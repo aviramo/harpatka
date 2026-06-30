@@ -23,6 +23,20 @@
   <meta name="twitter:description" content="ערב הכרויות חווייתי שבו מוזיקה, תנועה ומשחקיות יוצרות מפגש טבעי, מרגש ולא שגרתי. בהוד השרון." />
   <meta name="twitter:image" content="https://aviramo.github.io/harpatka/images/og-image.jpg" />
 
+  <!-- Meta (Facebook) Pixel -->
+  <script>
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+    document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '429806621602468');
+    fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=429806621602468&ev=PageView&noscript=1"/></noscript>
+  <!-- End Meta Pixel -->
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -530,8 +544,8 @@
     </section>
 
     <!-- ====================== 9. רישום ====================== -->
-    <section id="register" class="relative py-24 md:py-32 overflow-hidden" style="background:linear-gradient(180deg, rgba(20,56,74,.5), rgba(11,35,48,.9));">
-      <div class="glow absolute" style="width:420px;height:420px;top:-120px;left:50%;transform:translateX(-50%);opacity:.6;"></div>
+    <section id="register" class="relative py-24 md:py-32 overflow-hidden" style="background:linear-gradient(180deg, transparent, rgba(20,56,74,.28) 45%, rgba(11,35,48,.55));">
+      <div class="glow absolute" style="width:460px;height:460px;top:8%;left:50%;transform:translateX(-50%);opacity:.4;"></div>
       <div class="relative max-w-xl mx-auto px-5">
         <div class="text-center mb-9 reveal">
           <h2 class="text-4xl md:text-5xl font-extrabold mb-4">בא לכם לצאת להרפתקה?</h2>
@@ -562,7 +576,7 @@
             </div>
             <div>
               <label class="block mb-2 text-sm font-semibold text-cream/80" for="phone">טלפון נייד</label>
-              <input id="phone" name="phone" type="tel" inputmode="tel" class="field w-full px-4 py-3" placeholder="0521234567">
+              <input id="phone" name="phone" type="tel" inputmode="tel" class="field w-full px-4 py-3">
               <p class="err text-coralhi text-sm mt-1 hidden">מספר נייד תקין (למשל 0521234567)</p>
             </div>
           </div>
@@ -575,7 +589,7 @@
         <!-- SUCCESS -->
         <div id="regSuccess" class="card p-8 md:p-10 text-center hidden">
           <div class="text-5xl mb-4">✨</div>
-          <h3 class="text-3xl font-extrabold mb-3">קיבלנו אתכם</h3>
+          <h3 class="text-3xl font-extrabold mb-3">קיבלנו אתכם 🎉</h3>
           <p class="text-cream/75 leading-relaxed mb-2">הפרטים נקלטו והם אצל ענבר ואופיר. שמרנו לכם מקום פוטנציאלי בערב הקרוב.</p>
           <p class="text-cream/60 leading-relaxed mb-7">בשלב הזה נשארו שני דברים קצרים: להצטרף לקבוצת העדכונים השקטה, ולסגור את התשלום מול ענבר כדי שהמקום יהפוך לסופי.</p>
           <div class="flex flex-col gap-3">
@@ -588,12 +602,10 @@
   </main>
 
   <!-- ====================== 10. פוטר ====================== -->
-  <footer class="relative border-t border-cream/10 pt-12 pb-32">
-    <div class="max-w-6xl mx-auto px-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-right">
-      <div>
-        <p class="font-display text-xl font-extrabold">יוצאים <span class="grad-text">להרפתקה</span></p>
-        <p class="text-cream/55 text-sm mt-1">אופיר וענבר</p>
-      </div>
+  <footer class="relative pt-12 pb-8">
+    <div class="max-w-6xl mx-auto px-5 text-right">
+      <p class="font-display text-xl font-extrabold">יוצאים <span class="grad-text">להרפתקה</span></p>
+      <p class="text-cream/55 text-sm mt-1">אופיר וענבר</p>
     </div>
   </footer>
 
@@ -606,9 +618,11 @@
   <script>
     /* ====== CONFIG — החליפו בערכים האמיתיים ====== */
     const CONFIG = {
-      whatsappInbar: '972500000000',                 // מספר הנייד של ענבר (פורמט בינ"ל, בלי +)
+      whatsappInbar: '972509055000',                 // מספר הנייד של ענבר (פורמט בינ"ל, בלי +)
       updatesGroupLink: 'https://chat.whatsapp.com/HPBClkrbondA3JlQyOvseI',
       payboxLink: 'https://payboxapp.page.link/REPLACE_ME',
+      sheetsEndpoint: 'REPLACE_WITH_APPS_SCRIPT_WEB_APP_URL',   // כתובת ה-/exec של Google Apps Script
+      pixelId: '429806621602468',
     };
 
     /* reveal on scroll */
@@ -640,11 +654,19 @@
     const genderBtns = Array.from(document.querySelectorAll('.gender-opt'));
     const touched = { name:false, gender:false, age:false, phone:false };
 
+    const cleanPhone = v => v.replace(/[\s\-()]/g, '');
+    const PHONE_RE = /^(\+972[1-9]\d{8}|0(5\d|7\d)\d{7}|0[2-489]\d{7}|\+[1-9]\d{9,14})$/;
+    // נורמליזציה לאחסון בגליון: +972 -> 0 ; מקומי 0... נשאר ; קידומת בינ"ל אחרת נשמרת עם הפלוס
+    const normalizePhone = v => {
+      const p = cleanPhone(v);
+      return p.indexOf('+972') === 0 ? '0' + p.slice(4) : p;
+    };
+
     const valid = {
       name:   v => v.trim().split(/\s+/).filter(Boolean).length >= 2,   // שם פרטי + שם משפחה (רווח באמצע)
       gender: v => v === 'אישה' || v === 'גבר',
       age:    v => { const n = parseInt(v, 10); return n >= 18 && n <= 70; },
-      phone:  v => /^05\d{8}$/.test(v.replace(/[-\s]/g, '')),
+      phone:  v => PHONE_RE.test(cleanPhone(v)),
     };
 
     const markInput = (key) => {
@@ -678,16 +700,57 @@
     }));
     refresh();   // מתחיל כבוי עד שהטופס תקין
 
+    function showThankYou(updateUrl){
+      form.classList.add('hidden');
+      document.getElementById('regSuccess').classList.remove('hidden');
+      if (updateUrl){
+        try { const u = new URL(window.location); u.searchParams.set('status','success'); history.replaceState({}, '', u); } catch(e){}
+      }
+    }
+
+    function submitToSheets(payload){
+      if (!CONFIG.sheetsEndpoint || CONFIG.sheetsEndpoint.indexOf('REPLACE') !== -1) return Promise.resolve();
+      return fetch(CONFIG.sheetsEndpoint, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload),
+      }).catch(function(){});
+    }
+
     form.addEventListener('submit', (ev) => {
       ev.preventDefault();
       Object.keys(touched).forEach(k => touched[k] = true);
       refresh();
       if (!allOk()) return;
 
-      /* === הטופס מושהה לבקשת המשתמש — לא נפתח שום דבר חיצוני בינתיים === */
-      const note = document.getElementById('formPaused');
-      if (note) note.classList.remove('hidden');
+      // עד שמחברים את ה-endpoint של Sheets — לא מציגים הצלחה מזויפת
+      if (!CONFIG.sheetsEndpoint || CONFIG.sheetsEndpoint.indexOf('REPLACE') !== -1) {
+        const note = document.getElementById('formPaused');
+        if (note) note.classList.remove('hidden');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'שולח...';
+
+      const payload = {
+        name:   fields.name.value.trim(),
+        gender: genderInput.value,
+        phone:  normalizePhone(fields.phone.value),   // הגרש לאחסון כטקסט מתווסף בצד השרת
+        age:    parseInt(fields.age.value, 10),
+      };
+
+      submitToSheets(payload).finally(function(){
+        if (window.fbq) { try { fbq('track', 'Lead'); } catch(e){} }   // אירוע המרה כשהכל תקין
+        showThankYou(true);                                            // ?status=success + מסך תודה
+      });
     });
+
+    /* חזרה ל-?status=success מציגה ישירות את מסך התודה */
+    if (new URLSearchParams(location.search).get('status') === 'success') {
+      showThankYou(false);
+    }
   </script>
 </body>
 </html>
