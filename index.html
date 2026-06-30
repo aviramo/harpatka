@@ -180,6 +180,11 @@
     /* warning state for invalid fields */
     .field.invalid{ border-color:var(--coral) !important; box-shadow:0 0 0 3px rgba(217,99,62,.22); }
     .field.invalid:focus{ border-color:var(--coral) !important; box-shadow:0 0 0 3px rgba(217,99,62,.3); }
+    /* gender choice buttons */
+    .gender-opt{ appearance:none; -webkit-appearance:none; cursor:pointer; text-align:center; font-weight:600; color:var(--cream); line-height:1.15; }
+    .gender-opt:hover{ border-color:rgba(233,169,78,.5); }
+    .gender-opt.selected{ border-color:var(--amber) !important; background:rgba(233,169,78,.16); color:var(--amberhi); box-shadow:0 0 0 2px rgba(233,169,78,.3); }
+    .gender-opt .ico{ display:block; font-size:1.6rem; line-height:1; margin-bottom:.35rem; }
 
     /* disabled submit — clearly looks unavailable until the form is valid */
     .btn-primary:disabled{
@@ -408,7 +413,7 @@
             </div>
           </div>
           <div class="lg:order-first">
-            <h2 class="text-4xl md:text-5xl font-extrabold mb-6 reveal text-center">למה דרך הרפתקה</h2>
+            <h2 class="text-4xl md:text-5xl font-extrabold mb-6 reveal">למה דרך הרפתקה</h2>
             <h3 class="text-xl md:text-2xl font-bold text-amberhi mb-2 reveal">הרבה מפגשי היכרות הפכו למבחן</h3>
             <p class="text-lg text-cream/80 leading-relaxed mb-6 reveal">מה להגיד, איך להיראות, איך לא לצאת מתאמץ. באפליקציות קל להחליק הלאה, ובמפגש רגיל הראש עובד יותר מדי.</p>
             <h3 class="text-xl md:text-2xl font-bold text-amberhi mb-2 reveal" style="transition-delay:.05s">כאן מתחילים אחרת</h3>
@@ -536,13 +541,13 @@
             <input id="fullName" name="fullName" type="text" class="field w-full px-4 py-3" placeholder="שם פרטי ומשפחה">
             <p class="err text-coralhi text-sm mt-1 hidden">אנא הזינו שם פרטי ושם משפחה</p>
           </div>
-          <div>
-            <label class="block mb-2 text-sm font-semibold text-cream/80" for="gender">מגדר</label>
-            <select id="gender" name="gender" class="field w-full px-4 py-3">
-              <option value="" disabled selected>בחירת מגדר</option>
-              <option value="אישה">אישה</option>
-              <option value="גבר">גבר</option>
-            </select>
+          <div id="genderField">
+            <label class="block mb-2 text-sm font-semibold text-cream/80">מגדר</label>
+            <div class="grid grid-cols-2 gap-3">
+              <button type="button" class="gender-opt field py-3" data-value="אישה"><span class="ico">♀</span>אישה</button>
+              <button type="button" class="gender-opt field py-3" data-value="גבר"><span class="ico">♂</span>גבר</button>
+            </div>
+            <input type="hidden" id="gender" name="gender" value="">
             <p class="err text-coralhi text-sm mt-1 hidden">אנא בחרו מגדר</p>
           </div>
           <div class="grid grid-cols-2 gap-4">
@@ -626,7 +631,9 @@
     /* form — בדיקה חיה: הכפתור נדלק רק כשהכל תקין, ושדה לא תקין נצבע באזהרה */
     const form = document.getElementById('regForm');
     const submitBtn = document.getElementById('submitBtn');
-    const fields = { name: form.fullName, gender: form.gender, age: form.age, phone: form.phone };
+    const fields = { name: form.fullName, age: form.age, phone: form.phone };
+    const genderInput = document.getElementById('gender');
+    const genderBtns = Array.from(document.querySelectorAll('.gender-opt'));
     const touched = { name:false, gender:false, age:false, phone:false };
 
     const valid = {
@@ -636,22 +643,35 @@
       phone:  v => /^05\d{8}$/.test(v.replace(/[-\s]/g, '')),
     };
 
-    const mark = (key) => {
+    const markInput = (key) => {
       const el = fields[key];
       const bad = touched[key] && !valid[key](el.value);
       el.classList.toggle('invalid', bad);
       const err = el.parentElement.querySelector('.err');
       if (err) err.classList.toggle('hidden', !bad);
     };
-    const allOk = () => Object.keys(valid).every(k => valid[k](fields[k].value));
-    const refresh = () => { Object.keys(fields).forEach(mark); submitBtn.disabled = !allOk(); };
+    const markGender = () => {
+      const bad = touched.gender && !valid.gender(genderInput.value);
+      genderBtns.forEach(b => b.classList.toggle('invalid', bad));
+      const err = document.querySelector('#genderField .err');
+      if (err) err.classList.toggle('hidden', !bad);
+    };
+    const allOk = () =>
+      valid.name(fields.name.value) && valid.age(fields.age.value) &&
+      valid.phone(fields.phone.value) && valid.gender(genderInput.value);
+    const refresh = () => { Object.keys(fields).forEach(markInput); markGender(); submitBtn.disabled = !allOk(); };
 
     Object.keys(fields).forEach(key => {
       const el = fields[key];
-      const evt = el.tagName === 'SELECT' ? 'change' : 'input';
-      el.addEventListener(evt,  () => { touched[key] = true; refresh(); });
-      el.addEventListener('blur', () => { touched[key] = true; mark(key); });
+      el.addEventListener('input', () => { touched[key] = true; refresh(); });
+      el.addEventListener('blur',  () => { touched[key] = true; markInput(key); });
     });
+    genderBtns.forEach(b => b.addEventListener('click', () => {
+      genderInput.value = b.dataset.value;
+      genderBtns.forEach(x => x.classList.toggle('selected', x === b));
+      touched.gender = true;
+      refresh();
+    }));
     refresh();   // מתחיל כבוי עד שהטופס תקין
 
     form.addEventListener('submit', (ev) => {
