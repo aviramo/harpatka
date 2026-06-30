@@ -650,6 +650,18 @@
     }, { threshold:0.12 });
     document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
+    /* גלילה חלקה לעוגנים פנימיים (כמו #register) בלי להוסיף שום תוספת ל-URL */
+    document.querySelectorAll('a[href^="#"]').forEach(function(a){
+      const id = a.getAttribute('href').slice(1);
+      if (!id) return;                       // מדלגים על href="#" ריקים
+      a.addEventListener('click', function(ev){
+        const target = document.getElementById(id);
+        if (!target) return;
+        ev.preventDefault();                 // מונע הוספת #id לכתובת
+        target.scrollIntoView({ behavior:'smooth', block:'start' });
+      });
+    });
+
     /* wire updates links */
     document.getElementById('updates').href = CONFIG.updatesGroupLink;
     /* share — פותח וואטסאפ עם קישור האתר בלבד, ללא טקסט נלווה */
