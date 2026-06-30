@@ -427,8 +427,8 @@
     <section id="why" class="relative py-24 md:py-32">
       <div class="max-w-6xl mx-auto px-5">
         <div class="grid lg:grid-cols-2 gap-12 items-center">
-          <div class="reveal lg:order-last">
-            <div class="imgframe rounded-3xl aspect-[3/4] relative">
+          <div id="motionHome" class="reveal lg:order-last hidden lg:block">
+            <div id="motionFrame" class="imgframe rounded-3xl aspect-[3/4] relative">
               <video id="motionVid" class="cursor-pointer" playsinline loop muted preload="auto">
                 <source src="images/motion.mp4#t=0.1" type="video/mp4">
               </video>
@@ -448,6 +448,8 @@
             <h3 class="text-xl md:text-2xl font-bold text-amberhi mb-2 reveal">כי אחרי כל מה שעברנו, קשה פשוט להיפתח</h3>
             <p class="text-lg text-cream/80 leading-relaxed mb-4 reveal">רובנו מגיעים למפגש חדש עם ניסיון עבר על הגב.<br>דייטים שלא הלכו לשום מקום, שיחות שהתייבשו, אכזבות קטנות, מגננות, והרצון לא להיפגע שוב.</p>
             <p class="text-lg text-cream/80 leading-relaxed mb-6 reveal">אז הראש מתחיל לעבוד שעות נוספות:<br>מה להגיד, איך להיראות, איך לא לצאת מתאמץ, איך לא לחשוף יותר מדי.</p>
+            <!-- חריץ למובייל בלבד: הסרטון מועבר לכאן (לפני "כאן מתחילים אחרת") ע"י JS -->
+            <div id="motionMobileSlot" class="lg:hidden mb-8 reveal"></div>
             <h3 class="text-xl md:text-2xl font-bold text-amberhi mb-2 reveal" style="transition-delay:.05s">כאן מתחילים אחרת</h3>
             <p class="text-lg text-cream/80 leading-relaxed mb-4 reveal" style="transition-delay:.05s">דרך מוזיקה, תנועה, משחקיות ומפגש עדין, הגוף נרגע לפני שהלב נדרש להיפתח.<br>לא צריך להרשים. לא צריך להוכיח. לא צריך לדעת לרקוד.</p>
             <p class="text-lg text-cream/80 leading-relaxed mb-8 reveal" style="transition-delay:.05s">רק להגיע, לנשום, לזוז קצת, לפגוש מבטים, ולתת למשהו אמיתי לקרות בקצב טבעי יותר.</p>
@@ -660,6 +662,20 @@
       entries.forEach(e => { if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
     }, { threshold:0.12 });
     document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    /* במובייל בלבד: ממקמים את הסרטון לפני "כאן מתחילים אחרת". בדסקטופ הפריסה לא משתנה. */
+    const motionFrame = document.getElementById('motionFrame');
+    const motionHome = document.getElementById('motionHome');
+    const motionMobileSlot = document.getElementById('motionMobileSlot');
+    if (motionFrame && motionHome && motionMobileSlot) {
+      const mq = window.matchMedia('(max-width: 1023.98px)');
+      const placeMotion = () => {
+        const dest = mq.matches ? motionMobileSlot : motionHome;
+        if (motionFrame.parentElement !== dest) dest.appendChild(motionFrame);
+      };
+      placeMotion();
+      mq.addEventListener('change', placeMotion);
+    }
 
     /* וידאו "למה הרפתקה" — אוטופליי בלופ; ממשיך לרוץ עם הסאונד דרך הטקסט שאחריו,
        ונעצר רק כשהתמונה הבאה מתחילה להופיע בתחתית המסך. שליטה: פאוז/פליי בלבד. */
