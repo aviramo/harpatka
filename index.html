@@ -711,11 +711,14 @@
     }));
     refresh();   // מתחיל כבוי עד שהטופס תקין
 
-    function showThankYou(updateUrl){
+    function showThankYou(remember){
       form.classList.add('hidden');
       document.getElementById('regSuccess').classList.remove('hidden');
-      if (updateUrl){
-        try { const u = new URL(window.location); u.searchParams.set('status','success'); history.replaceState({}, '', u); } catch(e){}
+      if (remember){
+        // נזכר רק בדפדפן הזה (לא ב-URL) כדי שקישור משותף עדיין יציג את הטופס
+        try { sessionStorage.setItem('regDone', '1'); } catch(e){}
+        // מנקים פרמטר status ישן מה-URL אם נשאר, כדי שהכתובת תהיה נקייה לשיתוף
+        try { const u = new URL(window.location); u.searchParams.delete('status'); history.replaceState({}, '', u); } catch(e){}
       }
     }
 
@@ -759,8 +762,10 @@
       });
     });
 
-    /* חזרה ל-?status=success מציגה ישירות את מסך התודה */
-    if (new URLSearchParams(location.search).get('status') === 'success') {
+    /* רענון אצל מי שכבר נרשם (בדפדפן הזה) מציג ישירות את מסך התודה */
+    let alreadyDone = false;
+    try { alreadyDone = sessionStorage.getItem('regDone') === '1'; } catch(e){}
+    if (alreadyDone) {
       showThankYou(false);
     }
   </script>
