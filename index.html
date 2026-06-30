@@ -721,12 +721,13 @@
 
     function submitToSheets(payload){
       if (!CONFIG.sheetsEndpoint || CONFIG.sheetsEndpoint.indexOf('REPLACE') !== -1) return Promise.resolve();
-      return fetch(CONFIG.sheetsEndpoint, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload),
-      }).catch(function(){});
+      // form-encoded (UTF-8) — נכתב נכון בעברית דרך e.parameter ב-Apps Script
+      const body = new URLSearchParams();
+      body.append('name',   payload.name);
+      body.append('gender', payload.gender);
+      body.append('phone',  payload.phone);
+      body.append('age',    String(payload.age));
+      return fetch(CONFIG.sheetsEndpoint, { method: 'POST', mode: 'no-cors', body: body }).catch(function(){});
     }
 
     form.addEventListener('submit', (ev) => {
