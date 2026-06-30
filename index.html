@@ -611,7 +611,11 @@
         </form>
 
         <!-- SUCCESS -->
-        <div id="regSuccess" class="card p-8 md:p-10 text-center hidden">
+        <div id="regSuccess" class="card p-8 md:p-10 text-center hidden relative">
+          <button id="backToForm" type="button" aria-label="סגירה וחזרה לטופס"
+            class="absolute top-4 left-4 w-10 h-10 rounded-full flex items-center justify-center text-cream/70 hover:text-cream hover:bg-cream/10 transition">
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
           <div class="text-5xl mb-4">🎉</div>
           <h3 class="text-3xl font-extrabold mb-3">הפרטים נרשמו</h3>
           <p class="text-cream/75 leading-relaxed mb-2">הפרטים נקלטו והם אצל ענבר ואופיר.</p>
@@ -844,6 +848,14 @@
         try { const u = new URL(window.location); u.searchParams.delete('status'); history.replaceState({}, '', u); } catch(e){}
       }
     }
+
+    /* X על מסך התודה — סגירה וחזרה למצב מילוי טופס */
+    const backToFormBtn = document.getElementById('backToForm');
+    if (backToFormBtn) backToFormBtn.addEventListener('click', function(){
+      document.getElementById('regSuccess').classList.add('hidden');
+      form.classList.remove('hidden');
+      try { sessionStorage.removeItem('regDone'); } catch(e){}   // שרענון לא יחזיר ישר למסך התודה
+    });
 
     function submitToSheets(payload){
       if (!CONFIG.sheetsEndpoint || CONFIG.sheetsEndpoint.indexOf('REPLACE') !== -1) return Promise.resolve();
