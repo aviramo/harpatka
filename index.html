@@ -214,9 +214,11 @@
     }
     .btn-primary:disabled::after{ display:none; }
 
-    /* floating updates button — hidden until scrolled half a screen */
-    #updates{ opacity:0; visibility:hidden; transform:translateY(16px); transition:opacity .35s ease, transform .35s ease, visibility .35s; pointer-events:none; }
-    #updates.show{ opacity:1; visibility:visible; transform:none; pointer-events:auto; }
+    /* floating buttons — slide in from the sides (no opacity), shown after scrolling half a screen */
+    #updates, #share{ transition:transform .55s cubic-bezier(.16,1,.3,1); pointer-events:none; }
+    #updates{ transform:translateX(calc(-100% - 2rem)); }   /* יושב מחוץ למסך משמאל */
+    #share{ transform:translateX(calc(100% + 2rem)); }       /* יושב מחוץ למסך מימין */
+    #updates.show, #share.show{ transform:translateX(0); pointer-events:auto; }
 
     /* nav */
     #nav{ transition:background .35s ease, backdrop-filter .35s ease, border-color .35s ease; }
@@ -621,6 +623,13 @@
     לעדכונים
   </a>
 
+  <!-- floating share button -->
+  <a id="share" href="#" target="_blank" rel="noopener" aria-label="שיתוף הקישור לאתר בוואטסאפ"
+     class="fixed bottom-5 right-5 z-50 btn-primary rounded-full px-5 py-3 text-sm shadow-2xl flex items-center gap-2">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6 h-6" fill="currentColor" aria-hidden="true"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
+    שיתוף
+  </a>
+
   <script>
     /* ====== CONFIG — החליפו בערכים האמיתיים ====== */
     const CONFIG = {
@@ -639,23 +648,29 @@
 
     /* wire updates links */
     document.getElementById('updates').href = CONFIG.updatesGroupLink;
+    /* share — פותח וואטסאפ עם קישור האתר בלבד, ללא טקסט נלווה */
+    document.getElementById('share').href =
+      'https://wa.me/?text=' + encodeURIComponent(location.origin + location.pathname);
     document.getElementById('joinGroupBtn').href = CONFIG.updatesGroupLink;
     document.getElementById('eventUpdatesBtn').href = CONFIG.updatesGroupLink;
     document.getElementById('payInbarBtn').href =
       'https://wa.me/' + CONFIG.whatsappInbar + '?text=' +
       encodeURIComponent('היי ענבר, נרשמתי לאירוע ואני רוצה לצאת להרפתקה. אפשר לקבל קישור לתשלום בפייבוקס?');
 
-    /* reveal the floating updates button after scrolling half a screen height */
+    /* reveal the floating buttons after scrolling half a screen height — מחליקים מהצדדים */
     const updatesBtn = document.getElementById('updates');
+    const shareBtn = document.getElementById('share');
     const registerSec = document.getElementById('register');
-    const toggleUpdates = () => {
+    const toggleFloating = () => {
       const pastHalf = window.scrollY > window.innerHeight * 0.5;
       const atForm = registerSec && registerSec.getBoundingClientRect().top < window.innerHeight * 0.9;
-      updatesBtn.classList.toggle('show', pastHalf && !atForm);   // נעלם בהנפשה כשמגיעים לטופס
+      const visible = pastHalf && !atForm;
+      updatesBtn.classList.toggle('show', visible);   // מחליק פנימה משמאל / יוצא שמאלה
+      shareBtn.classList.toggle('show', visible);      // מחליק פנימה מימין / יוצא ימינה
     };
-    toggleUpdates();
-    window.addEventListener('scroll', toggleUpdates, { passive:true });
-    window.addEventListener('resize', toggleUpdates, { passive:true });
+    toggleFloating();
+    window.addEventListener('scroll', toggleFloating, { passive:true });
+    window.addEventListener('resize', toggleFloating, { passive:true });
 
     /* form — בדיקה חיה: הכפתור נדלק רק כשהכל תקין, ושדה לא תקין נצבע באזהרה */
     const form = document.getElementById('regForm');
