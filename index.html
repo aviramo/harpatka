@@ -608,7 +608,7 @@
 
   <!-- ====================== 10. פוטר ====================== -->
   <footer class="relative pt-6 pb-5">
-    <div class="max-w-6xl mx-auto px-5 text-right leading-tight">
+    <div class="max-w-6xl mx-auto px-5 text-center leading-tight">
       <p class="font-display text-xl font-extrabold">יוצאים <span class="grad-text">להרפתקה</span></p>
       <p class="text-cream/55 text-sm">אופיר וענבר</p>
     </div>
@@ -647,7 +647,12 @@
 
     /* reveal the floating updates button after scrolling half a screen height */
     const updatesBtn = document.getElementById('updates');
-    const toggleUpdates = () => updatesBtn.classList.toggle('show', window.scrollY > window.innerHeight * 0.5);
+    const registerSec = document.getElementById('register');
+    const toggleUpdates = () => {
+      const pastHalf = window.scrollY > window.innerHeight * 0.5;
+      const atForm = registerSec && registerSec.getBoundingClientRect().top < window.innerHeight * 0.9;
+      updatesBtn.classList.toggle('show', pastHalf && !atForm);   // נעלם בהנפשה כשמגיעים לטופס
+    };
     toggleUpdates();
     window.addEventListener('scroll', toggleUpdates, { passive:true });
     window.addEventListener('resize', toggleUpdates, { passive:true });
