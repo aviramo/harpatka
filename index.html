@@ -688,11 +688,17 @@
       document.addEventListener('click', enableSound, { once:true });
       document.addEventListener('keydown', enableSound, { once:true });
 
-      // מתחיל לרוץ כשמגיעים אליו; *לא* נעצר כשיוצא מהמסך — כדי שהמוזיקה תלווה את הקריאה
+      // מתחיל לרוץ כשמגיעים אליו. ממשיך כשיוצא כלפי מטה (כדי שהמוזיקה תלווה את הקריאה),
+      // אבל נעצר אם גוללים בחזרה כלפי מעלה — אל מעל הסרטון.
       new IntersectionObserver((entries) => {
         entries.forEach(e => {
           inView = e.isIntersecting;
-          if (inView && !userPaused && !nextVisible) startPlay();
+          if (inView) {
+            if (!userPaused && !nextVisible) startPlay();
+          } else if (e.boundingClientRect.top >= 0) {
+            motionVid.pause();                 // הוידאו מתחת לאזור הצפייה — גללנו מעליו → עצירה
+          }
+          // אחרת (הוידאו מעל אזור הצפייה, גללנו מטה) — ממשיך לרוץ
         });
       }, { threshold:0.4 }).observe(motionVid);
 
