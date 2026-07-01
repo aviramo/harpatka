@@ -343,7 +343,7 @@
         </div>
       </div>
       <div class="reveal flex flex-wrap gap-4 items-center justify-center" style="transition-delay:.2s">
-        <a data-scroll="regForm" role="button" tabindex="0" class="btn-primary rounded-full px-8 py-4 text-lg cursor-pointer">בא לכם לצאת להרפתקה?</a>
+        <a id="heroCta" data-scroll="regForm" role="button" tabindex="0" class="btn-primary rounded-full px-8 py-4 text-lg cursor-pointer">בא לכם לצאת להרפתקה?</a>
       </div>
     </div>
   </header>
@@ -791,14 +791,16 @@
       'https://wa.me/' + CONFIG.whatsappInbar + '?text=' +
       encodeURIComponent('היי ענבר, נרשמתי לאירוע ואני רוצה לצאת להרפתקה. אפשר לקבל קישור לתשלום בפייבוקס?');
 
-    /* reveal the floating buttons after scrolling half a screen height — מחליקים מהצדדים */
+    /* כפתורי הצד הצפים מופיעים רק אחרי שכפתור ה-CTA המרכזי יצא מהמסך (גללנו לסקשן הבא),
+       ונעלמים ברגע שגוללים בחזרה מעליו — כדי שלא ייראו שלושת הכפתורים יחד. מחליקים מהצדדים. */
     const updatesBtn = document.getElementById('updates');
     const shareBtn = document.getElementById('share');
     const registerSec = document.getElementById('register');
+    const heroCta = document.getElementById('heroCta');
     const toggleFloating = () => {
-      const pastHalf = window.scrollY > window.innerHeight * 0.5;
+      const pastHeroCta = heroCta ? heroCta.getBoundingClientRect().bottom < 0 : window.scrollY > window.innerHeight;
       const atForm = registerSec && registerSec.getBoundingClientRect().top < window.innerHeight * 0.9;
-      const visible = pastHalf && !atForm;
+      const visible = pastHeroCta && !atForm;
       updatesBtn.classList.toggle('show', visible);   // מחליק פנימה משמאל / יוצא שמאלה
       shareBtn.classList.toggle('show', visible);      // מחליק פנימה מימין / יוצא ימינה
     };
