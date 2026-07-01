@@ -348,7 +348,7 @@
         </div>
       </div>
       <div class="reveal flex flex-wrap gap-4 items-center justify-center" style="transition-delay:.2s">
-        <a href="#register" class="btn-primary rounded-full px-8 py-4 text-lg">בא לך לצאת להרפתקה?</a>
+        <a data-scroll="register" role="button" tabindex="0" class="btn-primary rounded-full px-8 py-4 text-lg cursor-pointer">בא לך לצאת להרפתקה?</a>
       </div>
       <p class="reveal text-sm text-cream/55 mt-5" style="transition-delay:.25s">ההרשמה מאושרת לאחר בדיקת מקום ואיזון הקבוצה</p>
     </div>
@@ -456,7 +456,7 @@
               <li class="flex items-center gap-3"><span class="text-amber">₪</span> 50 ש״ח להתנסות</li>
             </ul>
             <p class="text-sm text-cream/55 mt-6 leading-relaxed">המיקום המדויק יישלח בקבוצה השקטה לאחר אישור מקום</p>
-            <a href="#register" class="btn-primary rounded-full px-6 py-3 mt-7 inline-flex">בא לך לצאת להרפתקה?</a>
+            <a data-scroll="register" role="button" tabindex="0" class="btn-primary rounded-full px-6 py-3 mt-7 inline-flex cursor-pointer">בדיקת מקום והרשמה</a>
           </div>
           <!-- event 2 -->
           <div class="card p-8 reveal" style="transition-delay:.08s">
@@ -722,15 +722,16 @@
     }, { threshold:0.12 });
     document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
-    /* גלילה חלקה לעוגנים פנימיים (כמו #register) בלי להוסיף שום תוספת ל-URL */
-    document.querySelectorAll('a[href^="#"]').forEach(function(a){
-      const id = a.getAttribute('href').slice(1);
-      if (!id) return;                       // מדלגים על href="#" ריקים
-      a.addEventListener('click', function(ev){
+    /* גלילה חלקה לטופס/עוגנים פנימיים דרך data-scroll — בלי האשטאג ובלי שום תוספת ל-URL */
+    document.querySelectorAll('[data-scroll]').forEach(function(el){
+      const id = el.getAttribute('data-scroll');
+      const go = function(){
         const target = document.getElementById(id);
-        if (!target) return;
-        ev.preventDefault();                 // מונע הוספת #id לכתובת
-        target.scrollIntoView({ behavior:'smooth', block:'start' });
+        if (target) target.scrollIntoView({ behavior:'smooth', block:'start' });
+      };
+      el.addEventListener('click', go);
+      el.addEventListener('keydown', function(ev){   // נגישות: Enter / רווח מפעילים כמו לחיצה
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); }
       });
     });
 
