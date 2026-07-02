@@ -6,7 +6,7 @@
 
 ## פרסום (Deploy)
 - **GitHub Pages**, repo `aviramo/harpatka`, ענף `main`.
-- כתובת חיה: **https://aviramo.github.io/harpatka/**
+- דומיין מותאם (apex): **https://harpatka.co.il/** (מוגדר דרך קובץ `CNAME` בשורש ה-repo + רשומות DNS). `https://aviramo.github.io/harpatka/` ממשיך לעבוד ומפנה לדומיין.
 - לפרסם שינוי: `git add -A && git commit && git push origin main` (gh CLI לא מותקן; דוחפים ישירות עם git, אישורי GitHub שמורים ב-Credential Manager).
 - `.claude/` ב-`.gitignore` (לא נדחף).
 
