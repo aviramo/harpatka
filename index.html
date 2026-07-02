@@ -884,6 +884,14 @@
       document.getElementById('regSuccess').classList.add('hidden');
       form.classList.remove('hidden');
       try { sessionStorage.removeItem('regDone'); } catch(e){}   // שרענון לא יחזיר ישר למסך התודה
+      // מרוקנים את הטופס וממתחלים את מצב הכפתור לשליחה מחדש
+      form.reset();
+      genderInput.value = '';
+      genderBtns.forEach(b => b.classList.remove('selected'));
+      Object.keys(touched).forEach(k => touched[k] = false);
+      refresh();
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'שליחה';
     });
 
     function submitToSheets(payload){
