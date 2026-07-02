@@ -190,6 +190,15 @@
     input.field{ box-shadow:inset 0 2px 8px rgba(0,0,0,.3); }
     .field:focus{ outline:none; border-color:var(--amber); box-shadow:0 0 0 3px rgba(233,169,78,.22); }
     .field::placeholder{ color:rgba(244,231,211,.55); text-align:right; }
+    /* מנטרל את הרקע הלבן של מילוי-אוטומטי (Chrome/Safari) ושומר על העיצוב הכהה */
+    input.field:-webkit-autofill,
+    input.field:-webkit-autofill:hover,
+    input.field:-webkit-autofill:focus{
+      -webkit-text-fill-color:var(--cream);
+      caret-color:var(--cream);
+      -webkit-box-shadow:0 0 0 1000px #0a1e29 inset, inset 0 2px 8px rgba(0,0,0,.3);
+      transition:background-color 9999s ease-in-out 0s;
+    }
     /* elegant custom select with a chevron spaced from the left edge */
     select.field{
       appearance:none; -webkit-appearance:none; -moz-appearance:none;
@@ -702,7 +711,7 @@
               <p class="err text-coralhi text-sm mt-1 hidden">מספר נייד תקין (למשל 0521234567)</p>
             </div>
           </div>
-          <button id="submitBtn" type="submit" class="btn-primary rounded-full w-full py-4 text-lg" disabled>שליחה</button>
+          <button id="submitBtn" type="submit" class="btn-primary rounded-full w-full py-4 text-lg">שליחה</button>
           <p class="text-center text-sm text-cream/75">הטופס קצר ונועד לעזור לנו לבנות קבוצה מדויקת, נעימה ומאוזנת עם אנשים שמגיעים בכוונה טובה ובלב פתוח. לא נבקש קורות חיים, מזל, אופק או ניתוח עומק של מערכות יחסים קודמות, רק כמה פרטים שיעזרו לנו לשמור על חוויה איכותית ונעימה</p>
           <p id="formPaused" class="hidden text-center text-sm text-coralhi bg-coral/10 border border-coral/30 rounded-xl py-3 px-4">הטופס עדיין לא מחובר — נחבר אותו בהמשך. בינתיים זו תצוגה בלבד</p>
         </form>
@@ -844,7 +853,7 @@
     const allOk = () =>
       valid.name(fields.name.value) && valid.age(fields.age.value) &&
       valid.phone(fields.phone.value) && valid.gender(genderInput.value);
-    const refresh = () => { Object.keys(fields).forEach(markInput); markGender(); submitBtn.disabled = !allOk(); };
+    const refresh = () => { Object.keys(fields).forEach(markInput); markGender(); };
 
     Object.keys(fields).forEach(key => {
       const el = fields[key];
@@ -857,7 +866,7 @@
       touched.gender = true;
       refresh();
     }));
-    refresh();   // מתחיל כבוי עד שהטופס תקין
+    refresh();   // הכפתור תמיד פעיל ובולט; הולידציה נאכפת בזמן השליחה (submit)
 
     function showThankYou(remember){
       form.classList.add('hidden');
