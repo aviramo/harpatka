@@ -287,6 +287,47 @@
       .portal-float, .portal::before, .portal-inner::after, .spark, .stars, .floaty{ animation:none; }
       .parallax{ transform:none; }
     }
+
+    /* ===== subtle payment entry link (לא בולט) ===== */
+    .pay-link{
+      display:inline-flex; align-items:center; gap:.5rem;
+      color:rgba(244,231,211,.6); font-size:.9rem; font-weight:600; cursor:pointer;
+      border-bottom:1px solid rgba(244,231,211,.22); padding-bottom:2px;
+      transition:color .2s ease, border-color .2s ease;
+    }
+    .pay-link:hover{ color:var(--amberhi); border-color:rgba(233,169,78,.55); }
+    .pay-link svg{ width:1rem; height:1rem; opacity:.85; }
+
+    /* ===== payment modal ===== */
+    .modal{
+      position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center;
+      padding:1.25rem; background:rgba(6,20,28,.74); backdrop-filter:blur(6px);
+      opacity:0; pointer-events:none; transition:opacity .3s ease;
+    }
+    .modal.open{ opacity:1; pointer-events:auto; }
+    .modal-box{
+      width:100%; max-width:31rem; max-height:calc(100dvh - 2.5rem); overflow-y:auto;
+      transform:translateY(16px) scale(.98); transition:transform .38s cubic-bezier(.16,1,.3,1);
+    }
+    .modal.open .modal-box{ transform:none; }
+
+    /* whatsapp contact row inside the modal */
+    .wa-contact{
+      display:flex; align-items:center; gap:.85rem; text-align:right;
+      border:1px solid rgba(244,231,211,.16); border-radius:1rem; padding:.85rem 1rem;
+      background:rgba(8,26,36,.5); transition:border-color .2s ease, background .2s ease, transform .2s ease;
+    }
+    .wa-contact:hover{ border-color:rgba(37,211,102,.55); background:rgba(37,211,102,.08); transform:translateY(-1px); }
+    .wa-contact .wa-ic{
+      flex:none; width:2.4rem; height:2.4rem; border-radius:9999px;
+      display:flex; align-items:center; justify-content:center;
+      background:rgba(37,211,102,.16); color:#25D366;
+    }
+    .wa-contact .wa-ic svg{ width:1.4rem; height:1.4rem; }
+    /* וריאנט בולט לקבוצה הראשית — רקע ירוק וואטסאפ חצי־שקוף, כדי שלא יתבלבלו בין הקבוצות */
+    .wa-contact.is-primary{ border-color:rgba(37,211,102,.55); background:rgba(37,211,102,.12); }
+    .wa-contact.is-primary:hover{ border-color:rgba(37,211,102,.85); background:rgba(37,211,102,.18); transform:translateY(-1px); }
+    .wa-contact.is-primary .wa-ic{ background:rgba(37,211,102,.24); color:#25D366; }
   </style>
 </head>
 
@@ -732,6 +773,14 @@
             <a id="joinGroupBtn" href="#" target="_blank" rel="noopener" class="btn-ghost rounded-full py-3.5">הצטרפות לקבוצת העדכונים השקטה</a>
           </div>
         </div>
+
+        <!-- כניסה עדינה לתשלום (למי שכבר אושר לו מקום) -->
+        <div class="text-center mt-7">
+          <button id="payTrigger" type="button" class="pay-link" aria-haspopup="dialog" aria-controls="payModal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>
+            לתשלום
+          </button>
+        </div>
       </div>
     </section>
   </main>
@@ -743,6 +792,78 @@
       <p class="text-cream/75 text-sm">אופיר וענבר</p>
     </div>
   </footer>
+
+  <!-- ====================== פופאפ תשלום ====================== -->
+  <div id="payModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="payModalTitle" hidden>
+    <div class="modal-box card p-7 md:p-8 relative text-right">
+      <button id="payClose" type="button" data-close-modal aria-label="סגירה"
+        class="absolute top-4 left-4 w-10 h-10 rounded-full flex items-center justify-center text-cream/80 hover:text-cream hover:bg-cream/10 transition">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+
+      <h3 id="payModalTitle" class="text-2xl md:text-3xl font-extrabold mb-3">רגע לפני התשלום</h3>
+      <p class="text-cream/80 leading-relaxed mb-2">ההרשמה מאושרת לפי התאמה ואיזון מגדרי, אז כדאי לוודא איתנו שנשאר לכם מקום לערב הקרוב לפני שמשלמים</p>
+      <p class="text-cream/70 text-sm leading-relaxed mb-5">כתבו לנו בוואטסאפ ונאשר לכם מיד:</p>
+
+      <div class="flex flex-col gap-3 mb-6">
+        <a id="waOfir" href="#" target="_blank" rel="noopener" class="wa-contact">
+          <span class="wa-ic"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.057 0a11.82 11.82 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.477-.913zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg></span>
+          <span class="flex flex-col leading-tight">
+            <span class="font-bold text-cream">וידוא מקום עם אופיר</span>
+            <span class="text-cream/55 text-sm">וואטסאפ · 058-707-8708</span>
+          </span>
+        </a>
+        <a id="waInbar" href="#" target="_blank" rel="noopener" class="wa-contact">
+          <span class="wa-ic"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.057 0a11.82 11.82 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.477-.913zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg></span>
+          <span class="flex flex-col leading-tight">
+            <span class="font-bold text-cream">וידוא מקום עם ענבר</span>
+            <span class="text-cream/55 text-sm">וואטסאפ · 050-905-5000</span>
+          </span>
+        </a>
+      </div>
+
+      <div class="divider mb-5"></div>
+
+      <a id="payboxBtn" href="#" target="_blank" rel="noopener" class="btn-primary rounded-full w-full py-4 text-lg flex items-center justify-center gap-2.5">
+        <svg class="w-6 h-6 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="5.3" r="2.5"/>
+          <path d="M5.4 6.3 9 10v6q0 1.6 1.6 1.6h2.8Q15 17.6 15 16v-6l3.6-3.7"/>
+        </svg>
+        תשלום בפייבוקס
+      </a>
+      <p class="text-center text-cream/55 text-sm mt-3">מומלץ לשלם רק לאחר שאושר לכם מקום</p>
+    </div>
+  </div>
+
+  <!-- ====================== פופאפ בחירת קבוצת וואטסאפ (לפי גיל) ====================== -->
+  <div id="groupModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="groupModalTitle" hidden>
+    <div class="modal-box card p-7 md:p-8 relative text-right">
+      <button type="button" data-close-modal aria-label="סגירה"
+        class="absolute top-4 left-4 w-10 h-10 rounded-full flex items-center justify-center text-cream/80 hover:text-cream hover:bg-cream/10 transition">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+
+      <h3 id="groupModalTitle" class="text-2xl md:text-3xl font-extrabold mb-3">לאיזו קבוצה להצטרף?</h3>
+      <p class="text-cream/80 leading-relaxed mb-5">בחרו את קבוצת העדכונים השקטה שמתאימה לגיל שלכם</p>
+
+      <div class="flex flex-col gap-3">
+        <a id="group50" href="#" target="_blank" rel="noopener" class="wa-contact is-primary">
+          <span class="wa-ic"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.057 0a11.82 11.82 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.477-.913zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg></span>
+          <span class="flex flex-col leading-tight">
+            <span class="font-extrabold text-xl" style="color:#4ade80">עד גיל 50</span>
+            <span class="text-cream/60 text-sm">קבוצת העדכונים השקטה</span>
+          </span>
+        </a>
+        <a id="group50plus" href="#" target="_blank" rel="noopener" class="wa-contact">
+          <span class="wa-ic"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.057 0a11.82 11.82 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.477-.913zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg></span>
+          <span class="flex flex-col leading-tight">
+            <span class="font-extrabold text-xl text-cream">גיל 50 ומעלה</span>
+            <span class="text-cream/60 text-sm">קבוצת העדכונים השקטה</span>
+          </span>
+        </a>
+      </div>
+    </div>
+  </div>
 
   <!-- floating updates button -->
   <a id="updates" href="#" target="_blank" rel="noopener" aria-label="להצטרפות לקבוצת העדכונים השקטה בוואטסאפ"
@@ -762,8 +883,10 @@
     /* ====== CONFIG — החליפו בערכים האמיתיים ====== */
     const CONFIG = {
       whatsappInbar: '972509055000',                 // מספר הנייד של ענבר (פורמט בינ"ל, בלי +)
-      updatesGroupLink: 'https://chat.whatsapp.com/HPBClkrbondA3JlQyOvseI',
-      payboxLink: 'https://payboxapp.page.link/REPLACE_ME',
+      whatsappOfir: '972587078708',                   // מספר הנייד של אופיר (פורמט בינ"ל, בלי +)
+      updatesGroupLink: 'https://chat.whatsapp.com/HPBClkrbondA3JlQyOvseI',            // קבוצת העדכונים עד גיל 50
+      updatesGroup50PlusLink: 'https://chat.whatsapp.com/DB7zVc2NdVXEquZCC6PpUP',      // קבוצת העדכונים גיל 50 ומעלה
+      payboxLink: 'https://links.payboxapp.com/MgKzRuPAZ3b',
       sheetsEndpoint: 'https://script.google.com/macros/s/AKfycbwlSCkL9134xBFJ0_Rl4dboWgTq6H7UR6HWaP7CJaURakuBsE9klQIrpBx9zT6X6jhTxw/exec',
       pixelId: '429806621602468',
     };
@@ -787,16 +910,60 @@
       });
     });
 
-    /* wire updates links */
-    document.getElementById('updates').href = CONFIG.updatesGroupLink;
     /* share — פותח וואטסאפ עם קישור האתר בלבד, ללא טקסט נלווה */
     document.getElementById('share').href =
       'https://wa.me/?text=' + encodeURIComponent(location.origin + location.pathname);
-    document.getElementById('joinGroupBtn').href = CONFIG.updatesGroupLink;
-    document.getElementById('eventUpdatesBtn').href = CONFIG.updatesGroupLink;
     document.getElementById('payInbarBtn').href =
       'https://wa.me/' + CONFIG.whatsappInbar + '?text=' +
       encodeURIComponent('היי ענבר, נרשמתי לאירוע ואני רוצה לצאת להרפתקה. אפשר לקבל קישור לתשלום בפייבוקס?');
+
+    /* ===== מנגנון פופאפ כללי (משותף לכל ה-.modal) ===== */
+    let modalLastFocus = null;
+    function openModal(m){
+      modalLastFocus = document.activeElement;
+      m.hidden = false;
+      requestAnimationFrame(() => m.classList.add('open'));
+      document.body.style.overflow = 'hidden';
+      const f = m.querySelector('[data-autofocus]') || m.querySelector('button, a');
+      if (f) f.focus();
+    }
+    function closeModal(m){
+      m.classList.remove('open');
+      document.body.style.overflow = '';
+      setTimeout(() => { m.hidden = true; }, 320);
+      if (modalLastFocus) modalLastFocus.focus();
+    }
+    // כל פופאפ נסגר ב-X, בלחיצה על הרקע, וב-Esc
+    document.querySelectorAll('.modal').forEach(m => {
+      m.querySelectorAll('[data-close-modal]').forEach(b => b.addEventListener('click', () => closeModal(m)));
+      m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const open = document.querySelector('.modal.open');
+      if (open) closeModal(open);
+    });
+
+    /* ===== פופאפ תשלום ===== */
+    const payVerifyMsg = encodeURIComponent(
+      'היי, נרשמתי ל"יוצאים להרפתקה" ואני רוצה להסדיר תשלום. אפשר לוודא שנשאר לי מקום לערב הקרוב לפני שאני משלם/ת?'
+    );
+    document.getElementById('waOfir').href  = 'https://wa.me/' + CONFIG.whatsappOfir  + '?text=' + payVerifyMsg;
+    document.getElementById('waInbar').href = 'https://wa.me/' + CONFIG.whatsappInbar + '?text=' + payVerifyMsg;
+    document.getElementById('payboxBtn').href = CONFIG.payboxLink;
+    document.getElementById('payTrigger').addEventListener('click', () => openModal(document.getElementById('payModal')));
+
+    /* ===== פופאפ בחירת קבוצת וואטסאפ לפי גיל =====
+       כל טריגר להצטרפות לקבוצה פותח קודם בחירה: עד גיל 50 / גיל 50 ומעלה */
+    document.getElementById('group50').href     = CONFIG.updatesGroupLink;
+    document.getElementById('group50plus').href = CONFIG.updatesGroup50PlusLink;
+    const groupModal = document.getElementById('groupModal');
+    ['updates', 'joinGroupBtn', 'eventUpdatesBtn'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('click', (e) => { e.preventDefault(); openModal(groupModal); });
+    });
+    // אחרי בחירת קבוצה — הקישור נפתח בטאב חדש והפופאפ נסגר
+    groupModal.querySelectorAll('a[href]').forEach(a => a.addEventListener('click', () => closeModal(groupModal)));
 
     /* כפתורי הצד הצפים מופיעים רק אחרי שכפתור ה-CTA המרכזי יצא מהמסך (גללנו לסקשן הבא),
        ונעלמים ברגע שגוללים בחזרה מעליו — כדי שלא ייראו שלושת הכפתורים יחד. מחליקים מהצדדים. */
