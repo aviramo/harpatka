@@ -55,15 +55,17 @@
       theme: {
         extend: {
           colors: {
-            ink:    '#0B2330',
-            ink2:   '#0E2A3A',
-            navy:   '#14384A',
-            amber:  '#E9A94E',
-            amberhi:'#F2C572',
-            coral:  '#D9633E',
-            coralhi:'#E6794D',
-            teal:   '#1E6B73',
-            cream:  '#F4E7D3',
+            ink:    '#0C1E3A',
+            ink2:   '#122A4A',
+            navy:   '#1B3C5E',
+            amber:  '#ECA94C',
+            amberhi:'#F5CE83',
+            coral:  '#E0603A',
+            coralhi:'#EE7E4E',
+            teal:   '#2A8A85',
+            tealhi: '#3FB0A6',
+            plum:   '#8A4E74',
+            cream:  '#F5EAD6',
           },
           fontFamily: {
             display: ['"Frank Ruhl Libre"', 'serif'],
@@ -76,9 +78,9 @@
 
   <style>
     :root{
-      --ink:#0B2330; --ink2:#0E2A3A; --navy:#14384A;
-      --amber:#E9A94E; --amberhi:#F2C572; --coral:#D9633E;
-      --teal:#1E6B73; --cream:#F4E7D3;
+      --ink:#0C1E3A; --ink2:#122A4A; --navy:#1B3C5E;
+      --amber:#ECA94C; --amberhi:#F5CE83; --coral:#E0603A; --coralhi:#EE7E4E;
+      --teal:#2A8A85; --tealhi:#3FB0A6; --plum:#8A4E74; --cream:#F5EAD6;
     }
     html{ scroll-behavior:smooth; overflow-x:clip; font-size:110%; }
     /* v2: סקאלת טיפוגרפיה מכווצת ל-4 מדרגות — כותרות מעט קטנות יותר, טקסטים קטנים מעט גדולים יותר.
@@ -90,6 +92,22 @@
     body{
       font-family:"Assistant",sans-serif;
       background:var(--ink);
+      /* one continuous, sophisticated color journey across the WHOLE page —
+         a slow hue drift (navy → teal → indigo → plum → sunrise warmth → navy)
+         with soft radial pops layered on top. mapped to full document height,
+         so scrolling travels smoothly through the palette with no section seams. */
+      background-image:
+        radial-gradient(48% 16% at 84% 23%, rgba(236,169,76,.15), transparent 62%),
+        radial-gradient(48% 16% at 14% 39%, rgba(42,138,133,.15), transparent 62%),
+        radial-gradient(50% 16% at 80% 52%, rgba(224,96,58,.13), transparent 62%),
+        radial-gradient(48% 16% at 18% 67%, rgba(138,78,116,.16), transparent 62%),
+        radial-gradient(50% 16% at 82% 83%, rgba(42,138,133,.12), transparent 62%),
+        radial-gradient(48% 16% at 22% 95%, rgba(236,169,76,.11), transparent 62%),
+        linear-gradient(180deg,
+          #0C1E3A 0%, #0F2A40 17%, #16323F 33%, #203042 47%,
+          #2A2742 60%, #2E2440 73%, #1A2038 88%, #0C1E3A 100%);
+      background-repeat:no-repeat;
+      background-size:100% 100%;
       color:var(--cream);
       -webkit-font-smoothing:antialiased;
       overflow-x:clip;
@@ -107,9 +125,14 @@
 
     /* sunrise glow */
     .glow{
-      background:radial-gradient(closest-side, rgba(242,197,114,.55), rgba(217,99,62,.18) 55%, rgba(11,35,48,0) 78%);
+      background:radial-gradient(closest-side, rgba(245,206,131,.62), rgba(224,96,58,.24) 52%, rgba(12,30,58,0) 78%);
       filter:blur(8px);
     }
+
+    /* ambient section color fields — keep the dark page colorful & alive, matched to the hero */
+    /* per-section color fields removed — the page now carries one continuous
+       full-document gradient (see body), so these are intentionally inert */
+    .aura{ display:none; }
 
     /* floating orbs */
     .orb{ position:absolute; border-radius:9999px; background:radial-gradient(circle at 35% 30%, var(--amberhi), var(--coral)); box-shadow:0 0 40px rgba(233,169,78,.45); }
@@ -134,31 +157,24 @@
       background:linear-gradient(100deg, var(--coral), var(--amber));
       color:#1a1208; font-weight:700;
       box-shadow:0 14px 40px -12px rgba(233,169,78,.6);
-      transition:transform .25s ease, box-shadow .25s ease;
     }
-    .btn-primary:hover{ transform:translateY(-2px); box-shadow:0 20px 50px -12px rgba(233,169,78,.8); }
-    .btn-primary::after{
-      content:""; position:absolute; inset:0; z-index:-1;
-      background:linear-gradient(110deg, transparent 35%, rgba(255,255,255,.45) 50%, transparent 65%);
-      transform:translateX(-120%); transition:transform .7s ease;
-    }
-    .btn-primary:hover::after{ transform:translateX(120%); }
+    /* hover + click/press feedback removed — interactive elements stay fully static */
+    .btn-primary, .btn-ghost, .gender-opt, .consent-cb, .pay-link, .wa-contact, .pay-inline-link{ -webkit-tap-highlight-color:transparent; }
+    .btn-primary:active, .btn-ghost:active, .gender-opt:active, .pay-link:active, .wa-contact:active{ transform:none; }
 
     .btn-ghost{
       border:1px solid rgba(244,231,211,.35); color:var(--cream);
-      transition:all .25s ease;
     }
-    .btn-ghost:hover{ border-color:var(--amber); background:rgba(233,169,78,.08); transform:translateY(-2px); }
 
     /* cards */
     .card{
-      background:linear-gradient(160deg, rgba(20,56,74,.55), rgba(11,35,48,.55));
-      border:1px solid rgba(244,231,211,.10);
+      background:linear-gradient(160deg, rgba(27,60,94,.58), rgba(12,30,58,.52));
+      border:1px solid rgba(245,234,214,.12);
       border-radius:1.5rem;
       backdrop-filter:blur(6px);
+      box-shadow:0 24px 60px -34px rgba(0,0,0,.7);
     }
-    /* ללא אפקטים על הכרטיסים — אין שינוי גבול/צל/מיקום ב-hover, לחיצה או פוקוס */
-    .card:hover, .card:active, .card:focus-within{ transform:none; border-color:rgba(244,231,211,.10); box-shadow:none; }
+    /* ללא אפקטים על הכרטיסים — הצל/הגבול קבועים, בלי שינוי ב-hover, לחיצה או פוקוס */
     .card.reveal{ transform:none !important; }
 
     /* number badge */
@@ -220,7 +236,6 @@
     .field.invalid:focus{ border-color:var(--coral) !important; box-shadow:0 0 0 3px rgba(217,99,62,.3); }
     /* gender choice buttons */
     .gender-opt{ appearance:none; -webkit-appearance:none; cursor:pointer; display:flex; align-items:center; justify-content:center; text-align:center; font-weight:600; color:var(--cream); line-height:1.15; }
-    .gender-opt:hover{ border-color:rgba(233,169,78,.5); }
     .gender-opt.selected{ border-color:var(--amber) !important; background:rgba(233,169,78,.16); color:var(--amberhi); box-shadow:0 0 0 2px rgba(233,169,78,.3); }
 
     /* צ׳ק-בוקס מותאם — באותה שפה עיצובית של השדות (רקע כהה, לא לבן) */
@@ -231,7 +246,6 @@
       box-shadow:inset 0 2px 8px rgba(0,0,0,.3);
       transition:border-color .2s ease, background .2s ease;
     }
-    .consent-cb:hover{ border-color:rgba(233,169,78,.5); }
     .consent-cb:checked{ background:var(--amber); border-color:var(--amber); box-shadow:none; }
     .consent-cb:checked::after{
       content:""; position:absolute; left:50%; top:46%;
@@ -254,6 +268,13 @@
 
     /* path divider */
     .divider{ height:1px; background:linear-gradient(90deg, transparent, rgba(233,169,78,.4), transparent); }
+
+    /* colorful accent under section titles — echoes the hero's sunrise */
+    .sect-title::after{
+      content:""; display:block; width:3.25rem; height:4px; border-radius:9999px;
+      margin:.9rem auto 0; background:linear-gradient(90deg, var(--amber), var(--coral));
+      box-shadow:0 0 18px -2px rgba(236,169,76,.5);
+    }
 
     /* ===== magical hero portal ===== */
     .stars{
@@ -314,7 +335,6 @@
       border-bottom:1px solid rgba(244,231,211,.22); padding-bottom:2px;
       transition:color .2s ease, border-color .2s ease;
     }
-    .pay-link:hover{ color:var(--amberhi); border-color:rgba(233,169,78,.55); }
     .pay-link svg{ width:1rem; height:1rem; opacity:.85; }
 
     /* ===== payment modal ===== */
@@ -334,9 +354,8 @@
     .wa-contact{
       display:flex; align-items:center; gap:.85rem; text-align:right;
       border:1px solid rgba(244,231,211,.16); border-radius:1rem; padding:.85rem 1rem;
-      background:rgba(8,26,36,.5); transition:border-color .2s ease, background .2s ease, transform .2s ease;
+      background:rgba(8,26,36,.5);
     }
-    .wa-contact:hover{ border-color:rgba(37,211,102,.55); background:rgba(37,211,102,.08); transform:translateY(-1px); }
     .wa-contact .wa-ic{
       flex:none; width:2.4rem; height:2.4rem; border-radius:9999px;
       display:flex; align-items:center; justify-content:center;
@@ -345,7 +364,6 @@
     .wa-contact .wa-ic svg{ width:1.4rem; height:1.4rem; }
     /* וריאנט בולט לקבוצה הראשית — רקע ירוק וואטסאפ חצי־שקוף, כדי שלא יתבלבלו בין הקבוצות */
     .wa-contact.is-primary{ border-color:rgba(37,211,102,.55); background:rgba(37,211,102,.12); }
-    .wa-contact.is-primary:hover{ border-color:rgba(37,211,102,.85); background:rgba(37,211,102,.18); transform:translateY(-1px); }
     .wa-contact.is-primary .wa-ic{ background:rgba(37,211,102,.24); color:#25D366; }
 
     /* קישורי וואטסאפ מוטמעים בתוך הטקסט */
@@ -359,7 +377,6 @@
       content:""; display:inline-block; width:.85em; height:.85em; margin-inline-end:.25em; vertical-align:-.06em;
       background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2325D366'%3E%3Cpath d='M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.057 0a11.82 11.82 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.477-.913zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z'/%3E%3C/svg%3E");
     }
-    .pay-inline-link:hover{ color:#3ee07f; text-decoration-color:#25D366; }
   </style>
 </head>
 
@@ -368,7 +385,9 @@
   <!-- ====================== HERO ====================== -->
   <header id="hero" class="relative overflow-hidden pt-10 pb-16">
     <!-- ambient night sky -->
-    <div class="absolute inset-0" style="background:radial-gradient(120% 90% at 50% 0%, rgba(20,56,74,.55), rgba(11,35,48,1) 70%);"></div>
+    <!-- soft sky-glow only (fades to fully transparent) so the page's single continuous
+         gradient shows through the hero and flows seamlessly into the sections below -->
+    <div class="absolute inset-0" style="background:radial-gradient(120% 85% at 50% -6%, rgba(31,66,104,.6), rgba(12,30,58,0) 68%);"></div>
     <div class="stars"></div>
 
     <!-- decorative orbs + hanging lines + sunrise glow -->
@@ -413,7 +432,7 @@
 
       <!-- כותרת משנה (הכותרת הראשית מופיעה כבר בתוך תמונת ההירו) -->
       <p class="reveal text-2xl md:text-3xl text-amberhi font-bold leading-snug mt-12 mb-6" style="transition-delay:.05s; text-wrap:balance">
-        ערב של מוזיקה, תנועה<br>ומפגש אנושי
+        ערב של מוזיקה, תנועה<br><span style="font-size:2.15rem; line-height:1.2; display:inline-block; margin-top:.3rem;">ומפגש אנושי</span>
       </p>
 
       <div class="reveal mb-8 max-w-xl mx-auto" style="transition-delay:.1s">
@@ -423,7 +442,7 @@
 
         <!-- שורת חיזוק -->
         <div class="max-w-md mx-auto rounded-2xl border border-amber/25 bg-cream/[.03] px-6 py-5">
-          <p class="text-lg md:text-xl font-bold text-amberhi leading-relaxed">הקבוצה נבנית באיזון בין נשים וגברים</p>
+          <p class="text-lg md:text-xl font-bold text-amberhi leading-relaxed">הקבוצה נבנית באיזון מגדרי</p>
           <p class="text-lg md:text-xl font-bold text-cream leading-relaxed mt-3">זה לא ערב של ריקודים<br>זה ערב של חוויה אנושית</p>
         </div>
       </div>
@@ -432,10 +451,11 @@
   </header>
 
   <main>
-    <section id="how" class="relative py-24 md:py-32 scroll-mt-8">
-      <div class="max-w-3xl mx-auto px-5">
+    <section id="how" class="relative py-12 md:py-16 scroll-mt-8">
+      <div class="aura g-teal"></div>
+      <div class="relative z-10 max-w-3xl mx-auto px-5">
         <div class="text-center max-w-2xl mx-auto mb-10 reveal">
-          <h2 class="text-4xl md:text-5xl font-extrabold mb-4">המסלול של הערב</h2>
+          <h2 class="sect-title text-4xl md:text-5xl font-extrabold mb-4">המסלול של הערב</h2>
           <p class="text-lg text-cream/75 leading-relaxed">ערב אחד, רצף אחד, שנבנה בהדרגה</p>
         </div>
         <div class="reveal max-w-md mx-auto mb-12">
@@ -492,10 +512,11 @@
       </div>
     </section>
 
-    <section id="register" class="relative pb-12 scroll-mt-8">
-      <div class="max-w-xl mx-auto px-5 text-center">
-      <div id="regHeading" class="reveal mt-20 md:mt-28 mb-7 scroll-mt-8" style="transition-delay:.2s">
-        <h2 class="text-4xl md:text-5xl font-extrabold mb-2">רוצים להצטרף?</h2>
+    <section id="register" class="relative py-12 md:py-16 scroll-mt-8">
+      <div class="aura g-amber"></div>
+      <div class="relative z-10 max-w-xl mx-auto px-5 text-center">
+      <div id="regHeading" class="reveal mb-7 scroll-mt-8" style="transition-delay:.2s">
+        <h2 class="sect-title text-4xl md:text-5xl font-extrabold mb-2">רוצים להצטרף?</h2>
         <p class="text-base md:text-lg text-cream/80">השאירו פרטים ונעדכן אתכם</p>
       </div>
       <div class="max-w-lg mx-auto text-right">
@@ -547,7 +568,7 @@
         <!-- SUCCESS -->
         <div id="regSuccess" class="card p-8 md:p-10 text-center hidden relative">
           <button id="backToForm" type="button" aria-label="סגירה וחזרה לטופס"
-            class="absolute top-4 left-4 w-10 h-10 rounded-full flex items-center justify-center text-cream/80 hover:text-cream hover:bg-cream/10 transition">
+            class="absolute top-4 left-4 w-10 h-10 rounded-full flex items-center justify-center text-cream/80">
             <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
           </button>
           <div class="text-5xl mb-4">🎉</div>
@@ -562,9 +583,10 @@
       </div>
     </section>
 
-    <section id="whatisnot" class="relative py-16 md:py-20">
-      <div class="max-w-2xl mx-auto px-5">
-        <h2 class="text-4xl md:text-5xl font-extrabold mb-10 text-center reveal">מה חשוב לדעת?</h2>
+    <section id="whatisnot" class="relative py-12 md:py-16">
+      <div class="aura g-coral"></div>
+      <div class="relative z-10 max-w-2xl mx-auto px-5">
+        <h2 class="sect-title text-4xl md:text-5xl font-extrabold mb-10 text-center reveal">מה חשוב לדעת?</h2>
         <div class="space-y-4">
           <div class="reveal card p-5 md:p-6">
             <p class="text-lg md:text-xl font-bold text-cream mb-1">זה לא ערב של ישיבה ודיבורים</p>
@@ -578,10 +600,11 @@
       </div>
     </section>
 
-    <section id="human" class="relative py-24 md:py-32">
-      <div class="max-w-6xl mx-auto px-5">
+    <section id="human" class="relative py-12 md:py-16">
+      <div class="aura g-plum"></div>
+      <div class="relative z-10 max-w-6xl mx-auto px-5">
         <div class="text-center max-w-2xl mx-auto mb-12 reveal">
-          <h2 class="text-4xl md:text-5xl font-extrabold mb-4">קצת מוזר?<br>יכול להיות.</h2>
+          <h2 class="sect-title font-display font-extrabold mb-4 whitespace-nowrap" style="font-size:clamp(1.55rem,7vw,1.95rem); line-height:1.15;">קצת מוזר? יכול להיות.</h2>
         </div>
         <div class="grid lg:grid-cols-2 gap-12 items-center">
           <div class="reveal lg:order-last">
@@ -590,7 +613,7 @@
                 <source src="../images/motion.mp4#t=0.1" type="video/mp4">
               </video>
               <button id="motionToggle" type="button" aria-label="הפעלה / השהיה"
-                class="absolute bottom-3 left-3 z-10 w-12 h-12 rounded-full bg-ink/55 backdrop-blur-sm flex items-center justify-center text-cream hover:bg-ink/80 transition">
+                class="absolute bottom-3 left-3 z-10 w-12 h-12 rounded-full bg-ink/55 backdrop-blur-sm flex items-center justify-center text-cream">
                 <svg class="ic-play w-6 h-6 hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
                 <svg class="ic-pause w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
               </button>
@@ -607,9 +630,9 @@
             <p class="font-display grad-text font-bold text-2xl md:text-3xl mb-7 reveal" style="transition-delay:.08s">ולפעמים דווקא בתוך המוזרות הזאת משהו מתחיל להתרכך.</p>
 
             <ul class="space-y-2.5 mb-7 reveal" style="transition-delay:.1s">
-              <li class="flex items-center gap-3 text-cream/80"><span class="text-amber font-display leading-none">✦</span> לא צריך להופיע מול אף אחד</li>
-              <li class="flex items-center gap-3 text-cream/80"><span class="text-amber font-display leading-none">✦</span> לא חייבים קשר עין או מגע</li>
-              <li class="flex items-center gap-3 text-cream/80"><span class="text-amber font-display leading-none">✦</span> נכנסים פנימה בהדרגה, בקצב נעים</li>
+              <li class="flex items-start gap-3 text-cream/80"><span class="leading-none">✨</span> מפסיקים לרגע לנסות להרשים</li>
+              <li class="flex items-start gap-3 text-cream/80"><span class="leading-none">✨</span> מגלים שאפשר להישאר גם כשלא הכול מוכר</li>
+              <li class="flex items-start gap-3 text-cream/80"><span class="leading-none">✨</span> ונותנים למפגש אמיתי להתחיל להיווצר</li>
             </ul>
 
             <p class="text-xl md:text-2xl font-bold text-amberhi leading-relaxed reveal" style="transition-delay:.15s">לא צריך לנצח את המבוכה.<br>נותנים לה קצת זמן</p>
@@ -618,10 +641,11 @@
       </div>
     </section>
 
-    <section id="facilitators" class="relative py-24 md:py-32">
-      <div class="max-w-3xl mx-auto px-5">
+    <section id="facilitators" class="relative py-12 md:py-16">
+      <div class="aura g-amber"></div>
+      <div class="relative z-10 max-w-3xl mx-auto px-5">
         <div class="text-center max-w-2xl mx-auto mb-10 reveal">
-          <h2 class="text-4xl md:text-5xl font-extrabold mb-4">מי איתכם בדרך?</h2>
+          <h2 class="sect-title text-4xl md:text-5xl font-extrabold mb-4">מי איתכם בדרך?</h2>
           <p class="text-lg text-cream/80">את הערב מנחה אופיר אבירם</p>
         </div>
 
@@ -633,10 +657,11 @@
       </div>
     </section>
 
-    <section id="faq" class="relative py-24 md:py-32">
-      <div class="max-w-3xl mx-auto px-5">
+    <section id="faq" class="relative py-12 md:py-16">
+      <div class="aura g-teal"></div>
+      <div class="relative z-10 max-w-3xl mx-auto px-5">
         <img src="../images/faq-icons.webp" loading="lazy" width="900" height="431" class="w-1/2 max-w-[192px] mx-auto mb-6 reveal" alt="" onerror="this.style.display='none'">
-        <h2 class="text-4xl md:text-5xl font-extrabold mb-12 text-center reveal">שאלות נפוצות</h2>
+        <h2 class="sect-title text-4xl md:text-5xl font-extrabold mb-12 text-center reveal">שאלות נפוצות</h2>
         <div class="reveal">
           <details>
             <summary class="flex items-center justify-between gap-4 py-5 text-lg font-semibold">מה עושים שם בפועל? <span class="chev text-amber text-2xl">+</span></summary>
