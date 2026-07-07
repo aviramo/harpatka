@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- רמזי cache: מבקשים מהדפדפן לבדוק מחדש מול השרת. הערה: GitHub Pages לא מאפשר
+       להגדיר Cache-Control ברמת ה-HTTP, לכן האכיפה בפועל נעשית ב-Service Worker (sw.js). -->
+  <meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
   <title>יוצאים להרפתקה | מוזיקה, תנועה ומפגש אנושי</title>
 
   <!-- Favicon -->
@@ -959,6 +962,17 @@
     try { alreadyDone = sessionStorage.getItem('regDone') === '1'; } catch(e){}
     if (alreadyDone) {
       showThankYou(false);
+    }
+
+    /* ====== Service Worker — מבטיח שכל רענון טוען את הגרסה האחרונה שפורסמה ======
+       network-first ל-HTML (ראו v2/sw.js). updateViaCache:'none' מכריח את הדפדפן
+       להביא את sw.js טרי (עוקף את max-age של GitHub Pages) כדי לזהות גרסאות חדשות מיד. */
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js', { scope: './', updateViaCache: 'none' })
+          .then((reg) => { reg.update(); })
+          .catch(() => {});
+      });
     }
   </script>
 </body>
