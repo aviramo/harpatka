@@ -561,17 +561,13 @@
           <div class="space-y-3 pt-1">
             <label for="consent1" class="flex items-start gap-3 cursor-pointer text-sm md:text-[15px] text-cream/85 leading-relaxed rounded-xl border border-cream/15 bg-cream/[.03] p-4">
               <input id="consent1" type="checkbox" class="consent-cb mt-0.5">
-              <span>הבנתי שמדובר בערב של מוזיקה, תנועה ומפגש אנושי, ולא באירוע של דייטים או התאמות</span>
-            </label>
-            <label for="consent2" class="flex items-start gap-3 cursor-pointer text-sm md:text-[15px] text-cream/85 leading-relaxed rounded-xl border border-cream/15 bg-cream/[.03] p-4">
-              <input id="consent2" type="checkbox" class="consent-cb mt-0.5">
-              <span>ברור לי שההשתתפות בתרגילים היא חלק מהחוויה, ואני מגיע/ה בפתיחות לקחת בהם חלק</span>
+              <span>אני פנוי/ה כיום ואיני נמצא/ת בזוגיות או בקשר שמונע היכרות חדשה</span>
             </label>
             <label for="consent3" class="flex items-start gap-3 cursor-pointer text-sm md:text-[15px] text-cream/85 leading-relaxed rounded-xl border border-cream/15 bg-cream/[.03] p-4">
               <input id="consent3" type="checkbox" class="consent-cb mt-0.5">
               <span>הבנתי שבחלק מהתרגילים עשויה להיות הזמנה למגע עדין, ושכל מגע הוא אופציונלי ואפשר לבחור שלא להשתתף בו</span>
             </label>
-            <p id="consentErr" class="text-coralhi text-sm hidden">כדי להמשיך יש לאשר את שלוש ההצהרות</p>
+            <p id="consentErr" class="text-coralhi text-sm hidden">כדי להמשיך יש לאשר את שתי ההצהרות</p>
           </div>
           <button id="submitBtn" type="submit" class="btn-primary rounded-full w-full py-4 text-lg">להצטרפות למפגש הבא</button>
         </form>
@@ -885,11 +881,10 @@
 
     /* הצהרות הבנה (חובה) — הטופס לא נשלח בלי אישור שתי ההצהרות */
     const consent1 = document.getElementById('consent1');
-    const consent2 = document.getElementById('consent2');
     const consent3 = document.getElementById('consent3');
     const consentErr = document.getElementById('consentErr');
-    const consentOk = () => !!(consent1 && consent1.checked && consent2 && consent2.checked && consent3 && consent3.checked);
-    [consent1, consent2, consent3].forEach(cb => { if (cb) cb.addEventListener('change', () => {
+    const consentOk = () => !!(consent1 && consent1.checked && consent3 && consent3.checked);
+    [consent1, consent3].forEach(cb => { if (cb) cb.addEventListener('change', () => {
       if (consentErr && consentOk()) consentErr.classList.add('hidden');
     }); });
 
