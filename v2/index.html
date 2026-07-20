@@ -326,8 +326,46 @@
     @keyframes sparkle{ 0%,100%{ opacity:.25; transform:scale(.7) } 50%{ opacity:1; transform:scale(1.1) } }
     .spark{ animation:sparkle 3.5s ease-in-out infinite; }
 
+    /* ===== שלוש הפעימות — נתיב שנגמר בלא־נודע ===== */
+    .beats{ max-width:36rem; margin-inline:auto; }
+    .beat{ text-wrap:balance; line-height:1.2; }
+    .b1, .b2{
+      font-size:clamp(1.3rem, 5.4vw, 1.75rem); font-weight:700; color:var(--cream);
+    }
+    .b2{ color:rgba(245,234,214,.9); }
+    .b3{
+      font-size:clamp(1.75rem, 7.4vw, 2.75rem); font-weight:800; letter-spacing:-.01em;
+      background:linear-gradient(100deg, var(--amberhi), var(--coral) 45%, var(--amberhi));
+      background-size:220% 100%;
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+      animation:beatShimmer 7s ease-in-out infinite;
+    }
+    @keyframes beatShimmer{ 0%,100%{ background-position:0% 50% } 50%{ background-position:100% 50% } }
+
+    /* מחבר בין פעימות: קו דק עם ניצוץ במרכזו */
+    .beat-link{
+      position:relative; display:block; width:1px; height:30px; margin:.9rem auto;
+      background:linear-gradient(rgba(236,169,76,.55), rgba(236,169,76,.12));
+    }
+    .beat-link::after{
+      content:"✦"; position:absolute; inset-inline-start:50%; top:50%;
+      transform:translate(50%,-50%); font-size:.62rem; line-height:1;
+      color:var(--amberhi); opacity:.8; filter:drop-shadow(0 0 5px rgba(242,197,114,.7));
+    }
+
+    /* זנב מתפוגג — הנתיב נמוג אל הלא־נודע */
+    .beat-tail{ display:flex; flex-direction:column; align-items:center; gap:8px; margin-top:1.25rem; }
+    .beat-tail i{
+      display:block; width:4px; height:4px; border-radius:9999px; background:var(--amberhi);
+      animation:tailDrift 3.6s ease-in-out infinite;
+    }
+    .beat-tail i:nth-child(1){ opacity:.55; animation-delay:0s; }
+    .beat-tail i:nth-child(2){ opacity:.32; animation-delay:.45s; }
+    .beat-tail i:nth-child(3){ opacity:.16; animation-delay:.9s; }
+    @keyframes tailDrift{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(5px); } }
+
     @media (prefers-reduced-motion: reduce){
-      .portal-float, .portal::before, .portal-inner::after, .spark, .stars, .floaty{ animation:none; }
+      .b3, .beat-tail i, .portal-float, .portal::before, .portal-inner::after, .spark, .stars, .floaty{ animation:none; }
       .parallax{ transform:none; }
     }
 
@@ -386,7 +424,7 @@
 <body class="grain">
 
   <!-- ====================== HERO ====================== -->
-  <header id="hero" class="relative overflow-hidden pt-10 pb-0">
+  <header id="hero" class="relative overflow-hidden pt-10 pb-12 md:pb-16">
     <!-- ambient night sky -->
     <!-- soft sky-glow only (fades to fully transparent) so the page's single continuous
          gradient shows through the hero and flows seamlessly into the sections below -->
@@ -433,23 +471,20 @@
         </div>
       </div>
 
-      <!-- כותרת ראשית — הבלוק הגדול והבולט ביותר -->
-      <p class="reveal text-4xl md:text-5xl text-amberhi font-extrabold leading-[1.15] mt-7" style="transition-delay:.04s; text-wrap:balance">יש אנשים שפוגשים דווקא כשמפסיקים לחפש</p>
-
-      <!-- טקסט אמצעי — רגוע ונקי, קטן מהכותרת -->
-      <p class="reveal text-base md:text-lg text-cream/80 font-normal leading-relaxed mt-4 mb-4 max-w-xl mx-auto" style="transition-delay:.05s; text-wrap:balance">אז יצרנו ערב שבו לא באים לחפש. פשוט באים לחוות מוזיקה, תנועה ומפגש אנושי</p>
+      <!-- שלוש הפעימות — נתיב עולה שנגמר בלא־נודע -->
+      <div class="beats mt-9">
+        <p class="beat b1 reveal" style="transition-delay:.04s">באים בשביל החוויה</p>
+        <span class="beat-link reveal" style="transition-delay:.16s" aria-hidden="true"></span>
+        <p class="beat b2 reveal" style="transition-delay:.28s">פוגשים אנשים בדרך</p>
+        <span class="beat-link reveal" style="transition-delay:.4s" aria-hidden="true"></span>
+        <p class="beat b3 reveal" style="transition-delay:.52s">ולאן זה יוביל אף אחד לא יודע</p>
+        <span class="beat-tail reveal" style="transition-delay:.68s" aria-hidden="true"><i></i><i></i><i></i></span>
+      </div>
 
     </div>
   </header>
 
   <main>
-    <!-- ====================== מסגרת (framing) ====================== -->
-    <section class="relative pt-0 pb-12 md:pb-16">
-      <div class="relative z-10 max-w-3xl mx-auto px-5 text-center reveal">
-        <p class="grad-text text-lg md:text-2xl font-semibold leading-snug max-w-xl mx-auto" style="text-wrap:balance">ובתוך כל זה, פוגשים אנשים. ומה יקרה משם? זה כבר חלק מההרפתקה</p>
-      </div>
-    </section>
-
     <section id="how" class="relative py-12 md:py-16 scroll-mt-8">
       <div class="aura g-teal"></div>
       <div class="relative z-10 max-w-3xl mx-auto px-5">
