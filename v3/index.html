@@ -246,6 +246,61 @@
     .sway{ animation:sway 11s ease-in-out infinite; transform-origin:50% 100%; }
     .sway.slow{ animation-duration:15s; animation-delay:-4s; }
 
+    /* ===== צמד המפתח בכותרת: "תנועה חדשה" — שורה משלו, גדול יותר, גרדיאנט זורם + משיכת מכחול רכה מאחור ===== */
+    .key{
+      position:relative; display:inline-block; isolation:isolate;
+      font-size:1.16em; font-weight:700; letter-spacing:-.01em; padding-inline:0 .06em; margin-inline-start:-.035em; /* מיושר לימין בדיוק כמו שאר הכותרת */
+      background:linear-gradient(100deg, #565B37 0%, #686A48 28%, #7F8656 52%, #949A6E 74%, #565B37 100%);
+      background-size:220% 100%;
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+      animation:keyFlow 9s ease-in-out infinite;
+    }
+    .h-hero .key{ margin-top:.08em; }
+    @keyframes keyFlow{ 0%,100%{ background-position:0% 50%; } 50%{ background-position:100% 50%; } }
+    /* כניסה: מילים נחשפות אחת־אחת (טשטוש שנעלם, בלי תזוזה אנכית), ואז "תנועה חדשה" נחשפת מימין לשמאל
+       בקצה רך כמו משב רוח, משיכת המכחול נמתחת מאחוריה, והסרטים מתחתיה מופיעים */
+    .hero-in .w{ display:inline-block; opacity:0; filter:blur(6px);
+      animation:wordIn 1s cubic-bezier(.2,.7,.2,1) forwards; }
+    @keyframes wordIn{ to{ opacity:1; filter:blur(0); } }
+    .hero-in .key{
+      -webkit-mask-image:linear-gradient(270deg, #000 42%, transparent 58%); mask-image:linear-gradient(270deg, #000 42%, transparent 58%);
+      -webkit-mask-size:320% 100%; mask-size:320% 100%;
+      -webkit-mask-position:0% 0; mask-position:0% 0;
+      animation:keyFlow 9s ease-in-out 3.6s infinite, keyIn 1.6s cubic-bezier(.45,.05,.25,1) 2.05s forwards;
+    }
+    @keyframes keyIn{
+      0%  { -webkit-mask-position:0% 0; mask-position:0% 0; transform:translateX(.35em); filter:blur(3px); }
+      100%{ -webkit-mask-position:100% 0; mask-position:100% 0; transform:none; filter:blur(0); }
+    }
+    .hero-in .key-q{ display:inline-block; opacity:0; animation:wordIn .8s ease 3.15s forwards; }
+    /* שלוש נקודות אחרי "שלך" — מופיעות אחת־אחת, פועמות רגע, ומתמוססות כש"תנועה חדשה" נכנסת לאותו מקום */
+    /* עטיפה ברוחב 0 על קו הבסיס — הנקודות יושבות בתחתית השורה כמו "..." אמיתי, בלי להזיז את הטקסט */
+    .dots{ display:inline-block; width:0; overflow:visible; white-space:nowrap; vertical-align:baseline; padding-inline-start:.14em;
+      animation:dotsOut .7s ease 1.9s forwards; }
+    .dots i{ display:inline-block; vertical-align:baseline; margin-inline-end:.16em; width:.15em; height:.15em; border-radius:50%; background:#686A48; opacity:0; transform:scale(.4);
+      animation:dotIn .45s ease forwards, dotPulse 1.1s ease-in-out infinite; }
+    .dots i:nth-child(1){ animation-delay:.85s, 1.3s; }
+    .dots i:nth-child(2){ animation-delay:1.05s, 1.45s; }
+    .dots i:nth-child(3){ animation-delay:1.25s, 1.6s; }
+    @keyframes dotIn{ to{ opacity:1; transform:scale(1); } }
+    @keyframes dotPulse{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
+    @keyframes dotsOut{ to{ opacity:0; filter:blur(4px); } }
+    .flow{ opacity:0; animation:fadeFlow 1s ease 3.35s forwards; }
+    @keyframes fadeFlow{ to{ opacity:1; } }
+    /* הדף "מצטייר" מלמעלה למטה: במובייל התמונה (שמתחת לטקסט) מופיעה רק אחרי הכפתור; בדסקטופ היא לצד הטקסט ומופיעה מוקדם יותר */
+    .hero-pic{ transition-delay:5.85s; }
+    @media (min-width:1024px){ .hero-pic{ transition-delay:4.25s; } }
+    .intro-strip{ opacity:0; transition:opacity 1s ease 6.2s; }
+    .intro-on .intro-strip{ opacity:1; }
+    /* אחרי הכניסה הראשונית, או ברגע שגוללים — בלי השהיה בכלל */
+    .intro-done .hero-pic, .intro-done .intro, .intro-done .intro-strip{ transition-delay:0s !important; }
+    @keyframes fadeFlow{ to{ opacity:1; } }
+
+    @media (prefers-reduced-motion: reduce){
+      .dots{ display:none; }
+      .key, .hero-in .w, .hero-in .key, .hero-in .key-q, .flow, .dots, .dots i, .intro-strip{ animation:none; transition:none; opacity:1; transform:none; filter:none; -webkit-mask-image:none; mask-image:none; }
+    }
+
     /* ===== תנועה מופשטת מתחת לכותרת — סרטי צבע זורמים (אנימציית SMIL, נעצרת ב-reduced motion דרך JS) ===== */
     .flow{ display:block; width:100%; max-width:30rem; height:auto; overflow:visible; }
 
@@ -369,7 +424,7 @@
       <!-- טקסט (ימין בדסקטופ, ראשון במובייל) -->
       <div class="max-w-xl">
         <!-- שאלת הזדהות → פעם זה קרה מעצמו → היום אין דרך → יצרנו משהו חדש → מה זה → CTA -->
-        <h1 class="h-hero mb-1 reveal">מתי בפעם האחרונה נכנסה לחיים שלך תנועה חדשה?</h1>
+        <h1 class="h-hero hero-in mb-5 md:mb-7"><span class="w" style="animation-delay:0.12s">מתי</span> <span class="w" style="animation-delay:0.23s">בפעם</span> <span class="w" style="animation-delay:0.34s">האחרונה</span> <span class="w" style="animation-delay:0.45s">נכנסה</span> <span class="w" style="animation-delay:0.56s">לחיים</span> <span class="w w-last" style="animation-delay:0.67s">שלך<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></span> <span class="key">תנועה חדשה</span><span class="key-q">?</span></h1>
         <!-- תנועה מופשטת: סרטי צבע שקופים שזורמים ומשנים צורה, כמו בד ברוח -->
         <svg class="flow mb-5" viewBox="0 0 480 110" aria-hidden="true">
           <defs>
@@ -384,17 +439,17 @@
             <path d="M0.0 67.8 C10.0 65.8 40.0 59.0 60.0 55.5 C80.0 52.0 100.0 47.4 120.0 46.8 C140.0 46.3 160.0 49.5 180.0 52.1 C200.0 54.8 220.0 60.8 240.0 62.8 C260.0 64.8 280.0 65.4 300.0 64.3 C320.0 63.3 340.0 58.3 360.0 56.5 C380.0 54.6 400.0 52.3 420.0 53.4 C440.0 54.5 470.0 61.5 480.0 63.1 L480.0 65.0 C470.0 64.2 440.0 59.3 420.0 59.9 C400.0 60.5 380.0 65.1 360.0 68.6 C340.0 72.0 320.0 78.7 300.0 80.7 C280.0 82.7 260.0 82.8 240.0 80.7 C220.0 78.7 200.0 72.1 180.0 68.5 C160.0 64.8 140.0 60.0 120.0 59.0 C100.0 57.9 80.0 60.2 60.0 62.0 C40.0 63.8 10.0 68.4 0.0 69.7 Z" fill="url(#fl3)"><animate attributeName="d" dur="13s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1;0.45 0 0.55 1" values="M0.0 67.8 C10.0 65.8 40.0 59.0 60.0 55.5 C80.0 52.0 100.0 47.4 120.0 46.8 C140.0 46.3 160.0 49.5 180.0 52.1 C200.0 54.8 220.0 60.8 240.0 62.8 C260.0 64.8 280.0 65.4 300.0 64.3 C320.0 63.3 340.0 58.3 360.0 56.5 C380.0 54.6 400.0 52.3 420.0 53.4 C440.0 54.5 470.0 61.5 480.0 63.1 L480.0 65.0 C470.0 64.2 440.0 59.3 420.0 59.9 C400.0 60.5 380.0 65.1 360.0 68.6 C340.0 72.0 320.0 78.7 300.0 80.7 C280.0 82.7 260.0 82.8 240.0 80.7 C220.0 78.7 200.0 72.1 180.0 68.5 C160.0 64.8 140.0 60.0 120.0 59.0 C100.0 57.9 80.0 60.2 60.0 62.0 C40.0 63.8 10.0 68.4 0.0 69.7 Z;M0.0 52.3 C10.0 51.4 40.0 45.9 60.0 46.6 C80.0 47.4 100.0 53.4 120.0 56.8 C140.0 60.2 160.0 66.3 180.0 67.2 C200.0 68.1 220.0 65.2 240.0 62.1 C260.0 59.1 280.0 51.3 300.0 48.9 C320.0 46.4 340.0 45.2 360.0 47.6 C380.0 50.0 400.0 58.3 420.0 63.4 C440.0 68.5 470.0 75.7 480.0 78.1 L480.0 80.1 C470.0 78.4 440.0 73.3 420.0 69.9 C400.0 66.5 380.0 60.5 360.0 59.7 C340.0 58.9 320.0 61.8 300.0 65.2 C280.0 68.6 260.0 77.0 240.0 80.1 C220.0 83.1 200.0 85.4 180.0 83.5 C160.0 81.7 140.0 74.0 120.0 68.9 C100.0 63.9 80.0 55.6 60.0 53.1 C40.0 50.7 10.0 54.1 0.0 54.3 Z;M0.0 45.6 C10.0 47.9 40.0 55.3 60.0 59.6 C80.0 64.0 100.0 71.0 120.0 71.6 C140.0 72.2 160.0 67.7 180.0 63.3 C200.0 58.9 220.0 48.5 240.0 45.0 C260.0 41.4 280.0 39.5 300.0 42.1 C320.0 44.7 340.0 54.6 360.0 60.6 C380.0 66.6 400.0 75.9 420.0 78.1 C440.0 80.4 470.0 74.9 480.0 74.3 L480.0 76.2 C470.0 77.6 440.0 85.2 420.0 84.7 C400.0 84.1 380.0 77.1 360.0 72.7 C340.0 68.3 320.0 60.1 300.0 58.5 C280.0 56.8 260.0 59.4 240.0 62.9 C220.0 66.4 200.0 76.2 180.0 79.6 C160.0 83.1 140.0 86.0 120.0 83.7 C100.0 81.5 80.0 72.2 60.0 66.1 C40.0 60.1 10.0 50.6 0.0 47.5 Z;M0.0 67.8 C10.0 65.8 40.0 59.0 60.0 55.5 C80.0 52.0 100.0 47.4 120.0 46.8 C140.0 46.3 160.0 49.5 180.0 52.1 C200.0 54.8 220.0 60.8 240.0 62.8 C260.0 64.8 280.0 65.4 300.0 64.3 C320.0 63.3 340.0 58.3 360.0 56.5 C380.0 54.6 400.0 52.3 420.0 53.4 C440.0 54.5 470.0 61.5 480.0 63.1 L480.0 65.0 C470.0 64.2 440.0 59.3 420.0 59.9 C400.0 60.5 380.0 65.1 360.0 68.6 C340.0 72.0 320.0 78.7 300.0 80.7 C280.0 82.7 260.0 82.8 240.0 80.7 C220.0 78.7 200.0 72.1 180.0 68.5 C160.0 64.8 140.0 60.0 120.0 59.0 C100.0 57.9 80.0 60.2 60.0 62.0 C40.0 63.8 10.0 68.4 0.0 69.7 Z"/></path>
           </g>
         </svg>
-        <p class="lead font-semibold text-ink reveal" style="transition-delay:.05s">פעם זה קרה מעצמו</p>
-        <p class="muted mb-5 reveal" style="transition-delay:.08s">בלימודים, בצבא, בטיולים, דרך חברים</p>
-        <p class="lead font-semibold text-ink mb-6 reveal" style="transition-delay:.11s">היום כמעט אין דרך פשוטה לפגוש מישהו או מישהי שמסקרנים אותך</p>
-<p class="font-display text-[1.6rem] md:text-[2.1rem] leading-snug font-semibold text-terra mb-8 reveal" style="transition-delay:.14s">בדיוק בשביל זה יצרנו מפגשי תנועה קבועים, לגילאי 30–50 שכרגע לא בזוגיות</p>
-        <div class="flex justify-center lg:justify-start reveal" style="transition-delay:.15s">
+        <p class="lead font-semibold text-ink reveal intro" style="transition-delay:4.25s">פעם זה קרה מעצמו</p>
+        <p class="muted mb-5 reveal intro" style="transition-delay:4.55s">בלימודים, בצבא, בטיולים, דרך חברים</p>
+        <p class="lead font-semibold text-ink mb-6 reveal intro" style="transition-delay:4.85s">היום כמעט אין דרך פשוטה לפגוש מישהו או מישהי שמסקרנים אותך</p>
+<p class="font-display text-[1.6rem] md:text-[2.1rem] leading-snug font-semibold text-terra mb-8 reveal intro" style="transition-delay:5.15s">בדיוק בשביל זה יצרנו מפגשי תנועה קבועים, לגילאי 30–50</p>
+        <div class="flex justify-center lg:justify-start reveal intro" style="transition-delay:5.5s">
           <a href="#" target="_blank" rel="noopener" data-wa-hadar class="btn-primary rounded-full px-5 md:px-8 py-4 text-[1.05rem] md:text-[1.2rem] whitespace-nowrap w-full max-w-[24rem]"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6 h-6" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.057 0a11.82 11.82 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.477-.913zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>אני רוצה לשמוע עוד פרטים</a>
         </div>
       </div>
 
       <!-- תמונה (שמאל בדסקטופ, מתחת לטקסט במובייל) -->
-      <div class="relative reveal" style="transition-delay:.1s">
+      <div class="relative reveal hero-pic">
         <!-- צורות אורגניות מאחורי התמונה -->
         <svg class="sway absolute -top-8 -right-6 md:-right-10 w-36 md:w-52 text-sand" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="100" fill="currentColor"/></svg>
         <svg class="sway slow absolute -bottom-8 -left-5 md:-left-8 w-24 md:w-32 text-sage/45" viewBox="0 0 120 160" aria-hidden="true"><path d="M0 160V60a60 60 0 0 1 120 0v100z" fill="currentColor"/></svg>
@@ -406,14 +461,14 @@
                  width="1200" height="1200" fetchpriority="high"
                  alt="קבוצת אנשים רוקדים יחפים באולם מואר באור חם, בין עצי זית וקשתות">
           </div>
-          <p class="sticker hand text-[1.7rem] md:text-[2.1rem] -bottom-5 right-5 md:right-8">לא צריך לדעת לרקוד <span class="text-terra">♡</span></p>
+          <p class="sticker hand text-[1.7rem] md:text-[2.1rem] -bottom-5 right-5 md:right-8">הכניסה למי שלא בזוגיות <span class="text-terra">♡</span></p>
         </div>
       </div>
     </div>
   </header>
 
   <!-- סטריפ מילים — תנועה רכה ומתמשכת -->
-  <div class="marquee-wrap border-y border-ink/10 py-5 md:py-6" aria-hidden="true">
+  <div class="marquee-wrap intro-strip border-y border-ink/10 py-5 md:py-6" aria-hidden="true">
     <div class="marquee font-display text-2xl md:text-[2rem] font-medium" dir="rtl">
       <span class="text-olive px-6">גוף</span><span class="text-coral px-2">✿</span>
       <span class="text-ink px-6">תנועה</span><span class="text-coral px-2">✿</span>
@@ -448,7 +503,7 @@
           <article class="card-soft p-5 pb-8 md:p-6 md:pb-9 reveal" style="transition-delay:.08s">
             <div class="arch aspect-[4/5] mb-6 -mx-1"><img src="../images/crop-group.webp" width="600" height="800" loading="lazy" alt="קבוצה רוקדת יחד, מחזיקים ידיים ומחייכים"></div>
             <h3 class="h-card mb-2 px-3">נפגשים</h3>
-            <p class="muted px-3">אותם אנשים בכל מפגש, והקשר נבנה לבד</p>
+            <p class="muted px-3">אותם פנים מוכרות, ומדי פעם גם פנים חדשות. הקשר נבנה לבד</p>
           </article>
           <article class="card-soft p-5 pb-8 md:p-6 md:pb-9 reveal" style="transition-delay:.16s">
             <div class="arch aspect-[4/5] mb-6 -mx-1"><img src="../images/crop-smiles.webp" width="600" height="800" loading="lazy" alt="רוקד ורוקדת מחייכים זה לזו באמצע תנועה"></div>
@@ -456,15 +511,6 @@
             <p class="muted px-3">בלי לנסות להרשים, פשוט להיות ביחד</p>
           </article>
         </div>
-      </div>
-    </section>
-
-    <!-- ====================== 4. הפרדוקס ====================== -->
-    <section id="meet" class="relative py-12 md:py-16">
-      <div class="relative z-10 max-w-3xl mx-auto px-5 text-center">
-        <h2 class="h-sect mb-5 reveal">לא באים כדי להכיר<br><span class="text-terra">ובדיוק בגלל זה <span class="relative inline-block">מכירים<svg class="absolute -bottom-2 inset-x-0 w-full h-3 text-coral" viewBox="0 0 100 12" preserveAspectRatio="none" fill="none" aria-hidden="true"><path d="M2 8c20-6 45-7 96-3" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span> באמת</span></h2>
-        <p class="lead muted mb-4 reveal">בלי התאמות, בלי סבבים, בלי לחץ</p>
-        <p class="font-display text-xl md:text-2xl font-semibold text-terra reveal">ומה שיכול לצמוח מזה: חברות, קרבה, ואולי גם אהבה</p>
       </div>
     </section>
 
@@ -514,8 +560,8 @@
       </div>
     </section>
 
-    <!-- ====================== 6. זה לא חוג ריקוד ====================== -->
-    <section id="notdance" class="relative py-6 md:py-10">
+    <!-- ====================== 6. חוויה אנושית, בלי מילים ====================== -->
+    <section id="experience" class="relative py-6 md:py-10">
       <div class="max-w-6xl mx-auto px-5">
         <div class="relative overflow-hidden rounded-[32px] text-ink px-7 py-12 md:px-16 md:py-14" style="background:linear-gradient(135deg, #C9CBAE 0%, #DCD6BE 48%, #EBD3C4 100%);">
           <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 800 400" preserveAspectRatio="none" fill="none" aria-hidden="true">
@@ -524,10 +570,10 @@
             <path d="M-20 90 C 120 30, 260 150, 400 90 S 680 10, 820 70" stroke="#C98D86" stroke-opacity=".35" stroke-width="1.5"/>
           </svg>
           <svg class="sway absolute -top-20 -left-16 w-64 md:w-80 text-paper/35 pointer-events-none" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="100" fill="currentColor"/></svg>
-          <div class="relative grid md:grid-cols-2 gap-8 md:gap-16 items-center">
+          <div class="relative grid md:grid-cols-2 gap-4 md:gap-16 items-center">
             <div>
-              <h2 class="h-sect mb-4 reveal">זה לא חוג ריקוד</h2>
-              <p class="lead text-ink/80 reveal">אין צעדים, אין כוריאוגרפיה ואין קהל<br>כל מפגש הוא חוויה אחרת</p>
+              <h2 class="h-sect mb-4 reveal">חוויה אנושית, בלי מילים</h2>
+              <p class="lead text-ink/80 reveal">הזמנה למסע של מבט, תנועה, צחוק ונוכחות<br><span class="font-semibold text-ink">וכל מפגש הוא חוויה אחרת</span></p>
             </div>
             <div class="font-display font-medium text-3xl md:text-[2.6rem] leading-[1.35] reveal" style="transition-delay:.1s">
               <p class="text-terra">לפעמים קלילה</p>
@@ -535,15 +581,17 @@
               <p class="text-[#A9605A]">לפעמים מצחיקה</p>
               <p class="text-plum">ולפעמים מפתיעה</p>
             </div>
+            <!-- מה שיכול לצמוח — בא אחרי "לפעמים..." (במובייל מתחת, בדסקטופ בשורה מלאה) -->
+            <p class="md:col-span-2 font-display text-xl md:text-2xl font-semibold text-terra md:text-center pt-2 md:pt-4 reveal">ומה שיכול לצמוח מזה: חברות, קרבה, ואולי גם אהבה</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ====================== 7. מי נפגש כאן ====================== -->
+    <!-- ====================== 7. מי מגיע ====================== -->
     <section id="who" class="relative py-12 md:py-16">
       <div class="relative z-10 max-w-2xl mx-auto px-5 text-center">
-        <h2 class="h-sect mb-5 reveal">מי נפגש כאן?</h2>
+        <h2 class="h-sect mb-5 reveal">מי מגיע?</h2>
         <p class="lead mb-2 reveal">נשים וגברים בפרק פתוח בחיים</p>
         <p class="lead muted mb-6 reveal">בתקופה של שינויים, עם רצון לתנועה חדשה</p>
         <p class="font-display text-xl md:text-2xl font-semibold text-terra reveal">לא צריך ניסיון, רק סקרנות</p>
@@ -554,7 +602,7 @@
     <section id="human" class="relative py-12 md:py-16">
       <div class="relative z-10 max-w-6xl mx-auto px-5">
         <div class="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-          <div>
+          <div class="text-center">
             <h2 class="h-sect mb-5 reveal">ומה אם זה מביך?</h2>
             <p class="lead font-semibold mb-3 reveal">כנראה שזה לא רק אצלך</p>
             <p class="lead muted mb-6 reveal">מתחילים לאט, והקבוצה עוברת את המבוכה ביחד</p>
@@ -681,6 +729,12 @@
       sheetsEndpoint: 'https://script.google.com/macros/s/AKfycbzTGo8SNjyF-xJsn08PXWrYt6EdkZOlmOCXeeFnlMHvg7uyMxXR6i8IoemuiBJTZE-EPQ/exec',
       pixelId: '429806621602468',
     };
+
+    /* סוף הכניסה הראשונית של ה-Hero: אחרי 2.2 שניות או בגלילה הראשונה — התמונה לא מחכה יותר */
+    const introDone = () => document.documentElement.classList.add('intro-done');
+    document.documentElement.classList.add('intro-on');
+    setTimeout(introDone, 7300);
+    window.addEventListener('scroll', introDone, { once:true, passive:true });
 
     /* reveal on scroll — fade-in + slide-up קטן */
     const io = new IntersectionObserver((entries) => {
