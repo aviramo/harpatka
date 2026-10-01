@@ -245,6 +245,25 @@
     .sway{ animation:sway 11s ease-in-out infinite; transform-origin:50% 100%; }
     .sway.slow{ animation-duration:15s; animation-delay:-4s; }
 
+    /* ===== צמד המפתח בכותרת: "תנועה חדשה" — שורה משלו, גדול יותר, גרדיאנט זורם + משיכת מכחול רכה מאחור ===== */
+    .key{
+      position:relative; display:inline-block; isolation:isolate;
+      font-size:1.16em; font-weight:700; letter-spacing:-.01em; padding-inline:.06em;
+      background:linear-gradient(100deg, #B85E42 0%, #C96F52 30%, #D98B70 55%, #C98D86 78%, #B85E42 100%);
+      background-size:220% 100%;
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+      animation:keyFlow 9s ease-in-out infinite;
+    }
+    .key::before{
+      content:""; position:absolute; z-index:-1; inset-inline:-.12em; bottom:.06em; height:.42em;
+      border-radius:999px 60% 999px 70%;
+      background:linear-gradient(90deg, rgba(217,139,112,0), rgba(217,139,112,.28) 18%, rgba(154,154,117,.22) 60%, rgba(201,141,134,0));
+      transform:rotate(-1.5deg); filter:blur(1px);
+    }
+    .h-hero .key{ margin-top:.08em; }
+    @keyframes keyFlow{ 0%,100%{ background-position:0% 50%; } 50%{ background-position:100% 50%; } }
+    @media (prefers-reduced-motion: reduce){ .key{ animation:none; } }
+
     /* ===== תנועה מופשטת מתחת לכותרת — סרטי צבע זורמים (אנימציית SMIL, נעצרת ב-reduced motion דרך JS) ===== */
     .flow{ display:block; width:100%; max-width:30rem; height:auto; overflow:visible; }
 
@@ -368,7 +387,7 @@
       <!-- טקסט (ימין בדסקטופ, ראשון במובייל) -->
       <div class="max-w-xl">
         <!-- שאלת הזדהות → פעם זה קרה מעצמו → היום אין דרך → יצרנו משהו חדש → מה זה → CTA -->
-        <h1 class="h-hero mb-1 reveal">מתי בפעם האחרונה נכנסה לחיים שלך תנועה חדשה?</h1>
+        <h1 class="h-hero mb-1 reveal">מתי בפעם האחרונה נכנסה לחיים שלך <span class="key">תנועה חדשה</span><span class="key-q">?</span></h1>
         <!-- תנועה מופשטת: סרטי צבע שקופים שזורמים ומשנים צורה, כמו בד ברוח -->
         <svg class="flow mb-5" viewBox="0 0 480 110" aria-hidden="true">
           <defs>
