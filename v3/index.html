@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- רמזי cache: מבקשים מהדפדפן לבדוק מחדש מול השרת. הערה: GitHub Pages לא מאפשר
+       להגדיר Cache-Control ברמת ה-HTTP, לכן האכיפה בפועל נעשית ב-Service Worker (sw.js). -->
+  <meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
+  <title>יוצאים להרפתקה | מפגשי תנועה קבועים</title>
+
+  <!-- Favicon -->
+  <link rel="icon" href="../images/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="../images/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="../images/favicon-16.png" />
+  <link rel="apple-touch-icon" href="../images/apple-touch-icon.png" />
+  <meta name="description" content="מתי בפעם האחרונה נכנסה לחיים שלך תנועה חדשה? מפגשי תנועה קבועים לגילאי 30–50 שכרגע לא בזוגיות" />
+
+  <!-- Canonical — מונע תוכן כפול מול aviramo.github.io/harpatka/ -->
+  <link rel="canonical" href="https://harpatka.co.il/v3/" />
+  <meta name="robots" content="noindex" />
+
+  <!-- Open Graph (WhatsApp / Facebook / רשתות) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://harpatka.co.il/v3/" />
+  <meta property="og:title" content="מתי בפעם האחרונה נכנסה לחיים שלך תנועה חדשה?" />
+  <meta property="og:description" content="מפגשי תנועה קבועים לגילאי 30–50" />
+  <meta property="og:image" content="https://harpatka.co.il/images/og-v3.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="1200" />
+  <meta property="og:locale" content="he_IL" />
+  <meta property="og:site_name" content="יוצאים להרפתקה" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="מתי בפעם האחרונה נכנסה לחיים שלך תנועה חדשה?" />
+  <meta name="twitter:description" content="מפגשי תנועה קבועים לגילאי 30–50" />
+  <meta name="twitter:image" content="https://harpatka.co.il/images/og-v3.jpg" />
+
+  <!-- Structured Data — Organization (זהות הארגון עבור גוגל) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "יוצאים להרפתקה",
+    "url": "https://harpatka.co.il/",
+    "logo": "https://harpatka.co.il/images/apple-touch-icon.png",
+    "image": "https://harpatka.co.il/images/og-v3.jpg",
+    "description": "מתי בפעם האחרונה נכנסה לחיים שלך תנועה חדשה? מפגשי תנועה קבועים לגילאי 30–50 שכרגע לא בזוגיות",
+    "founder": { "@type": "Person", "name": "אופיר אבירם" },
+    "areaServed": "IL",
+    "knowsAbout": [
+      "מפגשי תנועה קבועים",
+      "מוזיקה ותנועה",
+      "תנועה ומפגש אנושי"
+    ]
+  }
+  </script>
+
+  <!-- Structured Data — FAQPage (שאלות נפוצות; זכאי ל-rich snippet בגוגל) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "צריך לדעת לרקוד?",
+        "acceptedAnswer": { "@type": "Answer", "text": "ממש לא. המטרה היא לא לרקוד יפה, אלא פשוט לנוע." }
+      },
+      {
+        "@type": "Question",
+        "name": "יש מגע?",
+        "acceptedAnswer": { "@type": "Answer", "text": "בחלק מהתרגילים יכולה להיות הזמנה למגע עדין, בדרך כלל אחיזת ידיים. כל מגע הוא אופציונלי ובהסכמה, ואפשר לבחור שלא להשתתף בלי צורך להסביר." }
+      },
+      {
+        "@type": "Question",
+        "name": "חייבים להשתתף בכל תרגיל?",
+        "acceptedAnswer": { "@type": "Answer", "text": "לא. אפשר לעצור, לנוח בצד, להתבונן ולחזור כשמתאים. אין צורך להסביר או להצדיק." }
+      },
+      {
+        "@type": "Question",
+        "name": "אפשר להגיע לבד?",
+        "acceptedAnswer": { "@type": "Answer", "text": "בהחלט. בשביל זה יש קבוצה: מגיעים לבד, ולאט לאט כבר לא." }
+      },
+      {
+        "@type": "Question",
+        "name": "האם זו קבוצת הכרויות?",
+        "acceptedAnswer": { "@type": "Answer", "text": "לא. המשתתפים נמצאים כרגע ללא זוגיות, אבל אין שום ציפייה שמשהו צריך לקרות." }
+      },
+      {
+        "@type": "Question",
+        "name": "מה לובשים?",
+        "acceptedAnswer": { "@type": "Answer", "text": "בגדים נוחים שקל לזוז בהם. כדאי להביא גם בקבוק מים." }
+      }
+    ]
+  }
+  </script>
+
+  <!-- Meta (Facebook) Pixel -->
+  <script>
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+    document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '429806621602468');
+    fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=429806621602468&ev=PageView&noscript=1"/></noscript>
+  <!-- End Meta Pixel -->
+
+  <!-- Fonts — Rubik לכותרות (עגול ורך), Assistant לגוף (קריא מאוד), Amatic SC לנגיעות בכתב יד -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@700&family=Assistant:wght@400;500;600;700&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cream: '#F6EFE4',
+            sand:  '#E8D5BE',
+            terra: '#C96F52',
+            coral: '#D98B70',
+            dusty: '#C98D86',
+            sage:  '#9A9A75',
+            olive: '#686A48',
+            plum:  '#663F4C',
+            ink:   '#3F382F',
+            paper: '#FFFDF9',
+            err:   '#A94B33',
+          },
+          fontFamily: {
+            display: ['"Rubik"', '"Assistant"', 'sans-serif'],
+            body: ['"Assistant"', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root{
+      --cream:#F6EFE4; --sand:#E8D5BE; --terra:#C96F52; --coral:#D98B70; --dusty:#C98D86;
+      --sage:#9A9A75; --olive:#686A48; --plum:#663F4C; --ink:#3F382F; --paper:#FFFDF9;
+      --muted:#51493F; --err:#A94B33;
+      --r-lg:32px; --r-md:26px;
+      --shadow-soft:0 34px 70px -44px rgba(63,56,47,.42);
+    }
+    /* בסיס טיפוגרפי מוגדל לקריאות: 17px במובייל, 18px מטאבלט ומעלה — כל ה-rem (טקסט וריווח) גדלים יחד */
+    html{ scroll-behavior:smooth; overflow-x:clip; font-size:106.25%; }
+    @media (min-width:768px){ html{ font-size:112.5%; } }
+    body{
+      font-family:"Assistant",sans-serif;
+      background:var(--cream);
+      color:var(--ink);
+      font-size:1.125rem;            /* ≈19px במובייל */
+      line-height:1.75;
+      -webkit-font-smoothing:antialiased;
+      overflow-x:clip;
+      max-width:100vw;
+    }
+    @media (min-width:768px){ body{ font-size:1.15rem; } }   /* ≈21px */
+    h1,h2,h3,.font-display{ font-family:"Rubik","Assistant",sans-serif; }
+
+    /* מניעת "יתום" — מילה בודדת בשורה האחרונה של פסקה */
+    p, li, summary, h1, h2, h3, h4, blockquote, figcaption, label, .ans p{ text-wrap:pretty; }
+    h1, h2, .balance{ text-wrap:balance; }
+    ::selection{ background:var(--terra); color:var(--paper); }
+
+    /* מרקם נייר עדין — תחושה אורגנית */
+    .grain::before{
+      content:""; position:fixed; inset:0; z-index:1; pointer-events:none;
+      opacity:.05; mix-blend-mode:multiply;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* ===== טיפוגרפיה ===== */
+    .h-hero{ font-size:clamp(2.2rem, 4.6vw, 3.6rem); line-height:1.08; font-weight:600; letter-spacing:-.015em; }
+    .h-sect{ font-size:clamp(2rem, 4vw, 2.9rem); line-height:1.14; font-weight:600; letter-spacing:-.01em; }
+    .h-card{ font-size:1.5rem; line-height:1.25; font-weight:600; }
+    .lead{ font-size:clamp(1.2rem, 1.7vw, 1.4rem); line-height:1.6; }
+    .muted{ color:var(--muted); }
+    .eyebrow{
+      display:inline-flex; align-items:center; gap:.6rem;
+      font-size:.98rem; font-weight:600; letter-spacing:.02em; color:var(--olive);
+    }
+    .eyebrow::before{ content:""; width:.55rem; height:.55rem; border-radius:9999px; background:var(--terra); }
+
+    /* ===== אנימציות עדינות ===== */
+    .reveal{ opacity:0; transform:translateY(18px); transition:opacity 1s cubic-bezier(.16,1,.3,1), transform 1s cubic-bezier(.16,1,.3,1); }
+    .reveal.in{ opacity:1; transform:none; }
+    [data-parallax]{ will-change:transform; }
+    @media (prefers-reduced-motion: reduce){
+      .reveal{ opacity:1; transform:none; transition:none; }
+      [data-parallax]{ transform:none !important; }
+      html{ scroll-behavior:auto; }
+    }
+
+    /* ===== כפתורים — סטטיים (בלי אפקטי hover/לחיצה) ===== */
+    .btn-primary{
+      display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+      background:var(--terra); color:var(--paper); font-weight:700; letter-spacing:.005em;
+      box-shadow:0 14px 30px -16px rgba(201,111,82,.85);
+      cursor:pointer;
+    }
+    .btn-light{
+      display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+      background:var(--paper); color:#A9533A; font-weight:700; cursor:pointer;
+      box-shadow:0 14px 30px -16px rgba(63,56,47,.5);
+    }
+    .btn-ghost{
+      display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+      border:1.5px solid rgba(63,56,47,.22); color:var(--ink); background:transparent; font-weight:600;
+      cursor:pointer;
+    }
+    .btn-primary, .btn-ghost, .gender-opt, .consent-cb{ -webkit-tap-highlight-color:transparent; }
+    .btn-primary:active, .btn-ghost:active, .gender-opt:active{ transform:none; }
+    .btn-primary:disabled{ opacity:.55; cursor:default; box-shadow:none; }
+
+    /* ===== נגישות — טבעת פוקוס ברורה לניווט מקלדת, וקישור דילוג לטופס ===== */
+    a:focus-visible, button:focus-visible, summary:focus-visible, video:focus-visible{
+      outline:3px solid var(--plum); outline-offset:3px; border-radius:14px;
+    }
+    .skip-link{
+      position:absolute; top:-100px; right:1rem; z-index:70;
+      background:var(--ink); color:var(--paper); padding:.7rem 1.2rem; border-radius:999px; font-weight:600;
+    }
+    .skip-link:focus{ top:1rem; }
+
+    /* ===== כתב יד — נגיעה אנושית (wildcard) ===== */
+    .hand{ font-family:"Amatic SC","Assistant",cursive; font-weight:700; letter-spacing:.01em; line-height:1; }
+    .sticker{
+      position:absolute; z-index:5; background:var(--paper); color:var(--ink);
+      padding:.55rem 1.15rem .7rem; border-radius:18px;
+      box-shadow:0 18px 34px -22px rgba(63,56,47,.55);
+      transform:rotate(-4deg);
+    }
+
+    /* ===== תנועה חתימה: "נשימה" איטית של הצורות, כמו בד שזז ברוח ===== */
+    @keyframes sway{ 0%,100%{ transform:translateY(0) rotate(0deg); } 50%{ transform:translateY(-10px) rotate(2deg); } }
+    .sway{ animation:sway 11s ease-in-out infinite; transform-origin:50% 100%; }
+    .sway.slow{ animation-duration:15s; animation-delay:-4s; }
+
+    /* ===== רוח אביבית מתחת לכותרת — משבים שנמתחים ועלים/פרחים שנישאים ===== */
+    .breeze{ display:block; width:100%; max-width:30rem; height:auto; overflow:visible; }
+    .breeze .gust{ stroke-dasharray:560; stroke-dashoffset:560; animation:gust 2.6s cubic-bezier(.45,.05,.2,1) .35s forwards; }
+    .breeze .gust.g2{ animation-delay:.65s; }
+    .breeze .gust.g3{ animation-delay:.95s; }
+    @keyframes gust{ to{ stroke-dashoffset:0; } }
+    .breeze .drift{ opacity:0; transform-box:fill-box; transform-origin:center; animation:drift 10s ease-in-out infinite; }
+    .breeze .drift.d2{ animation-duration:12s; animation-delay:2.2s; }
+    .breeze .drift.d3{ animation-duration:11s; animation-delay:4.6s; }
+    .breeze .drift.d4{ animation-duration:13s; animation-delay:6.8s; }
+    .breeze .drift.d5{ animation-duration:12s; animation-delay:1.2s; }
+    .breeze .drift.d6{ animation-duration:14s; animation-delay:3.4s; }
+    .breeze .drift.d7{ animation-duration:11s; animation-delay:8.4s; }
+    @keyframes drift{
+      0%  { transform:translate(0,0) rotate(0deg); opacity:0; }
+      12% { opacity:1; }
+      50% { transform:translate(-170px,14px) rotate(140deg); }
+      85% { opacity:.9; }
+      100%{ transform:translate(-360px,-8px) rotate(300deg); opacity:0; }
+    }
+    @media (prefers-reduced-motion: reduce){
+      .breeze .gust{ animation:none; stroke-dashoffset:0; }
+      .breeze .drift{ animation:none; opacity:1; }
+    }
+
+    /* ===== סטריפ מילים נע (ltr-wrap, -50%→0) ===== */
+    .marquee-wrap{ direction:ltr; overflow:hidden; contain:paint; }
+    .marquee{ display:flex; width:max-content; animation:marquee 46s linear infinite; }
+    .marquee > span{ white-space:nowrap; }
+    @keyframes marquee{ from{ transform:translateX(-50%) } to{ transform:translateX(0) } }
+
+    /* ===== תמונות בצורת קשת — מהדהדות את הקשתות שבתמונה ===== */
+    .arch{ border-radius:999px 999px var(--r-md) var(--r-md); overflow:hidden; }
+    .arch img{ display:block; width:100%; height:100%; object-fit:cover; }
+
+    /* ===== CTA דביק במובייל — מופיע אחרי ה-Hero ונעלם ליד הטופס ===== */
+    .sticky-cta{
+      position:fixed; inset-inline:0; bottom:0; z-index:40;
+      padding:.75rem 1rem calc(.75rem + env(safe-area-inset-bottom, 0px));
+      background:linear-gradient(to top, rgba(246,239,228,.97) 70%, rgba(246,239,228,0));
+      transform:translateY(110%); transition:transform .45s cubic-bezier(.16,1,.3,1);
+    }
+    .sticky-cta.show{ transform:none; }
+    @media (min-width:768px){ .sticky-cta{ display:none; } }
+
+    @media (prefers-reduced-motion: reduce){
+      .sway, .marquee{ animation:none; }
+    }
+
+    /* ===== כרטיסים ===== */
+    .card-soft{ background:rgba(232,213,190,.42); border-radius:var(--r-md); }
+    .shadow-soft{ box-shadow:var(--shadow-soft); }
+
+    /* ===== Hero ===== */
+    .hero-img{ border-radius:var(--r-lg); overflow:hidden; box-shadow:0 40px 80px -48px rgba(63,56,47,.55); }
+    .hero-img img{ display:block; width:100%; height:auto; }
+
+    /* ===== מסלול המפגש ===== */
+    .step-dot{
+      width:3.5rem; height:3.5rem; border-radius:9999px; flex:none;
+      display:grid; place-items:center;
+      font-family:"Rubik",sans-serif; font-weight:600; font-size:1.2rem;
+      background:var(--sand); color:var(--olive);
+      box-shadow:0 0 0 7px var(--cream);
+    }
+    .step-dot.is-last{ background:var(--terra); color:var(--paper); }
+
+    /* ===== וידאו ===== */
+    .imgframe{ background:var(--sand); position:relative; overflow:hidden; }
+    .imgframe img, .imgframe video{ width:100%; height:100%; object-fit:cover; display:block; }
+
+    /* ===== FAQ ===== */
+    details{ border-bottom:1px solid rgba(63,56,47,.13); }
+    details summary{ cursor:pointer; list-style:none; }
+    details summary::-webkit-details-marker{ display:none; }
+    details summary .chev{ transition:transform .3s ease; }
+    details[open] summary .chev{ transform:rotate(45deg); }
+    details .ans{ overflow:hidden; max-height:0; transition:max-height .4s ease; }
+    details[open] .ans{ max-height:40rem; }
+
+    /* ===== טופס ===== */
+    .field{
+      background:var(--cream); border:1px solid rgba(104,106,72,.28);
+      color:var(--ink); border-radius:16px; transition:border-color .2s ease, box-shadow .2s ease;
+      text-align:right; direction:rtl;
+      height:3.5rem;   /* גובה אחיד לכל השדות והכפתורים */
+    }
+    .field:focus{ outline:none; border-color:var(--terra); box-shadow:0 0 0 3px rgba(201,111,82,.18); }
+    .field::placeholder{ color:rgba(63,56,47,.45); text-align:right; }
+    /* מנטרל את הרקע הצבעוני של מילוי-אוטומטי (Chrome/Safari) ושומר על צבע השדה */
+    input.field:-webkit-autofill,
+    input.field:-webkit-autofill:hover,
+    input.field:-webkit-autofill:focus{
+      -webkit-text-fill-color:var(--ink);
+      caret-color:var(--ink);
+      -webkit-box-shadow:0 0 0 1000px #F6EFE4 inset;
+      transition:background-color 9999s ease-in-out 0s;
+    }
+    .field.invalid{ border-color:var(--err) !important; box-shadow:0 0 0 3px rgba(169,75,51,.16); }
+    .field.invalid:focus{ border-color:var(--err) !important; box-shadow:0 0 0 3px rgba(169,75,51,.22); }
+    .gender-opt{ appearance:none; -webkit-appearance:none; cursor:pointer; display:flex; align-items:center; justify-content:center; text-align:center; font-weight:600; color:var(--ink); line-height:1.15; }
+    .gender-opt.selected{ border-color:var(--terra) !important; background:rgba(201,111,82,.12); color:#9C4A30; box-shadow:0 0 0 2px rgba(201,111,82,.25); }
+
+    .consent-cb{
+      appearance:none; -webkit-appearance:none; flex:none; position:relative; cursor:pointer;
+      width:1.4rem; height:1.4rem; border-radius:.45rem;
+      background:var(--cream); border:1px solid rgba(104,106,72,.4);
+      transition:border-color .2s ease, background .2s ease;
+    }
+    .consent-cb:checked{ background:var(--terra); border-color:var(--terra); }
+    .consent-cb:checked::after{
+      content:""; position:absolute; left:50%; top:46%;
+      width:.34rem; height:.66rem; border:solid var(--paper); border-width:0 .17rem .17rem 0;
+      transform:translate(-50%,-50%) rotate(45deg);
+    }
+    .consent-cb:focus-visible{ outline:none; border-color:var(--terra); box-shadow:0 0 0 3px rgba(201,111,82,.22); }
+  </style>
+</head>
+
+<body class="grain">
+  <a href="#register" class="skip-link">דילוג להצטרפות</a>
+
+  <!-- ====================== כותרת עליונה ====================== -->
+  <div class="relative z-10 max-w-[76rem] mx-auto px-5 pt-5 md:pt-7 flex items-center justify-between gap-4">
+    <p class="font-display font-semibold text-[1.05rem] sm:text-lg md:text-xl text-ink whitespace-nowrap">יוצאים <span class="text-terra">להרפתקה</span></p>
+    <div class="flex gap-2 items-center">
+      <a id="updates" href="#" target="_blank" rel="noopener" aria-label="להצטרפות לקבוצת העדכונים השקטה בוואטסאפ"
+         class="btn-ghost rounded-full px-3.5 sm:px-4 py-2 text-[.95rem]">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[1.1rem] h-[1.1rem] text-olive" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.057 0a11.82 11.82 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.477-.913zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+        לעדכונים
+      </a>
+      <a id="share" href="#" target="_blank" rel="noopener" aria-label="שיתוף הקישור לאתר בוואטסאפ"
+         class="btn-ghost rounded-full px-3 sm:px-4 py-2 text-[.95rem]">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[1.1rem] h-[1.1rem] text-olive" fill="currentColor" aria-hidden="true"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
+        <span class="hidden sm:inline">שיתוף</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- ====================== 1. HERO — המסר המרכזי ====================== -->
+  <header id="hero" class="relative pt-8 md:pt-12 pb-10 md:pb-14">
+    <div class="relative z-10 max-w-[78rem] mx-auto px-5 grid lg:grid-cols-[minmax(0,.9fr)_minmax(0,1.1fr)] gap-10 lg:gap-14 items-center">
+      <!-- טקסט (ימין בדסקטופ, ראשון במובייל) -->
+      <div class="max-w-xl">
+        <!-- שאלת הזדהות → פעם זה קרה מעצמו → היום אין דרך → יצרנו משהו חדש → מה זה → CTA -->
+        <h1 class="h-hero mb-1 reveal">מתי בפעם האחרונה נכנסה לחיים שלך תנועה חדשה?</h1>
+        <!-- רוח אביבית: משבים + עלים ופרחים שנישאים ברוח -->
+        <svg class="breeze mb-5" viewBox="0 0 480 110" fill="none" aria-hidden="true">
+          <path class="gust" d="M472 48 C 404 14, 336 82, 256 48 S 112 20, 26 52" stroke="#9A9A75" stroke-width="2.8" stroke-linecap="round"/>
+          <path class="gust g2" d="M462 74 C 386 50, 306 102, 224 72 S 96 54, 40 76 c -20 7 -30 -12 -14 -19 s 26 2 16 12" stroke="#D98B70" stroke-width="2.2" stroke-linecap="round" opacity=".8"/>
+          <path class="gust g3" d="M440 24 C 390 6, 340 34, 290 22" stroke="#C98D86" stroke-width="1.8" stroke-linecap="round" opacity=".65"/>
+          <!-- עלי זית -->
+          <g class="drift"><path d="M420 34 c 11 -13 29 -13 37 0 c -11 13 -29 13 -37 0z" fill="#686A48" opacity=".9"/><path d="M420 34 h 37" stroke="#F6EFE4" stroke-width="1"/></g>
+          <g class="drift d3"><path d="M412 82 c 10 -11 25 -11 31 0 c -10 11 -25 11 -31 0z" fill="#9A9A75"/></g>
+          <!-- עלי כותרת אביביים -->
+          <g class="drift d2"><ellipse cx="452" cy="62" rx="10" ry="6" fill="#D98B70"/></g>
+          <g class="drift d4"><ellipse cx="465" cy="40" rx="8" ry="5" fill="#C98D86"/></g>
+          <g class="drift d5"><ellipse cx="400" cy="56" rx="7.5" ry="4.5" fill="#E8B9A2"/></g>
+          <g class="drift d6"><ellipse cx="438" cy="92" rx="7" ry="4.2" fill="#D98B70" opacity=".8"/></g>
+          <g class="drift d7"><path d="M445 18 c 8 -9 20 -9 25 0 c -8 9 -20 9 -25 0z" fill="#9A9A75" opacity=".85"/></g>
+        </svg>
+        <p class="lead font-semibold text-ink reveal" style="transition-delay:.05s">פעם זה קרה מעצמו</p>
+        <p class="muted mb-5 reveal" style="transition-delay:.08s">בלימודים, בצבא, בטיולים, דרך חברים</p>
+        <p class="lead font-semibold text-ink mb-6 reveal" style="transition-delay:.11s">היום כמעט אין דרך פשוטה לפגוש מישהו או מישהי שמסקרנים אותך</p>
+<p class="font-display text-[1.6rem] md:text-[2.1rem] leading-snug font-semibold text-terra mb-8 reveal" style="transition-delay:.14s">בדיוק בשביל זה יצרנו מפגשי תנועה קבועים, לגילאי 30–50 שכרגע לא בזוגיות</p>
+        <div class="flex justify-center lg:justify-start reveal" style="transition-delay:.15s">
+          <a href="#" target="_blank" rel="noopener" data-wa-hadar class="btn-primary rounded-full px-5 md:px-8 py-4 text-[1.05rem] md:text-[1.2rem] whitespace-nowrap w-full max-w-[24rem]"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6 h-6" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.057 0a11.82 11.82 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.477-.913zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>אני רוצה לשמוע עוד פרטים</a>
+        </div>
+      </div>
+
+      <!-- תמונה (שמאל בדסקטופ, מתחת לטקסט במובייל) -->
+      <div class="relative reveal" style="transition-delay:.1s">
+        <!-- צורות אורגניות מאחורי התמונה -->
+        <svg class="sway absolute -top-8 -right-6 md:-right-10 w-36 md:w-52 text-sand" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="100" fill="currentColor"/></svg>
+        <svg class="sway slow absolute -bottom-8 -left-5 md:-left-8 w-24 md:w-32 text-sage/45" viewBox="0 0 120 160" aria-hidden="true"><path d="M0 160V60a60 60 0 0 1 120 0v100z" fill="currentColor"/></svg>
+        <div class="relative" data-parallax="0.04">
+          <div class="hero-img">
+            <img src="../images/biodanza-hero.webp"
+                 srcset="../images/biodanza-hero-720.webp 720w, ../images/biodanza-hero.webp 1200w"
+                 sizes="(min-width:1024px) 40rem, 92vw"
+                 width="1200" height="1200" fetchpriority="high"
+                 alt="קבוצת אנשים רוקדים יחפים באולם מואר באור חם, בין עצי זית וקשתות">
+          </div>
+          <p class="sticker hand text-[1.7rem] md:text-[2.1rem] -bottom-5 right-5 md:right-8">לא צריך לדעת לרקוד <span class="text-terra">♡</span></p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- סטריפ מילים — תנועה רכה ומתמשכת -->
+  <div class="marquee-wrap border-y border-ink/10 py-5 md:py-6" aria-hidden="true">
+    <div class="marquee font-display text-2xl md:text-[2rem] font-medium" dir="rtl">
+      <span class="text-olive px-6">גוף</span><span class="text-coral px-2">✿</span>
+      <span class="text-ink px-6">תנועה</span><span class="text-coral px-2">✿</span>
+      <span class="text-terra px-6">צחוק</span><span class="text-coral px-2">✿</span>
+      <span class="text-olive px-6">נשימה</span><span class="text-coral px-2">✿</span>
+      <span class="text-ink px-6">קהילה</span><span class="text-coral px-2">✿</span>
+      <span class="text-plum px-6">חיבור</span><span class="text-coral px-2">✿</span>
+      <span class="text-olive px-6">חופש</span><span class="text-coral px-2">✿</span>
+      <span class="text-terra px-6">סקרנות</span><span class="text-coral px-2">✿</span>
+      <span class="text-olive px-6">גוף</span><span class="text-coral px-2">✿</span>
+      <span class="text-ink px-6">תנועה</span><span class="text-coral px-2">✿</span>
+      <span class="text-terra px-6">צחוק</span><span class="text-coral px-2">✿</span>
+      <span class="text-olive px-6">נשימה</span><span class="text-coral px-2">✿</span>
+      <span class="text-ink px-6">קהילה</span><span class="text-coral px-2">✿</span>
+      <span class="text-plum px-6">חיבור</span><span class="text-coral px-2">✿</span>
+      <span class="text-olive px-6">חופש</span><span class="text-coral px-2">✿</span>
+      <span class="text-terra px-6">סקרנות</span><span class="text-coral px-2">✿</span>
+    </div>
+  </div>
+
+  <main>
+    <!-- ====================== 3. אז מה זה בעצם ====================== -->
+    <section id="what" class="relative py-12 md:py-16">
+      <div class="relative z-10 max-w-6xl mx-auto px-5">
+        <h2 class="h-sect text-center mb-8 md:mb-12 reveal">אז מה זה בעצם?</h2>
+        <div class="grid md:grid-cols-3 gap-5 md:gap-6">
+          <article class="card-soft p-5 pb-8 md:p-6 md:pb-9 reveal">
+            <div class="arch aspect-[4/5] mb-6 -mx-1"><img src="../images/crop-movement.webp" width="600" height="800" loading="lazy" alt="חצאית מתנופפת ורגליים יחפות באמצע ריקוד"></div>
+            <h3 class="h-card mb-2 px-3">זזים</h3>
+            <p class="muted px-3">מוזיקה טובה ותרגילים פשוטים שמוציאים מהראש ומכניסים לגוף</p>
+          </article>
+          <article class="card-soft p-5 pb-8 md:p-6 md:pb-9 reveal" style="transition-delay:.08s">
+            <div class="arch aspect-[4/5] mb-6 -mx-1"><img src="../images/crop-group.webp" width="600" height="800" loading="lazy" alt="קבוצה רוקדת יחד, מחזיקים ידיים ומחייכים"></div>
+            <h3 class="h-card mb-2 px-3">נפגשים</h3>
+            <p class="muted px-3">אותם אנשים בכל מפגש, והקשר נבנה לבד</p>
+          </article>
+          <article class="card-soft p-5 pb-8 md:p-6 md:pb-9 reveal" style="transition-delay:.16s">
+            <div class="arch aspect-[4/5] mb-6 -mx-1"><img src="../images/crop-smiles.webp" width="600" height="800" loading="lazy" alt="רוקד ורוקדת מחייכים זה לזו באמצע תנועה"></div>
+            <h3 class="h-card mb-2 px-3">נפתחים</h3>
+            <p class="muted px-3">בלי לנסות להרשים, פשוט להיות ביחד</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================== 4. הפרדוקס ====================== -->
+    <section id="meet" class="relative py-12 md:py-16">
+      <div class="relative z-10 max-w-3xl mx-auto px-5 text-center">
+        <h2 class="h-sect mb-5 reveal">לא באים כדי להכיר<br><span class="text-terra">ובדיוק בגלל זה <span class="relative inline-block">מכירים<svg class="absolute -bottom-2 inset-x-0 w-full h-3 text-coral" viewBox="0 0 100 12" preserveAspectRatio="none" fill="none" aria-hidden="true"><path d="M2 8c20-6 45-7 96-3" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span> באמת</span></h2>
+        <p class="lead muted mb-4 reveal">בלי התאמות, בלי סבבים, בלי לחץ</p>
+        <p class="font-display text-xl md:text-2xl font-semibold text-terra reveal">ומה שיכול לצמוח מזה: חברות, קרבה, ואולי גם אהבה</p>
+      </div>
+    </section>
+
+    <!-- ====================== 5. איך נראה מפגש ====================== -->
+    <section id="session" class="relative py-12 md:py-16">
+      <div class="relative z-10 max-w-6xl mx-auto px-5">
+        <h2 class="h-sect text-center mb-9 md:mb-14 reveal">איך נראה מפגש?</h2>
+        <ol class="relative grid md:grid-cols-5 gap-8 md:gap-6">
+          <span class="md:hidden pointer-events-none absolute top-7 bottom-7 right-7 w-0 border-r-2 border-dashed border-sage/45" aria-hidden="true"></span>
+          <span class="hidden md:block pointer-events-none absolute top-7 right-[10%] left-[10%] h-0 border-t-2 border-dashed border-sage/45" aria-hidden="true"></span>
+          <li class="relative flex md:flex-col md:items-center md:text-center gap-5 reveal" style="transition-delay:0.00s">
+            <span class="step-dot relative z-10">1</span>
+            <div class="md:px-1 pt-2 md:pt-0">
+              <h3 class="h-card mb-1">מתיישבים</h3>
+              <p class="muted text-[1.05rem] leading-relaxed">שיחה קצרה והסבר על מה שהולך לקרות</p>
+            </div>
+          </li>
+          <li class="relative flex md:flex-col md:items-center md:text-center gap-5 reveal" style="transition-delay:0.06s">
+            <span class="step-dot relative z-10">2</span>
+            <div class="md:px-1 pt-2 md:pt-0">
+              <h3 class="h-card mb-1">מתחילים לזוז</h3>
+              <p class="muted text-[1.05rem] leading-relaxed">בהנחיה פשוטה ונעימה</p>
+            </div>
+          </li>
+          <li class="relative flex md:flex-col md:items-center md:text-center gap-5 reveal" style="transition-delay:0.12s">
+            <span class="step-dot relative z-10">3</span>
+            <div class="md:px-1 pt-2 md:pt-0">
+              <h3 class="h-card mb-1">פוגשים</h3>
+              <p class="muted text-[1.05rem] leading-relaxed">לבד, בזוגות ובקבוצה</p>
+            </div>
+          </li>
+          <li class="relative flex md:flex-col md:items-center md:text-center gap-5 reveal" style="transition-delay:0.18s">
+            <span class="step-dot relative z-10">4</span>
+            <div class="md:px-1 pt-2 md:pt-0">
+              <h3 class="h-card mb-1">משהו נפתח</h3>
+              <p class="muted text-[1.05rem] leading-relaxed">המבוכה יורדת והגוף משתחרר</p>
+            </div>
+          </li>
+          <li class="relative flex md:flex-col md:items-center md:text-center gap-5 reveal" style="transition-delay:0.24s">
+            <span class="step-dot is-last relative z-10">5</span>
+            <div class="md:px-1 pt-2 md:pt-0">
+              <h3 class="h-card mb-1 text-terra">חוזרים במפגש הבא</h3>
+              <p class="muted text-[1.05rem] leading-relaxed">וממשיכים מאותה נקודה</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ====================== 6. זה לא חוג ריקוד ====================== -->
+    <section id="notdance" class="relative py-6 md:py-10">
+      <div class="max-w-6xl mx-auto px-5">
+        <div class="relative overflow-hidden rounded-[32px] text-ink px-7 py-12 md:px-16 md:py-14" style="background:linear-gradient(135deg, #C9CBAE 0%, #DCD6BE 48%, #EBD3C4 100%);">
+          <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 800 400" preserveAspectRatio="none" fill="none" aria-hidden="true">
+            <path d="M-20 300 C 140 220, 260 380, 420 300 S 700 200, 820 260" stroke="#FFFDF9" stroke-opacity=".55" stroke-width="2"/>
+            <path d="M-20 330 C 160 260, 280 400, 440 330 S 690 240, 820 300" stroke="#FFFDF9" stroke-opacity=".35" stroke-width="1.5"/>
+            <path d="M-20 90 C 120 30, 260 150, 400 90 S 680 10, 820 70" stroke="#C98D86" stroke-opacity=".35" stroke-width="1.5"/>
+          </svg>
+          <svg class="sway absolute -top-20 -left-16 w-64 md:w-80 text-paper/35 pointer-events-none" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="100" fill="currentColor"/></svg>
+          <div class="relative grid md:grid-cols-2 gap-8 md:gap-16 items-center">
+            <div>
+              <h2 class="h-sect mb-4 reveal">זה לא חוג ריקוד</h2>
+              <p class="lead text-ink/80 reveal">אין צעדים, אין כוריאוגרפיה ואין קהל<br>כל מפגש הוא חוויה אחרת</p>
+            </div>
+            <div class="font-display font-medium text-3xl md:text-[2.6rem] leading-[1.35] reveal" style="transition-delay:.1s">
+              <p class="text-terra">לפעמים קלילה</p>
+              <p class="text-olive">לפעמים שקטה</p>
+              <p class="text-[#A9605A]">לפעמים מצחיקה</p>
+              <p class="text-plum">ולפעמים מפתיעה</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================== 7. מי נפגש כאן ====================== -->
+    <section id="who" class="relative py-12 md:py-16">
+      <div class="relative z-10 max-w-2xl mx-auto px-5 text-center">
+        <h2 class="h-sect mb-5 reveal">מי נפגש כאן?</h2>
+        <p class="lead mb-2 reveal">נשים וגברים בפרק פתוח בחיים</p>
+        <p class="lead muted mb-6 reveal">בתקופה של שינויים, עם רצון לתנועה חדשה</p>
+        <p class="font-display text-xl md:text-2xl font-semibold text-terra reveal">לא צריך ניסיון, רק סקרנות</p>
+      </div>
+    </section>
+
+    <!-- ====================== 8. ומה אם זה מביך? (+ הסרטון) ====================== -->
+    <section id="human" class="relative py-12 md:py-16">
+      <div class="relative z-10 max-w-6xl mx-auto px-5">
+        <div class="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+          <div>
+            <h2 class="h-sect mb-5 reveal">ומה אם זה מביך?</h2>
+            <p class="lead font-semibold mb-3 reveal">כנראה שזה לא רק אצלך</p>
+            <p class="lead muted mb-6 reveal">מתחילים לאט, והקבוצה עוברת את המבוכה ביחד</p>
+            <p class="font-display text-xl md:text-2xl font-semibold text-terra reveal">רק להסכים להגיע</p>
+          </div>
+          <div class="reveal">
+            <div class="imgframe rounded-[32px] aspect-[3/4] relative max-w-md mx-auto shadow-soft">
+              <video id="motionVid" aria-label="סרטון קצר מתוך מפגש תנועה" class="cursor-pointer" playsinline loop muted preload="auto">
+                <source src="../images/motion.mp4#t=0.1" type="video/mp4">
+              </video>
+              <button id="motionToggle" type="button" aria-label="הפעלה / השהיה"
+                class="absolute bottom-3 left-3 z-10 w-12 h-12 rounded-full bg-ink/55 backdrop-blur-sm flex items-center justify-center text-paper">
+                <svg class="ic-play w-6 h-6 hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                <svg class="ic-pause w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+              </button>
+              <span id="motionMuted" class="absolute bottom-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-ink/55 backdrop-blur-sm text-paper text-sm px-3 py-2 pointer-events-none">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.63 3.63a.996.996 0 000 1.41L7.29 8.7 7 9H4a1 1 0 00-1 1v4a1 1 0 001 1h3l3.29 3.29c.63.63 1.71.18 1.71-.71v-4.17l4.18 4.18c-.49.37-1.02.68-1.6.91-.36.15-.58.53-.58.92 0 .72.73 1.18 1.39.91.8-.33 1.55-.77 2.22-1.31l1.34 1.34a.996.996 0 101.41-1.41L5.05 3.63a.996.996 0 00-1.42 0zM19 12c0 .82-.15 1.61-.41 2.34l1.53 1.53c.56-1.17.88-2.48.88-3.87 0-3.83-2.4-7.11-5.78-8.4-.59-.23-1.22.23-1.22.86v.19c0 .38.25.71.61.85C17.18 6.54 19 9.06 19 12zm-8.71-6.29l-.17.17L12 7.76V6.41c0-.89-1.08-1.33-1.71-.7zM16.5 12A4.5 4.5 0 0014 7.97v1.79l2.48 2.48c.01-.08.02-.16.02-.24z"/></svg>
+                הקשה להפעלת הסאונד
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================== 9. מי מחזיק את המרחב — שני מנחים במעמד שווה (הדר ראשונה, אופיר שני) ====================== -->
+    <section id="facilitators" class="relative py-12 md:py-16">
+      <div class="relative z-10 max-w-5xl mx-auto px-5">
+        <div class="text-center mb-8 md:mb-10 reveal">
+          <h2 class="h-sect mb-3">מי מחזיק את המרחב?</h2>
+          <p class="lead muted">הדר לוריא ואופיר אבירם מנחים יחד</p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-5 md:gap-6">
+          <!-- הדר לוריא -->
+          <article class="card-soft px-5 py-8 md:p-10 text-center reveal">
+            <img src="../images/hadar.jpg" width="400" height="400" loading="lazy" alt="הדר לוריא"
+                 class="w-32 h-32 md:w-36 md:h-36 rounded-full object-cover mx-auto mb-5 ring-[6px] ring-cream">
+            <h3 class="h-card mb-3">הדר לוריא</h3>
+            <div class="space-y-2 muted text-[1.05rem] leading-relaxed">
+              <p>כבר יותר מעשור חוקרת את החיבור בין גוף, מערכת העצבים, רגשות ותקשורת</p>
+              <p>מנחה תנועה, תקשורת מקרבת, יוגה ומדיטציה, ומביאה לקבוצה רגישות ועומק</p>
+            </div>
+          </article>
+          <!-- אופיר אבירם -->
+          <article class="card-soft px-5 py-8 md:p-10 text-center reveal" style="transition-delay:.08s">
+            <img src="../images/ofir.jpg" width="400" height="400" loading="lazy" alt="אופיר אבירם"
+                 class="w-32 h-32 md:w-36 md:h-36 rounded-full object-cover mx-auto mb-5 ring-[6px] ring-cream">
+            <h3 class="h-card mb-3">אופיר אבירם</h3>
+            <div class="space-y-2 muted text-[1.05rem] leading-relaxed">
+              <p>אוהב את הרגע שבו אנשים בחדר מפסיקים להיות זרים</p>
+              <p>יוצר ומנחה מפגשי מוזיקה ותנועה, ומביא חום, משחקיות וגובה עיניים</p>
+            </div>
+          </article>
+        </div>
+        <p class="font-display text-xl md:text-2xl font-semibold text-center text-ink mt-8 md:mt-10 reveal">אנחנו לא כאן כדי ללמד אתכם איך להיות<br><span class="text-terra">אנחנו כאן כדי ליצור מרחב שבו אפשר לזוז, להרגיש ולפגוש</span></p>
+      </div>
+    </section>
+
+    <!-- ====================== 10. הזמנה — וואטסאפ עם הדר ====================== -->
+    <section id="register" class="relative py-6 md:py-10 scroll-mt-6">
+      <div class="max-w-6xl mx-auto px-5">
+        <div class="relative overflow-hidden rounded-[32px] px-6 py-12 md:px-14 md:py-16 text-center"
+             style="background:linear-gradient(150deg, #CF7A5D 0%, #D98B70 55%, #DE9A82 100%);">
+          <svg class="absolute -top-28 -right-20 w-80 md:w-[28rem] text-paper/10 pointer-events-none" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="100" fill="currentColor"/></svg>
+          <div class="relative max-w-2xl mx-auto text-paper">
+            <h2 class="h-sect mb-4 reveal">אולי זה הזמן להכניס קצת תנועה</h2>
+            <p class="lead text-paper/90 mb-8 reveal">קבוצה חדשה נפתחת, ומספר המקומות מוגבל</p>
+            <div class="flex justify-center reveal"><a href="#" target="_blank" rel="noopener" data-wa-hadar class="btn-light rounded-full px-5 md:px-8 py-4 text-[1.05rem] md:text-[1.2rem] whitespace-nowrap w-full max-w-[24rem]"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6 h-6" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.057 0a11.82 11.82 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.477-.913zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>אני רוצה לשמוע עוד פרטים</a></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================== FAQ ====================== -->
+    <section id="faq" class="relative py-12 md:py-16">
+      <div class="relative z-10 max-w-3xl mx-auto px-5">
+        <h2 class="h-sect mb-8 text-center reveal">שאלות נפוצות</h2>
+        <div class="reveal">
+          <details>
+            <summary class="flex items-center justify-between gap-4 py-5 text-lg md:text-xl font-semibold">צריך לדעת לרקוד? <span class="chev text-terra text-2xl">+</span></summary>
+            <div class="ans"><p class="pb-6 muted leading-relaxed">ממש לא. המטרה היא לא לרקוד יפה, אלא פשוט לנוע</p></div>
+          </details>
+          <details>
+            <summary class="flex items-center justify-between gap-4 py-5 text-lg md:text-xl font-semibold">יש מגע? <span class="chev text-terra text-2xl">+</span></summary>
+            <div class="ans"><p class="pb-6 muted leading-relaxed">בחלק מהתרגילים יכולה להיות הזמנה למגע עדין, בדרך כלל אחיזת ידיים. כל מגע הוא אופציונלי ובהסכמה, ואפשר לבחור שלא להשתתף בלי צורך להסביר</p></div>
+          </details>
+          <details>
+            <summary class="flex items-center justify-between gap-4 py-5 text-lg md:text-xl font-semibold">חייבים להשתתף בכל תרגיל? <span class="chev text-terra text-2xl">+</span></summary>
+            <div class="ans"><p class="pb-6 muted leading-relaxed">לא. אפשר לעצור, לנוח בצד, להתבונן ולחזור כשמתאים. אין צורך להסביר או להצדיק</p></div>
+          </details>
+          <details>
+            <summary class="flex items-center justify-between gap-4 py-5 text-lg md:text-xl font-semibold">אפשר להגיע לבד? <span class="chev text-terra text-2xl">+</span></summary>
+            <div class="ans"><p class="pb-6 muted leading-relaxed">בהחלט. בשביל זה יש קבוצה: מגיעים לבד, ולאט לאט כבר לא</p></div>
+          </details>
+          <details>
+            <summary class="flex items-center justify-between gap-4 py-5 text-lg md:text-xl font-semibold">האם זו קבוצת הכרויות? <span class="chev text-terra text-2xl">+</span></summary>
+            <div class="ans"><p class="pb-6 muted leading-relaxed">לא. המשתתפים נמצאים כרגע ללא זוגיות, אבל אין שום ציפייה שמשהו צריך לקרות</p></div>
+          </details>
+          <details>
+            <summary class="flex items-center justify-between gap-4 py-5 text-lg md:text-xl font-semibold">מה לובשים? <span class="chev text-terra text-2xl">+</span></summary>
+            <div class="ans"><p class="pb-6 muted leading-relaxed">בגדים נוחים שקל לזוז בהם. כדאי להביא גם בקבוק מים</p></div>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- CTA דביק במובייל -->
+  <div id="stickyCta" class="sticky-cta" aria-hidden="true">
+    <a href="#" target="_blank" rel="noopener" data-wa-hadar tabindex="-1" class="btn-primary rounded-full w-full py-4 text-[1.2rem]"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6 h-6" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.057 0a11.82 11.82 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.477-.913zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>אני רוצה לשמוע עוד פרטים</a>
+  </div>
+
+  <!-- ====================== פוטר ====================== -->
+  <footer class="relative pt-6 pb-24 md:pb-12">
+    <div class="max-w-6xl mx-auto px-5 text-center">
+      <svg class="w-16 h-4 text-sage mx-auto mb-6" viewBox="0 0 96 16" fill="none" aria-hidden="true"><path d="M2 8c8-8 14-8 22 0s14 8 22 0 14-8 22 0 14 8 22 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+      <p class="font-display text-xl font-semibold">יוצאים <span class="text-terra">להרפתקה</span></p>
+    </div>
+  </footer>
+
+  <script>
+    /* ====== CONFIG — החליפו בערכים האמיתיים ====== */
+    const CONFIG = {
+      whatsappOfir: '972587078708',                   // מספר הנייד של אופיר (פורמט בינ"ל, בלי +)
+      whatsappHadar: '972546163012',                  // מספר הנייד של הדר — יעד כל כפתורי "אני רוצה להצטרף"
+      hadarMessage: 'היי הדר, הגעתי מהאתר ואשמח לשמוע עוד פרטים על המפגשים',
+      updatesGroupLink: 'https://chat.whatsapp.com/HPBClkrbondA3JlQyOvseI',            // קבוצת העדכונים עד גיל 50
+      updatesGroup50PlusLink: 'https://chat.whatsapp.com/DB7zVc2NdVXEquZCC6PpUP',      // קבוצת העדכונים גיל 50 ומעלה
+      payboxLink: 'https://links.payboxapp.com/MgKzRuPAZ3b',
+      sheetsEndpoint: 'https://script.google.com/macros/s/AKfycbzTGo8SNjyF-xJsn08PXWrYt6EdkZOlmOCXeeFnlMHvg7uyMxXR6i8IoemuiBJTZE-EPQ/exec',
+      pixelId: '429806621602468',
+    };
+
+    /* reveal on scroll — fade-in + slide-up קטן */
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { threshold:0.12 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    /* parallax עדין מאוד — לתמונת ה-Hero ולצורות. נמדד מול ההורה (שאינו זז) כדי למנוע לולאת משוב */
+    const pxEls = Array.from(document.querySelectorAll('[data-parallax]'));
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (pxEls.length && !reduceMotion) {
+      let ticking = false;
+      const updatePx = () => {
+        const vh = window.innerHeight;
+        pxEls.forEach(el => {
+          const host = el.parentElement || el;
+          const r = host.getBoundingClientRect();
+          if (r.bottom < -200 || r.top > vh + 200) return;
+          const offset = (r.top + r.height / 2) - vh / 2;
+          const shift = Math.max(-28, Math.min(28, -offset * parseFloat(el.dataset.parallax)));   // תזוזה מקסימלית קטנה
+          el.style.transform = 'translate3d(0,' + shift.toFixed(1) + 'px,0)';
+        });
+        ticking = false;
+      };
+      window.addEventListener('scroll', () => { if (!ticking){ ticking = true; requestAnimationFrame(updatePx); } }, { passive:true });
+      window.addEventListener('resize', updatePx);
+      updatePx();
+    }
+
+    /* וידאו ה-motion — אוטופליי בלופ (מושתק), הקשה מדליקה סאונד, וכפתור פאוז/פליי.
+       מתנגן כשנכנס לתצוגה ונעצר כשיוצא ממנה. התנהגות כמו בדף המקורי. */
+    const motionVid = document.getElementById('motionVid');
+    const motionToggle = document.getElementById('motionToggle');
+    if (motionVid && motionToggle) {
+      let inView = false, userPaused = false;
+      const playIcon = motionToggle.querySelector('.ic-play');
+      const pauseIcon = motionToggle.querySelector('.ic-pause');
+      const mutedBadge = document.getElementById('motionMuted');
+      const syncIcon = () => { const playing = !motionVid.paused; playIcon.classList.toggle('hidden', playing); pauseIcon.classList.toggle('hidden', !playing); };
+      const syncMuted = () => { if (mutedBadge) mutedBadge.classList.toggle('hidden', !motionVid.muted); };
+      motionVid.addEventListener('play', syncIcon);
+      motionVid.addEventListener('pause', syncIcon);
+      motionVid.addEventListener('volumechange', syncMuted);
+      const startPlay = () => motionVid.play().catch(() => { motionVid.muted = true; motionVid.play().catch(()=>{}); });
+      // הדלקת סאונד דורשת מחווה אמיתית (קליק/מקלדת) — גלילה לבדה לא מתירה סאונד בדפדפן
+      const enableSound = () => { if (motionVid.muted) motionVid.muted = false; };
+      document.addEventListener('click', enableSound, { once:true });
+      document.addEventListener('keydown', enableSound, { once:true });
+      new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          inView = e.isIntersecting;
+          if (inView) { if (!userPaused) startPlay(); }
+          else motionVid.pause();
+        });
+      }, { threshold:0.4 }).observe(motionVid);
+      // הקשה: הפעם הראשונה מדליקה סאונד (בלי לעצור), אח"כ פאוז/פליי בלבד
+      const onTap = (ev) => {
+        ev.stopPropagation();
+        if (motionVid.muted) { motionVid.muted = false; userPaused = false; if (motionVid.paused) startPlay(); return; }
+        if (motionVid.paused) { userPaused = false; startPlay(); }
+        else { userPaused = true; motionVid.pause(); }
+      };
+      motionToggle.addEventListener('click', onTap);
+      motionVid.addEventListener('click', onTap);
+      syncIcon(); syncMuted();
+    }
+
+    /* גלילה חלקה לטופס/עוגנים פנימיים דרך data-scroll — בלי האשטאג ובלי שום תוספת ל-URL */
+    document.querySelectorAll('[data-scroll]').forEach(function(el){
+      const id = el.getAttribute('data-scroll');
+      const go = function(){
+        const target = document.getElementById(id);
+        if (target) target.scrollIntoView({ behavior:'smooth', block:'start' });
+      };
+      el.addEventListener('click', go);
+      el.addEventListener('keydown', function(ev){   // נגישות: Enter / רווח מפעילים כמו לחיצה
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); }
+      });
+    });
+
+    /* CTA דביק במובייל — מוצג אחרי שה-Hero יצא מהמסך, ומוסתר כשהטופס בתצוגה */
+    const stickyCta = document.getElementById('stickyCta');
+    if (stickyCta && 'IntersectionObserver' in window) {
+      let heroVisible = true, regVisible = false;
+      const syncSticky = () => {
+        const show = !heroVisible && !regVisible;
+        stickyCta.classList.toggle('show', show);
+        stickyCta.setAttribute('aria-hidden', show ? 'false' : 'true');
+        stickyCta.querySelector('a').tabIndex = show ? 0 : -1;
+      };
+      new IntersectionObserver(([e]) => { heroVisible = e.isIntersecting; syncSticky(); }, { threshold:0 }).observe(document.getElementById('hero'));
+      new IntersectionObserver(([e]) => { regVisible = e.isIntersecting; syncSticky(); }, { threshold:0 }).observe(document.getElementById('register'));
+    }
+
+    /* share — פותח וואטסאפ עם קישור האתר בלבד, ללא טקסט נלווה */
+    document.getElementById('share').href =
+      'https://wa.me/?text=' + encodeURIComponent(location.origin + location.pathname);
+
+    /* ===== מנגנון פופאפ כללי (משותף לכל ה-.modal) ===== */
+    let modalLastFocus = null;
+    function openModal(m){
+      modalLastFocus = document.activeElement;
+      m.hidden = false;
+      requestAnimationFrame(() => m.classList.add('open'));
+      document.body.style.overflow = 'hidden';
+      const f = m.querySelector('[data-autofocus]') || m.querySelector('button, a');
+      if (f) f.focus();
+    }
+    function closeModal(m){
+      m.classList.remove('open');
+      document.body.style.overflow = '';
+      setTimeout(() => { m.hidden = true; }, 320);
+      if (modalLastFocus) modalLastFocus.focus();
+    }
+    // כל פופאפ נסגר ב-X, בלחיצה על הרקע, וב-Esc
+    document.querySelectorAll('.modal').forEach(m => {
+      m.querySelectorAll('[data-close-modal]').forEach(b => b.addEventListener('click', () => closeModal(m)));
+      m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const open = document.querySelector('.modal.open');
+      if (open) closeModal(open);
+    });
+
+    /* ===== הצטרפות לעדכונים — קישור ישיר לקבוצת הוואטסאפ (עד גיל 50), בלי פופאפ בחירה ===== */
+    ['updates'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.setAttribute('href', CONFIG.updatesGroupLink); el.setAttribute('target', '_blank'); el.setAttribute('rel', 'noopener'); }
+    });
+
+    /* ===== CTA ראשי — "אני רוצה להצטרף" פותח שיחת וואטסאפ עם הדר עם הודעה מוכנה (במקום טופס) =====
+       אירוע ההמרה Lead של ה-Pixel נשלח בלחיצה (במקום בשליחת טופס) */
+    const hadarLink = 'https://wa.me/' + CONFIG.whatsappHadar + '?text=' + encodeURIComponent(CONFIG.hadarMessage);
+    document.querySelectorAll('[data-wa-hadar]').forEach(el => {
+      el.setAttribute('href', hadarLink);
+      el.addEventListener('click', () => {
+        if (window.fbq) { try { fbq('track', 'Lead'); } catch(e){} }
+      });
+    });
+
+    /* ====== Service Worker — מבטיח שכל רענון טוען את הגרסה האחרונה שפורסמה ======
+       network-first ל-HTML (ראו sw.js). updateViaCache:'none' מכריח את הדפדפן
+       להביא את sw.js טרי (עוקף את max-age של GitHub Pages) כדי לזהות גרסאות חדשות מיד. */
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js', { scope: './', updateViaCache: 'none' })
+          .then((reg) => { reg.update(); })
+          .catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
