@@ -237,13 +237,15 @@
 
     /* ===== צמד המפתח בכותרת: "תנועה חדשה" — שורה משלו, גדול יותר, גרדיאנט זורם + משיכת מכחול רכה מאחור ===== */
     .key{
-      position:relative; display:inline-block; isolation:isolate;
-      font-size:1.42em; font-weight:700; letter-spacing:-.01em; padding-inline:0 .06em; margin-inline-start:-.035em; /* מיושר לימין בדיוק כמו שאר הכותרת */
-      background:linear-gradient(100deg, #565B37 0%, #686A48 28%, #7F8656 52%, #949A6E 74%, #565B37 100%);
-      background-size:220% 100%;
-      -webkit-background-clip:text; background-clip:text; color:transparent;
-      animation:keyFlow 9s ease-in-out infinite;
+      position:relative; display:block; isolation:isolate;
+      font-size:1.75em; font-weight:700; letter-spacing:-.01em; line-height:1.02; margin-inline-start:-.035em; /* מיושר לימין כמו שאר הכותרת */
     }
+    /* כל מילה בשורה משלה ובצבע משלה: "תנועה" ירוק זית, "חדשה?" טרקוטה (סימן השאלה באותו צבע) */
+    .key .kw{ display:block; width:max-content; padding-inline-end:.06em;
+      background-size:220% 100%; -webkit-background-clip:text; background-clip:text; color:transparent;
+    }
+    .key .kw1{ background-image:linear-gradient(100deg, #565B37 0%, #686A48 28%, #7F8656 52%, #949A6E 74%, #565B37 100%); }
+    .key .kw2{ background-image:linear-gradient(100deg, #B85E42 0%, #C96F52 30%, #D98B70 55%, #C98D86 78%, #B85E42 100%); }
     .h-hero .key{ margin-top:.08em; }
     @keyframes keyFlow{ 0%,100%{ background-position:0% 50%; } 50%{ background-position:100% 50%; } }
     /* כניסה: מילים נחשפות אחת־אחת (טשטוש שנעלם, בלי תזוזה אנכית), ואז "תנועה חדשה" נחשפת מימין לשמאל
@@ -251,23 +253,18 @@
     .hero-in .w{ display:inline-block; opacity:0; filter:blur(6px);
       animation:wordIn 1s cubic-bezier(.2,.7,.2,1) forwards; }
     @keyframes wordIn{ to{ opacity:1; filter:blur(0); } }
-    .hero-in .key{
+    /* "תנועה" ואז "חדשה?" — כל מילה נכנסת בנפרד, מימין לשמאל בקצה רך כמו משב רוח (בלי ציר Y), ואז דוממת */
+    .hero-in .key .kw{
       -webkit-mask-image:linear-gradient(270deg, #000 42%, transparent 58%); mask-image:linear-gradient(270deg, #000 42%, transparent 58%);
       -webkit-mask-size:320% 100%; mask-size:320% 100%;
       -webkit-mask-position:0% 0; mask-position:0% 0;
-      animation:keyFlow 9s ease-in-out 3.6s infinite, keyIn 1.6s cubic-bezier(.45,.05,.25,1) 2.05s forwards;
+      animation:keyIn 1.25s cubic-bezier(.4,.05,.25,1) both;
     }
+    .hero-in .key .kw1{ animation-delay:2.05s; }
+    .hero-in .key .kw2{ animation-delay:2.75s; }
     @keyframes keyIn{
-      0%  { -webkit-mask-position:0% 0; mask-position:0% 0; transform:translateX(.35em); filter:blur(3px); }
+      0%  { -webkit-mask-position:0% 0; mask-position:0% 0; transform:translateX(.6em); filter:blur(4px); }
       100%{ -webkit-mask-position:100% 0; mask-position:100% 0; transform:none; filter:blur(0); }
-    }
-    /* אחרי הכניסה — "תנועה חדשה" זזה ברכות כ-3 שניות ואז נעצרת: נדנוד צדדי ומשיכה קלה כמו בד ברוח (בלי תזוזה אנכית) */
-    .key-sway{ display:inline-block; transform-origin:70% 85%; animation:keySway 1.5s ease-in-out 3.7s 2 both; }   /* ~3 שניות ואז דומם */
-    @keyframes keySway{
-      0%,100%{ transform:translateX(0) skewX(0deg); }
-      25%    { transform:translateX(.05em) skewX(-4deg); }
-      50%    { transform:translateX(0) skewX(0deg); }
-      75%    { transform:translateX(-.04em) skewX(3deg); }
     }
     .hero-in .key-q{ display:inline-block; opacity:0; animation:wordIn .8s ease 3.15s forwards; }
     /* שלוש נקודות אחרי "שלך" — מופיעות אחת־אחת, פועמות רגע, ומתמוססות כש"תנועה חדשה" נכנסת לאותו מקום */
@@ -295,7 +292,7 @@
 
     @media (prefers-reduced-motion: reduce){
       .dots{ display:none; }
-      .key, .hero-in .w, .hero-in .key, .hero-in .key-q, .flow, .key-sway, .dots, .dots i, .intro-strip{ animation:none; transition:none; opacity:1; transform:none; filter:none; -webkit-mask-image:none; mask-image:none; }
+      .key, .hero-in .w, .hero-in .key, .hero-in .key-q, .hero-in .key .kw, .flow, .dots, .dots i, .intro-strip{ animation:none; transition:none; opacity:1; transform:none; filter:none; -webkit-mask-image:none; mask-image:none; }
     }
 
     /* ===== תנועה מופשטת מתחת לכותרת — סרטי צבע זורמים (אנימציית SMIL, נעצרת ב-reduced motion דרך JS) ===== */
@@ -439,7 +436,7 @@
       <!-- טקסט (ימין בדסקטופ, ראשון במובייל) -->
       <div class="max-w-xl">
         <!-- שאלת הזדהות → פעם זה קרה מעצמו → היום אין דרך → יצרנו משהו חדש → מה זה → CTA -->
-        <h1 class="h-hero hero-in mb-5 md:mb-7"><span class="w" style="animation-delay:0.12s">מתי</span> <span class="w" style="animation-delay:0.23s">בפעם</span> <span class="w" style="animation-delay:0.34s">האחרונה</span> <span class="w" style="animation-delay:0.45s">נכנסה</span> <span class="w" style="animation-delay:0.56s">לחיים</span> <span class="w w-last" style="animation-delay:0.67s">שלך<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></span> <span class="key-sway"><span class="key">תנועה חדשה</span></span><span class="key-q">?</span></h1>
+        <h1 class="h-hero hero-in mb-5 md:mb-7"><span class="w" style="animation-delay:0.12s">מתי</span> <span class="w" style="animation-delay:0.23s">בפעם</span> <span class="w" style="animation-delay:0.34s">האחרונה</span> <span class="w" style="animation-delay:0.45s">נכנסה</span> <span class="w" style="animation-delay:0.56s">לחיים</span> <span class="w w-last" style="animation-delay:0.67s">שלך<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></span> <span class="key" aria-label="תנועה חדשה?"><span class="kw kw1" aria-hidden="true">תנועה</span><span class="kw kw2" aria-hidden="true">חדשה?</span></span></h1>
         <p class="lead font-semibold text-ink reveal intro" style="transition-delay:4.25s">פעם זה קרה מעצמו</p>
         <p class="muted mb-5 reveal intro" style="transition-delay:4.55s">בלימודים, בצבא, בטיולים, דרך חברים</p>
         <p class="lead font-semibold text-ink mb-6 reveal intro" style="transition-delay:4.85s">היום כמעט אין דרך פשוטה לפגוש מישהו או מישהי שמסקרנים אותך</p>
