@@ -331,20 +331,6 @@
     .shape-blob.t3 img{ transform:scaleX(-1) rotate(24deg) scale(1.35); }
     @media (prefers-reduced-motion: reduce){ .shape-blob{ animation:none; } }
 
-    /* ===== ספירלה עולה בין "מה קורה במפגש?" לפאנל החוויה — נמתחת מלמטה למעלה כשנכנסת למסך ===== */
-    .spiral-wrap{ display:flex; justify-content:center; padding-block:0; opacity:1 !important; transform:none !important; }
-    .spiral{ width:min(92%, 28rem); height:auto; overflow:visible; }
-    .spiral .sp-line{ stroke-dasharray:1; stroke-dashoffset:1; transition:stroke-dashoffset 2.6s cubic-bezier(.45,.05,.25,1); }
-    .spiral-wrap.in .sp-line{ stroke-dashoffset:0; }
-    .spiral .sp-dot, .spiral .sp-glow{ opacity:0; transition:opacity .9s ease 2.3s; }
-    .spiral-wrap.in .sp-dot, .spiral-wrap.in .sp-glow{ opacity:1; }
-    .spiral-wrap.in .sp-glow{ animation:spGlow 3.2s ease-in-out 3.2s infinite; transform-box:fill-box; transform-origin:center; }
-    @keyframes spGlow{ 0%,100%{ opacity:.55; transform:scale(.85); } 50%{ opacity:1; transform:scale(1.15); } }
-    @media (prefers-reduced-motion: reduce){
-      .spiral .sp-line{ transition:none; stroke-dashoffset:0; }
-      .spiral .sp-dot, .spiral .sp-glow{ opacity:1; transition:none; animation:none !important; }
-    }
-
     /* ===== CTA דביק במובייל — מופיע אחרי ה-Hero ונעלם ליד הטופס ===== */
     .method-link{ color:#C96F52; font-weight:700; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:6px; text-decoration-color:#D98B70; }
     .method-link .arr{ display:inline-block; margin-inline-start:.3em; font-size:.9em; }
@@ -620,57 +606,33 @@
       </div>
     </section>
 
-    <!-- ספירלה עולה — אנרגיה שמתרוממת, מעבר בין "מה קורה במפגש?" ל"חוויה אנושית, בלי מילים" -->
-    <div class="spiral-wrap reveal" aria-hidden="true">
-      <svg class="spiral" viewBox="0 0 360 150" fill="none">
-        <defs>
-          <linearGradient id="spg" x1="0" y1="1" x2="0" y2="0">
-            <stop offset="0" stop-color="#9A9A75" stop-opacity=".35"/>
-            <stop offset=".45" stop-color="#D98B70" stop-opacity=".95"/>
-            <stop offset="1" stop-color="#C96F52"/>
-          </linearGradient>
-          <radialGradient id="spglow"><stop offset="0" stop-color="#FFF6E8"/><stop offset=".4" stop-color="#F2C9A8" stop-opacity=".7"/><stop offset="1" stop-color="#F2C9A8" stop-opacity="0"/></radialGradient>
-        </defs>
-        <path class="sp-line" pathLength="1" d="M345.0 136.0 L344.5 137.2 L343.5 138.3 L342.1 139.5 L340.2 140.6 L337.9 141.7 L335.1 142.8 L331.9 143.9 L328.3 144.9 L324.3 145.9 L319.8 146.9 L315.0 147.8 L309.9 148.6 L304.4 149.5 L298.5 150.2 L292.3 151.0 L285.9 151.6 L279.2 152.2 L272.2 152.8 L264.9 153.3 L257.5 153.7 L249.9 154.0 L242.0 154.3 L234.1 154.5 L226.0 154.7 L217.8 154.8 L209.6 154.8 L201.2 154.7 L192.9 154.6 L184.6 154.4 L176.2 154.1 L167.9 153.8 L159.7 153.4 L151.5 152.9 L143.5 152.3 L135.6 151.7 L127.8 151.0 L120.3 150.3 L112.9 149.5 L105.7 148.6 L98.8 147.7 L92.1 146.7 L85.7 145.7 L79.6 144.6 L73.8 143.4 L68.3 142.2 L63.2 141.0 L58.4 139.7 L54.0 138.4 L49.9 137.1 L46.2 135.7 L42.9 134.3 L40.0 132.9 L37.6 131.4 L35.5 130.0 L33.8 128.5 L32.6 127.0 L31.8 125.5 L31.4 124.0 L31.4 122.5 L31.9 121.0 L32.8 119.5 L34.0 118.1 L35.7 116.6 L37.8 115.2 L40.3 113.7 L43.2 112.3 L46.4 111.0 L50.0 109.6 L54.0 108.4 L58.3 107.1 L62.9 105.9 L67.9 104.7 L73.1 103.6 L78.7 102.5 L84.5 101.4 L90.5 100.5 L96.8 99.5 L103.3 98.7 L109.9 97.8 L116.8 97.1 L123.8 96.4 L130.9 95.7 L138.1 95.2 L145.5 94.7 L152.9 94.2 L160.3 93.8 L167.8 93.5 L175.3 93.2 L182.7 93.0 L190.1 92.9 L197.5 92.8 L204.8 92.8 L212.0 92.9 L219.0 93.0 L225.9 93.2 L232.7 93.4 L239.3 93.7 L245.7 94.0 L251.9 94.4 L257.8 94.9 L263.5 95.4 L269.0 95.9 L274.2 96.5 L279.1 97.1 L283.6 97.8 L287.9 98.5 L291.9 99.2 L295.5 100.0 L298.8 100.8 L301.7 101.6 L304.3 102.4 L306.5 103.3 L308.3 104.1 L309.8 105.0 L310.9 105.9 L311.6 106.8 L311.9 107.7 L311.9 108.6 L311.5 109.5 L310.7 110.3 L309.6 111.2 L308.1 112.1 L306.2 112.9 L304.0 113.7 L301.5 114.5 L298.6 115.3 L295.4 116.0 L291.9 116.8 L288.1 117.4 L284.0 118.1 L279.6 118.7 L274.9 119.3 L270.0 119.8 L264.9 120.3 L259.6 120.7 L254.0 121.1 L248.3 121.4 L242.4 121.7 L236.4 121.9 L230.2 122.1 L223.9 122.3 L217.5 122.3 L211.0 122.3 L204.5 122.3 L197.9 122.2 L191.4 122.1 L184.8 121.8 L178.2 121.6 L171.7 121.3 L165.2 120.9 L158.8 120.5 L152.5 120.0 L146.3 119.4 L140.2 118.9 L134.2 118.2 L128.5 117.5 L122.8 116.8 L117.4 116.0 L112.2 115.2 L107.2 114.3 L102.4 113.4 L97.9 112.5 L93.6 111.5 L89.6 110.5 L85.9 109.4 L82.4 108.4 L79.2 107.3 L76.4 106.1 L73.8 105.0 L71.6 103.8 L69.7 102.7 L68.1 101.5 L66.8 100.3 L65.9 99.1 L65.2 97.8 L65.0 96.6 L65.0 95.4 L65.4 94.2 L66.0 93.0 L67.0 91.8 L68.4 90.6 L70.0 89.5 L71.9 88.3 L74.2 87.2 L76.7 86.1 L79.5 85.0 L82.5 84.0 L85.9 83.0 L89.4 82.0 L93.3 81.0 L97.3 80.1 L101.5 79.2 L106.0 78.4 L110.6 77.5 L115.5 76.8 L120.4 76.1 L125.5 75.4 L130.8 74.8 L136.1 74.2 L141.6 73.6 L147.1 73.1 L152.7 72.7 L158.3 72.3 L164.0 72.0 L169.7 71.7 L175.4 71.4 L181.0 71.2 L186.7 71.1 L192.2 71.0 L197.8 70.9 L203.2 70.9 L208.5 70.9 L213.8 71.0 L218.9 71.1 L223.8 71.3 L228.6 71.5 L233.3 71.7 L237.8 72.0 L242.0 72.3 L246.1 72.7 L250.0 73.1 L253.6 73.5 L257.1 73.9 L260.2 74.4 L263.2 74.9 L265.9 75.4 L268.3 75.9 L270.4 76.5 L272.3 77.1 L274.0 77.6 L275.3 78.2 L276.4 78.8 L277.1 79.4 L277.6 80.0 L277.9 80.6 L277.8 81.2 L277.5 81.8 L276.9 82.4 L276.0 83.0 L274.9 83.6 L273.4 84.1 L271.8 84.7 L269.9 85.2 L267.7 85.7 L265.3 86.2 L262.7 86.7 L259.9 87.1 L256.8 87.5 L253.6 87.9 L250.1 88.2 L246.5 88.6 L242.7 88.9 L238.8 89.1 L234.7 89.3 L230.5 89.5 L226.2 89.6 L221.8 89.7 L217.3 89.8 L212.7 89.8 L208.0 89.8 L203.3 89.8 L198.6 89.7 L193.8 89.5 L189.1 89.3 L184.3 89.1 L179.6 88.8 L174.9 88.5 L170.2 88.2 L165.6 87.8 L161.1 87.4 L156.6 86.9 L152.3 86.5 L148.0 85.9 L143.9 85.4 L139.9 84.8 L136.1 84.1 L132.4 83.5 L128.8 82.8 L125.5 82.1 L122.3 81.3 L119.3 80.5 L116.5 79.8 L113.8 78.9 L111.4 78.1 L109.3 77.3 L107.3 76.4 L105.5 75.5 L104.0 74.6 L102.7 73.7 L101.6 72.8 L100.8 71.9 L100.2 71.0 L99.8 70.1 L99.7 69.1 L99.7 68.2 L100.1 67.3 L100.6 66.4 L101.3 65.5 L102.3 64.6 L103.5 63.8 L104.9 62.9 L106.5 62.0 L108.3 61.2 L110.3 60.4 L112.5 59.6 L114.8 58.8 L117.3 58.1 L120.0 57.4 L122.8 56.7 L125.8 56.0 L128.9 55.4 L132.1 54.7 L135.4 54.2 L138.9 53.6 L142.4 53.1 L146.0 52.6 L149.6 52.1 L153.3 51.7 L157.1 51.3 L160.9 50.9 L164.7 50.6 L168.5 50.3 L172.4 50.0 L176.2 49.8 L180.0 49.6 L183.8 49.4 L187.5 49.3 L191.2 49.2 L194.8 49.1 L198.3 49.1 L201.7 49.1 L205.1 49.1 L208.4 49.1 L211.5 49.2 L214.5 49.3 L217.4 49.4 L220.2 49.6 L222.8 49.7 L225.3 49.9 L227.6 50.1 L229.8 50.3 L231.8 50.5 L233.7 50.8 L235.3 51.1 L236.8 51.3 L238.2 51.6 L239.3 51.9 L240.3 52.2 L241.1 52.5 L241.7 52.8 L242.1 53.1 L242.3 53.4 L242.4 53.7 L242.2 54.0 L241.9 54.3 L241.4 54.6 L240.8 54.9 L240.0 55.2 L239.0 55.4 L237.9 55.7 L236.6 55.9 L235.1 56.2 L233.5 56.4 L231.8 56.6 L230.0 56.7 L228.0 56.9 L225.9 57.0 L223.7 57.2 L221.4 57.2 L219.0 57.3 L216.5 57.4 L214.0 57.4 L211.3 57.4 L208.6 57.4 L205.9 57.4 L203.1 57.3 L200.3 57.2 L197.4 57.1 L194.6 56.9 L191.7 56.8 L188.8 56.6 L185.9 56.4 L183.1 56.1 L180.3 55.8 L177.5 55.5 L174.7 55.2 L172.0 54.9 L169.4 54.5 L166.8 54.2 L164.3 53.8 L161.8 53.3 L159.5 52.9 L157.2 52.4 L155.0 51.9 L153.0 51.5 L151.0 50.9 L149.1 50.4 L147.4 49.9 L145.8 49.3 L144.3 48.8 L142.9 48.2 L141.6 47.6 L140.5 47.0 L139.5 46.4 L138.6 45.8 L137.9 45.2 L137.3 44.6 L136.8 44.0 L136.5 43.4 L136.3 42.8 L136.2 42.1 L136.3 41.5 L136.5 40.9 L136.8 40.3 L137.2 39.7 L137.7 39.1 L138.4 38.6 L139.2 38.0 L140.1 37.4 L141.1 36.9 L142.1 36.3 L143.3 35.8 L144.6 35.3 L145.9 34.8 L147.4 34.3 L148.9 33.8 L150.4 33.4 L152.1 33.0 L153.8 32.5 L155.5 32.1 L157.3 31.7 L159.1 31.4 L160.9 31.0 L162.8 30.7 L164.7 30.3 L166.6 30.0 L168.5 29.8 L170.4 29.5 L172.3 29.2 L174.2 29.0 L176.0 28.8 L177.9 28.6 L179.7 28.4 L181.4 28.2 L183.2 28.1 L184.9 27.9 L186.5 27.8 L188.1 27.7 L189.6 27.6 L191.1 27.5 L192.5 27.4 L193.8 27.3 L195.1 27.3 L196.3 27.2 L197.4 27.2 L198.4 27.1 L199.4 27.1 L200.3 27.1 L201.1 27.1 L201.8 27.0 L202.4 27.0 L202.9 27.0 L203.4 27.0 L203.7 27.0 L204.0 27.0 L204.2 27.0 L204.3 27.0 L204.4 27.0 L204.3 27.0 L204.2 27.0 L204.0 27.0 L203.7 26.9 L203.4 26.9 L203.0 26.9 L202.5 26.8 L202.0 26.8 L201.4 26.7 L200.8 26.6 L200.1 26.6 L199.4 26.5 L198.6 26.4 L197.8 26.3 L196.9 26.2 L196.1 26.1 L195.2 25.9 L194.3 25.8 L193.3 25.6 L192.4 25.5 L191.4 25.3 L190.5 25.1 L189.5 24.9 L188.6 24.7 L187.7 24.5 L186.7 24.3 L185.8 24.1 L184.9 23.8 L184.1 23.6 L183.2 23.3 L182.4 23.0 L181.6 22.8 L180.9 22.5 L180.2 22.2 L179.5 21.9 L178.9 21.6 L178.3 21.3 L177.8 21.0 L177.3 20.7 L176.9 20.4 L176.5 20.0 L176.2 19.7 L175.9 19.4 L175.7 19.1 L175.5 18.7 L175.4 18.4 L175.3 18.1 L175.3 17.8 L175.4 17.4 L175.5 17.1 L175.7 16.8 L176.0 16.5" stroke="url(#spg)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle class="sp-glow" cx="176.0" cy="16.5" r="22" fill="url(#spglow)"/>
-        <circle class="sp-dot" cx="176.0" cy="16.5" r="4.5" fill="#C96F52"/>
-      </svg>
-    </div>
-
-    <!-- ====================== 6. חוויה אנושית, בלי מילים ====================== -->
-    <section id="experience" class="relative py-6 md:py-10">
-      <div class="max-w-6xl mx-auto px-5">
-        <div class="relative overflow-hidden rounded-[32px] text-ink px-7 py-12 md:px-16 md:py-14" style="background:linear-gradient(135deg, #C9CBAE 0%, #DCD6BE 48%, #EBD3C4 100%);">
-          <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 800 400" preserveAspectRatio="none" fill="none" aria-hidden="true">
-            <path d="M-20 300 C 140 220, 260 380, 420 300 S 700 200, 820 260" stroke="#FFFDF9" stroke-opacity=".55" stroke-width="2"/>
-            <path d="M-20 330 C 160 260, 280 400, 440 330 S 690 240, 820 300" stroke="#FFFDF9" stroke-opacity=".35" stroke-width="1.5"/>
-            <path d="M-20 90 C 120 30, 260 150, 400 90 S 680 10, 820 70" stroke="#C98D86" stroke-opacity=".35" stroke-width="1.5"/>
-          </svg>
-          <svg class="sway absolute -top-20 -left-16 w-64 md:w-80 text-paper/35 pointer-events-none" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="100" fill="currentColor"/></svg>
-          <div class="relative grid md:grid-cols-2 gap-4 md:gap-16 items-center">
-            <div>
-              <h2 class="h-sect mb-4 reveal">חוויה אנושית, בלי מילים</h2>
-              <p class="lead text-ink/80 reveal">הזמנה למסע של מבט, תנועה, כיף ונוכחות<br><span class="font-semibold text-ink">וכל מפגש הוא חוויה אחרת</span></p>
+    <!-- ====================== 6. הזמנה: חוויה אנושית בלי מילים + מי מגיע ====================== -->
+    <section id="experience" class="relative py-10 md:py-14">
+      <div class="max-w-2xl mx-auto px-5 reveal">
+        <div class="relative">
+          <svg class="block w-full h-auto relative z-0" viewBox="0 0 600 96" aria-hidden="true"><path d="M8 88 L300 10 L592 88 Z" fill="#D98B70" stroke="#D98B70" stroke-width="16" stroke-linejoin="round"/></svg>
+          <div class="relative rounded-b-[28px] px-3 md:px-8 pb-6" style="background:linear-gradient(180deg,#D98B70 0%,#C98D86 100%);">
+            <div class="relative z-10 -mt-9 md:-mt-16 rounded-[22px] bg-paper text-ink text-center px-6 md:px-12 pt-9 md:pt-11 pb-36 md:pb-40" style="box-shadow:0 2px 14px rgba(63,56,47,.07);">
+              <div class="absolute inset-2 md:inset-3 rounded-[16px] border border-dashed border-sand pointer-events-none" aria-hidden="true"></div>
+              <p class="hand text-3xl md:text-4xl text-terra mb-1">הזמנה</p>
+              <h2 class="h-sect mb-4">חוויה אנושית, בלי מילים</h2>
+              <p class="lead text-ink/80">הזמנה למסע של מבט, תנועה, כיף ונוכחות<br><span class="font-semibold text-ink">וכל מפגש הוא חוויה אחרת</span></p>
+              <div class="font-display font-medium text-2xl md:text-3xl leading-[1.4] mt-6">
+                <p class="text-terra">לפעמים קלילה</p>
+                <p class="text-olive">לפעמים שקטה</p>
+                <p class="text-[#A9605A]">לפעמים מצחיקה</p>
+                <p class="text-plum">ולפעמים מפתיעה</p>
+              </div>
+              <div class="mx-auto my-7 w-16 border-t-2 border-dotted border-sage/60" aria-hidden="true"></div>
+              <h3 class="h-card text-xl md:text-2xl mb-2">מי מגיע?</h3>
+              <p class="lead">נשים וגברים בפרק פתוח בחיים</p>
+              <p class="lead muted">בתקופה של שינויים, עם רצון לתנועה חדשה</p>
+              <p class="font-display text-lg md:text-xl font-semibold text-terra mt-6">ומתוך זה יכולות לצמוח חברות, קרבה ואולי גם אהבה</p>
             </div>
-            <div class="font-display font-medium text-3xl md:text-[2.6rem] leading-[1.35] reveal" style="transition-delay:.1s">
-              <p class="text-terra">לפעמים קלילה</p>
-              <p class="text-olive">לפעמים שקטה</p>
-              <p class="text-[#A9605A]">לפעמים מצחיקה</p>
-              <p class="text-plum">ולפעמים מפתיעה</p>
-            </div>
-            <!-- מה שיכול לצמוח — בא אחרי "לפעמים..." (במובייל מתחת, בדסקטופ בשורה מלאה) -->
-            <p class="md:col-span-2 font-display text-xl md:text-2xl font-semibold text-terra md:text-center pt-2 md:pt-4 reveal">ומתוך זה יכולות לצמוח חברות, קרבה ואולי גם אהבה</p>
+            <div class="absolute inset-x-0 bottom-0 h-32 z-20 pointer-events-none" style="background:linear-gradient(180deg,#C96F52,#BC634A);border-radius:0 0 28px 28px;clip-path:polygon(0 0,50% 52%,100% 0,100% 100%,0 100%);"></div>
+            <span class="absolute z-30 left-1/2 w-12 h-12 -ml-6 rounded-full grid place-items-center text-paper" style="bottom:2.2rem;background:#A9533A;box-shadow:0 2px 6px rgba(63,56,47,.18);" aria-hidden="true"><svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.3-9.2C1.4 8.4 3.4 5 6.8 5c2 0 3.5 1.1 5.2 3 1.7-1.9 3.2-3 5.2-3 3.4 0 5.4 3.4 4.1 6.8C19.5 16.4 12 21 12 21z"/></svg></span>
           </div>
         </div>
-      </div>
-    </section>
-
-    <!-- ====================== 7. מי מגיע ====================== -->
-    <section id="who" class="relative py-12 md:py-16">
-      <div class="relative z-10 max-w-2xl mx-auto px-5 text-center">
-        <h2 class="h-sect mb-5 reveal">מי מגיע?</h2>
-        <p class="lead reveal">נשים וגברים בפרק פתוח בחיים</p>
-        <p class="lead muted reveal">בתקופה של שינויים, עם רצון לתנועה חדשה</p>
       </div>
     </section>
 
