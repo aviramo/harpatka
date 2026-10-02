@@ -305,7 +305,7 @@
 
     /* ===== סטריפ מילים נע (ltr-wrap, -50%→0) ===== */
     .marquee-wrap{ direction:ltr; overflow:hidden; contain:paint; }
-    .marquee{ display:flex; width:max-content; animation:marquee 46s linear infinite; }
+    .marquee{ display:flex; width:max-content; animation:marquee 20s linear infinite; }
     .marquee > span{ white-space:nowrap; }
     @keyframes marquee{ from{ transform:translateX(-50%) } to{ transform:translateX(0) } }
 
@@ -332,6 +332,13 @@
     @media (prefers-reduced-motion: reduce){ .shape-blob{ animation:none; } }
 
     /* ===== CTA דביק במובייל — מופיע אחרי ה-Hero ונעלם ליד הטופס ===== */
+    @media (max-height:700px){ #hero{ padding-top:1rem; } }
+    .scroll-hint{ transition:opacity .4s ease; }
+    .scroll-hint svg{ animation:hintBounce 1.6s ease-in-out infinite; }
+    .scroll-hint.gone{ opacity:0; pointer-events:none; }
+    @keyframes hintBounce{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(8px); } }
+    @media (prefers-reduced-motion: reduce){ .scroll-hint svg{ animation:none; } }
+    .btn-green{ display:inline-block; background:#686A48; color:#FFFDF9; font-weight:700; font-size:1.05rem; padding:.8rem 1.6rem; border-radius:999px; }
     .method-link{ color:#C96F52; font-weight:700; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:6px; text-decoration-color:#D98B70; }
     .method-link .arr{ display:inline-block; margin-inline-start:.3em; font-size:.9em; }
     .sticky-cta{
@@ -438,13 +445,13 @@
   </div>
 
   <!-- ====================== 1. HERO — מכתב הזמנה (מעטפת דואר בפסים): חוויה אנושית בלי מילים + מי מגיע + CTA ====================== -->
-  <header id="hero" class="relative pt-8 md:pt-12 pb-12 md:pb-16">
+  <header id="hero" class="relative pt-8 md:pt-12 pb-6 md:pb-10">
     <div class="relative z-10 max-w-2xl mx-auto px-5 reveal">
       <div class="p-[10px] md:p-[12px] rounded-[20px]" style="background:repeating-linear-gradient(-45deg,#C96F52 0 14px,#FFFDF9 14px 24px,#9A9A75 24px 38px,#FFFDF9 38px 48px);box-shadow:0 8px 24px rgba(63,56,47,.10);">
         <div class="relative rounded-[12px] text-ink text-center px-6 md:px-12 pt-6 md:pt-8 pb-8 md:pb-10" style="background:#FFFDF9;">
           <div class="flex items-start justify-between mb-5 md:mb-6">
             <p class="hand text-3xl md:text-4xl text-terra pt-1">הזמנה</p>
-            <div class="w-[3.6rem] h-[4.3rem] md:w-[4.2rem] md:h-[5rem] grid place-items-center text-terra" style="background:#F3E3D1;border:5px dotted #FFFDF9;outline:1.5px solid #E6D3BC;outline-offset:-1px;transform:rotate(4deg);" aria-hidden="true"><svg class="w-7 h-7 md:w-8 md:h-8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.3-9.2C1.4 8.4 3.4 5 6.8 5c2 0 3.5 1.1 5.2 3 1.7-1.9 3.2-3 5.2-3 3.4 0 5.4 3.4 4.1 6.8C19.5 16.4 12 21 12 21z"/></svg></div>
+            <div class="w-[3.8rem] h-[4.5rem] md:w-[4.4rem] md:h-[5.2rem] grid place-items-center text-terra" style="background:#F3E3D1;border:5px dotted #FFFDF9;outline:1.5px solid #E6D3BC;outline-offset:-1px;transform:rotate(4deg);" aria-hidden="true"><svg class="w-full h-full p-1" viewBox="0 0 48 52" fill="currentColor" aria-hidden="true"><g stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"><path d="M15 21Q8 17 6 9"/><path d="M15 21Q21 18 24 12"/><path d="M34 22Q40 17 42 11"/><path d="M34 22Q29 19 27 14"/></g><circle cx="15" cy="12" r="3.4"/><path d="M15 17C9 22 8 33 5 42L25 42C22 33 21 22 15 17Z"/><circle cx="34" cy="13" r="3.2" fill="#C98D86"/><path d="M34 18C28.500 23 28 33 26 42L42 42C40 33 39.500 23 34 18Z" fill="#9A9A75"/></svg></div>
           </div>
           <h1 class="h-sect mb-4">חוויה אנושית בלי מילים</h1>
           <p class="lead text-ink/80">מסע של מבט, תנועה, כיף ונוכחות</p>
@@ -456,30 +463,33 @@
           </div>
         </div>
       </div>
+      <a id="scrollHint" href="#what" aria-label="להמשך הדף" class="scroll-hint flex justify-center mt-3 text-terra"><svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9l7 7 7-7"/></svg></a>
     </div>
   </header>
 
-  <!-- סטריפ מילים — תנועה רכה ומתמשכת -->
-  <div class="marquee-wrap intro-strip border-y border-ink/10 py-5 md:py-6" aria-hidden="true">
-    <div class="marquee font-display text-2xl md:text-[2rem] font-medium" dir="rtl">
-      <span class="text-olive px-6">גוף</span><span class="text-coral px-2">✿</span>
-      <span class="text-ink px-6">תנועה</span><span class="text-coral px-2">✿</span>
-      <span class="text-terra px-6">צחוק</span><span class="text-coral px-2">✿</span>
-      <span class="text-olive px-6">נשימה</span><span class="text-coral px-2">✿</span>
-      <span class="text-ink px-6">שייכות</span><span class="text-coral px-2">✿</span>
-      <span class="text-plum px-6">חיבור</span><span class="text-coral px-2">✿</span>
-      <span class="text-olive px-6">חופש</span><span class="text-coral px-2">✿</span>
-      <span class="text-terra px-6">סקרנות</span><span class="text-coral px-2">✿</span>
-      <span class="text-olive px-6">גוף</span><span class="text-coral px-2">✿</span>
-      <span class="text-ink px-6">תנועה</span><span class="text-coral px-2">✿</span>
-      <span class="text-terra px-6">צחוק</span><span class="text-coral px-2">✿</span>
-      <span class="text-olive px-6">נשימה</span><span class="text-coral px-2">✿</span>
-      <span class="text-ink px-6">שייכות</span><span class="text-coral px-2">✿</span>
-      <span class="text-plum px-6">חיבור</span><span class="text-coral px-2">✿</span>
-      <span class="text-olive px-6">חופש</span><span class="text-coral px-2">✿</span>
-      <span class="text-terra px-6">סקרנות</span><span class="text-coral px-2">✿</span>
+  <!-- מילים מתחלפות — מילה אחת בכל פעם, בסדר אקראי ועם אנימציית כניסה אקראית -->
+  <div class="py-6 md:py-10 text-center" aria-hidden="true">
+    <div class="h-24 md:h-32 flex items-center justify-center overflow-hidden">
+      <span id="rotWord" class="font-display font-medium text-[3.4rem] md:text-[5.4rem] leading-none inline-block text-terra">תנועה</span>
     </div>
   </div>
+
+  <!-- תמונת Hero — אחרי הסטריפ הנע -->
+  <section class="relative pt-12 md:pt-16 pb-6 md:pb-10">
+    <div class="relative max-w-3xl mx-auto px-5 reveal">
+      <svg class="sway absolute -top-6 -right-1 md:-right-8 w-28 md:w-44 text-sand" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="100" fill="currentColor"/></svg>
+      <svg class="sway slow absolute -bottom-6 -left-1 md:-left-6 w-20 md:w-28 text-sage/45" viewBox="0 0 120 160" aria-hidden="true"><path d="M0 160V60a60 60 0 0 1 120 0v100z" fill="currentColor"/></svg>
+      <div class="relative">
+        <div class="hero-img">
+          <img src="../images/biodanza-hero.webp"
+               srcset="../images/biodanza-hero-720.webp 720w, ../images/biodanza-hero.webp 1200w"
+               sizes="(min-width:768px) 48rem, 92vw"
+               width="1200" height="1200" loading="lazy"
+               alt="קבוצת אנשים רוקדים יחפים באולם מואר באור חם, בין עצי זית וקשתות">
+        </div>
+      </div>
+    </div>
+  </section>
 
   <main>
     <!-- ====================== 3. אז מה זה בעצם ====================== -->
@@ -491,7 +501,7 @@
           <div class="flex items-center justify-center gap-3 text-terra mb-2" aria-hidden="true"><span class="w-12 border-t-2 border-dotted border-coral/70"></span><svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.3-9.2C1.4 8.4 3.4 5 6.8 5c2 0 3.5 1.1 5.2 3 1.7-1.9 3.2-3 5.2-3 3.4 0 5.4 3.4 4.1 6.8C19.5 16.4 12 21 12 21z"/></svg><span class="w-12 border-t-2 border-dotted border-coral/70"></span></div>
           <p class="hand text-[2rem] md:text-[2.6rem] leading-[1.1] text-terra">ומתוך כל זה יכולות לצמוח חברות, קרבה ואולי גם אהבה</p>
         </div>
-        <p class="text-center mb-8 md:mb-12 reveal"><a href="../biodanza/" class="method-link">להכיר לעומק את שיטת הביודנסה<span class="arr" aria-hidden="true">←</span></a></p>
+        <p class="text-center mb-8 md:mb-12 reveal"><a id="methodBtn" href="../biodanza/" class="btn-green">להכיר לעומק את שיטת הביודנסה</a></p>
         <div class="grid md:grid-cols-3 gap-5 md:gap-6">
           <article class="card-soft p-5 pb-8 md:p-6 md:pb-9 reveal">
             <div class="shape shape-blob t1 aspect-square mb-6 mx-auto w-[88%]"><img src="../images/dance-foot.webp" width="600" height="600" loading="lazy" alt="חצאית מתנופפת ורגליים יחפות באמצע ריקוד"></div>
@@ -515,7 +525,7 @@
     <!-- ====================== 5. איך נראה מפגש ====================== -->
     <section id="session" class="relative py-12 md:py-16">
       <div class="relative z-10 max-w-6xl mx-auto px-5">
-        <h2 class="h-sect text-center mb-6 md:mb-8 reveal">מה קורה במפגש?</h2>
+        <h2 class="h-sect text-center mb-6 md:mb-8 reveal">המפגש עצמו</h2>
         <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-w-3xl mx-auto mb-12 md:mb-16">
           <div class="card-soft px-4 py-5 md:py-6 text-center reveal" style="transition-delay:0.00s">
             <span class="inline-flex text-terra mb-2"><svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg></span>
@@ -603,8 +613,8 @@
         <div class="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
           <div class="text-center">
             <h2 class="h-sect mb-5 reveal">ומה אם זה מביך?</h2>
-            <p class="lead font-semibold reveal">כנראה שזה לא רק אצלך</p>
-            <p class="lead muted reveal">כולנו באותה סירה. לכולנו קשה לפעמים להיפתח, ובעיקר להיות פשוט מי שאנחנו</p>
+            <p class="lead font-semibold reveal">זה טבעי, וזה חלק מהעניין</p>
+            <p class="lead muted reveal">כולנו מתחילים מאותה נקודה. עם הזמן נרגעים, וצומח משהו חדש: אמון, קלילות וחיוך שבא מעצמו</p>
           </div>
           <div class="reveal">
             <div class="imgframe rounded-[32px] aspect-[3/4] relative max-w-md mx-auto shadow-soft">
@@ -814,7 +824,47 @@
       });
     });
 
-    /* CTA דביק במובייל — מוצג אחרי שה-Hero יצא מהמסך, ומוסתר כשהטופס בתצוגה */
+    /* מילים מתחלפות — סדר אקראי; לכל מילה אנימציית כניסה אקראית (עדינה) */
+    (function(){
+      const el = document.getElementById('rotWord'); if (!el || !el.animate) return;
+      const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const words = ['גוף','תנועה','צחוק','מוזיקה','נשימה','מבט','שייכות','חיוך','חיבור','קצב','חופש','משחק','סקרנות','נוכחות','חיוּת','יצירתיות','חיבתיות','אמון','פתיחות','הקשבה','קרבה','עדינות','שמחה','התחדשות','ביטחון','התרגשות'];
+      const cols = ['#C96F52','#686A48','#663F4C','#D98B70','#9A9A75'];
+      const E = 'cubic-bezier(.2,.7,.2,1)';
+      const anims = [
+        [{opacity:0, transform:'translateY(26px)'}, {opacity:1, transform:'none'}],
+        [{opacity:0, transform:'translateY(-26px)'}, {opacity:1, transform:'none'}],
+        [{opacity:0, filter:'blur(12px)', transform:'scale(1.06)'}, {opacity:1, filter:'blur(0)', transform:'none'}],
+        [{opacity:0, transform:'scale(.72)'}, {opacity:1, transform:'none'}],
+        [{opacity:0, transform:'translateX(-44px)'}, {opacity:1, transform:'none'}],
+        [{opacity:0, transform:'translateX(44px)'}, {opacity:1, transform:'none'}],
+        [{opacity:0, letterSpacing:'.35em'}, {opacity:1, letterSpacing:'0'}],
+        [{opacity:0, transform:'translateY(18px) rotate(-5deg)'}, {opacity:1, transform:'none'}]
+      ];
+      let order = [], last = -1, ci = 0;
+      const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+      const next = () => { if (!order.length) { order = shuffle(words.slice()); if (order[order.length-1] === el.textContent) order.reverse(); } return order.pop(); };
+      const show = () => {
+        el.textContent = next();
+        el.style.color = cols[ci++ % cols.length];
+        if (reduce) return;
+        let k; do { k = Math.floor(Math.random() * anims.length); } while (k === last); last = k;
+        el.animate(anims[k], { duration: 420, easing: E, fill: 'both' });
+      };
+      const cycle = () => {
+        if (reduce) { show(); return; }
+        el.animate([{opacity:1},{opacity:0}], { duration: 180, easing: 'ease-in', fill: 'forwards' }).onfinish = show;
+      };
+      show();
+      setInterval(cycle, 950);
+    })();
+
+    /* חץ רמז להמשך — נעלם ברגע שמתחילים לגלול */
+    (function(){ const h=document.getElementById('scrollHint'); if(!h) return;
+      const f=()=>{ const g=window.scrollY>20; h.classList.toggle('gone',g); h.tabIndex=g?-1:0; };
+      window.addEventListener('scroll',f,{passive:true}); f(); })();
+
+    /* CTA דביק במובייל — מוצג אחרי שכפתור "להכיר לעומק" יצא מהמסך, ומוסתר כשהטופס בתצוגה */
     const stickyCta = document.getElementById('stickyCta');
     if (stickyCta && 'IntersectionObserver' in window) {
       let heroVisible = true, regVisible = false, footVisible = false;
@@ -824,7 +874,8 @@
         stickyCta.setAttribute('aria-hidden', show ? 'false' : 'true');
         stickyCta.querySelector('a').tabIndex = show ? 0 : -1;
       };
-      new IntersectionObserver(([e]) => { heroVisible = e.isIntersecting; syncSticky(); }, { threshold:0 }).observe(document.getElementById('hero'));
+      /* מופיע רק אחרי שכפתור "להכיר לעומק את שיטת הביודנסה" יצא מהמסך כלפי מעלה */
+      new IntersectionObserver(([e]) => { heroVisible = !(!e.isIntersecting && e.boundingClientRect.top < 0); syncSticky(); }, { threshold:0 }).observe(document.getElementById('methodBtn'));
       new IntersectionObserver(([e]) => { regVisible = e.isIntersecting; syncSticky(); }, { threshold:0 }).observe(document.getElementById('register'));
       new IntersectionObserver(([e]) => { footVisible = e.isIntersecting; syncSticky(); }, { threshold:0 }).observe(document.querySelector('footer'));
     }
