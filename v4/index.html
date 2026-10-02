@@ -474,7 +474,7 @@
       <svg class="sway absolute -top-6 -right-1 md:-right-8 w-28 md:w-44 text-sand" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="100" fill="currentColor"/></svg>
       <svg class="sway slow absolute -bottom-6 -left-1 md:-left-6 w-20 md:w-28 text-sage/45" viewBox="0 0 120 160" aria-hidden="true"><path d="M0 160V60a60 60 0 0 1 120 0v100z" fill="currentColor"/></svg>
       <div class="relative">
-        <div class="hero-img">
+        <div id="heroPic" class="hero-img">
           <img src="../images/biodanza-hero.webp"
                srcset="../images/biodanza-hero-720.webp 720w, ../images/biodanza-hero.webp 1200w"
                sizes="(min-width:768px) 48rem, 92vw"
@@ -887,9 +887,11 @@
       } else loop();
     })();
 
-    /* חץ רמז להמשך — נעלם ברגע שמתחילים לגלול */
+    /* חץ רמז להמשך — מוצג רק כשהתמונה לא נראית במסך, ונעלם ברגע שמתחילים לגלול */
     (function(){ const h=document.getElementById('scrollHint'); if(!h) return;
-      const f=()=>{ const g=window.scrollY>20; h.classList.toggle('gone',g); h.tabIndex=g?-1:0; };
+      const pic=document.getElementById('heroPic'); let picVisible=false;
+      const f=()=>{ const g=window.scrollY>20 || picVisible; h.classList.toggle('gone',g); h.tabIndex=g?-1:0; };
+      if (pic && 'IntersectionObserver' in window) new IntersectionObserver(([e])=>{ picVisible=e.isIntersecting; f(); },{threshold:0}).observe(pic);
       window.addEventListener('scroll',f,{passive:true}); f(); })();
 
     /* CTA דביק במובייל — מוצג אחרי שכפתור "להכיר לעומק" יצא מהמסך, ומוסתר כשהטופס בתצוגה */
