@@ -334,11 +334,6 @@
 
     /* ===== CTA דביק במובייל — מופיע אחרי ה-Hero ונעלם ליד הטופס ===== */
     @media (max-height:700px){ #hero{ padding-top:1rem; } }
-    .scroll-hint{ transition:opacity .4s ease; }
-    .scroll-hint svg{ animation:hintBounce 1.6s ease-in-out infinite; }
-    .scroll-hint.gone{ opacity:0; pointer-events:none; }
-    @keyframes hintBounce{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(8px); } }
-    @media (prefers-reduced-motion: reduce){ .scroll-hint svg{ animation:none; } }
     .btn-green{ display:inline-block; background:#686A48; color:#FFFDF9; font-weight:700; font-size:1.05rem; padding:.8rem 1.6rem; border-radius:999px; }
     .method-link{ color:#C96F52; font-weight:700; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:6px; text-decoration-color:#D98B70; }
     .method-link .arr{ display:inline-block; margin-inline-start:.3em; font-size:.9em; }
@@ -464,12 +459,11 @@
           </div>
         </div>
       </div>
-      <a id="scrollHint" href="#what" aria-label="להמשך הדף" class="scroll-hint absolute inset-x-0 -bottom-10 flex justify-center text-terra"><svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9l7 7 7-7"/></svg></a>
     </div>
   </header>
 
   <!-- תמונת Hero — אחרי הסטריפ הנע -->
-  <section class="relative pt-5 md:pt-8 pb-6 md:pb-10">
+  <section class="relative pt-8 md:pt-10 pb-6 md:pb-10">
     <div class="relative max-w-3xl mx-auto px-5 reveal">
       <svg class="sway absolute -top-6 -right-1 md:-right-8 w-28 md:w-44 text-sand" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="100" fill="currentColor"/></svg>
       <svg class="sway slow absolute -bottom-6 -left-1 md:-left-6 w-20 md:w-28 text-sage/45" viewBox="0 0 120 160" aria-hidden="true"><path d="M0 160V60a60 60 0 0 1 120 0v100z" fill="currentColor"/></svg>
@@ -859,13 +853,6 @@
         io.observe(stage);
       } else loop();
     })();
-
-    /* חץ רמז להמשך — מוצג רק כשהתמונה לא נראית במסך, ונעלם ברגע שמתחילים לגלול */
-    (function(){ const h=document.getElementById('scrollHint'); if(!h) return;
-      const pic=document.getElementById('heroPic'); let picVisible=false;
-      const f=()=>{ const g=window.scrollY>20 || picVisible; h.classList.toggle('gone',g); h.tabIndex=g?-1:0; };
-      if (pic && 'IntersectionObserver' in window) new IntersectionObserver(([e])=>{ picVisible=e.isIntersecting; f(); },{threshold:0, rootMargin:'0px 0px -44px 0px'}).observe(pic);
-      window.addEventListener('scroll',f,{passive:true}); f(); })();
 
     /* CTA דביק במובייל — מוצג אחרי שכפתור "להכיר לעומק" יצא מהמסך, ומוסתר כשהטופס בתצוגה */
     const stickyCta = document.getElementById('stickyCta');
