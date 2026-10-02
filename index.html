@@ -466,37 +466,10 @@
     </div>
   </header>
 
-  <!-- סטריפ מילים — תנועה רכה ומתמשכת -->
-  <div class="marquee-wrap py-5 md:py-6" aria-hidden="true">
-    <div class="marquee font-display text-2xl md:text-[2rem] font-medium" dir="rtl">
-      <span class="text-olive px-6">גוף</span><span class="text-coral px-2">✿</span>
-      <span class="text-ink px-6">תנועה</span><span class="text-coral px-2">✿</span>
-      <span class="text-terra px-6">צחוק</span><span class="text-coral px-2">✿</span>
-      <span class="text-plum px-6">מוזיקה</span><span class="text-coral px-2">✿</span>
-      <span class="text-olive px-6">נשימה</span><span class="text-coral px-2">✿</span>
-      <span class="text-terra px-6">מבט</span><span class="text-coral px-2">✿</span>
-      <span class="text-ink px-6">שייכות</span><span class="text-coral px-2">✿</span>
-      <span class="text-olive px-6">חיוך</span><span class="text-coral px-2">✿</span>
-      <span class="text-plum px-6">חיבור</span><span class="text-coral px-2">✿</span>
-      <span class="text-terra px-6">קצב</span><span class="text-coral px-2">✿</span>
-      <span class="text-olive px-6">חופש</span><span class="text-coral px-2">✿</span>
-      <span class="text-ink px-6">משחק</span><span class="text-coral px-2">✿</span>
-      <span class="text-terra px-6">סקרנות</span><span class="text-coral px-2">✿</span>
-      <span class="text-plum px-6">נוכחות</span><span class="text-coral px-2">✿</span>
-      <span class="text-olive px-6">גוף</span><span class="text-coral px-2">✿</span>
-      <span class="text-ink px-6">תנועה</span><span class="text-coral px-2">✿</span>
-      <span class="text-terra px-6">צחוק</span><span class="text-coral px-2">✿</span>
-      <span class="text-plum px-6">מוזיקה</span><span class="text-coral px-2">✿</span>
-      <span class="text-olive px-6">נשימה</span><span class="text-coral px-2">✿</span>
-      <span class="text-terra px-6">מבט</span><span class="text-coral px-2">✿</span>
-      <span class="text-ink px-6">שייכות</span><span class="text-coral px-2">✿</span>
-      <span class="text-olive px-6">חיוך</span><span class="text-coral px-2">✿</span>
-      <span class="text-plum px-6">חיבור</span><span class="text-coral px-2">✿</span>
-      <span class="text-terra px-6">קצב</span><span class="text-coral px-2">✿</span>
-      <span class="text-olive px-6">חופש</span><span class="text-coral px-2">✿</span>
-      <span class="text-ink px-6">משחק</span><span class="text-coral px-2">✿</span>
-      <span class="text-terra px-6">סקרנות</span><span class="text-coral px-2">✿</span>
-      <span class="text-plum px-6">נוכחות</span><span class="text-coral px-2">✿</span>
+  <!-- מילים מתחלפות — מילה אחת בכל פעם, בסדר אקראי ועם אנימציית כניסה אקראית -->
+  <div class="py-6 md:py-10 text-center" aria-hidden="true">
+    <div class="h-24 md:h-32 flex items-center justify-center overflow-hidden">
+      <span id="rotWord" class="font-display font-medium text-[3.4rem] md:text-[5.4rem] leading-none inline-block text-terra">תנועה</span>
     </div>
   </div>
 
@@ -850,14 +823,39 @@
       });
     });
 
-    /* סטריפ המילים — סדר המילים מתערבב בכל טעינה (וצבעים מתחלפים בסבב) */
+    /* מילים מתחלפות — סדר אקראי; לכל מילה אנימציית כניסה אקראית (עדינה) */
     (function(){
-      const m = document.querySelector('.marquee'); if (!m) return;
-      const words = Array.from(m.querySelectorAll('span.px-6')).slice(0, 14).map(s => s.textContent);
-      for (let i = words.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [words[i], words[j]] = [words[j], words[i]]; }
-      const cols = ['olive', 'terra', 'ink', 'plum'];
-      const half = words.map((w, i) => '<span class="text-' + cols[i % 4] + ' px-6">' + w + '</span><span class="text-coral px-2">✿</span>').join('');
-      m.innerHTML = half + half;
+      const el = document.getElementById('rotWord'); if (!el || !el.animate) return;
+      const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const words = ['גוף','תנועה','צחוק','מוזיקה','נשימה','מבט','שייכות','חיוך','חיבור','קצב','חופש','משחק','סקרנות','נוכחות'];
+      const cols = ['#C96F52','#686A48','#663F4C','#D98B70','#9A9A75'];
+      const E = 'cubic-bezier(.2,.7,.2,1)';
+      const anims = [
+        [{opacity:0, transform:'translateY(26px)'}, {opacity:1, transform:'none'}],
+        [{opacity:0, transform:'translateY(-26px)'}, {opacity:1, transform:'none'}],
+        [{opacity:0, filter:'blur(12px)', transform:'scale(1.06)'}, {opacity:1, filter:'blur(0)', transform:'none'}],
+        [{opacity:0, transform:'scale(.72)'}, {opacity:1, transform:'none'}],
+        [{opacity:0, transform:'translateX(-44px)'}, {opacity:1, transform:'none'}],
+        [{opacity:0, transform:'translateX(44px)'}, {opacity:1, transform:'none'}],
+        [{opacity:0, letterSpacing:'.35em'}, {opacity:1, letterSpacing:'0'}],
+        [{opacity:0, transform:'translateY(18px) rotate(-5deg)'}, {opacity:1, transform:'none'}]
+      ];
+      let order = [], last = -1, ci = 0;
+      const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+      const next = () => { if (!order.length) { order = shuffle(words.slice()); if (order[order.length-1] === el.textContent) order.reverse(); } return order.pop(); };
+      const show = () => {
+        el.textContent = next();
+        el.style.color = cols[ci++ % cols.length];
+        if (reduce) return;
+        let k; do { k = Math.floor(Math.random() * anims.length); } while (k === last); last = k;
+        el.animate(anims[k], { duration: 550, easing: E, fill: 'both' });
+      };
+      const cycle = () => {
+        if (reduce) { show(); return; }
+        el.animate([{opacity:1},{opacity:0}], { duration: 250, easing: 'ease-in', fill: 'forwards' }).onfinish = show;
+      };
+      show();
+      setInterval(cycle, 1500);
     })();
 
     /* חץ רמז להמשך — נעלם ברגע שמתחילים לגלול */
