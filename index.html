@@ -506,7 +506,7 @@
     <section id="what" class="relative py-12 md:py-16">
       <div class="relative z-10 max-w-6xl mx-auto px-5">
         <h2 class="h-sect text-center mb-5 reveal">אז מה זה בעצם?</h2>
-        <p class="lead muted text-center max-w-2xl mx-auto mb-8 md:mb-12 reveal"><strong class="font-bold text-terra">שיטת הביודנסה</strong> משלבת מוזיקה, תנועה וקשר אנושי כדי לטפח תחושת חיות, ביטחון ופתיחות. החוויה מזמינה אותנו להקשיב למה שאנחנו מרגישים, לבטא את עצמנו ולהרגיש בנוח עם אחרים. את מה שחווים במפגש אפשר לקחת גם ליומיום, ליחסים שלנו ולדרך שבה אנחנו פוגשים את החיים</p>
+        <p class="lead muted text-center max-w-2xl mx-auto mb-8 md:mb-12 reveal"><strong class="font-bold text-terra">שיטת הביודנסה</strong> משלבת מוזיקה, תנועה וקשר אנושי כדי לטפח תחושת חיות, ביטחון ופתיחות. החוויה מזמינה אותנו להקשיב למה שאנחנו מרגישים, לבטא את עצמנו ולהרגיש בנוח עם אחרים. את מה שחווים במפגשים אפשר לקחת גם ליומיום, ליחסים שלנו ולדרך שבה אנחנו פוגשים את החיים</p>
         <div class="grid md:grid-cols-3 gap-5 md:gap-6">
           <article class="card-soft p-5 pb-8 md:p-6 md:pb-9 reveal">
             <div class="shape shape-blob t1 aspect-square mb-6 mx-auto w-[88%]"><img src="images/dance-foot.webp" width="600" height="600" loading="lazy" alt="חצאית מתנופפת ורגליים יחפות באמצע ריקוד"></div>
@@ -737,7 +737,7 @@
   </div>
 
   <!-- ====================== פוטר ====================== -->
-  <footer class="relative pt-6 pb-24 md:pb-12">
+  <footer class="relative pt-6 pb-8 md:pb-12">
     <div class="max-w-6xl mx-auto px-5 text-center">
       <svg class="w-16 h-4 text-sage mx-auto mb-6" viewBox="0 0 96 16" fill="none" aria-hidden="true"><path d="M2 8c8-8 14-8 22 0s14 8 22 0 14-8 22 0 14 8 22 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
       <p class="font-display text-xl font-semibold">יוצאים <span class="text-terra">להרפתקה</span></p>
@@ -854,15 +854,16 @@
     /* CTA דביק במובייל — מוצג אחרי שה-Hero יצא מהמסך, ומוסתר כשהטופס בתצוגה */
     const stickyCta = document.getElementById('stickyCta');
     if (stickyCta && 'IntersectionObserver' in window) {
-      let heroVisible = true, regVisible = false;
+      let heroVisible = true, regVisible = false, footVisible = false;
       const syncSticky = () => {
-        const show = !heroVisible && !regVisible;
+        const show = !heroVisible && !regVisible && !footVisible;   /* מוסתר גם בתחתית הדף, כך שאין צורך ברווח ריק מתחת לפוטר */
         stickyCta.classList.toggle('show', show);
         stickyCta.setAttribute('aria-hidden', show ? 'false' : 'true');
         stickyCta.querySelector('a').tabIndex = show ? 0 : -1;
       };
       new IntersectionObserver(([e]) => { heroVisible = e.isIntersecting; syncSticky(); }, { threshold:0 }).observe(document.getElementById('hero'));
       new IntersectionObserver(([e]) => { regVisible = e.isIntersecting; syncSticky(); }, { threshold:0 }).observe(document.getElementById('register'));
+      new IntersectionObserver(([e]) => { footVisible = e.isIntersecting; syncSticky(); }, { threshold:0 }).observe(document.querySelector('footer'));
     }
 
     /* share — פותח וואטסאפ עם קישור האתר בלבד, ללא טקסט נלווה */
