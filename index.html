@@ -332,6 +332,11 @@
 
     /* ===== CTA דביק במובייל — מופיע אחרי ה-Hero ונעלם ליד הטופס ===== */
     @media (max-height:700px){ #hero{ padding-top:1rem; } }
+    .scroll-hint{ transition:opacity .4s ease; }
+    .scroll-hint svg{ animation:hintBounce 1.6s ease-in-out infinite; }
+    .scroll-hint.gone{ opacity:0; pointer-events:none; }
+    @keyframes hintBounce{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(8px); } }
+    @media (prefers-reduced-motion: reduce){ .scroll-hint svg{ animation:none; } }
     .btn-green{ display:inline-block; background:#686A48; color:#FFFDF9; font-weight:700; font-size:1.05rem; padding:.8rem 1.6rem; border-radius:999px; }
     .method-link{ color:#C96F52; font-weight:700; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:6px; text-decoration-color:#D98B70; }
     .method-link .arr{ display:inline-block; margin-inline-start:.3em; font-size:.9em; }
@@ -457,7 +462,7 @@
           </div>
         </div>
       </div>
-      <a href="#what" aria-label="להמשך הדף" class="flex justify-center mt-3 text-terra"><svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9l7 7 7-7"/></svg></a>
+      <a id="scrollHint" href="#what" aria-label="להמשך הדף" class="scroll-hint flex justify-center mt-3 text-terra"><svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9l7 7 7-7"/></svg></a>
     </div>
   </header>
 
@@ -844,6 +849,11 @@
         if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); }
       });
     });
+
+    /* חץ רמז להמשך — נעלם ברגע שמתחילים לגלול */
+    (function(){ const h=document.getElementById('scrollHint'); if(!h) return;
+      const f=()=>{ const g=window.scrollY>20; h.classList.toggle('gone',g); h.tabIndex=g?-1:0; };
+      window.addEventListener('scroll',f,{passive:true}); f(); })();
 
     /* CTA דביק במובייל — מוצג אחרי שכפתור "להכיר לעומק" יצא מהמסך, ומוסתר כשהטופס בתצוגה */
     const stickyCta = document.getElementById('stickyCta');
