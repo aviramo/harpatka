@@ -480,10 +480,9 @@
                width="1200" height="1200" loading="lazy"
                alt="קבוצת אנשים רוקדים יחפים באולם מואר באור חם, בין עצי זית וקשתות">
         </div>
-        <div class="absolute inset-x-0 bottom-4 md:bottom-6 flex justify-center pointer-events-none" aria-hidden="true">
-          <div id="rotPill" class="inline-block rounded-full px-6 md:px-9 py-2 md:py-3 text-center overflow-hidden" style="transition:width .35s ease;background:rgba(255,253,249,.82);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);">
-            <span id="rotWord" class="font-display font-medium text-[2.4rem] md:text-[3.6rem] leading-none inline-block whitespace-nowrap text-terra">תנועה</span>
-          </div>
+        <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div class="absolute inset-0" style="background:radial-gradient(ellipse 62% 40% at 50% 50%, rgba(255,253,249,.88) 0%, rgba(255,253,249,.62) 45%, rgba(255,253,249,0) 100%);"></div>
+          <div id="rotStage" class="absolute inset-0"><span class="rot-w absolute inset-0 grid place-items-center font-display font-medium text-[3.6rem] md:text-[6.2rem] leading-none whitespace-nowrap text-terra" style="text-shadow:0 0 22px rgba(255,253,249,.95)">תנועה</span></div>
         </div>
       </div>
     </div>
@@ -822,41 +821,43 @@
       });
     });
 
-    /* מילים מתחלפות — סדר אקראי; לכל מילה אנימציית כניסה אקראית (עדינה) */
+    /* מילים מתחלפות על התמונה — סדר אקראי, הטיה אקראית ואנימציית כניסה אקראית ("שפיכה"); המילה הקודמת נעלמת */
     (function(){
-      const el = document.getElementById('rotWord'); if (!el || !el.animate) return;
+      const stage = document.getElementById('rotStage'); if (!stage || !stage.animate) return;
       const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
       const words = ['גוף','תנועה','צחוק','מוזיקה','נשימה','מבט','שייכות','חיוך','חיבור','קצב','חופש','משחק','סקרנות','נוכחות','חיוּת','יצירתיות','חיבתיות','אמון','פתיחות','הקשבה','קרבה','עדינות','שמחה','התחדשות','ביטחון','התרגשות'];
-      const cols = ['#C96F52','#686A48','#663F4C','#D98B70','#9A9A75'];
+      const cols = ['#C96F52','#686A48','#663F4C','#D98B70','#9A9A75','#A9533A'];
       const E = 'cubic-bezier(.2,.7,.2,1)';
-      const anims = [
-        [{opacity:0, transform:'translateY(26px)'}, {opacity:1, transform:'none'}],
-        [{opacity:0, transform:'translateY(-26px)'}, {opacity:1, transform:'none'}],
-        [{opacity:0, filter:'blur(12px)', transform:'scale(1.06)'}, {opacity:1, filter:'blur(0)', transform:'none'}],
-        [{opacity:0, transform:'scale(.72)'}, {opacity:1, transform:'none'}],
-        [{opacity:0, transform:'translateX(-44px)'}, {opacity:1, transform:'none'}],
-        [{opacity:0, transform:'translateX(44px)'}, {opacity:1, transform:'none'}],
-        [{opacity:0, letterSpacing:'.35em'}, {opacity:1, letterSpacing:'0'}],
-        [{opacity:0, transform:'translateY(18px) rotate(-5deg)'}, {opacity:1, transform:'none'}]
+      /* כניסות — כולן מסתיימות במצב נקי; "שפיכה" = חשיפה בחיתוך (clip-path) כמו צבע שנשפך */
+      const enters = [
+        r => [{clipPath:'inset(0 0 100% 0)', transform:'rotate('+r+'deg) translateY(-12px)'}, {clipPath:'inset(-20% -20% -20% -20%)', transform:'rotate('+r+'deg)'}],
+        r => [{clipPath:'inset(100% 0 0 0)', transform:'rotate('+r+'deg) translateY(12px)'}, {clipPath:'inset(-20% -20% -20% -20%)', transform:'rotate('+r+'deg)'}],
+        r => [{clipPath:'inset(0 0 0 100%)', transform:'rotate('+r+'deg)'}, {clipPath:'inset(-20% -20% -20% -20%)', transform:'rotate('+r+'deg)'}],
+        r => [{clipPath:'inset(0 100% 0 0)', transform:'rotate('+r+'deg)'}, {clipPath:'inset(-20% -20% -20% -20%)', transform:'rotate('+r+'deg)'}],
+        r => [{clipPath:'circle(0% at 50% 55%)', transform:'rotate('+r+'deg)'}, {clipPath:'circle(90% at 50% 55%)', transform:'rotate('+r+'deg)'}],
+        r => [{opacity:0, filter:'blur(14px)', transform:'rotate('+r+'deg) scale(1.12)'}, {opacity:1, filter:'blur(0)', transform:'rotate('+r+'deg)'}],
+        r => [{opacity:0, transform:'rotate('+r+'deg) scale(.7)'}, {opacity:1, transform:'rotate('+r+'deg)'}],
+        r => [{opacity:0, transform:'rotate('+(r*2.2)+'deg) translateY(22px)'}, {opacity:1, transform:'rotate('+r+'deg)'}]
       ];
-      let order = [], last = -1, ci = 0;
+      let order = [], last = -1, ci = 0, prev = stage.firstElementChild;
       const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-      const next = () => { if (!order.length) { order = shuffle(words.slice()); if (order[order.length-1] === el.textContent) order.reverse(); } return order.pop(); };
-      const show = () => {
-        el.textContent = next();
-        el.style.color = cols[ci++ % cols.length];
-        const pill = document.getElementById('rotPill');
-        if (pill) { const cs = getComputedStyle(pill); pill.style.width = (el.getBoundingClientRect().width + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight)) + 'px'; }
-        if (reduce) return;
-        let k; do { k = Math.floor(Math.random() * anims.length); } while (k === last); last = k;
-        el.animate(anims[k], { duration: 420, easing: E, fill: 'both' });
+      const next = () => { if (!order.length) { order = shuffle(words.slice()); if (order[order.length-1] === (prev && prev.textContent)) order.reverse(); } return order.pop(); };
+      const tilt = () => { const v = 3 + Math.random() * 7; return (Math.random() < .5 ? -v : v); };
+      prev.style.transform = 'rotate(' + tilt() + 'deg)';
+      const swap = () => {
+        const r = tilt();
+        const w = prev.cloneNode(false);
+        w.textContent = next();
+        w.style.color = cols[ci++ % cols.length];
+        w.style.transform = 'rotate(' + r + 'deg)';
+        stage.appendChild(w);
+        const old = prev; prev = w;
+        if (reduce) { old.remove(); return; }
+        let k; do { k = Math.floor(Math.random() * enters.length); } while (k === last); last = k;
+        w.animate(enters[k](r), { duration: 650, easing: E, fill: 'backwards' });
+        old.animate([{opacity:1},{opacity:0}], { duration: 500, delay: 150, easing: 'ease-in', fill: 'forwards' }).onfinish = () => old.remove();
       };
-      const cycle = () => {
-        if (reduce) { show(); return; }
-        el.animate([{opacity:1},{opacity:0}], { duration: 180, easing: 'ease-in', fill: 'forwards' }).onfinish = show;
-      };
-      show();
-      setInterval(cycle, 950);
+      setInterval(swap, 1500);
     })();
 
     /* חץ רמז להמשך — נעלם ברגע שמתחילים לגלול */
