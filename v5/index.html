@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- רמזי cache: מבקשים מהדפדפן לבדוק מחדש מול השרת. הערה: GitHub Pages לא מאפשר
+       להגדיר Cache-Control ברמת ה-HTTP, לכן האכיפה בפועל נעשית ב-Service Worker (sw.js). -->
+  <meta http-equiv="Cache-Control" content="no-cache, must-revalidate" />
+  <title>חוויה אנושית בלי מילים | ביודנסה לגילאי 30–49 – יוצאים להרפתקה</title>
+
+  <!-- Favicon -->
+  <link rel="icon" href="../images/favicon-v4.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="48x48" href="../images/favicon-v4-48.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="../images/favicon-v4-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="../images/favicon-v4-16.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="../images/favicon-v4-192.png" />
+  <link rel="apple-touch-icon" href="../images/apple-touch-icon-v4.png" />
+  <meta name="description" content="הזמנה לחוויה אנושית בלי מילים: מפגשי תנועה ומוזיקה קבועים בהרצליה לנשים וגברים בגילאי 30–49 בפרק פתוח בחיים. מסע של מבט, תנועה, נוכחות וכיף" />
+  <meta name="keywords" content="ביודנסה, ביודנסה לבוגרים, ביודנסה בישראל, שיטת הביודנסה, מפגשי תנועה, תנועה ומוזיקה, מפגשי תנועה קבועים, יוצאים להרפתקה" />
+
+  <!-- Canonical — מונע תוכן כפול מול aviramo.github.io/harpatka/ -->
+  <link rel="canonical" href="https://harpatka.co.il/v5/" />
+  <meta name="robots" content="noindex" />
+
+  <!-- Open Graph (WhatsApp / Facebook / רשתות) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://harpatka.co.il/v5/" />
+  <meta property="og:title" content="חוויה אנושית בלי מילים" />
+  <meta property="og:description" content="הזמנה למסע של מבט, תנועה, נוכחות וכיף. מפגשי תנועה קבועים בהרצליה, לגילאי 30–49" />
+  <meta property="og:image" content="https://harpatka.co.il/images/og-v3.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="1200" />
+  <meta property="og:locale" content="he_IL" />
+  <meta property="og:site_name" content="יוצאים להרפתקה" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="חוויה אנושית בלי מילים" />
+  <meta name="twitter:description" content="הזמנה למסע של מבט, תנועה, נוכחות וכיף. מפגשי תנועה קבועים בהרצליה, לגילאי 30–49" />
+  <meta name="twitter:image" content="https://harpatka.co.il/images/og-v3.jpg" />
+
+  <!-- Structured Data — Organization (זהות הארגון עבור גוגל) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "יוצאים להרפתקה",
+    "url": "https://harpatka.co.il/",
+    "logo": "https://harpatka.co.il/images/apple-touch-icon-v4.png",
+    "image": "https://harpatka.co.il/images/og-v3.jpg",
+    "description": "הזמנה לחוויה אנושית בלי מילים: מפגשי תנועה ומוזיקה קבועים בהרצליה לנשים וגברים בגילאי 30–49 בפרק פתוח בחיים. מסע של מבט, תנועה, נוכחות וכיף",
+    "founder": { "@type": "Person", "name": "אופיר אבירם" },
+    "areaServed": "IL",
+    "knowsAbout": [
+      "ביודנסה",
+      "שיטת הביודנסה",
+      "מפגשי תנועה קבועים",
+      "מוזיקה ותנועה",
+      "תנועה ומפגש אנושי"
+    ]
+  }
+  </script>
+
+  <!-- Structured Data — FAQPage (שאלות נפוצות; זכאי ל-rich snippet בגוגל) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "צריך לדעת לרקוד?",
+        "acceptedAnswer": { "@type": "Answer", "text": "ממש לא. המטרה היא לא לרקוד יפה, אלא פשוט לנוע." }
+      },
+      {
+        "@type": "Question",
+        "name": "יש מגע?",
+        "acceptedAnswer": { "@type": "Answer", "text": "בחלק מהתרגילים יכולה להיות הזמנה למגע עדין, בדרך כלל אחיזת ידיים. כל מגע הוא אופציונלי ובהסכמה, ואפשר לבחור שלא להשתתף בלי צורך להסביר." }
+      },
+      {
+        "@type": "Question",
+        "name": "ומה אם זה מביך?",
+        "acceptedAnswer": { "@type": "Answer", "text": "זה טבעי, וזה חלק מהעניין. כולנו מתחילים מאותה נקודה. עם הזמן נרגעים, וצומח משהו חדש: אמון, קלילות וחיוך שבא מעצמו" }
+      },
+      {
+        "@type": "Question",
+        "name": "האם זו קבוצת הכרויות?",
+        "acceptedAnswer": { "@type": "Answer", "text": "לא. המשתתפים נמצאים כרגע ללא זוגיות, אבל אין שום ציפייה שמשהו צריך לקרות." }
+      },
+      {
+        "@type": "Question",
+        "name": "מה לובשים?",
+        "acceptedAnswer": { "@type": "Answer", "text": "בגדים נוחים שקל לזוז בהם. כדאי להביא גם בקבוק מים." }
+      }
+    ]
+  }
+  </script>
+
+  <!-- Meta (Facebook) Pixel -->
+  <script>
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+    document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '429806621602468');
+    fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=429806621602468&ev=PageView&noscript=1"/></noscript>
+  <!-- End Meta Pixel -->
+
+  <!-- Fonts — Rubik לכותרות (עגול ורך), Assistant לגוף (קריא מאוד), Amatic SC לנגיעות בכתב יד -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@700&family=Assistant:wght@400;500;600;700&family=Rubik:wght@400;500;600;700&family=Fredoka:wght@600&display=swap" rel="stylesheet">
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cream: '#F6EFE4',
+            sand:  '#E8D5BE',
+            terra: '#C96F52',
+            coral: '#D98B70',
+            dusty: '#C98D86',
+            sage:  '#9A9A75',
+            olive: '#686A48',
+            plum:  '#663F4C',
+            ink:   '#3F382F',
+            paper: '#FFFDF9',
+            err:   '#A94B33',
+          },
+          fontFamily: {
+            display: ['"Rubik"', '"Assistant"', 'sans-serif'],
+            body: ['"Assistant"', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root{
+      --cream:#F6EFE4; --sand:#E8D5BE; --terra:#C96F52; --coral:#D98B70; --dusty:#C98D86;
+      --sage:#9A9A75; --olive:#686A48; --plum:#663F4C; --ink:#3F382F; --paper:#FFFDF9;
+      --muted:#51493F; --err:#A94B33;
+      --r-lg:32px; --r-md:26px;
+      --shadow-soft:0 34px 70px -44px rgba(63,56,47,.42);
+    }
+    /* בסיס טיפוגרפי מוגדל לקריאות: 17px במובייל, 18px מטאבלט ומעלה — כל ה-rem (טקסט וריווח) גדלים יחד */
+    html{ scroll-behavior:smooth; overflow-x:clip; font-size:106.25%; }
+    @media (min-width:768px){ html{ font-size:112.5%; } }
+    body{
+      font-family:"Assistant",sans-serif;
+      background:var(--cream);
+      color:var(--ink);
+      font-size:1.125rem;            /* ≈19px במובייל */
+      line-height:1.75;
+      -webkit-font-smoothing:antialiased;
+      overflow-x:clip;
+      max-width:100vw;
+    }
+    @media (min-width:768px){ body{ font-size:1.15rem; } }   /* ≈21px */
+    h1,h2,h3,.font-display{ font-family:"Rubik","Assistant",sans-serif; }
+
+    /* מניעת "יתום" — מילה בודדת בשורה האחרונה של פסקה */
+    p, li, summary, h1, h2, h3, h4, blockquote, figcaption, label, .ans p{ text-wrap:pretty; }
+    h1, h2, .balance{ text-wrap:balance; }
+    ::selection{ background:var(--terra); color:var(--paper); }
+
+    /* מרקם נייר עדין — תחושה אורגנית */
+    .grain::before{
+      content:""; position:fixed; inset:0; z-index:1; pointer-events:none;
+      opacity:.05; mix-blend-mode:multiply;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* ===== טיפוגרפיה ===== */
+    .h-hero{ font-size:clamp(2.2rem, 4.6vw, 3.6rem); line-height:1.08; font-weight:600; letter-spacing:-.015em; }
+    .h-sect{ font-size:clamp(2rem, 4vw, 2.9rem); line-height:1.14; font-weight:600; letter-spacing:-.01em; }
+    .h-card{ font-size:1.5rem; line-height:1.25; font-weight:600; }
+    .lead{ font-size:clamp(1.2rem, 1.7vw, 1.4rem); line-height:1.75; }   /* אותו מרווח שורות כמו גוף הטקסט — אחיד בכל הדף */
+    .muted{ color:var(--muted); }
+    .eyebrow{
+      display:inline-flex; align-items:center; gap:.6rem;
+      font-size:.98rem; font-weight:600; letter-spacing:.02em; color:var(--olive);
+    }
+    .eyebrow::before{ content:""; width:.55rem; height:.55rem; border-radius:9999px; background:var(--terra); }
+
+    /* ===== אנימציות עדינות ===== */
+    /* פס עליון: הלוגו נכנס מימין והכפתורים משמאל בטעינת הדף */
+    .from-right{ animation:slideFromRight .9s cubic-bezier(.16,1,.3,1) .1s both; }
+    .from-left{ animation:slideFromLeft .9s cubic-bezier(.16,1,.3,1) .1s both; }
+    @keyframes slideFromRight{ from{ opacity:0; transform:translateX(48px); } to{ opacity:1; transform:none; } }
+    @keyframes slideFromLeft{ from{ opacity:0; transform:translateX(-48px); } to{ opacity:1; transform:none; } }
+    @media (prefers-reduced-motion: reduce){ .from-right, .from-left{ animation:none; } }
+    .reveal{ opacity:0; transform:translateY(18px); transition:opacity 1s cubic-bezier(.16,1,.3,1), transform 1s cubic-bezier(.16,1,.3,1); }
+    .reveal.in{ opacity:1; transform:none; }
+    [data-parallax]{ will-change:transform; }
+    @media (prefers-reduced-motion: reduce){
+      .reveal{ opacity:1; transform:none; transition:none; }
+      [data-parallax]{ transform:none !important; }
+      html{ scroll-behavior:auto; }
+    }
+
+    /* ===== כפתורים — סטטיים (בלי אפקטי hover/לחיצה) ===== */
+    .btn-primary{
+      display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+      background:var(--terra); color:var(--paper); font-weight:700; letter-spacing:.005em;
+      box-shadow:0 14px 30px -16px rgba(201,111,82,.85);
+      cursor:pointer;
+    }
+    .btn-light{
+      display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+      background:var(--paper); color:#A9533A; font-weight:700; cursor:pointer;
+      box-shadow:0 14px 30px -16px rgba(63,56,47,.5);
+    }
+    .btn-ghost{
+      display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+      border:1.5px solid rgba(63,56,47,.22); color:var(--ink); background:transparent; font-weight:600;
+      cursor:pointer;
+    }
+    .btn-primary, .btn-ghost, .gender-opt, .consent-cb{ -webkit-tap-highlight-color:transparent; }
+    .btn-primary:active, .btn-ghost:active, .gender-opt:active{ transform:none; }
+    .btn-primary:disabled{ opacity:.55; cursor:default; box-shadow:none; }
+
+    /* ===== נגישות — טבעת פוקוס ברורה לניווט מקלדת, וקישור דילוג לטופס ===== */
+    a:focus-visible, button:focus-visible, summary:focus-visible, video:focus-visible{
+      outline:3px solid var(--plum); outline-offset:3px; border-radius:14px;
+    }
+    .skip-link{
+      position:absolute; top:-100px; right:1rem; z-index:70;
+      background:var(--ink); color:var(--paper); padding:.7rem 1.2rem; border-radius:999px; font-weight:600;
+    }
+    .skip-link:focus{ top:1rem; }
+
+    /* ===== כתב יד — נגיעה אנושית (wildcard) ===== */
+    .font-word{ font-family:"Fredoka","Rubik",sans-serif; font-weight:600; }
+    .hand{ font-family:"Amatic SC","Assistant",cursive; font-weight:700; letter-spacing:.01em; line-height:1; }
+    .sticker{
+      position:absolute; z-index:5; background:var(--paper); color:var(--ink);
+      padding:.55rem 1.15rem .7rem; border-radius:18px;
+      box-shadow:0 18px 34px -22px rgba(63,56,47,.55);
+      transform:rotate(-4deg);
+    }
+
+    /* ===== תנועה חתימה: "נשימה" איטית של הצורות, כמו בד שזז ברוח ===== */
+    @keyframes sway{ 0%,100%{ transform:translateY(0) rotate(0deg); } 50%{ transform:translateY(-10px) rotate(2deg); } }
+    .sway{ animation:sway 11s ease-in-out infinite; transform-origin:50% 100%; }
+    .sway.slow{ animation-duration:15s; animation-delay:-4s; }
+
+    /* ===== צמד המפתח בכותרת: "תנועה חדשה" — שורה משלו, גדול יותר, גרדיאנט זורם + משיכת מכחול רכה מאחור ===== */
+    .key{
+      position:relative; display:block; isolation:isolate;
+      font-size:1.75em; font-weight:700; letter-spacing:-.01em; line-height:1.02; margin-inline-start:-.035em; /* מיושר לימין כמו שאר הכותרת */
+    }
+    /* כל מילה בשורה משלה ובצבע משלה: "תנועה" ירוק זית, "חדשה?" טרקוטה (סימן השאלה באותו צבע) */
+    .key .kw{ display:block; width:max-content; padding-inline-end:.06em;
+      background-size:220% 100%; -webkit-background-clip:text; background-clip:text; color:transparent;
+    }
+    .key .kw1{ background-image:linear-gradient(100deg, #565B37 0%, #686A48 28%, #7F8656 52%, #949A6E 74%, #565B37 100%); }
+    .key .kw2{ background-image:linear-gradient(100deg, #B85E42 0%, #C96F52 30%, #D98B70 55%, #C98D86 78%, #B85E42 100%); }
+    .h-hero .key{ margin-top:.08em; }
+    @keyframes keyFlow{ 0%,100%{ background-position:0% 50%; } 50%{ background-position:100% 50%; } }
+    /* כניסה: מילים נחשפות אחת־אחת (טשטוש שנעלם, בלי תזוזה אנכית), ואז "תנועה חדשה" נחשפת מימין לשמאל
+       בקצה רך כמו משב רוח, משיכת המכחול נמתחת מאחוריה, והסרטים מתחתיה מופיעים */
+    .hero-in .w{ display:inline-block; opacity:0; filter:blur(6px);
+      animation:wordIn .7s cubic-bezier(.2,.7,.2,1) forwards; }
+    @keyframes wordIn{ to{ opacity:1; filter:blur(0); } }
+    /* "תנועה" ואז "חדשה?" — כל מילה נכנסת בנפרד, מימין לשמאל בקצה רך כמו משב רוח (בלי ציר Y), ואז דוממת */
+    .hero-in .key .kw{
+      -webkit-mask-image:linear-gradient(270deg, #000 42%, transparent 58%); mask-image:linear-gradient(270deg, #000 42%, transparent 58%);
+      -webkit-mask-size:320% 100%; mask-size:320% 100%;
+      -webkit-mask-position:0% 0; mask-position:0% 0;
+      animation:keyIn .85s cubic-bezier(.4,.05,.25,1) both;
+    }
+    .hero-in .key .kw1{ animation-delay:1.15s; }
+    .hero-in .key .kw2{ animation-delay:1.55s; }
+    @keyframes keyIn{
+      0%  { -webkit-mask-position:0% 0; mask-position:0% 0; transform:translateX(.6em); filter:blur(4px); }
+      100%{ -webkit-mask-position:100% 0; mask-position:100% 0; transform:none; filter:blur(0); }
+    }
+    .hero-in .key-q{ display:inline-block; opacity:0; animation:wordIn .8s ease 3.15s forwards; }
+    /* שלוש נקודות אחרי "שלך" — מופיעות אחת־אחת, פועמות רגע, ומתמוססות כש"תנועה חדשה" נכנסת לאותו מקום */
+    /* עטיפה ברוחב 0 על קו הבסיס — הנקודות יושבות בתחתית השורה כמו "..." אמיתי, בלי להזיז את הטקסט */
+    .dots{ display:inline-block; width:0; overflow:visible; white-space:nowrap; vertical-align:baseline; padding-inline-start:.14em;
+      animation:dotsOut .45s ease 1.15s forwards; }
+    .dots i{ display:inline-block; vertical-align:baseline; margin-inline-end:.16em; width:.15em; height:.15em; border-radius:50%; background:#686A48; opacity:0; transform:scale(.4);
+      animation:dotIn .45s ease forwards, dotPulse 1.1s ease-in-out infinite; }
+    .dots i:nth-child(1){ animation-delay:.45s, .75s; }
+    .dots i:nth-child(2){ animation-delay:.57s, .85s; }
+    .dots i:nth-child(3){ animation-delay:.69s, .95s; }
+    @keyframes dotIn{ to{ opacity:1; transform:scale(1); } }
+    @keyframes dotPulse{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
+    @keyframes dotsOut{ to{ opacity:0; filter:blur(4px); } }
+    .flow{ opacity:0; animation:fadeFlow 1s ease 3.35s forwards; }
+    @keyframes fadeFlow{ to{ opacity:1; } }
+    /* הדף "מצטייר" מלמעלה למטה: במובייל התמונה (שמתחת לטקסט) מופיעה רק אחרי הכפתור; בדסקטופ היא לצד הטקסט ומופיעה מוקדם יותר */
+    .intro{ transition-duration:.7s; }
+    .hero-pic{ transition-delay:2.8s; transition-duration:.7s; }   /* במובייל: יחד עם הכפתור */
+    @media (min-width:1024px){ .hero-pic{ transition-delay:2.2s; } }
+    .intro-strip{ opacity:0; transition:opacity .7s ease 3.2s; }
+    .intro-on .intro-strip{ opacity:1; }
+    /* אחרי הכניסה הראשונית, או ברגע שגוללים — בלי השהיה בכלל */
+    .intro-done .hero-pic, .intro-done .intro, .intro-done .intro-strip{ transition-delay:0s !important; }
+    @keyframes fadeFlow{ to{ opacity:1; } }
+
+    @media (prefers-reduced-motion: reduce){
+      .dots{ display:none; }
+      .key, .hero-in .w, .hero-in .key, .hero-in .key-q, .hero-in .key .kw, .flow, .dots, .dots i, .intro-strip{ animation:none; transition:none; opacity:1; transform:none; filter:none; -webkit-mask-image:none; mask-image:none; }
+    }
+
+    /* ===== תנועה מופשטת מתחת לכותרת — סרטי צבע זורמים (אנימציית SMIL, נעצרת ב-reduced motion דרך JS) ===== */
+    .flow{ display:block; width:100%; max-width:30rem; height:auto; overflow:visible; }
+
+    /* ===== סטריפ מילים נע (ltr-wrap, -50%→0) ===== */
+    .marquee-wrap{ direction:ltr; overflow:hidden; contain:paint; }
+    .marquee{ display:flex; width:max-content; animation:marquee 20s linear infinite; }
+    .marquee > span{ white-space:nowrap; }
+    @keyframes marquee{ from{ transform:translateX(-50%) } to{ transform:translateX(0) } }
+
+    /* ===== תמונות בצורת קשת — מהדהדות את הקשתות שבתמונה ===== */
+    .arch{ border-radius:999px 999px var(--r-md) var(--r-md); overflow:hidden; }
+    .arch img{ display:block; width:100%; height:100%; object-fit:cover; }
+
+    /* ===== שלוש צורות שונות לכרטיסי "אז מה זה בעצם?": בועה זורמת (זזים), עיגול (נפגשים), עלה (מגלים) ===== */
+    .shape{ overflow:hidden; box-shadow:0 26px 50px -34px rgba(63,56,47,.55); }
+    .shape img{ display:block; width:100%; height:100%; object-fit:cover; }
+    .shape-blob{ border-radius:58% 42% 55% 45% / 48% 58% 42% 52%; animation:blob 14s ease-in-out infinite; }
+    @keyframes blob{
+      0%,100%{ border-radius:58% 42% 55% 45% / 48% 58% 42% 52%; }
+      33%    { border-radius:44% 56% 40% 60% / 58% 42% 60% 40%; }
+      66%    { border-radius:52% 48% 62% 38% / 42% 52% 48% 58%; }
+    }
+    /* אותה צורה בשלוש הטיות: הבועה מסובבת, התמונה בתוכה מסובבת חזרה כדי להישאר ישרה; כל אחת בשלב אחר של הנשימה */
+    .shape-blob.t1{ transform:rotate(-9deg); animation-delay:0s; }
+    .shape-blob.t2{ transform:rotate(14deg); animation-delay:-4.7s; }
+    .shape-blob.t3{ transform:rotate(-24deg) scaleX(-1); animation-delay:-9.3s; }
+    .shape-blob.t1 img{ transform:rotate(9deg) scale(1.2); }
+    .shape-blob.t2 img{ transform:rotate(-14deg) scale(1.25); }
+    .shape-blob.t3 img{ transform:scaleX(-1) rotate(24deg) scale(1.35); }
+    @media (prefers-reduced-motion: reduce){ .shape-blob{ animation:none; } }
+
+    /* ===== CTA דביק במובייל — מופיע אחרי ה-Hero ונעלם ליד הטופס ===== */
+    @media (max-height:700px){ #hero{ padding-top:1rem; } }
+    .btn-green{ display:inline-block; background:#686A48; color:#FFFDF9; font-weight:700; font-size:1.05rem; padding:.8rem 1.6rem; border-radius:999px; }
+    .method-link{ color:#C96F52; font-weight:700; text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:6px; text-decoration-color:#D98B70; }
+    .method-link .arr{ display:inline-block; margin-inline-start:.3em; font-size:.9em; }
+    .sticky-cta{
+      position:fixed; inset-inline:0; bottom:0; z-index:40;
+      padding:.75rem 1rem calc(.75rem + env(safe-area-inset-bottom, 0px));
+      background:linear-gradient(to top, rgba(246,239,228,.97) 70%, rgba(246,239,228,0));
+      transform:translateY(110%); transition:transform .45s cubic-bezier(.16,1,.3,1);
+    }
+    .sticky-cta.show{ transform:none; }
+    @media (min-width:768px){ .sticky-cta{ display:none; } }
+
+    @media (prefers-reduced-motion: reduce){
+      .sway, .marquee{ animation:none; }
+    }
+
+    /* ===== כרטיסים ===== */
+    .card-soft{ background:rgba(232,213,190,.42); border-radius:var(--r-md); }
+    .shadow-soft{ box-shadow:var(--shadow-soft); }
+
+    /* ===== Hero ===== */
+    .hero-img{ border-radius:var(--r-lg); overflow:hidden; box-shadow:0 40px 80px -48px rgba(63,56,47,.55); }
+    .hero-img img{ display:block; width:100%; height:auto; }
+
+    /* ===== מסלול המפגש ===== */
+    .step-dot{
+      width:3.5rem; height:3.5rem; border-radius:9999px; flex:none;
+      display:grid; place-items:center;
+      font-family:"Rubik",sans-serif; font-weight:600; font-size:1.2rem;
+      background:var(--sand); color:var(--olive);
+      box-shadow:0 0 0 7px var(--cream);
+    }
+    .step-dot.is-last{ background:var(--terra); color:var(--paper); }
+
+    /* ===== וידאו ===== */
+    .imgframe{ background:var(--sand); position:relative; overflow:hidden; }
+    .imgframe img, .imgframe video{ width:100%; height:100%; object-fit:cover; display:block; }
+
+    /* ===== FAQ ===== */
+    details{ border-bottom:1px solid rgba(63,56,47,.13); }
+    details summary{ cursor:pointer; list-style:none; }
+    details summary::-webkit-details-marker{ display:none; }
+    details summary .chev{ transition:transform .3s ease; }
+    details[open] summary .chev{ transform:rotate(45deg); }
+    details .ans{ overflow:hidden; max-height:0; transition:max-height .4s ease; }
+    details[open] .ans{ max-height:40rem; }
+
+    /* ===== טופס ===== */
+    .field{
+      background:var(--cream); border:1px solid rgba(104,106,72,.28);
+      color:var(--ink); border-radius:16px; transition:border-color .2s ease, box-shadow .2s ease;
+      text-align:right; direction:rtl;
+      height:3.5rem;   /* גובה אחיד לכל השדות והכפתורים */
+    }
+    .field:focus{ outline:none; border-color:var(--terra); box-shadow:0 0 0 3px rgba(201,111,82,.18); }
+    .field::placeholder{ color:rgba(63,56,47,.45); text-align:right; }
+    /* מנטרל את הרקע הצבעוני של מילוי-אוטומטי (Chrome/Safari) ושומר על צבע השדה */
+    input.field:-webkit-autofill,
+    input.field:-webkit-autofill:hover,
+    input.field:-webkit-autofill:focus{
+      -webkit-text-fill-color:var(--ink);
+      caret-color:var(--ink);
+      -webkit-box-shadow:0 0 0 1000px #F6EFE4 inset;
+      transition:background-color 9999s ease-in-out 0s;
+    }
+    .field.invalid{ border-color:var(--err) !important; box-shadow:0 0 0 3px rgba(169,75,51,.16); }
+    .field.invalid:focus{ border-color:var(--err) !important; box-shadow:0 0 0 3px rgba(169,75,51,.22); }
+    .gender-opt{ appearance:none; -webkit-appearance:none; cursor:pointer; display:flex; align-items:center; justify-content:center; text-align:center; font-weight:600; color:var(--ink); line-height:1.15; }
+    .gender-opt.selected{ border-color:var(--terra) !important; background:rgba(201,111,82,.12); color:#9C4A30; box-shadow:0 0 0 2px rgba(201,111,82,.25); }
+
+    .consent-cb{
+      appearance:none; -webkit-appearance:none; flex:none; position:relative; cursor:pointer;
+      width:1.4rem; height:1.4rem; border-radius:.45rem;
+      background:var(--cream); border:1px solid rgba(104,106,72,.4);
+      transition:border-color .2s ease, background .2s ease;
+    }
+    .consent-cb:checked{ background:var(--terra); border-color:var(--terra); }
+    .consent-cb:checked::after{
+      content:""; position:absolute; left:50%; top:46%;
+      width:.34rem; height:.66rem; border:solid var(--paper); border-width:0 .17rem .17rem 0;
+      transform:translate(-50%,-50%) rotate(45deg);
+    }
+    .consent-cb:focus-visible{ outline:none; border-color:var(--terra); box-shadow:0 0 0 3px rgba(201,111,82,.22); }
+  </style>
+</head>
+
+<body class="grain">
+  <a href="#register" class="skip-link">דילוג להצטרפות</a>
+
+  <!-- ====================== כותרת עליונה ====================== -->
+  <div class="relative z-10 max-w-[76rem] mx-auto px-5 pt-5 md:pt-7 flex items-center justify-between gap-4">
+    <p class="from-right font-display font-semibold text-[1.05rem] sm:text-lg md:text-xl text-ink whitespace-nowrap">יוצאים <span class="text-terra">להרפתקה</span></p>
+    <div class="from-left flex gap-2 items-center">
+      <a id="updates" href="#" target="_blank" rel="noopener" aria-label="להצטרפות לקבוצת העדכונים השקטה בוואטסאפ"
+         class="btn-ghost rounded-full px-3.5 sm:px-4 py-2 text-[.95rem]">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[1.1rem] h-[1.1rem] text-olive" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.057 0a11.82 11.82 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.477-.913zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+        לעדכונים
+      </a>
+      <a id="share" href="#" target="_blank" rel="noopener" aria-label="שיתוף הקישור לאתר בוואטסאפ"
+         class="btn-ghost rounded-full px-3 sm:px-4 py-2 text-[.95rem]">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[1.1rem] h-[1.1rem] text-olive" fill="currentColor" aria-hidden="true"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
+        <span class="hidden sm:inline">שיתוף</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- ====================== 1. HERO — מכתב הזמנה (מעטפת דואר בפסים): חוויה אנושית בלי מילים + מי מגיע + CTA ====================== -->
+  <header id="hero" class="relative pt-8 md:pt-12 pb-0">
+    <div class="relative z-10 max-w-2xl mx-auto px-5 reveal">
+      <div class="p-[10px] md:p-[12px] rounded-[20px]" style="background:repeating-linear-gradient(-45deg,#C96F52 0 14px,#FFFDF9 14px 24px,#9A9A75 24px 38px,#FFFDF9 38px 48px);box-shadow:0 8px 24px rgba(63,56,47,.10);">
+        <div class="relative rounded-[12px] text-ink text-center px-6 md:px-12 pt-6 md:pt-8 pb-8 md:pb-10" style="background:#FFFDF9;">
+          <div class="flex items-start justify-between mb-5 md:mb-6">
+            <p class="hand text-[3.4rem] md:text-[4.6rem] text-[#B85C40] pt-0">הזמנה</p>
+            <div class="w-[3.8rem] h-[4.5rem] md:w-[4.4rem] md:h-[5.2rem] grid place-items-center text-terra" style="background:#F3E3D1;border:5px dotted #FFFDF9;outline:1.5px solid #E6D3BC;outline-offset:-1px;transform:rotate(4deg);" aria-hidden="true"><svg class="w-full h-full p-1" viewBox="0 0 48 52" fill="currentColor" aria-hidden="true"><g stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"><path d="M15 21Q8 17 6 9"/><path d="M15 21Q21 18 24 12"/><path d="M34 22Q40 17 42 11"/><path d="M34 22Q29 19 27 14"/></g><circle cx="15" cy="12" r="3.4"/><path d="M15 17C9 22 8 33 5 42L25 42C22 33 21 22 15 17Z"/><circle cx="34" cy="13" r="3.2" fill="#C98D86"/><path d="M34 18C28.500 23 28 33 26 42L42 42C40 33 39.500 23 34 18Z" fill="#9A9A75"/></svg></div>
+          </div>
+          <h1 class="h-sect mb-4">חוויה אנושית בלי מילים</h1>
+          <p class="lead text-ink/80">מסע של מבט, תנועה, נוכחות וכיף</p>
+          <div class="mx-auto my-7 w-16 border-t-2 border-dotted border-sage/60" aria-hidden="true"></div>
+          <h2 class="h-card text-xl md:text-2xl mb-2">מי מגיע?</h2>
+          <p class="lead">נשים וגברים בגילאי 30–49 בפרק פתוח בחיים, בתקופה של שינויים, עם רצון לתנועה חדשה</p>
+          <div class="flex justify-center mt-8">
+            <a href="#" target="_blank" rel="noopener" data-wa-hadar class="btn-primary rounded-full px-5 md:px-8 py-4 text-[1.05rem] md:text-[1.2rem] whitespace-nowrap w-full max-w-[24rem]"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6 h-6" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.057 0a11.82 11.82 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.477-.913zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>אני רוצה לשמוע עוד פרטים</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- תמונת Hero — אחרי הסטריפ הנע -->
+  <section class="relative pt-8 md:pt-10 pb-6 md:pb-10">
+    <div id="heroPicWrap" class="relative max-w-3xl mx-auto px-5 reveal">
+      <svg class="sway absolute -top-6 -right-1 md:-right-8 w-28 md:w-44 text-sand" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="100" fill="currentColor"/></svg>
+      <svg class="sway slow absolute -bottom-6 -left-1 md:-left-6 w-20 md:w-28 text-sage/45" viewBox="0 0 120 160" aria-hidden="true"><path d="M0 160V60a60 60 0 0 1 120 0v100z" fill="currentColor"/></svg>
+      <div class="relative">
+        <div id="heroPic" class="hero-img">
+          <img src="../images/biodanza-hero.webp"
+               srcset="../images/biodanza-hero-720.webp 720w, ../images/biodanza-hero.webp 1200w"
+               sizes="(min-width:768px) 48rem, 92vw"
+               width="1200" height="1200"
+               alt="קבוצת אנשים רוקדים יחפים באולם מואר באור חם, בין עצי זית וקשתות">
+        </div>
+        <div class="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <div class="absolute inset-0" style="background:radial-gradient(ellipse 70% 20% at 50% 83%, rgba(255,253,249,.9) 0%, rgba(255,253,249,.65) 50%, rgba(255,253,249,0) 100%);"></div>
+          <div id="rotStage" class="absolute inset-x-0 bottom-0 h-[34%]"><span class="rot-w absolute inset-0 grid place-items-center font-word text-[4.2rem] md:text-[7.2rem] leading-none whitespace-nowrap text-terra" style="text-shadow:0 0 22px rgba(255,253,249,.95)">תנועה</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main>
+    <!-- ====================== 3. אז מה זה בעצם ====================== -->
+    <section id="what" class="relative py-12 md:py-16">
+      <div class="relative z-10 max-w-6xl mx-auto px-5">
+        <h2 class="h-sect text-center mb-5 reveal">אז מה זה בעצם?</h2>
+        <p class="lead muted text-center max-w-2xl mx-auto mb-4 reveal"><strong class="font-bold text-ink">שיטת הביודנסה</strong> משלבת מוזיקה, תנועה וקשר אנושי כדי לטפח תחושת חיות, ביטחון ופתיחות. החוויה מזמינה אותנו להקשיב למה שאנחנו מרגישים, לבטא את עצמנו ולהרגיש בנוח עם אחרים. את מה שחווים במפגשים אפשר לקחת גם ליומיום, ליחסים שלנו ולדרך שבה אנחנו פוגשים את החיים</p>
+        <div class="text-center max-w-xl mx-auto mb-6 md:mb-8 reveal">
+          <div class="flex items-center justify-center gap-3 text-terra mb-2" aria-hidden="true"><span class="w-12 border-t-2 border-dotted border-coral/70"></span><svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.3-9.2C1.4 8.4 3.4 5 6.8 5c2 0 3.5 1.1 5.2 3 1.7-1.9 3.2-3 5.2-3 3.4 0 5.4 3.4 4.1 6.8C19.5 16.4 12 21 12 21z"/></svg><span class="w-12 border-t-2 border-dotted border-coral/70"></span></div>
+          <p class="hand text-[2rem] md:text-[2.6rem] leading-[1.1] text-terra">ומתוך כל זה יכולות לצמוח חברות, קרבה ואולי גם אהבה</p>
+        </div>
+        <p class="text-center mb-8 md:mb-12 reveal"><a id="methodBtn" href="../biodanza/" class="btn-green">להכיר לעומק את שיטת הביודנסה</a></p>
+        <div class="grid md:grid-cols-3 gap-5 md:gap-6">
+          <article class="card-soft p-5 pb-8 md:p-6 md:pb-9 reveal">
+            <div class="shape shape-blob t1 aspect-square mb-6 mx-auto w-[88%]"><img src="../images/dance-foot.webp" width="600" height="600" loading="lazy" alt="חצאית מתנופפת ורגליים יחפות באמצע ריקוד"></div>
+            <h3 class="h-card mb-2 px-3">זזים</h3>
+            <p class="muted px-3">מוזיקה טובה ותרגילים פשוטים שמוציאים מהראש ומכניסים לגוף</p>
+          </article>
+          <article class="card-soft p-5 pb-8 md:p-6 md:pb-9 reveal" style="transition-delay:.08s">
+            <div class="shape shape-blob t2 aspect-square mb-6 mx-auto w-[88%]"><img src="../images/fingertips.webp" width="600" height="750" loading="lazy" alt="שתי ידיים נפגשות בקצות האצבעות באור חם"></div>
+            <h3 class="h-card mb-2 px-3">נפגשים</h3>
+            <p class="muted px-3">מגע קטן, מבט, רגע משותף. מפגש אחרי מפגש, הקשר נבנה לבד</p>
+          </article>
+          <article class="card-soft p-5 pb-8 md:p-6 md:pb-9 reveal" style="transition-delay:.16s">
+            <div class="shape shape-blob t3 aspect-square mb-6 mx-auto w-[88%]"><img src="../images/hands-heart-wide.webp" width="700" height="700" loading="lazy" alt="שתי ידיים מונחות על הלב"></div>
+            <h3 class="h-card mb-2 px-3">מגלים</h3>
+            <p class="muted px-3">פוגשים את עצמנו מחדש, וכל מפגש מלמד משהו חדש</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================== 5. איך נראה מפגש ====================== -->
+    <section id="session" class="relative py-12 md:py-16">
+      <div class="relative z-10 max-w-6xl mx-auto px-5">
+        <h2 class="h-sect text-center mb-6 md:mb-8 reveal">המפגש עצמו</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-w-3xl mx-auto mb-12 md:mb-16">
+          <div class="card-soft px-4 py-5 md:py-6 text-center reveal" style="transition-delay:0.00s">
+            <span class="inline-flex text-terra mb-2"><svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg></span>
+            <div class="text-[.9rem] muted">יום</div>
+            <div class="h-card text-[1.2rem] md:text-[1.35rem]">ראשון</div>
+          </div>
+          <div class="card-soft px-4 py-5 md:py-6 text-center reveal" style="transition-delay:0.05s">
+            <span class="inline-flex text-terra mb-2"><svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg></span>
+            <div class="text-[.9rem] muted">שעה</div>
+            <div class="h-card text-[1.2rem] md:text-[1.35rem]">20:00</div>
+          </div>
+          <div class="card-soft px-4 py-5 md:py-6 text-center reveal" style="transition-delay:0.10s">
+            <span class="inline-flex text-terra mb-2"><svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span>
+            <div class="text-[.9rem] muted">מקום</div>
+            <div class="h-card text-[1.2rem] md:text-[1.35rem]">הרצליה</div>
+          </div>
+          <div class="card-soft px-4 py-5 md:py-6 text-center reveal" style="transition-delay:0.15s">
+            <span class="inline-flex text-terra mb-2"><svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h10M7 21h10M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9s8 4 8 9"/></svg></span>
+            <div class="text-[.9rem] muted">משך</div>
+            <div class="h-card text-[1.2rem] md:text-[1.35rem]">כשעתיים</div>
+          </div>
+          <div class="card-soft px-4 py-5 md:py-6 text-center reveal" style="transition-delay:0.20s">
+            <span class="inline-flex text-terra mb-2"><svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14-4.5L4 9M4 4v5h5M4 13a8 8 0 0 0 14 4.5L20 15M20 20v-5h-5"/></svg></span>
+            <div class="text-[.9rem] muted">תדירות</div>
+            <div class="h-card text-[1.2rem] md:text-[1.35rem]">מפגשים קבועים שחוזרים</div>
+          </div>
+          <div class="card-soft px-4 py-5 md:py-6 text-center reveal" style="transition-delay:0.25s">
+            <span class="inline-flex text-terra mb-2"><svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18M9.5 4.5A3 3 0 0 1 15 6v4M9 9v2a3 3 0 0 0 4.6 2.5M5.5 11a6.5 6.5 0 0 0 10 5.5M12 17.5V21"/></svg></span>
+            <div class="text-[.9rem] muted">בלי מילים</div>
+            <div class="h-card text-[1.2rem] md:text-[1.35rem]">ללא דיבור</div>
+          </div>
+        </div>
+        <ol class="relative grid md:grid-cols-6 gap-8 md:gap-5">
+          <span class="md:hidden pointer-events-none absolute top-7 bottom-7 right-7 w-0 border-r-2 border-dashed border-sage/45" aria-hidden="true"></span>
+          <span class="hidden md:block pointer-events-none absolute top-7 right-[10%] left-[10%] h-0 border-t-2 border-dashed border-sage/45" aria-hidden="true"></span>
+          <li class="relative flex md:flex-col md:items-center md:text-center gap-5 reveal" style="transition-delay:0.00s">
+            <span class="step-dot relative z-10">1</span>
+            <div class="md:px-1 pt-2 md:pt-0">
+              <h3 class="h-card mb-1">מתיישבים</h3>
+              <p class="muted text-[1.05rem]">הסבר קצר על מה שהולך לקרות ושיתופים מהמפגש האחרון</p>
+            </div>
+          </li>
+          <li class="relative flex md:flex-col md:items-center md:text-center gap-5 reveal" style="transition-delay:0.06s">
+            <span class="step-dot relative z-10">2</span>
+            <div class="md:px-1 pt-2 md:pt-0">
+              <h3 class="h-card mb-1">מתחילים לזוז</h3>
+              <p class="muted text-[1.05rem]">מתרגלים ונכנסים לחוויה שהיא בעצם הרפתקה קטנה</p>
+            </div>
+          </li>
+          <li class="relative flex md:flex-col md:items-center md:text-center gap-5 reveal" style="transition-delay:0.12s">
+            <span class="step-dot relative z-10">3</span>
+            <div class="md:px-1 pt-2 md:pt-0">
+              <h3 class="h-card mb-1">מעלים את הקצב</h3>
+              <p class="muted text-[1.05rem]">שובבות וכיף, הרבה ריקוד, והדופק עולה</p>
+            </div>
+          </li>
+          <li class="relative flex md:flex-col md:items-center md:text-center gap-5 reveal" style="transition-delay:0.18s">
+            <span class="step-dot relative z-10">4</span>
+            <div class="md:px-1 pt-2 md:pt-0">
+              <h3 class="h-card mb-1">מאטים</h3>
+              <p class="muted text-[1.05rem]">הקצב יורד, נכנסים פנימה, והלב נפתח<br><span class="font-semibold text-terra">כאן הקסם מתחיל לקרות</span></p>
+            </div>
+          </li>
+          <li class="relative flex md:flex-col md:items-center md:text-center gap-5 reveal" style="transition-delay:0.24s">
+            <span class="step-dot relative z-10">5</span>
+            <div class="md:px-1 pt-2 md:pt-0">
+              <h3 class="h-card mb-1">חוזרים לקרקע</h3>
+              <p class="muted text-[1.05rem]">הקצב עולה שוב, ויוצאים ערניים ומלאי חיים</p>
+            </div>
+          </li>
+          <li class="relative flex md:flex-col md:items-center md:text-center gap-5 reveal" style="transition-delay:0.30s">
+            <span class="step-dot is-last relative z-10">6</span>
+            <div class="md:px-1 pt-2 md:pt-0">
+              <h3 class="h-card mb-1 text-terra">חוזרים במפגש הבא</h3>
+              <p class="muted text-[1.05rem]">וממשיכים מאותה נקודה</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ====================== 8. ומה אם זה מביך? (+ הסרטון) ====================== -->
+    <section id="human" class="relative pt-0 pb-12 md:pb-16">
+      <div class="relative z-10 max-w-6xl mx-auto px-5">
+        <div class="grid items-center">
+          <div class="reveal">
+            <div class="imgframe rounded-[32px] aspect-[3/4] relative max-w-md mx-auto shadow-soft">
+              <video id="motionVid" aria-label="סרטון קצר מתוך מפגש תנועה" class="cursor-pointer" playsinline loop muted preload="auto">
+                <source src="../images/motion.mp4#t=0.1" type="video/mp4">
+              </video>
+              <button id="motionToggle" type="button" aria-label="הפעלה / השהיה"
+                class="absolute bottom-3 left-3 z-10 w-12 h-12 rounded-full bg-ink/55 backdrop-blur-sm flex items-center justify-center text-paper">
+                <svg class="ic-play w-6 h-6 hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                <svg class="ic-pause w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+              </button>
+              <span id="motionMuted" class="absolute bottom-3 right-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-ink/55 backdrop-blur-sm text-paper text-sm px-3 py-2 pointer-events-none">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.63 3.63a.996.996 0 000 1.41L7.29 8.7 7 9H4a1 1 0 00-1 1v4a1 1 0 001 1h3l3.29 3.29c.63.63 1.71.18 1.71-.71v-4.17l4.18 4.18c-.49.37-1.02.68-1.6.91-.36.15-.58.53-.58.92 0 .72.73 1.18 1.39.91.8-.33 1.55-.77 2.22-1.31l1.34 1.34a.996.996 0 101.41-1.41L5.05 3.63a.996.996 0 00-1.42 0zM19 12c0 .82-.15 1.61-.41 2.34l1.53 1.53c.56-1.17.88-2.48.88-3.87 0-3.83-2.4-7.11-5.78-8.4-.59-.23-1.22.23-1.22.86v.19c0 .38.25.71.61.85C17.18 6.54 19 9.06 19 12zm-8.71-6.29l-.17.17L12 7.76V6.41c0-.89-1.08-1.33-1.71-.7zM16.5 12A4.5 4.5 0 0014 7.97v1.79l2.48 2.48c.01-.08.02-.16.02-.24z"/></svg>
+                הקשה להפעלת הסאונד
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================== 9. מי מחזיק את המרחב — שני מנחים במעמד שווה (הדר ראשונה, אופיר שני) ====================== -->
+    <section id="facilitators" class="relative py-12 md:py-16">
+      <div class="relative z-10 max-w-5xl mx-auto px-5">
+        <div class="text-center mb-8 md:mb-10 reveal">
+          <h2 class="h-sect mb-3">מי מלווה את המפגשים?</h2>
+          <p class="lead muted">הדר לוריא ואופיר אבירם מנחים יחד</p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-5 md:gap-6">
+          <!-- הדר לוריא -->
+          <article class="card-soft px-5 py-8 md:p-10 text-center reveal">
+            <img src="../images/hadar.jpg" width="400" height="400" loading="lazy" alt="הדר לוריא"
+                 class="w-32 h-32 md:w-36 md:h-36 rounded-full object-cover mx-auto mb-5 ring-[6px] ring-cream">
+            <h3 class="h-card mb-3">הדר לוריא</h3>
+            <p class="muted text-[1.05rem]">חוקרת את החיבור בין גוף, רגשות ותקשורת. מנחה תנועה, תקשורת מקרבת, יוגה ומדיטציה, ומביאה לקבוצה רגישות ועומק</p>
+          </article>
+          <!-- אופיר אבירם -->
+          <article class="card-soft px-5 py-8 md:p-10 text-center reveal" style="transition-delay:.08s">
+            <img src="../images/ofir.jpg" width="400" height="400" loading="lazy" alt="אופיר אבירם"
+                 class="w-32 h-32 md:w-36 md:h-36 rounded-full object-cover mx-auto mb-5 ring-[6px] ring-cream">
+            <h3 class="h-card mb-3">אופיר אבירם</h3>
+            <p class="muted text-[1.05rem]">יוצר ומנחה מפגשי מוזיקה, תנועה ושירה. לומד ומעמיק בדרך שבה מוזיקה ותנועה מקרבות בין אנשים, ומביא לקבוצה חום, משחקיות וגובה עיניים</p>
+          </article>
+        </div>
+        <p class="font-display text-xl md:text-2xl font-semibold text-center text-ink mt-8 md:mt-10 reveal">מרחב לזוז, להרגיש <span class="text-terra">ולהיפגש</span></p>
+      </div>
+    </section>
+
+    <!-- ====================== 10. הזמנה — וואטסאפ עם הדר ====================== -->
+    <section id="register" class="relative py-6 md:py-10 scroll-mt-6">
+      <div class="max-w-6xl mx-auto px-5">
+        <div class="relative overflow-hidden rounded-[32px] px-6 py-12 md:px-14 md:py-16 text-center"
+             style="background:linear-gradient(150deg, #CF7A5D 0%, #D98B70 55%, #DE9A82 100%);">
+          <svg class="absolute -top-28 -right-20 w-80 md:w-[28rem] text-paper/10 pointer-events-none" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="100" fill="currentColor"/></svg>
+          <div class="relative max-w-2xl mx-auto text-paper">
+            <h2 class="h-sect mb-4 reveal">אולי זה הזמן להכניס קצת תנועה</h2>
+            <p class="lead text-paper/90 mb-8 reveal">קבוצה חדשה נפתחת, ומספר המקומות מוגבל</p>
+            <div class="flex justify-center reveal"><a href="#" target="_blank" rel="noopener" data-wa-hadar class="btn-light rounded-full px-5 md:px-8 py-4 text-[1.05rem] md:text-[1.2rem] whitespace-nowrap w-full max-w-[24rem]"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6 h-6" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.057 0a11.82 11.82 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.477-.913zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>אני רוצה לשמוע עוד פרטים</a></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====================== FAQ ====================== -->
+    <section id="faq" class="relative py-12 md:py-16">
+      <div class="relative z-10 max-w-3xl mx-auto px-5">
+        <h2 class="h-sect mb-8 text-center reveal">שאלות נפוצות</h2>
+        <div class="reveal">
+          <details>
+            <summary class="flex items-center justify-between gap-4 py-5 text-lg md:text-xl font-semibold">צריך לדעת לרקוד? <span class="chev text-terra text-2xl">+</span></summary>
+            <div class="ans"><p class="pb-6 muted">ממש לא. המטרה היא לא לרקוד יפה, אלא פשוט לנוע</p></div>
+          </details>
+          <details>
+            <summary class="flex items-center justify-between gap-4 py-5 text-lg md:text-xl font-semibold">יש מגע? <span class="chev text-terra text-2xl">+</span></summary>
+            <div class="ans"><p class="pb-6 muted">בחלק מהתרגילים יכולה להיות הזמנה למגע עדין, בדרך כלל אחיזת ידיים. כל מגע הוא אופציונלי ובהסכמה, ואפשר לבחור שלא להשתתף בלי צורך להסביר</p></div>
+          </details>
+          <details>
+            <summary class="flex items-center justify-between gap-4 py-5 text-lg md:text-xl font-semibold">ומה אם זה מביך? <span class="chev text-terra text-2xl">+</span></summary>
+            <div class="ans"><p class="pb-6 muted">זה טבעי, וזה חלק מהעניין. כולנו מתחילים מאותה נקודה. עם הזמן נרגעים, וצומח משהו חדש: אמון, קלילות וחיוך שבא מעצמו</p></div>
+          </details>
+          <details>
+            <summary class="flex items-center justify-between gap-4 py-5 text-lg md:text-xl font-semibold">האם זו קבוצת הכרויות? <span class="chev text-terra text-2xl">+</span></summary>
+            <div class="ans"><p class="pb-6 muted">לא. המשתתפים נמצאים כרגע ללא זוגיות, אבל אין שום ציפייה שמשהו צריך לקרות</p></div>
+          </details>
+          <details>
+            <summary class="flex items-center justify-between gap-4 py-5 text-lg md:text-xl font-semibold">מה לובשים? <span class="chev text-terra text-2xl">+</span></summary>
+            <div class="ans"><p class="pb-6 muted">בגדים נוחים שקל לזוז בהם. כדאי להביא גם בקבוק מים</p></div>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- CTA דביק במובייל -->
+  <div id="stickyCta" class="sticky-cta" aria-hidden="true">
+    <a href="#" target="_blank" rel="noopener" data-wa-hadar tabindex="-1" class="btn-primary rounded-full w-full py-4 text-[1.2rem]"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6 h-6" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.057 0a11.82 11.82 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.477-.913zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>אני רוצה לשמוע עוד פרטים</a>
+  </div>
+
+  <!-- ====================== פוטר ====================== -->
+  <footer class="relative pt-6 pb-8 md:pb-12">
+    <div class="max-w-6xl mx-auto px-5 text-center">
+      <svg class="w-16 h-4 text-sage mx-auto mb-6" viewBox="0 0 96 16" fill="none" aria-hidden="true"><path d="M2 8c8-8 14-8 22 0s14 8 22 0 14-8 22 0 14 8 22 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+      <p class="font-display text-xl font-semibold">יוצאים <span class="text-terra">להרפתקה</span></p>
+    </div>
+  </footer>
+
+  <script>
+    /* ====== CONFIG — החליפו בערכים האמיתיים ====== */
+    const CONFIG = {
+      whatsappOfir: '972587078708',                   // מספר הנייד של אופיר (פורמט בינ"ל, בלי +)
+      whatsappHadar: '972546163012',                  // מספר הנייד של הדר — יעד כל כפתורי "אני רוצה להצטרף"
+      hadarMessage: 'היי הדר, הגעתי מהאתר ואשמח לשמוע עוד פרטים על המפגשים',
+      updatesGroupLink: 'https://chat.whatsapp.com/HPBClkrbondA3JlQyOvseI',            // קבוצת העדכונים עד גיל 50
+      updatesGroup50PlusLink: 'https://chat.whatsapp.com/DB7zVc2NdVXEquZCC6PpUP',      // קבוצת העדכונים גיל 50 ומעלה
+      payboxLink: 'https://links.payboxapp.com/MgKzRuPAZ3b',
+      sheetsEndpoint: 'https://script.google.com/macros/s/AKfycbzTGo8SNjyF-xJsn08PXWrYt6EdkZOlmOCXeeFnlMHvg7uyMxXR6i8IoemuiBJTZE-EPQ/exec',
+      pixelId: '429806621602468',
+    };
+
+    /* סוף הכניסה הראשונית של ה-Hero: אחרי 2.2 שניות או בגלילה הראשונה — התמונה לא מחכה יותר */
+    const introDone = () => document.documentElement.classList.add('intro-done');
+    document.documentElement.classList.add('intro-on');
+    setTimeout(introDone, 3900);
+    window.addEventListener('scroll', introDone, { once:true, passive:true });
+
+    /* reveal on scroll — fade-in + slide-up קטן */
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { threshold:0.12 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+    /* ה-Hero מנוגן לפי לוח הזמנים שלו מיד בטעינה — לא מחכה שהאלמנט ייכנס למסך
+       (במובייל רק פס דק מהתמונה נראה מתחת לכפתור, ולכן היא לא הופיעה יחד איתו) */
+    /* חשוב: רק אחרי הפריים הראשון — אחרת אין "שינוי" והמעברים (וההשהיות שלהם) לא רצים, והכל מופיע בבת אחת */
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      document.querySelectorAll('#hero .reveal, #heroPicWrap').forEach(el => { el.classList.add('in'); io.unobserve(el); });
+    }));
+
+    /* parallax עדין מאוד — לתמונת ה-Hero ולצורות. נמדד מול ההורה (שאינו זז) כדי למנוע לולאת משוב */
+    const pxEls = Array.from(document.querySelectorAll('[data-parallax]'));
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (pxEls.length && !reduceMotion) {
+      let ticking = false;
+      const updatePx = () => {
+        const vh = window.innerHeight;
+        pxEls.forEach(el => {
+          const host = el.parentElement || el;
+          const r = host.getBoundingClientRect();
+          if (r.bottom < -200 || r.top > vh + 200) return;
+          const offset = (r.top + r.height / 2) - vh / 2;
+          const shift = Math.max(-28, Math.min(28, -offset * parseFloat(el.dataset.parallax)));   // תזוזה מקסימלית קטנה
+          el.style.transform = 'translate3d(0,' + shift.toFixed(1) + 'px,0)';
+        });
+        ticking = false;
+      };
+      window.addEventListener('scroll', () => { if (!ticking){ ticking = true; requestAnimationFrame(updatePx); } }, { passive:true });
+      window.addEventListener('resize', updatePx);
+      updatePx();
+    }
+
+    /* תנועה מופשטת — עצירה למי שביקש פחות תנועה */
+    if (reduceMotion) document.querySelectorAll('svg.flow').forEach(f => { try { f.pauseAnimations(); } catch(e){} });
+
+    /* וידאו ה-motion — אוטופליי בלופ (מושתק), הקשה מדליקה סאונד, וכפתור פאוז/פליי.
+       מתנגן כשנכנס לתצוגה ונעצר כשיוצא ממנה. התנהגות כמו בדף המקורי. */
+    const motionVid = document.getElementById('motionVid');
+    const motionToggle = document.getElementById('motionToggle');
+    if (motionVid && motionToggle) {
+      let inView = false, userPaused = false;
+      const playIcon = motionToggle.querySelector('.ic-play');
+      const pauseIcon = motionToggle.querySelector('.ic-pause');
+      const mutedBadge = document.getElementById('motionMuted');
+      const syncIcon = () => { const playing = !motionVid.paused; playIcon.classList.toggle('hidden', playing); pauseIcon.classList.toggle('hidden', !playing); };
+      const syncMuted = () => { if (mutedBadge) mutedBadge.classList.toggle('hidden', !motionVid.muted); };
+      motionVid.addEventListener('play', syncIcon);
+      motionVid.addEventListener('pause', syncIcon);
+      motionVid.addEventListener('volumechange', syncMuted);
+      const startPlay = () => motionVid.play().catch(() => { motionVid.muted = true; motionVid.play().catch(()=>{}); });
+      // הדלקת סאונד דורשת מחווה אמיתית (קליק/מקלדת) — גלילה לבדה לא מתירה סאונד בדפדפן
+      const enableSound = () => { if (motionVid.muted) motionVid.muted = false; };
+      document.addEventListener('click', enableSound, { once:true });
+      document.addEventListener('keydown', enableSound, { once:true });
+      new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          inView = e.isIntersecting;
+          if (inView) { if (!userPaused) startPlay(); }
+          else motionVid.pause();
+        });
+      }, { threshold:0.4 }).observe(motionVid);
+      // הקשה: הפעם הראשונה מדליקה סאונד (בלי לעצור), אח"כ פאוז/פליי בלבד
+      const onTap = (ev) => {
+        ev.stopPropagation();
+        if (motionVid.muted) { motionVid.muted = false; userPaused = false; if (motionVid.paused) startPlay(); return; }
+        if (motionVid.paused) { userPaused = false; startPlay(); }
+        else { userPaused = true; motionVid.pause(); }
+      };
+      motionToggle.addEventListener('click', onTap);
+      motionVid.addEventListener('click', onTap);
+      syncIcon(); syncMuted();
+    }
+
+    /* גלילה חלקה לטופס/עוגנים פנימיים דרך data-scroll — בלי האשטאג ובלי שום תוספת ל-URL */
+    document.querySelectorAll('[data-scroll]').forEach(function(el){
+      const id = el.getAttribute('data-scroll');
+      const go = function(){
+        const target = document.getElementById(id);
+        if (target) target.scrollIntoView({ behavior:'smooth', block:'start' });
+      };
+      el.addEventListener('click', go);
+      el.addEventListener('keydown', function(ev){   // נגישות: Enter / רווח מפעילים כמו לחיצה
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); }
+      });
+    });
+
+    /* מילים מתחלפות על התמונה — ישרות (בלי הטיה), מעבר שקט: המילה הקודמת נעלמת הצידה והחדשה נכנסת מהצד ההפוך; הכיוון מתחלף בכל מעבר (ימין↔שמאל) */
+    (function(){
+      const stage = document.getElementById('rotStage'); if (!stage || !stage.animate) return;
+      const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const words = ['גוף','תנועה','צחוק','מוזיקה','נשימה','מבט','שייכות','חיוך','חיבור','קצב','חופש','משחק','סקרנות','נוכחות','חיוּת','יצירתיות','חיבתיות','אמון','פתיחות','הקשבה','קרבה','עדינות','שמחה','התחדשות','ביטחון','התרגשות'];
+      const cols = ['#C96F52','#686A48','#663F4C','#D98B70','#9A9A75','#A9533A'];
+      const SHIFT = 56;   /* px */
+      const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+      let order = [], lastWord = '', ci = 0, cur = null, dir = Math.random() < .5 ? 1 : -1;   /* 1 = יוצאת ימינה, נכנסת משמאל */
+      const nextWord = () => { if (!order.length) { order = shuffle(words.slice()); if (order[order.length-1] === lastWord) order.reverse(); } return lastWord = order.pop(); };
+      const wait = ms => new Promise(res => setTimeout(res, ms));
+      const make = () => {
+        const w = document.createElement('span');
+        w.className = 'rot-w absolute inset-0 grid place-items-center font-word text-[4.2rem] md:text-[7.2rem] leading-none whitespace-nowrap';
+        w.style.textShadow = '0 0 22px rgba(255,253,249,.95)';
+        w.textContent = nextWord();
+        w.style.color = cols[ci++ % cols.length];
+        return w;
+      };
+      async function loop(){
+        for (;;) {
+          if (cur) {
+            if (!reduce) { try { await cur.animate([{opacity:1, transform:'translateX(0)'}, {opacity:0, transform:'translateX(' + (dir * SHIFT) + 'px)'}], { duration: 420, easing: 'ease-in', fill: 'forwards' }).finished; } catch(e){} }
+            cur.remove();
+          }
+          cur = make(); stage.appendChild(cur);
+          if (!reduce) { try { await cur.animate([{opacity:0, transform:'translateX(' + (-dir * SHIFT) + 'px)'}, {opacity:1, transform:'translateX(0)'}], { duration: 520, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'both' }).finished; } catch(e){} }
+          dir = -dir;   /* המעבר הבא בכיוון ההפוך */
+          await wait(1200);
+        }
+      }
+      stage.innerHTML = '';
+      loop();
+    })();
+
+    /* CTA דביק במובייל — מוצג אחרי שכפתור "להכיר לעומק" יצא מהמסך, ומוסתר כשהטופס בתצוגה */
+    const stickyCta = document.getElementById('stickyCta');
+    if (stickyCta && 'IntersectionObserver' in window) {
+      let heroVisible = true, regVisible = false, footVisible = false;
+      const syncSticky = () => {
+        const show = !heroVisible && !regVisible && !footVisible;   /* מוסתר גם בתחתית הדף, כך שאין צורך ברווח ריק מתחת לפוטר */
+        stickyCta.classList.toggle('show', show);
+        stickyCta.setAttribute('aria-hidden', show ? 'false' : 'true');
+        stickyCta.querySelector('a').tabIndex = show ? 0 : -1;
+      };
+      /* מופיע רק אחרי שכפתור "להכיר לעומק את שיטת הביודנסה" יצא מהמסך כלפי מעלה */
+      new IntersectionObserver(([e]) => { heroVisible = !(!e.isIntersecting && e.boundingClientRect.top < 0); syncSticky(); }, { threshold:0 }).observe(document.getElementById('methodBtn'));
+      new IntersectionObserver(([e]) => { regVisible = e.isIntersecting; syncSticky(); }, { threshold:0 }).observe(document.getElementById('register'));
+      new IntersectionObserver(([e]) => { footVisible = e.isIntersecting; syncSticky(); }, { threshold:0 }).observe(document.querySelector('footer'));
+    }
+
+    /* share — פותח וואטסאפ עם קישור האתר בלבד, ללא טקסט נלווה */
+    document.getElementById('share').href =
+      'https://wa.me/?text=' + encodeURIComponent(location.origin + location.pathname);
+
+    /* ===== מנגנון פופאפ כללי (משותף לכל ה-.modal) ===== */
+    let modalLastFocus = null;
+    function openModal(m){
+      modalLastFocus = document.activeElement;
+      m.hidden = false;
+      requestAnimationFrame(() => m.classList.add('open'));
+      document.body.style.overflow = 'hidden';
+      const f = m.querySelector('[data-autofocus]') || m.querySelector('button, a');
+      if (f) f.focus();
+    }
+    function closeModal(m){
+      m.classList.remove('open');
+      document.body.style.overflow = '';
+      setTimeout(() => { m.hidden = true; }, 320);
+      if (modalLastFocus) modalLastFocus.focus();
+    }
+    // כל פופאפ נסגר ב-X, בלחיצה על הרקע, וב-Esc
+    document.querySelectorAll('.modal').forEach(m => {
+      m.querySelectorAll('[data-close-modal]').forEach(b => b.addEventListener('click', () => closeModal(m)));
+      m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const open = document.querySelector('.modal.open');
+      if (open) closeModal(open);
+    });
+
+    /* ===== הצטרפות לעדכונים — קישור ישיר לקבוצת הוואטסאפ (עד גיל 50), בלי פופאפ בחירה ===== */
+    ['updates'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.setAttribute('href', CONFIG.updatesGroupLink); el.setAttribute('target', '_blank'); el.setAttribute('rel', 'noopener'); }
+    });
+
+    /* ===== CTA ראשי — "אני רוצה להצטרף" פותח שיחת וואטסאפ עם הדר עם הודעה מוכנה (במקום טופס) =====
+       אירוע ההמרה Lead של ה-Pixel נשלח בלחיצה (במקום בשליחת טופס) */
+    const hadarLink = 'https://wa.me/' + CONFIG.whatsappHadar + '?text=' + encodeURIComponent(CONFIG.hadarMessage);
+    document.querySelectorAll('[data-wa-hadar]').forEach(el => {
+      el.setAttribute('href', hadarLink);
+      el.addEventListener('click', () => {
+        if (window.fbq) { try { fbq('track', 'Lead'); } catch(e){} }
+      });
+    });
+
+    /* ====== Service Worker — מבטיח שכל רענון טוען את הגרסה האחרונה שפורסמה ======
+       network-first ל-HTML (ראו sw.js). updateViaCache:'none' מכריח את הדפדפן
+       להביא את sw.js טרי (עוקף את max-age של GitHub Pages) כדי לזהות גרסאות חדשות מיד. */
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js', { scope: './', updateViaCache: 'none' })
+          .then((reg) => { reg.update(); })
+          .catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
