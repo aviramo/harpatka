@@ -254,17 +254,17 @@
     /* כניסה: מילים נחשפות אחת־אחת (טשטוש שנעלם, בלי תזוזה אנכית), ואז "תנועה חדשה" נחשפת מימין לשמאל
        בקצה רך כמו משב רוח, משיכת המכחול נמתחת מאחוריה, והסרטים מתחתיה מופיעים */
     .hero-in .w{ display:inline-block; opacity:0; filter:blur(6px);
-      animation:wordIn 1s cubic-bezier(.2,.7,.2,1) forwards; }
+      animation:wordIn .7s cubic-bezier(.2,.7,.2,1) forwards; }
     @keyframes wordIn{ to{ opacity:1; filter:blur(0); } }
     /* "תנועה" ואז "חדשה?" — כל מילה נכנסת בנפרד, מימין לשמאל בקצה רך כמו משב רוח (בלי ציר Y), ואז דוממת */
     .hero-in .key .kw{
       -webkit-mask-image:linear-gradient(270deg, #000 42%, transparent 58%); mask-image:linear-gradient(270deg, #000 42%, transparent 58%);
       -webkit-mask-size:320% 100%; mask-size:320% 100%;
       -webkit-mask-position:0% 0; mask-position:0% 0;
-      animation:keyIn 1.25s cubic-bezier(.4,.05,.25,1) both;
+      animation:keyIn .85s cubic-bezier(.4,.05,.25,1) both;
     }
-    .hero-in .key .kw1{ animation-delay:2.05s; }
-    .hero-in .key .kw2{ animation-delay:2.75s; }
+    .hero-in .key .kw1{ animation-delay:1.15s; }
+    .hero-in .key .kw2{ animation-delay:1.55s; }
     @keyframes keyIn{
       0%  { -webkit-mask-position:0% 0; mask-position:0% 0; transform:translateX(.6em); filter:blur(4px); }
       100%{ -webkit-mask-position:100% 0; mask-position:100% 0; transform:none; filter:blur(0); }
@@ -273,21 +273,22 @@
     /* שלוש נקודות אחרי "שלך" — מופיעות אחת־אחת, פועמות רגע, ומתמוססות כש"תנועה חדשה" נכנסת לאותו מקום */
     /* עטיפה ברוחב 0 על קו הבסיס — הנקודות יושבות בתחתית השורה כמו "..." אמיתי, בלי להזיז את הטקסט */
     .dots{ display:inline-block; width:0; overflow:visible; white-space:nowrap; vertical-align:baseline; padding-inline-start:.14em;
-      animation:dotsOut .7s ease 1.9s forwards; }
+      animation:dotsOut .45s ease 1.15s forwards; }
     .dots i{ display:inline-block; vertical-align:baseline; margin-inline-end:.16em; width:.15em; height:.15em; border-radius:50%; background:#686A48; opacity:0; transform:scale(.4);
       animation:dotIn .45s ease forwards, dotPulse 1.1s ease-in-out infinite; }
-    .dots i:nth-child(1){ animation-delay:.85s, 1.3s; }
-    .dots i:nth-child(2){ animation-delay:1.05s, 1.45s; }
-    .dots i:nth-child(3){ animation-delay:1.25s, 1.6s; }
+    .dots i:nth-child(1){ animation-delay:.45s, .75s; }
+    .dots i:nth-child(2){ animation-delay:.57s, .85s; }
+    .dots i:nth-child(3){ animation-delay:.69s, .95s; }
     @keyframes dotIn{ to{ opacity:1; transform:scale(1); } }
     @keyframes dotPulse{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
     @keyframes dotsOut{ to{ opacity:0; filter:blur(4px); } }
     .flow{ opacity:0; animation:fadeFlow 1s ease 3.35s forwards; }
     @keyframes fadeFlow{ to{ opacity:1; } }
     /* הדף "מצטייר" מלמעלה למטה: במובייל התמונה (שמתחת לטקסט) מופיעה רק אחרי הכפתור; בדסקטופ היא לצד הטקסט ומופיעה מוקדם יותר */
-    .hero-pic{ transition-delay:5.5s; }   /* במובייל: יחד עם הכפתור */
-    @media (min-width:1024px){ .hero-pic{ transition-delay:4.25s; } }
-    .intro-strip{ opacity:0; transition:opacity 1s ease 6.2s; }
+    .intro{ transition-duration:.7s; }
+    .hero-pic{ transition-delay:2.8s; transition-duration:.7s; }   /* במובייל: יחד עם הכפתור */
+    @media (min-width:1024px){ .hero-pic{ transition-delay:2.2s; } }
+    .intro-strip{ opacity:0; transition:opacity .7s ease 3.2s; }
     .intro-on .intro-strip{ opacity:1; }
     /* אחרי הכניסה הראשונית, או ברגע שגוללים — בלי השהיה בכלל */
     .intro-done .hero-pic, .intro-done .intro, .intro-done .intro-strip{ transition-delay:0s !important; }
@@ -455,12 +456,12 @@
       <!-- טקסט (ימין בדסקטופ, ראשון במובייל) -->
       <div class="max-w-xl">
         <!-- שאלת הזדהות → פעם זה קרה מעצמו → היום אין דרך → יצרנו משהו חדש → מה זה → CTA -->
-        <h1 class="h-hero hero-in mb-5 md:mb-7"><span class="w" style="animation-delay:0.12s">מתי</span> <span class="w" style="animation-delay:0.23s">בפעם</span> <span class="w" style="animation-delay:0.34s">האחרונה</span> <span class="w" style="animation-delay:0.45s">נכנסה</span> <span class="w" style="animation-delay:0.56s">לחיים</span> <span class="w w-last" style="animation-delay:0.67s">שלך<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></span> <span class="key" aria-label="תנועה חדשה?"><span class="kw kw1" aria-hidden="true">תנועה</span><span class="kw kw2" aria-hidden="true">חדשה?</span></span></h1>
-        <p class="lead font-semibold text-ink reveal intro" style="transition-delay:4.25s">פעם זה קרה מעצמו</p>
-        <p class="muted mb-5 reveal intro" style="transition-delay:4.55s">בלימודים, בצבא, בטיולים, דרך חברים</p>
-        <p class="lead font-semibold text-ink mb-6 reveal intro" style="transition-delay:4.85s">היום כמעט אין דרך פשוטה לפגוש מישהו או מישהי שמסקרנים אותך</p>
-<p class="font-display text-[1.6rem] md:text-[2.1rem] leading-snug font-semibold text-terra mb-8 reveal intro" style="transition-delay:5.15s">בדיוק בשביל זה יצרנו מפגשי תנועה קבועים, לגילאי 30–49</p>
-        <div class="flex justify-center lg:justify-start reveal intro" style="transition-delay:5.5s">
+        <h1 class="h-hero hero-in mb-5 md:mb-7"><span class="w" style="animation-delay:0.05s">מתי</span> <span class="w" style="animation-delay:0.12s">בפעם</span> <span class="w" style="animation-delay:0.19s">האחרונה</span> <span class="w" style="animation-delay:0.26s">נכנסה</span> <span class="w" style="animation-delay:0.33s">לחיים</span> <span class="w w-last" style="animation-delay:0.40s">שלך<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span></span> <span class="key" aria-label="תנועה חדשה?"><span class="kw kw1" aria-hidden="true">תנועה</span><span class="kw kw2" aria-hidden="true">חדשה?</span></span></h1>
+        <p class="lead font-semibold text-ink reveal intro" style="transition-delay:2.2s">פעם זה קרה מעצמו</p>
+        <p class="muted mb-5 reveal intro" style="transition-delay:2.35s">בלימודים, בצבא, בטיולים, דרך חברים</p>
+        <p class="lead font-semibold text-ink mb-6 reveal intro" style="transition-delay:2.5s">היום כמעט אין דרך פשוטה לפגוש מישהו או מישהי שמסקרנים אותך</p>
+<p class="font-display text-[1.6rem] md:text-[2.1rem] leading-snug font-semibold text-terra mb-8 reveal intro" style="transition-delay:2.65s">בדיוק בשביל זה יצרנו מפגשי תנועה קבועים, לגילאי 30–49</p>
+        <div class="flex justify-center lg:justify-start reveal intro" style="transition-delay:2.8s">
           <a href="#" target="_blank" rel="noopener" data-wa-hadar class="btn-primary rounded-full px-5 md:px-8 py-4 text-[1.05rem] md:text-[1.2rem] whitespace-nowrap w-full max-w-[24rem]"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6 h-6" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.057 0a11.82 11.82 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.477-.913zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>אני רוצה לשמוע עוד פרטים</a>
         </div>
       </div>
@@ -766,7 +767,7 @@
     /* סוף הכניסה הראשונית של ה-Hero: אחרי 2.2 שניות או בגלילה הראשונה — התמונה לא מחכה יותר */
     const introDone = () => document.documentElement.classList.add('intro-done');
     document.documentElement.classList.add('intro-on');
-    setTimeout(introDone, 7300);
+    setTimeout(introDone, 3900);
     window.addEventListener('scroll', introDone, { once:true, passive:true });
 
     /* reveal on scroll — fade-in + slide-up קטן */
