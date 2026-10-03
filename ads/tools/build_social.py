@@ -37,13 +37,12 @@ body{{background:#F6EFE4;position:relative;font-family:Rubik,sans-serif;color:#3
 .c4{{position:absolute;right:250px;top:190px;width:56px;height:56px;border-radius:50%;background:#C98D86;opacity:.7}}
 .stamp{{position:absolute;left:330px;top:50px;width:96px;height:114px;background:#F3E3D1;border:9px dotted #FFFDF9;outline:2px solid #E6D3BC;outline-offset:-2px;transform:rotate(4deg);padding:10px}}
 .hand{{position:absolute;right:340px;top:40px;font-family:"Amatic SC";font-weight:700;font-size:118px;line-height:1;color:#B85C40}}
-.txt{{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding-top:62px}}
+.txt{{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding-top:0}}
 h1{{font-size:190px;line-height:.98;font-weight:600;letter-spacing:-.01em;color:#C96F52}}
 .sub{{margin-top:12px;font-size:86px;line-height:1.1;font-weight:500;color:#3F382F}}
 </style><body>
 <div class="frame"><div class="paper">
 <div class="c1"></div><div class="c2"></div><div class="c3"></div><div class="c4"></div>
-<div class="stamp">{DANCERS("#C96F52","#9A9A75")}</div><div class="hand">הזמנה</div>
 <div class="txt"><h1>ביודנסה</h1><div class="sub">@@SUB@@</div></div>
 </div></div></body></html>'''
 
