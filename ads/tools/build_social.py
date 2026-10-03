@@ -24,33 +24,28 @@ img{{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-po
 </body></html>'''
 
 COVER_T = f'''<!doctype html><html lang="he" dir="rtl"><meta charset="utf-8">
-<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600;700&family=Assistant:wght@600;700&family=Amatic+SC:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600;700&family=Amatic+SC:wght@700&display=swap" rel="stylesheet">
 <style>
 *{{margin:0;box-sizing:border-box}}html,body{{width:1640px;height:624px;overflow:hidden}}
 body{{background:#F6EFE4;position:relative;font-family:Rubik,sans-serif;color:#3F382F}}
-/* מעטפת דואר: מסגרת פסים סביב כל הקאבר */
+/* מעטפת דואר: מסגרת פסים סביב כל הקאבר, בלי תמונה */
 .frame{{position:absolute;inset:20px;border-radius:30px;padding:22px;background:repeating-linear-gradient(-45deg,#C96F52 0 30px,#FFFDF9 30px 52px,#9A9A75 52px 82px,#FFFDF9 82px 104px);box-shadow:0 8px 22px rgba(63,56,47,.10)}}
 .paper{{position:relative;width:100%;height:100%;border-radius:16px;background:#FFFDF9;overflow:hidden}}
-.c1{{position:absolute;left:-120px;top:-210px;width:520px;height:520px;border-radius:50%;background:#F1E4D3}}
-.c2{{position:absolute;right:-60px;bottom:-110px;width:360px;height:440px;border-radius:180px 180px 0 0;background:rgba(154,154,117,.30)}}
-.photo{{position:absolute;left:300px;top:36px;width:470px;height:470px;border-radius:58% 42% 55% 45% / 48% 58% 42% 52%;overflow:hidden;box-shadow:0 20px 44px rgba(63,56,47,.16)}}
-.photo img{{width:100%;height:100%;object-fit:cover}}
-.txt{{position:absolute;right:280px;top:34px;width:560px;text-align:right}}
-.row{{display:flex;align-items:flex-start;justify-content:space-between}}
-.hand{{font-family:"Amatic SC";font-weight:700;font-size:112px;line-height:1;color:#B85C40}}
-.stamp{{width:88px;height:104px;background:#F3E3D1;border:8px dotted #FFFDF9;outline:2px solid #E6D3BC;outline-offset:-2px;transform:rotate(4deg);padding:9px;margin-top:6px}}
-h1{{margin-top:14px;font-size:132px;line-height:1.04;font-weight:600;letter-spacing:-.01em}}
-h1 em{{font-style:normal;color:#C96F52}}
-.sub{{margin-top:14px;font-family:Rubik;font-weight:500;font-size:50px;line-height:1.2;color:#3F382F}}
+.c1{{position:absolute;left:-110px;top:-200px;width:540px;height:540px;border-radius:50%;background:#F1E4D3}}
+.c2{{position:absolute;right:-70px;bottom:-110px;width:380px;height:460px;border-radius:190px 190px 0 0;background:rgba(154,154,117,.28)}}
+.c3{{position:absolute;left:300px;bottom:70px;width:130px;height:130px;border-radius:50%;background:#E9B8A4;opacity:.75}}
+.c4{{position:absolute;right:250px;top:190px;width:56px;height:56px;border-radius:50%;background:#C98D86;opacity:.7}}
+.stamp{{position:absolute;left:330px;top:50px;width:96px;height:114px;background:#F3E3D1;border:9px dotted #FFFDF9;outline:2px solid #E6D3BC;outline-offset:-2px;transform:rotate(4deg);padding:10px}}
+.hand{{position:absolute;right:340px;top:40px;font-family:"Amatic SC";font-weight:700;font-size:118px;line-height:1;color:#B85C40}}
+.txt{{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding-top:62px}}
+h1{{font-size:190px;line-height:.98;font-weight:600;letter-spacing:-.01em;color:#C96F52}}
+.sub{{margin-top:12px;font-size:86px;line-height:1.1;font-weight:500;color:#3F382F}}
 </style><body>
 <div class="frame"><div class="paper">
-<div class="c1"></div><div class="c2"></div>
-<div class="photo"><img src="{IMG}/biodanza-hero.webp"></div>
-<div class="txt">
- <div class="row"><div class="hand">הזמנה</div><div class="stamp">{DANCERS("#C96F52","#9A9A75")}</div></div>
- <h1><em>ביודנסה</em></h1>
- <div class="sub">@@SUB@@</div>
-</div></div></div></body></html>'''
+<div class="c1"></div><div class="c2"></div><div class="c3"></div><div class="c4"></div>
+<div class="stamp">{DANCERS("#C96F52","#9A9A75")}</div><div class="hand">הזמנה</div>
+<div class="txt"><h1>ביודנסה</h1><div class="sub">@@SUB@@</div></div>
+</div></div></body></html>'''
 
 def cover(sub):
     return COVER_T.replace("@@SUB@@", sub)
