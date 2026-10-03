@@ -1,6 +1,7 @@
 # מייצר תמונת מודעה (1080x1350, יחס 4:5) לכל שורה ב-ads/sentences.txt
 # טקסט בשני צבעים: מה שבתוך [ ] מודגש בצבע ההדגשה. בלי צילומים.
-# הרצה:  python ads/tools/build_ads.py [מספר-תמונה]   (דורש Chrome)
+# הרצה:  python ads/tools/build_ads.py [--all]   (דורש Chrome). בלי --all מייצר רק תמונות חסרות (טקסטים חדשים).
+# מספר סידורי קבוע לכל טקסט ב-ads/registry.json — להוסיף טקסטים חדשים רק בסוף sentences.txt (או בכל מקום; המספר נקבע לפי הטקסט).
 import os, sys, json, subprocess, html, tempfile, pathlib
 from concurrent.futures import ThreadPoolExecutor
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -64,23 +65,42 @@ while((t.scrollHeight>box.clientHeight||t.scrollWidth>box.clientWidth) && fs>40)
 </script></body></html>'''
 
 def render(args):
-    i, text, tmp, out = args
-    name = f"ad-{i+1:02d}.png"
-    f = tmp / f"{i}.html"; f.write_text(page(text, i), encoding="utf-8")
+    i, text, tmp, out = args          # i = מספר סידורי (id), מתחיל ב-1
+    name = f"ad-{i:02d}.png"
+    f = tmp / f"{i}.html"; f.write_text(page(text, i - 1), encoding="utf-8")
     subprocess.run([CHROME, "--headless", "--disable-gpu", "--hide-scrollbars", f"--window-size={W},{H}", "--virtual-time-budget=6000",
                     f"--user-data-dir={tmp/('p'+str(i))}", f"--screenshot={out/name}", f.as_uri()], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
     return name
 
+def plain(s):
+    return s.replace("[", "").replace("]", "")
+
 def main():
+    # מספר סידורי קבוע לכל טקסט: ads/registry.json. טקסט חדש מקבל את המספר הבא; מספרים לא משתנים ולא נעשה בהם שימוש חוזר.
+    reg_path = ROOT/"ads"/"registry.json"
+    reg = json.loads(reg_path.read_text(encoding="utf-8")) if reg_path.exists() else {"next": 1, "items": {}}
+    by_text = {v: int(k) for k, v in reg["items"].items()}
     lines = [l.strip() for l in (ROOT/"ads"/"sentences.txt").read_text(encoding="utf-8").splitlines() if l.strip()]
     out = ROOT/"ads"/"img"; out.mkdir(parents=True, exist_ok=True)
     tmp = pathlib.Path(tempfile.mkdtemp())
-    only = int(sys.argv[1]) if len(sys.argv) > 1 else None
-    items = [{"file": f"ad-{i+1:02d}.png", "text": t.replace("[", "").replace("]", "")} for i, t in enumerate(lines)]
-    jobs = [(i, t, tmp, out) for i, t in enumerate(lines) if only is None or i+1 == only]
+    force_all = "--all" in sys.argv
+    jobs, items = [], []
+    for l in lines:
+        pt = plain(l)
+        if pt not in by_text:
+            n = reg["next"]; reg["next"] = n + 1
+            reg["items"][str(n)] = pt; by_text[pt] = n
+        n = by_text[pt]
+        name = f"ad-{n:02d}.png"
+        items.append({"id": n, "file": name, "text": pt})
+        if force_all or not (out/name).exists():
+            jobs.append((n, l, tmp, out))
+    reg_path.write_text(json.dumps(reg, ensure_ascii=False, indent=1), encoding="utf-8")
+    items.sort(key=lambda x: x["id"])
     with ThreadPoolExecutor(max_workers=4) as ex:
         for n in ex.map(render, jobs): print("ok", n, flush=True)
     (ROOT/"ads"/"ads.json").write_text(json.dumps(items, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"{len(items)} תמונות, מספר הבא: {reg['next']}")
 
 if __name__ == "__main__":
     main()
