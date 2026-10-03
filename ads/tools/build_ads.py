@@ -10,9 +10,9 @@ DANCERS = '<svg viewBox="0 0 48 52" fill="currentColor" style="width:100%;height
 
 # עיצובים: bg, צבע טקסט, צבע הדגשה, צבע לוגו, תמונה/מסגרת
 STYLES = [
-  dict(k="cream",  bg="#F6EFE4", fg="#3F382F", acc="#C96F52", deco="blob"),
+  dict(k="cream",  bg="#F6EFE4", fg="#3F382F", acc="#C96F52", deco="none"),
   dict(k="terra",  bg="#C96F52", fg="#FFFDF9", acc="#F6EFE4", deco="none"),
-  dict(k="sand",   bg="#E8D5BE", fg="#3F382F", acc="#C96F52", deco="blob"),
+  dict(k="sand",   bg="#E8D5BE", fg="#3F382F", acc="#C96F52", deco="none"),
   dict(k="olive",  bg="#686A48", fg="#FFFDF9", acc="#E8D5BE", deco="none"),
   dict(k="mail",   bg="#F6EFE4", fg="#3F382F", acc="#C96F52", deco="mail"),
   dict(k="dusty",  bg="linear-gradient(160deg,#E7B7A6,#C98D86)", fg="#3F382F", acc="#FFFDF9", deco="none"),
