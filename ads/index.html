@@ -40,6 +40,7 @@
                 + '<svg class="i-stop" viewBox="0 0 10 10" aria-hidden="true"><rect x="1.8" y="1.8" width="6.4" height="6.4" rx=".8" fill="currentColor"/></svg>';
     Promise.all([json('ads.json'), json('videos.json')]).then(([items, videos]) => {
       const g = document.getElementById('grid');
+      const stops = [];   // סרטון אחד בכל פעם: כשאחד מתחיל לנגן, כל השאר עוצרים וחוזרים לתמונה
       (Array.isArray(items) ? items : []).forEach(it => {
         const f = document.createElement('figure');
         const n = document.createElement('span'); n.className = 'n'; n.textContent = it.id;
@@ -65,6 +66,9 @@
           im.addEventListener('click', () => show(true));
           v.addEventListener('click', () => v.paused ? v.play().catch(() => {}) : v.pause());   // לחיצה על הסרטון: השהיה והמשך
           v.addEventListener('ended', () => show(false));   // בסוף הסרטון התא חוזר לתמונה
+          const stop = () => { if (f.classList.contains('playing')) show(false); };
+          stops.push(stop);
+          v.addEventListener('play', () => stops.forEach(s => s !== stop && s()));
           f.classList.add('has-video'); media.appendChild(v); media.appendChild(btn);
           show(false);
         }
