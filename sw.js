@@ -10,7 +10,7 @@
  *
  * החלף את CACHE_VERSION בכל deploy משמעותי (או השאר — network-first ממילא מביא HTML טרי).
  */
-const CACHE_VERSION = 'harpatka-home-2026-10-03';
+const CACHE_VERSION = 'harpatka-home-2026-10-04';
 const RUNTIME_CACHE = `runtime-${CACHE_VERSION}`;
 
 self.addEventListener('install', (event) => {
@@ -41,7 +41,10 @@ self.addEventListener('fetch', (event) => {
     req.mode === 'navigate' ||
     (req.headers.get('accept') || '').includes('text/html');
 
-  if (isHTML) {
+  /* עמוד ads: התמונות וה-JSON משתנים באותו שם קובץ — תמיד רשת קודם, כדי שלא יוצג מצב ישן בטעינה הראשונה */
+  const isAds = sameOrigin && url.pathname.indexOf('/ads/') === 0;
+
+  if (isHTML || isAds) {
     event.respondWith((async () => {
       try {
         const fresh = await fetch(req);
