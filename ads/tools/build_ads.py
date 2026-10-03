@@ -32,8 +32,11 @@ def colored(text):
             out.append(html.escape(text[i:])); break
         b = text.find("]", a)
         out.append(html.escape(text[i:a]))
-        out.append("<em>" + html.escape(text[a+1:b]) + "</em>")
-        i = b + 1
+        j = b + 1
+        while j < len(text) and text[j] in '?!.,:;…"״”':   # סימני פיסוק צמודים אחרי ההדגשה — באותו צבע
+            j += 1
+        out.append("<em>" + html.escape(text[a+1:b] + text[b+1:j]) + "</em>")
+        i = j
     return "".join(out)
 
 def page(text, i):
