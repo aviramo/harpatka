@@ -53,7 +53,7 @@ body{{background:{s["bg"]};color:{s["fg"]};font-family:Rubik,Assistant,sans-seri
 {mail}{stamp}{'<div class="hand">הזמנה</div>' if deco=="mail" else ''}
 {deco_html}
 <div class="txt"><div id="t">{html.escape(text)}</div></div>
-<div class="sub">מפגשי תנועה קבועים בהרצליה</div>
+<div class="sub">מפגשים מסוג אחר</div>
 <div class="logo">יוצאים <b>להרפתקה</b></div>
 <script>
 const t=document.getElementById('t'), box=t.parentElement;
@@ -86,7 +86,7 @@ body{{background:#F6EFE4;color:#3F382F;font-family:Fredoka,Rubik,sans-serif;posi
 </style></head><body>
 <div class="c1"></div><div class="c2"></div><div class="c3"></div><div class="c4"></div>
 <div class="txt"><div id="t">{safe}</div></div>
-<div class="sub">מפגשי תנועה קבועים בהרצליה</div>
+<div class="sub">מפגשים מסוג אחר</div>
 <div class="logo">יוצאים <b>להרפתקה</b></div>
 <script>
 const t=document.getElementById('t'), box=t.parentElement;
