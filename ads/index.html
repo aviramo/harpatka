@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>תמונות למודעות | יוצאים להרפתקה</title>
+  <link rel="icon" href="../images/favicon-v4.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="../images/favicon-v4-32.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{ --cream:#F6EFE4; --sand:#E8D5BE; --terra:#C96F52; --olive:#686A48; --ink:#3F382F; --paper:#FFFDF9; }
+    *{ box-sizing:border-box; margin:0; }
+    body{ background:var(--cream); color:var(--ink); font-family:Assistant,Rubik,sans-serif; font-size:1.05rem; line-height:1.6; }
+    .wrap{ max-width:72rem; margin:0 auto; padding:2.5rem 1.25rem 4rem; }
+    h1{ font-family:Rubik,sans-serif; font-weight:600; font-size:clamp(1.8rem,4vw,2.6rem); line-height:1.15; }
+    .lead{ color:#6b6254; max-width:46rem; margin-top:.75rem; }
+    .spec{ display:flex; flex-wrap:wrap; gap:.6rem; margin:1.4rem 0 2rem; }
+    .spec span{ background:var(--sand); border-radius:999px; padding:.35rem .95rem; font-weight:600; font-size:.95rem; }
+    .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(15rem,1fr)); gap:1.25rem; }
+    .card{ background:var(--paper); border-radius:24px; padding:.75rem .75rem 1rem; box-shadow:0 2px 12px rgba(63,56,47,.06); }
+    .card img{ width:100%; height:auto; aspect-ratio:4/5; border-radius:16px; display:block; background:var(--sand); }
+    .card p{ font-size:.95rem; margin:.7rem .35rem .6rem; color:#5a5246; min-height:2.9em; }
+    .card a{ display:inline-block; margin:0 .35rem; color:var(--paper); background:var(--olive); border-radius:999px; padding:.4rem 1.1rem; font-weight:700; font-size:.95rem; text-decoration:none; }
+    .num{ color:var(--terra); font-weight:700; margin:0 .35rem; }
+    .notes{ margin-top:2.5rem; background:var(--paper); border-radius:24px; padding:1.5rem 1.6rem; }
+    .notes h2{ font-family:Rubik,sans-serif; font-size:1.3rem; margin-bottom:.6rem; }
+    .notes li{ margin:.35rem 1.2rem .35rem 0; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>תמונות למודעות בפייסבוק ובאינסטגרם</h1>
+    <p class="lead">כל משפט הופך לתמונה אחת. לחיצה על "הורדה" שומרת את התמונה במלואה (PNG).</p>
+    <div class="spec" aria-label="מפרט">
+      <span>יחס 4:5</span><span>1080×1350 פיקסלים</span><span>פיד בפייסבוק ובאינסטגרם</span>
+    </div>
+    <div id="grid" class="grid" aria-live="polite"></div>
+    <section class="notes">
+      <h2>לפני שמעלים</h2>
+      <ul>
+        <li>4:5 מציג את התמונה בגודל המלא בפיד של שתי הפלטפורמות. לסטוריז ולרילס אפשר להוסיף גרסה ביחס 9:16.</li>
+        <li>בטקסט המודעה וברצועת הכותרת כדאי להימנע מניסוחים שמרמזים על מצב משפחתי או זוגי של מי שרואה אותה (למשל "לך שנמצא לבד"). מדיניות המודעות של מטא מגבילה זאת.</li>
+        <li>כפתור הפעולה במודעה: "שליחת הודעה" או "וואטסאפ", שמוביל לשיחה עם הדר.</li>
+      </ul>
+    </section>
+  </main>
+  <script>
+    fetch('ads.json').then(r => r.json()).then(items => {
+      const g = document.getElementById('grid');
+      items.forEach((it, i) => {
+        const c = document.createElement('article'); c.className = 'card';
+        const n = String(i + 1).padStart(2, '0');
+        c.innerHTML = '<img loading="lazy" width="1080" height="1350" src="img/' + it.file + '" alt="' + it.text.replace(/"/g, '&quot;') + '">' +
+          '<p><span class="num">' + n + '</span>' + it.text.replace(/</g, '&lt;') + '</p>' +
+          '<a href="img/' + it.file + '" download="' + it.file + '">הורדה</a>';
+        g.appendChild(c);
+      });
+    });
+  </script>
+</body>
+</html>
