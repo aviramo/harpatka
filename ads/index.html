@@ -5,31 +5,70 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex, nofollow" />
   <title>תמונות למודעות</title>
-  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@600&display=swap" rel="stylesheet">
   <link rel="icon" href="../images/favicon-v4.ico" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="../images/favicon-v4-32.png" />
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    :root{ --bg:#24201C; --ink:#EDE6DA; }
+    :root{ --bg:#24201C; --ink:#EDE6DA; --terra:#C96F52; --paper:#FFFDF9; }
     *{ box-sizing:border-box; margin:0; }
     body{ background:var(--bg); color:var(--ink); }
     .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(16rem,1fr)); gap:1rem; padding:1rem; }
     .grid figure{ display:block; }
     .grid .n{ display:block; font-family:Rubik,Assistant,sans-serif; font-weight:600; font-size:.95rem; line-height:1; color:#A89F90; padding:0 .15rem .4rem; }
-    .grid img{ width:100%; height:auto; aspect-ratio:4/5; display:block; }
+    .grid .media{ position:relative; }
+    .grid img, .grid video{ width:100%; height:auto; aspect-ratio:4/5; display:block; }
+    .grid video{ display:none; background:#000; cursor:pointer; }
+    /* מודעה עם סרטון: כפתור ▶ בפינה השמאלית התחתונה; לחיצה עליו או על התמונה מנגנת את הסרטון באותו תא */
+    .grid .has-video img{ cursor:pointer; }
+    .grid .play{ position:absolute; left:.7rem; bottom:.7rem; width:3rem; height:3rem; display:grid; place-items:center; padding:0;
+      border:0; border-radius:50%; background:var(--terra); color:var(--paper); cursor:pointer; box-shadow:0 2px 10px rgba(0,0,0,.28); }
+    .grid .play svg{ width:1.15rem; height:1.15rem; display:block; }
+    .grid .play .i-stop{ display:none; }
+    .grid .play:focus-visible{ outline:3px solid var(--paper); outline-offset:2px; }
+    .grid .playing img{ display:none; }
+    .grid .playing video{ display:block; }
+    .grid .playing .play .i-play{ display:none; }
+    .grid .playing .play .i-stop{ display:block; }
   </style>
 </head>
 <body>
   <div id="grid" class="grid"></div>
   <script>
-    fetch('ads.json').then(r => r.json()).then(items => {
+    // ads.json נבנה על ידי ads/tools/build_ads.py. videos.json (ידני): מספר סידורי של מודעה → קובץ ב-video/.
+    const json = u => fetch(u).then(r => r.ok ? r.json() : {}).catch(() => ({}));
+    const ICONS = '<svg class="i-play" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.6 1.2v7.6L9 5z" fill="currentColor"/></svg>'
+                + '<svg class="i-stop" viewBox="0 0 10 10" aria-hidden="true"><rect x="1.8" y="1.8" width="6.4" height="6.4" rx=".8" fill="currentColor"/></svg>';
+    Promise.all([json('ads.json'), json('videos.json')]).then(([items, videos]) => {
       const g = document.getElementById('grid');
-      items.forEach(it => {
+      (Array.isArray(items) ? items : []).forEach(it => {
         const f = document.createElement('figure');
         const n = document.createElement('span'); n.className = 'n'; n.textContent = it.id;
+        const media = document.createElement('div'); media.className = 'media';
         const im = document.createElement('img');
         im.loading = 'lazy'; im.width = 1080; im.height = 1350; im.src = 'img/' + it.file; im.alt = it.text;
-        f.appendChild(n); f.appendChild(im); g.appendChild(f);
+        media.appendChild(im); f.appendChild(n); f.appendChild(media);
+
+        const file = videos[String(it.id)];
+        if (file) {
+          const v = document.createElement('video');
+          v.playsInline = true; v.preload = 'none';
+          v.width = 1080; v.height = 1350; v.poster = im.src; v.src = 'video/' + file;
+          v.setAttribute('aria-label', 'סרטון: ' + it.text);
+          const btn = document.createElement('button');
+          btn.type = 'button'; btn.className = 'play'; btn.innerHTML = ICONS;
+          const show = on => {
+            f.classList.toggle('playing', on);
+            btn.setAttribute('aria-label', on ? 'עצירה וחזרה לתמונה של מודעה ' + it.id : 'ניגון הסרטון של מודעה ' + it.id);
+            if (on) { v.currentTime = 0; v.play().catch(() => {}); } else v.pause();
+          };
+          btn.addEventListener('click', () => show(!f.classList.contains('playing')));
+          im.addEventListener('click', () => show(true));
+          v.addEventListener('click', () => v.paused ? v.play().catch(() => {}) : v.pause());   // לחיצה על הסרטון: השהיה והמשך
+          v.addEventListener('ended', () => show(false));   // בסוף הסרטון התא חוזר לתמונה
+          f.classList.add('has-video'); media.appendChild(v); media.appendChild(btn);
+          show(false);
+        }
+        g.appendChild(f);
       });
     });
   </script>

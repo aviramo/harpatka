@@ -36,6 +36,9 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   const sameOrigin = url.origin === self.location.origin;
 
+  // וידאו: הדפדפן מבקש טווחים (Range, תשובת 206) שאי אפשר לשמור ב-cache — לא מיירטים, הדפדפן מטפל לבד
+  if (req.headers.has('range') || /\.(mp4|webm)$/i.test(url.pathname)) return;
+
   // מסמכי HTML / ניווט → network-first (תמיד הגרסה האחרונה כשיש רשת)
   const isHTML =
     req.mode === 'navigate' ||
