@@ -63,5 +63,4 @@ def shot(html, w, h, name):
 
 if __name__ == "__main__":
     shot(PROFILE, 1080, 1080, "facebook-profile.png")
-    shot(cover("חוויה אנושית בתנועה"), 1640, 624, "facebook-cover-1.png")
-    shot(cover("מפגש מסוג אחר"), 1640, 624, "facebook-cover-2.png")
+    shot(cover("מפגש מסוג אחר"), 1640, 624, "facebook-cover.png")
