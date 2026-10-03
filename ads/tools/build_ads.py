@@ -47,11 +47,11 @@ html,body{{width:{W}px;height:{H}px;overflow:hidden}}
 body{{background:{bg};color:{fg};font-family:Fredoka,Rubik,sans-serif;position:relative}}
 .c1{{position:absolute;{'left' if flip else 'right'}:-170px;top:-240px;width:620px;height:620px;border-radius:50%;background:{deco}}}
 .c2{{position:absolute;{'right' if flip else 'left'}:-130px;bottom:-70px;width:400px;height:520px;border-radius:200px 200px 0 0;background:{deco}}}
-.txt{{position:absolute;left:96px;right:96px;top:200px;bottom:300px;display:flex;align-items:center;justify-content:center;text-align:center}}
+.txt{{position:absolute;left:96px;right:96px;top:180px;bottom:350px;display:flex;align-items:center;justify-content:center;text-align:center}}
 #t{{font-weight:600;line-height:1.22;letter-spacing:-.005em}}
 #t em{{font-style:normal;color:{acc}}}
-.sub{{position:absolute;bottom:150px;left:0;right:0;text-align:center;font-family:Assistant;font-size:32px;font-weight:600;opacity:.8}}
-.logo{{position:absolute;bottom:84px;left:0;right:0;text-align:center;font-family:Rubik;font-size:46px;font-weight:600}}
+.sub{{position:absolute;bottom:176px;left:0;right:0;text-align:center;font-family:Assistant;font-size:54px;font-weight:700;opacity:.88}}
+.logo{{position:absolute;bottom:80px;left:0;right:0;text-align:center;font-family:Rubik;font-size:62px;font-weight:600}}
 .logo b{{color:{acc};font-weight:700}}
 </style></head><body>
 <div class="c1"></div><div class="c2"></div>
