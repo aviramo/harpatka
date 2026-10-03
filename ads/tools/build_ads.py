@@ -63,20 +63,54 @@ while((t.scrollHeight>maxH||t.scrollWidth>maxW) && fs>40){{ fs-=4; t.style.fontS
 t.style.maxWidth=maxW+'px';
 </script></body></html>'''
 
+def page_round(text):
+    import re
+    safe = html.escape(text)
+    safe = re.sub(r"\[(.+?)\]", r'<em>\1</em>', safe)
+    return f'''<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Rubik:wght@600;700&family=Assistant:wght@600&display=swap" rel="stylesheet">
+<style>
+*{{box-sizing:border-box;margin:0}}
+html,body{{width:{W}px;height:{H}px;overflow:hidden}}
+body{{background:#F6EFE4;color:#3F382F;font-family:Fredoka,Rubik,sans-serif;position:relative}}
+.c1{{position:absolute;top:-260px;right:-170px;width:620px;height:620px;border-radius:50%;background:#E8D5BE}}
+.c2{{position:absolute;bottom:-60px;left:-120px;width:420px;height:560px;border-radius:210px 210px 0 0;background:rgba(154,154,117,.42)}}
+.c3{{position:absolute;bottom:300px;right:90px;width:150px;height:150px;border-radius:50%;background:#D98B70;opacity:.85}}
+.c4{{position:absolute;top:640px;left:70px;width:70px;height:70px;border-radius:50%;background:#C98D86;opacity:.8}}
+.txt{{position:absolute;left:100px;right:100px;top:220px;bottom:330px;display:flex;align-items:center;justify-content:center;text-align:center}}
+#t{{font-weight:600;line-height:1.22;letter-spacing:-.005em}}
+#t em{{font-style:normal;color:#C96F52}}
+.logo{{position:absolute;bottom:80px;left:0;right:0;text-align:center;font-family:Rubik;font-size:46px;font-weight:600}}
+.logo b{{color:#C96F52;font-weight:700}}
+.sub{{position:absolute;bottom:144px;left:0;right:0;text-align:center;font-family:Assistant;font-size:32px;font-weight:600;opacity:.75}}
+</style></head><body>
+<div class="c1"></div><div class="c2"></div><div class="c3"></div><div class="c4"></div>
+<div class="txt"><div id="t">{safe}</div></div>
+<div class="sub">מפגשי תנועה קבועים בהרצליה</div>
+<div class="logo">יוצאים <b>להרפתקה</b></div>
+<script>
+const t=document.getElementById('t'), box=t.parentElement;
+let fs=150; t.style.fontSize=fs+'px';
+while((t.scrollHeight>box.clientHeight||t.scrollWidth>box.clientWidth) && fs>40){{ fs-=4; t.style.fontSize=fs+'px'; }}
+</script></body></html>'''
+
 def main():
     lines = [l.strip() for l in (ROOT/"ads"/"sentences.txt").read_text(encoding="utf-8").splitlines() if l.strip()]
     out = ROOT/"ads"/"img"; out.mkdir(parents=True, exist_ok=True)
     tmp = pathlib.Path(tempfile.mkdtemp())
     items = []
     only = int(sys.argv[1]) if len(sys.argv) > 1 else None
-    for i, text in enumerate(lines):
+    for i, raw in enumerate(lines):
         name = f"ad-{i+1:02d}.png"
-        items.append({"file": name, "text": text})
+        rnd = raw.startswith("@r ")
+        text = raw[3:] if rnd else raw
+        plain = text.replace("[", "").replace("]", "")
+        items.append({"file": name, "text": plain})
         if only is not None and i+1 != only: continue
-        f = tmp/f"{i}.html"; f.write_text(page(text, i), encoding="utf-8")
+        f = tmp/f"{i}.html"; f.write_text(page_round(text) if rnd else page(text, i), encoding="utf-8")
         subprocess.run([CHROME, "--headless", "--disable-gpu", "--hide-scrollbars", f"--window-size={W},{H}", "--virtual-time-budget=6000",
                         f"--screenshot={out/name}", f.as_uri()], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
-        print("ok", name, text[:30])
+        print("ok", name, plain[:30])
     (ROOT/"ads"/"ads.json").write_text(json.dumps(items, ensure_ascii=False, indent=1), encoding="utf-8")
 if __name__ == "__main__":
     main()
