@@ -33,13 +33,13 @@ body{{background:#F6EFE4;position:relative;font-family:Rubik,sans-serif;color:#3
 .paper{{position:relative;width:100%;height:100%;border-radius:16px;background:#FFFDF9;overflow:hidden}}
 .c1{{position:absolute;left:-110px;top:-200px;width:540px;height:540px;border-radius:50%;background:#F1E4D3}}
 .c2{{position:absolute;right:-70px;bottom:-110px;width:380px;height:460px;border-radius:190px 190px 0 0;background:rgba(154,154,117,.28)}}
-.c3{{position:absolute;left:300px;bottom:70px;width:130px;height:130px;border-radius:50%;background:#E9B8A4;opacity:.75}}
-.c4{{position:absolute;right:250px;top:190px;width:56px;height:56px;border-radius:50%;background:#C98D86;opacity:.7}}
+.c3{{position:absolute;left:300px;bottom:60px;width:130px;height:130px;border-radius:50%;background:#E9B8A4;opacity:.75}}
+.c4{{position:absolute;right:300px;top:110px;width:56px;height:56px;border-radius:50%;background:#C98D86;opacity:.7}}
 .stamp{{position:absolute;left:330px;top:50px;width:96px;height:114px;background:#F3E3D1;border:9px dotted #FFFDF9;outline:2px solid #E6D3BC;outline-offset:-2px;transform:rotate(4deg);padding:10px}}
 .hand{{position:absolute;right:340px;top:40px;font-family:"Amatic SC";font-weight:700;font-size:118px;line-height:1;color:#B85C40}}
-.txt{{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding-top:0}}
-h1{{font-size:190px;line-height:.98;font-weight:600;letter-spacing:-.01em;color:#C96F52}}
-.sub{{margin-top:12px;font-size:86px;line-height:1.1;font-weight:500;color:#3F382F}}
+.txt{{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;padding-top:78px}}
+h1{{font-size:172px;line-height:.98;font-weight:600;letter-spacing:-.01em;color:#C96F52}}
+.sub{{margin-top:10px;font-size:78px;line-height:1.1;font-weight:500;color:#3F382F}}
 </style><body>
 <div class="frame"><div class="paper">
 <div class="c1"></div><div class="c2"></div><div class="c3"></div><div class="c4"></div>
