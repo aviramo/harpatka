@@ -250,8 +250,9 @@
     .hv{ position:absolute; inset:0; z-index:5; border-radius:20px; overflow:hidden; background:#F6EFE4; transition:opacity .45s ease; }
     .hv[hidden]{ display:none; }
     .hv.out{ opacity:0; pointer-events:none; }
-    .hv-bg{ position:absolute; left:-40px; top:-40px; width:calc(100% + 80px); height:calc(100% + 80px); filter:blur(22px) saturate(1.15); }
-    .hv video{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; background:transparent; }
+    .hv-bg{ position:absolute; left:-40px; top:-40px; width:calc(100% + 80px); height:calc(100% + 80px); filter:blur(22px); }
+    .hv video{ opacity:0; position:absolute; inset:0; width:100%; height:100%; object-fit:contain; background:transparent; }
+    .hv.on video{ opacity:1; }
     .hv-skip{ position:absolute; top:.6rem; left:.6rem; z-index:2; opacity:0; transition:opacity .4s ease; padding:.35rem .95rem; border-radius:999px; font-weight:700; font-size:.92rem; color:#3F382F; background:rgba(255,253,249,.9); }
     .hv-skip.show{ opacity:1; }
     .hv-bar{ direction:ltr; position:absolute; left:14px; right:14px; bottom:10px; height:4px; border-radius:999px; background:rgba(255,253,249,.55); overflow:hidden; z-index:2; }
@@ -1028,13 +1029,57 @@
       const skipBtn = document.getElementById('heroVidSkip');
       const cx = document.getElementById('heroVidBg').getContext('2d');
       let done = false, raf = 0, cut = 99;
+      /* מעבר: הפריים האחרון מתפרק לחתיכות שנופלות בעדינות ודועכות, וההזמנה האמיתית (כבר גלויה מתחת) נחשפת.
+         נפילה לדהייה פשוטה אם אי אפשר לצייר (למשל הסרטון עוד לא התחיל) */
+      const fadeOut = () => { box.classList.add('out'); setTimeout(() => { try { v.pause(); } catch(e){} box.remove(); }, 600); };
+      const shatter = () => {
+        const w = box.clientWidth, h = box.clientHeight, dpr = Math.min(2, window.devicePixelRatio || 1);
+        const snap = document.createElement('canvas'); snap.width = Math.round(w * dpr); snap.height = Math.round(h * dpr);
+        const sx = snap.getContext('2d'); sx.scale(dpr, dpr);
+        sx.imageSmoothingEnabled = true; sx.imageSmoothingQuality = 'high';
+        sx.drawImage(document.getElementById('heroVidBg'), 0, 0, w, h);            // הפסים (מדורגים בצבעי הקצוות)
+        const vw = v.videoWidth, vh = v.videoHeight, s = Math.min(w / vw, h / vh);
+        sx.drawImage(v, (w - vw * s) / 2, (h - vh * s) / 2, vw * s, vh * s);        // הפריים האחרון
+        const cv = document.createElement('canvas'); cv.width = snap.width; cv.height = snap.height;
+        cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;z-index:6;pointer-events:none';
+        const cx2 = cv.getContext('2d'); cx2.scale(dpr, dpr);
+        box.style.cssText += ';overflow:visible;background:transparent';
+        Array.from(box.children).forEach(c => { c.style.visibility = 'hidden'; });
+        box.appendChild(cv);
+        const COLS = 6, ROWS = Math.max(6, Math.round(h / w * COLS)), tw = w / COLS, th = h / ROWS, DUR = 720;
+        const tiles = [];
+        for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+          const mx = (c + .5) / COLS - .5, my = (r + .5) / ROWS - .5, d = Math.hypot(mx, my) / .72;
+          tiles.push({ c, r, delay: d * 260 + Math.random() * 120, dx: mx * 70 + (Math.random() - .5) * 30, dy: 26 + Math.random() * 46 + my * 40, rot: (Math.random() - .5) * .45 });
+        }
+        const t0 = performance.now(), R = 20;
+        const clipRound = () => { cx2.beginPath(); cx2.moveTo(R, 0); cx2.arcTo(w, 0, w, h, R); cx2.arcTo(w, h, 0, h, R); cx2.arcTo(0, h, 0, 0, R); cx2.arcTo(0, 0, w, 0, R); cx2.closePath(); };
+        const frame = now => {
+          const el = now - t0; cx2.clearRect(0, 0, w, h);
+          let alive = false;
+          cx2.save(); clipRound(); cx2.clip();
+          tiles.forEach(k => {
+            const p = Math.min(1, Math.max(0, (el - k.delay) / DUR));
+            if (p >= 1) return; alive = true;
+            const e = p * p, q = Math.min(1, Math.max(0, (p - .55) / .45)), a = 1 - q * q * (3 - 2 * q), cxm = (k.c + .5) * tw, cym = (k.r + .5) * th;
+            cx2.save(); cx2.globalAlpha = a;
+            cx2.translate(cxm + k.dx * e, cym + k.dy * e); cx2.rotate(k.rot * e); cx2.scale(1 - .12 * e, 1 - .12 * e);
+            cx2.drawImage(snap, k.c * tw * dpr, k.r * th * dpr, tw * dpr + 1, th * dpr + 1, -tw / 2, -th / 2, tw + .5, th + .5);
+            cx2.restore();
+          });
+          cx2.restore();
+          if (alive) requestAnimationFrame(frame); else box.remove();
+        };
+        requestAnimationFrame(frame);
+      };
       const finish = () => {
         if (done) return; done = true;
         cancelAnimationFrame(raf);
         root.classList.remove('vid-pending');
         try { v.pause(); } catch(e){}
-        box.classList.add('out');
-        setTimeout(() => { try { v.pause(); } catch(e){} box.remove(); }, 700);
+        let ok = false;
+        try { if (v.readyState >= 2 && v.videoWidth && v.currentTime > 0.3) { shatter(); ok = true; } } catch(e){}
+        if (!ok) fadeOut();
       };
       skipBtn.addEventListener('click', finish);
       Promise.all([fetch('../ads/videos.json').then(r => r.json()), fetch('../ads/video-cuts.json').then(r => r.json())]).then(([vids, cuts]) => {
@@ -1043,8 +1088,8 @@
         const n = (q && vids[q]) ? q : keys[Math.floor(Math.random() * keys.length)];
         const nn = String(n).padStart(2, '0');
         cut = parseFloat(cuts[n]) || 8;
-        v.poster = '../ads/img/ad-' + nn + '.png';
         v.src = '../ads/video/' + vids[n];
+        v.addEventListener('loadedmetadata', () => { try { v.currentTime = 0.02; } catch(e){} }, { once: true });   // מדלגים על פריים 0 (תמונת המודעה לתצוגה מקדימה) ומתחילים מהאנימציה
         box.hidden = false;
         if (window.fbq) { try { fbq('trackCustom', 'HeroVideo', { ad: Number(n) }); } catch(e){} }
         const tick = () => {
@@ -1054,7 +1099,7 @@
           raf = requestAnimationFrame(tick);
         };
         const paint = () => { if (done) return; try { const vw = v.videoWidth, vh = v.videoHeight, sh = Math.max(2, Math.round(vh * 0.015)); cx.drawImage(v, 0, 0, vw, sh, 0, 0, 24, 15); cx.drawImage(v, 0, vh - sh, vw, sh, 0, 15, 24, 15); } catch(e){} v.requestVideoFrameCallback ? v.requestVideoFrameCallback(paint) : requestAnimationFrame(paint); };
-        v.addEventListener('playing', () => { clearTimeout(stall); paint(); setTimeout(() => skipBtn.classList.add('show'), 1200); raf = requestAnimationFrame(tick); }, { once: true });
+        v.addEventListener('playing', () => { clearTimeout(stall); const reveal = () => { box.classList.add('on'); paint(); }; if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(reveal); else setTimeout(reveal, 80); setTimeout(() => skipBtn.classList.add('show'), 1200); raf = requestAnimationFrame(tick); }, { once: true });
         v.addEventListener('ended', finish);
         v.addEventListener('error', finish);
         const stall = setTimeout(finish, 5000);   // לא התחיל להתנגן (חיבור איטי או חסימת הפעלה אוטומטית): מציגים את ההזמנה
