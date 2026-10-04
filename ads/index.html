@@ -14,7 +14,14 @@
     body{ background:var(--bg); color:var(--ink); }
     .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(16rem,1fr)); gap:1rem; padding:1rem; }
     .grid figure{ display:block; }
-    .grid .n{ display:block; font-family:Rubik,Assistant,sans-serif; font-weight:600; font-size:.95rem; line-height:1; color:#A89F90; padding:0 .15rem .4rem; }
+    .grid .head{ display:flex; align-items:center; gap:.5rem; padding:0 .15rem .4rem; }
+    .grid .n{ font-family:Rubik,Assistant,sans-serif; font-weight:600; font-size:.95rem; line-height:1; color:#A89F90; }
+    /* הורדה: בצד שמאל, באותה שורה עם המספר. סרטון (אם יש) ואז תמונה */
+    .grid .dl{ margin-inline-start:auto; display:flex; gap:.4rem; }
+    .grid .dl a{ display:flex; align-items:center; gap:.2rem; height:2rem; padding:0 .55rem; border-radius:999px;
+      border:1px solid rgba(168,159,144,.35); color:#A89F90; text-decoration:none; }
+    .grid .dl svg{ width:1.05rem; height:1.05rem; display:block; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+    .grid .dl a:focus-visible{ outline:3px solid var(--paper); outline-offset:2px; }
     .grid .media{ position:relative; }
     .grid img, .grid video{ width:100%; height:auto; aspect-ratio:4/5; display:block; }
     .grid video{ display:none; background:#000; cursor:pointer; }
@@ -38,18 +45,35 @@
     const json = u => fetch(u).then(r => r.ok ? r.json() : {}).catch(() => ({}));
     const ICONS = '<svg class="i-play" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.6 1.2v7.6L9 5z" fill="currentColor"/></svg>'
                 + '<svg class="i-stop" viewBox="0 0 10 10" aria-hidden="true"><rect x="1.8" y="1.8" width="6.4" height="6.4" rx=".8" fill="currentColor"/></svg>';
+    const ARROW = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg>';
+    const GLYPH = {
+      video: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="M15.5 10.5l6-3.5v10l-6-3.5z"/></svg>',
+      image: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="9.5" r="1.6"/><path d="M3.5 18l5.5-5.5 4 4 2.5-2.5 5 5"/></svg>'
+    };
+    const dlLink = (href, name, kind, label) => {
+      const a = document.createElement('a');
+      a.href = href; a.download = name; a.title = label; a.setAttribute('aria-label', label);
+      a.innerHTML = ARROW + GLYPH[kind];
+      return a;
+    };
     Promise.all([json('ads.json'), json('videos.json')]).then(([items, videos]) => {
       const g = document.getElementById('grid');
       const stops = [];   // סרטון אחד בכל פעם: כשאחד מתחיל לנגן, כל השאר עוצרים וחוזרים לתמונה
       (Array.isArray(items) ? items : []).forEach(it => {
         const f = document.createElement('figure');
+        const head = document.createElement('div'); head.className = 'head';
         const n = document.createElement('span'); n.className = 'n'; n.textContent = it.id;
+        const dl = document.createElement('div'); dl.className = 'dl';
+        head.appendChild(n); head.appendChild(dl);
         const media = document.createElement('div'); media.className = 'media';
         const im = document.createElement('img');
         im.loading = 'lazy'; im.width = 1080; im.height = 1350; im.src = 'img/' + it.file; im.alt = it.text;
-        media.appendChild(im); f.appendChild(n); f.appendChild(media);
+        media.appendChild(im); f.appendChild(head); f.appendChild(media);
 
         const file = videos[String(it.id)];
+        const pad = String(it.id).padStart(2, '0');
+        if (file) dl.appendChild(dlLink('video/' + file, 'ad-' + pad + '.mp4', 'video', 'הורדת הסרטון של מודעה ' + it.id));
+        dl.appendChild(dlLink('img/' + it.file, 'ad-' + pad + '.png', 'image', 'הורדת התמונה של מודעה ' + it.id));
         if (file) {
           const v = document.createElement('video');
           v.playsInline = true; v.preload = 'none';
