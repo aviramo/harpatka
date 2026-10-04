@@ -1053,7 +1053,7 @@
           bar.style.width = Math.min(100, v.currentTime / cut * 100) + '%';
           raf = requestAnimationFrame(tick);
         };
-        const paint = () => { if (done) return; try { cx.drawImage(v, 0, 0, 24, 30); } catch(e){} v.requestVideoFrameCallback ? v.requestVideoFrameCallback(paint) : requestAnimationFrame(paint); };
+        const paint = () => { if (done) return; try { const vw = v.videoWidth, vh = v.videoHeight, sh = Math.max(2, Math.round(vh * 0.015)); cx.drawImage(v, 0, 0, vw, sh, 0, 0, 24, 15); cx.drawImage(v, 0, vh - sh, vw, sh, 0, 15, 24, 15); } catch(e){} v.requestVideoFrameCallback ? v.requestVideoFrameCallback(paint) : requestAnimationFrame(paint); };
         v.addEventListener('playing', () => { clearTimeout(stall); paint(); setTimeout(() => skipBtn.classList.add('show'), 1200); raf = requestAnimationFrame(tick); }, { once: true });
         v.addEventListener('ended', finish);
         v.addEventListener('error', finish);
