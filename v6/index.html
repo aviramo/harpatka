@@ -252,7 +252,9 @@
     .hv.out{ opacity:0; pointer-events:none; }
     .hv-bg{ position:absolute; left:-40px; top:-40px; width:calc(100% + 80px); height:calc(100% + 80px); filter:blur(22px); }
     .hv video{ opacity:0; position:absolute; inset:0; width:100%; height:100%; object-fit:contain; background:transparent; }
-    .hv.on video{ opacity:1; }
+    .hv-cv{ position:absolute; inset:0; width:100%; height:100%; opacity:0; }
+    .hv.on .hv-cv{ opacity:1; }
+    .hv video{ pointer-events:none; }
     .hv-skip{ position:absolute; top:.6rem; left:.6rem; z-index:2; opacity:0; transition:opacity .4s ease; padding:.35rem .95rem; border-radius:999px; font-weight:700; font-size:.92rem; color:#3F382F; background:rgba(255,253,249,.9); }
     .hv-skip.show{ opacity:1; }
     .hv-bar{ direction:ltr; position:absolute; left:14px; right:14px; bottom:10px; height:4px; border-radius:999px; background:rgba(255,253,249,.4); overflow:hidden; z-index:2; }
@@ -518,7 +520,7 @@
         </div>
       </div>
       <div id="heroVid" class="hv" hidden aria-label="סרטון קצר">
-        <canvas class="hv-bg" id="heroVidBg" width="24" height="30" aria-hidden="true"></canvas>
+        <canvas class="hv-cv" id="heroVidCv" aria-hidden="true"></canvas>
         <video id="heroVideo" playsinline muted preload="auto" disablepictureinpicture></video>
         <button type="button" id="heroVidSkip" class="hv-skip">דלגו</button>
         <div class="hv-bar" aria-hidden="true"><i id="heroVidBar"></i></div>
@@ -694,7 +696,7 @@
           </article>
           <!-- אופיר אבירם -->
           <article class="card-soft px-5 py-8 md:p-10 text-center reveal" style="transition-delay:.08s">
-            <img src="../images/ofir-v2.jpg" width="400" height="400" loading="lazy" alt="אופיר אבירם"
+            <img src="../images/ofir-v3.jpg" width="400" height="400" loading="lazy" alt="אופיר אבירם"
                  class="w-32 h-32 md:w-36 md:h-36 rounded-full object-cover mx-auto mb-5 ring-[6px] ring-cream">
             <h3 class="h-card mb-3">אופיר אבירם</h3>
             <p class="muted text-[1.05rem]">יוצר ומנחה מפגשי מוזיקה, תנועה ושירה. לומד ומעמיק בדרך שבה מוזיקה ותנועה מקרבות בין אנשים, ומביא לקבוצה חום, משחקיות וגובה עיניים</p>
@@ -763,7 +765,7 @@
           <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.057 0a11.82 11.82 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.477-.913zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>וואטסאפ</span>
         </a>
         <a href="#" target="_blank" rel="noopener" data-wa="ofir" class="contact-opt">
-          <img src="../images/ofir-v2.jpg" width="400" height="400" alt="אופיר אבירם">
+          <img src="../images/ofir-v3.jpg" width="400" height="400" alt="אופיר אבירם">
           <b>אופיר</b>
           <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.057 0a11.82 11.82 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.477-.913zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>וואטסאפ</span>
         </a>
@@ -1027,23 +1029,36 @@
       const v = document.getElementById('heroVideo');
       const bar = document.getElementById('heroVidBar');
       const skipBtn = document.getElementById('heroVidSkip');
-      const cx = document.getElementById('heroVidBg').getContext('2d');
+      const cv0 = document.getElementById('heroVidCv'), g = cv0.getContext('2d');
+      const tT = document.createElement('canvas'); tT.width = 24; tT.height = 30; const gT = tT.getContext('2d');   // שוליים עליונים/תחתונים של הפריים
+      const tS = document.createElement('canvas'); tS.width = 30; tS.height = 24; const gS = tS.getContext('2d');   // שוליים שמאליים/ימניים (בדסקטופ)
+      /* ציור אחד לכל מה שנראה: הפסים (נמשכים מקצוות הפריים עצמו) והפריים באותו קנבס ובאותה קריאה, ולכן אין פיגור ביניהם */
+      const draw = () => {
+        const dpr = Math.min(2, window.devicePixelRatio || 1), W = Math.round(box.clientWidth * dpr), H = Math.round(box.clientHeight * dpr);
+        if (!W || !H || !v.videoWidth) return;
+        if (cv0.width !== W || cv0.height !== H) { cv0.width = W; cv0.height = H; }
+        const vw = v.videoWidth, vh = v.videoHeight, s = Math.min(W / vw, H / vh), dw = vw * s, dh = vh * s, dx = (W - dw) / 2, dy = (H - dh) / 2;
+        g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+        const sh = Math.max(2, Math.round(vh * 0.015)), sw = Math.max(2, Math.round(vw * 0.015));
+        if (dy > 0.5) {
+          gT.drawImage(v, 0, 0, vw, sh, 0, 0, 24, 15); gT.drawImage(v, 0, vh - sh, vw, sh, 0, 15, 24, 15);
+          g.drawImage(tT, 0, 0, 24, 15, 0, 0, W, Math.ceil(dy) + 1); g.drawImage(tT, 0, 15, 24, 15, 0, Math.floor(dy + dh) - 1, W, H - Math.floor(dy + dh) + 1);
+        }
+        if (dx > 0.5) {
+          gS.drawImage(v, 0, 0, sw, vh, 0, 0, 15, 24); gS.drawImage(v, vw - sw, 0, sw, vh, 15, 0, 15, 24);
+          g.drawImage(tS, 0, 0, 15, 24, 0, 0, Math.ceil(dx) + 1, H); g.drawImage(tS, 15, 0, 15, 24, Math.floor(dx + dw) - 1, 0, W - Math.floor(dx + dw) + 1, H);
+        }
+        g.drawImage(v, dx, dy, dw, dh);
+      };
       let done = false, raf = 0, cut = 99;
       /* מעבר: הפריים האחרון מתפרק לחתיכות שנופלות בעדינות ודועכות, וההזמנה האמיתית (כבר גלויה מתחת) נחשפת.
          נפילה לדהייה פשוטה אם אי אפשר לצייר (למשל הסרטון עוד לא התחיל) */
       const fadeOut = () => { box.classList.add('out'); setTimeout(() => { try { v.pause(); } catch(e){} box.remove(); }, 600); };
       const shatter = () => {
+        draw();   // הפריים הנוכחי בדיוק, יחד עם הפסים
         const w = box.clientWidth, h = box.clientHeight, dpr = Math.min(2, window.devicePixelRatio || 1);
-        const snap = document.createElement('canvas'); snap.width = Math.round(w * dpr); snap.height = Math.round(h * dpr);
-        const sx = snap.getContext('2d'); sx.scale(dpr, dpr);
-        sx.imageSmoothingEnabled = true; sx.imageSmoothingQuality = 'high';
-        // הפסים מצוירים מחדש מהפריים הנוכחי בדיוק (לא מהציור האחרון של הלולאה), כדי שהרקע והסרטון יהיו באותו צבע גם ברגע הפיצול
-        { const vw0 = v.videoWidth, vh0 = v.videoHeight, sh0 = Math.max(2, Math.round(vh0 * 0.015)); cx.drawImage(v, 0, 0, vw0, sh0, 0, 0, 24, 15); cx.drawImage(v, 0, vh0 - sh0, vw0, sh0, 0, 15, 24, 15); }
-        sx.save(); if ('filter' in sx) sx.filter = 'blur(22px)';
-        sx.drawImage(document.getElementById('heroVidBg'), -40, -40, w + 80, h + 80);   // כמו הפסים החיים: נמתח ומטושטש
-        sx.restore();
-        const vw = v.videoWidth, vh = v.videoHeight, s = Math.min(w / vw, h / vh);
-        sx.drawImage(v, (w - vw * s) / 2, (h - vh * s) / 2, vw * s, vh * s);        // הפריים האחרון
+        const snap = document.createElement('canvas'); snap.width = cv0.width; snap.height = cv0.height;
+        snap.getContext('2d').drawImage(cv0, 0, 0);
         const cv = document.createElement('canvas'); cv.width = snap.width; cv.height = snap.height;
         cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;z-index:6;pointer-events:none';
         const cx2 = cv.getContext('2d'); cx2.scale(dpr, dpr);
@@ -1099,7 +1114,7 @@
           bar.style.width = Math.min(100, v.currentTime / cut * 100) + '%';
           raf = requestAnimationFrame(tick);
         };
-        const paint = () => { if (done) return; try { const vw = v.videoWidth, vh = v.videoHeight, sh = Math.max(2, Math.round(vh * 0.015)); cx.drawImage(v, 0, 0, vw, sh, 0, 0, 24, 15); cx.drawImage(v, 0, vh - sh, vw, sh, 0, 15, 24, 15); } catch(e){} v.requestVideoFrameCallback ? v.requestVideoFrameCallback(paint) : requestAnimationFrame(paint); };
+        const paint = () => { if (done) return; draw(); v.requestVideoFrameCallback ? v.requestVideoFrameCallback(paint) : requestAnimationFrame(paint); };
         v.addEventListener('playing', () => { clearTimeout(stall); const reveal = () => { box.classList.add('on'); paint(); }; if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(reveal); else setTimeout(reveal, 80); setTimeout(() => skipBtn.classList.add('show'), 1200); raf = requestAnimationFrame(tick); }, { once: true });
         v.addEventListener('ended', finish);
         v.addEventListener('error', finish);
