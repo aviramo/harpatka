@@ -8,7 +8,7 @@ CHROME = next(p for p in [r"C:\Program Files\Google\Chrome\Application\chrome.ex
 OUT = ROOT / "ads" / "social"; OUT.mkdir(parents=True, exist_ok=True)
 W, H = 1080, 1350
 
-EVENT = {"file": "2026-10-25-v2", "day": "ראשון 25.10", "time": "20:00", "place": "הרצליה", "seats": "עד 30"}
+EVENT = {"file": "2026-10-25-v3", "day": "ראשון 25.10", "time": "20:00", "place": "הרצליה", "seats": "עד 30"}
 
 STAMP = '<svg viewBox="0 0 48 52" fill="#C96F52"><g stroke="#C96F52" stroke-width="1.8" stroke-linecap="round" fill="none"><path d="M15 21Q8 17 6 9"/><path d="M15 21Q21 18 24 12"/><path d="M34 22Q40 17 42 11"/><path d="M34 22Q29 19 27 14"/></g><circle cx="15" cy="12" r="3.4"/><path d="M15 17C9 22 8 33 5 42L25 42C22 33 21 22 15 17Z"/><circle cx="34" cy="13" r="3.2" fill="#C98D86"/><path d="M34 18C28.5 23 28 33 26 42L42 42C40 33 39.5 23 34 18Z" fill="#9A9A75"/></svg>'
 
@@ -20,23 +20,24 @@ def flyer(e):
 *{{margin:0;box-sizing:border-box}}html,body{{width:{W}px;height:{H}px;overflow:hidden}}
 body{{background:#F6EFE4;color:#3F382F;font-family:Assistant,sans-serif}}
 .frame{{position:absolute;inset:34px;border-radius:40px;padding:26px;background:repeating-linear-gradient(-45deg,#C96F52 0 30px,#FFFDF9 30px 52px,#9A9A75 52px 82px,#FFFDF9 82px 104px);box-shadow:0 10px 28px rgba(63,56,47,.12)}}
-.paper{{position:relative;height:100%;border-radius:22px;background:#FFFDF9;padding:46px 70px 50px;display:flex;flex-direction:column;align-items:center;text-align:center}}
+.paper{{position:relative;height:100%;border-radius:22px;background:#FFFDF9;padding:46px 56px 46px;display:flex;flex-direction:column;align-items:center;text-align:center}}
 .top{{width:100%;display:flex;justify-content:space-between;align-items:flex-start}}
 .hand{{font-family:"Amatic SC",cursive;font-weight:700;line-height:1}}
 .inv{{font-size:136px;color:#B85C40;margin-top:-6px}}
 .stamp{{width:104px;height:122px;padding:10px;background:#F3E3D1;border:8px dotted #FFFDF9;outline:2px solid #E6D3BC;outline-offset:-2px;transform:rotate(4deg)}}
 .stamp svg{{width:100%;height:100%}}
-h1{{font-family:Rubik,sans-serif;font-weight:600;font-size:118px;line-height:1.05;letter-spacing:-.01em;margin-top:2px}}
+h1{{font-family:Rubik,sans-serif;font-weight:600;font-size:112px;line-height:1.05;letter-spacing:-.01em;margin-top:2px}}
 .lead{{font-size:50px;font-weight:700;line-height:1.3;margin-top:30px;white-space:nowrap}}
-.lead2{{font-size:40px;font-weight:600;line-height:1.35;color:rgba(63,56,47,.78);margin-top:10px}}
-.note{{font-size:64px;line-height:1.05;color:#C96F52;margin-top:30px;transform:rotate(-1.5deg)}}
-.dots{{width:96px;border-top:4px dotted rgba(154,154,117,.7);margin:30px 0 24px}}
+.lead2{{font-size:37px;font-weight:600;line-height:1.4;color:rgba(63,56,47,.78);margin-top:10px;white-space:nowrap}}
+.lead2 b{{font-weight:700;color:#3F382F}}
+.note{{font-size:64px;line-height:1.05;color:#C96F52;margin-top:24px;transform:rotate(-1.5deg)}}
+.dots{{width:96px;border-top:4px dotted rgba(154,154,117,.7);margin:26px 0 20px}}
 .who{{font-size:40px;font-weight:700;line-height:1.35}}
 .who bdi{{direction:ltr;unicode-bidi:isolate}}
-.grid{{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:30px}}
-.cell{{background:#F6EFE4;border-radius:26px;padding:18px 10px 22px}}
+.grid{{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:26px}}
+.cell{{background:#F6EFE4;border-radius:26px;padding:12px 10px 16px}}
 .lbl{{font-size:30px;font-weight:600;color:rgba(63,56,47,.62);line-height:1.2}}
-.val{{font-family:Rubik,sans-serif;font-weight:600;font-size:62px;line-height:1.15;margin-top:4px}}
+.val{{font-family:Rubik,sans-serif;font-weight:600;font-size:60px;line-height:1.15;margin-top:2px}}
 .by{{margin-top:auto;font-size:32px;font-weight:600;color:rgba(63,56,47,.7)}}
 .by b{{font-family:Rubik,sans-serif;font-weight:600;color:#3F382F}}
 </style></head><body>
@@ -44,7 +45,7 @@ h1{{font-family:Rubik,sans-serif;font-weight:600;font-size:118px;line-height:1.0
   <div class="top"><p class="hand inv">הזמנה</p><div class="stamp">{STAMP}</div></div>
   <h1>מפגש מסוג אחר</h1>
   <p class="lead">להכיר אנשים חדשים, בלי לחפש מה להגיד</p>
-  <p class="lead2">תנועות פשוטות בקבוצה, בהנחיה ולצלילי מוזיקה</p>
+  <p class="lead2">תנועות פשוטות בקבוצה, בהנחיה ולצלילי מוזיקה מיוחדת<br><b>הגוף משתחרר, המבוכה נעלמת וההיכרות קורית מעצמה</b></p>
   <p class="hand note">לא ערב הכרויות,<br>אבל כן ערב שאפשר להכיר בו אנשים חדשים</p>
   <div class="dots"></div>
   <p class="who">נשים וגברים בגילאי <bdi>40–49</bdi> בפרק פתוח בחיים</p>
