@@ -254,12 +254,7 @@
     .hv video{ opacity:0; position:absolute; inset:0; width:100%; height:100%; object-fit:contain; background:transparent; }
     .hv-cv{ position:absolute; inset:0; width:100%; height:100%; opacity:0; }
     .hv.on .hv-cv{ opacity:1; }
-    .hv video{ pointer-events:none; }
-    .hv-skip{ position:absolute; top:.6rem; left:.6rem; z-index:2; opacity:0; transition:opacity .4s ease; padding:.35rem .95rem; border-radius:999px; font-weight:700; font-size:.92rem; color:#3F382F; background:rgba(255,253,249,.9); }
-    .hv-skip.show{ opacity:1; }
-    .hv-bar{ direction:ltr; position:absolute; left:14px; right:14px; bottom:10px; height:4px; border-radius:999px; background:rgba(255,253,249,.4); overflow:hidden; z-index:2; }
-    .hv-bar i{ display:block; height:100%; width:0; background:#8E8A84; }
-    .btn-ghost{
+    .hv video{ pointer-events:none; }    .btn-ghost{
       display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
       border:1.5px solid rgba(63,56,47,.22); color:var(--ink); background:transparent; font-weight:600;
       cursor:pointer;
@@ -522,8 +517,6 @@
       <div id="heroVid" class="hv" hidden aria-label="סרטון קצר">
         <canvas class="hv-cv" id="heroVidCv" aria-hidden="true"></canvas>
         <video id="heroVideo" playsinline muted preload="auto" disablepictureinpicture></video>
-        <button type="button" id="heroVidSkip" class="hv-skip">דלגו</button>
-        <div class="hv-bar" aria-hidden="true"><i id="heroVidBar"></i></div>
       </div>
       </div>
     </div>
@@ -1027,8 +1020,6 @@
       const box = document.getElementById('heroVid');
       if (!box || !root.classList.contains('vid-pending')) { if (box) box.remove(); return; }
       const v = document.getElementById('heroVideo');
-      const bar = document.getElementById('heroVidBar');
-      const skipBtn = document.getElementById('heroVidSkip');
       const cv0 = document.getElementById('heroVidCv'), g = cv0.getContext('2d');
       const tT = document.createElement('canvas'); tT.width = 24; tT.height = 30; const gT = tT.getContext('2d');   // שוליים עליונים/תחתונים של הפריים
       const tS = document.createElement('canvas'); tS.width = 30; tS.height = 24; const gS = tS.getContext('2d');   // שוליים שמאליים/ימניים (בדסקטופ)
@@ -1097,7 +1088,6 @@
         try { if (v.readyState >= 2 && v.videoWidth && v.currentTime > 0.3) { shatter(); ok = true; } } catch(e){}
         if (!ok) fadeOut();
       };
-      skipBtn.addEventListener('click', finish);
       Promise.all([fetch('../ads/videos.json').then(r => r.json()), fetch('../ads/video-cuts.json').then(r => r.json())]).then(([vids, cuts]) => {
         const keys = Object.keys(vids);
         const q = new URLSearchParams(location.search).get('ad');
@@ -1111,11 +1101,10 @@
         const tick = () => {
           if (done) return;
           if (v.currentTime >= cut) { finish(); return; }
-          bar.style.width = Math.min(100, v.currentTime / cut * 100) + '%';
           raf = requestAnimationFrame(tick);
         };
         const paint = () => { if (done) return; draw(); v.requestVideoFrameCallback ? v.requestVideoFrameCallback(paint) : requestAnimationFrame(paint); };
-        v.addEventListener('playing', () => { clearTimeout(stall); const reveal = () => { box.classList.add('on'); paint(); }; if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(reveal); else setTimeout(reveal, 80); setTimeout(() => skipBtn.classList.add('show'), 1200); raf = requestAnimationFrame(tick); }, { once: true });
+        v.addEventListener('playing', () => { clearTimeout(stall); const reveal = () => { box.classList.add('on'); paint(); }; if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(reveal); else setTimeout(reveal, 80); raf = requestAnimationFrame(tick); }, { once: true });
         v.addEventListener('ended', finish);
         v.addEventListener('error', finish);
         const stall = setTimeout(finish, 5000);   // לא התחיל להתנגן (חיבור איטי או חסימת הפעלה אוטומטית): מציגים את ההזמנה
