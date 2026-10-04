@@ -453,15 +453,15 @@
 <body class="grain">
   <a href="#register" class="skip-link">דילוג להצטרפות</a>
 
-  <!-- ====================== באנר "המפגש הבא": תאריך, שעה, מקום, מחיר (מחושב ב-JS) ונרשמים (CONFIG.registered מתוך CONFIG.capacity) ====================== -->
+  <!-- ====================== באנר "המפגש הבא": תאריך, שעה, מקום, מחיר (מחושב ב-JS) ושלב הרשמה (לפי תאריך) ====================== -->
   <div id="topbar" class="relative z-10" style="background:linear-gradient(120deg,#0A2236 0%,#0F3A4D 55%,#1B6170 100%);color:#FFFDF9;">
     <div class="max-w-2xl mx-auto px-5 py-3 flex items-center justify-between gap-3">
       <div class="min-w-0 flex-1">
         <p class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[.82rem] font-bold leading-none" style="background:#E9A68C;color:#3F382F"><span class="w-1.5 h-1.5 rounded-full" style="background:#663F4C" aria-hidden="true"></span>המפגש הבא</p>
         <p class="font-display font-semibold text-[.95rem] min-[375px]:text-[1rem] min-[410px]:text-[1.1rem] leading-tight whitespace-nowrap mt-2">יום ראשון 25.10 <span class="opacity-60" aria-hidden="true">·</span> 20:00 <span class="opacity-60" aria-hidden="true">·</span> הרצליה</p>
         <div class="flex items-center gap-2.5 mt-2.5">
-          <div class="h-[7px] flex-1 max-w-[9rem] rounded-full overflow-hidden" style="background:rgba(255,253,249,.25)" aria-hidden="true"><div id="regFill" class="h-full rounded-full" style="width:23.3%;background:#E9A68C"></div></div>
-          <p class="text-[.88rem] leading-none whitespace-nowrap"><b id="regCount">7</b> מתוך <span id="regCap">30</span> נרשמו</p>
+          <div class="h-[7px] flex-1 max-w-[9rem] rounded-full overflow-hidden" style="background:rgba(255,253,249,.25)" aria-hidden="true"><div id="regFill" class="h-full rounded-full" style="width:25%;background:#E9A68C"></div></div>
+          <p class="text-[.88rem] leading-none whitespace-nowrap"><span id="regStage">ההרשמה התחילה</span></p>
         </div>
       </div>
       <div class="text-center shrink-0 ps-3 self-stretch flex flex-col justify-center" style="border-inline-start:1px solid rgba(255,253,249,.3)">
@@ -756,8 +756,6 @@
       updatesGroup50PlusLink: 'https://chat.whatsapp.com/DB7zVc2NdVXEquZCC6PpUP',      // קבוצת העדכונים גיל 50 ומעלה
       payboxLink: 'https://links.payboxapp.com/MgKzRuPAZ3b',
       sheetsEndpoint: 'https://script.google.com/macros/s/AKfycbzTGo8SNjyF-xJsn08PXWrYt6EdkZOlmOCXeeFnlMHvg7uyMxXR6i8IoemuiBJTZE-EPQ/exec',
-      registered: 7,                                  // כמה נרשמו עד עכשיו (מוצג בבאנר "המפגש הבא")
-      capacity: 30,                                   // מספר המקומות במפגש
       pixelId: '429806621602468',
     };
 
@@ -946,12 +944,23 @@
       el.addEventListener('click', (e) => { e.preventDefault(); if (contactModal) openModal(contactModal); });
     });
 
-    /* ===== באנר "המפגש הבא": נרשמים מתוך מקומות ===== */
+    /* ===== באנר "המפגש הבא": שלבי הרשמה לפי התאריך (שעון ישראל), בלי חשיפת מספר נרשמים אמיתי.
+       שלב = טקסט + אחוז מילוי של הסרגל. עד התאריך (כולל) → השלב ===== */
     (function(){
       const el = id => document.getElementById(id);
-      if (el('regCount')) el('regCount').textContent = CONFIG.registered;
-      if (el('regCap')) el('regCap').textContent = CONFIG.capacity;
-      if (el('regFill')) el('regFill').style.width = Math.min(100, CONFIG.registered / CONFIG.capacity * 100).toFixed(1) + '%';
+      const day = s => { const [y,m,d] = s.split('-').map(Number); return Date.UTC(y, m-1, d) / 864e5; };
+      const today = day(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()));
+      const STAGES = [
+        ['2026-10-10', 'ההרשמה התחילה', 25],
+        ['2026-10-17', 'ההרשמה בעיצומה', 45],
+        ['2026-10-21', 'המקומות מתמלאים', 65],
+        ['2026-10-23', 'מעט מקומות נשארו', 85],
+        ['2026-10-25', 'המקומות האחרונים', 95]
+      ];
+      let s = STAGES.find(x => today <= day(x[0]));
+      if (!s) s = [null, 'ההרשמה הסתיימה', 100];
+      if (el('regStage')) el('regStage').textContent = s[1];
+      if (el('regFill')) el('regFill').style.width = s[2] + '%';
     })();
 
     /* ===== ציר מחיר: 80 ₪ עד 21.10, 100 ₪ מ-22.10 (שלושת הימים האחרונים) ועד המפגש ב-25.10; הנקודה "היום" נעה על הציר.
