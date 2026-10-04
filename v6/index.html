@@ -244,6 +244,18 @@
     .pt-lab b{ display:block; font-family:Rubik,sans-serif; font-weight:600; font-size:1.05rem; color:var(--ink); }
     .pt-lab span{ font-size:.85rem; color:#6b6254; }
     .pt-lab.l{ transform:none; text-align:left; } .pt-lab.r{ transform:none; text-align:right; }
+    /* ===== סרטון פתיחה על ההזמנה: אותו גודל בדיוק, בלי קפיצות; נעלם (דהייה) ברגע שההזמנה בסרטון נכנסת ===== */
+    #heroStage{ position:relative; }
+    html.vid-pending #heroStage > .hs-card{ visibility:hidden; }
+    .hv{ position:absolute; inset:0; z-index:5; border-radius:20px; overflow:hidden; background:#F6EFE4; transition:opacity .45s ease; }
+    .hv[hidden]{ display:none; }
+    .hv.out{ opacity:0; pointer-events:none; }
+    .hv-bg{ position:absolute; left:-40px; top:-40px; width:calc(100% + 80px); height:calc(100% + 80px); filter:blur(22px) saturate(1.15); }
+    .hv video{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; background:transparent; }
+    .hv-skip{ position:absolute; top:.6rem; left:.6rem; z-index:2; opacity:0; transition:opacity .4s ease; padding:.35rem .95rem; border-radius:999px; font-weight:700; font-size:.92rem; color:#3F382F; background:rgba(255,253,249,.9); }
+    .hv-skip.show{ opacity:1; }
+    .hv-bar{ direction:ltr; position:absolute; left:14px; right:14px; bottom:10px; height:4px; border-radius:999px; background:rgba(255,253,249,.55); overflow:hidden; z-index:2; }
+    .hv-bar i{ display:block; height:100%; width:0; background:#C96F52; }
     .btn-ghost{
       display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
       border:1.5px solid rgba(63,56,47,.22); color:var(--ink); background:transparent; font-weight:600;
@@ -448,6 +460,18 @@
     }
     .consent-cb:focus-visible{ outline:none; border-color:var(--terra); box-shadow:0 0 0 3px rgba(201,111,82,.22); }
   </style>
+  <script>
+    /* סרטון פתיחה: אם הדפדפן מאפשר, מסתירים את ההזמנה (בלי להזיז את הדף) עד שהסרטון נגמר; רשת ביטחון אחרי 9 שניות */
+    (function(){
+      try {
+        var c = navigator.connection || {};
+        var skip = (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) || c.saveData || /2g/.test(c.effectiveType || '');
+        if (skip) return;
+        document.documentElement.classList.add('vid-pending');
+        setTimeout(function(){ document.documentElement.classList.remove('vid-pending'); }, 9000);
+      } catch(e){}
+    })();
+  </script>
 </head>
 
 <body class="grain">
@@ -475,7 +499,8 @@
   <!-- ====================== 1. HERO — מכתב הזמנה (מעטפת דואר בפסים): חוויה אנושית בלי מילים + מי מגיע + CTA ====================== -->
   <header id="hero" class="relative pt-5 md:pt-8 pb-0">
     <div class="relative z-10 max-w-2xl mx-auto px-5 reveal">
-      <div class="p-[10px] md:p-[12px] rounded-[20px]" style="background:repeating-linear-gradient(-45deg,#C96F52 0 14px,#FFFDF9 14px 24px,#9A9A75 24px 38px,#FFFDF9 38px 48px);box-shadow:0 8px 24px rgba(63,56,47,.10);">
+      <div id="heroStage">
+      <div class="hs-card p-[10px] md:p-[12px] rounded-[20px]" style="background:repeating-linear-gradient(-45deg,#C96F52 0 14px,#FFFDF9 14px 24px,#9A9A75 24px 38px,#FFFDF9 38px 48px);box-shadow:0 8px 24px rgba(63,56,47,.10);">
         <div class="relative rounded-[12px] text-ink text-center px-6 md:px-12 pt-6 md:pt-8 pb-8 md:pb-10" style="background:#FFFDF9;">
           <div class="flex items-start justify-between mb-3 md:mb-6">
             <p class="hand text-[3.4rem] md:text-[4.6rem] text-[#B85C40] pt-0">הזמנה</p>
@@ -490,6 +515,13 @@
             <a href="#" target="_blank" rel="noopener" data-contact class="btn-primary rounded-full px-5 md:px-8 py-4 text-[1.05rem] md:text-[1.2rem] whitespace-nowrap w-full max-w-[24rem]"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-6 h-6" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.057 0a11.82 11.82 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.477-.913zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>שמירת מקום עכשיו</a>
           </div>
         </div>
+      </div>
+      <div id="heroVid" class="hv" hidden aria-label="סרטון קצר">
+        <canvas class="hv-bg" id="heroVidBg" width="24" height="30" aria-hidden="true"></canvas>
+        <video id="heroVideo" playsinline muted preload="auto" disablepictureinpicture></video>
+        <button type="button" id="heroVidSkip" class="hv-skip">דלגו</button>
+        <div class="hv-bar" aria-hidden="true"><i id="heroVidBar"></i></div>
+      </div>
       </div>
     </div>
   </header>
@@ -984,6 +1016,49 @@
       if (el('ptDot')) el('ptDot').style.left = pct;
       if (el('ptNow')) el('ptNow').style.left = pct;
       if (el('ptFill')) el('ptFill').style.width = pct;
+    })();
+
+    /* ===== סרטון פתיחה: סרטון אקראי מתוך 50 (או ?ad=N), מושתק, מתנגן אוטומטית וגם נחתך ברגע שההזמנה בסרטון נכנסת (ads/video-cuts.json) ===== */
+    (function(){
+      const root = document.documentElement;
+      const box = document.getElementById('heroVid');
+      if (!box || !root.classList.contains('vid-pending')) { if (box) box.remove(); return; }
+      const v = document.getElementById('heroVideo');
+      const bar = document.getElementById('heroVidBar');
+      const skipBtn = document.getElementById('heroVidSkip');
+      const cx = document.getElementById('heroVidBg').getContext('2d');
+      let done = false, raf = 0, cut = 99;
+      const finish = () => {
+        if (done) return; done = true;
+        cancelAnimationFrame(raf);
+        root.classList.remove('vid-pending');
+        box.classList.add('out');
+        setTimeout(() => { try { v.pause(); } catch(e){} box.remove(); }, 700);
+      };
+      skipBtn.addEventListener('click', finish);
+      Promise.all([fetch('../ads/videos.json').then(r => r.json()), fetch('../ads/video-cuts.json').then(r => r.json())]).then(([vids, cuts]) => {
+        const keys = Object.keys(vids);
+        const q = new URLSearchParams(location.search).get('ad');
+        const n = (q && vids[q]) ? q : keys[Math.floor(Math.random() * keys.length)];
+        const nn = String(n).padStart(2, '0');
+        cut = parseFloat(cuts[n]) || 8;
+        v.poster = '../ads/img/ad-' + nn + '.png';
+        v.src = '../ads/video/' + vids[n];
+        box.hidden = false;
+        if (window.fbq) { try { fbq('trackCustom', 'HeroVideo', { ad: Number(n) }); } catch(e){} }
+        const tick = () => {
+          if (done) return;
+          if (v.currentTime >= cut) { finish(); return; }
+          bar.style.width = Math.min(100, v.currentTime / cut * 100) + '%';
+          raf = requestAnimationFrame(tick);
+        };
+        const paint = () => { if (done) return; try { cx.drawImage(v, 0, 0, 24, 30); } catch(e){} v.requestVideoFrameCallback ? v.requestVideoFrameCallback(paint) : requestAnimationFrame(paint); };
+        v.addEventListener('playing', () => { clearTimeout(stall); paint(); setTimeout(() => skipBtn.classList.add('show'), 1200); raf = requestAnimationFrame(tick); }, { once: true });
+        v.addEventListener('ended', finish);
+        v.addEventListener('error', finish);
+        const stall = setTimeout(finish, 5000);   // לא התחיל להתנגן (חיבור איטי או חסימת הפעלה אוטומטית): מציגים את ההזמנה
+        const p = v.play(); if (p && p.catch) p.catch(finish);
+      }).catch(finish);
     })();
 
     /* ====== Service Worker — מבטיח שכל רענון טוען את הגרסה האחרונה שפורסמה ======

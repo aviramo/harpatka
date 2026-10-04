@@ -10,7 +10,7 @@
  *
  * החלף את CACHE_VERSION בכל deploy משמעותי (או השאר — network-first ממילא מביא HTML טרי).
  */
-const CACHE_VERSION = 'harpatka-v6-2026-10-03';
+const CACHE_VERSION = 'harpatka-v6-2026-10-04';
 const RUNTIME_CACHE = `runtime-${CACHE_VERSION}`;
 
 self.addEventListener('install', (event) => {
@@ -22,7 +22,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     // מחיקת caches ישנים מגרסאות קודמות
     const keys = await caches.keys();
-    await Promise.all(keys.filter((k) => k.startsWith('runtime-harpatka-v6') && k !== RUNTIME_CACHE).map((k) => caches.delete(k)));
+    await Promise.all(keys.filter((k) => k !== RUNTIME_CACHE).map((k) => caches.delete(k)));
     await self.clients.claim();
   })());
 });
@@ -36,12 +36,18 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   const sameOrigin = url.origin === self.location.origin;
 
+  // וידאו: הדפדפן מבקש טווחים (Range, תשובת 206) שאי אפשר לשמור ב-cache — לא מיירטים, הדפדפן מטפל לבד
+  if (req.headers.has('range') || /\.(mp4|webm)$/i.test(url.pathname)) return;
+
   // מסמכי HTML / ניווט → network-first (תמיד הגרסה האחרונה כשיש רשת)
   const isHTML =
     req.mode === 'navigate' ||
     (req.headers.get('accept') || '').includes('text/html');
 
-  if (isHTML) {
+  /* עמוד ads: התמונות וה-JSON משתנים באותו שם קובץ — תמיד רשת קודם, כדי שלא יוצג מצב ישן בטעינה הראשונה */
+  const isAds = sameOrigin && url.pathname.indexOf('/ads/') === 0;
+
+  if (isHTML || isAds) {
     event.respondWith((async () => {
       try {
         const fresh = await fetch(req);
