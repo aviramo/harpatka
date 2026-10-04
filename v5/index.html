@@ -231,6 +231,19 @@
     .contact-opt b{ font-family:Rubik,sans-serif; font-weight:600; font-size:1.2rem; }
     .contact-opt span{ display:inline-flex; align-items:center; gap:.35rem; background:var(--terra); color:var(--paper); font-weight:700; font-size:.98rem; border-radius:999px; padding:.4rem .95rem; }
     .btn-wa-sm{ display:inline-flex; align-items:center; justify-content:center; gap:.5rem; background:var(--terra); color:var(--paper); font-weight:700; font-size:1.05rem; border-radius:999px; padding:.7rem 1.5rem; }
+    /* ===== ציר מחיר: 80 ₪ עד 22.10, 100 ₪ בשלושת הימים האחרונים; נקודת "היום" נעה על הציר (הסימון באמצע תמיד) ===== */
+    .pt-wrap{ direction:ltr; position:relative; height:6.6rem; margin:1.1rem .9rem 0; }
+    .pt-line{ position:absolute; left:0; right:0; top:2.35rem; height:6px; border-radius:999px; background:var(--sand); }
+    .pt-fill{ position:absolute; left:0; top:2.35rem; height:6px; border-radius:999px; background:var(--terra); width:0; }
+    .pt-tick{ position:absolute; top:2.35rem; width:14px; height:14px; margin:-4px 0 0 -7px; border-radius:50%; background:var(--paper); border:3px solid var(--olive); }
+    .pt-now{ position:absolute; top:.15rem; display:flex; flex-direction:column; align-items:center; transform:translateX(-50%); }
+    .pt-now b{ font-family:Rubik,sans-serif; font-size:.82rem; font-weight:600; background:var(--terra); color:var(--paper); border-radius:999px; padding:.1rem .65rem; line-height:1.5; }
+    .pt-now i{ width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:7px solid var(--terra); }
+    .pt-dot{ position:absolute; top:2.35rem; width:20px; height:20px; margin:-7px 0 0 -10px; border-radius:50%; background:var(--terra); border:4px solid var(--paper); box-shadow:0 0 0 2px var(--terra); }
+    .pt-lab{ position:absolute; top:3.5rem; transform:translateX(-50%); text-align:center; line-height:1.25; white-space:nowrap; }
+    .pt-lab b{ display:block; font-family:Rubik,sans-serif; font-weight:600; font-size:1.05rem; color:var(--ink); }
+    .pt-lab span{ font-size:.85rem; color:#6b6254; }
+    .pt-lab.l{ transform:none; text-align:left; } .pt-lab.r{ transform:none; text-align:right; }
     .btn-ghost{
       display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
       border:1.5px solid rgba(63,56,47,.22); color:var(--ink); background:transparent; font-weight:600;
@@ -591,8 +604,16 @@
           <div class="card-soft px-4 py-5 md:py-6 text-center reveal col-span-2 md:col-span-3" style="transition-delay:0.30s">
             <span class="inline-flex text-terra mb-2"><svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 13.5l-7 7a2 2 0 0 1-2.8 0L3 12.8V4h8.8l8.7 8.7a1 1 0 0 1 0 .8z"/><circle cx="7.6" cy="8.6" r="1.4"/></svg></span>
             <div class="text-[.9rem] muted">מחיר</div>
-            <div class="h-card text-[1.45rem] md:text-[1.6rem]">80 ₪</div>
-            <div class="muted mt-1">ובשלושת הימים האחרונים 100 ₪</div>
+            <div id="priceNow" class="h-card text-[1.45rem] md:text-[1.6rem]">80 ₪</div>
+            <div class="pt-wrap" aria-label="ציר זמן: 80 ₪ עד שלושה ימים לפני המפגש, ואז 100 ₪">
+              <div class="pt-line"></div><div id="ptFill" class="pt-fill"></div>
+              <div class="pt-tick" style="left:50%"></div>
+              <div id="ptNow" class="pt-now" style="left:0"><b>היום</b><i></i></div>
+              <div id="ptDot" class="pt-dot" style="left:0"></div>
+              <div class="pt-lab l" style="left:0"><b>80 ₪</b><span>עד 21.10</span></div>
+              <div class="pt-lab" style="left:50%"><b>100 ₪</b><span>מיום 22.10</span></div>
+              <div class="pt-lab r" style="right:0"><b>המפגש</b><span>25.10</span></div>
+            </div>
           </div>
         </div>
         <ol class="relative grid md:grid-cols-6 gap-8 md:gap-5">
@@ -973,6 +994,24 @@
       el.setAttribute('href', '#');
       el.addEventListener('click', (e) => { e.preventDefault(); if (contactModal) openModal(contactModal); });
     });
+
+    /* ===== ציר מחיר: 80 ₪ עד 21.10, 100 ₪ מ-22.10 (שלושת הימים האחרונים) ועד המפגש ב-25.10; הנקודה "היום" נעה על הציר.
+       הציר לא לינארי בכוונה: השנתה (22.10) תמיד באמצע, חצי שמאלי = מתחילת הציר (START) עד 22.10, חצי ימני = 22.10 עד המפגש ===== */
+    (function(){
+      const START = '2026-10-04', STEP = '2026-10-22', EVENT = '2026-10-25';
+      const day = s => { const [y,m,d] = s.split('-').map(Number); return Date.UTC(y, m-1, d) / 864e5; };
+      const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());   // YYYY-MM-DD בשעון ישראל
+      const t = day(parts), a = day(START), b = day(STEP), c = day(EVENT);
+      let p;
+      if (t <= a) p = 0; else if (t < b) p = .5 * (t - a) / (b - a); else if (t <= c) p = .5 + .5 * (t - b) / (c - b); else p = 1;
+      const price = t >= b ? '100' : '80';
+      const el = id => document.getElementById(id);
+      if (el('priceNow')) el('priceNow').textContent = price + ' ₪';
+      const pct = (p * 100).toFixed(2) + '%';
+      if (el('ptDot')) el('ptDot').style.left = pct;
+      if (el('ptNow')) el('ptNow').style.left = pct;
+      if (el('ptFill')) el('ptFill').style.width = pct;
+    })();
 
     /* ====== Service Worker — מבטיח שכל רענון טוען את הגרסה האחרונה שפורסמה ======
        network-first ל-HTML (ראו sw.js). updateViaCache:'none' מכריח את הדפדפן
