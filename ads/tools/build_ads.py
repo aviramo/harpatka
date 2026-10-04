@@ -1,5 +1,6 @@
 # מייצר תמונת מודעה (1080x1350, יחס 4:5) לכל שורה ב-ads/sentences.txt
 # טקסט בשני צבעים: מה שבתוך [ ] מודגש בצבע ההדגשה. בלי צילומים.
+# בתחתית: שורת חיפוש עם "יוצאים להרפתקה" (רמז לחפש בגוגל), זכוכית מגדלת אחת בכפתור. בלי "מפגשים מסוג אחר" (אוק׳ 2026).
 # הרצה:  python ads/tools/build_ads.py [--all]   (דורש Chrome). בלי --all מייצר רק תמונות חסרות (טקסטים חדשים).
 # מספר סידורי קבוע לכל טקסט ב-ads/registry.json — להוסיף טקסטים חדשים רק בסוף sentences.txt (או בכל מקום; המספר נקבע לפי הטקסט).
 import os, sys, json, subprocess, html, tempfile, pathlib
@@ -53,14 +54,18 @@ body{{background:{bg};color:{fg};font-family:Fredoka,Rubik,sans-serif;position:r
 .txt{{position:absolute;left:96px;right:96px;top:180px;bottom:350px;display:flex;align-items:center;justify-content:center;text-align:center}}
 #t{{font-weight:600;line-height:1.22;letter-spacing:-.005em}}
 #t em{{font-style:normal;color:{acc}}}
-.sub{{position:absolute;bottom:176px;left:0;right:0;text-align:center;font-family:Assistant;font-size:54px;font-weight:700;opacity:.88}}
-.logo{{position:absolute;bottom:80px;left:0;right:0;text-align:center;font-family:Rubik;font-size:62px;font-weight:600}}
-.logo b{{color:{acc};font-weight:700}}
+.search{{position:absolute;bottom:112px;left:50%;transform:translateX(-50%);height:124px;display:flex;align-items:center;gap:26px;
+  padding:0 46px 0 18px;border-radius:999px;background:#FFFDF9;border:3px solid rgba(63,56,47,.14);box-shadow:0 10px 30px rgba(63,56,47,.16);white-space:nowrap}}
+.search .q{{font-family:Rubik;font-size:60px;font-weight:600;color:#3F382F;line-height:1;display:flex;align-items:center}}
+.search .q b{{color:#C96F52;font-weight:700}}
+.search .caret{{display:inline-block;width:5px;height:66px;border-radius:3px;background:#C96F52;margin-right:16px}}
+.search .go{{width:88px;height:88px;border-radius:50%;background:#C96F52;display:grid;place-items:center;flex:none;margin-right:6px}}
+.search .go svg{{width:44px;height:44px}}
 </style></head><body>
 <div class="c1"></div><div class="c2"></div>
 <div class="txt"><div id="t">{colored(text)}</div></div>
-<div class="sub">מפגשים מסוג אחר</div>
-<div class="logo">יוצאים <b>להרפתקה</b></div>
+<div class="search"><span class="q">יוצאים&nbsp;<b>להרפתקה</b><span class="caret"></span></span>
+<span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="#FFFDF9" stroke-width="2.8" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></span></div>
 <script>
 const t=document.getElementById('t'), box=t.parentElement;
 let fs=150; t.style.fontSize=fs+'px';
