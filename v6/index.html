@@ -1037,7 +1037,11 @@
         const snap = document.createElement('canvas'); snap.width = Math.round(w * dpr); snap.height = Math.round(h * dpr);
         const sx = snap.getContext('2d'); sx.scale(dpr, dpr);
         sx.imageSmoothingEnabled = true; sx.imageSmoothingQuality = 'high';
-        sx.drawImage(document.getElementById('heroVidBg'), 0, 0, w, h);            // הפסים (מדורגים בצבעי הקצוות)
+        // הפסים מצוירים מחדש מהפריים הנוכחי בדיוק (לא מהציור האחרון של הלולאה), כדי שהרקע והסרטון יהיו באותו צבע גם ברגע הפיצול
+        { const vw0 = v.videoWidth, vh0 = v.videoHeight, sh0 = Math.max(2, Math.round(vh0 * 0.015)); cx.drawImage(v, 0, 0, vw0, sh0, 0, 0, 24, 15); cx.drawImage(v, 0, vh0 - sh0, vw0, sh0, 0, 15, 24, 15); }
+        sx.save(); if ('filter' in sx) sx.filter = 'blur(22px)';
+        sx.drawImage(document.getElementById('heroVidBg'), -40, -40, w + 80, h + 80);   // כמו הפסים החיים: נמתח ומטושטש
+        sx.restore();
         const vw = v.videoWidth, vh = v.videoHeight, s = Math.min(w / vw, h / vh);
         sx.drawImage(v, (w - vw * s) / 2, (h - vh * s) / 2, vw * s, vh * s);        // הפריים האחרון
         const cv = document.createElement('canvas'); cv.width = snap.width; cv.height = snap.height;
@@ -1046,32 +1050,23 @@
         box.style.cssText += ';overflow:visible;background:transparent';
         Array.from(box.children).forEach(c => { c.style.visibility = 'hidden'; });
         box.appendChild(cv);
-        const DUR = 850, R = 20, PLEATS = 9, MIN = 0.06;
+        const DUR = 800, R = 20;
         const t0 = performance.now();
         const clipRound = () => { cx2.beginPath(); cx2.moveTo(R, 0); cx2.arcTo(w, 0, w, h, R); cx2.arcTo(w, h, 0, h, R); cx2.arcTo(0, h, 0, 0, R); cx2.arcTo(0, 0, w, 0, R); cx2.closePath(); };
         const ease = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;   // easeInOutCubic
-        /* וילון: שתי חצאים מתכנסים אל הצדדים (דחיסה אופקית עם קפלים), וחושפים את ההזמנה */
+        /* דלתות: הפריים נחצה באמצע, החצי השמאלי נדחף שמאלה והימני ימינה, וההזמנה נחשפת ביניהם */
         const frame = now => {
-          const p = Math.min(1, (now - t0) / DUR), e = ease(p), sc = 1 - e * (1 - MIN), half = w / 2, pw = half / PLEATS;
+          const p = Math.min(1, (now - t0) / DUR), e = ease(p), half = w / 2, off = half * e;
           cx2.clearRect(0, 0, w, h);
           cx2.save(); clipRound(); cx2.clip();
-          for (let side = 0; side < 2; side++) {
-            for (let i = 0; i < PLEATS; i++) {
-              // side 0 = חצי שמאלי (מעוגן לשמאל), side 1 = חצי ימני (מעוגן לימין)
-              const sxSrc = (side === 0 ? i * pw : half + i * pw) * dpr;
-              const dw = pw * sc, dx = side === 0 ? i * dw : w - (PLEATS - i) * dw;
-              cx2.drawImage(snap, sxSrc, 0, pw * dpr + 1, h * dpr, dx, 0, dw + .6, h);
-              // קפל: כהות לסירוגין שמתחזקת ככל שהבד מתכנס
-              cx2.fillStyle = 'rgba(40,28,20,' + ((i % 2 ? .12 : 0) * Math.min(1, e * 2.5)).toFixed(3) + ')';
-              cx2.fillRect(dx, 0, dw + .6, h);
-            }
-          }
-          // צל קל בקצה הפנימי של כל חצי, על ההזמנה
-          if (e > 0.02 && e < 0.98) {
-            const lw = (half * sc), g1 = cx2.createLinearGradient(lw, 0, lw + 18, 0); g1.addColorStop(0, 'rgba(40,28,20,.22)'); g1.addColorStop(1, 'rgba(40,28,20,0)');
-            cx2.fillStyle = g1; cx2.fillRect(lw, 0, 18, h);
-            const rw = w - lw, g2 = cx2.createLinearGradient(rw, 0, rw - 18, 0); g2.addColorStop(0, 'rgba(40,28,20,.22)'); g2.addColorStop(1, 'rgba(40,28,20,0)');
-            cx2.fillStyle = g2; cx2.fillRect(rw - 18, 0, 18, h);
+          cx2.drawImage(snap, 0, 0, half * dpr, h * dpr, -off, 0, half, h);              // חצי שמאלי
+          cx2.drawImage(snap, half * dpr, 0, half * dpr, h * dpr, half + off, 0, half, h);  // חצי ימני
+          if (e > 0.01 && e < 0.99) {   // צל קל בקצה הפנימי של כל חצי, על ההזמנה
+            const l = half - off, r = half + off;
+            const g1 = cx2.createLinearGradient(l, 0, l + 22, 0); g1.addColorStop(0, 'rgba(40,28,20,.20)'); g1.addColorStop(1, 'rgba(40,28,20,0)');
+            cx2.fillStyle = g1; cx2.fillRect(l, 0, 22, h);
+            const g2 = cx2.createLinearGradient(r, 0, r - 22, 0); g2.addColorStop(0, 'rgba(40,28,20,.20)'); g2.addColorStop(1, 'rgba(40,28,20,0)');
+            cx2.fillStyle = g2; cx2.fillRect(r - 22, 0, 22, h);
           }
           cx2.restore();
           if (p < 1) requestAnimationFrame(frame); else box.remove();
