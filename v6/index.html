@@ -253,7 +253,14 @@
     .hv video{ opacity:0; position:absolute; inset:0; width:100%; height:100%; object-fit:contain; background:transparent; }
     .hv-cv{ position:absolute; inset:0; width:100%; height:100%; opacity:0; }
     .hv.on .hv-cv{ opacity:1; }
-    .hv video{ pointer-events:none; }    .btn-ghost{
+    .hv video{ pointer-events:none; }    /* ===== טופס הרשמה קצר (שם + טלפון) ===== */
+    .su-input{ width:100%; background:var(--paper); border:2px solid var(--sand); border-radius:18px; padding:.85rem 1.1rem; font-size:1.05rem; color:var(--ink); font-family:inherit; }
+    .su-input::placeholder{ color:#a39a8b; }
+    .su-input:focus{ outline:none; border-color:var(--terra); }
+    .su-input.bad{ border-color:#B85C40; }
+    .su-err{ color:#A9533A; font-size:.92rem; font-weight:600; min-height:1.2rem; }
+    .su-hp{ position:absolute; left:-9999px; width:1px; height:1px; opacity:0; }
+    .btn-ghost{
       display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
       border:1.5px solid rgba(63,56,47,.22); color:var(--ink); background:transparent; font-weight:600;
       cursor:pointer;
@@ -479,7 +486,7 @@
     <div class="max-w-2xl mx-auto px-5 py-3 flex items-center justify-between gap-3">
       <div class="min-w-0 flex-1">
         <p class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[.82rem] font-bold leading-none" style="background:#E9A68C;color:#3F382F"><span class="w-1.5 h-1.5 rounded-full" style="background:#663F4C" aria-hidden="true"></span>המפגש הבא</p>
-        <p class="font-display font-semibold text-[.95rem] min-[375px]:text-[1rem] min-[410px]:text-[1.1rem] leading-tight whitespace-nowrap mt-2">יום ראשון 25.10 <span class="opacity-60" aria-hidden="true">·</span> 20:00 <span class="opacity-60" aria-hidden="true">·</span> הרצליה</p>
+        <p class="font-display font-semibold text-[.95rem] min-[375px]:text-[1rem] min-[410px]:text-[1.1rem] leading-tight whitespace-nowrap mt-2"><span id="barDate">יום ראשון 25.10</span> <span class="opacity-60" aria-hidden="true">·</span> <span id="barTime">20:00</span> <span class="opacity-60" aria-hidden="true">·</span> הרצליה</p>
         <div class="flex items-center gap-1.5 min-[375px]:gap-2 mt-2.5 text-[.74rem] min-[360px]:text-[.8rem] min-[390px]:text-[.88rem] leading-none whitespace-nowrap">
           <span id="regStage">ההרשמה התחילה</span>
           <div class="h-[7px] w-[1.6rem] min-[360px]:w-[2.4rem] min-[390px]:w-[4.5rem] rounded-full overflow-hidden shrink-0" style="background:rgba(255,253,249,.25)" aria-hidden="true"><div id="regFill" class="h-full rounded-full" style="width:25%;background:#E9A68C"></div></div>
@@ -626,6 +633,35 @@
         </ol>
       </div>
     </section>
+
+  <!-- ====================== הרשמה קצרה: שם + טלפון (לפני "לפעמים טוב לצאת מהמעגלים המוכרים") ====================== -->
+  <section id="signup" class="relative pt-10 md:pt-14 pb-0 scroll-mt-6">
+    <div class="max-w-xl mx-auto px-5">
+      <div class="card-soft px-6 py-8 md:px-10 md:py-10 text-center reveal">
+        <div id="suForm">
+          <h2 class="h-sect text-[1.7rem] md:text-[2.2rem] mb-2">השאירו פרטים ונחזור אליכם</h2>
+          <p class="muted mb-6">רק שם וטלפון</p>
+          <form id="signupForm" novalidate class="text-start">
+            <input type="text" name="website" id="suWebsite" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <label for="suName" class="block font-semibold mb-1">שם</label>
+            <input id="suName" name="name" type="text" class="su-input" autocomplete="name" maxlength="60" placeholder="איך קוראים לכם?" required>
+            <div id="suNameErr" class="su-err" role="alert"></div>
+            <label for="suPhone" class="block font-semibold mb-1 mt-3">טלפון</label>
+            <input id="suPhone" name="phone" type="tel" dir="ltr" inputmode="tel" class="su-input text-end" autocomplete="tel" maxlength="24" placeholder="050-1234567" required>
+            <div id="suPhoneErr" class="su-err" role="alert"></div>
+            <p class="muted text-[.88rem] mt-1" style="text-align:start">אפשר להתחיל ב-0 (<bdi>050-1234567</bdi>) או ב-+ עם קידומת המדינה (<bdi>+972501234567</bdi>)</p>
+            <button id="suBtn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-4 text-[1.2rem] whitespace-nowrap w-full mt-5">שליחה</button>
+            <div id="suFail" class="su-err mt-3 text-center" role="alert"></div>
+          </form>
+        </div>
+        <div id="suDone" hidden>
+          <h2 class="h-sect text-[1.7rem] md:text-[2.2rem] mb-3">תודה! נחזור אליכם בהקדם</h2>
+          <p class="lead muted mb-6">בינתיים אפשר להצטרף לקבוצת העדכונים בוואטסאפ</p>
+          <a href="#" target="_blank" rel="noopener" data-updates class="btn-green">הצטרפות לקבוצת העדכונים</a>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- ====================== מעבר: לפעמים פשוט חסרים מפגשים חדשים (בין ההזמנה לתמונת ה-Hero) ====================== -->
   <section id="missing" class="relative pt-10 md:pt-14 pb-8 md:pb-10">
@@ -778,6 +814,8 @@
   <script>
     /* ====== CONFIG — החליפו בערכים האמיתיים ====== */
     const CONFIG = {
+      supabaseUrl: 'https://aexmnaxvahblveejsbup.supabase.co',     // Supabase של floa (harpatka_meetings / harpatka_signup)
+      supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFleG1uYXh2YWhibHZlZWpzYnVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5NzE5MjMsImV4cCI6MjEwMTU0NzkyM30.oXPojzklAqOl9pvH5R_GNGTda6OvYruDQjMLprcBA0Y',                  // מפתח ציבורי (anon)
       whatsappOfir: '972587078708',                   // מספר הנייד של אופיר (פורמט בינ"ל, בלי +)
       whatsappHadar: '972546163012',                  // מספר הנייד של הדר — יעד כל כפתורי "אני רוצה להצטרף"
       hadarMessage: 'היי הדר, מסקרן אותי הקונספט שלכם',
@@ -954,6 +992,66 @@
 
     /* ===== הצטרפות לעדכונים — קישור ישיר לקבוצת הוואטסאפ (עד גיל 50), בלי פופאפ בחירה ===== */
     document.querySelectorAll('[data-updates]').forEach(el => { el.setAttribute('href', CONFIG.updatesGroupLink); });
+    /* ===== טופס הרשמה: שם + טלפון -> Supabase (פונקציה harpatka_signup, admin/signup.sql) =====
+       ולידציה ונרמול ל-E.164 זהים ללוגיקה בבסיס הנתונים (harpatka_normalize_phone).
+       הרשומה נקשרת בבסיס הנתונים למפגש הקרוב (זה שבבאנר) כ"טרם שילם" */
+    function normPhone(raw) {
+      const s = String(raw || '').trim();
+      if (!s) return '';
+      let plus = s[0] === '+', d = s.replace(/\D/g, '');
+      if (!d) return '';
+      if (d.startsWith('00')) { plus = true; d = d.slice(2); }
+      const IL = /^(5\d{8}|7\d{8}|[23489]\d{7})$/;
+      if (plus) {
+        if (d.startsWith('9720')) d = '972' + d.slice(4);
+        if (d.length < 8 || d.length > 15 || d[0] === '0') return '';
+        if (d.startsWith('972') && !IL.test(d.slice(3))) return '';
+        return '+' + d;
+      }
+      if (d[0] === '0') return IL.test(d.slice(1)) ? '+972' + d.slice(1) : '';
+      return '';
+    }
+    window.normPhone = normPhone;
+    (function(){
+      const form = document.getElementById('signupForm'); if (!form) return;
+      const el = id => document.getElementById(id), t0 = Date.now();
+      const nameI = el('suName'), phoneI = el('suPhone'), btn = el('suBtn');
+      const setErr = (input, errEl, msg) => { errEl.textContent = msg || ''; input.classList.toggle('bad', !!msg); };
+      const done = () => { el('suForm').hidden = true; el('suDone').hidden = false; try { sessionStorage.setItem('suDone', '1'); } catch(e){} };
+      try { if (sessionStorage.getItem('suDone') === '1') { el('suForm').hidden = true; el('suDone').hidden = false; } } catch(e){}
+      nameI.addEventListener('input', () => setErr(nameI, el('suNameErr'), ''));
+      phoneI.addEventListener('input', () => setErr(phoneI, el('suPhoneErr'), ''));
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault(); el('suFail').textContent = '';
+        const name = nameI.value.trim().replace(/\s+/g, ' '), norm = normPhone(phoneI.value);
+        let ok = true;
+        if (name.length < 2) { setErr(nameI, el('suNameErr'), 'נא למלא שם'); ok = false; }
+        if (!norm) { setErr(phoneI, el('suPhoneErr'), 'מספר הטלפון לא תקין'); ok = false; }
+        if (!ok) return;
+        if (el('suWebsite').value || Date.now() - t0 < 1500) { done(); return; }   // בוט: מציגים הצלחה בלי לשמור
+        btn.disabled = true; btn.textContent = 'שולחים...';
+        let finished = false;
+        try {
+          const res = await fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_signup', {
+            method: 'POST',
+            headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ p_name: name, p_phone: norm })
+          });
+          const out = res.ok ? await res.json() : null;
+          if (out === 'created' || out === 'exists') {   // כפילות: אותה הודעה, בלי לחשוף שהמספר כבר רשום
+            if (window.fbq) { try { fbq('track', 'Lead'); } catch(x){} }
+            finished = true; done();
+          } else if (out === 'invalid_phone') setErr(phoneI, el('suPhoneErr'), 'מספר הטלפון לא תקין');
+          else if (out === 'invalid_name') setErr(nameI, el('suNameErr'), 'נא למלא שם');
+          else throw new Error('signup failed');
+        } catch (err) {
+          el('suFail').innerHTML = 'משהו השתבש, אפשר ליצור קשר ישירות: <a href="#" class="underline font-bold">שיחה בוואטסאפ</a>';
+          el('suFail').querySelector('a').addEventListener('click', ev => { ev.preventDefault(); const m = document.getElementById('contactModal'); if (m) openModal(m); });
+        }
+        if (!finished) { btn.disabled = false; btn.textContent = 'שליחה'; }
+      });
+    })();
+
     ['updates'].forEach(id => {
       const el = document.getElementById(id);
       if (el) { el.setAttribute('href', CONFIG.updatesGroupLink); el.setAttribute('target', '_blank'); el.setAttribute('rel', 'noopener'); }
@@ -975,29 +1073,48 @@
       el.addEventListener('click', (e) => { e.preventDefault(); if (contactModal) openModal(contactModal); });
     });
 
-    /* ===== באנר "המפגש הבא": שלבי הרשמה לפי התאריך (שעון ישראל), בלי חשיפת מספר נרשמים אמיתי.
-       שלב = טקסט + אחוז מילוי של הסרגל. עד התאריך (כולל) → השלב ===== */
-    (function(){
+    /* ===== המפגש הבא: נטען מבסיס הנתונים (טבלת harpatka_meetings, המפגש הקרוב ביותר שעוד לא עבר, לפי שעון ישראל).
+       כשמפגש עובר הבאנר מתחלף אוטומטית לבא אחריו. אם הטעינה נכשלת או שאין מפגש: ברירת מחדל מהקוד ===== */
+    const MEETING_FALLBACK = { date: '2026-10-25', time: '20:00' };
+    const meetingReady = (async () => {
+      try {
+        const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
+        const r = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=meeting_date,meeting_time&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc&limit=1',
+          { headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey } });
+        const rows = r.ok ? await r.json() : [];
+        if (rows && rows[0]) return { date: rows[0].meeting_date, time: String(rows[0].meeting_time).slice(0, 5) };
+      } catch (e) {}
+      return MEETING_FALLBACK;
+    })();
+    const heDay = iso => ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'][new Date(iso + 'T12:00:00Z').getUTCDay()];
+
+    /* ===== באנר "המפגש הבא": תאריך, שעה ושלב הרשמה לפי המפגש מבסיס הנתונים, בלי חשיפת מספר נרשמים אמיתי.
+       שלב לפי כמה ימים נשארו עד המפגש: 15 ומעלה / 8 / 4 / 2 / 0 ===== */
+    meetingReady.then(m => {
       const el = id => document.getElementById(id);
-      const day = s => { const [y,m,d] = s.split('-').map(Number); return Date.UTC(y, m-1, d) / 864e5; };
+      const day = s => { const [y,mm,d] = s.split('-').map(Number); return Date.UTC(y, mm-1, d) / 864e5; };
       const today = day(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()));
-      const STAGES = [
-        ['2026-10-10', 'ההרשמה התחילה', 25],
-        ['2026-10-17', 'ההרשמה בעיצומה', 45],
-        ['2026-10-21', 'המקומות מתמלאים', 65],
-        ['2026-10-23', 'מעט מקומות נשארו', 85],
-        ['2026-10-25', 'המקומות האחרונים', 95]
-      ];
-      let s = STAGES.find(x => today <= day(x[0]));
-      if (!s) s = [null, 'ההרשמה הסתיימה', 100];
+      const left = day(m.date) - today;
+      const [yy, mo, dd] = m.date.split('-');
+      if (el('barDate')) el('barDate').textContent = 'יום ' + heDay(m.date) + ' ' + Number(dd) + '.' + Number(mo);
+      if (el('barTime')) el('barTime').textContent = m.time;
+      const STAGES = [[15, 'ההרשמה התחילה', 25], [8, 'ההרשמה בעיצומה', 45], [4, 'המקומות מתמלאים', 65], [2, 'מעט מקומות נשארו', 85], [0, 'המקומות האחרונים', 95]];
+      let s = STAGES.find(x => left >= x[0]);
+      if (left < 0) s = [0, 'ההרשמה הסתיימה', 100];
+      if (!s) s = STAGES[0];
       if (el('regStage')) el('regStage').textContent = s[1];
       if (el('regFill')) el('regFill').style.width = s[2] + '%';
-    })();
+      // מחיר: 100 ₪ ב-3 הימים האחרונים, אחרת 80 ₪ (הנחת הרשמה מוקדמת)
+      const price = left <= 3 ? '100' : '80';
+      if (el('barPrice')) el('barPrice').textContent = price + ' ₪';
+      if (el('priceNow')) el('priceNow').textContent = price + ' ₪';
+      if (price !== '80') { if (el('barEarly')) el('barEarly').hidden = true; if (el('barOld')) el('barOld').hidden = true; }
+    });
 
     /* ===== ציר מחיר: 80 ₪ עד 21.10, 100 ₪ מ-22.10 (שלושת הימים האחרונים) ועד המפגש ב-25.10; הנקודה "היום" נעה על הציר.
        הציר לא לינארי בכוונה: השנתה (22.10) תמיד באמצע, חצי שמאלי = מתחילת הציר (START) עד 22.10, חצי ימני = 22.10 עד המפגש ===== */
-    (function(){
-      const START = '2026-09-27', EVENT = '2026-10-25', RAISE_DAYS = 3;   // המחיר עולה תמיד RAISE_DAYS ימים לפני המפגש (מחושב מ-EVENT, לא תאריך קבוע)
+    meetingReady.then(function(MEET){
+      const START = '2026-09-27', EVENT = MEET.date, RAISE_DAYS = 3;   // המחיר עולה תמיד RAISE_DAYS ימים לפני המפגש (מחושב מהמפגש בבסיס הנתונים)
       const day = s => { const [y,m,d] = s.split('-').map(Number); return Date.UTC(y, m-1, d) / 864e5; };
       const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());   // YYYY-MM-DD בשעון ישראל
       const t = day(parts), a = day(START), c = day(EVENT), b = c - RAISE_DAYS;
@@ -1012,7 +1129,7 @@
       if (el('ptDot')) el('ptDot').style.left = pct;
       if (el('ptNow')) el('ptNow').style.left = pct;
       if (el('ptFill')) el('ptFill').style.width = pct;
-    })();
+    });
 
     /* ===== סרטון פתיחה: סרטון אקראי מתוך 50 (או ?ad=N), מושתק, מתנגן אוטומטית וגם נחתך ברגע שההזמנה בסרטון נכנסת (ads/video-cuts.json) ===== */
     (function(){
