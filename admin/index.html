@@ -109,6 +109,8 @@
     .gate .gerr { color: #A9533A; font-weight: 600; margin-top: 18px; min-height: 1.2em; }
     .gate .glink[hidden] { display: none; }
     .gate .glink { display: inline-block; margin-top: 16px; color: var(--muted); text-decoration: underline; cursor: pointer; background: none; font-size: 15px; }
+    .live { display: none; width: 9px; height: 9px; border-radius: 50%; background: #2FA866; margin-inline-start: 8px; vertical-align: middle; box-shadow: 0 0 0 3px rgba(47,168,102,.18); }
+    .live.on { display: inline-block; }
     .signout { background: none; color: var(--muted); text-decoration: underline; font-size: 14px; cursor: pointer; margin-inline-start: 12px; }
 
     .empty { text-align: center; color: var(--muted); padding: 48px 16px; }
@@ -191,7 +193,7 @@
     <header class="top">
       <div class="title-row">
         <h1>משתתפים</h1>
-        <span class="brand">יוצאים להרפתקה</span><button type="button" class="signout" id="signOut">יציאה</button>
+        <span class="brand">יוצאים להרפתקה</span><span class="live" id="liveDot" title="מתעדכן בזמן אמת"></span><button type="button" class="signout" id="signOut">יציאה</button>
       </div>
       <label class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
@@ -222,6 +224,7 @@
         <label class="field"><span>גיל</span><input name="age" type="number" inputmode="numeric" min="18" max="99" /></label>
       </div>
       <label class="field"><span>הערה קצרה</span><input name="note" maxlength="80" autocomplete="off" placeholder="למשל: הגיעה דרך פייסבוק" /></label>
+      <div class="note" id="pRegLine" style="color:var(--muted);font-size:14px;margin:2px 4px 6px"></div>
       <div class="sect-title" id="pMeetTitle">מפגשים</div>
       <div class="mlist" id="pMeetings"></div>
       <button class="btn" id="pSubmit" type="submit">הוספה</button>
@@ -273,6 +276,7 @@
       const r = await fetch(DB.url + '/auth/v1/token?grant_type=refresh_token', { method: 'POST', headers: { apikey: DB.key, 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh_token: session.refresh_token }) });
       if (!r.ok) return false;
       const d = await r.json(); saveSession({ access_token: d.access_token, refresh_token: d.refresh_token });
+      if (typeof rtSend === 'function') rtSend({ topic: RT_TOPIC, event: 'access_token', payload: { access_token: d.access_token }, ref: String(Date.now()) });
       return true;
     } catch (e) { return false; }
   }
@@ -281,6 +285,39 @@
   function showGate(msg, canSwitch) {
     document.body.classList.add('locked'); $('#gate').hidden = false; gateMsg(msg); $('#gOut').hidden = !canSwitch;
   }
+  /* ---------- זמן אמת (Supabase Realtime, WebSocket ישיר בלי SDK) ----------
+     כל שינוי בטבלאות (מהטופס באתר, מהדר או מכל מכשיר אחר) מרענן את המסך. דורש שהטבלאות ב-publication (admin/realtime.sql) */
+  let rtWs = null, rtHb = 0, rtRetry = 1000, rtDebounce = 0, rtAlive = false;
+  const RT_TOPIC = 'realtime:harpatka';
+  const rtSend = (o) => { if (rtWs && rtWs.readyState === 1) rtWs.send(JSON.stringify(o)); };
+  function scheduleRefresh() { clearTimeout(rtDebounce); rtDebounce = setTimeout(() => load(true), 350); }
+  function startRealtime() {
+    if (!session || rtWs) return;
+    let ws;
+    try { ws = new WebSocket(DB.url.replace(/^http/, 'ws') + '/realtime/v1/websocket?apikey=' + encodeURIComponent(DB.key) + '&vsn=1.0.0'); } catch (e) { return; }
+    rtWs = ws;
+    ws.onopen = () => {
+      rtRetry = 1000;
+      rtSend({ topic: RT_TOPIC, event: 'phx_join', ref: '1', payload: { config: { broadcast: { ack: false, self: false }, presence: { key: '' }, private: false,
+        postgres_changes: [T.p, T.m, T.a].map((table) => ({ event: '*', schema: 'public', table })) }, access_token: session.access_token } });
+      rtHb = setInterval(() => rtSend({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(Date.now()) }), 25000);
+    };
+    ws.onmessage = (e) => {
+      let m; try { m = JSON.parse(e.data); } catch (x) { return; }
+      if (m.event === 'phx_reply' && m.topic === RT_TOPIC && m.ref === '1') {
+        rtAlive = m.payload && m.payload.status === 'ok'; $('#liveDot').classList.toggle('on', rtAlive);
+        if (rtAlive) scheduleRefresh();   // מה שהוחמץ בזמן שהחיבור היה סגור
+      } else if (m.event === 'postgres_changes') scheduleRefresh();
+      else if (m.event === 'system' && m.payload && m.payload.status === 'error') { rtAlive = false; $('#liveDot').classList.remove('on'); }
+    };
+    ws.onclose = () => {
+      clearInterval(rtHb); rtWs = null; rtAlive = false; $('#liveDot').classList.remove('on');
+      if (session) setTimeout(startRealtime, rtRetry), rtRetry = Math.min(rtRetry * 2, 30000);
+    };
+    ws.onerror = () => { try { ws.close(); } catch (x) {} };
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && session) { load(true); if (!rtWs) startRealtime(); } });
+
   async function startAuth() {
     const h = new URLSearchParams(location.hash.replace(/^#/, ''));
     if (h.get('access_token')) {
@@ -297,6 +334,7 @@
     if (!ADMINS.includes(emailOf())) { showGate('אין הרשאה לחשבון ' + emailOf(), true); return; }
     document.body.classList.remove('locked'); $('#gate').hidden = true;
     load();
+    startRealtime();
   }
 
   async function api(path, { method = 'GET', body, prefer } = {}) {
@@ -348,6 +386,14 @@
     if (n.length === 9) return 'tel:+972' + n;
     return 'tel:+' + n;
   }
+  /* תאריך הרשמה/יצירה (created_at), בשעון ישראל: 5.10.26 */
+  function regDate(p) {
+    if (!p.created_at) return '';
+    const d = new Date(p.created_at); if (isNaN(d)) return '';
+    const parts = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jerusalem', day: 'numeric', month: 'numeric', year: '2-digit' }).formatToParts(d);
+    const g = (k) => parts.find((x) => x.type === k).value;
+    return g('day') + '.' + g('month') + '.' + g('year');
+  }
   function waLink(phone) {
     let n = digits(phone);
     if (!n) return null;
@@ -388,8 +434,8 @@
   }
 
   /* ---------- טעינה ---------- */
-  async function load() {
-    $('#status').innerHTML = '<div class="empty">טוען…</div>';
+  async function load(silent) {
+    if (!silent) $('#status').innerHTML = '<div class="empty">טוען…</div>';
     try {
       const [p, m, a] = await Promise.all([
         api(T.p + '?select=*'),
@@ -398,10 +444,11 @@
       ]);
       state.participants = p; state.meetings = m; state.att = a;
       sortMeetings();
-      $('#status').innerHTML = '';
+      if (!silent) $('#status').innerHTML = '';
       render();
     } catch (err) {
       console.error(err);
+      if (silent) return;   // רענון שקט שנכשל: משאירים את מה שמוצג
       const missing = err.code === 'PGRST205' || err.code === '42P01' || /does not exist|schema cache/i.test(err.message);
       $('#status').innerHTML = '<div class="error-box">' + (missing
         ? '<b>הטבלאות עוד לא קיימות.</b><br>צריך להריץ פעם אחת את <code>admin/schema.sql</code> ב-SQL Editor של Supabase'
@@ -479,6 +526,7 @@
           '<div><bdi class="name">' + esc(p.name) + '</bdi>' + (age != null ? '<span class="age" title="גיל">גיל <bdi>' + age + '</bdi></span>' : '') + '</div>' +
           (p.phone ? '<div class="phone">' + esc(fmtPhone(p.phone)) + '</div>' : '') +
           (p.note ? '<div class="note">' + esc(p.note) + '</div>' : '') +
+          (regDate(p) ? '<div class="note regd">נרשם/ה ' + regDate(p) + (p.source === 'site' ? ' · מהאתר' : '') + '</div>' : '') +
           tags +
         '</button>' + side +
         (wa ? '<a class="wa" href="' + wa + '" target="_blank" rel="noopener" aria-label="וואטסאפ ל' + esc(p.name) + '">' + WA_ICON + '</a>'
@@ -528,6 +576,7 @@
     pForm.age.value = p ? (shownAge(p) ?? '') : '';
     pForm.note.value = p ? p.note : '';
     $('#pTitle').textContent = p ? 'עריכת משתתף' : 'משתתף חדש';
+    $('#pRegLine').textContent = p && regDate(p) ? ('תאריך הרשמה: ' + regDate(p) + (p.source === 'site' ? ' (דרך האתר)' : '')) : '';
     $('#pSubmit').hidden = !!p;
     $('#pDelete').hidden = !p;
     $('#savedMark').classList.remove('on');
@@ -694,7 +743,7 @@
 
   const goGoogle = () => { location.href = DB.url + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(location.origin + location.pathname); };
   $('#gLogin').addEventListener('click', goGoogle);
-  const signOut = () => { clearSession(); location.reload(); };
+  const signOut = () => { clearSession(); try { if (rtWs) rtWs.close(); } catch (e) {} location.reload(); };
   $('#gOut').addEventListener('click', signOut);
   $('#signOut').addEventListener('click', signOut);
   startAuth();
