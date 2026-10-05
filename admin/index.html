@@ -109,8 +109,6 @@
     .gate .gerr { color: #A9533A; font-weight: 600; margin-top: 18px; min-height: 1.2em; }
     .gate .glink[hidden] { display: none; }
     .gate .glink { display: inline-block; margin-top: 16px; color: var(--muted); text-decoration: underline; cursor: pointer; background: none; font-size: 15px; }
-    .live { display: none; width: 9px; height: 9px; border-radius: 50%; background: #2FA866; margin-inline-start: 8px; vertical-align: middle; box-shadow: 0 0 0 3px rgba(47,168,102,.18); }
-    .live.on { display: inline-block; }
     .signout { background: none; color: var(--muted); text-decoration: underline; font-size: 14px; cursor: pointer; margin-inline-start: 12px; }
 
     .empty { text-align: center; color: var(--muted); padding: 48px 16px; }
@@ -193,7 +191,7 @@
     <header class="top">
       <div class="title-row">
         <h1>משתתפים</h1>
-        <span class="live" id="liveDot" title="מתעדכן בזמן אמת"></span><button type="button" class="signout" id="signOut">יציאה</button>
+        <button type="button" class="signout" id="signOut">יציאה</button>
       </div>
       <label class="search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
@@ -304,13 +302,13 @@
     ws.onmessage = (e) => {
       let m; try { m = JSON.parse(e.data); } catch (x) { return; }
       if (m.event === 'phx_reply' && m.topic === RT_TOPIC && m.ref === '1') {
-        rtAlive = m.payload && m.payload.status === 'ok'; $('#liveDot').classList.toggle('on', rtAlive);
+        rtAlive = m.payload && m.payload.status === 'ok';
         if (rtAlive) scheduleRefresh();   // מה שהוחמץ בזמן שהחיבור היה סגור
       } else if (m.event === 'postgres_changes') scheduleRefresh();
-      else if (m.event === 'system' && m.payload && m.payload.status === 'error') { rtAlive = false; $('#liveDot').classList.remove('on'); }
+      else if (m.event === 'system' && m.payload && m.payload.status === 'error') { rtAlive = false; }
     };
     ws.onclose = () => {
-      clearInterval(rtHb); rtWs = null; rtAlive = false; $('#liveDot').classList.remove('on');
+      clearInterval(rtHb); rtWs = null; rtAlive = false;
       if (session) setTimeout(startRealtime, rtRetry), rtRetry = Math.min(rtRetry * 2, 30000);
     };
     ws.onerror = () => { try { ws.close(); } catch (x) {} };
