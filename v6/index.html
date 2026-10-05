@@ -516,7 +516,7 @@
       </div>
       <div id="heroVid" class="hv" hidden aria-label="סרטון קצר">
         <canvas class="hv-cv" id="heroVidCv" aria-hidden="true"></canvas>
-        <video id="heroVideo" playsinline muted preload="auto" disablepictureinpicture></video>
+        <video id="heroVideo" playsinline preload="auto" disablepictureinpicture></video>
       </div>
       </div>
     </div>
@@ -1108,7 +1108,12 @@
         v.addEventListener('ended', finish);
         v.addEventListener('error', finish);
         const stall = setTimeout(finish, 5000);   // לא התחיל להתנגן (חיבור איטי או חסימת הפעלה אוטומטית): מציגים את ההזמנה
-        const p = v.play(); if (p && p.catch) p.catch(finish);
+        /* סאונד: מנסים להתנגן עם קול; אם הדפדפן חוסם (ברירת המחדל בביקור ראשון) מתנגנים מושתק, וכל נגיעה או הקשה ראשונה בדף מפעילה את הקול */
+        const unmute = () => { try { v.muted = false; v.volume = 1; } catch(e){} };
+        ['pointerdown', 'touchstart', 'keydown'].forEach(ev => window.addEventListener(ev, function once(){ unmute(); window.removeEventListener(ev, once, true); }, { capture: true, passive: true }));
+        v.muted = false;
+        const p = v.play();
+        if (p && p.catch) p.catch(() => { v.muted = true; const p2 = v.play(); if (p2 && p2.catch) p2.catch(finish); });
       }).catch(finish);
     })();
 
