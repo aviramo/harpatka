@@ -270,20 +270,16 @@
     .su-err{ color:#A9533A; font-size:.88rem; font-weight:600; margin-top:.25rem; }
     .su-err:empty{ display:none; }
     .su-hp{ position:absolute; left:-9999px; width:1px; height:1px; opacity:0; }
-    /* ===== באנר עליון קבוע: בגלילה מצטמצם (שורת יום ראשון + מחיר בלבד), בראש הדף חוזר למצב המלא ===== */
+    /* ===== באנר עליון קבוע: ההצטמצמות צמודה לגלילה (--p = 0 בראש הדף, עד 1 אחרי ~110px) ===== */
     #tbWrap{ position:relative; z-index:50; }
-    #topbar{ position:fixed; top:0; left:0; right:0; z-index:50; transition:box-shadow .35s ease; }
-    #topbar > div{ transition:padding .35s ease; }
-    #topbar .tb-pill, #topbar .tb-stage, #topbar #barOld, #topbar #barEarly{ max-height:3rem; transition:max-height .35s ease, opacity .25s ease, margin .35s ease; }
-    #topbar .tb-date{ transition:margin .35s ease; }
-    #topbar #barPrice{ transition:font-size .35s ease; }
-    #topbar.compact{ box-shadow:0 8px 20px -10px rgba(0,0,0,.55); }
-    #topbar.compact > div{ padding-top:.45rem; padding-bottom:.45rem; }
-    #topbar.compact .tb-pill, #topbar.compact .tb-stage, #topbar.compact #barOld, #topbar.compact #barEarly{ max-height:0; opacity:0; margin-top:0 !important; margin-bottom:0 !important; }
-    #topbar.compact .tb-date{ margin-top:0 !important; }
-    #topbar .tb-pill{ transition:max-height .35s ease, opacity .25s ease, margin .35s ease, padding .35s ease; }
-    #topbar.compact .tb-pill{ padding-top:0 !important; padding-bottom:0 !important; }
-    #topbar.compact #barPrice{ font-size:1.25rem; }
+    #topbar{ --p:0; position:fixed; top:0; left:0; right:0; z-index:50; box-shadow:0 8px 20px -10px rgba(0,0,0,calc(var(--p) * .55)); }
+    #topbar > div{ padding-top:calc(.75rem - .3rem * var(--p)); padding-bottom:calc(.75rem - .3rem * var(--p)); }
+    #topbar .tb-pill{ overflow:hidden; max-height:calc(2rem * (1 - var(--p))); opacity:max(0, calc(1 - var(--p) * 1.7)); padding-top:calc(.25rem * (1 - var(--p))); padding-bottom:calc(.25rem * (1 - var(--p))); }
+    #topbar .tb-date{ margin-top:calc(.5rem * (1 - var(--p))); }
+    #topbar .tb-stage{ max-height:calc(1.3rem * (1 - var(--p))); opacity:max(0, calc(1 - var(--p) * 1.7)); margin-top:calc(.625rem * (1 - var(--p))); }
+    #topbar #barOld{ overflow:hidden; max-height:calc(1.5rem * (1 - var(--p))); opacity:max(0, calc(1 - var(--p) * 1.7)); margin-bottom:calc(.25rem * (1 - var(--p))); }
+    #topbar #barEarly{ overflow:hidden; max-height:calc(2.6rem * (1 - var(--p))); opacity:max(0, calc(1 - var(--p) * 1.7)); margin-top:calc(.375rem * (1 - var(--p))); }
+    #topbar #barPrice{ font-size:calc(1.5rem - .25rem * var(--p)); }
     .btn-ghost{
       display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
       border:1.5px solid rgba(63,56,47,.22); color:var(--ink); background:transparent; font-weight:600;
@@ -1282,25 +1278,26 @@
       }).catch(fail);
     })();
 
-    /* ===== באנר עליון קבוע ומצטמצם בגלילה (שומר גובה מקום קבוע כדי שהדף לא יקפוץ) ===== */
+    /* ===== באנר עליון קבוע: ההצטמצמות צמודה לגלילה (שומר גובה מקום קבוע כדי שהדף לא יקפוץ) ===== */
     (function(){
       const bar = document.getElementById('topbar'), wrap = document.getElementById('tbWrap'); if (!bar || !wrap) return;
+      const RANGE = 110;   // כמה פיקסלי גלילה עד המצב המצומצם המלא
+      let ticking = false;
+      const apply = () => {
+        ticking = false;
+        const y = window.scrollY || document.documentElement.scrollTop;
+        bar.style.setProperty('--p', Math.min(1, Math.max(0, y / RANGE)).toFixed(3));
+      };
       const measure = () => {   // גובה המצב המלא, גם אם הדף נטען באמצע גלילה
-        const was = bar.classList.contains('compact'); bar.style.transition = 'none'; bar.querySelectorAll('*').forEach(e => { e.style.transition = 'none'; });
-        bar.classList.remove('compact'); const h = bar.offsetHeight; if (was) bar.classList.add('compact');
-        void bar.offsetHeight; bar.style.transition = ''; bar.querySelectorAll('*').forEach(e => { e.style.transition = ''; });
+        const cur = bar.style.getPropertyValue('--p');
+        bar.style.setProperty('--p', '0'); const h = bar.offsetHeight; bar.style.setProperty('--p', cur || '0');
         if (h) wrap.style.height = h + 'px';
       };
-      let compact = false;
-      const onScroll = () => {
-        const y = window.scrollY || document.documentElement.scrollTop;
-        const next = compact ? y > 8 : y > 48;   // היסטרזיס: נפתח מחדש רק כשחוזרים ממש לראש הדף
-        if (next !== compact) { compact = next; bar.classList.toggle('compact', compact); }
-      };
-      measure(); window.addEventListener('load', measure); window.addEventListener('resize', measure);
+      measure(); apply();
+      window.addEventListener('load', measure); window.addEventListener('resize', measure);
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
       meetingReady.then(() => setTimeout(measure, 80));
-      window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
+      window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(apply); } }, { passive: true });
     })();
 
     /* ====== Service Worker — מבטיח שכל רענון טוען את הגרסה האחרונה שפורסמה ======
