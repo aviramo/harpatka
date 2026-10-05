@@ -18,7 +18,7 @@
 create table if not exists public.harpatka_admins (email text primary key);
 alter table public.harpatka_admins enable row level security;     -- בלי מדיניות: אף אחד לא קורא ישירות
 revoke all on public.harpatka_admins from anon, authenticated;
-insert into public.harpatka_admins (email) values ('ofir.aviram@gmail.com') on conflict do nothing;
+insert into public.harpatka_admins (email) values ('ofir.aviram@gmail.com'), ('luriahadar@gmail.com') on conflict do nothing;
 
 create or replace function public.harpatka_is_admin()
 returns boolean language sql stable security definer set search_path = public as $$
