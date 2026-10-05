@@ -1275,7 +1275,10 @@
         v.addEventListener('error', finish);
         const stall = setTimeout(finish, 5000);   // לא התחיל להתנגן (חיבור איטי או חסימת הפעלה אוטומטית): מציגים את ההזמנה
         /* סאונד: מנסים להתנגן עם קול; אם הדפדפן חוסם (ברירת המחדל בביקור ראשון) מתנגנים מושתק, וכל נגיעה או הקשה ראשונה בדף מפעילה את הקול */
-        const unmute = () => { try { v.muted = false; v.volume = 1; } catch(e){} };
+        /* הסאונד מושתק ברגע ש-50% מהסרטון כבר לא נראים במסך (גלילה); גם נגיעה במסך לא תפעיל קול כשהסרטון לא נראה */
+        let inView = true;
+        if ('IntersectionObserver' in window) new IntersectionObserver(([en]) => { inView = en.intersectionRatio >= 0.5; if (!inView) { try { v.muted = true; } catch(e){} } }, { threshold: [0, .5, 1] }).observe(box);
+        const unmute = () => { if (!inView) return; try { v.muted = false; v.volume = 1; } catch(e){} };
         ['pointerdown', 'touchstart', 'keydown'].forEach(ev => window.addEventListener(ev, function once(){ unmute(); window.removeEventListener(ev, once, true); }, { capture: true, passive: true }));
         v.muted = false;
         const p = v.play();
