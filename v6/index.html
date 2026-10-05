@@ -270,6 +270,18 @@
     .su-err{ color:#A9533A; font-size:.88rem; font-weight:600; margin-top:.25rem; }
     .su-err:empty{ display:none; }
     .su-hp{ position:absolute; left:-9999px; width:1px; height:1px; opacity:0; }
+    /* ===== באנר עליון קבוע: בגלילה מצטמצם (שורת יום ראשון + מחיר בלבד), בראש הדף חוזר למצב המלא ===== */
+    #tbWrap{ position:relative; z-index:50; }
+    #topbar{ position:fixed; top:0; left:0; right:0; z-index:50; transition:box-shadow .35s ease; }
+    #topbar > div{ transition:padding .35s ease; }
+    #topbar .tb-pill, #topbar .tb-stage, #topbar #barOld, #topbar #barEarly{ max-height:3rem; transition:max-height .35s ease, opacity .25s ease, margin .35s ease; }
+    #topbar .tb-date{ transition:margin .35s ease; }
+    #topbar #barPrice{ transition:font-size .35s ease; }
+    #topbar.compact{ box-shadow:0 8px 20px -10px rgba(0,0,0,.55); }
+    #topbar.compact > div{ padding-top:.45rem; padding-bottom:.45rem; }
+    #topbar.compact .tb-pill, #topbar.compact .tb-stage, #topbar.compact #barOld, #topbar.compact #barEarly{ max-height:0; opacity:0; margin-top:0 !important; margin-bottom:0 !important; }
+    #topbar.compact .tb-date{ margin-top:0 !important; }
+    #topbar.compact #barPrice{ font-size:1.25rem; }
     .btn-ghost{
       display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
       border:1.5px solid rgba(63,56,47,.22); color:var(--ink); background:transparent; font-weight:600;
@@ -491,12 +503,13 @@
   <a href="#register" class="skip-link">דילוג להצטרפות</a>
 
   <!-- ====================== באנר "המפגש הבא": תאריך, שעה, מקום, מחיר (מחושב ב-JS) ושלב הרשמה (לפי תאריך) ====================== -->
+  <div id="tbWrap">
   <div id="topbar" class="relative z-10" style="background:linear-gradient(120deg,#0A2236 0%,#0F3A4D 55%,#1B6170 100%);color:#FFFDF9;">
     <div class="max-w-2xl mx-auto px-5 py-3 flex items-center justify-between gap-3">
       <div class="min-w-0 flex-1">
-        <p class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[.82rem] font-bold leading-none" style="background:#E9A68C;color:#3F382F"><span class="w-1.5 h-1.5 rounded-full" style="background:#663F4C" aria-hidden="true"></span>המפגש הבא</p>
-        <p class="font-display font-semibold text-[.95rem] min-[375px]:text-[1rem] min-[410px]:text-[1.1rem] leading-tight whitespace-nowrap mt-2"><span id="barDate">יום ראשון 25.10</span> <span class="opacity-60" aria-hidden="true">·</span> <span id="barTime">20:00</span> <span class="opacity-60" aria-hidden="true">·</span> הרצליה</p>
-        <div class="flex items-center gap-1.5 min-[375px]:gap-2 mt-2.5 text-[.74rem] min-[360px]:text-[.8rem] min-[390px]:text-[.88rem] leading-none whitespace-nowrap">
+        <p class="tb-pill inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[.82rem] font-bold leading-none" style="background:#E9A68C;color:#3F382F"><span class="w-1.5 h-1.5 rounded-full" style="background:#663F4C" aria-hidden="true"></span>המפגש הבא</p>
+        <p class="tb-date font-display font-semibold text-[.95rem] min-[375px]:text-[1rem] min-[410px]:text-[1.1rem] leading-tight whitespace-nowrap mt-2"><span id="barDate">יום ראשון 25.10</span> <span class="opacity-60" aria-hidden="true">·</span> <span id="barTime">20:00</span> <span class="opacity-60" aria-hidden="true">·</span> הרצליה</p>
+        <div class="tb-stage flex items-center gap-1.5 min-[375px]:gap-2 mt-2.5 text-[.74rem] min-[360px]:text-[.8rem] min-[390px]:text-[.88rem] leading-none whitespace-nowrap">
           <span id="regStage">ההרשמה התחילה</span>
           <div class="h-[7px] w-[1.6rem] min-[360px]:w-[2.4rem] min-[390px]:w-[4.5rem] rounded-full overflow-hidden shrink-0" style="background:rgba(255,253,249,.25)" aria-hidden="true"><div id="regFill" class="h-full rounded-full" style="width:25%;background:#E9A68C"></div></div>
           <span>עד 30 משתתפים</span>
@@ -508,6 +521,7 @@
         <p id="barEarly" class="text-[.75rem] leading-tight mt-1.5 opacity-90">הנחת הרשמה<br>מוקדמת</p>
       </div>
     </div>
+  </div>
   </div>
 
   <!-- ====================== 1. HERO — מכתב הזמנה (מעטפת דואר בפסים): חוויה אנושית בלי מילים + מי מגיע + CTA ====================== -->
@@ -1264,6 +1278,27 @@
         v.muted = true;
         const p = v.play(); if (p && p.catch) p.catch(fail);
       }).catch(fail);
+    })();
+
+    /* ===== באנר עליון קבוע ומצטמצם בגלילה (שומר גובה מקום קבוע כדי שהדף לא יקפוץ) ===== */
+    (function(){
+      const bar = document.getElementById('topbar'), wrap = document.getElementById('tbWrap'); if (!bar || !wrap) return;
+      const measure = () => {   // גובה המצב המלא, גם אם הדף נטען באמצע גלילה
+        const was = bar.classList.contains('compact'); bar.style.transition = 'none'; bar.querySelectorAll('*').forEach(e => { e.style.transition = 'none'; });
+        bar.classList.remove('compact'); const h = bar.offsetHeight; if (was) bar.classList.add('compact');
+        void bar.offsetHeight; bar.style.transition = ''; bar.querySelectorAll('*').forEach(e => { e.style.transition = ''; });
+        if (h) wrap.style.height = h + 'px';
+      };
+      let compact = false;
+      const onScroll = () => {
+        const y = window.scrollY || document.documentElement.scrollTop;
+        const next = compact ? y > 8 : y > 48;   // היסטרזיס: נפתח מחדש רק כשחוזרים ממש לראש הדף
+        if (next !== compact) { compact = next; bar.classList.toggle('compact', compact); }
+      };
+      measure(); window.addEventListener('load', measure); window.addEventListener('resize', measure);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+      meetingReady.then(() => setTimeout(measure, 80));
+      window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
     })();
 
     /* ====== Service Worker — מבטיח שכל רענון טוען את הגרסה האחרונה שפורסמה ======
