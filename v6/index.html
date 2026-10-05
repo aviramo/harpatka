@@ -244,8 +244,9 @@
     .pt-lab span{ font-size:.85rem; color:#6b6254; }
     .pt-lab.l{ transform:none; text-align:left; } .pt-lab.r{ transform:none; text-align:right; }
     /* ===== סרטון פתיחה על ההזמנה: אותו גודל בדיוק, בלי קפיצות; נעלם (דהייה) ברגע שההזמנה בסרטון נכנסת ===== */
-    #heroStage{ position:relative; }
-    .hs-media{ position:relative; aspect-ratio:4/5; border-radius:20px; overflow:hidden; background:#FFFDF9; box-shadow:0 8px 24px rgba(63,56,47,.10); }   /* בלי מסגרת: רק הפינות המעוגלות */
+    #heroStage{ position:relative; width:100%; }
+    /* הסרטון לכל הרוחב, בלי פינות מעוגלות: ממשיך את הבאנר. בדסקטופ הגובה מוגבל והצדדים נצבעים מקצוות הפריים */
+    .hs-media{ position:relative; width:100%; aspect-ratio:4/5; max-height:88vh; overflow:hidden; background:#FFFDF9; }
     .hs-media > img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
     .hv{ pointer-events:none; position:absolute; inset:0; z-index:5; background:#FFFDF9; transition:opacity .45s ease; }
     html:not(.vid-pending) .hv:not(.closing){ display:none; }
@@ -481,7 +482,6 @@
         var skip = (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) || c.saveData || /2g/.test(c.effectiveType || '');
         if (skip) return;
         document.documentElement.classList.add('vid-pending');
-        setTimeout(function(){ document.documentElement.classList.remove('vid-pending'); }, 9000);
       } catch(e){}
     })();
   </script>
@@ -511,17 +511,15 @@
   </div>
 
   <!-- ====================== 1. HERO — מכתב הזמנה (מעטפת דואר בפסים): חוויה אנושית בלי מילים + מי מגיע + CTA ====================== -->
-  <header id="hero" class="relative pt-5 md:pt-8 pb-0">
-    <div class="relative z-10 max-w-2xl mx-auto px-5 reveal">
-      <div id="heroStage">
-    <div id="heroMedia" class="hs-media">
-      <img id="heroImg" alt="" width="1080" height="1350" decoding="async">
-    <div id="heroVid" class="hv" aria-label="סרטון קצר">
-      <div class="hv-load" aria-hidden="true"><i></i><i></i><i></i></div>
-      <canvas class="hv-cv" id="heroVidCv" aria-hidden="true"></canvas>
-      <video id="heroVideo" playsinline muted preload="auto" disablepictureinpicture></video>
-    </div>
-    </div>
+  <header id="hero" class="relative">
+    <div id="heroStage">
+      <div id="heroMedia" class="hs-media">
+        <img id="heroImg" alt="" width="1080" height="1350" decoding="async">
+        <div id="heroVid" class="hv" aria-label="סרטון קצר">
+          <div class="hv-load" aria-hidden="true"><i></i><i></i><i></i></div>
+          <canvas class="hv-cv" id="heroVidCv" aria-hidden="true"></canvas>
+          <video id="heroVideo" playsinline muted preload="auto" disablepictureinpicture></video>
+        </div>
       </div>
     </div>
   </header>
@@ -1221,52 +1219,21 @@
         g.drawImage(v, dx, dy, dw, dh);
       };
       let done = false, raf = 0, cut = 99;
-      /* מעבר: הפריים האחרון מתפרק לחתיכות שנופלות בעדינות ודועכות, וההזמנה האמיתית (כבר גלויה מתחת) נחשפת.
-         נפילה לדהייה פשוטה אם אי אפשר לצייר (למשל הסרטון עוד לא התחיל) */
-      const fadeOut = () => { box.classList.add('out'); setTimeout(() => { try { v.pause(); } catch(e){} box.remove(); }, 600); };
-      const shatter = () => {
-        draw();   // הפריים הנוכחי בדיוק, יחד עם הפסים
-        const w = box.clientWidth, h = box.clientHeight, dpr = Math.min(2, window.devicePixelRatio || 1);
-        const snap = document.createElement('canvas'); snap.width = cv0.width; snap.height = cv0.height;
-        snap.getContext('2d').drawImage(cv0, 0, 0);
-        const cv = document.createElement('canvas'); cv.width = snap.width; cv.height = snap.height;
-        cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;z-index:6;pointer-events:none';
-        const cx2 = cv.getContext('2d'); cx2.scale(dpr, dpr);
-        box.style.cssText += ';overflow:visible;background:transparent';
-        Array.from(box.children).forEach(c => { c.style.visibility = 'hidden'; });
-        box.appendChild(cv);
-        const DUR = 800, R = 12;
-        const t0 = performance.now();
-        const clipRound = () => { cx2.beginPath(); cx2.moveTo(R, 0); cx2.arcTo(w, 0, w, h, R); cx2.arcTo(w, h, 0, h, R); cx2.arcTo(0, h, 0, 0, R); cx2.arcTo(0, 0, w, 0, R); cx2.closePath(); };
-        const ease = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;   // easeInOutCubic
-        /* דלתות: הפריים נחצה באמצע, החצי השמאלי נדחף שמאלה והימני ימינה, וההזמנה נחשפת ביניהם */
-        const frame = now => {
-          const p = Math.min(1, (now - t0) / DUR), e = ease(p), half = w / 2, off = half * e;
-          cx2.clearRect(0, 0, w, h);
-          cx2.save(); clipRound(); cx2.clip();
-          cx2.drawImage(snap, 0, 0, half * dpr, h * dpr, -off, 0, half, h);              // חצי שמאלי
-          cx2.drawImage(snap, half * dpr, 0, half * dpr, h * dpr, half + off, 0, half, h);  // חצי ימני
-          if (e > 0.01 && e < 0.99) {   // צל קל בקצה הפנימי של כל חצי, על ההזמנה
-            const l = half - off, r = half + off;
-            const g1 = cx2.createLinearGradient(l, 0, l + 22, 0); g1.addColorStop(0, 'rgba(40,28,20,.20)'); g1.addColorStop(1, 'rgba(40,28,20,0)');
-            cx2.fillStyle = g1; cx2.fillRect(l, 0, 22, h);
-            const g2 = cx2.createLinearGradient(r, 0, r - 22, 0); g2.addColorStop(0, 'rgba(40,28,20,.20)'); g2.addColorStop(1, 'rgba(40,28,20,0)');
-            cx2.fillStyle = g2; cx2.fillRect(r - 22, 0, 22, h);
-          }
-          cx2.restore();
-          if (p < 1) requestAnimationFrame(frame); else box.remove();
-        };
-        frame(performance.now());   // הציור הראשון מיידי (באותה משימה), כדי שלא ייווצר פריים אחד שבו רואים רק את ההזמנה (ריצוד)
-      };
-      const finish = () => {
+      /* סיום: הסרטון נעצר בפריים האחרון ונשאר כך (בלי אנימציה). אם הסרטון נכשל/לא התחיל: דהייה לתמונת המודעה שמתחת */
+      const freeze = () => {
         if (done) return; done = true;
         cancelAnimationFrame(raf);
-        box.classList.add('closing');   // נשאר מוצג עד סוף אפקט הדלתות
-        root.classList.remove('vid-pending');
         try { v.pause(); } catch(e){}
-        let ok = false;
-        try { if (v.readyState >= 2 && v.videoWidth && v.currentTime > 0.3) { shatter(); ok = true; } } catch(e){}
-        if (!ok) fadeOut();
+        try { draw(); } catch(e){}              // הפריים הנוכחי בדיוק, יחד עם הצדדים
+        box.classList.add('closing');           // נשאר מוצג
+        root.classList.remove('vid-pending');
+      };
+      const fail = () => {
+        if (done) return; done = true;
+        cancelAnimationFrame(raf);
+        try { v.pause(); } catch(e){}
+        root.classList.remove('vid-pending');
+        box.classList.add('closing', 'out'); setTimeout(() => { box.remove(); }, 600);
       };
       Promise.all([fetch('../ads/videos.json').then(r => r.json()), fetch('../ads/video-cuts.json').then(r => r.json()), fetch('../ads/ads.json').then(r => r.json()).catch(() => [])]).then(([vids, cuts, ads]) => {
         const keys = Object.keys(vids);
@@ -1285,18 +1252,18 @@
         if (window.fbq) { try { fbq('trackCustom', 'HeroVideo', { ad: Number(n) }); } catch(e){} }
         const tick = () => {
           if (done) return;
-          if (v.currentTime >= cut) { finish(); return; }
+          if (v.currentTime >= cut) { freeze(); return; }
           raf = requestAnimationFrame(tick);
         };
         const paint = () => { if (done) return; draw(); v.requestVideoFrameCallback ? v.requestVideoFrameCallback(paint) : requestAnimationFrame(paint); };
         v.addEventListener('playing', () => { clearTimeout(stall); const reveal = () => { box.classList.add('on'); paint(); }; if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(reveal); else setTimeout(reveal, 80); raf = requestAnimationFrame(tick); }, { once: true });
-        v.addEventListener('ended', finish);
-        v.addEventListener('error', finish);
-        const stall = setTimeout(finish, 5000);   // לא התחיל להתנגן (חיבור איטי או חסימת הפעלה אוטומטית): מציגים את ההזמנה
+        v.addEventListener('ended', freeze);
+        v.addEventListener('error', fail);
+        const stall = setTimeout(fail, 5000);   // לא התחיל להתנגן (חיבור איטי או חסימת הפעלה אוטומטית): מציגים את ההזמנה
         /* בלי סאונד ובלי שום אינטראקציה: הסרטון מושתק, לחיצה/נגיעה/גלילה לא משפיעות עליו, והוא ממשיך עד רגע החיתוך */
         v.muted = true;
-        const p = v.play(); if (p && p.catch) p.catch(finish);
-      }).catch(finish);
+        const p = v.play(); if (p && p.catch) p.catch(fail);
+      }).catch(fail);
     })();
 
     /* ====== Service Worker — מבטיח שכל רענון טוען את הגרסה האחרונה שפורסמה ======
