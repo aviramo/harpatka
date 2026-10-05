@@ -246,7 +246,7 @@
     /* ===== סרטון פתיחה על ההזמנה: אותו גודל בדיוק, בלי קפיצות; נעלם (דהייה) ברגע שההזמנה בסרטון נכנסת ===== */
     #heroStage{ position:relative; }
     html.vid-pending #heroStage > .hs-card > div > *{ visibility:hidden; }   /* המסגרת (הפסים) נשארת תמיד; מוסתר רק תוכן ההזמנה */
-    .hv{ position:absolute; inset:10px; z-index:5; border-radius:12px; overflow:hidden; background:#FFFDF9; transition:opacity .45s ease; }
+    .hv{ pointer-events:none; position:absolute; inset:10px; z-index:5; border-radius:12px; overflow:hidden; background:#FFFDF9; transition:opacity .45s ease; }
     .hv[hidden]{ display:none; }
     @media (min-width:768px){ .hv{ inset:12px; } }
     .hv.out{ opacity:0; pointer-events:none; }
@@ -524,7 +524,7 @@
       </div>
       <div id="heroVid" class="hv" hidden aria-label="סרטון קצר">
         <canvas class="hv-cv" id="heroVidCv" aria-hidden="true"></canvas>
-        <video id="heroVideo" playsinline preload="auto" disablepictureinpicture></video>
+        <video id="heroVideo" playsinline muted preload="auto" disablepictureinpicture></video>
       </div>
       </div>
     </div>
@@ -1274,15 +1274,9 @@
         v.addEventListener('ended', finish);
         v.addEventListener('error', finish);
         const stall = setTimeout(finish, 5000);   // לא התחיל להתנגן (חיבור איטי או חסימת הפעלה אוטומטית): מציגים את ההזמנה
-        /* סאונד: מנסים להתנגן עם קול; אם הדפדפן חוסם (ברירת המחדל בביקור ראשון) מתנגנים מושתק, וכל נגיעה או הקשה ראשונה בדף מפעילה את הקול */
-        /* הסאונד מושתק ברגע ש-50% מהסרטון כבר לא נראים במסך (גלילה); גם נגיעה במסך לא תפעיל קול כשהסרטון לא נראה */
-        let inView = true;
-        if ('IntersectionObserver' in window) new IntersectionObserver(([en]) => { inView = en.intersectionRatio >= 0.5; if (!inView) { try { v.muted = true; } catch(e){} } }, { threshold: [0, .5, 1] }).observe(box);
-        const unmute = () => { if (!inView) return; try { v.muted = false; v.volume = 1; } catch(e){} };
-        ['pointerdown', 'touchstart', 'keydown'].forEach(ev => window.addEventListener(ev, function once(){ unmute(); window.removeEventListener(ev, once, true); }, { capture: true, passive: true }));
-        v.muted = false;
-        const p = v.play();
-        if (p && p.catch) p.catch(() => { v.muted = true; const p2 = v.play(); if (p2 && p2.catch) p2.catch(finish); });
+        /* בלי סאונד ובלי שום אינטראקציה: הסרטון מושתק, לחיצה/נגיעה/גלילה לא משפיעות עליו, והוא ממשיך עד רגע החיתוך */
+        v.muted = true;
+        const p = v.play(); if (p && p.catch) p.catch(finish);
       }).catch(finish);
     })();
 
