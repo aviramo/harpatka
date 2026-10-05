@@ -1065,7 +1065,7 @@
         const age = parseInt(ageI.value, 10);
         if (!(age >= 18 && age <= 99)) { setErr(ageI, q('ageErr'), 'נא למלא גיל תקין'); ok = false; }
         if (!ok) return;
-        const allDone = () => { suRoots.forEach(f => f()); try { sessionStorage.setItem('suDone', '1'); } catch(x){} };
+        const allDone = () => { suRoots.forEach(f => f()); };   // בלי שמירה בדפדפן: בכל טעינה של הדף הטופס מוצג מחדש
         if (q('hp').value || Date.now() - t0 < 1500) { allDone(); return; }   // בוט: מציגים הצלחה בלי לשמור
         btn.disabled = true; btn.textContent = 'שולחים...';
         let finished = false;
@@ -1094,7 +1094,6 @@
     const cmChoose = document.getElementById('cmChoose'), cmFormView = document.getElementById('cmFormView');
     function showChoose() { if (!cmChoose) return; cmFormView.hidden = true; cmChoose.hidden = false; }
     document.querySelectorAll('[data-su-root]').forEach(initSignup);
-    try { if (sessionStorage.getItem('suDone') === '1') suRoots.forEach(f => f()); } catch(e){}
     if (cmChoose) {
       document.getElementById('cmShowForm').addEventListener('click', () => { cmChoose.hidden = true; cmFormView.hidden = false; const i = cmFormView.querySelector('[data-su="name"]'); if (i) i.focus(); });
       document.getElementById('cmBack').addEventListener('click', showChoose);
