@@ -651,6 +651,9 @@
             <input id="suPhone" data-su="phone" name="phone" type="tel" dir="ltr" inputmode="tel" class="su-input text-end" autocomplete="tel" maxlength="24" placeholder="050-1234567" required>
             <div data-su="phoneErr" class="su-err" role="alert"></div>
             <p class="muted text-[.88rem] mt-1" style="text-align:start">אפשר להתחיל ב-0 (<bdi>050-1234567</bdi>) או ב-+ עם קידומת המדינה (<bdi>+972501234567</bdi>)</p>
+            <label for="suAge" class="block font-semibold mb-1 mt-3">גיל</label>
+            <input id="suAge" data-su="age" name="age" type="number" inputmode="numeric" min="18" max="99" class="su-input" autocomplete="off" placeholder="למשל 44" required>
+            <div data-su="ageErr" class="su-err" role="alert"></div>
             <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-4 text-[1.2rem] whitespace-nowrap w-full mt-5">שליחה</button>
             <div data-su="fail" class="su-err mt-3 text-center" role="alert"></div>
           </form>
@@ -816,6 +819,9 @@
             <input id="cmPhone" data-su="phone" name="phone" type="tel" dir="ltr" inputmode="tel" class="su-input text-end" autocomplete="tel" maxlength="24" placeholder="050-1234567" required>
             <div data-su="phoneErr" class="su-err" role="alert"></div>
             <p class="muted text-[.88rem] mt-1" style="text-align:start">אפשר להתחיל ב-0 (<bdi>050-1234567</bdi>) או ב-+ עם קידומת המדינה (<bdi>+972501234567</bdi>)</p>
+            <label for="cmAge" class="block font-semibold mb-1 mt-3">גיל</label>
+            <input id="cmAge" data-su="age" name="age" type="number" inputmode="numeric" min="18" max="99" class="su-input" autocomplete="off" placeholder="למשל 44" required>
+            <div data-su="ageErr" class="su-err" role="alert"></div>
             <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-4 text-[1.2rem] whitespace-nowrap w-full mt-5">שליחה</button>
             <div data-su="fail" class="su-err mt-3 text-center" role="alert"></div>
           </form>
@@ -1043,18 +1049,21 @@
     function initSignup(root) {
       const q = k => root.querySelector('[data-su="' + k + '"]');
       const form = q('form'); if (!form) return;
-      const nameI = q('name'), phoneI = q('phone'), btn = q('btn'), t0 = Date.now();
+      const nameI = q('name'), phoneI = q('phone'), ageI = q('age'), btn = q('btn'), t0 = Date.now();
       const setErr = (input, errEl, msg) => { errEl.textContent = msg || ''; input.classList.toggle('bad', !!msg); };
       const showDone = () => { q('formWrap').hidden = true; q('done').hidden = false; };
       suRoots.push(showDone);
       nameI.addEventListener('input', () => setErr(nameI, q('nameErr'), ''));
       phoneI.addEventListener('input', () => setErr(phoneI, q('phoneErr'), ''));
+      ageI.addEventListener('input', () => setErr(ageI, q('ageErr'), ''));
       form.addEventListener('submit', async (e) => {
         e.preventDefault(); q('fail').textContent = '';
         const name = nameI.value.trim().replace(/\s+/g, ' '), norm = normPhone(phoneI.value);
         let ok = true;
         if (name.length < 2) { setErr(nameI, q('nameErr'), 'נא למלא שם'); ok = false; }
         if (!norm) { setErr(phoneI, q('phoneErr'), 'מספר הטלפון לא תקין'); ok = false; }
+        const age = parseInt(ageI.value, 10);
+        if (!(age >= 18 && age <= 99)) { setErr(ageI, q('ageErr'), 'נא למלא גיל תקין'); ok = false; }
         if (!ok) return;
         const allDone = () => { suRoots.forEach(f => f()); try { sessionStorage.setItem('suDone', '1'); } catch(x){} };
         if (q('hp').value || Date.now() - t0 < 1500) { allDone(); return; }   // בוט: מציגים הצלחה בלי לשמור
@@ -1064,7 +1073,7 @@
           const res = await fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_signup', {
             method: 'POST',
             headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ p_name: name, p_phone: norm })
+            body: JSON.stringify({ p_name: name, p_phone: norm, p_age: age })
           });
           const out = res.ok ? await res.json() : null;
           if (out === 'created' || out === 'exists') {   // כפילות: אותה הודעה, בלי לחשוף שהמספר כבר רשום
@@ -1072,6 +1081,7 @@
             finished = true; allDone();
           } else if (out === 'invalid_phone') setErr(phoneI, q('phoneErr'), 'מספר הטלפון לא תקין');
           else if (out === 'invalid_name') setErr(nameI, q('nameErr'), 'נא למלא שם');
+          else if (out === 'invalid_age') setErr(ageI, q('ageErr'), 'נא למלא גיל תקין');
           else throw new Error('signup failed');
         } catch (err) {
           q('fail').innerHTML = 'משהו השתבש, אפשר ליצור קשר ישירות: <a href="#" class="underline font-bold">שיחה בוואטסאפ</a>';

@@ -65,10 +65,12 @@ exception when unique_violation then
   raise notice 'יש כפילויות קיימות של מספרי טלפון: למזג אותן ידנית ולהריץ שוב כדי להפעיל את האינדקס הייחודי';
 end $$;
 
--- 5. הרשמה מהאתר. מחזירה: created | exists | invalid_name | invalid_phone
+-- 5. הרשמה מהאתר. מחזירה: created | exists | invalid_name | invalid_phone | invalid_age
 --    המשתתף נקשר אוטומטית למפגש הקרוב (המפגש שמוצג בבאנר: התאריך הקרוב ביותר שעוד לא עבר, שעון ישראל)
 --    כ"טרם שילם" (paid = false). אם המשתתף כבר קיים (אותו מספר) הוא נקשר למפגש הקרוב אם עוד לא היה מקושר.
-create or replace function public.harpatka_signup(p_name text, p_phone text)
+--    הגיל נשמר ב-age (ו-age_set_at = היום), כמו בדף הניהול. מספר שכבר קיים בלי גיל: הגיל מתעדכן.
+drop function if exists public.harpatka_signup(text, text);   -- הגרסה הישנה (בלי גיל)
+create or replace function public.harpatka_signup(p_name text, p_phone text, p_age int default null)
 returns text language plpgsql security definer set search_path = public as $$
 declare
   n   text := public.harpatka_normalize_phone(p_phone);
@@ -79,6 +81,7 @@ declare
 begin
   if char_length(nm) < 2 or char_length(nm) > 60 then return 'invalid_name'; end if;
   if n = '' then return 'invalid_phone'; end if;
+  if p_age is null or p_age < 18 or p_age > 99 then return 'invalid_age'; end if;
 
   select id into mid from public.harpatka_meetings
     where meeting_date >= (now() at time zone 'Asia/Jerusalem')::date
@@ -87,9 +90,11 @@ begin
   select id into pid from public.harpatka_participants where phone_norm = n limit 1;
   if pid is not null then
     res := 'exists';
+    update public.harpatka_participants set age = p_age, age_set_at = current_date where id = pid and age is null;
   else
     begin
-      insert into public.harpatka_participants (name, phone, source) values (nm, n, 'site')   -- phone_norm נקבע בטריגר
+      insert into public.harpatka_participants (name, phone, age, age_set_at, source)
+        values (nm, n, p_age, current_date, 'site')   -- phone_norm נקבע בטריגר
         returning id into pid;
     exception when unique_violation then
       select id into pid from public.harpatka_participants where phone_norm = n limit 1;
@@ -104,7 +109,7 @@ begin
   return res;
 end $$;
 
-revoke all on function public.harpatka_signup(text, text) from public;
-grant execute on function public.harpatka_signup(text, text) to anon, authenticated;
+revoke all on function public.harpatka_signup(text, text, int) from public;
+grant execute on function public.harpatka_signup(text, text, int) to anon, authenticated;
 
 notify pgrst, 'reload schema';
