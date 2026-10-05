@@ -254,11 +254,12 @@
     .hv-cv{ position:absolute; inset:0; width:100%; height:100%; opacity:0; }
     .hv.on .hv-cv{ opacity:1; }
     .hv video{ pointer-events:none; }    /* ===== טופס הרשמה קצר (שם + טלפון) ===== */
-    .su-input{ width:100%; background:var(--paper); border:2px solid var(--sand); border-radius:18px; padding:.85rem 1.1rem; font-size:1.05rem; color:var(--ink); font-family:inherit; }
+    .su-input{ width:100%; background:var(--paper); border:2px solid var(--sand); border-radius:16px; padding:.7rem 1rem; font-size:1.05rem; color:var(--ink); font-family:inherit; }
     .su-input::placeholder{ color:#a39a8b; }
     .su-input:focus{ outline:none; border-color:var(--terra); }
     .su-input.bad{ border-color:#B85C40; }
-    .su-err{ color:#A9533A; font-size:.92rem; font-weight:600; min-height:1.2rem; }
+    .su-err{ color:#A9533A; font-size:.88rem; font-weight:600; margin-top:.25rem; }
+    .su-err:empty{ display:none; }
     .su-hp{ position:absolute; left:-9999px; width:1px; height:1px; opacity:0; }
     .btn-ghost{
       display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
@@ -639,21 +640,18 @@
     <div class="max-w-xl mx-auto px-5">
       <div class="card-soft px-6 py-8 md:px-10 md:py-10 text-center reveal" data-su-root>
         <div data-su="formWrap">
-          <h2 class="h-sect text-[1.7rem] md:text-[2.2rem] mb-2">השאירו פרטים ונחזור אליכם</h2>
-          <p class="muted mb-6">רק שם וטלפון</p>
+          <h2 class="h-sect text-[1.7rem] md:text-[2.2rem] mb-5">השאירו פרטים ונחזור אליכם</h2>
           <form data-su="form" novalidate class="text-start">
             <input type="text" name="website" data-su="hp" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
-            <label for="suName" class="block font-semibold mb-1">שם</label>
-            <input id="suName" data-su="name" name="name" type="text" class="su-input" autocomplete="name" maxlength="60" placeholder="איך קוראים לכם?" required>
+            <input id="suName" data-su="name" name="name" type="text" class="su-input" autocomplete="name" maxlength="60" placeholder="שם" aria-label="שם" required>
             <div data-su="nameErr" class="su-err" role="alert"></div>
-            <label for="suPhone" class="block font-semibold mb-1 mt-3">טלפון</label>
-            <input id="suPhone" data-su="phone" name="phone" type="tel" dir="ltr" inputmode="tel" class="su-input text-end" autocomplete="tel" maxlength="24" placeholder="050-1234567" required>
+            <div class="flex gap-2 mt-2.5">
+              <input id="suPhone" data-su="phone" name="phone" type="tel" dir="ltr" inputmode="tel" class="su-input text-end flex-1 min-w-0" autocomplete="tel" maxlength="24" placeholder="טלפון" aria-label="טלפון" required>
+              <input id="suAge" data-su="age" name="age" type="number" inputmode="numeric" min="18" max="99" class="su-input shrink-0" style="width:5.2rem" autocomplete="off" placeholder="גיל" aria-label="גיל" required>
+            </div>
             <div data-su="phoneErr" class="su-err" role="alert"></div>
-            <p class="muted text-[.88rem] mt-1" style="text-align:start">אפשר להתחיל ב-0 (<bdi>050-1234567</bdi>) או ב-+ עם קידומת המדינה (<bdi>+972501234567</bdi>)</p>
-            <label for="suAge" class="block font-semibold mb-1 mt-3">גיל</label>
-            <input id="suAge" data-su="age" name="age" type="number" inputmode="numeric" min="18" max="99" class="su-input" autocomplete="off" placeholder="למשל 44" required>
             <div data-su="ageErr" class="su-err" role="alert"></div>
-            <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-4 text-[1.2rem] whitespace-nowrap w-full mt-5">שליחה</button>
+            <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-3.5 text-[1.2rem] whitespace-nowrap w-full mt-4">שליחה</button>
             <div data-su="fail" class="su-err mt-3 text-center" role="alert"></div>
           </form>
         </div>
@@ -811,17 +809,15 @@
           <h2 class="h-sect text-[1.5rem] md:text-[1.9rem] mb-5 px-8">השאירו פרטים ונחזור אליכם</h2>
           <form data-su="form" novalidate class="text-start">
             <input type="text" name="website" data-su="hp" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
-            <label for="cmName" class="block font-semibold mb-1">שם</label>
-            <input id="cmName" data-su="name" name="name" type="text" class="su-input" autocomplete="name" maxlength="60" placeholder="איך קוראים לכם?" required>
+            <input id="cmName" data-su="name" name="name" type="text" class="su-input" autocomplete="name" maxlength="60" placeholder="שם" aria-label="שם" required>
             <div data-su="nameErr" class="su-err" role="alert"></div>
-            <label for="cmPhone" class="block font-semibold mb-1 mt-3">טלפון</label>
-            <input id="cmPhone" data-su="phone" name="phone" type="tel" dir="ltr" inputmode="tel" class="su-input text-end" autocomplete="tel" maxlength="24" placeholder="050-1234567" required>
+            <div class="flex gap-2 mt-2.5">
+              <input id="cmPhone" data-su="phone" name="phone" type="tel" dir="ltr" inputmode="tel" class="su-input text-end flex-1 min-w-0" autocomplete="tel" maxlength="24" placeholder="טלפון" aria-label="טלפון" required>
+              <input id="cmAge" data-su="age" name="age" type="number" inputmode="numeric" min="18" max="99" class="su-input shrink-0" style="width:5.2rem" autocomplete="off" placeholder="גיל" aria-label="גיל" required>
+            </div>
             <div data-su="phoneErr" class="su-err" role="alert"></div>
-            <p class="muted text-[.88rem] mt-1" style="text-align:start">אפשר להתחיל ב-0 (<bdi>050-1234567</bdi>) או ב-+ עם קידומת המדינה (<bdi>+972501234567</bdi>)</p>
-            <label for="cmAge" class="block font-semibold mb-1 mt-3">גיל</label>
-            <input id="cmAge" data-su="age" name="age" type="number" inputmode="numeric" min="18" max="99" class="su-input" autocomplete="off" placeholder="למשל 44" required>
             <div data-su="ageErr" class="su-err" role="alert"></div>
-            <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-4 text-[1.2rem] whitespace-nowrap w-full mt-5">שליחה</button>
+            <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-3.5 text-[1.2rem] whitespace-nowrap w-full mt-4">שליחה</button>
             <div data-su="fail" class="su-err mt-3 text-center" role="alert"></div>
           </form>
           <button type="button" id="cmBack" class="mt-4 underline underline-offset-4 decoration-2 text-terra font-bold text-[.98rem]">חזרה לבחירה</button>
