@@ -220,6 +220,7 @@
     .modal{ position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; padding:1rem; background:rgba(63,56,47,.5); opacity:0; transition:opacity .3s ease; }
     .modal[hidden]{ display:none; }
     .modal.open{ opacity:1; }
+    #contactModal [data-su="done"] h2{ padding-inline:2rem; font-size:1.5rem; }
     .modal-box{ position:relative; width:100%; max-width:30rem; background:var(--paper); border-radius:28px; padding:2rem 1.25rem 1.5rem; text-align:center; transform:translateY(14px); transition:transform .3s ease; }
     .modal.open .modal-box{ transform:none; }
     .modal-close{ position:absolute; top:.6rem; left:.6rem; width:2.5rem; height:2.5rem; border-radius:50%; background:var(--sand); color:var(--ink); font-size:1.5rem; line-height:1; }
@@ -636,24 +637,24 @@
   <!-- ====================== הרשמה קצרה: שם + טלפון (לפני "לפעמים טוב לצאת מהמעגלים המוכרים") ====================== -->
   <section id="signup" class="relative pt-10 md:pt-14 pb-0 scroll-mt-6">
     <div class="max-w-xl mx-auto px-5">
-      <div class="card-soft px-6 py-8 md:px-10 md:py-10 text-center reveal">
-        <div id="suForm">
+      <div class="card-soft px-6 py-8 md:px-10 md:py-10 text-center reveal" data-su-root>
+        <div data-su="formWrap">
           <h2 class="h-sect text-[1.7rem] md:text-[2.2rem] mb-2">השאירו פרטים ונחזור אליכם</h2>
           <p class="muted mb-6">רק שם וטלפון</p>
-          <form id="signupForm" novalidate class="text-start">
-            <input type="text" name="website" id="suWebsite" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <form data-su="form" novalidate class="text-start">
+            <input type="text" name="website" data-su="hp" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
             <label for="suName" class="block font-semibold mb-1">שם</label>
-            <input id="suName" name="name" type="text" class="su-input" autocomplete="name" maxlength="60" placeholder="איך קוראים לכם?" required>
-            <div id="suNameErr" class="su-err" role="alert"></div>
+            <input id="suName" data-su="name" name="name" type="text" class="su-input" autocomplete="name" maxlength="60" placeholder="איך קוראים לכם?" required>
+            <div data-su="nameErr" class="su-err" role="alert"></div>
             <label for="suPhone" class="block font-semibold mb-1 mt-3">טלפון</label>
-            <input id="suPhone" name="phone" type="tel" dir="ltr" inputmode="tel" class="su-input text-end" autocomplete="tel" maxlength="24" placeholder="050-1234567" required>
-            <div id="suPhoneErr" class="su-err" role="alert"></div>
+            <input id="suPhone" data-su="phone" name="phone" type="tel" dir="ltr" inputmode="tel" class="su-input text-end" autocomplete="tel" maxlength="24" placeholder="050-1234567" required>
+            <div data-su="phoneErr" class="su-err" role="alert"></div>
             <p class="muted text-[.88rem] mt-1" style="text-align:start">אפשר להתחיל ב-0 (<bdi>050-1234567</bdi>) או ב-+ עם קידומת המדינה (<bdi>+972501234567</bdi>)</p>
-            <button id="suBtn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-4 text-[1.2rem] whitespace-nowrap w-full mt-5">שליחה</button>
-            <div id="suFail" class="su-err mt-3 text-center" role="alert"></div>
+            <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-4 text-[1.2rem] whitespace-nowrap w-full mt-5">שליחה</button>
+            <div data-su="fail" class="su-err mt-3 text-center" role="alert"></div>
           </form>
         </div>
-        <div id="suDone" hidden>
+        <div data-su="done" hidden>
           <h2 class="h-sect text-[1.7rem] md:text-[2.2rem] mb-3">תודה! נחזור אליכם בהקדם</h2>
           <p class="lead muted mb-6">בינתיים אפשר להצטרף לקבוצת העדכונים בוואטסאפ</p>
           <a href="#" target="_blank" rel="noopener" data-updates class="btn-green">הצטרפות לקבוצת העדכונים</a>
@@ -785,6 +786,7 @@
   <div id="contactModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="contactTitle">
     <div class="modal-box">
       <button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button>
+      <div id="cmChoose">
       <h2 id="contactTitle" class="h-sect text-[1.6rem] md:text-[2rem] mb-5">עם מי תרצו לדבר?</h2>
       <div class="grid grid-cols-2 gap-3">
         <a href="#" target="_blank" rel="noopener" data-wa="hadar" data-autofocus class="contact-opt">
@@ -798,7 +800,32 @@
           <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.057 0a11.82 11.82 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.477-.913zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>וואטסאפ</span>
         </a>
       </div>
+      <button type="button" id="cmShowForm" class="mt-4 w-full rounded-full px-5 py-3.5 text-[1.05rem] font-bold" style="background:var(--sand);color:var(--ink)">או השאירו פרטים ונחזור אליכם</button>
       <p class="mt-4 text-[.98rem]"><a href="#" target="_blank" rel="noopener" data-updates class="underline underline-offset-4 decoration-2 text-terra font-bold">לא בטוחים עדיין? אפשר להצטרף לקבוצת העדכונים</a></p>
+      </div>
+      <div id="cmFormView" hidden data-su-root>
+        <div data-su="formWrap">
+          <h2 class="h-sect text-[1.5rem] md:text-[1.9rem] mb-5 px-8">השאירו פרטים ונחזור אליכם</h2>
+          <form data-su="form" novalidate class="text-start">
+            <input type="text" name="website" data-su="hp" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <label for="cmName" class="block font-semibold mb-1">שם</label>
+            <input id="cmName" data-su="name" name="name" type="text" class="su-input" autocomplete="name" maxlength="60" placeholder="איך קוראים לכם?" required>
+            <div data-su="nameErr" class="su-err" role="alert"></div>
+            <label for="cmPhone" class="block font-semibold mb-1 mt-3">טלפון</label>
+            <input id="cmPhone" data-su="phone" name="phone" type="tel" dir="ltr" inputmode="tel" class="su-input text-end" autocomplete="tel" maxlength="24" placeholder="050-1234567" required>
+            <div data-su="phoneErr" class="su-err" role="alert"></div>
+            <p class="muted text-[.88rem] mt-1" style="text-align:start">אפשר להתחיל ב-0 (<bdi>050-1234567</bdi>) או ב-+ עם קידומת המדינה (<bdi>+972501234567</bdi>)</p>
+            <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-4 text-[1.2rem] whitespace-nowrap w-full mt-5">שליחה</button>
+            <div data-su="fail" class="su-err mt-3 text-center" role="alert"></div>
+          </form>
+          <button type="button" id="cmBack" class="mt-4 underline underline-offset-4 decoration-2 text-terra font-bold text-[.98rem]">חזרה לבחירה</button>
+        </div>
+        <div data-su="done" hidden>
+          <h2 class="h-sect text-[1.7rem] md:text-[2.2rem] mb-3">תודה! נחזור אליכם בהקדם</h2>
+          <p class="lead muted mb-6">בינתיים אפשר להצטרף לקבוצת העדכונים בוואטסאפ</p>
+          <a href="#" target="_blank" rel="noopener" data-updates class="btn-green">הצטרפות לקבוצת העדכונים</a>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1011,23 +1038,25 @@
       return '';
     }
     window.normPhone = normPhone;
-    (function(){
-      const form = document.getElementById('signupForm'); if (!form) return;
-      const el = id => document.getElementById(id), t0 = Date.now();
-      const nameI = el('suName'), phoneI = el('suPhone'), btn = el('suBtn');
+    const suRoots = [];
+    function initSignup(root) {
+      const q = k => root.querySelector('[data-su="' + k + '"]');
+      const form = q('form'); if (!form) return;
+      const nameI = q('name'), phoneI = q('phone'), btn = q('btn'), t0 = Date.now();
       const setErr = (input, errEl, msg) => { errEl.textContent = msg || ''; input.classList.toggle('bad', !!msg); };
-      const done = () => { el('suForm').hidden = true; el('suDone').hidden = false; try { sessionStorage.setItem('suDone', '1'); } catch(e){} };
-      try { if (sessionStorage.getItem('suDone') === '1') { el('suForm').hidden = true; el('suDone').hidden = false; } } catch(e){}
-      nameI.addEventListener('input', () => setErr(nameI, el('suNameErr'), ''));
-      phoneI.addEventListener('input', () => setErr(phoneI, el('suPhoneErr'), ''));
+      const showDone = () => { q('formWrap').hidden = true; q('done').hidden = false; };
+      suRoots.push(showDone);
+      nameI.addEventListener('input', () => setErr(nameI, q('nameErr'), ''));
+      phoneI.addEventListener('input', () => setErr(phoneI, q('phoneErr'), ''));
       form.addEventListener('submit', async (e) => {
-        e.preventDefault(); el('suFail').textContent = '';
+        e.preventDefault(); q('fail').textContent = '';
         const name = nameI.value.trim().replace(/\s+/g, ' '), norm = normPhone(phoneI.value);
         let ok = true;
-        if (name.length < 2) { setErr(nameI, el('suNameErr'), 'נא למלא שם'); ok = false; }
-        if (!norm) { setErr(phoneI, el('suPhoneErr'), 'מספר הטלפון לא תקין'); ok = false; }
+        if (name.length < 2) { setErr(nameI, q('nameErr'), 'נא למלא שם'); ok = false; }
+        if (!norm) { setErr(phoneI, q('phoneErr'), 'מספר הטלפון לא תקין'); ok = false; }
         if (!ok) return;
-        if (el('suWebsite').value || Date.now() - t0 < 1500) { done(); return; }   // בוט: מציגים הצלחה בלי לשמור
+        const allDone = () => { suRoots.forEach(f => f()); try { sessionStorage.setItem('suDone', '1'); } catch(x){} };
+        if (q('hp').value || Date.now() - t0 < 1500) { allDone(); return; }   // בוט: מציגים הצלחה בלי לשמור
         btn.disabled = true; btn.textContent = 'שולחים...';
         let finished = false;
         try {
@@ -1039,17 +1068,27 @@
           const out = res.ok ? await res.json() : null;
           if (out === 'created' || out === 'exists') {   // כפילות: אותה הודעה, בלי לחשוף שהמספר כבר רשום
             if (window.fbq) { try { fbq('track', 'Lead'); } catch(x){} }
-            finished = true; done();
-          } else if (out === 'invalid_phone') setErr(phoneI, el('suPhoneErr'), 'מספר הטלפון לא תקין');
-          else if (out === 'invalid_name') setErr(nameI, el('suNameErr'), 'נא למלא שם');
+            finished = true; allDone();
+          } else if (out === 'invalid_phone') setErr(phoneI, q('phoneErr'), 'מספר הטלפון לא תקין');
+          else if (out === 'invalid_name') setErr(nameI, q('nameErr'), 'נא למלא שם');
           else throw new Error('signup failed');
         } catch (err) {
-          el('suFail').innerHTML = 'משהו השתבש, אפשר ליצור קשר ישירות: <a href="#" class="underline font-bold">שיחה בוואטסאפ</a>';
-          el('suFail').querySelector('a').addEventListener('click', ev => { ev.preventDefault(); const m = document.getElementById('contactModal'); if (m) openModal(m); });
+          q('fail').innerHTML = 'משהו השתבש, אפשר ליצור קשר ישירות: <a href="#" class="underline font-bold">שיחה בוואטסאפ</a>';
+          q('fail').querySelector('a').addEventListener('click', ev => { ev.preventDefault(); const m = document.getElementById('contactModal'); if (m) { if (m.hidden) openModal(m); else showChoose(); } });
         }
         if (!finished) { btn.disabled = false; btn.textContent = 'שליחה'; }
       });
-    })();
+    }
+    /* פופאפ יצירת קשר: כפתור שלישי "השאירו פרטים" מחליף את הבחירה בטופס (באותו פופאפ) */
+    const cmChoose = document.getElementById('cmChoose'), cmFormView = document.getElementById('cmFormView');
+    function showChoose() { if (!cmChoose) return; cmFormView.hidden = true; cmChoose.hidden = false; }
+    document.querySelectorAll('[data-su-root]').forEach(initSignup);
+    try { if (sessionStorage.getItem('suDone') === '1') suRoots.forEach(f => f()); } catch(e){}
+    if (cmChoose) {
+      document.getElementById('cmShowForm').addEventListener('click', () => { cmChoose.hidden = true; cmFormView.hidden = false; const i = cmFormView.querySelector('[data-su="name"]'); if (i) i.focus(); });
+      document.getElementById('cmBack').addEventListener('click', showChoose);
+      new MutationObserver(() => { if (document.getElementById('contactModal').hidden) showChoose(); }).observe(document.getElementById('contactModal'), { attributes: true, attributeFilter: ['hidden'] });
+    }
 
     ['updates'].forEach(id => {
       const el = document.getElementById(id);
