@@ -259,6 +259,7 @@
     .hv.out{ opacity:0; pointer-events:none; }
     .hv-bg{ position:absolute; left:-40px; top:-40px; width:calc(100% + 80px); height:calc(100% + 80px); filter:blur(22px); }
     .hv video{ opacity:0; position:absolute; inset:0; width:100%; height:100%; object-fit:contain; background:transparent; }
+    .hv-frozen{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
     .hv-cv{ position:absolute; inset:0; width:100%; height:100%; opacity:0; }
     .hv.on .hv-cv{ opacity:1; }
     .hv video{ pointer-events:none; }    /* ===== טופס הרשמה קצר (שם + טלפון) ===== */
@@ -1238,7 +1239,21 @@
         try { draw(); } catch(e){}              // הפריים הנוכחי בדיוק, יחד עם הצדדים
         box.classList.add('closing');           // נשאר מוצג
         root.classList.remove('vid-pending');
+        /* הפריים האחרון נשמר גם כתמונה רגילה: כשהאפליקציה עוברת לרקע הדפדפן יכול למחוק את תוכן הקנבס והסרטון, ואז היה נשאר מקום ריק */
+        try {
+          const im = new Image(); im.className = 'hv-frozen'; im.alt = ''; im.src = cv0.toDataURL('image/jpeg', 0.92);
+          im.onload = () => { box.appendChild(im); cv0.style.display = 'none'; v.style.display = 'none'; };
+          im.onerror = () => { box.remove(); };   // אין תמונה: חושפים את תמונת המודעה שמתחת
+        } catch (e) { box.remove(); }
       };
+      /* חזרה מהרקע: הדפדפן עצר את הסרטון באמצע (או מחק את הקנבס): ממשיכים להתנגן ומציירים מחדש */
+      const resume = () => {
+        if (done || document.hidden) return;
+        try { draw(); } catch (e) {}
+        if (v.paused && v.readyState >= 2) { const q = v.play(); if (q && q.catch) q.catch(() => {}); }
+      };
+      document.addEventListener('visibilitychange', resume);
+      window.addEventListener('pageshow', resume);
       const fail = () => {
         if (done) return; done = true;
         cancelAnimationFrame(raf);
