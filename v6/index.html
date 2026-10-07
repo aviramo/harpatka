@@ -1070,6 +1070,14 @@
     /* ===== טופס הרשמה: שם + טלפון -> Supabase (פונקציה harpatka_signup, admin/signup.sql) =====
        ולידציה ונרמול ל-E.164 זהים ללוגיקה בבסיס הנתונים (harpatka_normalize_phone).
        הרשומה נקשרת בבסיס הנתונים למפגש הקרוב (זה שבבאנר) כ"טרם שילם" */
+    /* Lead חד ערכי למכשיר: נשלח לפיקסל פעם אחת בלבד לכל מכשיר/דפדפן (גם אם נרשמים או לוחצים על וואטסאפ שוב), לפי סימון ב-localStorage */
+    const leadOnce = () => {
+      if (!window.fbq) return;
+      const K = 'harpatka_lead_sent';
+      try { if (localStorage.getItem(K)) return; localStorage.setItem(K, '1'); }
+      catch (e) { if (window.__leadSent) return; window.__leadSent = true; }   // בלי אחסון: פעם אחת לטעינת דף
+      try { fbq('track', 'Lead'); } catch (e) {}
+    };
     function normPhone(raw) {
       const s = String(raw || '').trim();
       if (!s) return '';
@@ -1119,7 +1127,7 @@
           });
           const out = res.ok ? await res.json() : null;
           if (out === 'created' || out === 'exists') {   // כפילות: אותה הודעה, בלי לחשוף שהמספר כבר רשום
-            if (out === 'created' && window.fbq) { try { fbq('track', 'Lead'); } catch(x){} }   // Lead רק על מספר חדש (חד ערכי), לא על כפילות
+            if (out === 'created') leadOnce();   // Lead רק על מספר חדש (חד ערכי), לא על כפילות
             finished = true; allDone();
           } else if (out === 'invalid_phone') setErr(phoneI, q('phoneErr'), 'מספר הטלפון לא תקין');
           else if (out === 'invalid_name') setErr(nameI, q('nameErr'), 'נא למלא שם');
@@ -1154,7 +1162,7 @@
     document.querySelectorAll('[data-wa]').forEach(el => {
       el.setAttribute('href', waLinks[el.dataset.wa]);
       el.addEventListener('click', () => {
-        if (window.fbq) { try { fbq('track', 'Lead'); } catch(e){} }
+        leadOnce();
       });
     });
     const contactModal = document.getElementById('contactModal');
