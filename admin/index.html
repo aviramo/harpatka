@@ -257,6 +257,13 @@
   const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance' };
 
   const state = { participants: [], meetings: [], att: [], filter: null, q: '' };
+  /* קישור עמוק מהמייל: ?m=<מפגש>&p=<משתתף>; נשמר בזמן הכניסה עם גוגל (שמחזירה בלי הפרמטרים) */
+  let deep = null;
+  try {
+    const sp = new URLSearchParams(location.search);
+    if (sp.get('m') || sp.get('p')) { deep = { m: sp.get('m'), p: sp.get('p') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
+    else { deep = JSON.parse(sessionStorage.getItem('harpatka_deep') || 'null'); }
+  } catch (e) {}
   const $ = (s) => document.querySelector(s);
 
   /* ---------- כניסה עם גוגל (הזדהות של floa ב-Supabase, בלי SDK) ---------- */
@@ -442,6 +449,14 @@
       state.participants = p; state.meetings = m; state.att = a;
       sortMeetings();
       if (!silent) $('#status').innerHTML = '';
+      if (deep) {
+        const d = deep; deep = null;
+        try { sessionStorage.removeItem('harpatka_deep'); } catch (e) {}
+        if (d.m && state.meetings.some((x) => x.id === d.m)) state.filter = d.m;
+        render();
+        if (d.p && state.participants.some((x) => x.id === d.p)) openParticipant(d.p);
+        return;
+      }
       render();
     } catch (err) {
       console.error(err);
@@ -489,7 +504,7 @@
       if (!q) return true;
       return p.name.toLowerCase().includes(q) || (qd.length >= 2 && digits(p.phone).includes(qd));
     });
-    rows.sort((a, b) => a.name.localeCompare(b.name, 'he'));
+    rows.sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')) || a.name.localeCompare(b.name, 'he'));   // לפי תאריך יצירה, החדשים למעלה
 
     if (!rows.length) {
       $('#list').innerHTML = '<li class="empty">' + (

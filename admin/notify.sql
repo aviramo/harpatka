@@ -15,7 +15,7 @@ create table if not exists public.harpatka_settings (key text primary key, value
 alter table public.harpatka_settings enable row level security;          -- בלי מדיניות: רק פונקציות security definer קוראות
 revoke all on public.harpatka_settings from anon, authenticated;
 
-create or replace function public.harpatka_notify_signup(p_name text, p_phone text, p_age int, p_mdate date, p_mtime time)
+create or replace function public.harpatka_notify_signup(p_name text, p_phone text, p_age int, p_mdate date, p_mtime time, p_pid uuid, p_mid uuid)
 returns void language plpgsql security definer set search_path = public as $$
 declare u text; tok text;
 begin
@@ -25,13 +25,15 @@ begin
   perform net.http_post(
     url     := u,
     body    := jsonb_build_object('token', tok, 'name', p_name, 'phone', p_phone, 'age', p_age,
-                                  'meeting_date', p_mdate, 'meeting_time', to_char(p_mtime, 'HH24:MI'), 'created_at', now()),
+                                  'meeting_date', p_mdate, 'meeting_time', to_char(p_mtime, 'HH24:MI'), 'created_at', now(),
+                                  'participant_id', p_pid, 'meeting_id', p_mid),
     headers := jsonb_build_object('Content-Type', 'application/json')
   );
 exception when others then
   null;   -- התראה שנכשלה לא מפילה את ההרשמה
 end $$;
-revoke all on function public.harpatka_notify_signup(text, text, int, date, time) from public, anon, authenticated;
+drop function if exists public.harpatka_notify_signup(text, text, int, date, time);
+revoke all on function public.harpatka_notify_signup(text, text, int, date, time, uuid, uuid) from public, anon, authenticated;
 
 -- הרשמה מהאתר (כמו ב-setup.sql) + התראה על משתתף חדש בלבד
 drop function if exists public.harpatka_signup(text, text, int);
@@ -75,7 +77,7 @@ begin
   end if;
 
   if res = 'created' then
-    perform public.harpatka_notify_signup(nm, n, p_age, md, mt);
+    perform public.harpatka_notify_signup(nm, n, p_age, md, mt, pid, mid);
   end if;
   return res;
 end $$;

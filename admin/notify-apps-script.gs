@@ -28,6 +28,8 @@ function send_(d) {
   const digits = String(d.phone || '').replace(/\D/g, '');
   const meeting = d.meeting_date ? (d.meeting_date + (d.meeting_time ? ' בשעה ' + d.meeting_time : '')) : 'אין מפגש קרוב';
   const when = Utilities.formatDate(new Date(d.created_at || Date.now()), 'Asia/Jerusalem', 'dd.MM.yyyy HH:mm');
+  const link = ADMIN_URL + (d.meeting_id || d.participant_id
+    ? '?' + [d.meeting_id ? 'm=' + d.meeting_id : '', d.participant_id ? 'p=' + d.participant_id : ''].filter(Boolean).join('&') : '');
   const body = [
     'נרשם/ה משתתף/ת חדש/ה דרך האתר:',
     '',
@@ -38,7 +40,7 @@ function send_(d) {
     'זמן ההרשמה: ' + when,
     '',
     'וואטסאפ: https://wa.me/' + digits,
-    'דף הניהול: ' + ADMIN_URL
+    'הפרטים בדף הניהול (במפגש הזה): ' + link
   ].join('\n');
   MailApp.sendEmail({ to: TO, subject: 'הרשמה חדשה מהאתר: ' + d.name, body: body, name: 'יוצאים להרפתקה' });
 }
