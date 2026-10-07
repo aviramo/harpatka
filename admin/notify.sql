@@ -27,7 +27,8 @@ begin
     body    := jsonb_build_object('token', tok, 'name', p_name, 'phone', p_phone, 'age', p_age,
                                   'meeting_date', p_mdate, 'meeting_time', to_char(p_mtime, 'HH24:MI'), 'created_at', now(),
                                   'participant_id', p_pid, 'meeting_id', p_mid),
-    headers := jsonb_build_object('Content-Type', 'application/json')
+    headers := jsonb_build_object('Content-Type', 'application/json'),
+    timeout_milliseconds := 30000
   );
 exception when others then
   null;   -- התראה שנכשלה לא מפילה את ההרשמה
