@@ -1119,7 +1119,7 @@
           });
           const out = res.ok ? await res.json() : null;
           if (out === 'created' || out === 'exists') {   // כפילות: אותה הודעה, בלי לחשוף שהמספר כבר רשום
-            if (window.fbq) { try { fbq('track', 'Lead'); } catch(x){} }
+            if (out === 'created' && window.fbq) { try { fbq('track', 'Lead'); } catch(x){} }   // Lead רק על מספר חדש (חד ערכי), לא על כפילות
             finished = true; allDone();
           } else if (out === 'invalid_phone') setErr(phoneI, q('phoneErr'), 'מספר הטלפון לא תקין');
           else if (out === 'invalid_name') setErr(nameI, q('nameErr'), 'נא למלא שם');
