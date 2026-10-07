@@ -30,19 +30,18 @@ function send_(d) {
   const when = Utilities.formatDate(new Date(d.created_at || Date.now()), 'Asia/Jerusalem', 'dd.MM.yyyy HH:mm');
   const link = ADMIN_URL + (d.meeting_id || d.participant_id
     ? '?' + [d.meeting_id ? 'm=' + d.meeting_id : '', d.participant_id ? 'p=' + d.participant_id : ''].filter(Boolean).join('&') : '');
-  const body = [
-    'נרשם/ה משתתף/ת חדש/ה דרך האתר:',
-    '',
-    'שם: ' + d.name,
-    'טלפון: ' + d.phone,
-    'גיל: ' + d.age,
-    'מפגש: ' + meeting,
-    'זמן ההרשמה: ' + when,
-    '',
-    'וואטסאפ: https://wa.me/' + digits,
-    'הפרטים בדף הניהול (במפגש הזה): ' + link
-  ].join('\n');
-  MailApp.sendEmail({ to: TO, subject: 'הרשמה חדשה מהאתר: ' + d.name, body: body, name: 'יוצאים להרפתקה' });
+  const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const row = (k, v) => '<div><b>' + k + ':</b> ' + v + '</div>';
+  const html = '<div dir="rtl" style="direction:rtl;text-align:right;font-family:Arial,sans-serif;font-size:16px;line-height:1.7">' +
+    '<p>נרשם/ה משתתף/ת חדש/ה דרך האתר:</p>' +
+    row('שם', esc(d.name)) +
+    row('טלפון', '<bdi dir="ltr">' + esc(d.phone) + '</bdi>') +
+    row('גיל', esc(d.age)) +
+    row('מפגש', esc(meeting)) +
+    row('זמן ההרשמה', esc(when)) +
+    '<p><a href="https://wa.me/' + digits + '">וואטסאפ</a><br>' +
+    '<a href="' + link + '">הפרטים בדף הניהול (במפגש הזה)</a></p></div>';
+  MailApp.sendEmail({ to: TO, subject: 'הרשמה חדשה מהאתר: ' + d.name, body: 'נרשם/ה משתתף/ת חדש/ה: ' + d.name + ' ' + d.phone + ' ' + link, htmlBody: html, name: 'יוצאים להרפתקה' });
 }
 
 /** בדיקה ידנית מתוך העורך (גם נדרש להרצה ראשונה כדי לאשר הרשאות) */
