@@ -90,9 +90,9 @@
     .row .acts { display: flex; align-items: center; justify-content: flex-start; gap: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
     .row .name { font-weight: 700; font-size: 18px; }
     .row .age { display: inline-block; color: var(--muted); background: #EFE4D3; border-radius: 999px; padding: 1px 10px; font-weight: 600; margin-inline-start: 10px; font-size: 14px; vertical-align: middle; white-space: nowrap; }
-    .row .nm { min-width: 0; display: flex; align-items: center; gap: 6px; }
-    .row .gtag { flex: 0 0 auto; font-size: 12px; font-weight: 800; color: var(--muted); border: 1.5px solid var(--line); border-radius: 999px; min-width: 22px; height: 22px; display: inline-grid; place-items: center; padding: 0 5px; }
-    .row .meta { display: flex; align-items: center; flex-wrap: nowrap; gap: 6px; margin-top: 3px; }
+    .row .nm { min-width: 0; }
+    .row .meta { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 5px; margin-top: 3px; }
+    .row .meta .age, .row .meta .ptag { font-size: 13px; padding: 1px 8px; margin: 0; }
     .row .meta > * { flex: 0 0 auto; }
     .row .nm .name { min-width: 0; overflow-wrap: anywhere; line-height: 1.2; }
     .row .nm .age { margin-inline-start: 0; flex: 0 0 auto; }
@@ -594,8 +594,8 @@
     const othersHtml = others.length
       ? '<li class="group">לא רשומים למפגש הזה</li>' + others.map((p) => {
           const age = shownAge(p);
-          return '<li class="row other"><div class="main" role="button" tabindex="0" data-edit="' + p.id + '"><div class="nm"><bdi class="name">' + esc(p.name) + '</bdi>' + (p.gender ? '<span class="gtag" title="' + (p.gender === 'male' ? 'זכר' : 'נקבה') + '">' + (p.gender === 'male' ? 'ז' : 'נ') + '</span>' : '') + '</div>' +
-            (age != null ? '<div class="meta"><span class="age" title="גיל"><bdi>' + age + '</bdi></span></div>' : '') + '</div>' +
+          return '<li class="row other"><div class="main" role="button" tabindex="0" data-edit="' + p.id + '"><div class="nm"><bdi class="name">' + esc(p.name) + '</bdi></div>' +
+            ((age != null || p.gender) ? '<div class="meta">' + ((age != null || p.gender) ? '<span class="age" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? (p.gender === 'male' ? 'ז' : 'נ') + ' ' : '') + (age != null ? age : '') + '</bdi></span>' : '') + '</div>' : '') + '</div>' +
             '<div class="acts"><button type="button" class="addm" data-addm="' + p.id + '">+ הוספה למפגש</button></div></li>';
         }).join('')
       : '';
@@ -632,8 +632,8 @@
       }
       return '<li class="row">' +
         '<div class="main" role="button" tabindex="0" data-edit="' + p.id + '">' +
-          '<div class="nm"><bdi class="name">' + esc(p.name) + '</bdi>' + (p.gender ? '<span class="gtag" title="' + (p.gender === 'male' ? 'זכר' : 'נקבה') + '">' + (p.gender === 'male' ? 'ז' : 'נ') + '</span>' : '') + '</div>' +
-          ((age != null || side || tags) ? '<div class="meta">' + (age != null ? '<span class="age" title="גיל"><bdi>' + age + '</bdi></span>' : '') + side + tags + '</div>' : '') +
+          '<div class="nm"><bdi class="name">' + esc(p.name) + '</bdi></div>' +
+          ((age != null || side || tags) ? '<div class="meta">' + ((age != null || p.gender) ? '<span class="age" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? (p.gender === 'male' ? 'ז' : 'נ') + ' ' : '') + (age != null ? age : '') + '</bdi></span>' : '') + side + tags + '</div>' : '') +
           (p.note ? '<div class="note">' + esc(p.note) + '</div>' : '') +
         '</div>' +
       '</li>';
