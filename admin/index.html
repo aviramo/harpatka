@@ -43,7 +43,7 @@
       background: var(--paper); padding: 0 44px 0 14px; font-size: 17px;
     }
     .search input:focus { border-color: var(--terra); outline: none; }
-    .search svg { position: absolute; right: 14px; top: 14px; width: 20px; height: 20px; color: var(--muted); }
+    .search svg { position: absolute; right: 12px; top: 12px; width: 20px; height: 20px; color: var(--muted); }
 
     .chips {
       display: flex; gap: 8px; overflow-x: auto; padding: 12px 16px 4px; margin: 0 -16px;
@@ -109,6 +109,37 @@
     .tag.neutral { background: rgba(63,56,47,.10); color: var(--ink); }
     button.tag { cursor: pointer; border: 2px solid transparent; font-family: inherit; }
     button.tag[aria-pressed="true"] { border-color: currentColor; }
+    .tools { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+    .tools .search { margin-top: 0; flex: 1 1 auto; min-width: 0; }
+    .tools .search input { height: 44px; padding-right: 40px; }
+    .facets { display: flex; flex: 0 1 auto; gap: 8px; min-width: 0; }
+    .fx .li { display: none; }
+    /* במובייל החיפוש מכווץ לאייקון ומתרחב בלחיצה (ואז הסינונים מוסתרים זמנית) */
+    @media (max-width: 759px) {
+      .tools .search { flex: 0 0 44px; transition: flex-basis .15s; }
+      .tools .search input { padding: 0; cursor: pointer; }
+      .tools .search:not(:focus-within) input:placeholder-shown::placeholder { color: transparent; }
+      .tools .search:focus-within, .tools:has(.search input:not(:placeholder-shown)) .search { flex: 1 1 auto; }
+      .tools .search:focus-within input, .tools .search input:not(:placeholder-shown) { padding-right: 40px; cursor: text; }
+      .tools:has(.search:focus-within) .facets, .tools:has(.search input:not(:placeholder-shown)) .facets { display: none; }
+      .fx { padding: 0 7px; gap: 4px; font-size: 13px; }
+      .fx b { font-size: 14px; }
+      .fx .lw.pay-lw { display: none; }
+      .fx .li { display: inline; font-size: 15px; }
+      .facets { gap: 6px; }
+      .fgroup { padding: 3px; }
+    }
+    .facets:empty { display: none; }
+    .fgroup { display: inline-flex; align-items: center; height: 44px; box-sizing: border-box; background: rgba(63,56,47,.07); border-radius: 999px; padding: 4px; gap: 2px; }
+    .fx { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border-radius: 999px; font-size: 14px; font-weight: 700; color: var(--ink); white-space: nowrap; transition: background .15s, color .15s, opacity .15s; }
+    .fx b { font-family: "Rubik", sans-serif; font-size: 15px; font-weight: 700; }
+    .fx.zero { opacity: .45; }
+    .fx[aria-pressed="true"] { background: var(--ink); color: var(--paper); opacity: 1; }
+    .fx.ok b { color: var(--green); }
+    .fx.no b { color: var(--red); }
+    .fx[aria-pressed="true"] b { color: inherit; }
+    .fx.ok[aria-pressed="true"] { background: var(--green); color: #fff; }
+    .fx.no[aria-pressed="true"] { background: var(--red); color: #fff; }
     .bar-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 
     .pay {
@@ -229,10 +260,13 @@
       </div>
       <nav class="chips" id="chips" aria-label="סינון לפי מפגש"></nav>
       <div class="meeting-bar" id="meetingBar"></div>
-      <label class="search">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-        <input id="q" type="search" placeholder="חיפוש לפי שם או טלפון" autocomplete="off" aria-label="חיפוש" />
-      </label>
+      <div class="tools">
+        <label class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input id="q" type="search" placeholder="חיפוש לפי שם או טלפון" autocomplete="off" aria-label="חיפוש" />
+        </label>
+        <div class="facets" id="facets" role="group" aria-label="סינון לפי מגדר ותשלום"></div>
+      </div>
     </header>
 
     <div id="status"></div>
@@ -306,12 +340,12 @@
   };
   const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance' };
 
-  const state = { participants: [], meetings: [], att: [], filter: null, q: '', pay: null };
+  const state = { participants: [], meetings: [], att: [], filter: null, q: '', pay: null, gender: null };
   /* קישור עמוק מהמייל: ?m=<מפגש>&p=<משתתף>; נשמר בזמן הכניסה עם גוגל (שמחזירה בלי הפרמטרים) */
   let deep = null;
   try {
     const sp = new URLSearchParams(location.search);
-    if (['m', 'p', 'pay', 'q', 'em'].some((k) => sp.get(k))) { deep = { m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), q: sp.get('q'), em: sp.get('em') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
+    if (['m', 'p', 'pay', 'q', 'em', 'g'].some((k) => sp.get(k))) { deep = { m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
     else { deep = JSON.parse(sessionStorage.getItem('harpatka_deep') || 'null'); }
   } catch (e) {}
   const $ = (s) => document.querySelector(s);
@@ -322,7 +356,8 @@
     if (!urlReady) return;
     const sp = new URLSearchParams();
     if (state.filter) sp.set('m', state.filter);
-    if (state.filter && state.pay) sp.set('pay', state.pay);
+    if (state.pay) sp.set('pay', state.pay);
+    if (state.gender) sp.set('g', state.gender);
     if (state.q.trim()) sp.set('q', state.q.trim());
     if (openPid) sp.set('p', openPid);
     if (editingMeeting && mDlg.open) sp.set('em', editingMeeting.id);
@@ -470,6 +505,42 @@
     return 'https://wa.me/' + n;
   }
 
+  /* מספר ישראלי בפורמט בינלאומי (+972...) מוצג כמספר מקומי שמתחיל באפס */
+  function localPhone(phone) {
+    const s = String(phone || '').trim(), d = digits(s);
+    return /^\+?972\d{8,9}$/.test(s.replace(/[\s-]/g, '')) ? '0' + d.slice(3) : s;
+  }
+
+  const phoneHay = (p) => digits(p.phone) + ' ' + digits(localPhone(p.phone));   // חיפוש גם לפי 05... וגם לפי 972...
+
+  /* ולידציה ונרמול טלפון (זהה ללוגיקה באתר ול-harpatka_normalize_phone): ריק, או מספר ישראלי / בינלאומי תקין */
+  function normPhone(raw) {
+    const s = String(raw || '').trim();
+    if (!s) return '';
+    let plus = s[0] === '+', d = s.replace(/\D/g, '');
+    if (!d) return '';
+    if (d.startsWith('00')) { plus = true; d = d.slice(2); }
+    const IL = /^(5\d{8}|7\d{8}|[23489]\d{7})$/;
+    if (plus) {
+      if (d.startsWith('9720')) d = '972' + d.slice(4);
+      if (d.length < 8 || d.length > 15 || d[0] === '0') return '';
+      if (d.startsWith('972') && !IL.test(d.slice(3))) return '';
+      return '+' + d;
+    }
+    if (d[0] === '0') return IL.test(d.slice(1)) ? '+972' + d.slice(1) : '';
+    return '';
+  }
+  /* מחזיר את הערך לשמירה (ישראלי: 05XXXXXXXX), '' לריק, או null אם לא תקין */
+  function phoneToSave(raw) {
+    if (!String(raw || '').trim()) return '';
+    const n = normPhone(raw);
+    return n ? localPhone(n) : null;
+  }
+  function badPhone(on) {
+    pForm.phone.style.borderColor = on ? 'var(--red)' : '';
+    if (on) { toast('מספר הטלפון לא תקין'); pForm.phone.focus(); }
+  }
+
   function fmtPhone(phone) {
     const n = digits(phone);
     if (n.length === 10 && n.startsWith('0')) return n.slice(0, 3) + ' ' + n.slice(3, 6) + ' ' + n.slice(6);
@@ -517,7 +588,8 @@
         const d = deep; deep = null;
         try { sessionStorage.removeItem('harpatka_deep'); } catch (e) {}
         if (d.m && state.meetings.some((x) => x.id === d.m)) state.filter = d.m;
-        if (state.filter && (d.pay === 'paid' || d.pay === 'unpaid')) state.pay = d.pay;
+        if (d.pay === 'paid' || d.pay === 'unpaid') state.pay = d.pay;
+        if (d.g === 'male' || d.g === 'female' || d.g === 'none') state.gender = d.g;
         if (d.q) { state.q = d.q; $('#q').value = d.q; }
         urlReady = true;
         render();
@@ -557,30 +629,54 @@
     const m = state.meetings.find((x) => x.id === state.filter);
     if (!m) { bar.classList.remove('show'); bar.innerHTML = ''; return; }
     const links = state.att.filter((a) => a.meeting_id === m.id);
-    const paid = links.filter((a) => a.paid).length;
-    bar.innerHTML = '<div><b>' + esc(meetingLabel(m, true)) + '</b>' + '<div class="bar-tags">' +
-      '<button type="button" class="tag neutral" data-pay-filter="" aria-pressed="' + (state.pay === null) + '">' + links.length + ' משתתפים</button>' +
-      '<button type="button" class="tag" data-pay-filter="unpaid" aria-pressed="' + (state.pay === 'unpaid') + '">' + (links.length - paid) + ' טרם שילמו</button>' +
-      '<button type="button" class="tag paid" data-pay-filter="paid" aria-pressed="' + (state.pay === 'paid') + '">' + paid + ' שילמו</button>' +
-      '</div></div>' +
+    bar.innerHTML = '<div><b>' + esc(meetingLabel(m, true)) + '</b> <span style="color:var(--muted)">· ' + links.length + ' משתתפים</span></div>' +
       '<button type="button" class="link-btn" id="editMeeting">עריכה</button>';
     bar.classList.add('show');
   }
 
   const WA_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.5c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.6.9 1-3.5-.2-.4C3.2 15.6 2.7 13.8 2.7 12c0-5.1 4.2-9.3 9.3-9.3 2.5 0 4.8 1 6.6 2.7 1.8 1.8 2.7 4.1 2.7 6.6 0 5.2-4.2 9.5-9.3 9.5zM20 4C17.9 1.8 15 .7 12 .7 5.8.7.7 5.8.7 12c0 2 .5 3.9 1.5 5.6L.6 23.4l6-1.6c1.6.9 3.5 1.4 5.4 1.4 6.2 0 11.3-5.1 11.3-11.3 0-3-1.2-5.8-3.3-7.9z"/></svg>';
 
+  /* סטטוס תשלום של משתתף: במפגש מסוים לפי המפגש; בתצוגת הכל: שילם = כל המפגשים שלו שולמו, טרם שילם = יש לפחות מפגש אחד שלא שולם, null = בלי מפגשים */
+  function paidState(p) {
+    if (state.filter) { const l = linkOf(p.id, state.filter); return l ? !!l.paid : null; }
+    const ls = linksOf(p.id);
+    return ls.length ? ls.every((l) => l.paid) : null;
+  }
+
+  /* מונים וסינון: גברים/נשים ושילמו/טרם שילמו. כל מונה סופר לפי הסינון האחר והחיפוש, כך שהמספר הוא בדיוק מה שיוצג בלחיצה */
+  function renderFacets() {
+    const q = state.q.trim().toLowerCase(), qd = digits(q);
+    const base = state.participants.filter((p) => {
+      if (state.filter && !linkOf(p.id, state.filter)) return false;
+      if (!q) return true;
+      return p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd));
+    });
+    const payOk = (p) => { if (!state.pay) return true; const s = paidState(p); return state.pay === 'paid' ? s === true : s === false; };
+    const genOk = (p) => state.gender === 'none' ? !p.gender : (!state.gender || p.gender === state.gender);
+    const nG = (g) => base.filter((p) => payOk(p) && (g === 'none' ? !p.gender : p.gender === g)).length;
+    const nP = (paid) => base.filter((p) => genOk(p) && paidState(p) === paid).length;
+    const btn = (kind, val, label, n, cls, on, aria) => '<button type="button"' + (aria ? ' aria-label="' + aria + ' ' + n + '" title="' + aria + '"' : '') + ' class="fx' + (cls ? ' ' + cls : '') + (n ? '' : ' zero') + '" data-fx="' + kind + ':' + val + '" aria-pressed="' + on + '">' + label + ' <b>' + n + '</b></button>';
+    const none = nG('none');
+    let h = '<div class="fgroup">' +
+      btn('g', 'male', 'גברים', nG('male'), '', state.gender === 'male') +
+      btn('g', 'female', 'נשים', nG('female'), '', state.gender === 'female') +
+      (none || state.gender === 'none' ? btn('g', 'none', 'ללא', none, '', state.gender === 'none') : '') + '</div>';
+    h += '<div class="fgroup">' +
+      btn('p', 'paid', '<span class="lw pay-lw">שילמו</span><span class="li">✓</span>', nP(true), 'ok', state.pay === 'paid', 'שילמו') +
+      btn('p', 'unpaid', '<span class="lw pay-lw">טרם שילמו</span><span class="li">₪</span>', nP(false), 'no', state.pay === 'unpaid', 'טרם שילמו') + '</div>';
+    $('#facets').innerHTML = base.length || state.gender || state.pay ? h : '';
+  }
+
   function renderList() {
+    renderFacets();
     const q = state.q.trim().toLowerCase();
     const qd = digits(q);
     let rows = state.participants.filter((p) => {
-      if (state.filter) {
-        const l = linkOf(p.id, state.filter);
-        if (!l) return false;
-        if (state.pay === 'paid' && !l.paid) return false;
-        if (state.pay === 'unpaid' && l.paid) return false;
-      }
+      if (state.filter && !linkOf(p.id, state.filter)) return false;
+      if (state.pay) { const s = paidState(p); if (state.pay === 'paid' ? s !== true : s !== false) return false; }
+      if (state.gender === 'none' ? p.gender : (state.gender && p.gender !== state.gender)) return false;
       if (!q) return true;
-      return p.name.toLowerCase().includes(q) || (qd.length >= 2 && digits(p.phone).includes(qd));
+      return p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd));
     });
     rows.sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')) || a.name.localeCompare(b.name, 'he'));   // לפי תאריך יצירה, החדשים למעלה
 
@@ -588,7 +684,7 @@
     let others = [];
     if (state.filter && q) {
       others = state.participants.filter((p) => !linkOf(p.id, state.filter) &&
-        (p.name.toLowerCase().includes(q) || (qd.length >= 2 && digits(p.phone).includes(qd))));
+        (p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd))));
       others.sort((a, b) => a.name.localeCompare(b.name, 'he'));
     }
     const othersHtml = others.length
@@ -686,7 +782,7 @@
     sheet = p ? { id: p.id } : { id: null, links: new Map(state.filter ? [[state.filter, false]] : []) };
     pForm.reset();
     pForm.name.value = p ? p.name : '';
-    pForm.phone.value = p ? p.phone : '';
+    pForm.phone.value = p ? localPhone(p.phone) : '';
     pForm.age.value = p ? (shownAge(p) ?? '') : '';
     if (p && p.gender) pForm.gender.value = p.gender;
     pForm.note.value = p ? p.note : '';
@@ -754,6 +850,11 @@
     const v = readForm();
     const field = e.target.name;
     if (field === 'name' && !v.name) { pForm.name.value = p.name; return; }
+    if (field === 'phone') {
+      const ph = phoneToSave(pForm.phone.value);
+      if (ph === null) { badPhone(true); return; }
+      v.phone = ph; pForm.phone.value = ph;
+    }
     const patch = { [field]: v[field] };
     if (field === 'age') patch.age_set_at = todayISO();
     const prev = { ...p };
@@ -772,6 +873,9 @@
     if (!sheet || sheet.id) { pDlg.close(); return; }
     const v = readForm();
     if (!v.name) { pForm.name.focus(); toast('חסר שם'); return; }
+    const ph = phoneToSave(pForm.phone.value);
+    if (ph === null) { badPhone(true); return; }
+    v.phone = ph;
     const btn = $('#pSubmit'); btn.disabled = true;
     try {
       const [p] = await api(T.p, { method: 'POST', body: { ...v, age_set_at: todayISO() }, prefer: 'return=representation' });
@@ -846,6 +950,7 @@
   document.querySelectorAll('dialog').forEach((d) => d.addEventListener('click', (e) => { if (e.target === d) d.close(); }));
   pDlg.addEventListener('close', () => { sheet = null; openPid = null; syncUrl(); });
   mDlg.addEventListener('close', syncUrl);
+  pForm.phone.addEventListener('input', () => badPhone(false));
 
   $('#q').addEventListener('input', (e) => { state.q = e.target.value; renderList(); syncUrl(); });
   $('#addBtn').addEventListener('click', () => openParticipant(null));
@@ -854,13 +959,18 @@
     if (e.target.closest('#addMeeting')) return openMeeting(null);
     const c = e.target.closest('[data-filter]');
     if (!c) return;
-    state.filter = c.dataset.filter || null; state.pay = null;
+    state.filter = c.dataset.filter || null;
     render();
   });
   $('#meetingBar').addEventListener('click', (e) => {
     if (e.target.closest('#editMeeting')) return openMeeting(state.filter);
-    const f = e.target.closest('[data-pay-filter]');
-    if (f) { const v = f.dataset.payFilter || null; state.pay = (state.pay === v ? null : v); render(); }
+  });
+  $('#facets').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-fx]'); if (!b) return;
+    const [k, v] = b.dataset.fx.split(':');
+    if (k === 'g') state.gender = state.gender === v ? null : v;
+    else state.pay = state.pay === v ? null : v;
+    render();
   });
 
   $('#list').addEventListener('keydown', (e) => {
