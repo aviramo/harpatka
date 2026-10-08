@@ -46,7 +46,6 @@ function send_(d) {
         '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse">' +
           row('טלפון', '<span dir="ltr" style="unicode-bidi:embed">' + esc(d.phone) + '</span>') +
           row('גיל', esc(d.age)) +
-          (d.gender ? row('מגדר', d.gender === 'male' ? 'זכר' : 'נקבה') : '') +
           row('מפגש', esc(meeting)) +
           row('נרשם/ה ב', esc(when)) +
         '</table>' +
