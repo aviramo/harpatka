@@ -295,10 +295,24 @@
   let deep = null;
   try {
     const sp = new URLSearchParams(location.search);
-    if (sp.get('m') || sp.get('p')) { deep = { m: sp.get('m'), p: sp.get('p') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
+    if (['m', 'p', 'pay', 'q', 'em'].some((k) => sp.get(k))) { deep = { m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), q: sp.get('q'), em: sp.get('em') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
     else { deep = JSON.parse(sessionStorage.getItem('harpatka_deep') || 'null'); }
   } catch (e) {}
   const $ = (s) => document.querySelector(s);
+
+  /* מצב המסך נשמר ב-URL (מפגש, סינון תשלום, חיפוש, חלון פתוח) כדי שאפשר יהיה לשתף */
+  let urlReady = false, openPid = null;
+  function syncUrl() {
+    if (!urlReady) return;
+    const sp = new URLSearchParams();
+    if (state.filter) sp.set('m', state.filter);
+    if (state.filter && state.pay) sp.set('pay', state.pay);
+    if (state.q.trim()) sp.set('q', state.q.trim());
+    if (openPid) sp.set('p', openPid);
+    if (editingMeeting && mDlg.open) sp.set('em', editingMeeting.id);
+    const s = sp.toString();
+    try { history.replaceState(null, '', location.pathname + (s ? '?' + s : '')); } catch (e) {}
+  }
 
   /* ---------- כניסה עם גוגל (הזדהות של floa ב-Supabase, בלי SDK) ---------- */
   const ADMINS = ['ofir.aviram@gmail.com', 'luriahadar@gmail.com'];            // תצוגה בלבד; האכיפה האמיתית ב-RLS (admin/auth.sql, טבלת harpatka_admins)
@@ -487,10 +501,15 @@
         const d = deep; deep = null;
         try { sessionStorage.removeItem('harpatka_deep'); } catch (e) {}
         if (d.m && state.meetings.some((x) => x.id === d.m)) state.filter = d.m;
+        if (state.filter && (d.pay === 'paid' || d.pay === 'unpaid')) state.pay = d.pay;
+        if (d.q) { state.q = d.q; $('#q').value = d.q; }
+        urlReady = true;
         render();
         if (d.p && state.participants.some((x) => x.id === d.p)) openParticipant(d.p);
+        else if (d.em && state.meetings.some((x) => x.id === d.em)) openMeeting(d.em);
         return;
       }
+      urlReady = true;
       render();
     } catch (err) {
       console.error(err);
@@ -503,7 +522,7 @@
   }
 
   /* ---------- רינדור ---------- */
-  function render() { renderChips(); renderBar(); renderList(); }
+  function render() { renderChips(); renderBar(); renderList(); syncUrl(); }
 
   function renderChips() {
     const all = '<button type="button" class="chip" data-filter="" aria-pressed="' + (state.filter === null) + '">הכל <span class="count">' + state.participants.length + '</span></button>';
@@ -665,7 +684,9 @@
     $('#pDelete').hidden = !p;
     $('#savedMark').classList.remove('on');
     refreshSheetMeetings();
+    openPid = p ? p.id : null;
     pDlg.showModal();
+    syncUrl();
     if (!p) setTimeout(() => pForm.name.focus(), 50);
   }
 
@@ -768,6 +789,7 @@
     $('#mSubmit').textContent = m ? 'שמירה' : 'יצירת מפגש';
     $('#mDelete').hidden = !m;
     mDlg.showModal();
+    syncUrl();
   }
 
   mForm.addEventListener('submit', async (e) => {
@@ -804,9 +826,10 @@
   /* ---------- אירועים כלליים ---------- */
   document.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => b.closest('dialog').close()));
   document.querySelectorAll('dialog').forEach((d) => d.addEventListener('click', (e) => { if (e.target === d) d.close(); }));
-  pDlg.addEventListener('close', () => { sheet = null; });
+  pDlg.addEventListener('close', () => { sheet = null; openPid = null; syncUrl(); });
+  mDlg.addEventListener('close', syncUrl);
 
-  $('#q').addEventListener('input', (e) => { state.q = e.target.value; renderList(); });
+  $('#q').addEventListener('input', (e) => { state.q = e.target.value; renderList(); syncUrl(); });
   $('#addBtn').addEventListener('click', () => openParticipant(null));
 
   $('#chips').addEventListener('click', (e) => {
