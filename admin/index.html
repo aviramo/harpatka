@@ -113,7 +113,10 @@
     .tools .search { margin-top: 0; flex: 1 1 auto; min-width: 0; }
     .tools .search input { height: 44px; padding-right: 40px; }
     .facets { display: flex; flex: 0 1 auto; gap: 8px; min-width: 0; }
-    .fx .li { display: none; }
+    .editm { display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 14px; border-radius: 16px; border: 1.5px solid var(--line); background: var(--paper); color: var(--plum); font-weight: 700; font-size: 15px; flex: 0 0 auto; }
+    .editm[hidden] { display: none; }
+    .editm svg { width: 20px; height: 20px; }
+    .fx .li, .fx .gi { display: none; }
     /* במובייל החיפוש מכווץ לאייקון ומתרחב בלחיצה (ואז הסינונים מוסתרים זמנית) */
     @media (max-width: 759px) {
       .tools .search { flex: 0 0 44px; transition: flex-basis .15s; }
@@ -126,6 +129,11 @@
       .fx b { font-size: 14px; }
       .fx .lw.pay-lw { display: none; }
       .fx .li { display: inline; font-size: 15px; }
+      .fx .lw.gen-lw { display: none; }
+      .fx .gi { display: inline; font-size: 16px; }
+      .editm { width: 44px; padding: 0; justify-content: center; }
+      .editm .et { display: none; }
+      .tools { gap: 6px; }
       .facets { gap: 6px; }
       .fgroup { padding: 3px; }
     }
@@ -172,6 +180,7 @@
     .empty b { display: block; color: var(--ink); font-family: "Rubik", sans-serif; font-size: 19px; margin-bottom: 6px; }
     .error-box { background: var(--red-bg); color: var(--ink); border-radius: 16px; padding: 14px; margin-top: 12px; }
 
+    .fab[hidden] { display: none; }
     .fab {
       position: fixed; left: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 6;
       height: 56px; padding: 0 22px; border-radius: 999px; background: var(--terra); color: #fff;
@@ -259,13 +268,13 @@
         <button type="button" class="signout" id="signOut">יציאה</button>
       </div>
       <nav class="chips" id="chips" aria-label="סינון לפי מפגש"></nav>
-      <div class="meeting-bar" id="meetingBar"></div>
       <div class="tools">
         <label class="search">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
           <input id="q" type="search" placeholder="חיפוש לפי שם או טלפון" autocomplete="off" aria-label="חיפוש" />
         </label>
         <div class="facets" id="facets" role="group" aria-label="סינון לפי מגדר ותשלום"></div>
+        <button type="button" class="editm" id="editMeeting" hidden aria-label="עריכת המפגש" title="עריכת המפגש"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 6.5l3 3"/></svg><span class="et">עריכת מפגש</span></button>
       </div>
     </header>
 
@@ -610,7 +619,7 @@
   }
 
   /* ---------- רינדור ---------- */
-  function render() { renderChips(); renderBar(); renderList(); syncUrl(); }
+  function render() { renderChips(); renderList(); $('#addBtn').hidden = !!state.filter; $('#editMeeting').hidden = !state.filter; syncUrl(); }   // בתוך מפגש מוסיפים דרך החיפוש
 
   function renderChips() {
     const all = '<button type="button" class="chip" data-filter="" aria-pressed="' + (state.filter === null) + '">הכל <span class="count">' + state.participants.length + '</span></button>';
@@ -622,16 +631,6 @@
     $('#chips').innerHTML = all + '<button type="button" class="chip add" id="addMeeting">+ מפגש</button>' + ms;
     const sel = $('#chips [aria-pressed="true"]');
     if (sel) sel.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-  }
-
-  function renderBar() {
-    const bar = $('#meetingBar');
-    const m = state.meetings.find((x) => x.id === state.filter);
-    if (!m) { bar.classList.remove('show'); bar.innerHTML = ''; return; }
-    const links = state.att.filter((a) => a.meeting_id === m.id);
-    bar.innerHTML = '<div><b>' + esc(meetingLabel(m, true)) + '</b> <span style="color:var(--muted)">· ' + links.length + ' משתתפים</span></div>' +
-      '<button type="button" class="link-btn" id="editMeeting">עריכה</button>';
-    bar.classList.add('show');
   }
 
   const WA_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.5c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.6.9 1-3.5-.2-.4C3.2 15.6 2.7 13.8 2.7 12c0-5.1 4.2-9.3 9.3-9.3 2.5 0 4.8 1 6.6 2.7 1.8 1.8 2.7 4.1 2.7 6.6 0 5.2-4.2 9.5-9.3 9.5zM20 4C17.9 1.8 15 .7 12 .7 5.8.7.7 5.8.7 12c0 2 .5 3.9 1.5 5.6L.6 23.4l6-1.6c1.6.9 3.5 1.4 5.4 1.4 6.2 0 11.3-5.1 11.3-11.3 0-3-1.2-5.8-3.3-7.9z"/></svg>';
@@ -658,13 +657,29 @@
     const btn = (kind, val, label, n, cls, on, aria) => '<button type="button"' + (aria ? ' aria-label="' + aria + ' ' + n + '" title="' + aria + '"' : '') + ' class="fx' + (cls ? ' ' + cls : '') + (n ? '' : ' zero') + '" data-fx="' + kind + ':' + val + '" aria-pressed="' + on + '">' + label + ' <b>' + n + '</b></button>';
     const none = nG('none');
     let h = '<div class="fgroup">' +
-      btn('g', 'male', 'גברים', nG('male'), '', state.gender === 'male') +
-      btn('g', 'female', 'נשים', nG('female'), '', state.gender === 'female') +
-      (none || state.gender === 'none' ? btn('g', 'none', 'ללא', none, '', state.gender === 'none') : '') + '</div>';
+      btn('g', 'male', '<span class="lw gen-lw">גברים</span><span class="gi">♂</span>', nG('male'), '', state.gender === 'male', 'גברים') +
+      btn('g', 'female', '<span class="lw gen-lw">נשים</span><span class="gi">♀</span>', nG('female'), '', state.gender === 'female', 'נשים') +
+      (none || state.gender === 'none' ? btn('g', 'none', 'ללא', none, '', state.gender === 'none', 'ללא מגדר') : '') + '</div>';
     h += '<div class="fgroup">' +
       btn('p', 'paid', '<span class="lw pay-lw">שילמו</span><span class="li">✓</span>', nP(true), 'ok', state.pay === 'paid', 'שילמו') +
       btn('p', 'unpaid', '<span class="lw pay-lw">טרם שילמו</span><span class="li">₪</span>', nP(false), 'no', state.pay === 'unpaid', 'טרם שילמו') + '</div>';
     $('#facets').innerHTML = base.length || state.gender || state.pay ? h : '';
+  }
+
+  /* הודעה כשאין תוצאות, לפי הסינון הפעיל */
+  function emptyMsg() {
+    const g = state.gender, pay = state.pay, scope = state.filter ? ' במפגש הזה' : '';
+    const clear = '<button type="button" class="link-btn" id="clearFx" style="margin-top:14px">ניקוי סינונים</button>';
+    if (g || pay) {
+      if (!g && pay === 'unpaid' && !state.q) return '<b>כולם שילמו</b>אין משתתפים שטרם שילמו' + scope + '<br>' + clear;
+      if (!g && pay === 'paid' && !state.q) return '<b>עוד אף אחד לא שילם</b>' + (state.filter ? 'אפשר לסמן תשלום בלחיצה על התגית "טרם שילם" בכרטיס' : 'תשלום מסמנים בפרטי המשתתף, בתוך המפגש') + '<br>' + clear;
+      const who = g === 'male' ? 'גברים' : g === 'female' ? 'נשים' : g === 'none' ? 'משתתפים ללא מגדר' : 'משתתפים';
+      const what = pay === 'paid' ? ' ששילמו' : pay === 'unpaid' ? ' שטרם שילמו' : '';
+      return '<b>אין ' + who + what + scope + (state.q ? ' שמתאימים לחיפוש' : '') + '</b>אפשר לנקות את הסינון ולנסות שוב<br>' + clear;
+    }
+    if (state.q) return '<b>לא נמצא אף אחד</b>אפשר לנסות שם או מספר אחר';
+    return state.filter ? '<b>עוד אין משתתפים במפגש הזה</b>אפשר להוסיף דרך החיפוש: מחפשים שם או טלפון ולוחצים "הוספה למפגש"'
+                        : '<b>עוד אין משתתפים</b>לחיצה על "+ משתתף" למטה מוסיפה את הראשון';
   }
 
   function renderList() {
@@ -699,12 +714,7 @@
       ? '<li class="group newp"><button type="button" class="addm wide" id="addNew">+ משתתף חדש: ' + esc(state.q.trim()) + '</button></li>' : '';
 
     if (!rows.length && !others.length) {
-      $('#list').innerHTML = newBtn || '<li class="empty">' + (
-        state.q ? '<b>לא נמצא אף אחד</b>אפשר לנסות שם אחר' :
-        (state.filter && state.pay === 'paid') ? '<b>עוד אף אחד לא שילם</b>אפשר לסמן תשלום בלחיצה על "טרם שילם" בכרטיס' :
-        (state.filter && state.pay === 'unpaid') ? '<b>כולם שילמו</b>אין משתתפים שטרם שילמו במפגש הזה' :
-        state.filter ? '<b>עוד אין משתתפים במפגש הזה</b>לחיצה על "+ משתתף" מוסיפה ישר למפגש' :
-        '<b>עוד אין משתתפים</b>לחיצה על "+ משתתף" למטה מוסיפה את הראשון') + '</li>';
+      $('#list').innerHTML = newBtn || '<li class="empty">' + emptyMsg() + '</li>';
       return;
     }
 
@@ -962,9 +972,8 @@
     state.filter = c.dataset.filter || null;
     render();
   });
-  $('#meetingBar').addEventListener('click', (e) => {
-    if (e.target.closest('#editMeeting')) return openMeeting(state.filter);
-  });
+  $('#editMeeting').addEventListener('click', () => openMeeting(state.filter));
+  $('#list').addEventListener('click', (e) => { if (e.target.closest('#clearFx')) { state.gender = null; state.pay = null; render(); } });
   $('#facets').addEventListener('click', (e) => {
     const b = e.target.closest('[data-fx]'); if (!b) return;
     const [k, v] = b.dataset.fx.split(':');
