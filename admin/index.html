@@ -52,9 +52,13 @@
     .chips::-webkit-scrollbar { display: none; }
     .chip {
       flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px;
-      height: 40px; padding: 0 14px; border-radius: 999px;
+      height: 54px; padding: 0 16px; border-radius: 20px;
       background: var(--paper); border: 1.5px solid var(--line); font-weight: 600; white-space: nowrap;
     }
+    .chip .cd { display: flex; flex-direction: column; align-items: center; line-height: 1.15; }
+    .chip .cd b { font-family: "Rubik", sans-serif; font-weight: 600; font-size: 16px; }
+    .chip .cd small { font-size: 12.5px; font-weight: 600; color: var(--muted); margin-top: 2px; }
+    .chip[aria-pressed="true"] .cd small { color: var(--sand); }
     .chip .count { font-weight: 600; color: var(--muted); font-size: 14px; }
     .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
     .chip[aria-pressed="true"] .count { color: var(--sand); }
@@ -626,7 +630,7 @@
     const ms = state.meetings.map((m) => {
       const n = state.att.filter((a) => a.meeting_id === m.id).length;
       return '<button type="button" class="chip' + (isPast(m) ? ' past' : '') + '" data-filter="' + m.id + '" aria-pressed="' + (state.filter === m.id) + '">' +
-        esc(meetingLabel(m)) + ' <span class="count">' + n + '</span></button>';
+        '<span class="cd"><b>' + esc(meetingLabel(m, true).split(' · ')[0]) + '</b><small>' + esc(String(m.meeting_time).slice(0, 5)) + '</small></span> <span class="count">' + n + '</span></button>';
     }).join('');
     $('#chips').innerHTML = all + '<button type="button" class="chip add" id="addMeeting">+ מפגש</button>' + ms;
     const sel = $('#chips [aria-pressed="true"]');
