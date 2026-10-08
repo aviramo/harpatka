@@ -91,7 +91,7 @@
     .row .name { font-weight: 700; font-size: 18px; }
     .row .age { display: inline-block; color: var(--muted); background: #EFE4D3; border-radius: 999px; padding: 1px 10px; font-weight: 600; margin-inline-start: 10px; font-size: 14px; vertical-align: middle; white-space: nowrap; }
     .row .nm { min-width: 0; }
-    .row .meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .row .meta { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; margin-top: 3px; }
     .row .nm .name { min-width: 0; overflow-wrap: anywhere; line-height: 1.2; }
     .row .nm .age { margin-inline-start: 0; flex: 0 0 auto; }
     .row .ptag { display: inline-block; border-radius: 999px; padding: 1px 10px; font-weight: 700; font-size: 14px; white-space: nowrap; background: var(--red-bg); color: var(--red); }
@@ -590,7 +590,9 @@
       if (!state.filter) {
         const ls = linksOf(p.id);
         if (ls.length) {
-          tags = '<span class="age" title="מפגשים">' + (ls.length === 1 ? 'מפגש אחד' : ls.length + ' מפגשים') + '</span>';
+          const np = ls.filter((l) => l.paid).length;
+          tags = '<span class="ptag' + (np === ls.length ? ' paid' : '') + '" title="תשלום לפי מפגשים">' +
+            (ls.length === 1 ? (np ? 'שילם' : 'טרם שילם') : np + ' מתוך ' + ls.length + ' שילמו') + '</span>';
         }
       }
       return '<li class="row">' +
