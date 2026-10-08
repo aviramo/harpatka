@@ -85,6 +85,9 @@
     .row .nm { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; min-width: 0; }
     .row .nm .name { min-width: 0; overflow-wrap: anywhere; line-height: 1.2; }
     .row .nm .age { margin-inline-start: 0; flex: 0 0 auto; }
+    .row .ptag { display: inline-block; border-radius: 999px; padding: 1px 10px; font-weight: 700; font-size: 14px; white-space: nowrap; background: var(--red-bg); color: var(--red); }
+    .row .ptag.paid { background: var(--green-bg); color: var(--green); }
+    .row .main { cursor: pointer; }
     .pay.pi { width: 36px; height: 36px; padding: 0; display: grid; place-items: center; font-size: 18px; font-weight: 800; line-height: 1; }
     .pay.pi svg { width: 20px; height: 20px; }
     .row .phone { color: var(--ink); font-size: 15px; direction: ltr; unicode-bidi: isolate; }
@@ -551,7 +554,7 @@
       let side = '';
       if (state.filter) {
         const l = linkOf(p.id, state.filter);
-        side = '<button type="button" class="pay pi' + (l.paid ? ' paid' : '') + '" data-pay="' + p.id + '" title="' + (l.paid ? 'שילם' : 'טרם שילם') + '" aria-label="' + (l.paid ? 'שילם' : 'טרם שילם') + '">' + (l.paid ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : '₪') + '</button>';
+        side = '<button type="button" class="ptag' + (l.paid ? ' paid' : '') + '" data-pay="' + p.id + '" title="לחיצה לשינוי סטטוס תשלום">' + (l.paid ? 'שילם' : 'טרם שילם') + '</button>';
       }
       let tags = '';
       if (!state.filter) {
@@ -564,12 +567,12 @@
         }
       }
       return '<li class="row">' +
-        '<button type="button" class="main" data-edit="' + p.id + '">' +
-          '<div class="nm"><bdi class="name">' + esc(p.name) + '</bdi>' + (age != null ? '<span class="age" title="גיל"><bdi>' + age + '</bdi></span>' : '') + '</div>' +
+        '<div class="main" role="button" tabindex="0" data-edit="' + p.id + '">' +
+          '<div class="nm"><bdi class="name">' + esc(p.name) + '</bdi>' + (age != null ? '<span class="age" title="גיל"><bdi>' + age + '</bdi></span>' : '') + side + '</div>' +
           (p.note ? '<div class="note">' + esc(p.note) + '</div>' : '') +
           tags +
-        '</button>' +
-        '<div class="acts">' + side +
+        '</div>' +
+        '<div class="acts">' +
         (wa ? '<a class="wa" href="' + wa + '" target="_blank" rel="noopener" aria-label="וואטסאפ ל' + esc(p.name) + '">' + WA_ICON + '</a>'
             : '<span class="wa disabled" aria-hidden="true">' + WA_ICON + '</span>') +
         (tel ? '<a class="wa call" href="' + tel + '" aria-label="שיחה ל' + esc(p.name) + '">' + CALL_ICON + '</a>'
@@ -790,6 +793,9 @@
     if (f) { const v = f.dataset.payFilter || null; state.pay = (state.pay === v ? null : v); render(); }
   });
 
+  $('#list').addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-edit]')) { e.preventDefault(); openParticipant(e.target.dataset.edit); }
+  });
   $('#list').addEventListener('click', (e) => {
     const pay = e.target.closest('[data-pay]');
     if (pay) return confirmPaid(pay.dataset.pay, state.filter, !pay.classList.contains('paid'));
