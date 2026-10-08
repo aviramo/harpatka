@@ -79,12 +79,19 @@
     .row .main { flex: 1; min-width: 0; text-align: right; }
     .row .name { font-weight: 700; font-size: 18px; }
     .row .age { display: inline-block; color: var(--muted); background: #EFE4D3; border-radius: 999px; padding: 1px 10px; font-weight: 600; margin-inline-start: 10px; font-size: 14px; vertical-align: middle; white-space: nowrap; }
+    .row .nm { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .row .nm .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .row .nm .age { margin-inline-start: 0; flex: 0 0 auto; }
+    .pay.pi { width: 44px; height: 44px; padding: 0; display: grid; place-items: center; font-size: 22px; font-weight: 800; line-height: 1; }
+    .pay.pi svg { width: 24px; height: 24px; }
     .row .phone { color: var(--ink); font-size: 15px; direction: ltr; unicode-bidi: isolate; }
     .row .note { color: var(--muted); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .row .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
     .tag { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--red-bg); color: var(--red); }
     .tag.paid { background: var(--green-bg); color: var(--green); }
     .tag.neutral { background: rgba(63,56,47,.10); color: var(--ink); }
+    button.tag { cursor: pointer; border: 2px solid transparent; font-family: inherit; }
+    button.tag[aria-pressed="true"] { border-color: currentColor; }
     .bar-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 
     .pay {
@@ -258,7 +265,7 @@
   };
   const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance' };
 
-  const state = { participants: [], meetings: [], att: [], filter: null, q: '' };
+  const state = { participants: [], meetings: [], att: [], filter: null, q: '', pay: null };
   /* קישור עמוק מהמייל: ?m=<מפגש>&p=<משתתף>; נשמר בזמן הכניסה עם גוגל (שמחזירה בלי הפרמטרים) */
   let deep = null;
   try {
@@ -491,7 +498,11 @@
     if (!m) { bar.classList.remove('show'); bar.innerHTML = ''; return; }
     const links = state.att.filter((a) => a.meeting_id === m.id);
     const paid = links.filter((a) => a.paid).length;
-    bar.innerHTML = '<div><b>' + esc(meetingLabel(m, true)) + '</b>' + '<div class="bar-tags"><span class="tag neutral">' + links.length + ' משתתפים</span><span class="tag paid">' + paid + ' שילמו</span><span class="tag">' + (links.length - paid) + ' טרם שילמו</span></div></div>' +
+    bar.innerHTML = '<div><b>' + esc(meetingLabel(m, true)) + '</b>' + '<div class="bar-tags">' +
+      '<button type="button" class="tag" data-pay-filter="unpaid" aria-pressed="' + (state.pay === 'unpaid') + '">' + (links.length - paid) + ' טרם שילמו</button>' +
+      '<button type="button" class="tag paid" data-pay-filter="paid" aria-pressed="' + (state.pay === 'paid') + '">' + paid + ' שילמו</button>' +
+      '<button type="button" class="tag neutral" data-pay-filter="" aria-pressed="' + (state.pay === null) + '">' + links.length + ' משתתפים</button>' +
+      '</div></div>' +
       '<button type="button" class="link-btn" id="editMeeting">עריכה</button>';
     bar.classList.add('show');
   }
@@ -502,7 +513,12 @@
     const q = state.q.trim().toLowerCase();
     const qd = digits(q);
     let rows = state.participants.filter((p) => {
-      if (state.filter && !linkOf(p.id, state.filter)) return false;
+      if (state.filter) {
+        const l = linkOf(p.id, state.filter);
+        if (!l) return false;
+        if (state.pay === 'paid' && !l.paid) return false;
+        if (state.pay === 'unpaid' && l.paid) return false;
+      }
       if (!q) return true;
       return p.name.toLowerCase().includes(q) || (qd.length >= 2 && digits(p.phone).includes(qd));
     });
@@ -523,7 +539,7 @@
       let side = '';
       if (state.filter) {
         const l = linkOf(p.id, state.filter);
-        side = '<button type="button" class="pay' + (l.paid ? ' paid' : '') + '" data-pay="' + p.id + '">' + (l.paid ? 'שילם' : 'טרם שילם') + '</button>';
+        side = '<button type="button" class="pay pi' + (l.paid ? ' paid' : '') + '" data-pay="' + p.id + '" title="' + (l.paid ? 'שילם' : 'טרם שילם') + '" aria-label="' + (l.paid ? 'שילם' : 'טרם שילם') + '">' + (l.paid ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' : '₪') + '</button>';
       }
       let tags = '';
       if (!state.filter) {
@@ -537,9 +553,8 @@
       }
       return '<li class="row">' +
         '<button type="button" class="main" data-edit="' + p.id + '">' +
-          '<div><bdi class="name">' + esc(p.name) + '</bdi>' + (age != null ? '<span class="age" title="גיל"><bdi>' + age + '</bdi></span>' : '') + '</div>' +
+          '<div class="nm"><bdi class="name">' + esc(p.name) + '</bdi>' + (age != null ? '<span class="age" title="גיל"><bdi>' + age + '</bdi></span>' : '') + '</div>' +
           (p.note ? '<div class="note">' + esc(p.note) + '</div>' : '') +
-          (regDate(p) ? '<div class="note regd">נרשם/ה ' + regDate(p) + (p.source === 'site' ? ' · מהאתר' : '') + '</div>' : '') +
           tags +
         '</button>' + side +
         (wa ? '<a class="wa" href="' + wa + '" target="_blank" rel="noopener" aria-label="וואטסאפ ל' + esc(p.name) + '">' + WA_ICON + '</a>'
@@ -742,10 +757,14 @@
     if (e.target.closest('#addMeeting')) return openMeeting(null);
     const c = e.target.closest('[data-filter]');
     if (!c) return;
-    state.filter = c.dataset.filter || null;
+    state.filter = c.dataset.filter || null; state.pay = null;
     render();
   });
-  $('#meetingBar').addEventListener('click', (e) => { if (e.target.closest('#editMeeting')) openMeeting(state.filter); });
+  $('#meetingBar').addEventListener('click', (e) => {
+    if (e.target.closest('#editMeeting')) return openMeeting(state.filter);
+    const f = e.target.closest('[data-pay-filter]');
+    if (f) { const v = f.dataset.payFilter || null; state.pay = (state.pay === v ? null : v); render(); }
+  });
 
   $('#list').addEventListener('click', (e) => {
     const pay = e.target.closest('[data-pay]');
