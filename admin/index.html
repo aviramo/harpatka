@@ -72,7 +72,12 @@
 
     .list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
     @media (min-width: 760px) { .list { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; } }
-    .list .empty { grid-column: 1 / -1; }
+    .list .empty, .list .group { grid-column: 1 / -1; }
+    .list .group { color: var(--muted); font-weight: 700; font-size: 14px; padding: 6px 4px 0; }
+    .list .group.newp { padding: 0; }
+    .row.other { background: transparent; box-shadow: none; border: 1.5px dashed var(--coral); }
+    .addm { height: 36px; padding: 0 14px; border-radius: 999px; background: var(--terra); color: #fff; font-weight: 700; font-size: 15px; }
+    .addm.wide { width: 100%; height: 44px; background: transparent; color: var(--terra); border: 1.5px dashed var(--coral); }
     .row {
       display: flex; flex-direction: column; justify-content: space-between; gap: 12px;
       background: var(--paper); border-radius: 20px; padding: 14px 14px 12px;
@@ -539,15 +544,33 @@
     });
     rows.sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')) || a.name.localeCompare(b.name, 'he'));   // לפי תאריך יצירה, החדשים למעלה
 
-    if (!rows.length) {
-      $('#list').innerHTML = '<li class="empty">' + (
+    /* במסך מפגש + חיפוש: מציגים גם מי שלא רשום למפגש, כדי להוסיף אותם בלחיצה (למשל מי שהגיע בלי להודיע) */
+    let others = [];
+    if (state.filter && q) {
+      others = state.participants.filter((p) => !linkOf(p.id, state.filter) &&
+        (p.name.toLowerCase().includes(q) || (qd.length >= 2 && digits(p.phone).includes(qd))));
+      others.sort((a, b) => a.name.localeCompare(b.name, 'he'));
+    }
+    const othersHtml = others.length
+      ? '<li class="group">לא רשומים למפגש הזה</li>' + others.map((p) => {
+          const age = shownAge(p);
+          return '<li class="row other"><div class="main" role="button" tabindex="0" data-edit="' + p.id + '"><div class="nm"><bdi class="name">' + esc(p.name) + '</bdi>' +
+            (age != null ? '<span class="age" title="גיל"><bdi>' + age + '</bdi></span>' : '') + '</div></div>' +
+            '<div class="acts"><button type="button" class="addm" data-addm="' + p.id + '">+ הוספה למפגש</button></div></li>';
+        }).join('')
+      : '';
+    const newBtn = (state.filter && q)
+      ? '<li class="group newp"><button type="button" class="addm wide" id="addNew">+ משתתף חדש: ' + esc(state.q.trim()) + '</button></li>' : '';
+
+    if (!rows.length && !others.length) {
+      $('#list').innerHTML = newBtn || '<li class="empty">' + (
         state.q ? '<b>לא נמצא אף אחד</b>אפשר לנסות שם אחר' :
         state.filter ? '<b>עוד אין משתתפים במפגש הזה</b>לחיצה על "+ משתתף" מוסיפה ישר למפגש' :
         '<b>עוד אין משתתפים</b>לחיצה על "+ משתתף" למטה מוסיפה את הראשון') + '</li>';
       return;
     }
 
-    $('#list').innerHTML = rows.map((p) => {
+    const rowsHtml = rows.map((p) => {
       const age = shownAge(p);
       const wa = waLink(p.phone);
       const tel = telLink(p.phone);
@@ -580,6 +603,7 @@
       '</div>' +
       '</li>';
     }).join('');
+    $('#list').innerHTML = rowsHtml + othersHtml + newBtn;
   }
 
   /* ---------- סטטוס תשלום ---------- */
@@ -797,6 +821,13 @@
     if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-edit]')) { e.preventDefault(); openParticipant(e.target.dataset.edit); }
   });
   $('#list').addEventListener('click', (e) => {
+    const am = e.target.closest('[data-addm]');
+    if (am) { setLinked(am.dataset.addm, state.filter, true); state.q = ''; $('#q').value = ''; renderList(); toast('נוסף למפגש'); return; }
+    if (e.target.closest('#addNew')) {
+      const q = state.q.trim(); openParticipant(null);
+      if (digits(q).length >= 6) pForm.phone.value = q; else pForm.name.value = q;
+      return;
+    }
     const pay = e.target.closest('[data-pay]');
     if (pay) return confirmPaid(pay.dataset.pay, state.filter, !pay.classList.contains('paid'));
     const ed = e.target.closest('[data-edit]');
