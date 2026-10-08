@@ -84,6 +84,8 @@
     .row .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
     .tag { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--red-bg); color: var(--red); }
     .tag.paid { background: var(--green-bg); color: var(--green); }
+    .tag.neutral { background: rgba(63,56,47,.10); color: var(--ink); }
+    .bar-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 
     .pay {
       flex: 0 0 auto; height: 36px; padding: 0 12px; border-radius: 999px; font-weight: 700; font-size: 14px;
@@ -489,7 +491,7 @@
     if (!m) { bar.classList.remove('show'); bar.innerHTML = ''; return; }
     const links = state.att.filter((a) => a.meeting_id === m.id);
     const paid = links.filter((a) => a.paid).length;
-    bar.innerHTML = '<div><b>' + esc(meetingLabel(m, true)) + '</b><br>' + links.length + ' משתתפים · ' + paid + ' שילמו · ' + (links.length - paid) + ' טרם שילמו</div>' +
+    bar.innerHTML = '<div><b>' + esc(meetingLabel(m, true)) + '</b>' + '<div class="bar-tags"><span class="tag neutral">' + links.length + ' משתתפים</span><span class="tag paid">' + paid + ' שילמו</span><span class="tag">' + (links.length - paid) + ' טרם שילמו</span></div></div>' +
       '<button type="button" class="link-btn" id="editMeeting">עריכה</button>';
     bar.classList.add('show');
   }
