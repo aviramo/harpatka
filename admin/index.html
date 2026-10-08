@@ -76,18 +76,19 @@
     .list .group { color: var(--muted); font-weight: 700; font-size: 14px; padding: 6px 4px 0; }
     .list .group.newp { padding: 0; }
     .row.other { background: transparent; box-shadow: none; border: 1.5px dashed var(--coral); }
-    .addm { height: 36px; padding: 0 14px; border-radius: 999px; background: var(--terra); color: #fff; font-weight: 700; font-size: 15px; }
-    .addm.wide { width: 100%; height: 44px; background: transparent; color: var(--terra); border: 1.5px dashed var(--coral); }
+    .addm { height: 30px; padding: 0 12px; border-radius: 999px; background: var(--terra); color: #fff; font-weight: 700; font-size: 14px; }
+    .addm.wide { width: 100%; height: 38px; background: transparent; color: var(--terra); border: 1.5px dashed var(--coral); }
     .row {
       display: flex; flex-direction: column; justify-content: space-between; gap: 12px;
       background: var(--paper); border-radius: 20px; padding: 14px 14px 12px;
       box-shadow: 0 1px 0 rgba(63,56,47,.05), 0 0 0 1px rgba(232,213,190,.6);
     }
     .row .main { flex: 1; min-width: 0; text-align: right; }
-    .row .acts { display: flex; align-items: center; justify-content: flex-start; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line); }
+    .row .acts { display: flex; align-items: center; justify-content: flex-start; gap: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
     .row .name { font-weight: 700; font-size: 18px; }
     .row .age { display: inline-block; color: var(--muted); background: #EFE4D3; border-radius: 999px; padding: 1px 10px; font-weight: 600; margin-inline-start: 10px; font-size: 14px; vertical-align: middle; white-space: nowrap; }
-    .row .nm { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; min-width: 0; }
+    .row .nm { min-width: 0; }
+    .row .meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
     .row .nm .name { min-width: 0; overflow-wrap: anywhere; line-height: 1.2; }
     .row .nm .age { margin-inline-start: 0; flex: 0 0 auto; }
     .row .ptag { display: inline-block; border-radius: 999px; padding: 1px 10px; font-weight: 700; font-size: 14px; white-space: nowrap; background: var(--red-bg); color: var(--red); }
@@ -111,10 +112,10 @@
     }
     .pay.paid { background: var(--green-bg); color: var(--green); }
     .wa {
-      flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+      flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
       background: var(--green); color: #fff;
     }
-    .wa svg { width: 20px; height: 20px; }
+    .wa svg { width: 17px; height: 17px; }
     .wa.disabled { background: var(--line); pointer-events: none; }
     .call { background: #3F6FB5; }   /* שיחת טלפון */
 
@@ -554,8 +555,8 @@
     const othersHtml = others.length
       ? '<li class="group">לא רשומים למפגש הזה</li>' + others.map((p) => {
           const age = shownAge(p);
-          return '<li class="row other"><div class="main" role="button" tabindex="0" data-edit="' + p.id + '"><div class="nm"><bdi class="name">' + esc(p.name) + '</bdi>' +
-            (age != null ? '<span class="age" title="גיל"><bdi>' + age + '</bdi></span>' : '') + '</div></div>' +
+          return '<li class="row other"><div class="main" role="button" tabindex="0" data-edit="' + p.id + '"><div class="nm"><bdi class="name">' + esc(p.name) + '</bdi></div>' +
+            (age != null ? '<div class="meta"><span class="age" title="גיל"><bdi>' + age + '</bdi></span></div>' : '') + '</div>' +
             '<div class="acts"><button type="button" class="addm" data-addm="' + p.id + '">+ הוספה למפגש</button></div></li>';
         }).join('')
       : '';
@@ -583,17 +584,14 @@
       if (!state.filter) {
         const ls = linksOf(p.id);
         if (ls.length) {
-          tags = '<div class="tags">' + state.meetings.filter((m) => ls.some((l) => l.meeting_id === m.id)).map((m) => {
-            const l = ls.find((x) => x.meeting_id === m.id);
-            return '<span class="tag' + (l.paid ? ' paid' : '') + '">' + esc(meetingLabel(m).split(' · ')[0]) + (l.paid ? ' ✓' : '') + '</span>';
-          }).join('') + '</div>';
+          tags = '<span class="age" title="מפגשים">' + (ls.length === 1 ? 'מפגש אחד' : ls.length + ' מפגשים') + '</span>';
         }
       }
       return '<li class="row">' +
         '<div class="main" role="button" tabindex="0" data-edit="' + p.id + '">' +
-          '<div class="nm"><bdi class="name">' + esc(p.name) + '</bdi>' + (age != null ? '<span class="age" title="גיל"><bdi>' + age + '</bdi></span>' : '') + side + '</div>' +
+          '<div class="nm"><bdi class="name">' + esc(p.name) + '</bdi></div>' +
+          ((age != null || side || tags) ? '<div class="meta">' + (age != null ? '<span class="age" title="גיל"><bdi>' + age + '</bdi></span>' : '') + side + tags + '</div>' : '') +
           (p.note ? '<div class="note">' + esc(p.note) + '</div>' : '') +
-          tags +
         '</div>' +
         '<div class="acts">' +
         (wa ? '<a class="wa" href="' + wa + '" target="_blank" rel="noopener" aria-label="וואטסאפ ל' + esc(p.name) + '">' + WA_ICON + '</a>'
