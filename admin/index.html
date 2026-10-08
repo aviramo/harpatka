@@ -76,6 +76,9 @@
     .list .group { color: var(--muted); font-weight: 700; font-size: 14px; padding: 6px 4px 0; }
     .list .group.newp { padding: 0; }
     .row.other { background: transparent; box-shadow: none; border: 1.5px dashed var(--coral); }
+    .head-acts { display: flex; gap: 8px; margin-inline-start: auto; margin-inline-end: 10px; }
+    .head-acts .wa { width: 38px; height: 38px; }
+    .head-acts .wa svg { width: 20px; height: 20px; }
     .addm { height: 30px; padding: 0 12px; border-radius: 999px; background: var(--terra); color: #fff; font-weight: 700; font-size: 14px; }
     .addm.wide { width: 100%; height: 38px; background: transparent; color: var(--terra); border: 1.5px dashed var(--coral); }
     .row {
@@ -234,6 +237,7 @@
       <div class="sheet-head">
         <h2 id="pTitle">משתתף חדש</h2>
         <span class="saved" id="savedMark">נשמר ✓</span>
+        <span class="head-acts" id="pContact"></span>
         <button class="close" type="button" data-close aria-label="סגירה">×</button>
       </div>
       <label class="field"><span>שם</span><input name="name" required maxlength="60" autocomplete="off" /></label>
@@ -566,6 +570,8 @@
     if (!rows.length && !others.length) {
       $('#list').innerHTML = newBtn || '<li class="empty">' + (
         state.q ? '<b>לא נמצא אף אחד</b>אפשר לנסות שם אחר' :
+        (state.filter && state.pay === 'paid') ? '<b>עוד אף אחד לא שילם</b>אפשר לסמן תשלום בלחיצה על "טרם שילם" בכרטיס' :
+        (state.filter && state.pay === 'unpaid') ? '<b>כולם שילמו</b>אין משתתפים שטרם שילמו במפגש הזה' :
         state.filter ? '<b>עוד אין משתתפים במפגש הזה</b>לחיצה על "+ משתתף" מוסיפה ישר למפגש' :
         '<b>עוד אין משתתפים</b>לחיצה על "+ משתתף" למטה מוסיפה את הראשון') + '</li>';
       return;
@@ -593,12 +599,6 @@
           ((age != null || side || tags) ? '<div class="meta">' + (age != null ? '<span class="age" title="גיל"><bdi>' + age + '</bdi></span>' : '') + side + tags + '</div>' : '') +
           (p.note ? '<div class="note">' + esc(p.note) + '</div>' : '') +
         '</div>' +
-        '<div class="acts">' +
-        (wa ? '<a class="wa" href="' + wa + '" target="_blank" rel="noopener" aria-label="וואטסאפ ל' + esc(p.name) + '">' + WA_ICON + '</a>'
-            : '<span class="wa disabled" aria-hidden="true">' + WA_ICON + '</span>') +
-        (tel ? '<a class="wa call" href="' + tel + '" aria-label="שיחה ל' + esc(p.name) + '">' + CALL_ICON + '</a>'
-            : '<span class="wa call disabled" aria-hidden="true">' + CALL_ICON + '</span>') +
-      '</div>' +
       '</li>';
     }).join('');
     $('#list').innerHTML = rowsHtml + othersHtml + newBtn;
@@ -654,6 +654,11 @@
     pForm.note.value = p ? p.note : '';
     $('#pTitle').textContent = p ? 'עריכת משתתף' : 'משתתף חדש';
     $('#pRegLine').textContent = p && regDate(p) ? ('תאריך הרשמה: ' + regDate(p) + (p.source === 'site' ? ' (דרך האתר)' : '')) : '';
+    { const wa = p && waLink(p.phone), tel = p && telLink(p.phone);
+      $('#pContact').innerHTML = p
+        ? (wa ? '<a class="wa" href="' + wa + '" target="_blank" rel="noopener" aria-label="וואטסאפ">' + WA_ICON + '</a>' : '') +
+          (tel ? '<a class="wa call" href="' + tel + '" aria-label="שיחה">' + CALL_ICON + '</a>' : '')
+        : ''; }
     $('#pSubmit').hidden = !!p;
     $('#pDelete').hidden = !p;
     $('#savedMark').classList.remove('on');
