@@ -11,11 +11,14 @@
 
 create extension if not exists pg_net;
 
+-- מגדר (זכר/נקבה)
+alter table public.harpatka_participants add column if not exists gender text check (gender in ('male', 'female'));
+
 create table if not exists public.harpatka_settings (key text primary key, value text not null default '');
 alter table public.harpatka_settings enable row level security;          -- בלי מדיניות: רק פונקציות security definer קוראות
 revoke all on public.harpatka_settings from anon, authenticated;
 
-create or replace function public.harpatka_notify_signup(p_name text, p_phone text, p_age int, p_mdate date, p_mtime time, p_pid uuid, p_mid uuid)
+create or replace function public.harpatka_notify_signup(p_name text, p_phone text, p_age int, p_mdate date, p_mtime time, p_pid uuid, p_mid uuid, p_gender text default null)
 returns void language plpgsql security definer set search_path = public as $$
 declare u text; tok text;
 begin
@@ -26,7 +29,7 @@ begin
     url     := u,
     body    := jsonb_build_object('token', tok, 'name', p_name, 'phone', p_phone, 'age', p_age,
                                   'meeting_date', p_mdate, 'meeting_time', to_char(p_mtime, 'HH24:MI'), 'created_at', now(),
-                                  'participant_id', p_pid, 'meeting_id', p_mid),
+                                  'participant_id', p_pid, 'meeting_id', p_mid, 'gender', p_gender),
     headers := jsonb_build_object('Content-Type', 'application/json'),
     timeout_milliseconds := 30000
   );
@@ -34,11 +37,13 @@ exception when others then
   null;   -- התראה שנכשלה לא מפילה את ההרשמה
 end $$;
 drop function if exists public.harpatka_notify_signup(text, text, int, date, time);
-revoke all on function public.harpatka_notify_signup(text, text, int, date, time, uuid, uuid) from public, anon, authenticated;
+drop function if exists public.harpatka_notify_signup(text, text, int, date, time, uuid, uuid);
+revoke all on function public.harpatka_notify_signup(text, text, int, date, time, uuid, uuid, text) from public, anon, authenticated;
 
 -- הרשמה מהאתר (כמו ב-setup.sql) + התראה על משתתף חדש בלבד
 drop function if exists public.harpatka_signup(text, text, int);
-create or replace function public.harpatka_signup(p_name text, p_phone text, p_age int default null)
+drop function if exists public.harpatka_signup(text, text, int, text);
+create or replace function public.harpatka_signup(p_name text, p_phone text, p_age int default null, p_gender text default null)
 returns text language plpgsql security definer set search_path = public as $$
 declare
   n   text := public.harpatka_normalize_phone(p_phone);
@@ -52,6 +57,7 @@ begin
   if char_length(nm) < 2 or char_length(nm) > 60 then return 'invalid_name'; end if;
   if n = '' then return 'invalid_phone'; end if;
   if p_age is null or p_age < 18 or p_age > 99 then return 'invalid_age'; end if;
+  if p_gender is not null and p_gender not in ('male', 'female') then return 'invalid_gender'; end if;
 
   select id, meeting_date, meeting_time into mid, md, mt from public.harpatka_meetings
     where meeting_date >= (now() at time zone 'Asia/Jerusalem')::date
@@ -61,10 +67,11 @@ begin
   if pid is not null then
     res := 'exists';
     update public.harpatka_participants set age = p_age, age_set_at = current_date where id = pid and age is null;
+    update public.harpatka_participants set gender = p_gender where id = pid and gender is null and p_gender is not null;
   else
     begin
-      insert into public.harpatka_participants (name, phone, age, age_set_at, source)
-        values (nm, n, p_age, current_date, 'site')
+      insert into public.harpatka_participants (name, phone, age, age_set_at, source, gender)
+        values (nm, n, p_age, current_date, 'site', p_gender)
         returning id into pid;
     exception when unique_violation then
       select id into pid from public.harpatka_participants where phone_norm = n limit 1;
@@ -78,12 +85,12 @@ begin
   end if;
 
   if res = 'created' then
-    perform public.harpatka_notify_signup(nm, n, p_age, md, mt, pid, mid);
+    perform public.harpatka_notify_signup(nm, n, p_age, md, mt, pid, mid, p_gender);
   end if;
   return res;
 end $$;
-revoke all on function public.harpatka_signup(text, text, int) from public;
-grant execute on function public.harpatka_signup(text, text, int) to anon, authenticated;
+revoke all on function public.harpatka_signup(text, text, int, text) from public;
+grant execute on function public.harpatka_signup(text, text, int, text) to anon, authenticated;
 
 notify pgrst, 'reload schema';
 

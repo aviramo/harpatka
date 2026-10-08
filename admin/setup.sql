@@ -47,6 +47,7 @@ insert into public.harpatka_meetings (meeting_date, meeting_time) values ('2026-
 -- 2. נרמול טלפונים, כפילויות והפונקציה harpatka_signup
 alter table public.harpatka_participants add column if not exists phone_norm text not null default '';
 alter table public.harpatka_participants add column if not exists source     text not null default '';
+alter table public.harpatka_participants add column if not exists gender text check (gender in ('male', 'female'));
 
 -- 1. נרמול (אותה לוגיקה בדיוק כמו ב-index.html)
 create or replace function public.harpatka_normalize_phone(p text)

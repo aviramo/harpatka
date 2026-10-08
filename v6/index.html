@@ -283,6 +283,13 @@
     .su-input::placeholder{ color:#a39a8b; }
     .su-input:focus{ outline:none; border-color:var(--terra); }
     .su-input.bad{ border-color:#B85C40; }
+    .su-seg{ display:flex; gap:.4rem; flex-shrink:0; }
+    .su-seg label{ position:relative; display:block; }
+    .su-seg input{ position:absolute; inset:0; opacity:0; margin:0; cursor:pointer; }
+    .su-seg span{ display:block; text-align:center; padding:.7rem .8rem; border:2px solid var(--sand); border-radius:16px; background:var(--paper); font-size:1.05rem; font-weight:600; color:var(--ink); white-space:nowrap; }
+    .su-seg input:checked + span{ border-color:var(--terra); background:var(--terra); color:#fff; }
+    .su-seg input:focus-visible + span{ outline:3px solid var(--plum); outline-offset:2px; }
+    .su-seg.bad span{ border-color:#B85C40; }
     .su-err{ color:#A9533A; font-size:.88rem; font-weight:600; margin-top:.25rem; }
     .su-err:empty{ display:none; }
     .su-hp{ position:absolute; left:-9999px; width:1px; height:1px; opacity:0; }
@@ -690,8 +697,15 @@
           <h2 class="h-sect text-[1.7rem] md:text-[2.2rem] mb-5">השאירו פרטים ונחזור אליכם</h2>
           <form data-su="form" novalidate class="text-start">
             <input type="text" name="website" data-su="hp" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
-            <input id="suName" data-su="name" name="name" type="text" class="su-input" autocomplete="name" maxlength="60" placeholder="שם" aria-label="שם" required>
+            <div class="flex gap-2">
+              <input id="suName" data-su="name" name="name" type="text" class="su-input flex-1 min-w-0" autocomplete="name" maxlength="60" placeholder="שם" aria-label="שם" required>
+              <div class="su-seg" data-su="gender" role="radiogroup" aria-label="מגדר">
+                <label><input type="radio" name="suGender" value="male"><span>זכר</span></label>
+                <label><input type="radio" name="suGender" value="female"><span>נקבה</span></label>
+              </div>
+            </div>
             <div data-su="nameErr" class="su-err" role="alert"></div>
+            <div data-su="genderErr" class="su-err" role="alert"></div>
             <div class="flex gap-2 mt-2.5">
               <input id="suPhone" data-su="phone" name="phone" type="tel" dir="ltr" inputmode="tel" class="su-input text-end flex-1 min-w-0" autocomplete="tel" maxlength="24" placeholder="טלפון" aria-label="טלפון" required>
               <input id="suAge" data-su="age" name="age" type="number" inputmode="numeric" min="18" max="99" class="su-input shrink-0" style="width:5.2rem" autocomplete="off" placeholder="גיל" aria-label="גיל" required>
@@ -856,8 +870,15 @@
           <h2 class="h-sect text-[1.5rem] md:text-[1.9rem] mb-5 px-8">השאירו פרטים ונחזור אליכם</h2>
           <form data-su="form" novalidate class="text-start">
             <input type="text" name="website" data-su="hp" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
-            <input id="cmName" data-su="name" name="name" type="text" class="su-input" autocomplete="name" maxlength="60" placeholder="שם" aria-label="שם" required>
+            <div class="flex gap-2">
+              <input id="cmName" data-su="name" name="name" type="text" class="su-input flex-1 min-w-0" autocomplete="name" maxlength="60" placeholder="שם" aria-label="שם" required>
+              <div class="su-seg" data-su="gender" role="radiogroup" aria-label="מגדר">
+                <label><input type="radio" name="cmGender" value="male"><span>זכר</span></label>
+                <label><input type="radio" name="cmGender" value="female"><span>נקבה</span></label>
+              </div>
+            </div>
             <div data-su="nameErr" class="su-err" role="alert"></div>
+            <div data-su="genderErr" class="su-err" role="alert"></div>
             <div class="flex gap-2 mt-2.5">
               <input id="cmPhone" data-su="phone" name="phone" type="tel" dir="ltr" inputmode="tel" class="su-input text-end flex-1 min-w-0" autocomplete="tel" maxlength="24" placeholder="טלפון" aria-label="טלפון" required>
               <input id="cmAge" data-su="age" name="age" type="number" inputmode="numeric" min="18" max="99" class="su-input shrink-0" style="width:5.2rem" autocomplete="off" placeholder="גיל" aria-label="גיל" required>
@@ -1106,6 +1127,8 @@
       nameI.addEventListener('input', () => setErr(nameI, q('nameErr'), ''));
       phoneI.addEventListener('input', () => setErr(phoneI, q('phoneErr'), ''));
       ageI.addEventListener('input', () => setErr(ageI, q('ageErr'), ''));
+      const genderBox = q('gender');
+      genderBox.addEventListener('change', () => { genderBox.classList.remove('bad'); q('genderErr').textContent = ''; });
       form.addEventListener('submit', async (e) => {
         e.preventDefault(); q('fail').textContent = '';
         const name = nameI.value.trim().replace(/\s+/g, ' '), norm = normPhone(phoneI.value);
@@ -1114,6 +1137,8 @@
         if (!norm) { setErr(phoneI, q('phoneErr'), 'מספר הטלפון לא תקין'); ok = false; }
         const age = parseInt(ageI.value, 10);
         if (!(age >= 18 && age <= 99)) { setErr(ageI, q('ageErr'), 'נא למלא גיל תקין'); ok = false; }
+        const gEl = genderBox.querySelector('input:checked'), gender = gEl ? gEl.value : null;
+        if (!gender) { genderBox.classList.add('bad'); q('genderErr').textContent = 'נא לבחור'; ok = false; }
         if (!ok) return;
         const allDone = () => { suRoots.forEach(f => f()); };   // בלי שמירה בדפדפן: בכל טעינה של הדף הטופס מוצג מחדש
         if (q('hp').value || Date.now() - t0 < 1500) { allDone(); return; }   // בוט: מציגים הצלחה בלי לשמור
@@ -1123,7 +1148,7 @@
           const res = await fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_signup', {
             method: 'POST',
             headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ p_name: name, p_phone: norm, p_age: age })
+            body: JSON.stringify({ p_name: name, p_phone: norm, p_age: age, p_gender: gender })
           });
           const out = res.ok ? await res.json() : null;
           if (out === 'created' || out === 'exists') {   // כפילות: אותה הודעה, בלי לחשוף שהמספר כבר רשום
