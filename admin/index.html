@@ -254,6 +254,15 @@
     </form>
   </dialog>
 
+  <dialog id="cDlg" aria-labelledby="cTitle" style="max-width:420px">
+    <form class="sheet" method="dialog" novalidate>
+      <h2 id="cTitle" style="margin-bottom:6px"></h2>
+      <p id="cText" style="color:var(--muted);margin:0 0 16px"></p>
+      <button class="btn" id="cYes" type="button">אישור</button>
+      <button class="btn ghost" id="cNo" type="button" style="color:var(--muted)">ביטול</button>
+    </form>
+  </dialog>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
@@ -566,6 +575,16 @@
   }
 
   /* ---------- סטטוס תשלום ---------- */
+  function confirmPaid(pid, mid, paid) {
+    const p = state.participants.find((x) => x.id === pid);
+    $('#cTitle').textContent = paid ? 'לסמן כ"שילם"?' : 'לסמן כ"טרם שילם"?';
+    $('#cText').textContent = (p ? p.name : '') + ' · ' + (state.meetings.find((x) => x.id === mid) ? meetingLabel(state.meetings.find((x) => x.id === mid), true) : '');
+    const dlg = $('#cDlg');
+    $('#cYes').onclick = () => { dlg.close(); setPaid(pid, mid, paid); };
+    $('#cNo').onclick = () => dlg.close();
+    dlg.showModal();
+  }
+
   async function setPaid(pid, mid, paid) {
     const l = linkOf(pid, mid);
     if (!l) return;
@@ -636,7 +655,7 @@
       else { on ? sheet.links.set(mid, false) : sheet.links.delete(mid); refreshSheetMeetings(); }
     } else if (pay) {
       const mid = pay.dataset.mp;
-      if (sheet.id) setPaid(sheet.id, mid, !linkOf(sheet.id, mid).paid);
+      if (sheet.id) confirmPaid(sheet.id, mid, !linkOf(sheet.id, mid).paid);
       else { sheet.links.set(mid, !sheet.links.get(mid)); refreshSheetMeetings(); }
     }
   });
@@ -768,7 +787,7 @@
 
   $('#list').addEventListener('click', (e) => {
     const pay = e.target.closest('[data-pay]');
-    if (pay) return setPaid(pay.dataset.pay, state.filter, !pay.classList.contains('paid'));
+    if (pay) return confirmPaid(pay.dataset.pay, state.filter, !pay.classList.contains('paid'));
     const ed = e.target.closest('[data-edit]');
     if (ed) openParticipant(ed.dataset.edit);
   });
