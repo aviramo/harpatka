@@ -630,7 +630,7 @@
     const ms = state.meetings.map((m) => {
       const n = state.att.filter((a) => a.meeting_id === m.id).length;
       return '<button type="button" class="chip' + (isPast(m) ? ' past' : '') + '" data-filter="' + m.id + '" aria-pressed="' + (state.filter === m.id) + '">' +
-        '<span class="cd"><b>' + esc(meetingLabel(m, true).split(' · ')[0]) + '</b><small>' + esc(String(m.meeting_time).slice(0, 5)) + '</small></span> <span class="count">' + n + '</span></button>';
+        '<span class="cd"><b>' + esc(meetingLabel(m).split(' · ')[0]) + '</b><small>' + esc(meetingLabel(m, true).split(' ').slice(0, 2).join(' ')) + ' · ' + esc(String(m.meeting_time).slice(0, 5)) + '</small></span> <span class="count">' + n + '</span></button>';
     }).join('');
     $('#chips').innerHTML = all + '<button type="button" class="chip add" id="addMeeting">+ מפגש</button>' + ms;
     const sel = $('#chips [aria-pressed="true"]');
