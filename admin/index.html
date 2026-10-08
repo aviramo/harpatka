@@ -120,9 +120,6 @@
     .tools .search { margin-top: 0; flex: 1 1 auto; min-width: 0; }
     .tools .search input { height: 44px; padding-right: 40px; }
     .facets { display: flex; flex: 0 1 auto; gap: 8px; min-width: 0; }
-    .editm { display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 14px; border-radius: 16px; border: 1.5px solid var(--line); background: var(--paper); color: var(--plum); font-weight: 700; font-size: 15px; flex: 0 0 auto; }
-    .editm[hidden] { display: none; }
-    .editm svg { width: 20px; height: 20px; }
     .fx .li, .fx .gi { display: none; }
     /* במובייל החיפוש מכווץ לאייקון ומתרחב בלחיצה (ואז הסינונים מוסתרים זמנית) */
     @media (max-width: 759px) {
@@ -138,8 +135,6 @@
       .fx .li { display: inline; font-size: 15px; }
       .fx .lw.gen-lw { display: none; }
       .fx .gi { display: inline; font-size: 16px; }
-      .editm { width: 44px; padding: 0; justify-content: center; }
-      .editm .et { display: none; }
       .tools { gap: 6px; }
       .facets { gap: 6px; }
       .fgroup { padding: 3px; }
@@ -188,6 +183,7 @@
     .error-box { background: var(--red-bg); color: var(--ink); border-radius: 16px; padding: 14px; margin-top: 12px; }
 
     .fab[hidden] { display: none; }
+    .fab.edit { background: var(--plum); box-shadow: 0 6px 18px rgba(102,63,76,.35); }
     .fab {
       position: fixed; left: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 6;
       height: 56px; padding: 0 22px; border-radius: 999px; background: var(--terra); color: #fff;
@@ -282,7 +278,6 @@
           <button type="button" class="sclear" id="qClear" aria-label="ניקוי החיפוש" tabindex="-1">×</button>
         </label>
         <div class="facets" id="facets" role="group" aria-label="סינון לפי מגדר ותשלום"></div>
-        <button type="button" class="editm" id="editMeeting" hidden aria-label="עריכת המפגש" title="עריכת המפגש"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 6.5l3 3"/></svg><span class="et">עריכת מפגש</span></button>
       </div>
     </header>
 
@@ -627,7 +622,7 @@
   }
 
   /* ---------- רינדור ---------- */
-  function render() { renderChips(); renderList(); $('#addBtn').hidden = !!state.filter; $('#editMeeting').hidden = !state.filter; syncUrl(); }   // בתוך מפגש מוסיפים דרך החיפוש
+  function render() { renderChips(); renderList(); { const fab = $('#addBtn'); fab.classList.toggle('edit', !!state.filter); fab.textContent = state.filter ? '✎ עריכת מפגש' : '+ משתתף'; } syncUrl(); }   // בתוך מפגש מוסיפים דרך החיפוש
 
   function renderChips() {
     const all = '<button type="button" class="chip" data-filter="" aria-pressed="' + (state.filter === null) + '">הכל <span class="count">' + state.participants.length + '</span></button>';
@@ -973,7 +968,7 @@
   $('#qClear').addEventListener('mousedown', (e) => e.preventDefault());
   $('#qClear').addEventListener('click', () => { const q = $('#q'); q.value = ''; state.q = ''; renderList(); syncUrl(); q.focus(); });
   $('#q').addEventListener('input', (e) => { state.q = e.target.value; renderList(); syncUrl(); });
-  $('#addBtn').addEventListener('click', () => openParticipant(null));
+  $('#addBtn').addEventListener('click', () => (state.filter ? openMeeting(state.filter) : openParticipant(null)));
 
   $('#chips').addEventListener('click', (e) => {
     if (e.target.closest('#addMeeting')) return openMeeting(null);
@@ -982,7 +977,6 @@
     state.filter = c.dataset.filter || null;
     render();
   });
-  $('#editMeeting').addEventListener('click', () => openMeeting(state.filter));
   $('#list').addEventListener('click', (e) => { if (e.target.closest('#clearFx')) { state.gender = null; state.pay = null; render(); } });
   $('#facets').addEventListener('click', (e) => {
     const b = e.target.closest('[data-fx]'); if (!b) return;
