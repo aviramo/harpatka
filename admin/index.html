@@ -27,7 +27,7 @@
     button { cursor: pointer; border: 0; background: none; padding: 0; }
     :focus-visible { outline: 3px solid var(--plum); outline-offset: 2px; }
 
-    .wrap { max-width: 720px; margin: 0 auto; padding: 0 16px 120px; }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px 120px; }
 
     header.top {
       position: sticky; top: 0; z-index: 5; background: var(--cream);
@@ -70,20 +70,23 @@
     .meeting-bar b { font-family: "Rubik", sans-serif; font-weight: 600; }
     .link-btn { color: var(--plum); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 
-    .list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+    .list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    @media (min-width: 760px) { .list { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; } }
+    .list .empty { grid-column: 1 / -1; }
     .row {
-      display: flex; align-items: center; gap: 10px;
-      background: var(--paper); border-radius: 20px; padding: 12px 14px;
-      box-shadow: 0 1px 0 rgba(63,56,47,.05);
+      display: flex; flex-direction: column; justify-content: space-between; gap: 12px;
+      background: var(--paper); border-radius: 20px; padding: 14px 14px 12px;
+      box-shadow: 0 1px 0 rgba(63,56,47,.05), 0 0 0 1px rgba(232,213,190,.6);
     }
     .row .main { flex: 1; min-width: 0; text-align: right; }
+    .row .acts { display: flex; align-items: center; justify-content: flex-start; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line); }
     .row .name { font-weight: 700; font-size: 18px; }
     .row .age { display: inline-block; color: var(--muted); background: #EFE4D3; border-radius: 999px; padding: 1px 10px; font-weight: 600; margin-inline-start: 10px; font-size: 14px; vertical-align: middle; white-space: nowrap; }
-    .row .nm { display: flex; align-items: center; gap: 8px; min-width: 0; }
-    .row .nm .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .row .nm { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; min-width: 0; }
+    .row .nm .name { min-width: 0; overflow-wrap: anywhere; line-height: 1.2; }
     .row .nm .age { margin-inline-start: 0; flex: 0 0 auto; }
-    .pay.pi { width: 44px; height: 44px; padding: 0; display: grid; place-items: center; font-size: 22px; font-weight: 800; line-height: 1; }
-    .pay.pi svg { width: 24px; height: 24px; }
+    .pay.pi { width: 36px; height: 36px; padding: 0; display: grid; place-items: center; font-size: 18px; font-weight: 800; line-height: 1; }
+    .pay.pi svg { width: 20px; height: 20px; }
     .row .phone { color: var(--ink); font-size: 15px; direction: ltr; unicode-bidi: isolate; }
     .row .note { color: var(--muted); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .row .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
@@ -100,10 +103,10 @@
     }
     .pay.paid { background: var(--green-bg); color: var(--green); }
     .wa {
-      flex: 0 0 auto; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center;
+      flex: 0 0 auto; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
       background: var(--green); color: #fff;
     }
-    .wa svg { width: 24px; height: 24px; }
+    .wa svg { width: 20px; height: 20px; }
     .wa.disabled { background: var(--line); pointer-events: none; }
     .call { background: #3F6FB5; }   /* שיחת טלפון */
 
@@ -129,7 +132,7 @@
       height: 56px; padding: 0 22px; border-radius: 999px; background: var(--terra); color: #fff;
       font-weight: 700; font-size: 18px; box-shadow: 0 6px 18px rgba(201,111,82,.35);
     }
-    @media (min-width: 760px) { .fab { left: calc(50% - 344px); } }
+    @media (min-width: 1152px) { .fab { left: calc(50% - 544px); } }
 
     /* חלונות (bottom sheet במובייל) */
     dialog {
@@ -565,11 +568,13 @@
           '<div class="nm"><bdi class="name">' + esc(p.name) + '</bdi>' + (age != null ? '<span class="age" title="גיל"><bdi>' + age + '</bdi></span>' : '') + '</div>' +
           (p.note ? '<div class="note">' + esc(p.note) + '</div>' : '') +
           tags +
-        '</button>' + side +
+        '</button>' +
+        '<div class="acts">' + side +
         (wa ? '<a class="wa" href="' + wa + '" target="_blank" rel="noopener" aria-label="וואטסאפ ל' + esc(p.name) + '">' + WA_ICON + '</a>'
             : '<span class="wa disabled" aria-hidden="true">' + WA_ICON + '</span>') +
         (tel ? '<a class="wa call" href="' + tel + '" aria-label="שיחה ל' + esc(p.name) + '">' + CALL_ICON + '</a>'
             : '<span class="wa call disabled" aria-hidden="true">' + CALL_ICON + '</span>') +
+      '</div>' +
       '</li>';
     }).join('');
   }
