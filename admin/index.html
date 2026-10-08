@@ -42,6 +42,9 @@
       width: 100%; height: 48px; border-radius: 16px; border: 1.5px solid var(--line);
       background: var(--paper); padding: 0 44px 0 14px; font-size: 17px;
     }
+    .search input::-webkit-search-cancel-button, .search input::-webkit-search-decoration { -webkit-appearance: none; appearance: none; display: none; }
+    .sclear { display: none; position: absolute; left: 8px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; border-radius: 50%; background: rgba(63,56,47,.10); color: var(--ink); font-size: 20px; line-height: 1; place-items: center; }
+    .search input:not(:placeholder-shown) ~ .sclear { display: grid; }
     .search input:focus { border-color: var(--terra); outline: none; }
     .search svg { position: absolute; right: 12px; top: 12px; width: 20px; height: 20px; color: var(--muted); }
 
@@ -276,6 +279,7 @@
         <label class="search">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
           <input id="q" type="search" placeholder="חיפוש לפי שם או טלפון" autocomplete="off" aria-label="חיפוש" />
+          <button type="button" class="sclear" id="qClear" aria-label="ניקוי החיפוש" tabindex="-1">×</button>
         </label>
         <div class="facets" id="facets" role="group" aria-label="סינון לפי מגדר ותשלום"></div>
         <button type="button" class="editm" id="editMeeting" hidden aria-label="עריכת המפגש" title="עריכת המפגש"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 6.5l3 3"/></svg><span class="et">עריכת מפגש</span></button>
@@ -966,6 +970,8 @@
   mDlg.addEventListener('close', syncUrl);
   pForm.phone.addEventListener('input', () => badPhone(false));
 
+  $('#qClear').addEventListener('mousedown', (e) => e.preventDefault());
+  $('#qClear').addEventListener('click', () => { const q = $('#q'); q.value = ''; state.q = ''; renderList(); syncUrl(); q.focus(); });
   $('#q').addEventListener('input', (e) => { state.q = e.target.value; renderList(); syncUrl(); });
   $('#addBtn').addEventListener('click', () => openParticipant(null));
 
