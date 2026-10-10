@@ -100,6 +100,7 @@
     .row .nm { min-width: 0; }
     .row .meta { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 5px; margin-top: 3px; }
     .row .meta .age, .row .meta .ptag { font-size: 13px; padding: 1px 8px; margin: 0; }
+    .row .adtag { display: inline-block; font-size: 13px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: #E3EEF3; color: #1F5C6B; white-space: nowrap; }
     .row .meta > * { flex: 0 0 auto; }
     .row .nm .name { min-width: 0; overflow-wrap: anywhere; line-height: 1.2; }
     .row .nm .age { margin-inline-start: 0; flex: 0 0 auto; }
@@ -742,7 +743,7 @@
       return '<li class="row">' +
         '<div class="main" role="button" tabindex="0" data-edit="' + p.id + '">' +
           '<div class="nm"><bdi class="name">' + esc(p.name) + '</bdi></div>' +
-          ((age != null || side || tags) ? '<div class="meta">' + ((age != null || p.gender) ? '<span class="age" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? (p.gender === 'male' ? 'ז' : 'נ') + ' ' : '') + (age != null ? age : '') + '</bdi></span>' : '') + side + tags + '</div>' : '') +
+          ((age != null || side || tags || p.source === 'site-ad') ? '<div class="meta">' + ((age != null || p.gender) ? '<span class="age" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? (p.gender === 'male' ? 'ז' : 'נ') + ' ' : '') + (age != null ? age : '') + '</bdi></span>' : '') + side + tags + (p.source === 'site-ad' ? '<span class="adtag" title="הגיע ממודעה בתשלום">ממומן</span>' : '') + '</div>' : '') +
           (p.note ? '<div class="note">' + esc(p.note) + '</div>' : '') +
         '</div>' +
       '</li>';
@@ -800,7 +801,7 @@
     if (p && p.gender) pForm.gender.value = p.gender;
     pForm.note.value = p ? p.note : '';
     $('#pTitle').textContent = p ? 'עריכת משתתף' : 'משתתף חדש';
-    $('#pRegLine').textContent = p && regDate(p) ? ('תאריך הרשמה: ' + regDate(p) + (p.source === 'site' ? ' (דרך האתר)' : '')) : '';
+    $('#pRegLine').textContent = p && regDate(p) ? ('תאריך הרשמה: ' + regDate(p) + (p.source === 'site' ? ' (דרך האתר)' : p.source === 'site-ad' ? ' (דרך האתר, ממומן)' : '')) : '';
     { const wa = p && waLink(p.phone), tel = p && telLink(p.phone);
       $('#pContact').innerHTML = p
         ? (wa ? '<a class="wa" href="' + wa + '" target="_blank" rel="noopener" aria-label="וואטסאפ">' + WA_ICON + '</a>' : '') +

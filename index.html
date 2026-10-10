@@ -1098,6 +1098,12 @@
       el.setAttribute('href', CONFIG.payboxLink);
       el.addEventListener('click', () => { try { fbq('track', 'InitiateCheckout'); } catch (e) {} });
     });
+    /* ===== הגעה ממודעה בתשלום: הקישור במודעות הוא ?s=p. הסימון נשמר למשך הביקור (גם אם עוברים בין עמודים) ונשלח עם ההרשמה ===== */
+    const PAID = (() => {
+      let v = new URLSearchParams(location.search).get('s') === 'p';
+      try { if (v) sessionStorage.setItem('harpatka_s', 'p'); else v = sessionStorage.getItem('harpatka_s') === 'p'; } catch (e) {}
+      return v;
+    })();
     /* ===== טופס הרשמה: שם + טלפון -> Supabase (פונקציה harpatka_signup, admin/signup.sql) =====
        ולידציה ונרמול ל-E.164 זהים ללוגיקה בבסיס הנתונים (harpatka_normalize_phone).
        הרשומה נקשרת בבסיס הנתונים למפגש הקרוב (זה שבבאנר) כ"טרם שילם" */
@@ -1155,11 +1161,13 @@
         btn.disabled = true; btn.textContent = 'שולחים...';
         let finished = false;
         try {
-          const res = await fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_signup', {
+          const send = (extra) => fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_signup', {
             method: 'POST',
             headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ p_name: name, p_phone: norm, p_age: age, p_gender: gender })
+            body: JSON.stringify(Object.assign({ p_name: name, p_phone: norm, p_age: age, p_gender: gender }, extra))
           });
+          let res = await send(PAID ? { p_src: 'p' } : {});
+          if (!res.ok && PAID) res = await send({});   // אם הפונקציה בבסיס הנתונים עוד לא עודכנה (admin/source.sql): ההרשמה נשמרת בלי הסימון
           const out = res.ok ? await res.json() : null;
           if (out === 'created' || out === 'exists') {   // כפילות: אותה הודעה, בלי לחשוף שהמספר כבר רשום
             if (out === 'created') leadOnce();   // Lead רק על מספר חדש (חד ערכי), לא על כפילות
