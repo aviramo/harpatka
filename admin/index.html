@@ -797,16 +797,18 @@
     $('#list').innerHTML = rowsHtml + othersHtml + newBtn;
   }
 
-  /* ---------- סטטוס תשלום ---------- */
-  function confirmPaid(pid, mid, paid) {
-    const p = state.participants.find((x) => x.id === pid);
-    $('#cTitle').textContent = paid ? 'לסמן כ"שילם"?' : 'לסמן כ"טרם שילם"?';
-    $('#cText').textContent = (p ? p.name : '') + ' · ' + (state.meetings.find((x) => x.id === mid) ? meetingLabel(state.meetings.find((x) => x.id === mid), true) : '');
+  /* ---------- אישור לפני שינוי: סטטוס תשלום, הוספה למפגש והסרה ממנו ---------- */
+  function confirmAct(title, pid, mid, fn) {
+    const p = state.participants.find((x) => x.id === pid), m = state.meetings.find((x) => x.id === mid);
+    $('#cTitle').textContent = title;
+    $('#cText').textContent = (p ? p.name : '') + ' · ' + (m ? meetingLabel(m, true) : '');
     const dlg = $('#cDlg');
-    $('#cYes').onclick = () => { dlg.close(); setPaid(pid, mid, paid); };
+    $('#cYes').onclick = () => { dlg.close(); fn(); };
     $('#cNo').onclick = () => dlg.close();
     dlg.showModal();
   }
+  const confirmPaid = (pid, mid, paid) => confirmAct(paid ? 'לסמן כ"שילם"?' : 'לסמן כ"טרם שילם"?', pid, mid, () => setPaid(pid, mid, paid));
+  const confirmLink = (pid, mid, on, after) => confirmAct(on ? 'להוסיף למפגש?' : 'להסיר מהמפגש?', pid, mid, () => { setLinked(pid, mid, on); if (after) after(); });
 
   async function setPaid(pid, mid, paid) {
     const l = linkOf(pid, mid);
@@ -882,7 +884,7 @@
     const t = e.target.closest('[data-mt]'), pay = e.target.closest('[data-mp]');
     if (t) {
       const mid = t.dataset.mt, on = t.getAttribute('aria-pressed') !== 'true';
-      if (sheet.id) setLinked(sheet.id, mid, on);
+      if (sheet.id) confirmLink(sheet.id, mid, on);
       else { on ? sheet.links.set(mid, false) : sheet.links.delete(mid); refreshSheetMeetings(); }
     } else if (pay) {
       const mid = pay.dataset.mp;
@@ -1038,7 +1040,7 @@
   });
   $('#list').addEventListener('click', (e) => {
     const am = e.target.closest('[data-addm]');
-    if (am) { setLinked(am.dataset.addm, state.filter, true); state.q = ''; $('#q').value = ''; renderList(); toast('נוסף למפגש'); return; }
+    if (am) { confirmLink(am.dataset.addm, state.filter, true, () => { state.q = ''; $('#q').value = ''; renderList(); toast('נוסף למפגש'); }); return; }
     if (e.target.closest('#addNew')) {
       const q = state.q.trim(); openParticipant(null);
       if (digits(q).length >= 6) pForm.phone.value = q; else pForm.name.value = q;
