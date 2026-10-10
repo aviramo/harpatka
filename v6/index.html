@@ -1292,9 +1292,21 @@
           im.onerror = () => { box.remove(); };   // אין תמונה: חושפים את תמונת המודעה שמתחת
         } catch (e) { box.remove(); }
       };
+      /* חזרה מהרקע: כשהלשונית ברקע הדפדפן לא מריץ את בדיקת רגע החיתוך, והסרטון יכול להמשיך לנגן אחריו. לכן קודם חוזרים בדיוק לפריים של החיתוך ורק אז עוצרים (אחרת נשאר פריים מאוחר יותר מהסרטון) */
+      const freezeAtCut = () => {
+        if (done) return;
+        if (v.currentTime > cut + 0.08) {
+          try { v.pause(); } catch(e){}
+          const go = () => { v.removeEventListener('seeked', go); freeze(); };
+          v.addEventListener('seeked', go);
+          setTimeout(() => { if (!done) freeze(); }, 800);
+          try { v.currentTime = cut; } catch(e){ freeze(); }
+        } else freeze();
+      };
       /* חזרה מהרקע: הדפדפן עצר את הסרטון באמצע (או מחק את הקנבס): ממשיכים להתנגן ומציירים מחדש */
       const resume = () => {
         if (done || document.hidden) return;
+        if (v.currentTime >= cut) { freezeAtCut(); return; }
         try { draw(); } catch (e) {}
         if (v.paused && v.readyState >= 2) { const q = v.play(); if (q && q.catch) q.catch(() => {}); }
       };
@@ -1324,12 +1336,12 @@
         if (window.fbq) { try { fbq('trackCustom', 'HeroVideo', { ad: Number(n) }); } catch(e){} }
         const tick = () => {
           if (done) return;
-          if (v.currentTime >= cut) { freeze(); return; }
+          if (v.currentTime >= cut) { freezeAtCut(); return; }
           raf = requestAnimationFrame(tick);
         };
         const paint = () => { if (done) return; draw(); v.requestVideoFrameCallback ? v.requestVideoFrameCallback(paint) : requestAnimationFrame(paint); };
         v.addEventListener('playing', () => { clearTimeout(stall); const reveal = () => { box.classList.add('on'); paint(); }; if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(reveal); else setTimeout(reveal, 80); raf = requestAnimationFrame(tick); }, { once: true });
-        v.addEventListener('ended', freeze);
+        v.addEventListener('ended', freezeAtCut);
         v.addEventListener('error', fail);
         const stall = setTimeout(fail, 5000);   // לא התחיל להתנגן (חיבור איטי או חסימת הפעלה אוטומטית): מציגים את ההזמנה
         /* בלי סאונד ובלי שום אינטראקציה: הסרטון מושתק, לחיצה/נגיעה/גלילה לא משפיעות עליו, והוא ממשיך עד רגע החיתוך */
