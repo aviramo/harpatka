@@ -276,6 +276,8 @@
     #topbar .tb-stage{ max-height:calc(1.3rem * (1 - var(--p))); opacity:max(0, calc(1 - var(--p) * 1.7)); margin-top:calc(.625rem * (1 - var(--p))); }
     #topbar #barOld{ overflow:hidden; max-height:calc(1.5rem * (1 - var(--p))); opacity:max(0, calc(1 - var(--p) * 1.7)); margin-bottom:calc(.25rem * (1 - var(--p))); }
     #topbar #barEarly{ overflow:hidden; max-height:calc(2.6rem * (1 - var(--p))); opacity:max(0, calc(1 - var(--p) * 1.7)); margin-top:calc(.375rem * (1 - var(--p))); }
+    #regFill{ transition:width 1.4s cubic-bezier(.22,1,.36,1); }
+    @media (prefers-reduced-motion:reduce){ #regFill{ transition:none; } }
     #topbar #barPrice{ font-size:calc(1.5rem - .25rem * var(--p)); }
     .btn-ghost{
       display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
@@ -506,7 +508,7 @@
         <p class="tb-date font-display font-semibold leading-tight mt-2" style="font-size:clamp(.8rem,3.4vw,1.1rem)"><span id="barDate">יום ראשון 25.10</span> <span class="opacity-60" aria-hidden="true">·</span> <span id="barTime">20:00</span> <span class="opacity-60" aria-hidden="true">·</span> הרצליה</p>
         <div class="tb-stage flex items-center gap-1.5 min-[375px]:gap-2 mt-2.5 leading-none whitespace-nowrap" style="font-size:clamp(.66rem,2.8vw,.88rem)">
           <span id="regStage">ההרשמה התחילה</span>
-          <div class="h-[7px] rounded-full overflow-hidden" style="flex:1 1 1rem;min-width:.6rem;max-width:4.5rem;background:rgba(255,253,249,.25)" aria-hidden="true"><div id="regFill" class="h-full rounded-full" style="width:25%;background:#E9A68C"></div></div>
+          <div class="h-[7px] rounded-full overflow-hidden" style="flex:1 1 1rem;min-width:.6rem;max-width:4.5rem;background:rgba(255,253,249,.25)" aria-hidden="true"><div id="regFill" class="h-full rounded-full" style="width:0%;background:#E9A68C"></div></div>
           <span>עד 30 משתתפים</span>
         </div>
       </div>
@@ -518,6 +520,33 @@
     </div>
   </div>
   </div>
+
+  <script>
+    /* באנר "המפגש הבא": הסטטוס, המחיר והתאריך מחושבים מיד בטעינה (מהמפגש ברירת המחדל), בלי להמתין לבסיס הנתונים, כדי שלא יוצג סטטוס ישן שמתחלף אחרי רגע.
+       סרגל ההתמלאות עולה באנימציה מ-0 עד הנקודה המתאימה. כשהמפגש מבסיס הנתונים מתקבל (meetingReady) הפונקציה רצה שוב עם הנתונים שלו. */
+    window.applyBanner = function (m) {
+      const el = id => document.getElementById(id);
+      const day = s => { const [y, mm, d] = s.split('-').map(Number); return Date.UTC(y, mm - 1, d) / 864e5; };
+      const left = day(m.date) - day(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()));
+      const [, mo, dd] = m.date.split('-');
+      const heDay = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'][new Date(m.date + 'T12:00:00Z').getUTCDay()];
+      if (el('barDate')) el('barDate').textContent = 'יום ' + heDay + ' ' + Number(dd) + '.' + Number(mo);
+      if (el('barTime') && m.time) el('barTime').textContent = m.time;
+      const STAGES = [[15, 'ההרשמה התחילה', 25], [8, 'ההרשמה בעיצומה', 45], [4, 'המקומות מתמלאים', 65], [2, 'מעט מקומות נשארו', 85], [0, 'המקומות האחרונים', 95]];
+      let s = STAGES.find(x => left >= x[0]);
+      if (left < 0) s = [0, 'ההרשמה הסתיימה', 100];
+      if (!s) s = STAGES[0];
+      if (el('regStage')) el('regStage').textContent = s[1];
+      const fill = el('regFill');
+      if (fill) { if (!fill.dataset.go) { fill.dataset.go = '1'; requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => { fill.style.width = s[2] + '%'; }, 250))); } else fill.style.width = s[2] + '%'; }
+      // מחיר: 100 ₪ ב-3 הימים האחרונים, אחרת 80 ₪ (הנחת הרשמה מוקדמת)
+      const price = left <= 3 ? '100' : '80';
+      if (el('barPrice')) el('barPrice').textContent = price + ' ₪';
+      if (el('barEarly')) el('barEarly').hidden = price !== '80';
+      if (el('barOld')) el('barOld').hidden = price !== '80';
+    };
+    window.applyBanner({ date: '2026-10-25', time: '20:00' });   // חייב להתאים ל-MEETING_FALLBACK
+  </script>
 
   <!-- ====================== 1. HERO — מכתב הזמנה (מעטפת דואר בפסים): חוויה אנושית בלי מילים + מי מגיע + CTA ====================== -->
   <header id="hero" class="relative">
@@ -960,26 +989,7 @@
 
     /* ===== באנר "המפגש הבא": תאריך, שעה ושלב הרשמה לפי המפגש מבסיס הנתונים, בלי חשיפת מספר נרשמים אמיתי.
        שלב לפי כמה ימים נשארו עד המפגש: 15 ומעלה / 8 / 4 / 2 / 0 ===== */
-    meetingReady.then(m => {
-      const el = id => document.getElementById(id);
-      const day = s => { const [y,mm,d] = s.split('-').map(Number); return Date.UTC(y, mm-1, d) / 864e5; };
-      const today = day(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()));
-      const left = day(m.date) - today;
-      const [yy, mo, dd] = m.date.split('-');
-      if (el('barDate')) el('barDate').textContent = 'יום ' + heDay(m.date) + ' ' + Number(dd) + '.' + Number(mo);
-      if (el('barTime')) el('barTime').textContent = m.time;
-      const STAGES = [[15, 'ההרשמה התחילה', 25], [8, 'ההרשמה בעיצומה', 45], [4, 'המקומות מתמלאים', 65], [2, 'מעט מקומות נשארו', 85], [0, 'המקומות האחרונים', 95]];
-      let s = STAGES.find(x => left >= x[0]);
-      if (left < 0) s = [0, 'ההרשמה הסתיימה', 100];
-      if (!s) s = STAGES[0];
-      if (el('regStage')) el('regStage').textContent = s[1];
-      if (el('regFill')) el('regFill').style.width = s[2] + '%';
-      // מחיר: 100 ₪ ב-3 הימים האחרונים, אחרת 80 ₪ (הנחת הרשמה מוקדמת)
-      const price = left <= 3 ? '100' : '80';
-      if (el('barPrice')) el('barPrice').textContent = price + ' ₪';
-      if (el('priceNow')) el('priceNow').textContent = price + ' ₪';
-      if (price !== '80') { if (el('barEarly')) el('barEarly').hidden = true; if (el('barOld')) el('barOld').hidden = true; }
-    });
+    meetingReady.then(m => window.applyBanner(m));
 
     /* ===== ציר מחיר: 80 ₪ עד 21.10, 100 ₪ מ-22.10 (שלושת הימים האחרונים) ועד המפגש ב-25.10; הנקודה "היום" נעה על הציר.
        הציר לא לינארי בכוונה: השנתה (22.10) תמיד באמצע, חצי שמאלי = מתחילת הציר (START) עד 22.10, חצי ימני = 22.10 עד המפגש ===== */
