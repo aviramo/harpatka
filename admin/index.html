@@ -130,7 +130,7 @@
       .tools .search:not(:focus-within) input:placeholder-shown::placeholder { color: transparent; }
       .tools .search:focus-within, .tools:has(.search input:not(:placeholder-shown)) .search { flex: 1 1 auto; }
       .tools .search:focus-within input, .tools .search input:not(:placeholder-shown) { padding-right: 40px; cursor: text; }
-      .tools:has(.search:focus-within) .facets, .tools:has(.search input:not(:placeholder-shown)) .facets { display: none; }
+      .tools:has(.search:focus-within) .facets, .tools:has(.search input:not(:placeholder-shown)) .facets, .tools:has(.search:focus-within) .sortwrap, .tools:has(.search input:not(:placeholder-shown)) .sortwrap { display: none; }
       .fx { padding: 0 7px; gap: 4px; font-size: 13px; }
       .fx b { font-size: 14px; }
       .fx .lw.pay-lw { display: none; }
@@ -178,10 +178,11 @@
     .gate .gerr { color: #A9533A; font-weight: 600; margin-top: 18px; min-height: 1.2em; }
     .gate .glink[hidden] { display: none; }
     .gate .glink { display: inline-block; margin-top: 16px; color: var(--muted); text-decoration: underline; cursor: pointer; background: none; font-size: 15px; }
-    .sortwrap { position: relative; margin-inline-start: auto; }
-    .sortbtn { color: var(--muted); font-size: 14px; padding: 4px 8px; border-radius: 999px; }
-    .sortbtn b { color: var(--ink); font-weight: 700; }
-    .sortmenu { position: absolute; top: calc(100% + 6px); inset-inline-end: 0; z-index: 20; min-width: 190px; background: var(--paper); border-radius: 16px; border: 1.5px solid var(--line); box-shadow: 0 10px 30px rgba(63,56,47,.18); padding: 6px; }
+    .sortwrap { position: relative; margin-inline-start: auto; flex: 0 0 auto; }
+    .sortbtn { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 16px; border: 1.5px solid var(--line); background: var(--paper); color: var(--muted); }
+    .sortbtn svg { width: 20px; height: 20px; }
+    .sortbtn.on { color: var(--terra); border-color: var(--coral); }
+    .sortmenu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; min-width: 190px; background: var(--paper); border-radius: 16px; border: 1.5px solid var(--line); box-shadow: 0 10px 30px rgba(63,56,47,.18); padding: 6px; }
     .sortmenu[hidden] { display: none; }
     .sortmenu button { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 12px; text-align: right; font-size: 16px; font-weight: 600; }
     .sortmenu button[aria-checked="true"] { background: rgba(201,111,82,.12); color: var(--terra); }
@@ -278,10 +279,6 @@
     <header class="top">
       <div class="title-row">
         <h1>משתתפים</h1>
-        <div class="sortwrap">
-          <button type="button" class="sortbtn" id="sortBtn" aria-haspopup="menu" aria-expanded="false">מיון: <b id="sortLbl">חדשים ראשונים</b> ▾</button>
-          <div class="sortmenu" id="sortMenu" role="menu" hidden></div>
-        </div>
         <button type="button" class="signout" id="signOut">יציאה</button>
       </div>
       <nav class="chips" id="chips" aria-label="סינון לפי מפגש"></nav>
@@ -292,6 +289,10 @@
           <button type="button" class="sclear" id="qClear" aria-label="ניקוי החיפוש" tabindex="-1">×</button>
         </label>
         <div class="facets" id="facets" role="group" aria-label="סינון לפי מגדר ותשלום"></div>
+        <div class="sortwrap">
+          <button type="button" class="sortbtn" id="sortBtn" aria-haspopup="menu" aria-expanded="false" aria-label="מיון" title="מיון"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v15M7 19l-3-3M7 19l3-3M17 20V5M17 5l-3 3M17 5l3 3"/></svg></button>
+          <div class="sortmenu" id="sortMenu" role="menu" hidden></div>
+        </div>
       </div>
     </header>
 
@@ -705,7 +706,8 @@
     }
   }
   function renderSort() {
-    $('#sortLbl').textContent = (SORTS.find((s) => s[0] === state.sort) || SORTS[0])[1];
+    $('#sortBtn').classList.toggle('on', state.sort !== 'new');
+    $('#sortBtn').title = 'מיון: ' + (SORTS.find((s) => s[0] === state.sort) || SORTS[0])[1];
     $('#sortMenu').innerHTML = SORTS.map((s) => '<button type="button" role="menuitemradio" data-sort="' + s[0] + '" aria-checked="' + (state.sort === s[0]) + '">' + s[1] + '</button>').join('');
   }
   const closeSort = () => { $('#sortMenu').hidden = true; $('#sortBtn').setAttribute('aria-expanded', 'false'); };
