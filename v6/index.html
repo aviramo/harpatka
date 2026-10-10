@@ -718,7 +718,10 @@
         </div>
         <div data-su="done" hidden>
           <h2 class="h-sect text-[1.7rem] md:text-[2.2rem] mb-3">תודה! נחזור אליכם בהקדם</h2>
-          <p class="lead muted mb-6">בינתיים אפשר להצטרף לקבוצת העדכונים בוואטסאפ</p>
+          <p class="lead muted mb-5">כדי לשמור מקום אפשר לשלם כבר עכשיו בפייבוקס</p>
+          <a href="#" target="_blank" rel="noopener" data-paybox class="btn-primary rounded-full px-8 py-3.5 text-[1.2rem]">תשלום <span data-price>80 ₪</span> ושמירת מקום</a>
+          <p class="muted text-[.95rem] mt-3">בהערה לתשלום כדאי לכתוב את השם, כדי שנדע מי שילם</p>
+          <p class="lead muted mt-8 mb-4">ובינתיים אפשר להצטרף לקבוצת העדכונים בוואטסאפ</p>
           <a href="#" target="_blank" rel="noopener" data-updates class="btn-green">הצטרפות לקבוצת העדכונים</a>
         </div>
       </div>
@@ -892,7 +895,10 @@
         </div>
         <div data-su="done" hidden>
           <h2 class="h-sect text-[1.7rem] md:text-[2.2rem] mb-3">תודה! נחזור אליכם בהקדם</h2>
-          <p class="lead muted mb-6">בינתיים אפשר להצטרף לקבוצת העדכונים בוואטסאפ</p>
+          <p class="lead muted mb-5">כדי לשמור מקום אפשר לשלם כבר עכשיו בפייבוקס</p>
+          <a href="#" target="_blank" rel="noopener" data-paybox class="btn-primary rounded-full px-8 py-3.5 text-[1.2rem]">תשלום <span data-price>80 ₪</span> ושמירת מקום</a>
+          <p class="muted text-[.95rem] mt-3">בהערה לתשלום כדאי לכתוב את השם, כדי שנדע מי שילם</p>
+          <p class="lead muted mt-8 mb-4">ובינתיים אפשר להצטרף לקבוצת העדכונים בוואטסאפ</p>
           <a href="#" target="_blank" rel="noopener" data-updates class="btn-green">הצטרפות לקבוצת העדכונים</a>
         </div>
       </div>
@@ -1088,6 +1094,11 @@
 
     /* ===== הצטרפות לעדכונים — קישור ישיר לקבוצת הוואטסאפ (עד גיל 50), בלי פופאפ בחירה ===== */
     document.querySelectorAll('[data-updates]').forEach(el => { el.setAttribute('href', CONFIG.updatesGroupLink); });
+    /* ===== תשלום בפייבוקס (בהודעת התודה אחרי ההרשמה): קישור לקבוצת התשלום, ו-InitiateCheckout ל-Pixel בלחיצה ===== */
+    document.querySelectorAll('[data-paybox]').forEach(el => {
+      el.setAttribute('href', CONFIG.payboxLink);
+      el.addEventListener('click', () => { try { fbq('track', 'InitiateCheckout'); } catch (e) {} });
+    });
     /* ===== טופס הרשמה: שם + טלפון -> Supabase (פונקציה harpatka_signup, admin/signup.sql) =====
        ולידציה ונרמול ל-E.164 זהים ללוגיקה בבסיס הנתונים (harpatka_normalize_phone).
        הרשומה נקשרת בבסיס הנתונים למפגש הקרוב (זה שבבאנר) כ"טרם שילם" */
@@ -1231,6 +1242,7 @@
       const price = left <= 3 ? '100' : '80';
       if (el('barPrice')) el('barPrice').textContent = price + ' ₪';
       if (el('priceNow')) el('priceNow').textContent = price + ' ₪';
+      document.querySelectorAll('[data-price]').forEach(e => { e.textContent = price + ' ₪'; });   // מחיר בכפתור התשלום בהודעת התודה
       if (price !== '80') { if (el('barEarly')) el('barEarly').hidden = true; if (el('barOld')) el('barOld').hidden = true; }
     });
 
