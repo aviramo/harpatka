@@ -177,6 +177,14 @@
     .gate .gerr { color: #A9533A; font-weight: 600; margin-top: 18px; min-height: 1.2em; }
     .gate .glink[hidden] { display: none; }
     .gate .glink { display: inline-block; margin-top: 16px; color: var(--muted); text-decoration: underline; cursor: pointer; background: none; font-size: 15px; }
+    .sortwrap { position: relative; margin-inline-start: auto; }
+    .sortbtn { color: var(--muted); font-size: 14px; padding: 4px 8px; border-radius: 999px; }
+    .sortbtn b { color: var(--ink); font-weight: 700; }
+    .sortmenu { position: absolute; top: calc(100% + 6px); inset-inline-end: 0; z-index: 20; min-width: 190px; background: var(--paper); border-radius: 16px; border: 1.5px solid var(--line); box-shadow: 0 10px 30px rgba(63,56,47,.18); padding: 6px; }
+    .sortmenu[hidden] { display: none; }
+    .sortmenu button { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 12px; text-align: right; font-size: 16px; font-weight: 600; }
+    .sortmenu button[aria-checked="true"] { background: rgba(201,111,82,.12); color: var(--terra); }
+    .sortmenu button[aria-checked="true"]::after { content: "✓"; font-weight: 800; }
     .signout { background: none; color: var(--muted); text-decoration: underline; font-size: 14px; cursor: pointer; margin-inline-start: 12px; }
 
     .empty { text-align: center; color: var(--muted); padding: 48px 16px; }
@@ -269,6 +277,10 @@
     <header class="top">
       <div class="title-row">
         <h1>משתתפים</h1>
+        <div class="sortwrap">
+          <button type="button" class="sortbtn" id="sortBtn" aria-haspopup="menu" aria-expanded="false">מיון: <b id="sortLbl">חדשים ראשונים</b> ▾</button>
+          <div class="sortmenu" id="sortMenu" role="menu" hidden></div>
+        </div>
         <button type="button" class="signout" id="signOut">יציאה</button>
       </div>
       <nav class="chips" id="chips" aria-label="סינון לפי מפגש"></nav>
@@ -353,12 +365,12 @@
   };
   const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance' };
 
-  const state = { participants: [], meetings: [], att: [], filter: null, q: '', pay: null, gender: null };
+  const state = { participants: [], meetings: [], att: [], filter: null, q: '', pay: null, gender: null, sort: 'new' };
   /* קישור עמוק מהמייל: ?m=<מפגש>&p=<משתתף>; נשמר בזמן הכניסה עם גוגל (שמחזירה בלי הפרמטרים) */
   let deep = null;
   try {
     const sp = new URLSearchParams(location.search);
-    if (['m', 'p', 'pay', 'q', 'em', 'g'].some((k) => sp.get(k))) { deep = { m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
+    if (['m', 'p', 'pay', 'q', 'em', 'g', 's'].some((k) => sp.get(k))) { deep = { m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g'), s: sp.get('s') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
     else { deep = JSON.parse(sessionStorage.getItem('harpatka_deep') || 'null'); }
   } catch (e) {}
   const $ = (s) => document.querySelector(s);
@@ -371,6 +383,7 @@
     if (state.filter) sp.set('m', state.filter);
     if (state.pay) sp.set('pay', state.pay);
     if (state.gender) sp.set('g', state.gender);
+    if (state.sort !== 'new') sp.set('s', state.sort);
     if (state.q.trim()) sp.set('q', state.q.trim());
     if (openPid) sp.set('p', openPid);
     if (editingMeeting && mDlg.open) sp.set('em', editingMeeting.id);
@@ -603,6 +616,7 @@
         if (d.m && state.meetings.some((x) => x.id === d.m)) state.filter = d.m;
         if (d.pay === 'paid' || d.pay === 'unpaid') state.pay = d.pay;
         if (d.g === 'male' || d.g === 'female' || d.g === 'none') state.gender = d.g;
+        if (d.s && SORTS.some((x) => x[0] === d.s)) state.sort = d.s;
         if (d.q) { state.q = d.q; $('#q').value = d.q; }
         urlReady = true;
         render();
@@ -623,7 +637,7 @@
   }
 
   /* ---------- רינדור ---------- */
-  function render() { renderChips(); renderList(); { const fab = $('#addBtn'); fab.classList.toggle('edit', !!state.filter); fab.textContent = state.filter ? 'עריכת מפגש' : '+ משתתף'; } syncUrl(); }   // בתוך מפגש מוסיפים דרך החיפוש
+  function render() { renderChips(); renderSort(); renderList(); { const fab = $('#addBtn'); fab.classList.toggle('edit', !!state.filter); fab.textContent = state.filter ? 'עריכת מפגש' : '+ משתתף'; } syncUrl(); }   // בתוך מפגש מוסיפים דרך החיפוש
 
   function renderChips() {
     const all = '<button type="button" class="chip" data-filter="" aria-pressed="' + (state.filter === null) + '">הכל <span class="count">' + state.participants.length + '</span></button>';
@@ -670,6 +684,35 @@
     $('#facets').innerHTML = base.length || state.gender || state.pay ? h : '';
   }
 
+  /* מיון הרשימה */
+  const SORTS = [
+    ['new', 'חדשים ראשונים'], ['old', 'ישנים ראשונים'], ['name', 'שם (א עד ת)'],
+    ['age_asc', 'גיל: מהצעיר'], ['age_desc', 'גיל: מהמבוגר'], ['unpaid', 'טרם שילמו קודם'],
+  ];
+  function sortCmp() {
+    const byNew = (a, b) => String(b.created_at || '').localeCompare(String(a.created_at || ''));
+    const byName = (a, b) => a.name.localeCompare(b.name, 'he');
+    const ageOf = (p) => { const x = shownAge(p); return x == null ? null : x; };
+    const byAge = (dir) => (a, b) => { const x = ageOf(a), y = ageOf(b); if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1; return dir * (x - y); };
+    switch (state.sort) {
+      case 'old': return (a, b) => -byNew(a, b) || byName(a, b);
+      case 'name': return byName;
+      case 'age_asc': return (a, b) => byAge(1)(a, b) || byNew(a, b);
+      case 'age_desc': return (a, b) => byAge(-1)(a, b) || byNew(a, b);
+      case 'unpaid': return (a, b) => { const x = paidState(a) === false ? 0 : 1, y = paidState(b) === false ? 0 : 1; return x - y || byNew(a, b); };
+      default: return (a, b) => byNew(a, b) || byName(a, b);
+    }
+  }
+  function renderSort() {
+    $('#sortLbl').textContent = (SORTS.find((s) => s[0] === state.sort) || SORTS[0])[1];
+    $('#sortMenu').innerHTML = SORTS.map((s) => '<button type="button" role="menuitemradio" data-sort="' + s[0] + '" aria-checked="' + (state.sort === s[0]) + '">' + s[1] + '</button>').join('');
+  }
+  const closeSort = () => { $('#sortMenu').hidden = true; $('#sortBtn').setAttribute('aria-expanded', 'false'); };
+  $('#sortBtn').addEventListener('click', (e) => { e.stopPropagation(); const m = $('#sortMenu'); m.hidden = !m.hidden; $('#sortBtn').setAttribute('aria-expanded', String(!m.hidden)); });
+  $('#sortMenu').addEventListener('click', (e) => { const b = e.target.closest('[data-sort]'); if (!b) return; state.sort = b.dataset.sort; closeSort(); render(); });
+  document.addEventListener('click', (e) => { if (!e.target.closest('.sortwrap')) closeSort(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSort(); });
+
   /* הודעה כשאין תוצאות, לפי הסינון הפעיל */
   function emptyMsg() {
     const g = state.gender, pay = state.pay, scope = state.filter ? ' במפגש הזה' : '';
@@ -697,7 +740,7 @@
       if (!q) return true;
       return p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd));
     });
-    rows.sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')) || a.name.localeCompare(b.name, 'he'));   // לפי תאריך יצירה, החדשים למעלה
+    rows.sort(sortCmp());
 
     /* במסך מפגש + חיפוש: מציגים גם מי שלא רשום למפגש, כדי להוסיף אותם בלחיצה (למשל מי שהגיע בלי להודיע) */
     let others = [];
