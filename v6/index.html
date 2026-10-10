@@ -261,8 +261,7 @@
     /* ===== סרטון פתיחה על ההזמנה: אותו גודל בדיוק, בלי קפיצות; נעלם (דהייה) ברגע שההזמנה בסרטון נכנסת ===== */
     #heroStage{ position:relative; width:100%; }
     /* הסרטון לכל הרוחב, בלי פינות מעוגלות: ממשיך את הבאנר. בדסקטופ הגובה מוגבל והצדדים נצבעים מקצוות הפריים */
-    /* הסרטון לא ממלא את כל המסך הראשון: נשאר מקום בתחתית כדי שראש ההזמנה יציץ מתחתיו (--tbh = גובה הבאנר הקבוע, נקבע ב-JS) */
-    .hs-media{ position:relative; width:100%; aspect-ratio:4/5; max-height:max(17rem, min(88vh, calc(100vh - var(--tbh, 0px) - 6.5rem))); overflow:hidden; background:var(--cream); }
+    .hs-media{ position:relative; width:100%; aspect-ratio:4/5; max-height:88vh; overflow:hidden; background:var(--cream); }
     .hs-media > img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
     .hv{ pointer-events:none; position:absolute; inset:0; z-index:5; background:var(--cream); transition:opacity .45s ease; }
     html:not(.vid-pending) .hv:not(.closing){ display:none; }
@@ -832,7 +831,7 @@
       </div>
       <div id="cmFormView" data-su-root>
         <div data-su="formWrap">
-          <h2 class="h-sect text-[1.5rem] md:text-[1.9rem] mb-2 px-8">הרשמה למפגש</h2>
+          <h2 class="h-sect text-[1.5rem] md:text-[1.9rem] mb-2 px-8">שמרו לכם מקום</h2>
           <p class="muted mb-5 text-[.95rem]">מספר המקומות מוגבל, והמקום נשמר אחרי מילוי הפרטים ותשלום</p>
           <form data-su="form" novalidate class="text-start">
             <input type="text" name="website" data-su="hp" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
@@ -908,7 +907,7 @@
        (במובייל רק פס דק מהתמונה נראה מתחת לכפתור, ולכן היא לא הופיעה יחד איתו) */
     /* חשוב: רק אחרי הפריים הראשון — אחרת אין "שינוי" והמעברים (וההשהיות שלהם) לא רצים, והכל מופיע בבת אחת */
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      document.querySelectorAll('#hero .reveal, #invite .reveal, #notdating .reveal, #human .reveal').forEach(el => { el.classList.add('in'); io.unobserve(el); });
+      document.querySelectorAll('#hero .reveal, #notdating .reveal, #human .reveal').forEach(el => { el.classList.add('in'); io.unobserve(el); });
     }));
 
     /* parallax עדין מאוד — לתמונת ה-Hero ולצורות. נמדד מול ההורה (שאינו זז) כדי למנוע לולאת משוב */
@@ -1351,7 +1350,7 @@
       const measure = () => {   // גובה המצב המלא, גם אם הדף נטען באמצע גלילה
         const cur = bar.style.getPropertyValue('--p');
         bar.style.setProperty('--p', '0'); const h = bar.offsetHeight; bar.style.setProperty('--p', cur || '0');
-        if (h) { wrap.style.height = h + 'px'; document.documentElement.style.setProperty('--tbh', h + 'px'); }
+        if (h) wrap.style.height = h + 'px';
       };
       measure(); apply();
       window.addEventListener('load', measure); window.addEventListener('resize', measure);
