@@ -97,12 +97,13 @@
     .row .acts { display: flex; align-items: center; justify-content: flex-start; gap: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
     .row .name { font-weight: 700; font-size: 18px; }
     .row .age { display: inline-block; color: var(--muted); background: #EFE4D3; border-radius: 999px; padding: 1px 10px; font-weight: 600; margin-inline-start: 10px; font-size: 14px; vertical-align: middle; white-space: nowrap; }
-    .row .nm { min-width: 0; }
+    .row .nm { min-width: 0; display: flex; align-items: center; gap: 6px; }
     .row .meta { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 5px; margin-top: 3px; }
     .row .meta .age, .row .meta .ptag { font-size: 13px; padding: 1px 8px; margin: 0; }
-    .row .adtag { display: inline-block; font-size: 13px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: #E3EEF3; color: #1F5C6B; white-space: nowrap; }
+    .row .adtag { flex: 0 0 auto; display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #E3EEF3; color: #1F5C6B; }
+    .row .adtag svg { width: 13px; height: 13px; }
     .row .meta > * { flex: 0 0 auto; }
-    .row .nm .name { min-width: 0; overflow-wrap: anywhere; line-height: 1.2; }
+    .row .nm .name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; line-height: 1.2; }
     .row .nm .age { margin-inline-start: 0; flex: 0 0 auto; }
     .row .ptag { display: inline-block; border-radius: 999px; padding: 1px 10px; font-weight: 700; font-size: 14px; white-space: nowrap; background: var(--red-bg); color: var(--red); }
     .row .ptag.paid { background: var(--green-bg); color: var(--green); }
@@ -785,8 +786,8 @@
       }
       return '<li class="row">' +
         '<div class="main" role="button" tabindex="0" data-edit="' + p.id + '">' +
-          '<div class="nm"><bdi class="name">' + esc(p.name) + '</bdi></div>' +
-          ((age != null || side || tags || p.source === 'site-ad') ? '<div class="meta">' + ((age != null || p.gender) ? '<span class="age" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? (p.gender === 'male' ? 'ז' : 'נ') + ' ' : '') + (age != null ? age : '') + '</bdi></span>' : '') + side + tags + (p.source === 'site-ad' ? '<span class="adtag" title="הגיע ממודעה בתשלום">ממומן</span>' : '') + '</div>' : '') +
+          '<div class="nm"><bdi class="name">' + esc(p.name) + '</bdi>' + (p.source === 'site-ad' ? '<span class="adtag" title="ממומן: הגיע ממודעה בתשלום" aria-label="ממומן"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 9a4 4 0 0 1 0 6"/></svg></span>' : '') + '</div>' +
+          ((age != null || side || tags) ? '<div class="meta">' + ((age != null || p.gender) ? '<span class="age" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? (p.gender === 'male' ? 'ז' : 'נ') + ' ' : '') + (age != null ? age : '') + '</bdi></span>' : '') + side + tags + '</div>' : '') +
           (p.note ? '<div class="note">' + esc(p.note) + '</div>' : '') +
         '</div>' +
       '</li>';
