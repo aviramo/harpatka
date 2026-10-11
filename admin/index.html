@@ -181,13 +181,24 @@
     .kpi.good b { color: var(--green); } .kpi.warn b { color: #8A5A00; } .kpi.bad b { color: var(--red); }
     /* סולם ריווח אחיד: 4 / 8 / 12 / 16 */
     .stsec { background: #fff; border: 1.5px solid var(--line); border-radius: 20px; padding: 16px; margin-bottom: 12px; }
+    .stsec.flat { background: transparent; border: 0; padding: 4px 0 0; }   /* תובנות מרכזיות: בלי מסגרת ורקע */
     .stsec h3 { margin: 0 0 12px; font-family: "Rubik", sans-serif; font-size: 18px; line-height: 1.2; }
     .stsec h3:has(+ .sthint) { margin-bottom: 4px; }
     .sthint { margin: 0 0 12px; color: var(--muted); font-size: 13.5px; line-height: 1.4; }
     .stsec p.stline { margin: 8px 0 0; font-size: 14.5px; }
-    .insights { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
-    .insights li { padding: 12px 16px; background: var(--cream); border-radius: 14px; font-size: 15px; line-height: 1.5; }
-    .insights li b { font-weight: 800; }
+    .insights { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: 1fr; gap: 8px; }
+    @media (min-width: 640px) { .insights { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .insights li.ins { display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: var(--cream); border-radius: 18px; }
+    .ins .ring { position: relative; flex: 0 0 auto; width: 58px; height: 58px; display: grid; place-items: center; }
+    .ins .ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .ins .ring b { position: relative; font-family: "Rubik", sans-serif; font-size: 15px; font-weight: 700; }
+    .ins .trend { flex: 0 0 auto; width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; align-content: center; gap: 0; }
+    .ins .trend i { font-style: normal; font-size: 13px; line-height: 1; }
+    .ins .trend b { font-family: "Rubik", sans-serif; font-size: 15px; font-weight: 700; line-height: 1.1; }
+    .ins .trend.up { background: var(--green-bg); color: var(--green); } .ins .trend.down { background: var(--red-bg); color: var(--red); }
+    .ins .itx { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .ins .itx b { font-family: "Rubik", sans-serif; font-weight: 600; font-size: 16px; }
+    .ins .itx span { color: var(--muted); font-size: 13.5px; line-height: 1.45; }
     .brow { display: grid; grid-template-columns: 92px 1fr auto; align-items: center; gap: 8px; margin: 7px 0; font-size: 14px; }
     .brow .bl { font-weight: 700; }
     .brow .bt { height: 12px; background: rgba(63,56,47,.08); border-radius: 999px; overflow: hidden; }
@@ -954,17 +965,20 @@
     const last3 = regs.filter((l) => dnum(l.m.meeting_date) - dnum(ilDay(l.created_at)) <= 3);
     const out = [];
 
-    // ---- תובנות ----
+    // ---- תובנות: כל תובנה עם טבעת אחוז או תג מגמה, כותרת ופירוט ----
+    const ring = (pctVal, color) => { const v = Math.max(0, Math.min(100, pctVal || 0)); return '<span class="ring"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="none" stroke="rgba(63,56,47,.10)" stroke-width="6"/><circle cx="24" cy="24" r="20" fill="none" stroke="' + color + '" stroke-width="6" stroke-linecap="round" stroke-dasharray="' + (v * 1.2566).toFixed(1) + ' 125.7" transform="rotate(-90 24 24)"/></svg><b>' + (pctVal == null ? '—' : v + '%') + '</b></span>'; };
+    const insItem = (visual, title, detail) => '<li class="ins">' + visual + '<div class="itx"><b>' + title + '</b><span>' + detail + '</span></div></li>';
     const ins = [];
-    ins.push('<b>המרה לתשלום ' + Ps(paid.length, n) + '</b>: ' + paid.length + ' מתוך ' + n + ' הרשמות שולמו' + (waiting3.length ? ', ו-' + waiting3.length + ' ממתינים מעל 3 ימים' : ''));
-    if (male.length + female.length) ins.push('<b>הרכב:</b> ' + Ps(female.length, male.length + female.length) + ' נשים ו-' + Ps(male.length, male.length + female.length) + ' גברים' + (cM.n && cF.n ? ' (המרה: נשים ' + Ps(cF.paid, cF.n) + ', גברים ' + Ps(cM.paid, cM.n) + ')' : ''));
-    if (ages.length) ins.push('<b>' + Ps(target.length, ages.length) + '</b> מהקהל בטווח היעד 40–49, גיל ממוצע ' + (ages.reduce((a, b) => a + b, 0) / ages.length).toFixed(1));
-    if (regs.length >= 5) ins.push('<b>' + Ps(last3.length, regs.length) + '</b> מההרשמות מגיעות ב-3 הימים האחרונים לפני המפגש' + (last3.length / regs.length > .4 ? ': כדאי לחזק פרסום ותזכורות בימים האחרונים' : ''));
+    ins.push(insItem(ring(P(paid.length, n), '#2F7D4F'), 'המרה לתשלום', paid.length + ' מתוך ' + n + ' הרשמות שולמו' + (waiting3.length ? '<br>' + waiting3.length + ' ממתינים מעל 3 ימים' : '')));
+    if (male.length + female.length) ins.push(insItem(ring(P(female.length, male.length + female.length), '#C2547A'), 'הרכב מגדרי', P(female.length, male.length + female.length) + '% נשים · ' + P(male.length, male.length + female.length) + '% גברים' + (cM.n && cF.n ? '<br>המרה: נשים ' + Ps(cF.paid, cF.n) + ' · גברים ' + Ps(cM.paid, cM.n) : '')));
+    if (ages.length) ins.push(insItem(ring(P(target.length, ages.length), '#686A48'), 'בטווח היעד 40–49', 'גיל ממוצע ' + (ages.reduce((a, b) => a + b, 0) / ages.length).toFixed(1) + ' · חציון ' + median(ages)));
+    if (regs.length >= 5) ins.push(insItem(ring(P(last3.length, regs.length), '#C96F52'), 'נרשמים ברגע האחרון', 'ב-3 הימים שלפני המפגש' + (last3.length / regs.length > .4 ? '<br>כדאי לחזק פרסום ותזכורות בימים האחרונים' : '')));
     const adN = links.filter((l) => src(l.p) === 'ad').length;
-    if (adN) ins.push('<b>' + Ps(adN, n) + '</b> מההרשמות הגיעו ממודעה ממומנת (המרה לתשלום ' + Ps(links.filter((l) => src(l.p) === 'ad' && l.paid).length, adN) + ')');
+    if (adN) ins.push(insItem(ring(P(adN, n), '#B7791F'), 'מגיעים ממודעה ממומנת', 'המרה לתשלום ממודעות: ' + Ps(links.filter((l) => src(l.p) === 'ad' && l.paid).length, adN)));
     const pm = S.perMeeting.filter((r) => r.regs);
-    if (pm.length >= 2) { const a = pm[pm.length - 1], b = pm[pm.length - 2]; ins.push('<b>המפגש האחרון:</b> ' + a.regs + ' נרשמים לעומת ' + b.regs + ' במפגש שלפניו, ' + (a.regs >= b.regs ? 'עלייה' : 'ירידה') + ' של ' + Math.abs(P(a.regs - b.regs, b.regs) || 0) + '%'); }
-    out.push(sec('תובנות מרכזיות', '', '<ul class="insights">' + ins.map((x) => '<li>' + x + '</li>').join('') + '</ul>'));
+    if (pm.length >= 2) { const a = pm[pm.length - 1], b = pm[pm.length - 2], ch = P(a.regs - b.regs, b.regs) || 0, up = a.regs >= b.regs;
+      ins.push(insItem('<span class="trend ' + (up ? 'up' : 'down') + '"><i>' + (up ? '▲' : '▼') + '</i><b>' + Math.abs(ch) + '%</b></span>', 'המפגש האחרון ' + (up ? 'בעלייה' : 'בירידה'), a.regs + ' נרשמים לעומת ' + b.regs + ' במפגש שלפניו')); }
+    out.push(sec('תובנות מרכזיות', '', '<ul class="insights">' + ins.join('') + '</ul>').replace('<section class="stsec">', '<section class="stsec flat">'));
 
     // ---- מדדים ראשיים ----
     const kp = [];
