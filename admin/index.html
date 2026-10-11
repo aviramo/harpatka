@@ -108,6 +108,8 @@
     .row .nm .age { margin-inline-start: 0; flex: 0 0 auto; }
     .row .ptag { display: inline-block; border-radius: 999px; padding: 1px 10px; font-weight: 700; font-size: 14px; white-space: nowrap; background: var(--red-bg); color: var(--red); }
     .row .ptag.paid { background: var(--green-bg); color: var(--green); }
+    .row .ptag.requested { background: #FBEBC8; color: #8A5A00; }
+    .row .ptag.unpaid { background: var(--red-bg); color: var(--red); }
     .row .main { cursor: pointer; }
     .pay.pi { width: 36px; height: 36px; padding: 0; display: grid; place-items: center; font-size: 18px; font-weight: 800; line-height: 1; }
     .pay.pi svg { width: 20px; height: 20px; }
@@ -132,13 +134,16 @@
       .tools .search:focus-within, .tools:has(.search input:not(:placeholder-shown)) .search { flex: 1 1 auto; }
       .tools .search:focus-within input, .tools .search input:not(:placeholder-shown) { padding-right: 40px; cursor: text; }
       .tools:has(.search:focus-within) .facets, .tools:has(.search input:not(:placeholder-shown)) .facets, .tools:has(.search:focus-within) .sortwrap, .tools:has(.search input:not(:placeholder-shown)) .sortwrap { display: none; }
-      .fx { padding: 0 7px; gap: 4px; font-size: 13px; }
-      .fx b { font-size: 14px; }
+      .facets .fx { padding: 0 6px; gap: 3px; font-size: 12.5px; }
+      .facets .fx b { font-size: 13.5px; }
       .fx .lw.pay-lw { display: none; }
       .fx .li { display: inline; font-size: 15px; }
       .fx .lw.gen-lw { display: none; }
       .fx .gi { display: inline; font-size: 16px; }
-      .tools { gap: 6px; }
+      .tools { gap: 5px; }
+      .tools .search, .sortbtn { flex-basis: 40px; }
+      .sortbtn { width: 40px; }
+      .facets { gap: 5px; }
       .facets { gap: 6px; }
       .fgroup { padding: 3px; }
     }
@@ -150,9 +155,11 @@
     .fx[aria-pressed="true"] { background: var(--ink); color: var(--paper); opacity: 1; }
     .fx.ok b { color: var(--green); }
     .fx.no b { color: var(--red); }
+    .fx.wait b { color: #8A5A00; }
     .fx[aria-pressed="true"] b { color: inherit; }
     .fx.ok[aria-pressed="true"] { background: var(--green); color: #fff; }
     .fx.no[aria-pressed="true"] { background: var(--red); color: #fff; }
+    .fx.wait[aria-pressed="true"] { background: #B7791F; color: #fff; }
     .bar-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 
     .pay {
@@ -160,6 +167,14 @@
       background: var(--red-bg); color: var(--red);
     }
     .pay.paid { background: var(--green-bg); color: var(--green); }
+    .pay.requested { background: #FBEBC8; color: #8A5A00; }
+    .sopts { display: grid; gap: 8px; margin-bottom: 8px; }
+    .sopt { height: 50px; border-radius: 16px; font-size: 17px; font-weight: 700; border: 2px solid transparent; }
+    .sopt.paid { background: var(--green-bg); color: var(--green); }
+    .sopt.requested { background: #FBEBC8; color: #8A5A00; }
+    .sopt.unpaid { background: var(--red-bg); color: var(--red); }
+    .sopt[aria-pressed="true"] { border-color: currentColor; }
+    .sopt[aria-pressed="true"]::after { content: " ✓"; }
     .wa {
       flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
       background: var(--green); color: #fff;
@@ -345,6 +360,15 @@
       </div>
       <button class="btn" id="mSubmit" type="submit">יצירת מפגש</button>
       <button class="btn ghost" id="mDelete" type="button">מחיקת מפגש</button>
+    </form>
+  </dialog>
+
+  <dialog id="sDlg" aria-labelledby="sTitle" style="max-width:420px">
+    <form class="sheet" method="dialog" novalidate>
+      <h2 id="sTitle" style="margin-bottom:6px">סטטוס תשלום</h2>
+      <p id="sText" style="color:var(--muted);margin:0 0 14px"></p>
+      <div class="sopts" id="sOpts"></div>
+      <button class="btn ghost" id="sNo" type="button" style="color:var(--muted)">ביטול</button>
     </form>
   </dialog>
 
@@ -614,7 +638,7 @@
       const [p, m, a] = await Promise.all([
         api(T.p + '?select=*'),
         api(T.m + '?select=*'),
-        api(T.a + '?select=participant_id,meeting_id,paid'),
+        api(T.a + '?select=participant_id,meeting_id,paid,pay_requested_at'),
       ]);
       state.participants = p; state.meetings = m; state.att = a;
       sortMeetings();
@@ -623,7 +647,7 @@
         const d = deep; deep = null;
         try { sessionStorage.removeItem('harpatka_deep'); } catch (e) {}
         if (d.m && state.meetings.some((x) => x.id === d.m)) state.filter = d.m;
-        if (d.pay === 'paid' || d.pay === 'unpaid') state.pay = d.pay;
+        if (d.pay === 'paid' || d.pay === 'unpaid' || d.pay === 'requested') state.pay = d.pay;
         if (d.g === 'male' || d.g === 'female' || d.g === 'none') state.gender = d.g;
         if (d.s && SORTS.some((x) => x[0] === d.s)) state.sort = d.s;
         if (d.q) { state.q = d.q; $('#q').value = d.q; }
@@ -635,6 +659,7 @@
       }
       urlReady = true;
       render();
+      if (pend) setTimeout(askSent, 400);
     } catch (err) {
       console.error(err);
       if (silent) return;   // רענון שקט שנכשל: משאירים את מה שמוצג
@@ -663,10 +688,16 @@
   const WA_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.5c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.6.9 1-3.5-.2-.4C3.2 15.6 2.7 13.8 2.7 12c0-5.1 4.2-9.3 9.3-9.3 2.5 0 4.8 1 6.6 2.7 1.8 1.8 2.7 4.1 2.7 6.6 0 5.2-4.2 9.5-9.3 9.5zM20 4C17.9 1.8 15 .7 12 .7 5.8.7.7 5.8.7 12c0 2 .5 3.9 1.5 5.6L.6 23.4l6-1.6c1.6.9 3.5 1.4 5.4 1.4 6.2 0 11.3-5.1 11.3-11.3 0-3-1.2-5.8-3.3-7.9z"/></svg>';
 
   /* סטטוס תשלום של משתתף: במפגש מסוים לפי המפגש; בתצוגת הכל: שילם = כל המפגשים שלו שולמו, טרם שילם = יש לפחות מפגש אחד שלא שולם, null = בלי מפגשים */
+  const REQ_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></svg>';
+  const linkStatus = (l) => l.paid ? 'paid' : (l.pay_requested_at ? 'requested' : 'unpaid');   // שילם / נשלחה בקשת תשלום / טרם שילם
+  const STATUS_LABEL = { paid: 'שילם', requested: 'בקשה נשלחה', unpaid: 'טרם שילם' };
   function paidState(p) {
-    if (state.filter) { const l = linkOf(p.id, state.filter); return l ? !!l.paid : null; }
+    if (state.filter) { const l = linkOf(p.id, state.filter); return l ? linkStatus(l) : null; }
     const ls = linksOf(p.id);
-    return ls.length ? ls.every((l) => l.paid) : null;
+    if (!ls.length) return null;
+    const st = ls.map(linkStatus);
+    if (st.every((s) => s === 'paid')) return 'paid';
+    return st.includes('unpaid') ? 'unpaid' : 'requested';   // בתצוגת הכל: טרם שילם = יש מפגש בלי בקשה, בקשה נשלחה = על כל החוסרים כבר נשלחה בקשה
   }
 
   /* מונים וסינון: גברים/נשים ושילמו/טרם שילמו. כל מונה סופר לפי הסינון האחר והחיפוש, כך שהמספר הוא בדיוק מה שיוצג בלחיצה */
@@ -677,10 +708,10 @@
       if (!q) return true;
       return p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd));
     });
-    const payOk = (p) => { if (!state.pay) return true; const s = paidState(p); return state.pay === 'paid' ? s === true : s === false; };
+    const payOk = (p) => !state.pay || paidState(p) === state.pay;
     const genOk = (p) => state.gender === 'none' ? !p.gender : (!state.gender || p.gender === state.gender);
     const nG = (g) => base.filter((p) => payOk(p) && (g === 'none' ? !p.gender : p.gender === g)).length;
-    const nP = (paid) => base.filter((p) => genOk(p) && paidState(p) === paid).length;
+    const nP = (st) => base.filter((p) => genOk(p) && paidState(p) === st).length;
     const btn = (kind, val, label, n, cls, on, aria) => '<button type="button"' + (aria ? ' aria-label="' + aria + ' ' + n + '" title="' + aria + '"' : '') + ' class="fx' + (cls ? ' ' + cls : '') + (n ? '' : ' zero') + '" data-fx="' + kind + ':' + val + '" aria-pressed="' + on + '">' + label + ' <b>' + n + '</b></button>';
     const none = nG('none');
     let h = '<div class="fgroup">' +
@@ -688,8 +719,9 @@
       btn('g', 'female', '<span class="lw gen-lw">נשים</span><span class="gi">♀</span>', nG('female'), '', state.gender === 'female', 'נשים') +
       (none || state.gender === 'none' ? btn('g', 'none', 'ללא', none, '', state.gender === 'none', 'ללא מגדר') : '') + '</div>';
     h += '<div class="fgroup">' +
-      btn('p', 'unpaid', '<span class="lw pay-lw">טרם שילמו</span><span class="li">₪</span>', nP(false), 'no', state.pay === 'unpaid', 'טרם שילמו') +
-      btn('p', 'paid', '<span class="lw pay-lw">שילמו</span><span class="li">✓</span>', nP(true), 'ok', state.pay === 'paid', 'שילמו') + '</div>';
+      btn('p', 'unpaid', '<span class="lw pay-lw">טרם שילמו</span><span class="li">₪</span>', nP('unpaid'), 'no', state.pay === 'unpaid', 'טרם שילמו') +
+      btn('p', 'requested', '<span class="lw pay-lw">בקשה נשלחה</span><span class="li">' + REQ_ICON + '</span>', nP('requested'), 'wait', state.pay === 'requested', 'נשלחה בקשת תשלום') +
+      btn('p', 'paid', '<span class="lw pay-lw">שילמו</span><span class="li">✓</span>', nP('paid'), 'ok', state.pay === 'paid', 'שילמו') + '</div>';
     $('#facets').innerHTML = base.length || state.gender || state.pay ? h : '';
   }
 
@@ -708,7 +740,7 @@
       case 'name': return byName;
       case 'age_asc': return (a, b) => byAge(1)(a, b) || byNew(a, b);
       case 'age_desc': return (a, b) => byAge(-1)(a, b) || byNew(a, b);
-      case 'unpaid': return (a, b) => { const x = paidState(a) === false ? 0 : 1, y = paidState(b) === false ? 0 : 1; return x - y || byNew(a, b); };
+      case 'unpaid': return (a, b) => { const o = { unpaid: 0, requested: 1, paid: 2 }, x = o[paidState(a)] ?? 3, y = o[paidState(b)] ?? 3; return x - y || byNew(a, b); };
       default: return (a, b) => byNew(a, b) || byName(a, b);
     }
   }
@@ -728,10 +760,11 @@
     const g = state.gender, pay = state.pay, scope = state.filter ? ' במפגש הזה' : '';
     const clear = '<button type="button" class="link-btn" id="clearFx" style="margin-top:14px">ניקוי סינונים</button>';
     if (g || pay) {
+      if (!g && pay === 'requested' && !state.q) return '<b>אין בקשות תשלום פתוחות</b>כשנשלחת הודעת תשלום בוואטסאפ מתוך פרטי המשתתף, הסטטוס מסומן כאן' + '<br>' + clear;
       if (!g && pay === 'unpaid' && !state.q) return '<b>כולם שילמו</b>אין משתתפים שטרם שילמו' + scope + '<br>' + clear;
       if (!g && pay === 'paid' && !state.q) return '<b>עוד אף אחד לא שילם</b>' + (state.filter ? 'אפשר לסמן תשלום בלחיצה על התגית "טרם שילם" בכרטיס' : 'תשלום מסמנים בפרטי המשתתף, בתוך המפגש') + '<br>' + clear;
       const who = g === 'male' ? 'גברים' : g === 'female' ? 'נשים' : g === 'none' ? 'משתתפים ללא מגדר' : 'משתתפים';
-      const what = pay === 'paid' ? ' ששילמו' : pay === 'unpaid' ? ' שטרם שילמו' : '';
+      const what = pay === 'paid' ? ' ששילמו' : pay === 'unpaid' ? ' שטרם שילמו' : pay === 'requested' ? ' שנשלחה להם בקשת תשלום' : '';
       return '<b>אין ' + who + what + scope + (state.q ? ' שמתאימים לחיפוש' : '') + '</b>אפשר לנקות את הסינון ולנסות שוב<br>' + clear;
     }
     if (state.q) return '<b>לא נמצא אף אחד</b>אפשר לנסות שם או מספר אחר';
@@ -745,7 +778,7 @@
     const qd = digits(q);
     let rows = state.participants.filter((p) => {
       if (state.filter && !linkOf(p.id, state.filter)) return false;
-      if (state.pay) { const s = paidState(p); if (state.pay === 'paid' ? s !== true : s !== false) return false; }
+      if (state.pay && paidState(p) !== state.pay) return false;
       if (state.gender === 'none' ? p.gender : (state.gender && p.gender !== state.gender)) return false;
       if (!q) return true;
       return p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd));
@@ -782,15 +815,16 @@
       let side = '';
       if (state.filter) {
         const l = linkOf(p.id, state.filter);
-        side = '<button type="button" class="ptag' + (l.paid ? ' paid' : '') + '" data-pay="' + p.id + '" title="לחיצה לשינוי סטטוס תשלום">' + (l.paid ? 'שילם' : 'טרם שילם') + '</button>';
+        const st = linkStatus(l);
+        side = '<button type="button" class="ptag ' + st + '" data-pay="' + p.id + '" title="לחיצה לשינוי סטטוס תשלום">' + STATUS_LABEL[st] + '</button>';
       }
       let tags = '';
       if (!state.filter) {
         const ls = linksOf(p.id);
         if (ls.length) {
-          const np = ls.filter((l) => l.paid).length;
-          tags = '<span class="ptag' + (np === ls.length ? ' paid' : '') + '" title="תשלום לפי מפגשים">' +
-            (ls.length === 1 ? (np ? 'שילם' : 'טרם שילם') : '<bdi>' + np + '/' + ls.length + '</bdi> שילמו') + '</span>';
+          const np = ls.filter((l) => l.paid).length, ps = paidState(p);
+          tags = '<span class="ptag ' + ps + '" title="תשלום לפי מפגשים">' +
+            (ls.length === 1 ? STATUS_LABEL[ps] : (ps === 'requested' ? 'בקשה נשלחה' : '<bdi>' + np + '/' + ls.length + '</bdi> שילמו')) + '</span>';
         } else tags = '<span class="age">ללא מפגש</span>';
       }
       return '<li class="row">' +
@@ -814,17 +848,29 @@
     $('#cNo').onclick = () => dlg.close();
     dlg.showModal();
   }
-  const confirmPaid = (pid, mid, paid) => confirmAct(paid ? 'לסמן כ"שילם"?' : 'לסמן כ"טרם שילם"?', pid, mid, () => setPaid(pid, mid, paid));
+  /* בחירת סטטוס תשלום (שילם / נשלחה בקשת תשלום / טרם שילם), עם פופאפ */
+  function pickPayStatus(pid, mid) {
+    const l = linkOf(pid, mid); if (!l) return;
+    const p = state.participants.find((x) => x.id === pid), m = state.meetings.find((x) => x.id === mid);
+    const cur = linkStatus(l);
+    $('#sText').textContent = (p ? p.name : '') + ' · ' + (m ? meetingLabel(m, true) : '');
+    $('#sOpts').innerHTML = ['paid', 'requested', 'unpaid'].map((s) => '<button type="button" class="sopt ' + s + '" data-st="' + s + '" aria-pressed="' + (s === cur) + '">' + STATUS_LABEL[s] + '</button>').join('');
+    const dlg = $('#sDlg');
+    dlg.querySelectorAll('[data-st]').forEach((b) => b.onclick = () => { dlg.close(); if (b.dataset.st !== cur) setPayStatus(pid, mid, b.dataset.st); });
+    $('#sNo').onclick = () => dlg.close();
+    dlg.showModal();
+  }
   const confirmLink = (pid, mid, on, after) => confirmAct(on ? 'להוסיף למפגש?' : 'להסיר מהמפגש?', pid, mid, () => { setLinked(pid, mid, on); if (after) after(); });
 
-  async function setPaid(pid, mid, paid) {
+  async function setPayStatus(pid, mid, st) {
     const l = linkOf(pid, mid);
     if (!l) return;
-    const prev = l.paid;
-    l.paid = paid; render(); refreshSheetMeetings();
+    const prev = { paid: l.paid, pay_requested_at: l.pay_requested_at };
+    const body = st === 'paid' ? { paid: true } : st === 'requested' ? { paid: false, pay_requested_at: new Date().toISOString() } : { paid: false, pay_requested_at: null };
+    Object.assign(l, body); render(); refreshSheetMeetings();
     try {
-      await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body: { paid } });
-    } catch (err) { l.paid = prev; render(); refreshSheetMeetings(); fail(err); }
+      await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body });
+    } catch (err) { Object.assign(l, prev); render(); refreshSheetMeetings(); fail(err); }
   }
 
   async function setLinked(pid, mid, on) {
@@ -846,6 +892,114 @@
   const pDlg = $('#pDlg'), pForm = $('#pForm');
   let sheet = null; // { id } לעריכה, או { id: null, links: Map } למשתתף חדש
 
+
+  /* ---------- הודעת וואטסאפ אישית לבקשת תשלום (בפרטי המשתתף) ---------- */
+  const SENDERS = { 'ofir.aviram@gmail.com': 'אופיר', 'luriahadar@gmail.com': 'הדר' };
+  const PAYBOX = 'https://links.payboxapp.com/zwi4JG24Y6b';
+  const HE_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+  const dm = (m) => { const [, mo, d] = m.meeting_date.split('-').map(Number); return d + '.' + mo; };
+  function whenWords(m) {   // ביום ראשון 25.10 בשעה 20:00
+    const [y, mo, d] = m.meeting_date.split('-').map(Number);
+    return 'ביום ' + HE_DAYS[new Date(Date.UTC(y, mo - 1, d, 12)).getUTCDay()] + ' ' + d + '.' + mo + ' בשעה ' + String(m.meeting_time).slice(0, 5);
+  }
+  function priceFor(m) {   // כמו באתר: 100 ₪ ב-3 הימים האחרונים, אחרת 80 ₪
+    const day = (s) => { const [y, mo, d] = s.split('-').map(Number); return Date.UTC(y, mo - 1, d) / 864e5; };
+    return day(m.meeting_date) - day(todayISO()) <= 3 ? 100 : 80;
+  }
+  /* החוסרים של המשתתף: המפגש הקרוב שלא שולם, ומפגשים שעברו שלא שולמו */
+  function payPlan(p) {
+    const today = todayISO();
+    const open = linksOf(p.id).map((l) => ({ l, m: state.meetings.find((x) => x.id === l.meeting_id) })).filter((x) => x.m && !x.l.paid);
+    const key = (x) => x.m.meeting_date + x.m.meeting_time;
+    return {
+      upcoming: open.filter((x) => x.m.meeting_date >= today).sort((a, b) => key(a).localeCompare(key(b))),
+      past: open.filter((x) => x.m.meeting_date < today).sort((a, b) => key(a).localeCompare(key(b))),
+    };
+  }
+  function payMessage(p) {
+    const { upcoming, past } = payPlan(p);
+    if (!upcoming.length && !past.length) return null;
+    const who = SENDERS[emailOf()] || '';
+    const intro = who ? 'כאן ' + who + ' מיוצאים להרפתקה' : 'כאן יוצאים להרפתקה';
+    const name = p.name.trim().split(/\s+/)[0];
+    const next = upcoming[0];
+    const pastTxt = past.length === 1 ? 'המפגש מתאריך ' + dm(past[0].m) : 'המפגשים מתאריכים ' + past.map((x) => dm(x.m)).join(' ו ');
+    const sorry = 'ואם כבר שילמת ופספסנו, אפשר פשוט לכתוב לנו ונתקן';
+    let L = [];
+    if (next && linkStatus(next.l) === 'requested') {
+      L = ['היי ' + name + ', תזכורת קטנה 😊 ' + intro + '.',
+        'המקום שלך למפגש ' + whenWords(next.m) + ' עדיין לא שמור, כי חסר התשלום (' + priceFor(next.m) + ' ₪):',
+        PAYBOX,
+        'המקומות מוגבלים, ונשמח לראות אותך! 🌿'];
+    } else if (next && linksOf(p.id).length === 1) {
+      L = ['היי ' + name + ', נעים להכיר! ' + intro + ' 😊',
+        'תודה שנרשמת למפגש ' + whenWords(next.m) + '.',
+        'כדי לשמור לך מקום צריך להשלים תשלום של ' + priceFor(next.m) + ' ₪ בקישור הזה:',
+        PAYBOX,
+        'מספר המקומות מוגבל, והמקום נשמר רק אחרי התשלום.',
+        'אם יש שאלה או משהו לא ברור, אני כאן.',
+        'נתראה! 🌿'];
+    } else if (next) {
+      L = ['היי ' + name + ', מה שלומך? 😊 ' + intro + '.',
+        'שמחים שנרשמת שוב למפגש ' + whenWords(next.m) + '.',
+        'כדי לשמור את המקום צריך להשלים תשלום של ' + priceFor(next.m) + ' ₪ בקישור הזה:',
+        PAYBOX,
+        'המקומות מוגבלים, והמקום נשמר רק אחרי התשלום.',
+        'נתראה! 🌿'];
+    }
+    if (next && past.length) L.splice(L.length - 1, 0, 'ועוד דבר קטן: נשאר פתוח אצלנו התשלום על ' + pastTxt + '. אם אפשר להסדיר גם אותו באותו קישור, נשמח מאוד 🙏', sorry);
+    if (!next) {
+      L = ['היי ' + name + ', מה שלומך? 😊 ' + intro + '.',
+        'רציתי לעדכן בעדינות שנשאר פתוח אצלנו התשלום על ' + pastTxt + '.',
+        'אפשר להסדיר אותו בקישור הזה:',
+        PAYBOX,
+        sorry + '. תודה רבה 🙏'];
+    }
+    return L.join('\n');
+  }
+  /* כפתור וואטסאפ בפרטי המשתתף: אם יש חוסר תשלום, ההודעה מובנית; לחיצה מסמנת "נשלחה בקשת תשלום" על החוסרים */
+  function renderContact() {
+    const box = $('#pContact'); if (!box) return;
+    const p = sheet && sheet.id ? state.participants.find((x) => x.id === sheet.id) : null;
+    if (!p) { box.innerHTML = ''; return; }
+    let wa = waLink(p.phone); const tel = telLink(p.phone);
+    const msg = wa ? payMessage(p) : null;
+    if (wa && msg) wa += '?text=' + encodeURIComponent(msg);
+    box.innerHTML = (wa ? '<a class="wa" id="waPay" href="' + wa + '" target="_blank" rel="noopener" aria-label="וואטסאפ' + (msg ? ' עם בקשת תשלום' : '') + '"' + (msg ? ' data-pay="1"' : '') + '>' + WA_ICON + '</a>' : '') +
+      (tel ? '<a class="wa call" href="' + tel + '" aria-label="שיחה">' + CALL_ICON + '</a>' : '');
+  }
+  /* אחרי לחיצה על וואטסאפ עם הודעת תשלום: כשחוזרים לדשבורד נשאלים "האם ההודעה נשלחה?", ורק על "כן" הסטטוס עובר ל"בקשה נשלחה" */
+  const PEND_KEY = 'harpatka_wa_pending';
+  let pend = null, leftPage = false;
+  const savePend = () => { try { if (pend) sessionStorage.setItem(PEND_KEY, JSON.stringify(pend)); else sessionStorage.removeItem(PEND_KEY); } catch (e) {} };
+  try { pend = JSON.parse(sessionStorage.getItem(PEND_KEY) || 'null'); } catch (e) {}
+  $('#pContact').addEventListener('click', (e) => {
+    const a = e.target.closest('#waPay[data-pay]'); if (!a || !sheet || !sheet.id) return;
+    const { upcoming, past } = payPlan(state.participants.find((x) => x.id === sheet.id));
+    const mids = [...upcoming, ...past].filter((x) => linkStatus(x.l) === 'unpaid').map((x) => x.m.id);
+    if (!mids.length) return;
+    pend = { pid: sheet.id, mids, t: Date.now() }; leftPage = false; savePend();
+  });
+  function askSent() {
+    if (!pend || $('#cDlg').open) return;
+    if (Date.now() - pend.t > 6 * 36e5) { pend = null; savePend(); return; }
+    const p = state.participants.find((x) => x.id === pend.pid);
+    const mids = pend.mids.filter((mid) => { const l = linkOf(pend.pid, mid); return l && !l.paid; });
+    if (!p || !mids.length) { pend = null; savePend(); return; }
+    const dlg = $('#cDlg'), yes = $('#cYes'), no = $('#cNo'), pid = pend.pid;
+    $('#cTitle').textContent = 'האם ההודעה נשלחה?';
+    $('#cText').textContent = 'בקשת התשלום ל' + p.name + '. רק אם נשלחה, הסטטוס יעבור ל"בקשה נשלחה"';
+    yes.textContent = 'כן, בקשה נשלחה'; no.textContent = 'עדיין לא';
+    const reset = () => { yes.textContent = 'אישור'; no.textContent = 'ביטול'; pend = null; savePend(); };
+    yes.onclick = () => { dlg.close(); reset(); mids.forEach((mid) => setPayStatus(pid, mid, 'requested')); toast('סומן: נשלחה בקשת תשלום'); };
+    no.onclick = () => { dlg.close(); reset(); };
+    dlg.addEventListener('close', () => { yes.textContent = 'אישור'; no.textContent = 'ביטול'; }, { once: true });
+    dlg.showModal();
+  }
+  document.addEventListener('visibilitychange', () => { if (document.hidden) leftPage = true; else if (leftPage) { leftPage = false; setTimeout(askSent, 250); } });
+  window.addEventListener('blur', () => { if (pend) leftPage = true; });
+  window.addEventListener('focus', () => { if (pend && leftPage) { leftPage = false; setTimeout(askSent, 250); } });
+
   function openParticipant(id) {
     const p = id ? state.participants.find((x) => x.id === id) : null;
     sheet = p ? { id: p.id } : { id: null, links: new Map(state.filter ? [[state.filter, false]] : []) };
@@ -857,11 +1011,7 @@
     pForm.note.value = p ? p.note : '';
     $('#pTitle').textContent = p ? 'עריכת משתתף' : 'משתתף חדש';
     $('#pRegLine').textContent = p && regDate(p) ? ('תאריך הרשמה: ' + regDateTime(p) + (p.source === 'site' ? ' (דרך האתר)' : p.source === 'site-ad' ? ' (דרך האתר, ממומן)' : '')) : '';
-    { const wa = p && waLink(p.phone), tel = p && telLink(p.phone);
-      $('#pContact').innerHTML = p
-        ? (wa ? '<a class="wa" href="' + wa + '" target="_blank" rel="noopener" aria-label="וואטסאפ">' + WA_ICON + '</a>' : '') +
-          (tel ? '<a class="wa call" href="' + tel + '" aria-label="שיחה">' + CALL_ICON + '</a>' : '')
-        : ''; }
+    renderContact();
     $('#pSubmit').hidden = !!p;
     $('#pDelete').hidden = !p;
     $('#savedMark').classList.remove('on');
@@ -874,15 +1024,16 @@
 
   function refreshSheetMeetings() {
     if (!sheet) return;
+    renderContact();
     const box = $('#pMeetings');
     $('#pMeetTitle').hidden = !state.meetings.length;
     box.innerHTML = state.meetings.map((m) => {
-      let on, paid;
-      if (sheet.id) { const l = linkOf(sheet.id, m.id); on = !!l; paid = l && l.paid; }
-      else { on = sheet.links.has(m.id); paid = sheet.links.get(m.id); }
+      let on, st;
+      if (sheet.id) { const l = linkOf(sheet.id, m.id); on = !!l; st = l ? linkStatus(l) : 'unpaid'; }
+      else { on = sheet.links.has(m.id); st = sheet.links.get(m.id) ? 'paid' : 'unpaid'; }
       return '<div class="mrow">' +
         '<button type="button" class="mtoggle" data-mt="' + m.id + '" aria-pressed="' + on + '"><span class="box">' + (on ? '✓' : '') + '</span>' + esc(meetingLabel(m, true)) + '</button>' +
-        '<button type="button" class="pay' + (paid ? ' paid' : '') + '" data-mp="' + m.id + '"' + (on ? '' : ' hidden') + '>' + (paid ? 'שילם' : 'טרם שילם') + '</button>' +
+        '<button type="button" class="pay ' + st + '" data-mp="' + m.id + '"' + (on ? '' : ' hidden') + '>' + STATUS_LABEL[st] + '</button>' +
       '</div>';
     }).join('');
   }
@@ -895,7 +1046,7 @@
       else { on ? sheet.links.set(mid, false) : sheet.links.delete(mid); refreshSheetMeetings(); }
     } else if (pay) {
       const mid = pay.dataset.mp;
-      if (sheet.id) confirmPaid(sheet.id, mid, !linkOf(sheet.id, mid).paid);
+      if (sheet.id) pickPayStatus(sheet.id, mid);
       else { sheet.links.set(mid, !sheet.links.get(mid)); refreshSheetMeetings(); }
     }
   });
@@ -1054,7 +1205,7 @@
       return;
     }
     const pay = e.target.closest('[data-pay]');
-    if (pay) return confirmPaid(pay.dataset.pay, state.filter, !pay.classList.contains('paid'));
+    if (pay) return pickPayStatus(pay.dataset.pay, state.filter);
     const ed = e.target.closest('[data-edit]');
     if (ed) openParticipant(ed.dataset.edit);
   });

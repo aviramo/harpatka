@@ -187,3 +187,6 @@ revoke insert, update, delete on public.harpatka_meetings from anon;
 grant select on public.harpatka_meetings to anon;
 
 notify pgrst, 'reload schema';
+
+-- בקשת תשלום (נוסף אוק׳ 2026): מתי נשלחה למשתתף בקשת תשלום על המפגש (סטטוס "בקשה נשלחה")
+alter table public.harpatka_attendance add column if not exists pay_requested_at timestamptz;
