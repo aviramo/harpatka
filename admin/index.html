@@ -839,10 +839,11 @@
   }
 
   /* ---------- אישור לפני שינוי: סטטוס תשלום, הוספה למפגש והסרה ממנו ---------- */
+  const nameB = (n) => '<b style="color:var(--ink);font-weight:800">' + esc(n) + '</b>';   // שם מודגש בפופאפים
   function confirmAct(title, pid, mid, fn) {
     const p = state.participants.find((x) => x.id === pid), m = state.meetings.find((x) => x.id === mid);
     $('#cTitle').textContent = title;
-    $('#cText').textContent = (p ? p.name : '') + ' · ' + (m ? meetingLabel(m, true) : '');
+    $('#cText').innerHTML = nameB(p ? p.name : '') + ' · ' + esc(m ? meetingLabel(m, true) : '');
     const dlg = $('#cDlg');
     $('#cYes').onclick = () => { dlg.close(); fn(); };
     $('#cNo').onclick = () => dlg.close();
@@ -853,7 +854,7 @@
     const l = linkOf(pid, mid); if (!l) return;
     const p = state.participants.find((x) => x.id === pid), m = state.meetings.find((x) => x.id === mid);
     const cur = linkStatus(l);
-    $('#sText').textContent = (p ? p.name : '') + ' · ' + (m ? meetingLabel(m, true) : '');
+    $('#sText').innerHTML = nameB(p ? p.name : '') + ' · ' + esc(m ? meetingLabel(m, true) : '');
     $('#sOpts').innerHTML = ['paid', 'requested', 'unpaid'].map((s) => '<button type="button" class="sopt ' + s + '" data-st="' + s + '" aria-pressed="' + (s === cur) + '">' + STATUS_LABEL[s] + '</button>').join('');
     const dlg = $('#sDlg');
     dlg.querySelectorAll('[data-st]').forEach((b) => b.onclick = () => { dlg.close(); if (b.dataset.st !== cur) setPayStatus(pid, mid, b.dataset.st); });
@@ -988,7 +989,7 @@
     if (!p || !mids.length) { pend = null; savePend(); return; }
     const dlg = $('#cDlg'), yes = $('#cYes'), no = $('#cNo'), pid = pend.pid;
     $('#cTitle').textContent = 'האם ההודעה נשלחה?';
-    $('#cText').textContent = 'בקשת התשלום ל' + p.name + '. רק אם נשלחה, הסטטוס יעבור ל"בקשה נשלחה"';
+    $('#cText').innerHTML = 'בקשת התשלום ל' + nameB(p.name) + '. רק אם נשלחה, הסטטוס יעבור ל"בקשה נשלחה"';
     yes.textContent = 'כן, בקשה נשלחה'; no.textContent = 'עדיין לא';
     const reset = () => { yes.textContent = 'אישור'; no.textContent = 'ביטול'; pend = null; savePend(); };
     yes.onclick = () => { dlg.close(); reset(); mids.forEach((mid) => setPayStatus(pid, mid, 'requested')); toast('סומן: נשלחה בקשת תשלום'); };
