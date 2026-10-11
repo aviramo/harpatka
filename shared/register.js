@@ -27,7 +27,8 @@
       <div id="cmFormView" data-su-root>
         <div data-su="formWrap">
           <h2 class="h-sect text-[1.5rem] md:text-[1.9rem] mb-2 px-8">שמרו לכם מקום</h2>
-          <p class="muted mb-5 text-[.95rem]">מספר המקומות מוגבל, והמקום נשמר אחרי מילוי הפרטים ותשלום</p>
+          <p class="muted mb-5 text-[.95rem]" data-pay-on>מספר המקומות מוגבל, והמקום נשמר אחרי מילוי הפרטים ותשלום</p>
+          <p class="muted mb-5 text-[.95rem]" data-pay-off hidden>מספר המקומות מוגבל, ואחרי ההרשמה נעדכן אתכם בפרטי המפגש הסופיים</p>
           <form data-su="form" novalidate class="text-start">
             <input type="text" name="website" data-su="hp" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
             <div class="flex gap-2">
@@ -51,12 +52,20 @@
           <button type="button" id="cmBack" class="mt-4 underline underline-offset-4 decoration-2 muted font-semibold text-[.95rem]">מעדיפים וואטסאפ? אפשר לשלוח לנו הודעה</button>
         </div>
         <div data-su="done" hidden>
+          <div data-pay-on>
           <h2 class="h-sect text-[1.7rem] md:text-[2.2rem] mb-3">עוד צעד אחד ושומרים לכם מקום</h2>
           <p class="lead mb-1" style="color:var(--ink);font-weight:700">המקום נשמר רק אחרי תשלום</p>
           <p class="lead muted mb-5">מספר המקומות מוגבל, ומי ששילם קודם מקבל קודם</p>
           <a href="#" target="_blank" rel="noopener" data-paybox class="btn-primary rounded-full px-8 py-4 text-[1.3rem] inline-block">לתשלום <span data-price>80 ₪</span> ושמירת מקום</a>
           <p class="muted text-[.95rem] mt-3">בהערה לתשלום כדאי לכתוב את השם, כדי שנדע מי שילם</p>
           <p class="lead muted mt-8 mb-4">ובינתיים אפשר להצטרף לקבוצת העדכונים בוואטסאפ</p>
+          </div>
+          <div data-pay-off hidden>
+          <h2 class="h-sect text-[1.7rem] md:text-[2.2rem] mb-3">תודה, קיבלנו את הפרטים</h2>
+          <p class="lead mb-1" style="color:var(--ink);font-weight:700">נחזור אליכם בהודעה עם פרטי המפגש הסופיים</p>
+          <p class="lead muted mb-5">ורק אז נשלח קישור לתשלום ושמירת המקום</p>
+          <p class="lead muted mb-4">ובינתיים אפשר להצטרף לקבוצת העדכונים בוואטסאפ</p>
+          </div>
           <a href="#" target="_blank" rel="noopener" data-updates class="btn-green">הצטרפות לקבוצת העדכונים</a>
         </div>
       </div>
@@ -91,6 +100,9 @@
     if (open) closeModal(open);
   });
 
+  /* ===== מתג תשלום: CONFIG.payOpen (shared/config.js). false = אין כפתור תשלום עד שהמועד הסופי מאושר ===== */
+  document.querySelectorAll(CONFIG.payOpen === false ? '[data-pay-on]' : '[data-pay-off]').forEach(el => el.remove());
+  document.querySelectorAll('[data-pay-off]').forEach(el => { el.hidden = false; });
   /* ===== הצטרפות לעדכונים — קישור ישיר לקבוצת הוואטסאפ (עד גיל 50), בלי פופאפ בחירה ===== */
   document.querySelectorAll('[data-updates]').forEach(el => { el.setAttribute('href', CONFIG.updatesGroupLink); });
   /* ===== תשלום בפייבוקס (בהודעת התודה אחרי ההרשמה): קישור לקבוצת התשלום, ו-InitiateCheckout ל-Pixel בלחיצה ===== */

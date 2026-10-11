@@ -9,6 +9,7 @@ const CONFIG = {
   updatesGroupLink: 'https://chat.whatsapp.com/HPBClkrbondA3JlQyOvseI',            // קבוצת העדכונים עד גיל 50
   updatesGroup50PlusLink: 'https://chat.whatsapp.com/DB7zVc2NdVXEquZCC6PpUP',      // קבוצת העדכונים גיל 50 ומעלה
   payboxLink: 'https://links.payboxapp.com/zwi4JG24Y6b',
+  payOpen: false,                                 // false: אין כפתור תשלום באתר עד שהמועד והמקום סופיים (אוק׳ 2026). אחרי האישור: true
   sheetsEndpoint: 'https://script.google.com/macros/s/AKfycbzTGo8SNjyF-xJsn08PXWrYt6EdkZOlmOCXeeFnlMHvg7uyMxXR6i8IoemuiBJTZE-EPQ/exec',
   pixelId: '429806621602468',
 };
