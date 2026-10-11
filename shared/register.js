@@ -48,7 +48,6 @@
             <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-3.5 text-[1.2rem] whitespace-nowrap w-full mt-4">שמירת מקום</button>
             <div data-su="fail" class="su-err mt-3 text-center" role="alert"></div>
           </form>
-          <button type="button" id="cmBack" class="mt-4 underline underline-offset-4 decoration-2 muted font-semibold text-[.95rem]">מעדיפים וואטסאפ? אפשר לשלוח לנו הודעה</button>
         </div>
         <div data-su="done" hidden>
           <h2 class="h-sect text-[1.7rem] md:text-[2.2rem] mb-3">עוד צעד אחד ושומרים לכם מקום</h2>
@@ -190,7 +189,6 @@
   document.querySelectorAll('[data-su-root]').forEach(initSignup);
   if (cmChoose) {
     document.getElementById('cmShowForm').addEventListener('click', () => { showForm(); const i = cmFormView.querySelector('[data-su="name"]'); if (i) i.focus(); });
-    document.getElementById('cmBack').addEventListener('click', showChoose);
     new MutationObserver(() => { if (document.getElementById('contactModal').hidden) showForm(); }).observe(document.getElementById('contactModal'), { attributes: true, attributeFilter: ['hidden'] });
   }
 
