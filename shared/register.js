@@ -26,7 +26,8 @@
       </div>
       <div id="cmFormView" data-su-root>
         <div data-su="formWrap">
-          <h2 class="h-sect text-[1.5rem] md:text-[1.9rem] mb-2 px-8">הרשמה למפגש הקרוב</h2>
+          <h2 class="h-sect text-[1.5rem] md:text-[1.9rem] mb-3 px-8">הרשמה למפגש הקרוב</h2>
+          <div class="mt-badge" role="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><b data-meeting-when>המפגש הקרוב</b><span data-meeting-place></span></div>
           <p class="muted mb-5 text-[.95rem]">מספר המקומות מוגבל, והמקום נשמר אחרי מילוי הפרטים ותשלום</p>
           <form data-su="form" novalidate class="text-start">
             <input type="text" name="website" data-su="hp" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
@@ -57,6 +58,7 @@
         </div>
         <div data-su="done" hidden>
           <h2 class="h-sect text-[1.7rem] md:text-[2.2rem] mb-3">עוד צעד אחד ושומרים לכם מקום</h2>
+          <div class="mt-badge" role="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><b data-meeting-when>המפגש הקרוב</b><span data-meeting-place></span></div>
           <p class="lead mb-1" style="color:var(--ink);font-weight:700">המקום נשמר רק אחרי תשלום</p>
           <p class="lead muted mb-5">מספר המקומות מוגבל, ומי ששילם קודם מקבל קודם</p>
           <a href="#" target="_blank" rel="noopener" data-paybox class="btn-primary rounded-full px-8 py-4 text-[1.3rem] inline-block">לתשלום <span data-price>80 ₪</span> ושמירת מקום</a>
@@ -216,19 +218,26 @@
     el.addEventListener('click', (e) => { e.preventDefault(); if (contactModal) openModal(contactModal); });
   });
 
-  /* ===== מחיר בכפתור התשלום (בהודעת התודה): 100 ₪ ב-3 הימים האחרונים לפני המפגש הקרוב, אחרת 80 ₪ ===== */
+  /* ===== המפגש הקרוב (תאריך ושעה בולטים בפופאפ) ומחיר בכפתור התשלום: 100 ₪ ב-3 הימים האחרונים לפני המפגש, אחרת 80 ₪ ===== */
+  const HE_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+  const dayN = (s) => { const [y, mm, d] = s.split('-').map(Number); return Date.UTC(y, mm - 1, d) / 864e5; };
+  const showMeeting = (m) => {
+    const [, mo, d] = m.date.split('-').map(Number), wd = HE_DAYS[new Date(m.date + 'T12:00:00Z').getUTCDay()];
+    const when = 'יום ' + wd + ' ' + Number(d) + '.' + Number(mo) + (m.time ? ' · ' + m.time : '');
+    document.querySelectorAll('[data-meeting-when]').forEach((e) => { e.textContent = when; });
+    document.querySelectorAll('[data-meeting-place]').forEach((e) => { e.textContent = CONFIG.meetingPlace || ''; });
+    const left = dayN(m.date) - dayN(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()));
+    const price = left <= 3 ? '100' : '80';
+    document.querySelectorAll('[data-price]').forEach((e) => { e.textContent = price + ' ₪'; });
+  };
+  showMeeting(CONFIG.meetingFallback || { date: '2026-10-25', time: '20:00' });   // מיד, בלי להמתין לרשת
   (async () => {
-    let m = { date: '2026-10-25' };
     try {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
-      const r = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=meeting_date&meeting_date=gte.' + today + '&order=meeting_date.asc&limit=1',
+      const r = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=meeting_date,meeting_time&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc&limit=1',
         { headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey } });
       const rows = r.ok ? await r.json() : [];
-      if (rows && rows[0]) m = { date: rows[0].meeting_date };
+      if (rows && rows[0]) showMeeting({ date: rows[0].meeting_date, time: String(rows[0].meeting_time).slice(0, 5) });
     } catch (e) {}
-    const day = s => { const [y, mm, d] = s.split('-').map(Number); return Date.UTC(y, mm - 1, d) / 864e5; };
-    const left = day(m.date) - day(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()));
-    const price = left <= 3 ? '100' : '80';
-    document.querySelectorAll('[data-price]').forEach(e => { e.textContent = price + ' ₪'; });
   })();
 })();

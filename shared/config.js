@@ -11,4 +11,6 @@ const CONFIG = {
   payboxLink: 'https://links.payboxapp.com/zwi4JG24Y6b',
   sheetsEndpoint: 'https://script.google.com/macros/s/AKfycbzTGo8SNjyF-xJsn08PXWrYt6EdkZOlmOCXeeFnlMHvg7uyMxXR6i8IoemuiBJTZE-EPQ/exec',
   pixelId: '429806621602468',
+  meetingFallback: { date: '2026-10-25', time: '20:00' },   // המפגש הקרוב אם הטעינה מבסיס הנתונים נכשלת
+  meetingPlace: 'הרצליה',
 };
