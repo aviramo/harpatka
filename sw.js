@@ -10,7 +10,7 @@
  *
  * החלף את CACHE_VERSION בכל deploy משמעותי (או השאר — network-first ממילא מביא HTML טרי).
  */
-const CACHE_VERSION = 'harpatka-home-2026-10-11a';
+const CACHE_VERSION = 'harpatka-home-2026-10-12a';
 const RUNTIME_CACHE = `runtime-${CACHE_VERSION}`;
 
 self.addEventListener('install', (event) => {
@@ -50,7 +50,7 @@ self.addEventListener('fetch', (event) => {
   if (isHTML || isAds) {
     event.respondWith((async () => {
       try {
-        const fresh = await fetch(req);
+        const fresh = await fetch(req, { cache: 'no-cache' });   // מאמת מול השרת (עוקף את max-age של GitHub Pages)
         if (sameOrigin && fresh && fresh.ok) {
           const cache = await caches.open(RUNTIME_CACHE);
           cache.put(req, fresh.clone());

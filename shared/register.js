@@ -31,20 +31,26 @@
           <form data-su="form" novalidate class="text-start">
             <input type="text" name="website" data-su="hp" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
             <div class="su-grid">
-              <input id="cmName" data-su="name" name="name" type="text" class="su-input" autocomplete="name" maxlength="60" placeholder="שם" aria-label="שם" required>
-              <div class="su-seg eq" data-su="gender" role="radiogroup" aria-label="מגדר">
-                <label><input type="radio" name="cmGender" value="male"><span>גבר</span></label>
-                <label><input type="radio" name="cmGender" value="female"><span>אישה</span></label>
+              <div class="su-cell">
+                <input id="cmName" data-su="name" name="name" type="text" class="su-input" autocomplete="name" maxlength="60" placeholder="שם" aria-label="שם" required>
+                <div data-su="nameErr" class="su-err" role="alert"></div>
+              </div>
+              <div class="su-cell">
+                <div class="su-seg eq" data-su="gender" role="radiogroup" aria-label="מגדר">
+                  <label><input type="radio" name="cmGender" value="male"><span>גבר</span></label>
+                  <label><input type="radio" name="cmGender" value="female"><span>אישה</span></label>
+                </div>
+                <div data-su="genderErr" class="su-err" role="alert"></div>
+              </div>
+              <div class="su-cell">
+                <input id="cmPhone" data-su="phone" name="phone" type="tel" dir="ltr" inputmode="tel" class="su-input text-end" autocomplete="tel" maxlength="24" placeholder="טלפון" aria-label="טלפון" required>
+                <div data-su="phoneErr" class="su-err" role="alert"></div>
+              </div>
+              <div class="su-cell">
+                <input id="cmAge" data-su="age" name="age" type="number" inputmode="numeric" min="18" max="99" class="su-input" autocomplete="off" placeholder="גיל" aria-label="גיל" required>
+                <div data-su="ageErr" class="su-err" role="alert"></div>
               </div>
             </div>
-            <div data-su="nameErr" class="su-err" role="alert"></div>
-            <div data-su="genderErr" class="su-err" role="alert"></div>
-            <div class="su-grid mt-2.5">
-              <input id="cmPhone" data-su="phone" name="phone" type="tel" dir="ltr" inputmode="tel" class="su-input text-end" autocomplete="tel" maxlength="24" placeholder="טלפון" aria-label="טלפון" required>
-              <input id="cmAge" data-su="age" name="age" type="number" inputmode="numeric" min="18" max="99" class="su-input" autocomplete="off" placeholder="גיל" aria-label="גיל" required>
-            </div>
-            <div data-su="phoneErr" class="su-err" role="alert"></div>
-            <div data-su="ageErr" class="su-err" role="alert"></div>
             <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-3.5 text-[1.2rem] whitespace-nowrap w-full mt-4">שמירת מקום</button>
             <div data-su="fail" class="su-err mt-3 text-center" role="alert"></div>
           </form>
@@ -149,9 +155,9 @@
       const name = nameI.value.trim().replace(/\s+/g, ' '), norm = normPhone(phoneI.value);
       let ok = true;
       if (name.length < 2) { setErr(nameI, q('nameErr'), 'נא למלא שם'); ok = false; }
-      if (!norm) { setErr(phoneI, q('phoneErr'), 'מספר הטלפון לא תקין'); ok = false; }
+      if (!norm) { setErr(phoneI, q('phoneErr'), 'מספר לא תקין'); ok = false; }
       const age = parseInt(ageI.value, 10);
-      if (!(age >= 18 && age <= 99)) { setErr(ageI, q('ageErr'), 'נא למלא גיל תקין'); ok = false; }
+      if (!(age >= 18 && age <= 99)) { setErr(ageI, q('ageErr'), 'גיל לא תקין'); ok = false; }
       const gEl = genderBox.querySelector('input:checked'), gender = gEl ? gEl.value : null;
       if (!gender) { genderBox.classList.add('bad'); q('genderErr').textContent = 'נא לבחור'; ok = false; }
       if (!ok) return;
@@ -171,9 +177,9 @@
         if (out === 'created' || out === 'exists') {   // כפילות: אותה הודעה, בלי לחשוף שהמספר כבר רשום
           if (out === 'created') leadOnce();   // Lead רק על מספר חדש (חד ערכי), לא על כפילות
           finished = true; allDone();
-        } else if (out === 'invalid_phone') setErr(phoneI, q('phoneErr'), 'מספר הטלפון לא תקין');
+        } else if (out === 'invalid_phone') setErr(phoneI, q('phoneErr'), 'מספר לא תקין');
         else if (out === 'invalid_name') setErr(nameI, q('nameErr'), 'נא למלא שם');
-        else if (out === 'invalid_age') setErr(ageI, q('ageErr'), 'נא למלא גיל תקין');
+        else if (out === 'invalid_age') setErr(ageI, q('ageErr'), 'גיל לא תקין');
         else throw new Error('signup failed');
       } catch (err) {
         q('fail').innerHTML = 'משהו השתבש, אפשר ליצור קשר ישירות: <a href="#" class="underline font-bold">שיחה בוואטסאפ</a>';
