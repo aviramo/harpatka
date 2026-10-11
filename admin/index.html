@@ -194,6 +194,8 @@
     .cols { display: flex; align-items: flex-end; gap: 4px; height: 118px; margin-top: 6px; }
     .cols .col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; height: 100%; }
     .cols .col i { display: block; width: 100%; max-width: 30px; border-radius: 6px 6px 2px 2px; min-height: 2px; }
+    .cols.dense { gap: 2px; }
+    .cols.dense .cl { font-size: 9.5px; position: relative; }
     .cols .cv { font-size: 11.5px; font-weight: 700; color: var(--ink); min-height: 14px; }
     .cols .cl { font-size: 10.5px; color: var(--muted); white-space: nowrap; }
     .sttable { width: 100%; border-collapse: collapse; font-size: 13.5px; }
@@ -414,7 +416,6 @@
         <h2 id="stTitle">סטטיסטיקות</h2>
         <button class="close" type="button" data-close aria-label="סגירה">×</button>
       </div>
-      <div class="stscope" id="stScope" role="group" aria-label="בחירת מפגש"></div>
       <div id="stBody"></div>
     </div>
   </dialog>
@@ -461,7 +462,7 @@
     if (state.q.trim()) sp.set('q', state.q.trim());
     if (openPid) sp.set('p', openPid);
     if (editingMeeting && mDlg.open) sp.set('em', editingMeeting.id);
-    if ($('#stDlg').open) sp.set('st', stScope || 'all');
+    if ($('#stDlg').open) sp.set('st', '1');
     const s = sp.toString();
     try { history.replaceState(null, '', location.pathname + (s ? '?' + s : '')); } catch (e) {}
   }
@@ -703,7 +704,7 @@
         render();
         if (d.p && state.participants.some((x) => x.id === d.p)) openParticipant(d.p);
         else if (d.em && state.meetings.some((x) => x.id === d.em)) openMeeting(d.em);
-        else if (d.st) { stScope = d.st !== 'all' && state.meetings.some((x) => x.id === d.st) ? d.st : null; renderStats(); $('#stDlg').showModal(); syncUrl(); }
+        else if (d.st) { renderStats(); $('#stDlg').showModal(); syncUrl(); }
         return;
       }
       urlReady = true;
@@ -897,8 +898,6 @@
 
 
   /* ---------- סטטיסטיקות ---------- */
-  const CAPACITY = 30;
-  let stScope = null;   // null = כל המפגשים, או מזהה מפגש
   const ilDay = (iso) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date(iso));
   const dnum = (s) => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d) / 864e5; };
   const ilHour = (iso) => Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jerusalem', hour: '2-digit', hour12: false }).format(new Date(iso)).slice(0, 2)) % 24;
@@ -908,11 +907,11 @@
   const nfm = (n) => Math.round(n).toLocaleString('he-IL');
   const priceAtReg = (m, created) => (dnum(m.meeting_date) - (created ? dnum(ilDay(created)) : dnum(todayISO()))) <= 3 ? 100 : 80;
 
-  function computeStats(scope) {
+  function computeStats() {
     const asc = state.meetings.slice().sort((a, b) => (a.meeting_date + a.meeting_time).localeCompare(b.meeting_date + b.meeting_time));
     const mById = new Map(state.meetings.map((m) => [m.id, m])), pById = new Map(state.participants.map((p) => [p.id, p]));
     const all = state.att.filter((l) => mById.has(l.meeting_id) && pById.has(l.participant_id)).map((l) => ({ ...l, m: mById.get(l.meeting_id), p: pById.get(l.participant_id), st: linkStatus(l) }));
-    const links = scope ? all.filter((l) => l.meeting_id === scope) : all;
+    const links = all;
     // לכל מפגש: נרשמים, שילמו, הכנסה, חדשים/חוזרים, שימור מהמפגש הקודם
     const seen = new Set(); let prev = new Set();
     const perMeeting = asc.map((m) => {
@@ -923,21 +922,17 @@
       S.forEach((id) => seen.add(id)); prev = S;
       return row;
     });
-    return { asc, links, all, perMeeting, scope };
+    return { asc, links, all, perMeeting };
   }
 
   const kpi = (v, label, sub, tone) => '<div class="kpi ' + (tone || '') + '"><b>' + v + '</b><span>' + label + '</span>' + (sub ? '<i>' + sub + '</i>' : '') + '</div>';
   const sec = (title, hint, body) => '<section class="stsec"><h3>' + title + '</h3>' + (hint ? '<p class="sthint">' + hint + '</p>' : '') + body + '</section>';
   const barRow = (label, n, total, color, extra) => { const w = total ? Math.round(n / total * 100) : 0; return '<div class="brow"><span class="bl">' + label + '</span><span class="bt"><i style="width:' + w + '%;background:' + color + '"></i></span><span class="bv"><b>' + n + '</b>' + (total ? ' · ' + w + '%' : '') + (extra ? ' · ' + extra : '') + '</span></div>'; };
-  const colsChart = (items, color) => { const max = Math.max(1, ...items.map((i) => i.v)); return '<div class="cols">' + items.map((i) => '<div class="col"><span class="cv">' + (i.v || '') + '</span><i style="height:' + Math.round(i.v / max * 72) + 'px;background:' + (i.color || color) + '"></i><span class="cl">' + i.l + '</span></div>').join('') + '</div>'; };
+  const colsChart = (items, color, dense) => { const max = Math.max(1, ...items.map((i) => i.v)); return '<div class="cols' + (dense ? ' dense' : '') + '">' + items.map((i) => '<div class="col">' + (dense ? '' : '<span class="cv">' + (i.v || '') + '</span>') + '<i style="height:' + Math.round(i.v / max * 72) + 'px;background:' + (i.color || color) + '"></i><span class="cl">' + i.l + '</span></div>').join('') + '</div>'; };
   const median = (a) => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y), h = s.length >> 1; return s.length % 2 ? s[h] : (s[h - 1] + s[h]) / 2; };
 
   function renderStats() {
-    const S = computeStats(stScope), links = S.links, isAll = !stScope;
-    const meeting = stScope ? state.meetings.find((x) => x.id === stScope) : null;
-    // סרגל בחירת מפגש
-    $('#stScope').innerHTML = '<button type="button" class="stchip" data-sc="" aria-pressed="' + isAll + '">כל המפגשים</button>' +
-      state.meetings.map((m) => '<button type="button" class="stchip" data-sc="' + m.id + '" aria-pressed="' + (stScope === m.id) + '">' + esc(dm(m) + ' · ' + DAYS[new Date(dnum(m.meeting_date) * 864e5).getUTCDay()]) + '</button>').join('');
+    const S = computeStats(), links = S.links;   // תמיד התמונה הכוללת של כל המפגשים
     if (!links.length) { $('#stBody').innerHTML = '<div class="empty"><b>אין עדיין נתונים</b>כשיהיו הרשמות, הסטטיסטיקות יופיעו כאן</div>'; return; }
 
     const n = links.length, uniq = new Set(links.map((l) => l.participant_id)), people = [...uniq].map((id) => state.participants.find((x) => x.id === id));
@@ -966,18 +961,17 @@
     const adN = links.filter((l) => src(l.p) === 'ad').length;
     if (adN) ins.push('<b>' + Ps(adN, n) + '</b> מההרשמות הגיעו ממודעה ממומנת (המרה לתשלום ' + Ps(links.filter((l) => src(l.p) === 'ad' && l.paid).length, adN) + ')');
     const pm = S.perMeeting.filter((r) => r.regs);
-    if (isAll && pm.length >= 2) { const a = pm[pm.length - 1], b = pm[pm.length - 2]; ins.push('<b>המפגש האחרון:</b> ' + a.regs + ' נרשמים לעומת ' + b.regs + ' במפגש שלפניו, ' + (a.regs >= b.regs ? 'עלייה' : 'ירידה') + ' של ' + Math.abs(P(a.regs - b.regs, b.regs) || 0) + '%'); }
+    if (pm.length >= 2) { const a = pm[pm.length - 1], b = pm[pm.length - 2]; ins.push('<b>המפגש האחרון:</b> ' + a.regs + ' נרשמים לעומת ' + b.regs + ' במפגש שלפניו, ' + (a.regs >= b.regs ? 'עלייה' : 'ירידה') + ' של ' + Math.abs(P(a.regs - b.regs, b.regs) || 0) + '%'); }
     out.push(sec('תובנות מרכזיות', '', '<ul class="insights">' + ins.map((x) => '<li>' + x + '</li>').join('') + '</ul>'));
 
     // ---- מדדים ראשיים ----
     const kp = [];
-    kp.push(kpi(n, 'הרשמות', isAll ? uniq.size + ' אנשים ייחודיים' : 'תפוסה ' + n + '/' + CAPACITY));
+    kp.push(kpi(n, 'הרשמות', uniq.size + ' אנשים ייחודיים'));
     kp.push(kpi(paid.length, 'שילמו', Ps(paid.length, n) + ' מההרשמות', 'good'));
     kp.push(kpi(req.length, 'נשלחה בקשת תשלום', Ps(req.length, n), 'warn'));
     kp.push(kpi(unp.length, 'טרם שילמו (בלי בקשה)', Ps(unp.length, n), unp.length ? 'bad' : ''));
     kp.push(kpi('₪' + nfm(rev), 'הכנסה משוערת', 'חוב פתוח משוער ₪' + nfm(owed)));
-    if (isAll) kp.push(kpi(nfm(n / Math.max(1, pm.length)), 'ממוצע נרשמים למפגש', 'ממוצע ששילמו ' + (paid.length / Math.max(1, pm.length)).toFixed(1)));
-    else kp.push(kpi(Math.max(0, CAPACITY - paid.length), 'מקומות פנויים (לפי תשלום)', 'מתוך ' + CAPACITY + ', נרשמו ' + n));
+    kp.push(kpi(nfm(n / Math.max(1, pm.length)), 'ממוצע נרשמים למפגש', 'ממוצע ששילמו ' + (paid.length / Math.max(1, pm.length)).toFixed(1)));
     out.push('<div class="stkpis">' + kp.join('') + '</div>');
 
     // ---- המרה וגבייה ----
@@ -1010,13 +1004,28 @@
     }
 
     // ---- ציר זמן ----
-    if (!isAll && meeting) {
-      const days = []; for (let d = 14; d >= 0; d--) days.push({ l: d === 0 ? 'יום המפגש' : d === 14 ? '14+' : '-' + d, v: regs.filter((x) => { const k = dnum(meeting.meeting_date) - dnum(ilDay(x.created_at)); return d === 14 ? k >= 14 : k === d; }).length, color: d <= 3 ? '#C96F52' : '#686A48' });
-      out.push(sec('קצב ההרשמה לפני המפגש', 'הרשמות לפי ימים שנותרו עד המפגש (בכתום: 3 הימים האחרונים, בהם המחיר 100 ₪)', colsChart(days.map((x) => ({ ...x, l: x.l.replace('-', '') })), '#686A48') + '<p class="stline">נרשמו ב-3 הימים האחרונים: <b>' + Ps(last3.length, regs.length) + '</b></p>'));
-      const r = S.perMeeting.find((x) => x.m.id === stScope);
-      if (r) out.push(sec('חדשים וחוזרים', 'מתוך הנרשמים למפגש הזה', barRow('חדשים (לא היו במפגש קודם)', r.news, r.regs, '#2F7D4F') + barRow('חוזרים', r.ret, r.regs, '#3F6FB5') + (r.prevN ? '<p class="stline">שימור מהמפגש הקודם: <b>' + Ps(r.kept, r.prevN) + '</b> (' + r.kept + ' מתוך ' + r.prevN + ' שנרשמו אז, נרשמו שוב)</p>' : '')));
-    } else {
+    {
       const pmr = S.perMeeting.filter((r) => r.regs);
+
+      // הרשמות לפי יום על ציר הזמן (ימי מפגש בסגול)
+      const byDay = new Map(); regs.forEach((x) => { const d = dnum(ilDay(x.created_at)); byDay.set(d, (byDay.get(d) || 0) + 1); });
+      if (byDay.size) {
+        const lastD = Math.max(dnum(todayISO()), ...byDay.keys()), from = Math.max(Math.min(...byDay.keys()), lastD - 44);
+        const mdays = new Set(S.asc.map((m) => dnum(m.meeting_date))), dl = (d) => { const x = new Date(d * 864e5); return x.getUTCDate() + '.' + (x.getUTCMonth() + 1); };
+        const items = []; for (let d = from; d <= lastD; d++) items.push({ l: ((d - from) % 6 === 0 || mdays.has(d)) ? dl(d) : '', v: byDay.get(d) || 0, color: mdays.has(d) ? '#663F4C' : '#C96F52', dense: true });
+        const total = items.reduce((s, x) => s + x.v, 0), peak = items.slice().sort((a, b) => b.v - a.v)[0];
+        out.push(sec('הרשמות לאורך זמן', 'כל יום, עד 45 הימים האחרונים. בסגול: ימי מפגש', colsChart(items, '#C96F52', true) + '<p class="stline">' + total + ' הרשמות בתקופה, ממוצע <b>' + (total / items.length).toFixed(1) + '</b> ליום' + (peak && peak.v ? ' · היום החזק: <b>' + peak.l.replace(/^$/, '') + '</b>' : '') + '</p>'));
+      }
+      // קצב הרשמה מצטבר לפני כל מפגש, מונח זה על זה
+      const curves = pmr.map((r) => { const ls = regs.filter((x) => x.meeting_id === r.m.id); const arr = []; for (let d = 14; d >= 0; d--) arr.push(ls.filter((x) => dnum(r.m.meeting_date) - dnum(ilDay(x.created_at)) >= d).length); return { r, arr }; }).filter((c) => c.arr[14] > 0);
+      if (curves.length) {
+        const W = 320, H = 130, maxY = Math.max(...curves.map((c) => c.arr[14])), COL = ['#C96F52', '#3F6FB5', '#686A48', '#C2547A', '#B7791F', '#663F4C'];
+        const X = (i) => (W - 6) - (i / 14) * (W - 12), Y = (v) => H - 4 - (v / maxY) * (H - 12);   // ימין = 14 ימים לפני, שמאל = יום המפגש
+        const lines = curves.map((c, k) => '<polyline fill="none" stroke="' + COL[(curves.length - 1 - k) % COL.length] + '" stroke-width="' + (k === curves.length - 1 ? 3.2 : 2) + '" stroke-linecap="round" stroke-linejoin="round" points="' + c.arr.map((v, i) => X(i).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ') + '"/>').join('');
+        const grid = [0, .5, 1].map((f) => '<line x1="0" x2="' + W + '" y1="' + Y(maxY * f).toFixed(1) + '" y2="' + Y(maxY * f).toFixed(1) + '" stroke="rgba(63,56,47,.12)"/>').join('');
+        const legend = curves.map((c, k) => '<span style="display:inline-flex;align-items:center;gap:5px;margin:4px 0 0 12px"><i style="width:14px;height:4px;border-radius:2px;background:' + COL[(curves.length - 1 - k) % COL.length] + '"></i>' + esc(dm(c.r.m)) + ' <b>' + c.arr[14] + '</b></span>').join('');
+        out.push(sec('קצב ההרשמה לפני כל מפגש', 'הרשמות מצטברות לפי ימים שנותרו עד המפגש. רואים אם ההרשמה מתחילה מוקדם או מאוחר יותר ממפגש למפגש', '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;direction:ltr" role="img" aria-label="קצב הרשמה">' + grid + lines + '</svg><div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted)"><span>יום המפגש</span><span>14 ימים לפני</span></div><div>' + legend + '</div>'));
+      }
       let tb = '<table class="sttable"><tr><th>מפגש</th><th>נרשמו</th><th>שילמו</th><th>המרה</th><th>חדשים/חוזרים</th><th>הכנסה</th></tr>' +
         pmr.slice().reverse().map((r, i, arr) => { const b = arr[i + 1]; const tr = b ? (r.regs > b.regs ? ' <span class="up">▲</span>' : r.regs < b.regs ? ' <span class="down">▼</span>' : '') : ''; return '<tr><td>' + esc(dm(r.m)) + '</td><td class="num">' + r.regs + tr + '</td><td class="num">' + r.paid + '</td><td class="num">' + Ps(r.paid, r.regs) + '</td><td class="num">' + r.news + '/' + r.ret + '</td><td class="num">₪' + nfm(r.rev) + '</td></tr>'; }).join('') + '</table>';
       out.push(sec('המפגשים לאורך זמן', 'כל מפגש, מהחדש לישן. החצים משווים למפגש הקודם', colsChart(pmr.map((r) => ({ l: dm(r.m), v: r.regs })), '#686A48') + tb));
@@ -1042,8 +1051,7 @@
     out.push(sec('איכות נתונים', 'כמה מהמאגר מלא', barRow('עם מגדר', allP.filter((p) => p.gender).length, allP.length, '#686A48') + barRow('עם גיל', allP.filter((p) => p.age != null).length, allP.length, '#686A48') + barRow('עם טלפון', allP.filter((p) => p.phone).length, allP.length, '#686A48')));
     $('#stBody').innerHTML = out.join('');
   }
-  $('#statsBtn').addEventListener('click', () => { stScope = state.filter; renderStats(); $('#stDlg').showModal(); syncUrl(); });
-  $('#stScope').addEventListener('click', (e) => { const b = e.target.closest('[data-sc]'); if (!b) return; stScope = b.dataset.sc || null; renderStats(); syncUrl(); });
+  $('#statsBtn').addEventListener('click', () => { renderStats(); $('#stDlg').showModal(); syncUrl(); });
   $('#stDlg').addEventListener('close', syncUrl);
 
   /* ---------- אישור לפני שינוי: סטטוס תשלום, הוספה למפגש והסרה ממנו ---------- */
