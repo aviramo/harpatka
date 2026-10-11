@@ -140,7 +140,8 @@
       .fx .lw.pay-lw { display: none; }
       .fx .li { display: inline; font-size: 15px; }
       .fx .lw.gen-lw { display: none; }
-      .fx .gi { display: inline; font-size: 16px; }
+      .fx .gi { display: inline-grid; place-items: center; }
+      .fx .gi svg { width: 16px; height: 21px; }
     }
     .facets:empty { display: none; }
     .fgroup { display: inline-flex; align-items: center; height: var(--ctl); box-sizing: border-box; background: var(--paper); border: 1.5px solid var(--line); border-radius: 999px; padding: 3px 6.5px; gap: 2px; }   /* ריווח מהמסגרת לתוכן = הריווח הפנימי בין הכפתורים (2 + 6 + 6 = 14) */
@@ -683,6 +684,9 @@
   const WA_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.5c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.6.9 1-3.5-.2-.4C3.2 15.6 2.7 13.8 2.7 12c0-5.1 4.2-9.3 9.3-9.3 2.5 0 4.8 1 6.6 2.7 1.8 1.8 2.7 4.1 2.7 6.6 0 5.2-4.2 9.5-9.3 9.5zM20 4C17.9 1.8 15 .7 12 .7 5.8.7.7 5.8.7 12c0 2 .5 3.9 1.5 5.6L.6 23.4l6-1.6c1.6.9 3.5 1.4 5.4 1.4 6.2 0 11.3-5.1 11.3-11.3 0-3-1.2-5.8-3.3-7.9z"/></svg>';
 
   /* סטטוס תשלום של משתתף: במפגש מסוים לפי המפגש; בתצוגת הכל: שילם = כל המפגשים שלו שולמו, טרם שילם = יש לפחות מפגש אחד שלא שולם, null = בלי מפגשים */
+  /* סימוני שירותים ציבוריים: איש ואישה בשמלה */
+  const MAN_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="4" r="2.3"/><path d="M8.6 8h6.8c.9 0 1.6.7 1.6 1.6V15h-1.8v7h-2.6v-6.2h-1.2V22H8.8v-7H7V9.6C7 8.7 7.7 8 8.6 8z"/></svg>';
+  const WOMAN_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="4" r="2.3"/><path d="M10.3 8h3.4c.8 0 1.4.5 1.7 1.2L18.5 17h-3.2v5h-2v-5h-2.6v5h-2v-5H5.5l3.1-7.8C8.9 8.5 9.5 8 10.3 8z"/></svg>';
   const REQ_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></svg>';
   const linkStatus = (l) => l.paid ? 'paid' : (l.pay_requested_at ? 'requested' : 'unpaid');   // שילם / נשלחה בקשת תשלום / טרם שילם
   const STATUS_LABEL = { paid: 'שילם', requested: 'בקשה נשלחה', unpaid: 'טרם שילם' };
@@ -710,8 +714,8 @@
     const btn = (kind, val, label, n, cls, on, aria) => '<button type="button"' + (aria ? ' aria-label="' + aria + ' ' + n + '" title="' + aria + '"' : '') + ' class="fx' + (cls ? ' ' + cls : '') + (n ? '' : ' zero') + '" data-fx="' + kind + ':' + val + '" aria-pressed="' + on + '">' + label + ' <b>' + n + '</b></button>';
     const none = nG('none');
     let h = '<div class="fgroup">' +
-      btn('g', 'male', '<span class="lw gen-lw">גברים</span><span class="gi">♂</span>', nG('male'), '', state.gender === 'male', 'גברים') +
-      btn('g', 'female', '<span class="lw gen-lw">נשים</span><span class="gi">♀</span>', nG('female'), '', state.gender === 'female', 'נשים') +
+      btn('g', 'male', '<span class="lw gen-lw">גברים</span><span class="gi">' + MAN_ICON + '</span>', nG('male'), '', state.gender === 'male', 'גברים') +
+      btn('g', 'female', '<span class="lw gen-lw">נשים</span><span class="gi">' + WOMAN_ICON + '</span>', nG('female'), '', state.gender === 'female', 'נשים') +
       (none || state.gender === 'none' ? btn('g', 'none', 'ללא', none, '', state.gender === 'none', 'ללא מגדר') : '') + '</div>';
     h += '<div class="fgroup">' +
       btn('p', 'unpaid', '<span class="lw pay-lw">טרם שילמו</span><span class="li">₪</span>', nP('unpaid'), 'no', state.pay === 'unpaid', 'טרם שילמו') +
