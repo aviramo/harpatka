@@ -921,7 +921,7 @@
     const { upcoming, past } = payPlan(p);
     if (!upcoming.length && !past.length) return null;
     const who = SENDERS[emailOf()] || '';
-    const intro = who ? 'כאן ' + who + ' מיוצאים להרפתקה' : 'כאן יוצאים להרפתקה';
+    const intro = who ? 'זה ' + who + ', מ"יוצאים להרפתקה"' : 'זה מ"יוצאים להרפתקה"';
     const name = p.name.trim().split(/\s+/)[0];
     const next = upcoming[0];
     const pastTxt = past.length === 1 ? 'המפגש מתאריך ' + dm(past[0].m) : 'המפגשים מתאריכים ' + past.map((x) => dm(x.m)).join(' ו ');
@@ -935,22 +935,22 @@
     } else if (next && linksOf(p.id).length === 1) {
       L = ['היי ' + name + ', נעים להכיר! ' + intro + ' 😊',
         'תודה שנרשמת למפגש ' + whenWords(next.m) + '.',
-        'כדי לשמור לך מקום צריך להשלים תשלום של ' + priceFor(next.m) + ' ₪ בקישור הזה:',
+        'כדי לשמור לך מקום, נשאר רק להשלים תשלום של ' + priceFor(next.m) + ' ₪ בקישור הזה:',
         PAYBOX,
         'מספר המקומות מוגבל, והמקום נשמר רק אחרי התשלום.',
-        'אם יש שאלה או משהו לא ברור, אני כאן.',
+        'ואם יש שאלה או משהו לא ברור, אני כאן 🙂',
         'נתראה! 🌿'];
     } else if (next) {
-      L = ['היי ' + name + ', מה שלומך? 😊 ' + intro + '.',
+      L = ['היי ' + name + ', מה נשמע? 😊 ' + intro + '.',
         'שמחים שנרשמת שוב למפגש ' + whenWords(next.m) + '.',
-        'כדי לשמור את המקום צריך להשלים תשלום של ' + priceFor(next.m) + ' ₪ בקישור הזה:',
+        'כדי לשמור את המקום, נשאר רק להשלים תשלום של ' + priceFor(next.m) + ' ₪ בקישור הזה:',
         PAYBOX,
         'המקומות מוגבלים, והמקום נשמר רק אחרי התשלום.',
         'נתראה! 🌿'];
     }
     if (next && past.length) L.splice(L.length - 1, 0, 'ועוד דבר קטן: נשאר פתוח אצלנו התשלום על ' + pastTxt + '. אם אפשר להסדיר גם אותו באותו קישור, נשמח מאוד 🙏', sorry);
     if (!next) {
-      L = ['היי ' + name + ', מה שלומך? 😊 ' + intro + '.',
+      L = ['היי ' + name + ', מה נשמע? 😊 ' + intro + '.',
         'רציתי לעדכן בעדינות שנשאר פתוח אצלנו התשלום על ' + pastTxt + '.',
         'אפשר להסדיר אותו בקישור הזה:',
         PAYBOX,
