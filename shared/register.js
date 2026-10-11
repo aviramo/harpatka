@@ -26,7 +26,7 @@
       </div>
       <div id="cmFormView" data-su-root>
         <div data-su="formWrap">
-          <h2 class="h-sect text-[1.5rem] md:text-[1.9rem] mb-2 px-8">שמרו לכם מקום</h2>
+          <h2 class="h-sect text-[1.5rem] md:text-[1.9rem] mb-2 px-8">הרשמה למפגש הקרוב</h2>
           <p class="muted mb-5 text-[.95rem]">מספר המקומות מוגבל, והמקום נשמר אחרי מילוי הפרטים ותשלום</p>
           <form data-su="form" novalidate class="text-start">
             <input type="text" name="website" data-su="hp" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
