@@ -30,20 +30,18 @@
           <p class="muted mb-5 text-[.95rem]">מספר המקומות מוגבל, והמקום נשמר אחרי מילוי הפרטים ותשלום</p>
           <form data-su="form" novalidate class="text-start">
             <input type="text" name="website" data-su="hp" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
-            <div class="flex gap-2">
-              <input id="cmName" data-su="name" name="name" type="text" class="su-input flex-1 min-w-0" autocomplete="name" maxlength="60" placeholder="שם" aria-label="שם" required>
-              <div class="su-seg" data-su="gender" role="radiogroup" aria-label="מגדר">
+            <input id="cmName" data-su="name" name="name" type="text" class="su-input" autocomplete="name" maxlength="60" placeholder="שם" aria-label="שם" required>
+            <div data-su="nameErr" class="su-err" role="alert"></div>
+            <input id="cmPhone" data-su="phone" name="phone" type="tel" dir="ltr" inputmode="tel" class="su-input text-end mt-2.5" autocomplete="tel" maxlength="24" placeholder="טלפון" aria-label="טלפון" required>
+            <div data-su="phoneErr" class="su-err" role="alert"></div>
+            <div class="flex gap-2 mt-2.5">
+              <div class="su-seg eq" data-su="gender" role="radiogroup" aria-label="מגדר">
                 <label><input type="radio" name="cmGender" value="male"><span>גבר</span></label>
                 <label><input type="radio" name="cmGender" value="female"><span>אישה</span></label>
               </div>
-            </div>
-            <div data-su="nameErr" class="su-err" role="alert"></div>
-            <div data-su="genderErr" class="su-err" role="alert"></div>
-            <div class="flex gap-2 mt-2.5">
-              <input id="cmPhone" data-su="phone" name="phone" type="tel" dir="ltr" inputmode="tel" class="su-input text-end flex-1 min-w-0" autocomplete="tel" maxlength="24" placeholder="טלפון" aria-label="טלפון" required>
               <input id="cmAge" data-su="age" name="age" type="number" inputmode="numeric" min="18" max="99" class="su-input shrink-0" style="width:5.2rem" autocomplete="off" placeholder="גיל" aria-label="גיל" required>
             </div>
-            <div data-su="phoneErr" class="su-err" role="alert"></div>
+            <div data-su="genderErr" class="su-err" role="alert"></div>
             <div data-su="ageErr" class="su-err" role="alert"></div>
             <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-3.5 text-[1.2rem] whitespace-nowrap w-full mt-4">שמירת מקום</button>
             <div data-su="fail" class="su-err mt-3 text-center" role="alert"></div>
