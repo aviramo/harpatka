@@ -141,7 +141,10 @@
       .fx .li { display: inline; font-size: 15px; }
       .fx .lw.gen-lw { display: none; }
       .fx .gi { display: inline-grid; place-items: center; }
-      .fx .gi svg { width: 16px; height: 21px; }
+      .fx .gi svg { width: 17px; height: 23px; }
+      .fx .gi.gm { color: #3F6FB5; }
+      .fx .gi.gf { color: #C2547A; }
+      .fx[aria-pressed="true"] .gi { color: inherit; }
     }
     .facets:empty { display: none; }
     .fgroup { display: inline-flex; align-items: center; height: var(--ctl); box-sizing: border-box; background: var(--paper); border: 1.5px solid var(--line); border-radius: 999px; padding: 3px 6.5px; gap: 2px; }   /* ריווח מהמסגרת לתוכן = הריווח הפנימי בין הכפתורים (2 + 6 + 6 = 14) */
@@ -685,8 +688,8 @@
 
   /* סטטוס תשלום של משתתף: במפגש מסוים לפי המפגש; בתצוגת הכל: שילם = כל המפגשים שלו שולמו, טרם שילם = יש לפחות מפגש אחד שלא שולם, null = בלי מפגשים */
   /* סימוני שירותים ציבוריים: איש ואישה בשמלה */
-  const MAN_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="4" r="2.3"/><path d="M8.6 8h6.8c.9 0 1.6.7 1.6 1.6V15h-1.8v7h-2.6v-6.2h-1.2V22H8.8v-7H7V9.6C7 8.7 7.7 8 8.6 8z"/></svg>';
-  const WOMAN_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="4" r="2.3"/><path d="M10.3 8h3.4c.8 0 1.4.5 1.7 1.2L18.5 17h-3.2v5h-2v-5h-2.6v5h-2v-5H5.5l3.1-7.8C8.9 8.5 9.5 8 10.3 8z"/></svg>';
+  const MAN_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="3.4" r="2.4"/><rect x="8" y="7" width="8" height="8.6" rx="1.3"/><rect x="4.9" y="7.4" width="2.2" height="7.6" rx="1.1"/><rect x="16.9" y="7.4" width="2.2" height="7.6" rx="1.1"/><rect x="8.3" y="16" width="3.2" height="7" rx="1.2"/><rect x="12.5" y="16" width="3.2" height="7" rx="1.2"/></svg>';
+  const WOMAN_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="3.4" r="2.4"/><path d="M9.7 7h4.6c.7 0 1.2.4 1.4 1l3.1 9H5.2l3.1-9c.2-.6.7-1 1.4-1z"/><rect x="9.4" y="17.2" width="2.2" height="5.8" rx="1"/><rect x="12.4" y="17.2" width="2.2" height="5.8" rx="1"/></svg>';
   const REQ_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></svg>';
   const linkStatus = (l) => l.paid ? 'paid' : (l.pay_requested_at ? 'requested' : 'unpaid');   // שילם / נשלחה בקשת תשלום / טרם שילם
   const STATUS_LABEL = { paid: 'שילם', requested: 'בקשה נשלחה', unpaid: 'טרם שילם' };
@@ -714,8 +717,8 @@
     const btn = (kind, val, label, n, cls, on, aria) => '<button type="button"' + (aria ? ' aria-label="' + aria + ' ' + n + '" title="' + aria + '"' : '') + ' class="fx' + (cls ? ' ' + cls : '') + (n ? '' : ' zero') + '" data-fx="' + kind + ':' + val + '" aria-pressed="' + on + '">' + label + ' <b>' + n + '</b></button>';
     const none = nG('none');
     let h = '<div class="fgroup">' +
-      btn('g', 'male', '<span class="lw gen-lw">גברים</span><span class="gi">' + MAN_ICON + '</span>', nG('male'), '', state.gender === 'male', 'גברים') +
-      btn('g', 'female', '<span class="lw gen-lw">נשים</span><span class="gi">' + WOMAN_ICON + '</span>', nG('female'), '', state.gender === 'female', 'נשים') +
+      btn('g', 'male', '<span class="lw gen-lw">גברים</span><span class="gi gm">' + MAN_ICON + '</span>', nG('male'), '', state.gender === 'male', 'גברים') +
+      btn('g', 'female', '<span class="lw gen-lw">נשים</span><span class="gi gf">' + WOMAN_ICON + '</span>', nG('female'), '', state.gender === 'female', 'נשים') +
       (none || state.gender === 'none' ? btn('g', 'none', 'ללא', none, '', state.gender === 'none', 'ללא מגדר') : '') + '</div>';
     h += '<div class="fgroup">' +
       btn('p', 'unpaid', '<span class="lw pay-lw">טרם שילמו</span><span class="li">₪</span>', nP('unpaid'), 'no', state.pay === 'unpaid', 'טרם שילמו') +
