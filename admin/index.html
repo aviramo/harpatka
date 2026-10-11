@@ -761,7 +761,12 @@
     const clear = '<button type="button" class="link-btn" id="clearFx" style="margin-top:14px">ניקוי סינונים</button>';
     if (g || pay) {
       if (!g && pay === 'requested' && !state.q) return '<b>אין בקשות תשלום פתוחות</b>כשנשלחת הודעת תשלום בוואטסאפ מתוך פרטי המשתתף, הסטטוס מסומן כאן' + '<br>' + clear;
-      if (!g && pay === 'unpaid' && !state.q) return '<b>כולם שילמו</b>אין משתתפים שטרם שילמו' + scope + '<br>' + clear;
+      if (!g && pay === 'unpaid' && !state.q) {
+        const nReq = state.participants.filter((x) => (!state.filter || linkOf(x.id, state.filter)) && paidState(x) === 'requested').length;
+        return nReq
+          ? '<b>אין משתתפים בלי בקשת תשלום</b>על כל מי שטרם שילם' + scope + ' כבר נשלחה בקשה (' + nReq + ')<br>' + clear
+          : '<b>כולם שילמו</b>אין משתתפים שטרם שילמו' + scope + '<br>' + clear;
+      }
       if (!g && pay === 'paid' && !state.q) return '<b>עוד אף אחד לא שילם</b>' + (state.filter ? 'אפשר לסמן תשלום בלחיצה על התגית "טרם שילם" בכרטיס' : 'תשלום מסמנים בפרטי המשתתף, בתוך המפגש') + '<br>' + clear;
       const who = g === 'male' ? 'גברים' : g === 'female' ? 'נשים' : g === 'none' ? 'משתתפים ללא מגדר' : 'משתתפים';
       const what = pay === 'paid' ? ' ששילמו' : pay === 'unpaid' ? ' שטרם שילמו' : pay === 'requested' ? ' שנשלחה להם בקשת תשלום' : '';
