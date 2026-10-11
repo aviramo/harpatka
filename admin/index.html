@@ -103,6 +103,7 @@
     .row .adtag { flex: 0 0 auto; display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #E3EEF3; color: #1F5C6B; }
     .row .adtag svg { width: 13px; height: 13px; }
     .row .meta > * { flex: 0 0 auto; }
+    .row .age .gl { font-weight: 800; color: var(--ink); }
     .row .nm .name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; line-height: 1.2; }
     .row .nm .age { margin-inline-start: 0; flex: 0 0 auto; }
     .row .ptag { display: inline-block; border-radius: 999px; padding: 1px 10px; font-weight: 700; font-size: 14px; white-space: nowrap; background: var(--red-bg); color: var(--red); }
@@ -756,7 +757,7 @@
       ? '<li class="group">לא רשומים למפגש הזה</li>' + others.map((p) => {
           const age = shownAge(p);
           return '<li class="row other"><div class="main" role="button" tabindex="0" data-edit="' + p.id + '"><div class="nm"><bdi class="name">' + esc(p.name) + '</bdi></div>' +
-            ((age != null || p.gender) ? '<div class="meta">' + ((age != null || p.gender) ? '<span class="age" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? (p.gender === 'male' ? 'ז' : 'נ') + ' ' : '') + (age != null ? age : '') + '</bdi></span>' : '') + '</div>' : '') + '</div>' +
+            ((age != null || p.gender) ? '<div class="meta">' + ((age != null || p.gender) ? '<span class="age" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? '<b class="gl">' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : '') + '</bdi></span>' : '') + '</div>' : '') + '</div>' +
             '<div class="acts"><button type="button" class="addm" data-addm="' + p.id + '">+ הוספה למפגש</button></div></li>';
         }).join('')
       : '';
@@ -789,7 +790,7 @@
       return '<li class="row">' +
         '<div class="main" role="button" tabindex="0" data-edit="' + p.id + '">' +
           '<div class="nm"><bdi class="name">' + esc(p.name) + '</bdi>' + (p.source === 'site-ad' ? '<span class="adtag" title="ממומן: הגיע ממודעה בתשלום" aria-label="ממומן"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 9a4 4 0 0 1 0 6"/></svg></span>' : '') + '</div>' +
-          ((age != null || side || tags) ? '<div class="meta">' + ((age != null || p.gender) ? '<span class="age" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? (p.gender === 'male' ? 'ז' : 'נ') + ' ' : '') + (age != null ? age : '') + '</bdi></span>' : '') + side + tags + '</div>' : '') +
+          ((age != null || side || tags) ? '<div class="meta">' + ((age != null || p.gender) ? '<span class="age" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? '<b class="gl">' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : '') + '</bdi></span>' : '') + side + tags + '</div>' : '') +
           (p.note ? '<div class="note">' + esc(p.note) + '</div>' : '') +
         '</div>' +
       '</li>';
