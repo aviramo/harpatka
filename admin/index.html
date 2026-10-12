@@ -225,6 +225,7 @@
     .ptab[aria-selected="true"] { background: var(--ink); color: var(--paper); }
     /* גובה קבוע לפופאפ המשתתף בכל הלשוניות: הכותרת והלשוניות לא זזות, והתוכן נגלל בתוך הלשונית */
     #pDlg { height: min(88vh, 660px); overflow: visible; }
+    #pDlg:focus { outline: none; }
     #pDlg .sheet { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; border-radius: inherit; overflow: hidden; }
     /* כותרת (שם המשתתף) ממורכזת; כפתור הסגירה מרחף מעל הפופאפ במרכז, כמו בפופאפ ההרשמה באתר */
     #pDlg .sheet-head { position: relative; justify-content: center; text-align: center; min-height: 36px; }
@@ -244,6 +245,9 @@
     .mbtn { flex: 1 1 auto; height: 44px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 16px; color: #fff; background: var(--green); text-decoration: none; }
     .mbtn svg { width: 20px; height: 20px; }
     .mbtn.call { background: #3F6FB5; }
+    .mbtn.off { background: var(--line); color: var(--muted); }
+    .mtop { margin-bottom: 12px; }
+    .mtop .mbtn { flex: 1 1 0; }
     .mbtn.ghost { flex: 0 0 auto; padding: 0 16px; background: #fff; color: var(--ink); border: 1.5px solid var(--line); }
     .sopts { display: grid; gap: 8px; margin-bottom: 8px; }
     .sopt { height: 50px; border-radius: 16px; font-size: 17px; font-weight: 700; border: 2px solid transparent; }
@@ -1248,16 +1252,18 @@
     const textBox = (txt) => { msgTexts.push(txt); return '<div class="mtext">' + esc(txt).replace(/\n/g, '<br>') + '</div>'; };
     const copyBtn = () => '<button type="button" class="mbtn ghost" data-copy="' + (msgTexts.length - 1) + '">העתקה</button>';
     const card = (title, tag, inner) => '<div class="mcard"><div class="mhead"><b>' + title + '</b>' + (tag ? '<span class="mtag">' + tag + '</span>' : '') + '</div>' + inner + '</div>';
-    let h = '';
-    if (!base) h += card('וואטסאפ', '', '<p class="mnone">אין מספר טלפון תקין למשתתף. אפשר להוסיף בלשונית "פרטים"</p>');
+    // שני כפתורים פשוטים ליד זה: וואטסאפ (רק פותח שיחה, בלי טקסט) וחיוג (רק מחייג)
+    let h = '<div class="mact mtop">' +
+      (base ? '<a class="mbtn" href="' + base + '" target="_blank" rel="noopener">' + WA_ICON + 'וואטסאפ</a>' : '<span class="mbtn off">' + WA_ICON + 'וואטסאפ</span>') +
+      (tel ? '<a class="mbtn call" href="' + tel + '">' + CALL_ICON + 'חיוג</a>' : '<span class="mbtn off">' + CALL_ICON + 'חיוג</span>') + '</div>';
+    if (!base) h += '<p class="mnone" style="margin-bottom:12px">אין מספר טלפון תקין למשתתף. אפשר להוסיף בלשונית "פרטים"</p>';
     else {
       const g = greetMessage(p);
-      h += card('פנייה בוואטסאפ', 'הודעת פתיחה', textBox(g) + '<div class="mact"><a class="mbtn" href="' + base + '?text=' + encodeURIComponent(g) + '" target="_blank" rel="noopener">' + WA_ICON + 'פתיחה בוואטסאפ</a>' + copyBtn() + '</div>');
+      h += card('הודעת פתיחה', 'וואטסאפ', textBox(g) + '<div class="mact"><a class="mbtn" href="' + base + '?text=' + encodeURIComponent(g) + '" target="_blank" rel="noopener">' + WA_ICON + 'שליחת הודעת פתיחה</a>' + copyBtn() + '</div>');
       const msg = payMessage(p), { upcoming } = payPlan(p), next = upcoming[0], isRem = next && linkStatus(next.l) === 'requested';
       if (msg) h += card(isRem ? 'תזכורת תשלום' : 'בקשת תשלום', next ? 'מפגש ' + dm(next.m) + ' · ' + priceFor(next.m) + ' ₪' : 'חוב ממפגשים שעברו', textBox(msg) + '<div class="mact"><a class="mbtn" id="waPay" data-pay="1" href="' + base + '?text=' + encodeURIComponent(msg) + '" target="_blank" rel="noopener">' + WA_ICON + (isRem ? 'שליחת תזכורת' : 'שליחת בקשת תשלום') + '</a>' + copyBtn() + '</div>');
       else h += card('בקשת תשלום', '', '<p class="mnone">אין חוב פתוח: הכול שולם או מסומן "לא משלם"</p>');
     }
-    h += card('חיוג', localPhone(p.phone) || '', tel ? '<div class="mact"><a class="mbtn call" href="' + tel + '">' + CALL_ICON + 'חיוג</a></div>' : '<p class="mnone">אין מספר טלפון למשתתף</p>');
     box.innerHTML = h;
   }
   $('#pMsgs').addEventListener('click', (e) => {
@@ -1325,6 +1331,7 @@
     refreshSheetMeetings();
     openPid = p ? p.id : null;
     pDlg.showModal();
+    pDlg.setAttribute('tabindex', '-1'); pDlg.focus({ preventScroll: true });   // בלי טבעת פוקוס על כפתור הסגירה
     setPTab(p ? (tab || 'meets') : 'info');
     if (!p) setTimeout(() => pForm.name.focus(), 50);
   }
