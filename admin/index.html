@@ -224,10 +224,10 @@
     .ptab[hidden] { display: none; }
     .ptab[aria-selected="true"] { background: var(--ink); color: var(--paper); }
     /* גובה קבוע לפופאפ המשתתף בכל הלשוניות: הכותרת והלשוניות לא זזות, והתוכן נגלל בתוך הלשונית */
-    #pDlg { height: min(88vh, 660px); overflow: visible; }
+    #pDlg { height: min(84vh, 520px); overflow: visible; }
     #pDlg:focus { outline: none; }
     #pDlg .close, #pDlg .close:focus, #pDlg .close:focus-visible { outline: none; }   /* בלי מסגרת כהה סביב כפתור הסגירה */
-    #pDlg .sheet { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; border-radius: inherit; overflow: hidden; }
+    #pDlg .sheet { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; border-radius: inherit; overflow: hidden; padding-inline: 24px; }
     /* כותרת (שם המשתתף) ממורכזת; כפתור הסגירה מרחף מעל הפופאפ במרכז, כמו בפופאפ ההרשמה באתר */
     #pDlg .sheet-head { position: relative; justify-content: center; text-align: center; min-height: 36px; }
     #pDlg .sheet-head .saved { position: absolute; left: 0; top: 50%; transform: translateY(-50%); }
@@ -237,20 +237,23 @@
     #pDlg .ppanel { scrollbar-width: thin; scrollbar-color: rgba(63,56,47,.22) transparent; }
     #pDlg #pSubmit { flex: 0 0 auto; margin-top: 10px; }
     .ppanel[hidden] { display: none; }
-    .mcard { background: var(--cream); border-radius: 18px; padding: 14px; margin-bottom: 10px; }
-    .mhead { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
-    .mhead b { font-family: "Rubik", sans-serif; font-size: 16px; }
-    .mtag { font-size: 12.5px; background: #fff; border-radius: 999px; padding: 2px 10px; color: var(--muted); white-space: nowrap; }
-    .mtext { background: #fff; border-radius: 12px; padding: 10px 12px; font-size: 14.5px; line-height: 1.55; margin-bottom: 10px; }
-    .mnone { color: var(--muted); font-size: 14.5px; margin: 0; }
-    .mact { display: flex; gap: 8px; }
-    .mbtn { flex: 1 1 auto; height: 44px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 16px; color: #fff; background: var(--green); text-decoration: none; }
-    .mbtn svg { width: 20px; height: 20px; }
-    .mbtn.call { background: #3F6FB5; }
-    .mbtn.off { background: var(--line); color: var(--muted); }
-    .mtop { margin-bottom: 12px; }
-    .mtop .mbtn { flex: 1 1 0; }
-    .mbtn.ghost { flex: 0 0 auto; padding: 0 16px; background: #fff; color: var(--ink); border: 1.5px solid var(--line); }
+    .ctop { display: flex; gap: 10px; margin-bottom: 18px; }
+    .cbtn { flex: 1 1 0; height: 46px; border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 16px; text-decoration: none; }
+    .cbtn svg { width: 20px; height: 20px; }
+    .cbtn.cb-wa { background: #E3F4E9; color: #1E7A45; }
+    .cbtn.cb-call { background: #E4ECF8; color: #2F5EA8; }
+    .cbtn.off { background: var(--line); color: var(--muted); }
+    .clabel { font-size: 13px; font-weight: 700; color: var(--muted); margin: 0 4px 8px; }
+    .crow { display: flex; align-items: center; gap: 8px; padding: 12px 14px; background: var(--cream); border-radius: 16px; margin-bottom: 8px; }
+    .crow .ct { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+    .crow .ct b { font-family: "Rubik", sans-serif; font-size: 16px; }
+    .crow .ct span { color: var(--muted); font-size: 13.5px; line-height: 1.35; }
+    .crow.off { opacity: .75; }
+    .csend { flex: 0 0 auto; height: 38px; padding: 0 14px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; background: var(--green); color: #fff; font-weight: 700; font-size: 14.5px; text-decoration: none; }
+    .csend svg { width: 17px; height: 17px; }
+    .ccopy { flex: 0 0 auto; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: #fff; border: 1.5px solid var(--line); color: var(--muted); }
+    .ccopy svg { width: 18px; height: 18px; }
+    .mnone { color: var(--muted); font-size: 14.5px; margin: 0 4px 10px; }
     .sopts { display: grid; gap: 8px; margin-bottom: 8px; }
     .sopt { height: 50px; border-radius: 16px; font-size: 17px; font-weight: 700; border: 2px solid transparent; }
     .sopt.paid { background: var(--green-bg); color: var(--green); }
@@ -1251,20 +1254,23 @@
     if (!p) { box.innerHTML = ''; return; }
     const base = waLink(p.phone), tel = telLink(p.phone);
     msgTexts = [];
-    const textBox = (txt) => { msgTexts.push(txt); return '<div class="mtext">' + esc(txt).replace(/\n/g, '<br>') + '</div>'; };
-    const copyBtn = () => '<button type="button" class="mbtn ghost" data-copy="' + (msgTexts.length - 1) + '">העתקה</button>';
-    const card = (title, tag, inner) => '<div class="mcard"><div class="mhead"><b>' + title + '</b>' + (tag ? '<span class="mtag">' + tag + '</span>' : '') + '</div>' + inner + '</div>';
+    const COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="3"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>';
+    // שורת הודעה מוכנה: כותרת ותת כותרת מימין, שליחה והעתקה משמאל (הטקסט המלא לא מוצג, רק סוג הפנייה)
+    const row = (title, sub, href, label, text, extra) => { msgTexts.push(text); return '<div class="crow"><div class="ct"><b>' + title + '</b><span>' + sub + '</span></div>' +
+      '<a class="csend"' + (extra || '') + ' href="' + href + '" target="_blank" rel="noopener">' + WA_ICON + label + '</a>' +
+      '<button type="button" class="ccopy" data-copy="' + (msgTexts.length - 1) + '" aria-label="העתקת ההודעה" title="העתקת ההודעה">' + COPY_ICON + '</button></div>'; };
     // שני כפתורים פשוטים ליד זה: וואטסאפ (רק פותח שיחה, בלי טקסט) וחיוג (רק מחייג)
-    let h = '<div class="mact mtop">' +
-      (base ? '<a class="mbtn" href="' + base + '" target="_blank" rel="noopener">' + WA_ICON + 'וואטסאפ</a>' : '<span class="mbtn off">' + WA_ICON + 'וואטסאפ</span>') +
-      (tel ? '<a class="mbtn call" href="' + tel + '">' + CALL_ICON + 'חיוג</a>' : '<span class="mbtn off">' + CALL_ICON + 'חיוג</span>') + '</div>';
-    if (!base) h += '<p class="mnone" style="margin-bottom:12px">אין מספר טלפון תקין למשתתף. אפשר להוסיף בלשונית "פרטים"</p>';
+    let h = '<div class="ctop">' +
+      (base ? '<a class="cbtn cb-wa" href="' + base + '" target="_blank" rel="noopener">' + WA_ICON + 'וואטסאפ</a>' : '<span class="cbtn off">' + WA_ICON + 'וואטסאפ</span>') +
+      (tel ? '<a class="cbtn cb-call" href="' + tel + '">' + CALL_ICON + 'חיוג</a>' : '<span class="cbtn off">' + CALL_ICON + 'חיוג</span>') + '</div>';
+    if (!base) h += '<p class="mnone">אין מספר טלפון תקין למשתתף. אפשר להוסיף בלשונית "פרטים"</p>';
     else {
+      h += '<div class="clabel">הודעות מוכנות</div>';
       const g = greetMessage(p);
-      h += card('הודעת פתיחה', 'וואטסאפ', textBox(g) + '<div class="mact"><a class="mbtn" href="' + base + '?text=' + encodeURIComponent(g) + '" target="_blank" rel="noopener">' + WA_ICON + 'שליחת הודעת פתיחה</a>' + copyBtn() + '</div>');
+      h += row('הודעת פתיחה', 'פנייה חמה, מה נשמע', base + '?text=' + encodeURIComponent(g), 'שליחה', g);
       const msg = payMessage(p), { upcoming } = payPlan(p), next = upcoming[0], isRem = next && linkStatus(next.l) === 'requested';
-      if (msg) h += card(isRem ? 'תזכורת תשלום' : 'בקשת תשלום', next ? 'מפגש ' + dm(next.m) + ' · ' + priceFor(next.m) + ' ₪' : 'חוב ממפגשים שעברו', textBox(msg) + '<div class="mact"><a class="mbtn" id="waPay" data-pay="1" href="' + base + '?text=' + encodeURIComponent(msg) + '" target="_blank" rel="noopener">' + WA_ICON + (isRem ? 'שליחת תזכורת' : 'שליחת בקשת תשלום') + '</a>' + copyBtn() + '</div>');
-      else h += card('בקשת תשלום', '', '<p class="mnone">אין חוב פתוח: הכול שולם או מסומן "לא משלם"</p>');
+      if (msg) h += row(isRem ? 'תזכורת תשלום' : 'בקשת תשלום', next ? 'מפגש ' + dm(next.m) + ' · ' + priceFor(next.m) + ' ₪' : 'חוב ממפגשים שעברו', base + '?text=' + encodeURIComponent(msg), 'שליחה', msg, ' id="waPay" data-pay="1"');
+      else h += '<div class="crow off"><div class="ct"><b>בקשת תשלום</b><span>אין חוב פתוח: הכול שולם או "לא משלם"</span></div></div>';
     }
     box.innerHTML = h;
   }
