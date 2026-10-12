@@ -983,7 +983,7 @@
     const perMeeting = asc.map((m) => {
       const ls = all.filter((l) => l.meeting_id === m.id), S = new Set(ls.map((l) => l.participant_id));
       const ret = [...S].filter((id) => seen.has(id)).length, kept = [...S].filter((id) => prev.has(id)).length;
-      const row = { m, regs: ls.length, ex: ls.filter((l) => l.exempt).length, paid: ls.filter((l) => l.paid && !l.exempt).length, rev: ls.filter((l) => l.paid && !l.exempt).reduce((s, l) => s + priceAtReg(m, l.created_at), 0),
+      const row = { m, regs: ls.length, ad: ls.filter((l) => l.p.source === 'site-ad').length, ex: ls.filter((l) => l.exempt).length, paid: ls.filter((l) => l.paid && !l.exempt).length, rev: ls.filter((l) => l.paid && !l.exempt).reduce((s, l) => s + priceAtReg(m, l.created_at), 0),
         news: S.size - ret, ret, kept, prevN: prev.size };
       S.forEach((id) => seen.add(id)); prev = S;
       return row;
@@ -1036,6 +1036,8 @@
     // ---- מדדים ראשיים ----
     const kp = [];
     kp.push(kpi(n, 'הרשמות', uniq.size + ' אנשים ייחודיים'));
+    const adLinks = links.filter((l) => src(l.p) === 'ad'), adPaidN = adLinks.filter((l) => l.st === 'paid').length;
+    kp.push(kpi(adLinks.length, 'הגיעו מפרסום ממומן', Ps(adLinks.length, n) + ' מההרשמות' + (adLinks.length ? ' · ' + adPaidN + ' שילמו' : '')));
     kp.push(kpi(paid.length, 'שילמו', Ps(paid.length, nPay) + ' ממי שמשלמים', 'good'));
     kp.push(kpi(req.length, 'נשלחה בקשת תשלום', Ps(req.length, nPay), 'warn'));
     kp.push(kpi(unp.length, 'טרם שילמו (בלי בקשה)', Ps(unp.length, nPay), unp.length ? 'bad' : ''));
@@ -1063,7 +1065,7 @@
     }
 
     // ---- מקורות ----
-    const sk = ['site', 'ad', 'other'].map((k) => { const ls = links.filter((l) => src(l.p) === k); return { k, n: ls.length, nx: ls.filter((l) => l.st !== 'exempt').length, paid: ls.filter((l) => l.paid).length }; }).filter((x) => x.n);
+    const sk = ['site', 'ad', 'other'].map((k) => { const ls = links.filter((l) => src(l.p) === k); return { k, n: ls.length, nx: ls.filter((l) => l.st !== 'exempt').length, paid: ls.filter((l) => l.paid).length }; });
     out.push(sec('מקורות הגעה', 'איפה נרשמים ואיזה מקור נסגר בתשלום', sk.map((x) => barRow(SRC[x.k][0], x.n, n, SRC[x.k][1], 'שילמו ' + Ps(x.paid, x.nx))).join('')));
 
     // ---- מתי נרשמים ----
@@ -1096,8 +1098,8 @@
         const legend = curves.map((c, k) => '<span style="display:inline-flex;align-items:center;gap:5px;margin:4px 0 0 12px"><i style="width:14px;height:4px;border-radius:2px;background:' + COL[(curves.length - 1 - k) % COL.length] + '"></i>' + esc(dm(c.r.m)) + ' <b>' + c.arr[14] + '</b></span>').join('');
         out.push(sec('קצב ההרשמה לפני כל מפגש', 'הרשמות מצטברות לפי ימים שנותרו עד המפגש. רואים אם ההרשמה מתחילה מוקדם או מאוחר יותר ממפגש למפגש', '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;direction:ltr" role="img" aria-label="קצב הרשמה">' + grid + lines + '</svg><div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted)"><span>יום המפגש</span><span>14 ימים לפני</span></div><div>' + legend + '</div>'));
       }
-      let tb = '<table class="sttable"><tr><th>מפגש</th><th>נרשמו</th><th>שילמו</th><th>המרה</th><th>חדשים/חוזרים</th><th>הכנסה</th></tr>' +
-        pmr.slice().reverse().map((r, i, arr) => { const b = arr[i + 1]; const tr = b ? (r.regs > b.regs ? ' <span class="up">▲</span>' : r.regs < b.regs ? ' <span class="down">▼</span>' : '') : ''; return '<tr><td>' + esc(dm(r.m)) + '</td><td class="num">' + r.regs + tr + '</td><td class="num">' + r.paid + '</td><td class="num">' + Ps(r.paid, r.regs - r.ex) + '</td><td class="num">' + r.news + '/' + r.ret + '</td><td class="num">₪' + nfm(r.rev) + '</td></tr>'; }).join('') + '</table>';
+      let tb = '<table class="sttable"><tr><th>מפגש</th><th>נרשמו</th><th>ממומן</th><th>שילמו</th><th>המרה</th><th>חדשים/חוזרים</th><th>הכנסה</th></tr>' +
+        pmr.slice().reverse().map((r, i, arr) => { const b = arr[i + 1]; const tr = b ? (r.regs > b.regs ? ' <span class="up">▲</span>' : r.regs < b.regs ? ' <span class="down">▼</span>' : '') : ''; return '<tr><td>' + esc(dm(r.m)) + '</td><td class="num">' + r.regs + tr + '</td><td class="num">' + r.ad + '</td><td class="num">' + r.paid + '</td><td class="num">' + Ps(r.paid, r.regs - r.ex) + '</td><td class="num">' + r.news + '/' + r.ret + '</td><td class="num">₪' + nfm(r.rev) + '</td></tr>'; }).join('') + '</table>';
       out.push(sec('המפגשים לאורך זמן', 'כל מפגש, מהחדש לישן. החצים משווים למפגש הקודם', colsChart(pmr.map((r) => ({ l: dm(r.m), v: r.regs })), '#686A48') + tb));
       // נאמנות
       const per = new Map(); S.all.forEach((l) => per.set(l.participant_id, (per.get(l.participant_id) || 0) + 1));
