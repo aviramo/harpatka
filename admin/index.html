@@ -111,6 +111,7 @@
     .row .ptag.requested { background: #FBEBC8; color: #8A5A00; }
     .row .ptag.unpaid { background: var(--red-bg); color: var(--red); }
     .row .ptag.exempt { background: #E4E9EE; color: #4B5A6A; }
+    .row { cursor: pointer; }
     .row .main { cursor: pointer; }
     .pay.pi { width: 36px; height: 36px; padding: 0; display: grid; place-items: center; font-size: 18px; font-weight: 800; line-height: 1; }
     .pay.pi svg { width: 20px; height: 20px; }
@@ -897,7 +898,7 @@
       if (state.filter) {
         const l = linkOf(p.id, state.filter);
         const st = linkStatus(l);
-        side = '<button type="button" class="ptag ' + st + '" data-pay="' + p.id + '" title="לחיצה לשינוי סטטוס תשלום">' + STATUS_LABEL[st] + '</button>';
+        side = '<span class="ptag ' + st + '">' + STATUS_LABEL[st] + '</span>';   // תצוגה בלבד: לחיצה על הכרטיס פותחת את פרטי המשתתף, ושם משנים סטטוס
       }
       let tags = '';
       if (!state.filter) {
@@ -1448,9 +1449,7 @@
       if (digits(q).length >= 6) pForm.phone.value = q; else pForm.name.value = q;
       return;
     }
-    const pay = e.target.closest('[data-pay]');
-    if (pay) return pickPayStatus(pay.dataset.pay, state.filter);
-    const ed = e.target.closest('[data-edit]');
+    const row = e.target.closest('li.row'), ed = row && row.querySelector('[data-edit]');   // לחיצה בכל מקום בכרטיס פותחת את פרטי המשתתף
     if (ed) openParticipant(ed.dataset.edit);
   });
 
