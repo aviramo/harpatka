@@ -83,9 +83,6 @@
     .list .group { color: var(--muted); font-weight: 700; font-size: 14px; padding: 6px 4px 0; }
     .list .group.newp { padding: 0; }
     .row.other { background: transparent; box-shadow: none; border: 1.5px dashed var(--coral); }
-    .head-acts { display: flex; gap: 8px; margin-inline-start: auto; margin-inline-end: 10px; }
-    .head-acts .wa { width: 38px; height: 38px; }
-    .head-acts .wa svg { width: 20px; height: 20px; }
     .addm { height: 30px; padding: 0 12px; border-radius: 999px; background: var(--terra); color: #fff; font-weight: 700; font-size: 14px; }
     .addm.wide { width: 100%; height: 38px; background: transparent; color: var(--terra); border: 1.5px dashed var(--coral); }
     .row {
@@ -222,6 +219,23 @@
     .sttable td { padding: 7px 4px; border-top: 1px solid var(--line); }
     .sttable td.num { font-family: "Rubik", sans-serif; font-weight: 600; }
     .up { color: var(--green); } .down { color: var(--red); }
+    .ptabs { display: flex; gap: 4px; background: rgba(63,56,47,.07); border-radius: 999px; padding: 3px; margin-bottom: 14px; }
+    .ptab { flex: 1 1 0; height: 38px; border-radius: 999px; font-weight: 700; font-size: 15px; color: var(--ink); }
+    .ptab[hidden] { display: none; }
+    .ptab[aria-selected="true"] { background: var(--ink); color: var(--paper); }
+    .ppanel { min-height: 220px; }
+    .ppanel[hidden] { display: none; }
+    .mcard { background: var(--cream); border-radius: 18px; padding: 14px; margin-bottom: 10px; }
+    .mhead { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .mhead b { font-family: "Rubik", sans-serif; font-size: 16px; }
+    .mtag { font-size: 12.5px; background: #fff; border-radius: 999px; padding: 2px 10px; color: var(--muted); white-space: nowrap; }
+    .mtext { background: #fff; border-radius: 12px; padding: 10px 12px; font-size: 14.5px; line-height: 1.55; margin-bottom: 10px; }
+    .mnone { color: var(--muted); font-size: 14.5px; margin: 0; }
+    .mact { display: flex; gap: 8px; }
+    .mbtn { flex: 1 1 auto; height: 44px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 16px; color: #fff; background: var(--green); text-decoration: none; }
+    .mbtn svg { width: 20px; height: 20px; }
+    .mbtn.call { background: #3F6FB5; }
+    .mbtn.ghost { flex: 0 0 auto; padding: 0 16px; background: #fff; color: var(--ink); border: 1.5px solid var(--line); }
     .sopts { display: grid; gap: 8px; margin-bottom: 8px; }
     .sopt { height: 50px; border-radius: 16px; font-size: 17px; font-weight: 700; border: 2px solid transparent; }
     .sopt.paid { background: var(--green-bg); color: var(--green); }
@@ -382,26 +396,36 @@
       <div class="sheet-head">
         <h2 id="pTitle">משתתף חדש</h2>
         <span class="saved" id="savedMark">נשמר ✓</span>
-        <span class="head-acts" id="pContact"></span>
         <button class="close" type="button" data-close aria-label="סגירה">×</button>
       </div>
-      <div class="name-row">
-        <label class="field"><span>שם</span><input name="name" required maxlength="60" autocomplete="off" /></label>
-        <div class="seg" role="radiogroup" aria-label="מגדר">
-          <label><input type="radio" name="gender" value="male" /><span>גבר</span></label>
-          <label><input type="radio" name="gender" value="female" /><span>אישה</span></label>
+      <div class="ptabs" id="pTabs" role="tablist" aria-label="עריכת משתתף">
+        <button type="button" role="tab" class="ptab" data-tab="meets" aria-selected="true">מפגשים</button>
+        <button type="button" role="tab" class="ptab" data-tab="contact" aria-selected="false">התקשרות</button>
+        <button type="button" role="tab" class="ptab" data-tab="info" aria-selected="false">פרטים</button>
+      </div>
+      <div class="ppanel" data-panel="meets" role="tabpanel">
+        <div class="mlist" id="pMeetings"></div>
+      </div>
+      <div class="ppanel" data-panel="contact" role="tabpanel" hidden>
+        <div id="pMsgs"></div>
+      </div>
+      <div class="ppanel" data-panel="info" role="tabpanel" hidden>
+        <div class="name-row">
+          <label class="field"><span>שם</span><input name="name" required maxlength="60" autocomplete="off" /></label>
+          <div class="seg" role="radiogroup" aria-label="מגדר">
+            <label><input type="radio" name="gender" value="male" /><span>גבר</span></label>
+            <label><input type="radio" name="gender" value="female" /><span>אישה</span></label>
+          </div>
         </div>
+        <div class="two">
+          <label class="field"><span>טלפון</span><input name="phone" type="tel" inputmode="tel" maxlength="20" autocomplete="off" /></label>
+          <label class="field"><span>גיל</span><input name="age" type="number" inputmode="numeric" min="18" max="99" /></label>
+        </div>
+        <label class="field"><span>הערה קצרה</span><input name="note" maxlength="80" autocomplete="off" /></label>
+        <div class="note" id="pRegLine" style="color:var(--muted);font-size:14px;margin:2px 4px 10px"></div>
+        <button class="btn ghost" id="pDelete" type="button">מחיקת משתתף</button>
       </div>
-      <div class="two">
-        <label class="field"><span>טלפון</span><input name="phone" type="tel" inputmode="tel" maxlength="20" autocomplete="off" /></label>
-        <label class="field"><span>גיל</span><input name="age" type="number" inputmode="numeric" min="18" max="99" /></label>
-      </div>
-      <label class="field"><span>הערה קצרה</span><input name="note" maxlength="80" autocomplete="off" /></label>
-      <div class="note" id="pRegLine" style="color:var(--muted);font-size:14px;margin:2px 4px 6px"></div>
-      <div class="sect-title" id="pMeetTitle">מפגשים</div>
-      <div class="mlist" id="pMeetings"></div>
       <button class="btn" id="pSubmit" type="submit">הוספה</button>
-      <button class="btn ghost" id="pDelete" type="button">מחיקת משתתף</button>
     </form>
   </dialog>
 
@@ -465,7 +489,7 @@
   let deep = null;
   try {
     const sp = new URLSearchParams(location.search);
-    if (['m', 'p', 'pay', 'q', 'em', 'g', 's', 'st'].some((k) => sp.get(k))) { deep = { m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g'), s: sp.get('s'), st: sp.get('st') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
+    if (['m', 'p', 'pay', 'q', 'em', 'g', 's', 'st', 'pt'].some((k) => sp.get(k))) { deep = { m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g'), s: sp.get('s'), st: sp.get('st'), pt: sp.get('pt') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
     else { deep = JSON.parse(sessionStorage.getItem('harpatka_deep') || 'null'); }
   } catch (e) {}
   const $ = (s) => document.querySelector(s);
@@ -480,7 +504,7 @@
     if (state.gender) sp.set('g', state.gender);
     if (state.sort !== 'new') sp.set('s', state.sort);
     if (state.q.trim()) sp.set('q', state.q.trim());
-    if (openPid) sp.set('p', openPid);
+    if (openPid) { sp.set('p', openPid); if (pTab !== 'meets') sp.set('pt', pTab); }
     if (editingMeeting && mDlg.open) sp.set('em', editingMeeting.id);
     if ($('#stDlg').open) sp.set('st', '1');
     const s = sp.toString();
@@ -722,7 +746,7 @@
         if (d.q) { state.q = d.q; $('#q').value = d.q; }
         urlReady = true;
         render();
-        if (d.p && state.participants.some((x) => x.id === d.p)) openParticipant(d.p);
+        if (d.p && state.participants.some((x) => x.id === d.p)) openParticipant(d.p, ['meets', 'contact', 'info'].includes(d.pt) ? d.pt : 'meets');
         else if (d.em && state.meetings.some((x) => x.id === d.em)) openMeeting(d.em);
         else if (d.st) { renderStats(); $('#stDlg').showModal(); syncUrl(); }
         return;
@@ -1202,23 +1226,43 @@
     }
     return L.join('\n');
   }
-  /* כפתור וואטסאפ בפרטי המשתתף: אם יש חוסר תשלום, ההודעה מובנית; לחיצה מסמנת "נשלחה בקשת תשלום" על החוסרים */
+  /* לשונית "התקשרות" בפרטי המשתתף: פנייה בוואטסאפ, בקשת תשלום או תזכורת (הודעה מובנית) וחיוג */
+  let msgTexts = [];
+  function greetMessage(p) {
+    const who = SENDERS[emailOf()] || '', name = p.name.trim().split(/\s+/)[0];
+    return 'היי ' + name + ', ' + (who ? 'זה ' + who + ', מ"יוצאים להרפתקה"' : 'זה מ"יוצאים להרפתקה"') + ' 😊';
+  }
   function renderContact() {
-    const box = $('#pContact'); if (!box) return;
+    const box = $('#pMsgs'); if (!box) return;
     const p = sheet && sheet.id ? state.participants.find((x) => x.id === sheet.id) : null;
     if (!p) { box.innerHTML = ''; return; }
-    let wa = waLink(p.phone); const tel = telLink(p.phone);
-    const msg = wa ? payMessage(p) : null;
-    if (wa && msg) wa += '?text=' + encodeURIComponent(msg);
-    box.innerHTML = (wa ? '<a class="wa" id="waPay" href="' + wa + '" target="_blank" rel="noopener" aria-label="וואטסאפ' + (msg ? ' עם בקשת תשלום' : '') + '"' + (msg ? ' data-pay="1"' : '') + '>' + WA_ICON + '</a>' : '') +
-      (tel ? '<a class="wa call" href="' + tel + '" aria-label="שיחה">' + CALL_ICON + '</a>' : '');
+    const base = waLink(p.phone), tel = telLink(p.phone);
+    msgTexts = [];
+    const textBox = (txt) => { msgTexts.push(txt); return '<div class="mtext">' + esc(txt).replace(/\n/g, '<br>') + '</div>'; };
+    const copyBtn = () => '<button type="button" class="mbtn ghost" data-copy="' + (msgTexts.length - 1) + '">העתקה</button>';
+    const card = (title, tag, inner) => '<div class="mcard"><div class="mhead"><b>' + title + '</b>' + (tag ? '<span class="mtag">' + tag + '</span>' : '') + '</div>' + inner + '</div>';
+    let h = '';
+    if (!base) h += card('וואטסאפ', '', '<p class="mnone">אין מספר טלפון תקין למשתתף. אפשר להוסיף בלשונית "פרטים"</p>');
+    else {
+      const g = greetMessage(p);
+      h += card('פנייה בוואטסאפ', 'הודעת פתיחה', textBox(g) + '<div class="mact"><a class="mbtn" href="' + base + '?text=' + encodeURIComponent(g) + '" target="_blank" rel="noopener">' + WA_ICON + 'פתיחה בוואטסאפ</a>' + copyBtn() + '</div>');
+      const msg = payMessage(p), { upcoming } = payPlan(p), next = upcoming[0], isRem = next && linkStatus(next.l) === 'requested';
+      if (msg) h += card(isRem ? 'תזכורת תשלום' : 'בקשת תשלום', next ? 'מפגש ' + dm(next.m) + ' · ' + priceFor(next.m) + ' ₪' : 'חוב ממפגשים שעברו', textBox(msg) + '<div class="mact"><a class="mbtn" id="waPay" data-pay="1" href="' + base + '?text=' + encodeURIComponent(msg) + '" target="_blank" rel="noopener">' + WA_ICON + (isRem ? 'שליחת תזכורת' : 'שליחת בקשת תשלום') + '</a>' + copyBtn() + '</div>');
+      else h += card('בקשת תשלום', '', '<p class="mnone">אין חוב פתוח: הכול שולם או מסומן "לא משלם"</p>');
+    }
+    h += card('חיוג', localPhone(p.phone) || '', tel ? '<div class="mact"><a class="mbtn call" href="' + tel + '">' + CALL_ICON + 'חיוג</a></div>' : '<p class="mnone">אין מספר טלפון למשתתף</p>');
+    box.innerHTML = h;
   }
+  $('#pMsgs').addEventListener('click', (e) => {
+    const c = e.target.closest('[data-copy]');
+    if (c) { const txt = msgTexts[Number(c.dataset.copy)] || ''; (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast('ההודעה הועתקה'), () => toast('אי אפשר להעתיק מכאן')); return; }
+  });
   /* אחרי לחיצה על וואטסאפ עם הודעת תשלום: כשחוזרים לדשבורד נשאלים "האם ההודעה נשלחה?", ורק על "כן" הסטטוס עובר ל"בקשה נשלחה" */
   const PEND_KEY = 'harpatka_wa_pending';
   let pend = null, leftPage = false;
   const savePend = () => { try { if (pend) sessionStorage.setItem(PEND_KEY, JSON.stringify(pend)); else sessionStorage.removeItem(PEND_KEY); } catch (e) {} };
   try { pend = JSON.parse(sessionStorage.getItem(PEND_KEY) || 'null'); } catch (e) {}
-  $('#pContact').addEventListener('click', (e) => {
+  $('#pMsgs').addEventListener('click', (e) => {
     const a = e.target.closest('#waPay[data-pay]'); if (!a || !sheet || !sheet.id) return;
     const { upcoming, past } = payPlan(state.participants.find((x) => x.id === sheet.id));
     const mids = [...upcoming, ...past].filter((x) => linkStatus(x.l) === 'unpaid').map((x) => x.m.id);
@@ -1245,7 +1289,17 @@
   window.addEventListener('blur', () => { if (pend) leftPage = true; });
   window.addEventListener('focus', () => { if (pend && leftPage) { leftPage = false; setTimeout(askSent, 250); } });
 
-  function openParticipant(id) {
+  let pTab = 'meets';
+  function setPTab(tab) {
+    pTab = tab;
+    document.querySelectorAll('#pTabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
+    document.querySelectorAll('#pDlg [data-panel]').forEach((d) => { d.hidden = d.dataset.panel !== tab; });
+    if (tab === 'contact') renderContact();
+    syncUrl();
+  }
+  $('#pTabs').addEventListener('click', (e) => { const b = e.target.closest('[data-tab]'); if (b) setPTab(b.dataset.tab); });
+
+  function openParticipant(id, tab) {
     const p = id ? state.participants.find((x) => x.id === id) : null;
     sheet = p ? { id: p.id } : { id: null, links: new Map(state.filter ? [[state.filter, false]] : []) };
     pForm.reset();
@@ -1254,16 +1308,17 @@
     pForm.age.value = p ? (shownAge(p) ?? '') : '';
     if (p && p.gender) pForm.gender.value = p.gender;
     pForm.note.value = p ? p.note : '';
-    $('#pTitle').textContent = p ? 'עריכת משתתף' : 'משתתף חדש';
+    $('#pTitle').textContent = p ? p.name : 'משתתף חדש';
     $('#pRegLine').textContent = p && regDate(p) ? ('תאריך הרשמה: ' + regDateTime(p) + (p.source === 'site' ? ' (דרך האתר)' : p.source === 'site-ad' ? ' (דרך האתר, ממומן)' : '')) : '';
     renderContact();
     $('#pSubmit').hidden = !!p;
+    $('#pTabs [data-tab="contact"]').hidden = !p;
     $('#pDelete').hidden = !p;
     $('#savedMark').classList.remove('on');
     refreshSheetMeetings();
     openPid = p ? p.id : null;
     pDlg.showModal();
-    syncUrl();
+    setPTab(p ? (tab || 'meets') : 'info');
     if (!p) setTimeout(() => pForm.name.focus(), 50);
   }
 
@@ -1271,7 +1326,6 @@
     if (!sheet) return;
     renderContact();
     const box = $('#pMeetings');
-    $('#pMeetTitle').hidden = !state.meetings.length;
     box.innerHTML = state.meetings.map((m) => {
       let on, st;
       if (sheet.id) { const l = linkOf(sheet.id, m.id); on = !!l; st = l ? linkStatus(l) : 'unpaid'; }
@@ -1324,6 +1378,7 @@
     if (field === 'age') patch.age_set_at = todayISO();
     const prev = { ...p };
     Object.assign(p, patch); render();
+    if (field === 'name') $('#pTitle').textContent = p.name;
     try {
       await api(T.p + '?id=eq.' + p.id, { method: 'PATCH', body: patch });
       const mark = $('#savedMark');
