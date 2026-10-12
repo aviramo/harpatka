@@ -1206,37 +1206,30 @@
   function payMessage(p) {
     const { upcoming, past } = payPlan(p);
     if (!upcoming.length && !past.length) return null;
-    const who = SENDERS[emailOf()] || '';
-    const intro = who ? 'זה ' + who + ', מ"יוצאים להרפתקה"' : 'זה מ"יוצאים להרפתקה"';
-    const name = p.name.trim().split(/\s+/)[0];
     const next = upcoming[0];
     const pastTxt = past.length === 1 ? 'המפגש מתאריך ' + dm(past[0].m) : 'המפגשים מתאריכים ' + past.map((x) => dm(x.m)).join(' ו ');
     const sorry = 'ואם כבר שילמת ופספסנו, אפשר פשוט לכתוב לנו ונתקן';
     const payLine = (m, first) => (first ? 'כדי לשמור לך מקום, נשאר רק להשלים תשלום של ' : 'כדי לשמור את המקום, נשאר רק להשלים תשלום של ') + priceFor(m) + ' ₪ בקישור הזה:\n' + PAYBOX;
     const pastPara = 'ועוד דבר קטן: נשאר פתוח אצלנו התשלום על ' + pastTxt + '.\nאם אפשר להסדיר גם אותו באותו קישור, נשמח מאוד 🙏\n' + sorry;
-    // פסקאות מופרדות בשורה ריקה; שורות באותה פסקה צמודות
+    // ההודעה נשלחת אחרי הודעת הפתיחה, ולכן בלי היכרות מחדש (בלי "היי, זה אופיר מיוצאים להרפתקה")
     let paras = [];
     if (next && linkStatus(next.l) === 'requested') {
-      paras = ['היי ' + name + ', תזכורת קטנה 😊\n' + intro + '.',
-        'המקום שלך למפגש ' + whenWords(next.m) + ' עדיין לא שמור, כי חסר התשלום (' + priceFor(next.m) + ' ₪):\n' + PAYBOX,
+      paras = ['רק תזכורת קטנה 😊\nהמקום שלך למפגש ' + whenWords(next.m) + ' עדיין לא שמור, כי חסר התשלום (' + priceFor(next.m) + ' ₪):\n' + PAYBOX,
         'המקומות מוגבלים, ונשמח לראות אותך! 🌿'];
-      if (past.length) paras.splice(2, 0, pastPara);
+      if (past.length) paras.splice(1, 0, pastPara);
     } else if (next && linksOf(p.id).length === 1) {
-      paras = ['היי ' + name + ', נעים להכיר! ' + intro + ' 😊',
-        'תודה שנרשמת למפגש ' + whenWords(next.m) + '.',
+      paras = ['תודה שנרשמת למפגש ' + whenWords(next.m) + ' 🙏',
         payLine(next.m, true),
         'מספר המקומות מוגבל, והמקום נשמר רק אחרי התשלום.\nואם יש שאלה או משהו לא ברור, אני כאן 🙂',
         'נתראה! 🌿'];
     } else if (next) {
-      paras = ['היי ' + name + ', מה נשמע? 😊\n' + intro + '.',
-        'שמחים שנרשמת שוב למפגש ' + whenWords(next.m) + '.',
+      paras = ['שמחים שנרשמת שוב למפגש ' + whenWords(next.m) + ' 🙏',
         payLine(next.m, false),
         'המקומות מוגבלים, והמקום נשמר רק אחרי התשלום.'];
       if (past.length) paras.push(pastPara);
       paras.push('נתראה! 🌿');
     } else {
-      paras = ['היי ' + name + ', מה נשמע? 😊\n' + intro + '.',
-        'רציתי לעדכן בעדינות שנשאר פתוח אצלנו התשלום על ' + pastTxt + '.',
+      paras = ['רציתי לעדכן בעדינות שנשאר פתוח אצלנו התשלום על ' + pastTxt + '.',
         'אפשר להסדיר אותו בקישור הזה:\n' + PAYBOX,
         sorry + '.\nתודה רבה 🙏'];
     }
