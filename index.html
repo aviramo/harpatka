@@ -264,6 +264,9 @@
     .hv-bg{ position:absolute; left:-40px; top:-40px; width:calc(100% + 80px); height:calc(100% + 80px); filter:blur(22px); }
     .hv video{ opacity:0; position:absolute; inset:0; width:100%; height:100%; object-fit:contain; background:transparent; }
     .hv-frozen{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+    /* הפריים הראשון של הסרטון כתמונה עד שהסרטון מתחיל (במקום נקודות הטעינה); אחרי שהוא נטען הוא מצויר גם בקנבס, כולל הצדדים בדסקטופ */
+    .hv-poster{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; display:block; }
+    .hv.has-poster .hv-load{ display:none; }
     .hv-cv{ position:absolute; inset:0; width:100%; height:100%; opacity:0; }
     .hv.on .hv-cv{ opacity:1; }
     .hv video{ pointer-events:none; }    /* ===== טופס הרשמה קצר (שם + טלפון) ===== */
@@ -555,12 +558,28 @@
         <img id="heroImg" alt="" width="1080" height="1350" decoding="async">
         <div id="heroVid" class="hv" aria-label="סרטון קצר">
           <div class="hv-load" aria-hidden="true"><i></i><i></i><i></i></div>
+          <img class="hv-poster" id="heroPoster" alt="" width="1080" height="1350" decoding="async" fetchpriority="high" hidden>
           <canvas class="hv-cv" id="heroVidCv" aria-hidden="true"></canvas>
           <video id="heroVideo" playsinline muted preload="auto" disablepictureinpicture></video>
         </div>
       </div>
     </div>
   </header>
+  <script>
+    /* סרטון הפתיחה מוגדר כאן, מיד אחרי ה-Hero ולא בסוף הדף: הפריים הראשון מוצג מיד כתמונה (במקום נקודות הטעינה)
+       והסרטון מתחיל להיטען מיד אחריה. הסרטון מתחיל מאותו פריים בדיוק, ולכן המעבר מהתמונה לסרטון חלק. ?ad=N: סרטון מודעה (בסוף הדף) */
+    window.HERO = { id: 'biodanza', video: 'ads/video/biodanza-hero-c54b9cf4.mp4', poster: 'ads/img/biodanza-hero-first-b2151bbb.webp',
+      img: 'ads/img/biodanza-hero-c54b9cf4.jpg', cut: 99,
+      alt: 'יש רגעים שמפספסים. ויש רגעים שבוחרים להיות בהם. ביודנסה: להיות, לנוע, להיפגש' };
+    (function(){
+      if (!document.documentElement.classList.contains('vid-pending') || /[?&]ad=/.test(location.search)) return;
+      var p = document.getElementById('heroPoster');
+      var v = document.getElementById('heroVideo'), go = function(){ if (!v.getAttribute('src')) v.src = HERO.video; };
+      p.onload = p.onerror = go;   // הסרטון מתחיל לרדת רק אחרי התמונה (40KB), כדי שלא יתחרו על החיבור
+      p.src = HERO.poster; p.hidden = false;
+      document.getElementById('heroVid').classList.add('has-poster');
+    })();
+  </script>
 
   <!-- ההזמנה (מכתב בפסי דואר), סקשן אחד מתחת לסרטון/תמונת הפתיחה -->
   <section id="invite" class="relative pt-9 md:pt-12 pb-0">
@@ -1011,7 +1030,8 @@
       if (el('ptFill')) el('ptFill').style.width = pct;
     });
 
-    /* ===== סרטון פתיחה: סרטון אקראי מתוך 50 (או ?ad=N), מושתק, מתנגן אוטומטית וגם נחתך ברגע שההזמנה בסרטון נכנסת (ads/video-cuts.json) ===== */
+    /* ===== סרטון פתיחה: סרטון ביודנסה (4:5, 10 שניות), מושתק, מתנגן אוטומטית עד הסוף ונעצר בפריים האחרון.
+       ?ad=N: סרטון מודעה N במקומו, נחתך ברגע שההזמנה בסרטון נכנסת (ads/video-cuts.json) ===== */
     (function(){
       const root = document.documentElement;
       const box = document.getElementById('heroVid');
@@ -1021,25 +1041,33 @@
       const cv0 = document.getElementById('heroVidCv'), g = cv0.getContext('2d');
       const tT = document.createElement('canvas'); tT.width = 24; tT.height = 30; const gT = tT.getContext('2d');   // שוליים עליונים/תחתונים של הפריים
       const tS = document.createElement('canvas'); tS.width = 30; tS.height = 24; const gS = tS.getContext('2d');   // שוליים שמאליים/ימניים (בדסקטופ)
-      /* ציור אחד לכל מה שנראה: הפסים (נמשכים מקצוות הפריים עצמו) והפריים באותו קנבס ובאותה קריאה, ולכן אין פיגור ביניהם */
-      const draw = () => {
+      /* ציור אחד לכל מה שנראה: הפסים (נמשכים מקצוות הפריים עצמו) והפריים באותו קנבס ובאותה קריאה, ולכן אין פיגור ביניהם.
+         src: הסרטון, או תמונת הפריים הראשון לפני שהסרטון מתחיל (אותו ציור בדיוק, ולכן המעבר ביניהם לא מורגש) */
+      const draw = (src = v, vw = v.videoWidth, vh = v.videoHeight) => {
         const dpr = Math.min(2, window.devicePixelRatio || 1), W = Math.round(box.clientWidth * dpr), H = Math.round(box.clientHeight * dpr);
-        if (!W || !H || !v.videoWidth) return;
+        if (!W || !H || !vw) return;
         if (cv0.width !== W || cv0.height !== H) { cv0.width = W; cv0.height = H; }
-        const vw = v.videoWidth, vh = v.videoHeight, s = Math.min(W / vw, H / vh), dw = vw * s, dh = vh * s, dx = (W - dw) / 2, dy = (H - dh) / 2;
+        const s = Math.min(W / vw, H / vh), dw = vw * s, dh = vh * s, dx = (W - dw) / 2, dy = (H - dh) / 2;
         g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
         const sh = Math.max(2, Math.round(vh * 0.015)), sw = Math.max(2, Math.round(vw * 0.015));
         if (dy > 0.5) {
-          gT.drawImage(v, 0, 0, vw, sh, 0, 0, 24, 15); gT.drawImage(v, 0, vh - sh, vw, sh, 0, 15, 24, 15);
+          gT.drawImage(src, 0, 0, vw, sh, 0, 0, 24, 15); gT.drawImage(src, 0, vh - sh, vw, sh, 0, 15, 24, 15);
           g.drawImage(tT, 0, 0, 24, 15, 0, 0, W, Math.ceil(dy) + 1); g.drawImage(tT, 0, 15, 24, 15, 0, Math.floor(dy + dh) - 1, W, H - Math.floor(dy + dh) + 1);
         }
         if (dx > 0.5) {
-          gS.drawImage(v, 0, 0, sw, vh, 0, 0, 15, 24); gS.drawImage(v, vw - sw, 0, sw, vh, 15, 0, 15, 24);
+          gS.drawImage(src, 0, 0, sw, vh, 0, 0, 15, 24); gS.drawImage(src, vw - sw, 0, sw, vh, 15, 0, 15, 24);
           g.drawImage(tS, 0, 0, 15, 24, 0, 0, Math.ceil(dx) + 1, H); g.drawImage(tS, 15, 0, 15, 24, Math.floor(dx + dw) - 1, 0, W - Math.floor(dx + dw) + 1, H);
         }
-        g.drawImage(v, dx, dy, dw, dh);
+        g.drawImage(src, dx, dy, dw, dh);
       };
-      let done = false, raf = 0, cut = 99;
+      let done = false, raf = 0, cut = 99, started = false;
+      /* הפריים הראשון (תמונה) נכנס לקנבס ברגע שהוא נטען, וגם אחרי שינוי גודל, עד שהסרטון מתחיל לצייר */
+      const poster = document.getElementById('heroPoster');
+      const drawPoster = () => {
+        if (done || started || poster.hidden || !poster.naturalWidth) return;
+        try { draw(poster, poster.naturalWidth, poster.naturalHeight); box.classList.add('on'); } catch (e) {}
+      };
+      if (!poster.hidden) { if (poster.complete) drawPoster(); else poster.addEventListener('load', drawPoster, { once: true }); window.addEventListener('resize', drawPoster); }
       /* סיום: הסרטון נעצר בפריים האחרון ונשאר כך (בלי אנימציה). אם הסרטון נכשל/לא התחיל: דהייה לתמונת המודעה שמתחת */
       const freeze = () => {
         if (done) return; done = true;
@@ -1082,34 +1110,46 @@
         root.classList.remove('vid-pending');
         box.classList.add('closing', 'out'); setTimeout(() => { box.remove(); }, 600);
       };
-      Promise.all([fetch('ads/videos.json').then(r => r.json()), fetch('ads/video-cuts.json').then(r => r.json()), fetch('ads/ads.json').then(r => r.json()).catch(() => [])]).then(([vids, cuts, ads]) => {
-        const keys = Object.keys(vids);
-        const q = new URLSearchParams(location.search).get('ad');
-        const n = (q && vids[q]) ? q : keys[Math.floor(Math.random() * keys.length)];
-        const nn = String(n).padStart(2, '0');
-        cut = parseFloat(cuts[n]) || 8;
+      /* הסרטון הקבוע (window.HERO, מוגדר מיד אחרי ה-Hero): ביודנסה (4:5, 10 שניות), מתנגן עד הסוף ונעצר בפריים האחרון (התמונה האחרונה עם כל הטקסט).
+         התמונה שמתחת היא אותו פריים אחרון (חיסכון בנתונים / הפחתת תנועה / הסרטון לא נטען). ?ad=N: סרטון מודעה N, נחתך כמו קודם */
+      const HERO = window.HERO;
+      const q = new URLSearchParams(location.search).get('ad');
+      const pick = !q ? Promise.resolve(HERO) : Promise.all([fetch('ads/videos.json').then(r => r.json()), fetch('ads/video-cuts.json').then(r => r.json()), fetch('ads/ads.json').then(r => r.json()).catch(() => [])]).then(([vids, cuts, ads]) => {
+        if (!vids[q]) return HERO;
         // תמונת המודעה (אותו יחס 4:5 בדיוק כמו הסרטון) היא מה שנשאר אחרי שהסרטון נגמר
-        const meta = (ads || []).find(x => String(x.id) === String(n));
-        img.alt = meta ? meta.text : '';
-        img.src = 'ads/img/ad-' + nn + '.png';
+        const meta = (ads || []).find(x => String(x.id) === String(q));
+        return { id: Number(q), video: 'ads/video/' + vids[q], img: 'ads/img/ad-' + String(q).padStart(2, '0') + '.png', cut: parseFloat(cuts[q]) || 8, alt: meta ? meta.text : '' };
+      });
+      pick.then(h => {
+        cut = h.cut;
+        img.alt = h.alt;
+        img.src = h.img;
         if (!pending) { if (box) box.remove(); return; }
-        v.src = 'ads/video/' + vids[n];
-        v.addEventListener('loadedmetadata', () => { try { v.currentTime = 0.02; } catch(e){} }, { once: true });   // מדלגים על פריים 0 (תמונת המודעה לתצוגה מקדימה) ומתחילים מהאנימציה
+        // סרטון מודעה: מדלגים על פריים 0 (תמונת המודעה לתצוגה מקדימה) ומתחילים מהאנימציה. בביודנסה פריים 0 הוא התמונה שכבר מוצגת
+        if (h !== HERO) v.addEventListener('loadedmetadata', () => { try { v.currentTime = 0.02; } catch(e){} }, { once: true });
         box.hidden = false;
-        if (window.fbq) { try { fbq('trackCustom', 'HeroVideo', { ad: Number(n) }); } catch(e){} }
+        if (window.fbq) { try { fbq('trackCustom', 'HeroVideo', { ad: h.id }); } catch(e){} }
         const tick = () => {
           if (done) return;
           if (v.currentTime >= cut) { freezeAtCut(); return; }
           raf = requestAnimationFrame(tick);
         };
         const paint = () => { if (done) return; draw(); v.requestVideoFrameCallback ? v.requestVideoFrameCallback(paint) : requestAnimationFrame(paint); };
-        v.addEventListener('playing', () => { clearTimeout(stall); const reveal = () => { box.classList.add('on'); paint(); }; if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(reveal); else setTimeout(reveal, 80); raf = requestAnimationFrame(tick); }, { once: true });
+        let stall = 0;
+        v.addEventListener('playing', () => { clearTimeout(stall); const reveal = () => { started = true; box.classList.add('on'); paint(); }; if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(reveal); else setTimeout(reveal, 80); raf = requestAnimationFrame(tick); }, { once: true });
         v.addEventListener('ended', freezeAtCut);
         v.addEventListener('error', fail);
-        const stall = setTimeout(fail, 5000);   // לא התחיל להתנגן (חיבור איטי או חסימת הפעלה אוטומטית): מציגים את ההזמנה
-        /* בלי סאונד ובלי שום אינטראקציה: הסרטון מושתק, לחיצה/נגיעה/גלילה לא משפיעות עליו, והוא ממשיך עד רגע החיתוך */
+        /* בלי סאונד ובלי שום אינטראקציה: הסרטון מושתק, לחיצה/נגיעה/גלילה לא משפיעות עליו, והוא ממשיך עד הסוף (או עד רגע החיתוך בסרטון מודעה) */
         v.muted = true;
-        const p = v.play(); if (p && p.catch) p.catch(fail);
+        const begin = () => {
+          if (done) return;
+          if (v.getAttribute('src') !== h.video) v.src = h.video;
+          stall = setTimeout(fail, 5000);   // לא התחיל להתנגן (חיבור איטי או חסימת הפעלה אוטומטית): מציגים את ההזמנה
+          const p = v.play(); if (p && p.catch) p.catch(fail);
+        };
+        // ביודנסה: הסרטון מתחיל לרדת ולהתנגן רק אחרי תמונת הפריים הראשון (או אם היא נכשלה), כדי שלא יתחרו על החיבור
+        if (h === HERO && !poster.hidden && !poster.complete) { poster.addEventListener('load', begin, { once: true }); poster.addEventListener('error', begin, { once: true }); }
+        else begin();
       }).catch(fail);
     })();
 

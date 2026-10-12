@@ -1012,8 +1012,7 @@
       if (el('ptFill')) el('ptFill').style.width = pct;
     });
 
-    /* ===== סרטון פתיחה: סרטון ביודנסה (4:5, 10 שניות), מושתק, מתנגן אוטומטית עד הסוף ונעצר בפריים האחרון.
-       ?ad=N: סרטון מודעה N במקומו, נחתך ברגע שההזמנה בסרטון נכנסת (ads/video-cuts.json) ===== */
+    /* ===== סרטון פתיחה: סרטון אקראי מתוך 50 (או ?ad=N), מושתק, מתנגן אוטומטית וגם נחתך ברגע שההזמנה בסרטון נכנסת (ads/video-cuts.json) ===== */
     (function(){
       const root = document.documentElement;
       const box = document.getElementById('heroVid');
@@ -1084,26 +1083,21 @@
         root.classList.remove('vid-pending');
         box.classList.add('closing', 'out'); setTimeout(() => { box.remove(); }, 600);
       };
-      /* הסרטון הקבוע: ביודנסה (4:5, 10 שניות), מתנגן עד הסוף ונעצר בפריים האחרון (התמונה האחרונה עם כל הטקסט).
-         התמונה שמתחת היא אותו פריים אחרון (חיסכון בנתונים / הפחתת תנועה / הסרטון לא נטען). ?ad=N: סרטון מודעה N, נחתך כמו קודם */
-      const HERO = { id: 'biodanza', video: '../ads/video/biodanza-hero-c54b9cf4.mp4', img: '../ads/img/biodanza-hero-c54b9cf4.jpg', cut: 99,
-        alt: 'יש רגעים שמפספסים. ויש רגעים שבוחרים להיות בהם. ביודנסה: להיות, לנוע, להיפגש' };
-      const q = new URLSearchParams(location.search).get('ad');
-      const pick = !q ? Promise.resolve(HERO) : Promise.all([fetch('../ads/videos.json').then(r => r.json()), fetch('../ads/video-cuts.json').then(r => r.json()), fetch('../ads/ads.json').then(r => r.json()).catch(() => [])]).then(([vids, cuts, ads]) => {
-        if (!vids[q]) return HERO;
+      Promise.all([fetch('../ads/videos.json').then(r => r.json()), fetch('../ads/video-cuts.json').then(r => r.json()), fetch('../ads/ads.json').then(r => r.json()).catch(() => [])]).then(([vids, cuts, ads]) => {
+        const keys = Object.keys(vids);
+        const q = new URLSearchParams(location.search).get('ad');
+        const n = (q && vids[q]) ? q : keys[Math.floor(Math.random() * keys.length)];
+        const nn = String(n).padStart(2, '0');
+        cut = parseFloat(cuts[n]) || 8;
         // תמונת המודעה (אותו יחס 4:5 בדיוק כמו הסרטון) היא מה שנשאר אחרי שהסרטון נגמר
-        const meta = (ads || []).find(x => String(x.id) === String(q));
-        return { id: Number(q), video: '../ads/video/' + vids[q], img: '../ads/img/ad-' + String(q).padStart(2, '0') + '.png', cut: parseFloat(cuts[q]) || 8, alt: meta ? meta.text : '' };
-      });
-      pick.then(h => {
-        cut = h.cut;
-        img.alt = h.alt;
-        img.src = h.img;
+        const meta = (ads || []).find(x => String(x.id) === String(n));
+        img.alt = meta ? meta.text : '';
+        img.src = '../ads/img/ad-' + nn + '.png';
         if (!pending) { if (box) box.remove(); return; }
-        v.src = h.video;
+        v.src = '../ads/video/' + vids[n];
         v.addEventListener('loadedmetadata', () => { try { v.currentTime = 0.02; } catch(e){} }, { once: true });   // מדלגים על פריים 0 (תמונת המודעה לתצוגה מקדימה) ומתחילים מהאנימציה
         box.hidden = false;
-        if (window.fbq) { try { fbq('trackCustom', 'HeroVideo', { ad: h.id }); } catch(e){} }
+        if (window.fbq) { try { fbq('trackCustom', 'HeroVideo', { ad: Number(n) }); } catch(e){} }
         const tick = () => {
           if (done) return;
           if (v.currentTime >= cut) { freezeAtCut(); return; }
@@ -1114,7 +1108,7 @@
         v.addEventListener('ended', freezeAtCut);
         v.addEventListener('error', fail);
         const stall = setTimeout(fail, 5000);   // לא התחיל להתנגן (חיבור איטי או חסימת הפעלה אוטומטית): מציגים את ההזמנה
-        /* בלי סאונד ובלי שום אינטראקציה: הסרטון מושתק, לחיצה/נגיעה/גלילה לא משפיעות עליו, והוא ממשיך עד הסוף (או עד רגע החיתוך בסרטון מודעה) */
+        /* בלי סאונד ובלי שום אינטראקציה: הסרטון מושתק, לחיצה/נגיעה/גלילה לא משפיעות עליו, והוא ממשיך עד רגע החיתוך */
         v.muted = true;
         const p = v.play(); if (p && p.catch) p.catch(fail);
       }).catch(fail);
