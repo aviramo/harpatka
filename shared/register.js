@@ -90,8 +90,9 @@
     m.hidden = false;
     requestAnimationFrame(() => m.classList.add('open'));
     document.body.style.overflow = 'hidden';
-    const f = m.querySelector('[data-autofocus]') || m.querySelector('button, a');
-    if (f) f.focus();
+    /* הפוקוס עובר לקופסת הפופאפ (בלי טבעת פוקוס מכוערת על כפתור הסגירה) */
+    const f = m.querySelector('[data-autofocus]') || m.querySelector('.modal-box');
+    if (f) { if (f.matches('.modal-box')) f.setAttribute('tabindex', '-1'); f.focus({ preventScroll: true }); }
   }
   function closeModal(m){
     if (m.id === 'contactModal') regUrl(false);
