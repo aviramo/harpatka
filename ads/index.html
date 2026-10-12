@@ -41,9 +41,13 @@
     .grid .has-video img:focus-visible, .grid video:focus-visible{ outline:3px solid var(--paper); outline-offset:2px; }
     .grid .playing img{ display:none; }
     .grid .playing video{ display:block; }
+    /* סרטון מוביל בראש העמוד (9:16, לא מודעה ממוספרת). לא ב-videos.json, כדי שלא ייבחר לסרטון הפתיחה של עמוד הבית */
+    .grid.feature{ grid-template-columns:minmax(16rem,24rem); padding-bottom:0; }
+    .grid.feature img, .grid.feature video{ aspect-ratio:9/16; }
   </style>
 </head>
 <body>
+  <div id="feature" class="grid feature"></div>
   <div id="grid" class="grid"></div>
   <script>
     // ads.json נבנה על ידי ads/tools/build_ads.py. videos.json (ידני): מספר סידורי של מודעה → קובץ ב-video/.
@@ -80,16 +84,17 @@
     document.addEventListener('click', e => { if (openMore && !openMore.contains(e.target)) closeMore(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && openMore) { const b = openMore.querySelector('.dots'); closeMore(); b.focus(); } });
 
-    function moreMenu(id, img, vid) {
-      const pad = String(id).padStart(2, '0');
+    // name: "מודעה 12" (לתוויות נגישות), base: שם הקבצים בהורדה ובשיתוף (ad-12.png / ad-12.mp4)
+    function moreMenu(name, base, img, vid) {
+      const ext = img.split('.').pop();
       const wrap = document.createElement('div'); wrap.className = 'more';
       const btn = document.createElement('button');
       btn.type = 'button'; btn.className = 'dots'; btn.innerHTML = DOTS;
-      btn.setAttribute('aria-label', 'הורדה ושיתוף של מודעה ' + id); btn.setAttribute('aria-haspopup', 'menu'); btn.setAttribute('aria-expanded', 'false');
+      btn.setAttribute('aria-label', 'הורדה ושיתוף של ' + name); btn.setAttribute('aria-haspopup', 'menu'); btn.setAttribute('aria-expanded', 'false');
       const menu = document.createElement('div'); menu.className = 'menu'; menu.setAttribute('role', 'menu');
       // הסדר: שיתוף סרטון, הורדת סרטון, שיתוף תמונה, הורדת תמונה (בלי סרטון: רק התמונה)
-      const kinds = [{ url: img, name: 'ad-' + pad + '.png', type: 'image/png', dl: 'הורדת תמונה', sh: 'שיתוף תמונה' }];
-      if (vid) kinds.unshift({ url: vid, name: 'ad-' + pad + '.mp4', type: 'video/mp4', dl: 'הורדת סרטון', sh: 'שיתוף סרטון' });
+      const kinds = [{ url: img, name: base + '.' + ext, type: ext === 'jpg' ? 'image/jpeg' : 'image/png', dl: 'הורדת תמונה', sh: 'שיתוף תמונה' }];
+      if (vid) kinds.unshift({ url: vid, name: base + '.mp4', type: 'video/mp4', dl: 'הורדת סרטון', sh: 'שיתוף סרטון' });
       kinds.forEach((k, i) => {
         if (i) menu.appendChild(document.createElement('hr'));
         const a = document.createElement('a');
@@ -108,49 +113,64 @@
       wrap.appendChild(btn); wrap.appendChild(menu);
       return wrap;
     }
+
+    // סרטונים שמופיעים ראשונים, לפני המודעות הממוספרות. סרטון מעודכן = שם קובץ חדש (cache)
+    const FEATURED = [{ label: 'ביודנסה', name: 'הסרטון ביודנסה', base: 'biodanza-15s', w: 1080, h: 1920,
+      img: 'img/biodanza-15s-2bc3eb7b.jpg', vid: 'video/biodanza-15s-2bc3eb7b.mp4',
+      alt: 'יש רגעים שמפספסים. ויש רגעים שבוחרים להיות בהם. ביודנסה: להיות, לנוע, להיפגש' }];
+
+    const stops = [];   // סרטון אחד בכל פעם: כשאחד מתחיל לנגן, כל השאר עוצרים וחוזרים לתמונה
+    // גלילה: סרטון שיוצא מהמסך (נשאר ממנו פחות מרבע) נעצר וחוזר לתמונה
+    const io = 'IntersectionObserver' in window && new IntersectionObserver(es => es.forEach(e => {
+      if (e.intersectionRatio < 0.25 && e.target._stop) e.target._stop();
+    }), { threshold: [0, 0.25] });
+
+    // c: {label (מעל התמונה), name (לתוויות נגישות), base (שם קובץ בהורדה), img, vid, w, h, alt}
+    function card(g, c) {
+      const f = document.createElement('figure');
+      const head = document.createElement('div'); head.className = 'head';
+      const n = document.createElement('span'); n.className = 'n'; n.textContent = c.label;
+      head.appendChild(n);
+      const media = document.createElement('div'); media.className = 'media';
+      const im = document.createElement('img');
+      im.loading = 'lazy'; im.width = c.w; im.height = c.h; im.src = c.img; im.alt = c.alt;
+      media.appendChild(im); f.appendChild(head); f.appendChild(media);
+
+      head.appendChild(moreMenu(c.name, c.base, c.img, c.vid));
+      if (c.vid) {
+        const v = document.createElement('video');
+        v.playsInline = true; v.preload = 'none';
+        v.width = c.w; v.height = c.h; v.poster = im.src; v.src = c.vid;
+        v.setAttribute('aria-label', 'עצירת ' + c.name + ' וחזרה לתמונה');
+        im.setAttribute('role', 'button'); im.tabIndex = 0; v.tabIndex = 0;
+        im.setAttribute('aria-label', 'ניגון ' + c.name + ': ' + c.alt);
+        const show = on => {
+          f.classList.toggle('playing', on);
+          if (on) { v.currentTime = 0; v.play().catch(() => {}); v.focus({ preventScroll: true }); } else v.pause();
+        };
+        const key = on => e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(on); } };
+        im.addEventListener('click', () => show(true));   // לחיצה על התמונה: ניגון
+        v.addEventListener('click', () => show(false));   // לחיצה על הסרטון: עצירה וחזרה לתמונה
+        im.addEventListener('keydown', key(true)); v.addEventListener('keydown', key(false));
+        v.addEventListener('ended', () => show(false));   // בסוף הסרטון התא חוזר לתמונה
+        const stop = () => { if (f.classList.contains('playing')) show(false); };
+        stops.push(stop);
+        media._stop = stop; if (io) io.observe(media);
+        v.addEventListener('play', () => stops.forEach(s => s !== stop && s()));
+        f.classList.add('has-video'); media.appendChild(v);
+        show(false);
+      }
+      g.appendChild(f);
+    }
+
+    const feature = document.getElementById('feature');
+    FEATURED.forEach(c => card(feature, c));
     Promise.all([json('ads.json'), json('videos.json')]).then(([items, videos]) => {
       const g = document.getElementById('grid');
-      const stops = [];   // סרטון אחד בכל פעם: כשאחד מתחיל לנגן, כל השאר עוצרים וחוזרים לתמונה
-      // גלילה: סרטון שיוצא מהמסך (נשאר ממנו פחות מרבע) נעצר וחוזר לתמונה
-      const io = 'IntersectionObserver' in window && new IntersectionObserver(es => es.forEach(e => {
-        if (e.intersectionRatio < 0.25 && e.target._stop) e.target._stop();
-      }), { threshold: [0, 0.25] });
       (Array.isArray(items) ? items : []).forEach(it => {
-        const f = document.createElement('figure');
-        const head = document.createElement('div'); head.className = 'head';
-        const n = document.createElement('span'); n.className = 'n'; n.textContent = it.id;
-        head.appendChild(n);
-        const media = document.createElement('div'); media.className = 'media';
-        const im = document.createElement('img');
-        im.loading = 'lazy'; im.width = 1080; im.height = 1350; im.src = 'img/' + it.file; im.alt = it.text;
-        media.appendChild(im); f.appendChild(head); f.appendChild(media);
-
-        const file = videos[String(it.id)];
-        head.appendChild(moreMenu(it.id, 'img/' + it.file, file ? 'video/' + file : ''));
-        if (file) {
-          const v = document.createElement('video');
-          v.playsInline = true; v.preload = 'none';
-          v.width = 1080; v.height = 1350; v.poster = im.src; v.src = 'video/' + file;
-          v.setAttribute('aria-label', 'עצירת הסרטון של מודעה ' + it.id + ' וחזרה לתמונה');
-          im.setAttribute('role', 'button'); im.tabIndex = 0; v.tabIndex = 0;
-          im.setAttribute('aria-label', 'ניגון הסרטון של מודעה ' + it.id + ': ' + it.text);
-          const show = on => {
-            f.classList.toggle('playing', on);
-            if (on) { v.currentTime = 0; v.play().catch(() => {}); v.focus({ preventScroll: true }); } else v.pause();
-          };
-          const key = on => e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(on); } };
-          im.addEventListener('click', () => show(true));   // לחיצה על התמונה: ניגון
-          v.addEventListener('click', () => show(false));   // לחיצה על הסרטון: עצירה וחזרה לתמונה
-          im.addEventListener('keydown', key(true)); v.addEventListener('keydown', key(false));
-          v.addEventListener('ended', () => show(false));   // בסוף הסרטון התא חוזר לתמונה
-          const stop = () => { if (f.classList.contains('playing')) show(false); };
-          stops.push(stop);
-          media._stop = stop; if (io) io.observe(media);
-          v.addEventListener('play', () => stops.forEach(s => s !== stop && s()));
-          f.classList.add('has-video'); media.appendChild(v);
-          show(false);
-        }
-        g.appendChild(f);
+        const pad = String(it.id).padStart(2, '0'), file = videos[String(it.id)];
+        card(g, { label: it.id, name: 'מודעה ' + it.id, base: 'ad-' + pad, img: 'img/' + it.file, vid: file ? 'video/' + file : '',
+          w: 1080, h: 1350, alt: it.text });
       });
     });
   </script>
