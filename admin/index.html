@@ -321,17 +321,17 @@
     .hint { font-size: 13px; color: var(--muted); margin-top: 4px; }
     .sect-title { font-size: 14px; font-weight: 700; color: var(--muted); margin: 6px 0 6px; }
     .mlist { display: grid; gap: 6px; margin-bottom: 14px; }
-    .mrow { display: flex; align-items: center; gap: 8px; }
-    .mtoggle {
-      flex: 1; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 12px;
-      border-radius: 14px; border: 1.5px solid var(--line); background: #fff; font-weight: 600; text-align: right;
-    }
+    /* שורת מפגש: כרטיס אחד, סימון המפגש מימין והסטטוס משולב בתוכה משמאל */
+    .mrow { display: flex; align-items: center; gap: 8px; min-height: 54px; padding: 0 8px 0 6px; border-radius: 16px; border: 1.5px solid var(--line); background: #fff; transition: border-color .15s, background .15s; }
+    .mrow.on { border-color: var(--terra); background: rgba(201,111,82,.06); }
+    .mtoggle { flex: 1; display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 6px; border: 0; background: transparent; font-weight: 600; text-align: right; border-radius: 12px; }
     .mtoggle .box {
       width: 22px; height: 22px; border-radius: 7px; border: 2px solid var(--sand); display: grid; place-items: center;
       color: #fff; font-size: 14px; flex: 0 0 auto;
     }
-    .mtoggle[aria-pressed="true"] { border-color: var(--terra); }
     .mtoggle[aria-pressed="true"] .box { background: var(--terra); border-color: var(--terra); }
+    .mrow .pay { height: 34px; padding: 0 12px; font-size: 14px; }
+    .mrow .pay::after { content: "▾"; margin-inline-start: 6px; font-size: 11px; opacity: .7; }
     .mrow .pay[hidden] { display: none; }
     .btn {
       width: 100%; height: 52px; border-radius: 16px; background: var(--terra); color: #fff; font-weight: 700; font-size: 18px;
@@ -1230,7 +1230,7 @@
   let msgTexts = [];
   function greetMessage(p) {
     const who = SENDERS[emailOf()] || '', name = p.name.trim().split(/\s+/)[0];
-    return 'היי ' + name + ', ' + (who ? 'זה ' + who + ', מ"יוצאים להרפתקה"' : 'זה מ"יוצאים להרפתקה"') + ' 😊';
+    return 'היי ' + name + ', ' + (who ? 'זה ' + who + ', מ"יוצאים להרפתקה"' : 'זה מ"יוצאים להרפתקה"') + ' 😊 מה נשמע?';
   }
   function renderContact() {
     const box = $('#pMsgs'); if (!box) return;
@@ -1330,7 +1330,7 @@
       let on, st;
       if (sheet.id) { const l = linkOf(sheet.id, m.id); on = !!l; st = l ? linkStatus(l) : 'unpaid'; }
       else { on = sheet.links.has(m.id); st = sheet.links.get(m.id) ? 'paid' : 'unpaid'; }
-      return '<div class="mrow">' +
+      return '<div class="mrow' + (on ? ' on' : '') + '">' +
         '<button type="button" class="mtoggle" data-mt="' + m.id + '" aria-pressed="' + on + '"><span class="box">' + (on ? '✓' : '') + '</span>' + esc(meetingLabel(m, true)) + '</button>' +
         '<button type="button" class="pay ' + st + '" data-mp="' + m.id + '"' + (on ? '' : ' hidden') + '>' + STATUS_LABEL[st] + '</button>' +
       '</div>';
