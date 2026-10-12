@@ -758,7 +758,7 @@
         const d = deep; deep = null;
         try { sessionStorage.removeItem('harpatka_deep'); } catch (e) {}
         if (d.m && state.meetings.some((x) => x.id === d.m)) state.filter = d.m;
-        if (['paid', 'unpaid', 'requested', 'exempt'].includes(d.pay)) state.pay = d.pay;
+        if (['paid', 'unpaid', 'requested'].includes(d.pay)) state.pay = d.pay;
         if (d.g === 'male' || d.g === 'female' || d.g === 'none') state.gender = d.g;
         if (d.s && SORTS.some((x) => x[0] === d.s)) state.sort = d.s;
         if (d.q) { state.q = d.q; $('#q').value = d.q; }
@@ -807,6 +807,8 @@
   const REQ_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></svg>';
   const linkStatus = (l) => l.exempt ? 'exempt' : l.paid ? 'paid' : (l.pay_requested_at ? 'requested' : 'unpaid');   // לא משלם (בחינם ביודעין) / שילם / נשלחה בקשת תשלום / טרם שילם
   const STATUS_LABEL = { paid: 'שילם', requested: 'בקשה נשלחה', unpaid: 'טרם שילם', exempt: 'לא משלם' };
+  /* סינון "שילמו" כולל גם את מי שמסומן "לא משלם" (הסדירו הכול); שאר הסטטוסים נבדקים כמו שהם */
+  const payMatch = (ps, f) => f === 'paid' ? (ps === 'paid' || ps === 'exempt') : ps === f;
   function paidState(p) {
     if (state.filter) { const l = linkOf(p.id, state.filter); return l ? linkStatus(l) : null; }
     const ls = linksOf(p.id);
@@ -825,10 +827,10 @@
       if (!q) return true;
       return p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd));
     });
-    const payOk = (p) => !state.pay || paidState(p) === state.pay;
+    const payOk = (p) => !state.pay || payMatch(paidState(p), state.pay);
     const genOk = (p) => state.gender === 'none' ? !p.gender : (!state.gender || p.gender === state.gender);
     const nG = (g) => base.filter((p) => payOk(p) && (g === 'none' ? !p.gender : p.gender === g)).length;
-    const nP = (st) => base.filter((p) => genOk(p) && paidState(p) === st).length;
+    const nP = (st) => base.filter((p) => genOk(p) && payMatch(paidState(p), st)).length;
     const btn = (kind, val, label, n, cls, on, aria) => '<button type="button"' + (aria ? ' aria-label="' + aria + ' ' + n + '" title="' + aria + '"' : '') + ' class="fx' + (cls ? ' ' + cls : '') + (n ? '' : ' zero') + '" data-fx="' + kind + ':' + val + '" aria-pressed="' + on + '">' + label + ' <b>' + n + '</b></button>';
     const none = nG('none');
     let h = '<div class="fgroup">' +
@@ -838,8 +840,7 @@
     h += '<div class="fgroup">' +
       btn('p', 'unpaid', '<span class="lw pay-lw">טרם שילמו</span><span class="li">₪</span>', nP('unpaid'), 'no', state.pay === 'unpaid', 'טרם שילמו') +
       btn('p', 'requested', '<span class="lw pay-lw">בקשה נשלחה</span><span class="li">' + REQ_ICON + '</span>', nP('requested'), 'wait', state.pay === 'requested', 'נשלחה בקשת תשלום') +
-      btn('p', 'paid', '<span class="lw pay-lw">שילמו</span><span class="li">✓</span>', nP('paid'), 'ok', state.pay === 'paid', 'שילמו') +
-      (nP('exempt') || state.pay === 'exempt' ? btn('p', 'exempt', '<span class="lw pay-lw">לא משלמים</span><span class="li">' + FREE_ICON + '</span>', nP('exempt'), 'free', state.pay === 'exempt', 'לא משלמים') : '') + '</div>';
+      btn('p', 'paid', '<span class="lw pay-lw">שילמו</span><span class="li">✓</span>', nP('paid'), 'ok', state.pay === 'paid', 'שילמו') + '</div>';
     $('#facets').innerHTML = base.length || state.gender || state.pay ? h : '';
   }
 
@@ -878,7 +879,6 @@
     const g = state.gender, pay = state.pay, scope = state.filter ? ' במפגש הזה' : '';
     const clear = '<button type="button" class="link-btn" id="clearFx" style="margin-top:14px">ניקוי סינונים</button>';
     if (g || pay) {
-      if (!g && pay === 'exempt' && !state.q) return '<b>אין משתתפים בסטטוס "לא משלם"</b>אפשר לסמן סטטוס כזה בלחיצה על תגית התשלום של משתתף<br>' + clear;
       if (!g && pay === 'requested' && !state.q) return '<b>אין בקשות תשלום פתוחות</b>כשנשלחת הודעת תשלום בוואטסאפ מתוך פרטי המשתתף, הסטטוס מסומן כאן' + '<br>' + clear;
       if (!g && pay === 'unpaid' && !state.q) {
         const nReq = state.participants.filter((x) => (!state.filter || linkOf(x.id, state.filter)) && paidState(x) === 'requested').length;
@@ -888,7 +888,7 @@
       }
       if (!g && pay === 'paid' && !state.q) return '<b>עוד אף אחד לא שילם</b>' + (state.filter ? 'אפשר לסמן תשלום בלחיצה על התגית "טרם שילם" בכרטיס' : 'תשלום מסמנים בפרטי המשתתף, בתוך המפגש') + '<br>' + clear;
       const who = g === 'male' ? 'גברים' : g === 'female' ? 'נשים' : g === 'none' ? 'משתתפים ללא מגדר' : 'משתתפים';
-      const what = pay === 'paid' ? ' ששילמו' : pay === 'unpaid' ? ' שטרם שילמו' : pay === 'requested' ? ' שנשלחה להם בקשת תשלום' : pay === 'exempt' ? ' שלא משלמים' : '';
+      const what = pay === 'paid' ? ' ששילמו' : pay === 'unpaid' ? ' שטרם שילמו' : pay === 'requested' ? ' שנשלחה להם בקשת תשלום' : '';
       return '<b>אין ' + who + what + scope + (state.q ? ' שמתאימים לחיפוש' : '') + '</b>אפשר לנקות את הסינון ולנסות שוב<br>' + clear;
     }
     if (state.q) return '<b>לא נמצא אף אחד</b>אפשר לנסות שם או מספר אחר';
@@ -902,7 +902,7 @@
     const qd = digits(q);
     let rows = state.participants.filter((p) => {
       if (state.filter && !linkOf(p.id, state.filter)) return false;
-      if (state.pay && paidState(p) !== state.pay) return false;
+      if (state.pay && !payMatch(paidState(p), state.pay)) return false;
       if (state.gender === 'none' ? p.gender : (state.gender && p.gender !== state.gender)) return false;
       if (!q) return true;
       return p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd));
