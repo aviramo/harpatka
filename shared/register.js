@@ -212,6 +212,8 @@
     el.setAttribute('href', waLinks[el.dataset.wa]);
   });
   const contactModal = document.getElementById('contactModal');
+  window.HarpatkaRegister = { open: () => { if (contactModal) openModal(contactModal); } };   // לשימוש עמודים אחרים
+  if (document.body.hasAttribute('data-auto-register')) setTimeout(() => window.HarpatkaRegister.open(), 250);   // דף /register/: הטופס נפתח מיד
   document.querySelectorAll('[data-contact]').forEach(el => {
     el.setAttribute('href', '#');
     el.addEventListener('click', (e) => { e.preventDefault(); if (contactModal) openModal(contactModal); });
