@@ -26,32 +26,38 @@
       </div>
       <div id="cmFormView" data-su-root>
         <div data-su="formWrap">
-          <h2 class="h-sect text-[1.5rem] md:text-[1.9rem] mb-2 px-8">שמרו לכם מקום</h2>
+          <div class="mt-badge" role="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><b data-meeting-when>המפגש הקרוב</b><span data-meeting-place></span></div>
           <p class="muted mb-5 text-[.95rem]">מספר המקומות מוגבל, והמקום נשמר אחרי מילוי הפרטים ותשלום</p>
           <form data-su="form" novalidate class="text-start">
             <input type="text" name="website" data-su="hp" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
-            <div class="flex gap-2">
-              <input id="cmName" data-su="name" name="name" type="text" class="su-input flex-1 min-w-0" autocomplete="name" maxlength="60" placeholder="שם" aria-label="שם" required>
-              <div class="su-seg" data-su="gender" role="radiogroup" aria-label="מגדר">
-                <label><input type="radio" name="cmGender" value="male"><span>גבר</span></label>
-                <label><input type="radio" name="cmGender" value="female"><span>אישה</span></label>
+            <div class="su-grid">
+              <div class="su-cell">
+                <input id="cmName" data-su="name" name="name" type="text" class="su-input" autocomplete="name" maxlength="60" placeholder="שם" aria-label="שם" required>
+                <div data-su="nameErr" class="su-err" role="alert"></div>
+              </div>
+              <div class="su-cell">
+                <div class="su-seg eq" data-su="gender" role="radiogroup" aria-label="מגדר">
+                  <label><input type="radio" name="cmGender" value="male"><span>גבר</span></label>
+                  <label><input type="radio" name="cmGender" value="female"><span>אישה</span></label>
+                </div>
+                <div data-su="genderErr" class="su-err" role="alert"></div>
+              </div>
+              <div class="su-cell">
+                <input id="cmPhone" data-su="phone" name="phone" type="tel" dir="ltr" inputmode="tel" class="su-input text-end" autocomplete="tel" maxlength="24" placeholder="טלפון" aria-label="טלפון" required>
+                <div data-su="phoneErr" class="su-err" role="alert"></div>
+              </div>
+              <div class="su-cell">
+                <input id="cmAge" data-su="age" name="age" type="number" inputmode="numeric" min="18" max="99" class="su-input" autocomplete="off" placeholder="גיל" aria-label="גיל" required>
+                <div data-su="ageErr" class="su-err" role="alert"></div>
               </div>
             </div>
-            <div data-su="nameErr" class="su-err" role="alert"></div>
-            <div data-su="genderErr" class="su-err" role="alert"></div>
-            <div class="flex gap-2 mt-2.5">
-              <input id="cmPhone" data-su="phone" name="phone" type="tel" dir="ltr" inputmode="tel" class="su-input text-end flex-1 min-w-0" autocomplete="tel" maxlength="24" placeholder="טלפון" aria-label="טלפון" required>
-              <input id="cmAge" data-su="age" name="age" type="number" inputmode="numeric" min="18" max="99" class="su-input shrink-0" style="width:5.2rem" autocomplete="off" placeholder="גיל" aria-label="גיל" required>
-            </div>
-            <div data-su="phoneErr" class="su-err" role="alert"></div>
-            <div data-su="ageErr" class="su-err" role="alert"></div>
             <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-3.5 text-[1.2rem] whitespace-nowrap w-full mt-4">שמירת מקום</button>
             <div data-su="fail" class="su-err mt-3 text-center" role="alert"></div>
           </form>
-          <button type="button" id="cmBack" class="mt-4 underline underline-offset-4 decoration-2 muted font-semibold text-[.95rem]">מעדיפים וואטסאפ? אפשר לשלוח לנו הודעה</button>
         </div>
         <div data-su="done" hidden>
           <h2 class="h-sect text-[1.7rem] md:text-[2.2rem] mb-3">עוד צעד אחד ושומרים לכם מקום</h2>
+          <div class="mt-badge" role="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><b data-meeting-when>המפגש הקרוב</b><span data-meeting-place></span></div>
           <p class="lead mb-1" style="color:var(--ink);font-weight:700">המקום נשמר רק אחרי תשלום</p>
           <p class="lead muted mb-5">מספר המקומות מוגבל, ומי ששילם קודם מקבל קודם</p>
           <a href="#" target="_blank" rel="noopener" data-paybox class="btn-primary rounded-full px-8 py-4 text-[1.3rem] inline-block">לתשלום <span data-price>80 ₪</span> ושמירת מקום</a>
@@ -150,9 +156,9 @@
       const name = nameI.value.trim().replace(/\s+/g, ' '), norm = normPhone(phoneI.value);
       let ok = true;
       if (name.length < 2) { setErr(nameI, q('nameErr'), 'נא למלא שם'); ok = false; }
-      if (!norm) { setErr(phoneI, q('phoneErr'), 'מספר הטלפון לא תקין'); ok = false; }
+      if (!norm) { setErr(phoneI, q('phoneErr'), 'מספר לא תקין'); ok = false; }
       const age = parseInt(ageI.value, 10);
-      if (!(age >= 18 && age <= 99)) { setErr(ageI, q('ageErr'), 'נא למלא גיל תקין'); ok = false; }
+      if (!(age >= 18 && age <= 99)) { setErr(ageI, q('ageErr'), 'גיל לא תקין'); ok = false; }
       const gEl = genderBox.querySelector('input:checked'), gender = gEl ? gEl.value : null;
       if (!gender) { genderBox.classList.add('bad'); q('genderErr').textContent = 'נא לבחור'; ok = false; }
       if (!ok) return;
@@ -172,9 +178,9 @@
         if (out === 'created' || out === 'exists') {   // כפילות: אותה הודעה, בלי לחשוף שהמספר כבר רשום
           if (out === 'created') leadOnce();   // Lead רק על מספר חדש (חד ערכי), לא על כפילות
           finished = true; allDone();
-        } else if (out === 'invalid_phone') setErr(phoneI, q('phoneErr'), 'מספר הטלפון לא תקין');
+        } else if (out === 'invalid_phone') setErr(phoneI, q('phoneErr'), 'מספר לא תקין');
         else if (out === 'invalid_name') setErr(nameI, q('nameErr'), 'נא למלא שם');
-        else if (out === 'invalid_age') setErr(ageI, q('ageErr'), 'נא למלא גיל תקין');
+        else if (out === 'invalid_age') setErr(ageI, q('ageErr'), 'גיל לא תקין');
         else throw new Error('signup failed');
       } catch (err) {
         q('fail').innerHTML = 'משהו השתבש, אפשר ליצור קשר ישירות: <a href="#" class="underline font-bold">שיחה בוואטסאפ</a>';
@@ -190,7 +196,6 @@
   document.querySelectorAll('[data-su-root]').forEach(initSignup);
   if (cmChoose) {
     document.getElementById('cmShowForm').addEventListener('click', () => { showForm(); const i = cmFormView.querySelector('[data-su="name"]'); if (i) i.focus(); });
-    document.getElementById('cmBack').addEventListener('click', showChoose);
     new MutationObserver(() => { if (document.getElementById('contactModal').hidden) showForm(); }).observe(document.getElementById('contactModal'), { attributes: true, attributeFilter: ['hidden'] });
   }
 
@@ -212,19 +217,26 @@
     el.addEventListener('click', (e) => { e.preventDefault(); if (contactModal) openModal(contactModal); });
   });
 
-  /* ===== מחיר בכפתור התשלום (בהודעת התודה): 100 ₪ ב-3 הימים האחרונים לפני המפגש הקרוב, אחרת 80 ₪ ===== */
+  /* ===== המפגש הקרוב (תאריך ושעה בולטים בפופאפ) ומחיר בכפתור התשלום: 100 ₪ ב-3 הימים האחרונים לפני המפגש, אחרת 80 ₪ ===== */
+  const HE_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+  const dayN = (s) => { const [y, mm, d] = s.split('-').map(Number); return Date.UTC(y, mm - 1, d) / 864e5; };
+  const showMeeting = (m) => {
+    const [, mo, d] = m.date.split('-').map(Number), wd = HE_DAYS[new Date(m.date + 'T12:00:00Z').getUTCDay()];
+    const when = 'יום ' + wd + ' ' + Number(d) + '.' + Number(mo) + (m.time ? ' · ' + m.time : '');
+    document.querySelectorAll('[data-meeting-when]').forEach((e) => { e.textContent = when; });
+    document.querySelectorAll('[data-meeting-place]').forEach((e) => { e.textContent = CONFIG.meetingPlace || ''; });
+    const left = dayN(m.date) - dayN(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()));
+    const price = left <= 3 ? '100' : '80';
+    document.querySelectorAll('[data-price]').forEach((e) => { e.textContent = price + ' ₪'; });
+  };
+  showMeeting(CONFIG.meetingFallback || { date: '2026-10-25', time: '20:00' });   // מיד, בלי להמתין לרשת
   (async () => {
-    let m = { date: '2026-10-25' };
     try {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
-      const r = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=meeting_date&meeting_date=gte.' + today + '&order=meeting_date.asc&limit=1',
+      const r = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=meeting_date,meeting_time&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc&limit=1',
         { headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey } });
       const rows = r.ok ? await r.json() : [];
-      if (rows && rows[0]) m = { date: rows[0].meeting_date };
+      if (rows && rows[0]) showMeeting({ date: rows[0].meeting_date, time: String(rows[0].meeting_time).slice(0, 5) });
     } catch (e) {}
-    const day = s => { const [y, mm, d] = s.split('-').map(Number); return Date.UTC(y, mm - 1, d) / 864e5; };
-    const left = day(m.date) - day(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()));
-    const price = left <= 3 ? '100' : '80';
-    document.querySelectorAll('[data-price]').forEach(e => { e.textContent = price + ' ₪'; });
   })();
 })();

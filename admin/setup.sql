@@ -190,3 +190,6 @@ notify pgrst, 'reload schema';
 
 -- בקשת תשלום (נוסף אוק׳ 2026): מתי נשלחה למשתתף בקשת תשלום על המפגש (סטטוס "בקשה נשלחה")
 alter table public.harpatka_attendance add column if not exists pay_requested_at timestamptz;
+
+-- "לא משלם" (נוסף אוק׳ 2026): נרשם בחינם ביודעין, לא נספר בחוב ובהמרה
+alter table public.harpatka_attendance add column if not exists exempt boolean not null default false;
