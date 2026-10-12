@@ -77,8 +77,10 @@
     try {
       if (open) {
         if (/\/register\/?$/.test(location.pathname) || urlBeforeReg) return;
-        urlBeforeReg = location.pathname + location.search + location.hash;
-        history.replaceState(history.state, '', BASE + 'register/' + location.search);
+        const sp = new URLSearchParams(location.search); sp.delete('register');   // ?register=1 הוא רק מנגנון הפתיחה
+        const qs = sp.toString() ? '?' + sp.toString() : '';
+        urlBeforeReg = location.pathname + qs + location.hash;
+        history.replaceState(history.state, '', BASE + 'register/' + qs);
       } else if (urlBeforeReg) { history.replaceState(history.state, '', urlBeforeReg); urlBeforeReg = null; }
     } catch (e) {}
   }
@@ -225,7 +227,7 @@
   });
   const contactModal = document.getElementById('contactModal');
   window.HarpatkaRegister = { open: () => { if (contactModal) openModal(contactModal); } };   // לשימוש עמודים אחרים
-  if (document.body.hasAttribute('data-auto-register')) setTimeout(() => window.HarpatkaRegister.open(), 250);   // דף /register/: הטופס נפתח מיד
+  if (new URLSearchParams(location.search).has('register')) setTimeout(() => window.HarpatkaRegister.open(), 500);   // הגעה דרך /register/: דף הבית נטען והפופאפ נפתח עליו
   document.querySelectorAll('[data-contact]').forEach(el => {
     el.setAttribute('href', '#');
     el.addEventListener('click', (e) => { e.preventDefault(); if (contactModal) openModal(contactModal); });
