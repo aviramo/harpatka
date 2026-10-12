@@ -71,8 +71,19 @@
   document.body.insertAdjacentHTML('beforeend', MODAL_HTML);
 
   /* ===== מנגנון פופאפ כללי (משותף לכל ה-.modal) ===== */
-  let modalLastFocus = null;
+  let modalLastFocus = null, urlBeforeReg = null;
+  /* כשטופס ההרשמה פתוח, כתובת העמוד הופכת ל-/register/ (אפשר להעתיק ולשלוח); בסגירה היא חוזרת למה שהייתה */
+  function regUrl(open) {
+    try {
+      if (open) {
+        if (/\/register\/?$/.test(location.pathname) || urlBeforeReg) return;
+        urlBeforeReg = location.pathname + location.search + location.hash;
+        history.replaceState(history.state, '', BASE + 'register/' + location.search);
+      } else if (urlBeforeReg) { history.replaceState(history.state, '', urlBeforeReg); urlBeforeReg = null; }
+    } catch (e) {}
+  }
   function openModal(m){
+    if (m.id === 'contactModal') regUrl(true);
     modalLastFocus = document.activeElement;
     m.hidden = false;
     requestAnimationFrame(() => m.classList.add('open'));
@@ -81,6 +92,7 @@
     if (f) f.focus();
   }
   function closeModal(m){
+    if (m.id === 'contactModal') regUrl(false);
     m.classList.remove('open');
     document.body.style.overflow = '';
     setTimeout(() => { m.hidden = true; }, 320);
