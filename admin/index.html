@@ -522,7 +522,7 @@
     if (state.gender) sp.set('g', state.gender);
     if (state.sort !== 'new') sp.set('s', state.sort);
     if (state.q.trim()) sp.set('q', state.q.trim());
-    if (openPid) { sp.set('p', openPid); if (pTab !== 'meets') sp.set('pt', pTab); }
+    if (openPid) { sp.set('p', openPid); if (pTab !== 'contact') sp.set('pt', pTab); }
     if (editingMeeting && mDlg.open) sp.set('em', editingMeeting.id);
     if ($('#stDlg').open) sp.set('st', '1');
     const s = sp.toString();
@@ -764,7 +764,7 @@
         if (d.q) { state.q = d.q; $('#q').value = d.q; }
         urlReady = true;
         render();
-        if (d.p && state.participants.some((x) => x.id === d.p)) openParticipant(d.p, ['meets', 'contact', 'info'].includes(d.pt) ? d.pt : 'meets');
+        if (d.p && state.participants.some((x) => x.id === d.p)) openParticipant(d.p, ['meets', 'contact', 'info'].includes(d.pt) ? d.pt : 'contact');
         else if (d.em && state.meetings.some((x) => x.id === d.em)) openMeeting(d.em);
         else if (d.st) { renderStats(); $('#stDlg').showModal(); syncUrl(); }
         return;
@@ -1305,7 +1305,7 @@
   window.addEventListener('blur', () => { if (pend) leftPage = true; });
   window.addEventListener('focus', () => { if (pend && leftPage) { leftPage = false; setTimeout(askSent, 250); } });
 
-  let pTab = 'meets';
+  let pTab = 'contact';
   function setPTab(tab) {
     pTab = tab;
     document.querySelectorAll('#pTabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
@@ -1335,7 +1335,7 @@
     openPid = p ? p.id : null;
     pDlg.showModal();
     pDlg.setAttribute('tabindex', '-1'); pDlg.focus({ preventScroll: true });   // בלי טבעת פוקוס על כפתור הסגירה
-    setPTab(p ? (tab || 'meets') : 'info');
+    setPTab(p ? (tab || 'contact') : 'info');
     if (!p) setTimeout(() => pForm.name.focus(), 50);
   }
 
