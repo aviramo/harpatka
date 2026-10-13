@@ -569,8 +569,8 @@
   <script>
     /* סרטון הפתיחה מוגדר כאן, מיד אחרי ה-Hero ולא בסוף הדף: הפריים הראשון מוצג מיד כתמונה (במקום נקודות הטעינה)
        והסרטון מתחיל להיטען מיד אחריה. הסרטון מתחיל מאותו פריים בדיוק, ולכן המעבר מהתמונה לסרטון חלק. ?ad=N: סרטון מודעה (בסוף הדף) */
-    window.HERO = { id: 'biodanza', video: '../ads/video/biodanza-hero-c54b9cf4.mp4', poster: '../ads/img/biodanza-hero-first-b2151bbb.webp',
-      img: '../ads/img/biodanza-hero-c54b9cf4.jpg', cut: 99,
+    window.HERO = { id: 'biodanza', video: '../ads/video/biodanza-hero-ad8d449f.mp4', poster: '../ads/img/biodanza-hero-first-493ac11c.webp',
+      img: '../ads/img/biodanza-hero-ad8d449f.jpg', cut: 99,
       alt: 'יש רגעים שמפספסים. ויש רגעים שבוחרים להיות בהם. ביודנסה: להיות, לנוע, להיפגש' };
     (function(){
       if (!document.documentElement.classList.contains('vid-pending') || /[?&]ad=/.test(location.search)) return;
@@ -1070,6 +1070,22 @@
       };
       if (!poster.hidden) { if (poster.complete) drawPoster(); else poster.addEventListener('load', drawPoster, { once: true }); window.addEventListener('resize', drawPoster); }
       /* סיום: הסרטון נעצר בפריים האחרון ונשאר כך (בלי אנימציה). אם הסרטון נכשל/לא התחיל: דהייה לתמונת המודעה שמתחת */
+      /* בסיום הסרטון: אם ההמשך (ההזמנה) לא נראה על המסך, גוללים מעט כדי לרמוז שיש עוד. לא גוללים אם המשתמש כבר גלל או נגע, ולא במצב הפחתת תנועה */
+      const nudgeDown = () => {
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        const next = document.getElementById('invite'); if (!next) return;
+        if ((window.scrollY || 0) > 24) return;
+        if (next.getBoundingClientRect().top < window.innerHeight - 90) return;   // כבר רואים את ההמשך: אין צורך
+        let cancel = false; const stop = () => { cancel = true; };
+        ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach((ev) => window.addEventListener(ev, stop, { once: true, passive: true }));
+        setTimeout(() => {
+          if (cancel || (window.scrollY || 0) > 24) return;
+          // גלילה קטנה בלבד, כרמז: מספיק כדי שראש ההמשך (ההזמנה) יציץ בתחתית המסך
+          const delta = Math.min(320, Math.max(70, next.getBoundingClientRect().top - (window.innerHeight - 230)));
+          next.querySelectorAll('.reveal').forEach((e) => e.classList.add('in'));   // שההמשך יופיע מיד ולא יחכה לסף הנראות
+          window.scrollBy({ top: delta, behavior: 'smooth' });
+        }, 1400);
+      };
       const freeze = () => {
         if (done) return; done = true;
         cancelAnimationFrame(raf);
@@ -1083,6 +1099,7 @@
           im.onload = () => { box.appendChild(im); cv0.style.display = 'none'; v.style.display = 'none'; };
           im.onerror = () => { box.remove(); };   // אין תמונה: חושפים את תמונת המודעה שמתחת
         } catch (e) { box.remove(); }
+        nudgeDown();
       };
       /* חזרה מהרקע: כשהלשונית ברקע הדפדפן לא מריץ את בדיקת רגע החיתוך, והסרטון יכול להמשיך לנגן אחריו. לכן קודם חוזרים בדיוק לפריים של החיתוך ורק אז עוצרים (אחרת נשאר פריים מאוחר יותר מהסרטון) */
       const freezeAtCut = () => {
