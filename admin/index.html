@@ -224,7 +224,7 @@
     .ptab[hidden] { display: none; }
     .ptab[aria-selected="true"] { background: var(--ink); color: var(--paper); }
     /* גובה קבוע לפופאפ המשתתף בכל הלשוניות: הכותרת והלשוניות לא זזות, והתוכן נגלל בתוך הלשונית */
-    #pDlg { height: min(84vh, 520px); overflow: visible; }
+    #pDlg { height: min(84vh, 520px); overflow: visible; margin: auto; border-radius: 28px; }
     #pDlg:focus { outline: none; }
     #pDlg .close, #pDlg .close:focus, #pDlg .close:focus-visible { outline: none; }   /* בלי מסגרת כהה סביב כפתור הסגירה */
     #pDlg .sheet { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; border-radius: inherit; overflow: hidden; padding-inline: 24px; }
@@ -421,7 +421,6 @@
 
   <!-- משתתף -->
   <dialog id="pDlg" aria-labelledby="pTitle">
-    <button class="close" type="button" id="pClose" aria-label="סגירה">×</button>
     <form class="sheet" id="pForm" method="dialog" novalidate>
       <div class="sheet-head">
         <h2 id="pTitle">משתתף חדש</h2>
@@ -1291,16 +1290,17 @@
     if (reducedMotion() || !el || !el.isConnected) return null;
     const r = el.getBoundingClientRect(), d = pDlg.getBoundingClientRect();
     if (!d.width || !d.height) return null;
-    const sx = Math.max(.05, r.width / d.width), sy = Math.max(.05, r.height / d.height);
-    const dx = (r.left + r.width / 2) - (d.left + d.width / 2), dy = (r.top + r.height / 2) - (d.top + d.height / 2);
-    const from = { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + sx + ',' + sy + ')', borderRadius: '20px' };
-    const opts = { duration: closing ? 260 : 380, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both', direction: closing ? 'reverse' : 'normal' };
+    // חושפים את הפופאפ מתוך מלבן הכרטיס (clip-path) כך שהוא גדל מהכרטיס בלי לעוות את התוכן
+    const inset = (v) => 'inset(' + v.t + 'px ' + v.r + 'px ' + v.b + 'px ' + v.l + 'px round ' + v.rad + 'px)';
+    const from = { clipPath: inset({ t: Math.max(0, r.top - d.top), r: Math.max(0, d.right - r.right), b: Math.max(0, d.bottom - r.bottom), l: Math.max(0, r.left - d.left), rad: 20 }) };
+    const to = { clipPath: 'inset(-80px -20px -20px -20px round 28px)' };
+    const opts = { duration: closing ? 280 : 420, easing: 'cubic-bezier(.22,.8,.2,1)', fill: 'both', direction: closing ? 'reverse' : 'normal' };
     pDlg.getAnimations().forEach((a) => a.cancel());
-    const sheet = pDlg.querySelector('.sheet'), x = pDlg.querySelector('.close');
+    const sheet = pDlg.querySelector('.sheet'), x = null;
     const fade = [{ opacity: 0 }, { opacity: 0, offset: .35 }, { opacity: 1 }];
     if (sheet) sheet.animate(fade, opts);
     if (x) x.animate(fade, opts);
-    return pDlg.animate([from, { transform: 'none', borderRadius: '28px' }], opts);
+    return pDlg.animate([from, to], opts);
   }
   function closePDlg() {
     if (!pDlg.open || pClosing) return;
@@ -1312,7 +1312,7 @@
     const done = () => { pClosing = false; pDlg.close(); pDlg.getAnimations().forEach((x) => x.cancel()); pDlg.querySelectorAll('.sheet, .close').forEach((n) => n.getAnimations().forEach((x) => x.cancel())); };
     a.onfinish = done; a.oncancel = done;
   }
-  $('#pClose').addEventListener('click', closePDlg);
+  pDlg.addEventListener('cancel', (e) => { e.preventDefault(); closePDlg(); });   // Escape
   pDlg.addEventListener('click', (e) => { if (e.target === pDlg) closePDlg(); });
 
   let pFromEl = null, pClosing = false;
