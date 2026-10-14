@@ -429,8 +429,7 @@
       </div>
       <div class="ptabs" id="pTabs" role="tablist" aria-label="עריכת משתתף">
         <button type="button" role="tab" class="ptab" data-tab="meets" aria-selected="true">מפגשים</button>
-        <button type="button" role="tab" class="ptab" data-tab="contact" aria-selected="false">התקשרות</button>
-        <button type="button" role="tab" class="ptab" data-tab="notes" aria-selected="false">הערות <span class="tcount"></span></button>
+        <button type="button" role="tab" class="ptab" data-tab="contact" aria-selected="false">התקשרות <span class="tcount"></span></button>
         <button type="button" role="tab" class="ptab" data-tab="info" aria-selected="false">פרטים</button>
       </div>
       <div class="ppanel" data-panel="meets" role="tabpanel">
@@ -438,10 +437,9 @@
       </div>
       <div class="ppanel" data-panel="contact" role="tabpanel" hidden>
         <div id="pMsgs"></div>
-      </div>
-      <div class="ppanel" data-panel="notes" role="tabpanel" hidden>
+        <div class="clabel">הערות</div>
         <div class="nform">
-          <textarea id="nText" rows="2" maxlength="1000" aria-label="הערה חדשה"></textarea>
+          <textarea id="nText" rows="2" maxlength="1000" aria-label="הערה חדשה" placeholder="הערה חדשה..."></textarea>
           <button type="button" class="btn nadd" id="nAdd">הוספה</button>
         </div>
         <div id="nList"></div>
@@ -783,7 +781,7 @@
         if (d.q) { state.q = d.q; $('#q').value = d.q; }
         urlReady = true;
         render();
-        if (d.p && state.participants.some((x) => x.id === d.p)) openParticipant(d.p, ['meets', 'contact', 'notes', 'info'].includes(d.pt) ? d.pt : 'contact');
+        if (d.p && state.participants.some((x) => x.id === d.p)) openParticipant(d.p, ['meets', 'contact', 'info'].includes(d.pt) ? d.pt : 'contact');
         else if (d.em && state.meetings.some((x) => x.id === d.em)) openMeeting(d.em);
         else if (d.st) { renderStats(); $('#stDlg').showModal(); syncUrl(); }
         return;
@@ -1253,7 +1251,7 @@
     const p = sheet && sheet.id ? state.participants.find((x) => x.id === sheet.id) : null;
     if (!p) { list.innerHTML = ''; return; }
     const ns = notesOf(p.id);
-    const cnt = $('#pTabs [data-tab="notes"] .tcount'); if (cnt) cnt.textContent = ns.length ? ns.length : '';
+    const cnt = $('#pTabs [data-tab="contact"] .tcount'); if (cnt) cnt.textContent = ns.length ? ns.length : '';
     list.innerHTML = ns.length ? ns.map((n) => '<div class="nitem"><div class="nmeta"><span><b>' + esc(n.author_name || 'לא ידוע') + '</b> · ' + esc(fmtDT(n.created_at)) + '</span>' +
       '<button type="button" class="ndel" data-del="' + n.id + '" aria-label="מחיקת הערה" title="מחיקת הערה">×</button></div><div class="ntext">' + esc(n.body) + '</div></div>').join('')
       : '<p class="mnone">עוד אין הערות. אפשר לרשום למעלה מה דיברתם, מה הוחלט ומה צריך לזכור</p>';
@@ -1282,8 +1280,7 @@
     pTab = tab;
     document.querySelectorAll('#pTabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
     document.querySelectorAll('#pDlg [data-panel]').forEach((d) => { d.hidden = d.dataset.panel !== tab; });
-    if (tab === 'contact') renderContact();
-    if (tab === 'notes') renderNotes();
+    if (tab === 'contact') { renderContact(); renderNotes(); }
     syncUrl();
   }
   $('#pTabs').addEventListener('click', (e) => { const b = e.target.closest('[data-tab]'); if (b) setPTab(b.dataset.tab); });
@@ -1333,9 +1330,8 @@
     renderContact();
     $('#pSubmit').hidden = !!p;
     $('#pTabs [data-tab="contact"]').hidden = !p;
-    $('#pTabs [data-tab="notes"]').hidden = !p;
     $('#nText').value = '';
-    if (p) { const c = notesOf(p.id).length, el = $('#pTabs [data-tab="notes"] .tcount'); if (el) el.textContent = c ? c : ''; }
+    if (p) { const c = notesOf(p.id).length, el = $('#pTabs [data-tab="contact"] .tcount'); if (el) el.textContent = c ? c : ''; }
     $('#pDelete').hidden = !p;
     $('#savedMark').classList.remove('on');
     refreshSheetMeetings();
