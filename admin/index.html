@@ -224,10 +224,10 @@
     .ptab[hidden] { display: none; }
     .ptab[aria-selected="true"] { background: var(--ink); color: var(--paper); }
     /* גובה קבוע לפופאפ המשתתף בכל הלשוניות: הכותרת והלשוניות לא זזות, והתוכן נגלל בתוך הלשונית */
-    #pDlg { height: min(84vh, 520px); overflow: visible; margin: auto; border-radius: 28px; }
+    #pDlg { height: min(84vh, 520px); width: calc(100% - 32px); max-width: 480px; overflow: visible; margin: auto; border-radius: 28px; }
     #pDlg:focus { outline: none; }
     #pDlg .close, #pDlg .close:focus, #pDlg .close:focus-visible { outline: none; }   /* בלי מסגרת כהה סביב כפתור הסגירה */
-    #pDlg .sheet { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; border-radius: inherit; overflow: hidden; padding-inline: 24px; }
+    #pDlg .sheet { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; border-radius: inherit; overflow: hidden; padding: 24px; }
     /* כותרת (שם המשתתף) ממורכזת; כפתור הסגירה מרחף מעל הפופאפ במרכז, כמו בפופאפ ההרשמה באתר */
     #pDlg .sheet-head { position: relative; justify-content: center; text-align: center; min-height: 36px; }
     #pDlg .sheet-head .saved { position: absolute; left: 0; top: 50%; transform: translateY(-50%); }
@@ -1287,27 +1287,17 @@
   /* הפופאפ נפתח מהכרטיס: כאילו הכרטיס הקיים גדל (ובסגירה מתכווץ חזרה אליו) */
   const reducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   function cardMorph(el, closing) {
-    if (reducedMotion() || !el || !el.isConnected) return null;
-    const r = el.getBoundingClientRect(), d = pDlg.getBoundingClientRect();
-    if (!d.width || !d.height) return null;
-    // חושפים את הפופאפ מתוך מלבן הכרטיס (clip-path) כך שהוא גדל מהכרטיס בלי לעוות את התוכן
-    const inset = (v) => 'inset(' + v.t + 'px ' + v.r + 'px ' + v.b + 'px ' + v.l + 'px round ' + v.rad + 'px)';
-    const from = { clipPath: inset({ t: Math.max(0, r.top - d.top), r: Math.max(0, d.right - r.right), b: Math.max(0, d.bottom - r.bottom), l: Math.max(0, r.left - d.left), rad: 20 }) };
-    const to = { clipPath: 'inset(-80px -20px -20px -20px round 28px)' };
-    const opts = { duration: closing ? 280 : 420, easing: 'cubic-bezier(.22,.8,.2,1)', fill: 'both', direction: closing ? 'reverse' : 'normal' };
+    if (reducedMotion()) return null;
+    const opts = { duration: closing ? 180 : 240, easing: 'cubic-bezier(.22,.8,.2,1)', fill: 'both', direction: closing ? 'reverse' : 'normal' };
     pDlg.getAnimations().forEach((a) => a.cancel());
-    const sheet = pDlg.querySelector('.sheet'), x = null;
-    const fade = [{ opacity: 0 }, { opacity: 0, offset: .35 }, { opacity: 1 }];
-    if (sheet) sheet.animate(fade, opts);
-    if (x) x.animate(fade, opts);
-    try { pDlg.animate([{ opacity: 0 }, { opacity: 1 }], Object.assign({}, opts, { pseudoElement: '::backdrop' })); } catch (e) {}   // גם הכהיית הרקע נעלמת בהדרגה, בלי קפיצה
-    return pDlg.animate([from, to], opts);
+    try { pDlg.animate([{ opacity: 0 }, { opacity: 1 }], Object.assign({}, opts, { pseudoElement: '::backdrop' })); } catch (e) {}
+    return pDlg.animate([{ opacity: 0, transform: 'scale(.94)' }, { opacity: 1, transform: 'none' }], opts);
   }
   function closePDlg() {
     if (!pDlg.open || pClosing) return;
     let el = pFromEl && pFromEl.isConnected ? pFromEl : null;
     if (!el && openPid) { const m = document.querySelector('#list [data-edit="' + openPid + '"]'); el = m ? m.closest('li.row') : null; }
-    const a = cardMorph(el, true);
+    const a = cardMorph(null, true);
     if (!a) { pDlg.close(); return; }
     pClosing = true;
     let fin = false;
@@ -1340,7 +1330,7 @@
     openPid = p ? p.id : null;
     pDlg.showModal();
     pDlg.setAttribute('tabindex', '-1'); pDlg.focus({ preventScroll: true });   // בלי טבעת פוקוס על כפתור הסגירה
-    if (fromEl) cardMorph(fromEl, false);
+    cardMorph(null, false);
     setPTab(p ? (tab || 'contact') : 'info');
     if (!p) setTimeout(() => pForm.name.focus(), 50);
   }
