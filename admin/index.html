@@ -1300,6 +1300,7 @@
     const fade = [{ opacity: 0 }, { opacity: 0, offset: .35 }, { opacity: 1 }];
     if (sheet) sheet.animate(fade, opts);
     if (x) x.animate(fade, opts);
+    try { pDlg.animate([{ opacity: 0 }, { opacity: 1 }], Object.assign({}, opts, { pseudoElement: '::backdrop' })); } catch (e) {}   // גם הכהיית הרקע נעלמת בהדרגה, בלי קפיצה
     return pDlg.animate([from, to], opts);
   }
   function closePDlg() {
@@ -1309,7 +1310,8 @@
     const a = cardMorph(el, true);
     if (!a) { pDlg.close(); return; }
     pClosing = true;
-    const done = () => { pClosing = false; pDlg.close(); pDlg.getAnimations().forEach((x) => x.cancel()); pDlg.querySelectorAll('.sheet, .close').forEach((n) => n.getAnimations().forEach((x) => x.cancel())); };
+    let fin = false;
+    const done = () => { if (fin) return; fin = true; pClosing = false; pDlg.close(); pDlg.getAnimations().forEach((x) => x.cancel()); pDlg.querySelectorAll('.sheet, .close').forEach((n) => n.getAnimations().forEach((x) => x.cancel())); };
     a.onfinish = done; a.oncancel = done;
   }
   pDlg.addEventListener('cancel', (e) => { e.preventDefault(); closePDlg(); });   // Escape
