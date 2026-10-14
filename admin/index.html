@@ -224,10 +224,10 @@
     .ptab[hidden] { display: none; }
     .ptab[aria-selected="true"] { background: var(--ink); color: var(--paper); }
     /* גובה קבוע לפופאפ המשתתף בכל הלשוניות: הכותרת והלשוניות לא זזות, והתוכן נגלל בתוך הלשונית */
-    #pDlg { height: min(70vh, 430px); width: calc(100vw - 48px); max-width: 480px; overflow: visible; margin: auto; margin-inline: auto; border-radius: 28px; }
+    #pDlg { height: min(84vh, 520px); overflow: visible; }
     #pDlg:focus { outline: none; }
     #pDlg .close, #pDlg .close:focus, #pDlg .close:focus-visible { outline: none; }   /* בלי מסגרת כהה סביב כפתור הסגירה */
-    #pDlg .sheet { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; border-radius: inherit; overflow: hidden; padding: 24px; }
+    #pDlg .sheet { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; border-radius: inherit; overflow: hidden; padding: 30px 24px 24px; }
     /* כותרת (שם המשתתף) ממורכזת; כפתור הסגירה מרחף מעל הפופאפ במרכז, כמו בפופאפ ההרשמה באתר */
     #pDlg .sheet-head { position: relative; justify-content: center; text-align: center; min-height: 36px; }
     #pDlg .sheet-head .saved { position: absolute; left: 0; top: 50%; transform: translateY(-50%); }
@@ -326,6 +326,12 @@
     }
     @media (min-width: 560px) { dialog { margin: auto; border-radius: 28px; } }
     dialog::backdrop { background: rgba(63,56,47,.4); }
+    /* מגירה: כל הפופאפים עולים מלמטה, נסגרים בהחלקה למטה, בלחיצה בחוץ או בלחיצה על הפס */
+    dialog { overflow: hidden; touch-action: pan-y; }
+    dialog .sheet { padding-top: 30px; }
+    .grab { position: absolute; top: 0; left: 0; right: 0; height: 30px; display: grid; place-items: center; cursor: grab; touch-action: none; z-index: 2; }
+    .grab i { width: 44px; height: 5px; border-radius: 3px; background: rgba(63,56,47,.28); }
+    html.dlg-lock, html.dlg-lock body { overflow: hidden; overscroll-behavior: none; }
     .sheet { padding: 20px 20px calc(20px + env(safe-area-inset-bottom)); }
     .sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
     .sheet h2 { font-family: "Rubik", sans-serif; font-size: 21px; margin: 0; }
@@ -467,7 +473,6 @@
     <form class="sheet" id="mForm" method="dialog" novalidate>
       <div class="sheet-head">
         <h2 id="mTitle">מפגש חדש</h2>
-        <button class="close" type="button" data-close aria-label="סגירה">×</button>
       </div>
       <div class="two" style="grid-template-columns: 1fr 1fr">
         <label class="field"><span>תאריך</span><input name="date" type="date" required /></label>
@@ -491,7 +496,6 @@
     <div class="sheet stsheet">
       <div class="sheet-head">
         <h2 id="stTitle">סטטיסטיקות</h2>
-        <button class="close" type="button" data-close aria-label="סגירה">×</button>
       </div>
       <div id="stBody"></div>
     </div>
@@ -1284,32 +1288,68 @@
   }
   $('#pTabs').addEventListener('click', (e) => { const b = e.target.closest('[data-tab]'); if (b) setPTab(b.dataset.tab); });
 
-  /* הפופאפ נפתח מהכרטיס: כאילו הכרטיס הקיים גדל (ובסגירה מתכווץ חזרה אליו) */
-  const reducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function cardMorph(el, closing) {
-    if (reducedMotion()) return null;
-    const opts = { duration: closing ? 180 : 240, easing: 'cubic-bezier(.22,.8,.2,1)', fill: 'both', direction: closing ? 'reverse' : 'normal' };
-    pDlg.getAnimations().forEach((a) => a.cancel());
-    try { pDlg.animate([{ opacity: 0 }, { opacity: 1 }], Object.assign({}, opts, { pseudoElement: '::backdrop' })); } catch (e) {}
-    return pDlg.animate([{ opacity: 0, transform: 'scale(.94)' }, { opacity: 1, transform: 'none' }], opts);
-  }
-  function closePDlg() {
-    if (!pDlg.open || pClosing) return;
-    let el = pFromEl && pFromEl.isConnected ? pFromEl : null;
-    if (!el && openPid) { const m = document.querySelector('#list [data-edit="' + openPid + '"]'); el = m ? m.closest('li.row') : null; }
-    const a = cardMorph(null, true);
-    if (!a) { pDlg.close(); return; }
-    pClosing = true;
-    let fin = false;
-    const done = () => { if (fin) return; fin = true; pClosing = false; pDlg.close(); pDlg.getAnimations().forEach((x) => x.cancel()); pDlg.querySelectorAll('.sheet, .close').forEach((n) => n.getAnimations().forEach((x) => x.cancel())); };
-    a.onfinish = done; a.oncancel = done;
-  }
-  pDlg.addEventListener('cancel', (e) => { e.preventDefault(); closePDlg(); });   // Escape
-  pDlg.addEventListener('click', (e) => { if (e.target === pDlg) closePDlg(); });
+  /* מעטפת אחת לכל הפופאפים (משתתף, מפגש, סטטיסטיקה, אישור): עולים מלמטה, נסגרים באנימציה,
+     פס גרירה בראש כמו מגירה (אפשר להחליק למטה לסגירה), לחיצה בחוץ סוגרת, והדף מאחור נעול לגלילה */
+  (function () {
+    const proto = HTMLDialogElement.prototype, rawShow = proto.showModal, rawClose = proto.close;
+    const reduced = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const root = document.documentElement;
+    const offset = (d) => Math.max(120, window.innerHeight - d.getBoundingClientRect().top);
+    const backdrop = (d, from, to, ms) => { try { d.animate([{ opacity: from }, { opacity: to }], { duration: ms, easing: 'ease', fill: 'both', pseudoElement: '::backdrop' }); } catch (e) {} };
+    const unlock = () => { if (!document.querySelector('dialog[open]')) root.classList.remove('dlg-lock'); };
+    proto.showModal = function () {
+      if (this.open) return;
+      rawShow.call(this);
+      root.classList.add('dlg-lock');
+      this._closing = false;
+      this.getAnimations().forEach((a) => a.cancel());
+      if (reduced()) return;
+      const y = offset(this);
+      this.animate([{ transform: 'translateY(' + y + 'px)' }, { transform: 'none' }], { duration: 340, easing: 'cubic-bezier(.22,.8,.2,1)' });
+      backdrop(this, 0, 1, 340);
+    };
+    proto.close = function (rv, from) {
+      if (!this.open || this._closing) return;
+      if (reduced()) { rawClose.call(this, rv); unlock(); return; }
+      this._closing = true;
+      const d = this, cur = from == null ? 0 : from, y = offset(d);
+      d.getAnimations().forEach((a) => a.cancel());
+      backdrop(d, 1, 0, 240);
+      const a = d.animate([{ transform: 'translateY(' + cur + 'px)' }, { transform: 'translateY(' + y + 'px)' }], { duration: 240, easing: 'cubic-bezier(.4,0,.8,.6)', fill: 'both' });
+      const fin = () => { d._closing = false; d.getAnimations().forEach((x) => x.cancel()); rawClose.call(d, rv); unlock(); };
+      a.onfinish = fin; a.oncancel = () => { if (d._closing) fin(); };
+    };
+    document.querySelectorAll('dialog').forEach((d) => {
+      const g = document.createElement('div'); g.className = 'grab'; g.innerHTML = '<i></i>'; g.setAttribute('aria-hidden', 'true');
+      d.insertBefore(g, d.firstChild);
+      d.addEventListener('cancel', (e) => { e.preventDefault(); d.close(); });   // Escape
+      d.addEventListener('click', (e) => { if (e.target === d) d.close(); });    // לחיצה בחוץ
+      let sy = 0, dy = 0, t0 = 0, drag = false, moved = false;
+      const down = (e) => {
+        if (e.button > 0 || d._closing) return;
+        drag = true; moved = false; sy = e.clientY; dy = 0; t0 = performance.now();
+        d.getAnimations().forEach((a) => a.cancel());
+        try { e.currentTarget.setPointerCapture(e.pointerId); } catch (x) {}
+      };
+      const move = (e) => {
+        if (!drag) return;
+        dy = Math.max(0, e.clientY - sy); if (dy > 4) moved = true;
+        d.style.transform = 'translateY(' + dy + 'px)';
+      };
+      const up = () => {
+        if (!drag) return; drag = false;
+        const v = dy / Math.max(1, performance.now() - t0), tap = !moved;
+        if (tap || dy > 110 || (v > 0.6 && dy > 30)) { d.style.transform = ''; d.close(undefined, tap ? 0 : dy); return; }
+        d.style.transition = 'transform .2s ease'; d.style.transform = '';
+        setTimeout(() => { d.style.transition = ''; }, 220);
+      };
+      const bind = (el) => { el.addEventListener('pointerdown', down); el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); };
+      bind(g);
+      d.querySelectorAll('.sheet-head').forEach((h) => { h.style.touchAction = 'none'; bind(h); });
+    });
+  })();
 
-  let pFromEl = null, pClosing = false;
   function openParticipant(id, tab, fromEl) {
-    pFromEl = fromEl || null; pClosing = false;
     const p = id ? state.participants.find((x) => x.id === id) : null;
     sheet = p ? { id: p.id } : { id: null, links: new Map(state.filter ? [[state.filter, false]] : []) };
     pForm.reset();
@@ -1330,7 +1370,6 @@
     openPid = p ? p.id : null;
     pDlg.showModal();
     pDlg.setAttribute('tabindex', '-1'); pDlg.focus({ preventScroll: true });   // בלי טבעת פוקוס על כפתור הסגירה
-    cardMorph(null, false);
     setPTab(p ? (tab || 'contact') : 'info');
     if (!p) setTimeout(() => pForm.name.focus(), 50);
   }
@@ -1478,8 +1517,6 @@
   });
 
   /* ---------- אירועים כלליים ---------- */
-  document.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => b.closest('dialog').close()));
-  document.querySelectorAll('dialog:not(#pDlg)').forEach((d) => d.addEventListener('click', (e) => { if (e.target === d) d.close(); }));
   pDlg.addEventListener('close', () => { sheet = null; openPid = null; syncUrl(); });
   mDlg.addEventListener('close', syncUrl);
   pForm.phone.addEventListener('input', () => badPhone(false));
