@@ -233,10 +233,21 @@
     #pDlg .sheet-head .saved { position: absolute; left: 0; top: 50%; transform: translateY(-50%); }
     #pDlg .close { position: absolute; top: -3.5rem; left: 50%; margin-left: -22px; width: 44px; height: 44px; background: var(--paper); box-shadow: 0 4px 14px rgba(0,0,0,.25); font-size: 26px; }
     #pDlg .sheet-head, #pDlg .ptabs { flex: 0 0 auto; }
-    #pDlg .ppanel { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-bottom: 4px; }
+    #pDlg .ppanel { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; padding-bottom: 4px; }
     #pDlg .ppanel { scrollbar-width: thin; scrollbar-color: rgba(63,56,47,.22) transparent; }
     #pDlg #pSubmit { flex: 0 0 auto; margin-top: 10px; }
     .ppanel[hidden] { display: none; }
+    .ptab .tcount { font-size: 12px; opacity: .75; }
+    .ptab .tcount:empty { display: none; }
+    .nform { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 14px; }
+    .nform textarea { flex: 1 1 auto; min-width: 0; min-height: 46px; max-height: 140px; resize: none; border-radius: 14px; border: 1.5px solid var(--line); background: #fff; padding: 10px 12px; font-size: 16px; line-height: 1.4; }
+    .nform textarea:focus { border-color: var(--terra); outline: none; }
+    #pDlg .nform .nadd { flex: 0 0 auto; width: auto; height: 46px; padding: 0 18px; margin: 0; font-size: 16px; }
+    .nitem { background: var(--cream); border-radius: 16px; padding: 10px 14px 12px; margin-bottom: 8px; }
+    .nmeta { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); margin-bottom: 4px; }
+    .nmeta b { color: var(--ink); }
+    .ndel { width: 26px; height: 26px; border-radius: 50%; font-size: 18px; line-height: 1; color: var(--muted); }
+    .ntext { white-space: pre-wrap; font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
     .ctop { display: flex; gap: 10px; margin-bottom: 18px; }
     .cbtn { flex: 1 1 0; height: 46px; border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 16px; text-decoration: none; }
     .cbtn svg { width: 20px; height: 20px; }
@@ -419,6 +430,7 @@
       <div class="ptabs" id="pTabs" role="tablist" aria-label="עריכת משתתף">
         <button type="button" role="tab" class="ptab" data-tab="meets" aria-selected="true">מפגשים</button>
         <button type="button" role="tab" class="ptab" data-tab="contact" aria-selected="false">התקשרות</button>
+        <button type="button" role="tab" class="ptab" data-tab="notes" aria-selected="false">הערות <span class="tcount"></span></button>
         <button type="button" role="tab" class="ptab" data-tab="info" aria-selected="false">פרטים</button>
       </div>
       <div class="ppanel" data-panel="meets" role="tabpanel">
@@ -426,6 +438,13 @@
       </div>
       <div class="ppanel" data-panel="contact" role="tabpanel" hidden>
         <div id="pMsgs"></div>
+      </div>
+      <div class="ppanel" data-panel="notes" role="tabpanel" hidden>
+        <div class="nform">
+          <textarea id="nText" rows="2" maxlength="1000" aria-label="הערה חדשה"></textarea>
+          <button type="button" class="btn nadd" id="nAdd">הוספה</button>
+        </div>
+        <div id="nList"></div>
       </div>
       <div class="ppanel" data-panel="info" role="tabpanel" hidden>
         <div class="name-row">
@@ -439,7 +458,6 @@
           <label class="field"><span>טלפון</span><input name="phone" type="tel" inputmode="tel" maxlength="20" autocomplete="off" /></label>
           <label class="field"><span>גיל</span><input name="age" type="number" inputmode="numeric" min="18" max="99" /></label>
         </div>
-        <label class="field"><span>הערה קצרה</span><input name="note" maxlength="80" autocomplete="off" /></label>
         <div class="note" id="pRegLine" style="color:var(--muted);font-size:14px;margin:2px 4px 10px"></div>
         <button class="btn ghost" id="pDelete" type="button">מחיקת משתתף</button>
       </div>
@@ -500,9 +518,9 @@
     url: 'https://ezakarwqstnldqixgreb.supabase.co',
     key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6YWthcndxc3RubGRxaXhncmViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTA3MzIsImV4cCI6MjEwNjc4NjczMn0.Bg0eFBC4zKjyJc5kBw3wLgSP-PkxLFVv3o7-4YUdq4c',
   };
-  const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance' };
+  const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance', n: 'harpatka_notes' };
 
-  const state = { participants: [], meetings: [], att: [], filter: null, q: '', pay: null, gender: null, sort: 'new' };
+  const state = { participants: [], meetings: [], att: [], notes: [], filter: null, q: '', pay: null, gender: null, sort: 'new' };
   /* קישור עמוק מהמייל: ?m=<מפגש>&p=<משתתף>; נשמר בזמן הכניסה עם גוגל (שמחזירה בלי הפרמטרים) */
   let deep = null;
   try {
@@ -566,7 +584,7 @@
     ws.onopen = () => {
       rtRetry = 1000;
       rtSend({ topic: RT_TOPIC, event: 'phx_join', ref: '1', payload: { config: { broadcast: { ack: false, self: false }, presence: { key: '' }, private: false,
-        postgres_changes: [T.p, T.m, T.a].map((table) => ({ event: '*', schema: 'public', table })) }, access_token: session.access_token } });
+        postgres_changes: [T.p, T.m, T.a, T.n].map((table) => ({ event: '*', schema: 'public', table })) }, access_token: session.access_token } });
       rtHb = setInterval(() => rtSend({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(Date.now()) }), 25000);
     };
     ws.onmessage = (e) => {
@@ -746,12 +764,13 @@
   async function load(silent) {
     if (!silent) $('#status').innerHTML = '<div class="empty">טוען…</div>';
     try {
-      const [p, m, a] = await Promise.all([
+      const [p, m, a, nn] = await Promise.all([
         api(T.p + '?select=*'),
         api(T.m + '?select=*'),
         api(T.a + '?select=participant_id,meeting_id,paid,pay_requested_at,created_at,exempt'),
+        api(T.n + '?select=*&order=created_at.desc'),
       ]);
-      state.participants = p; state.meetings = m; state.att = a;
+      state.participants = p; state.meetings = m; state.att = a; state.notes = nn; rebuildNotes();
       sortMeetings();
       if (!silent) $('#status').innerHTML = '';
       if (deep) {
@@ -764,14 +783,13 @@
         if (d.q) { state.q = d.q; $('#q').value = d.q; }
         urlReady = true;
         render();
-        if (d.p && state.participants.some((x) => x.id === d.p)) openParticipant(d.p, ['meets', 'contact', 'info'].includes(d.pt) ? d.pt : 'contact');
+        if (d.p && state.participants.some((x) => x.id === d.p)) openParticipant(d.p, ['meets', 'contact', 'notes', 'info'].includes(d.pt) ? d.pt : 'contact');
         else if (d.em && state.meetings.some((x) => x.id === d.em)) openMeeting(d.em);
         else if (d.st) { renderStats(); $('#stDlg').showModal(); syncUrl(); }
         return;
       }
       urlReady = true;
       render();
-      if (pend) setTimeout(askSent, 400);
     } catch (err) {
       console.error(err);
       if (silent) return;   // רענון שקט שנכשל: משאירים את מה שמוצג
@@ -825,7 +843,7 @@
     const base = state.participants.filter((p) => {
       if (state.filter && !linkOf(p.id, state.filter)) return false;
       if (!q) return true;
-      return p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd));
+      return p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd)) || hasNote(p, q);
     });
     const payOk = (p) => !state.pay || payMatch(paidState(p), state.pay);
     const genOk = (p) => state.gender === 'none' ? !p.gender : (!state.gender || p.gender === state.gender);
@@ -905,7 +923,7 @@
       if (state.pay && !payMatch(paidState(p), state.pay)) return false;
       if (state.gender === 'none' ? p.gender : (state.gender && p.gender !== state.gender)) return false;
       if (!q) return true;
-      return p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd));
+      return p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd)) || hasNote(p, q);
     });
     rows.sort(sortCmp());
 
@@ -913,7 +931,7 @@
     let others = [];
     if (state.filter && q) {
       others = state.participants.filter((p) => !linkOf(p.id, state.filter) &&
-        (p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd))));
+        (p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd)) || hasNote(p, q)));
       others.sort((a, b) => a.name.localeCompare(b.name, 'he'));
     }
     const othersHtml = others.length
@@ -955,7 +973,7 @@
         '<div class="main" role="button" tabindex="0" data-edit="' + p.id + '">' +
           '<div class="nm"><bdi class="name">' + esc(p.name) + '</bdi>' + (p.source === 'site-ad' ? '<span class="adtag" title="ממומן: הגיע ממודעה בתשלום" aria-label="ממומן"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 9a4 4 0 0 1 0 6"/></svg></span>' : '') + '</div>' +
           ((age != null || side || tags) ? '<div class="meta">' + ((age != null || p.gender) ? '<span class="age" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? '<b class="gl">' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : '') + '</bdi></span>' : '') + side + tags + '</div>' : '') +
-          (p.note ? '<div class="note">' + esc(p.note) + '</div>' : '') +
+          (noteLatest.get(p.id) ? '<div class="note" title="' + esc(noteLatest.get(p.id).author_name || '') + '">' + esc(noteLatest.get(p.id).body) + '</div>' : '') +
         '</div>' +
       '</li>';
     }).join('');
@@ -1182,128 +1200,82 @@
   let sheet = null; // { id } לעריכה, או { id: null, links: Map } למשתתף חדש
 
 
-  /* ---------- הודעת וואטסאפ אישית לבקשת תשלום (בפרטי המשתתף) ---------- */
+  /* ---------- הערות (CRM): כמה הערות לכל משתתף, עם מי כתב ומתי; בכרטיס מוצגת האחרונה ---------- */
+  const noteLatest = new Map(), noteText = new Map();
+  function rebuildNotes() {
+    noteLatest.clear(); noteText.clear();
+    state.notes.slice().sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).forEach((n) => {   // מהחדשה לישנה
+      if (!noteLatest.has(n.participant_id)) noteLatest.set(n.participant_id, n);
+      noteText.set(n.participant_id, ((noteText.get(n.participant_id) || '') + ' ' + n.body).toLowerCase());
+    });
+  }
+  const notesOf = (pid) => state.notes.filter((n) => n.participant_id === pid).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+  const hasNote = (p, q) => (noteText.get(p.id) || '').includes(q);
+  function fmtDT(iso) {
+    const d = new Date(iso); if (isNaN(d)) return '';
+    const dd = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jerusalem', day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(d);
+    return dd.replace(',', '').replace(/\//g, '.');
+  }
+
+  /* ---------- שולח ההודעות והקישורים ---------- */
   const SENDERS = { 'ofir.aviram@gmail.com': 'אופיר', 'hadarluri135@gmail.com': 'הדר' };
   const PAYBOX = 'https://links.payboxapp.com/zwi4JG24Y6b';
   const HE_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
   const dm = (m) => { const [, mo, d] = m.meeting_date.split('-').map(Number); return d + '.' + mo; };
-  function whenWords(m) {   // ביום ראשון 25.10 בשעה 20:00
-    const [y, mo, d] = m.meeting_date.split('-').map(Number);
-    return 'ביום ' + HE_DAYS[new Date(Date.UTC(y, mo - 1, d, 12)).getUTCDay()] + ' ' + d + '.' + mo + ' בשעה ' + String(m.meeting_time).slice(0, 5);
-  }
-  function priceFor(m) {   // כמו באתר: 100 ₪ ב-3 הימים האחרונים, אחרת 80 ₪
-    const day = (s) => { const [y, mo, d] = s.split('-').map(Number); return Date.UTC(y, mo - 1, d) / 864e5; };
-    return day(m.meeting_date) - day(todayISO()) <= 3 ? 100 : 80;
-  }
-  /* החוסרים של המשתתף: המפגש הקרוב שלא שולם, ומפגשים שעברו שלא שולמו */
-  function payPlan(p) {
-    const today = todayISO();
-    const open = linksOf(p.id).map((l) => ({ l, m: state.meetings.find((x) => x.id === l.meeting_id) })).filter((x) => x.m && !x.l.paid && !x.l.exempt);
-    const key = (x) => x.m.meeting_date + x.m.meeting_time;
-    return {
-      upcoming: open.filter((x) => x.m.meeting_date >= today).sort((a, b) => key(a).localeCompare(key(b))),
-      past: open.filter((x) => x.m.meeting_date < today).sort((a, b) => key(a).localeCompare(key(b))),
-    };
-  }
-  function payMessage(p) {
-    const { upcoming, past } = payPlan(p);
-    if (!upcoming.length && !past.length) return null;
-    const next = upcoming[0];
-    const pastTxt = past.length === 1 ? 'המפגש מתאריך ' + dm(past[0].m) : 'המפגשים מתאריכים ' + past.map((x) => dm(x.m)).join(' ו ');
-    const sorry = 'ואם כבר שילמת ופספסנו, אפשר פשוט לכתוב לנו ונתקן';
-    const payLine = (m, first) => (first ? 'כדי לשמור לך מקום, נשאר רק להשלים תשלום של ' : 'כדי לשמור את המקום, נשאר רק להשלים תשלום של ') + priceFor(m) + ' ₪ בקישור הזה:\n' + PAYBOX;
-    const pastPara = 'ועוד דבר קטן: נשאר פתוח אצלנו התשלום על ' + pastTxt + '.\nאם אפשר להסדיר גם אותו באותו קישור, נשמח מאוד 🙏\n' + sorry;
-    // ההודעה נשלחת אחרי הודעת הפתיחה, ולכן בלי היכרות מחדש (בלי "היי, זה אופיר מיוצאים להרפתקה")
-    let paras = [];
-    if (next && linkStatus(next.l) === 'requested') {
-      paras = ['רק תזכורת קטנה 😊\nהמקום שלך למפגש ' + whenWords(next.m) + ' עדיין לא שמור, כי חסר התשלום (' + priceFor(next.m) + ' ₪):\n' + PAYBOX,
-        'המקומות מוגבלים, ונשמח לראות אותך! 🌿'];
-      if (past.length) paras.splice(1, 0, pastPara);
-    } else if (next && linksOf(p.id).length === 1) {
-      paras = ['תודה שנרשמת למפגש ' + whenWords(next.m) + ' 🙏',
-        payLine(next.m, true),
-        'מספר המקומות מוגבל, והמקום נשמר רק אחרי התשלום.\nואם יש שאלה או משהו לא ברור, אני כאן 🙂',
-        'נתראה! 🌿'];
-    } else if (next) {
-      paras = ['שמחים שנרשמת שוב למפגש ' + whenWords(next.m) + ' 🙏',
-        payLine(next.m, false),
-        'המקומות מוגבלים, והמקום נשמר רק אחרי התשלום.'];
-      if (past.length) paras.push(pastPara);
-      paras.push('נתראה! 🌿');
-    } else {
-      paras = ['רציתי לעדכן בעדינות שנשאר פתוח אצלנו התשלום על ' + pastTxt + '.',
-        'אפשר להסדיר אותו בקישור הזה:\n' + PAYBOX,
-        sorry + '.\nתודה רבה 🙏'];
-    }
-    return paras.join('\n\n');
-  }
-  /* לשונית "התקשרות" בפרטי המשתתף: פנייה בוואטסאפ, בקשת תשלום או תזכורת (הודעה מובנית) וחיוג */
-  let msgTexts = [];
-  function greetMessage(p) {
-    const who = SENDERS[emailOf()] || '', name = p.name.trim().split(/\s+/)[0];
-    return 'היי ' + name + ', ' + (who ? 'זה ' + who + ', מ"יוצאים להרפתקה"' : 'זה מ"יוצאים להרפתקה"') + ' 😊\nמה נשמע?';
-  }
+  const authorName = () => SENDERS[emailOf()] || emailOf().split('@')[0] || 'לא ידוע';
+
+  /* לשונית "התקשרות": וואטסאפ וחיוג (רק פותחים שיחה/מחייגים) וקישור קבוצת הפייבוקס להעתקה */
+  let copyTexts = [];
   function renderContact() {
     const box = $('#pMsgs'); if (!box) return;
     const p = sheet && sheet.id ? state.participants.find((x) => x.id === sheet.id) : null;
     if (!p) { box.innerHTML = ''; return; }
     const base = waLink(p.phone), tel = telLink(p.phone);
-    msgTexts = [];
+    copyTexts = [PAYBOX];
     const COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="3"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>';
-    // שורת הודעה מוכנה: כותרת ותת כותרת מימין, שליחה והעתקה משמאל (הטקסט המלא לא מוצג, רק סוג הפנייה)
-    const row = (title, sub, href, label, text, extra) => { msgTexts.push(text); return '<div class="crow"><div class="ct"><b>' + title + '</b><span>' + sub + '</span></div>' +
-      '<a class="csend"' + (extra || '') + ' href="' + href + '" target="_blank" rel="noopener">' + WA_ICON + label + '</a>' +
-      '<button type="button" class="ccopy" data-copy="' + (msgTexts.length - 1) + '" aria-label="העתקת ההודעה" title="העתקת ההודעה">' + COPY_ICON + '</button></div>'; };
-    // שני כפתורים פשוטים ליד זה: וואטסאפ (רק פותח שיחה, בלי טקסט) וחיוג (רק מחייג)
     let h = '<div class="ctop">' +
       (base ? '<a class="cbtn cb-wa" href="' + base + '" target="_blank" rel="noopener">' + WA_ICON + 'וואטסאפ</a>' : '<span class="cbtn off">' + WA_ICON + 'וואטסאפ</span>') +
       (tel ? '<a class="cbtn cb-call" href="' + tel + '">' + CALL_ICON + 'חיוג</a>' : '<span class="cbtn off">' + CALL_ICON + 'חיוג</span>') + '</div>';
     if (!base) h += '<p class="mnone">אין מספר טלפון תקין למשתתף. אפשר להוסיף בלשונית "פרטים"</p>';
-    else {
-      h += '<div class="clabel">הודעות מוכנות</div>';
-      const g = greetMessage(p);
-      h += row('הודעת פתיחה', 'פנייה חמה, מה נשמע', base + '?text=' + encodeURIComponent(g), 'שליחה', g);
-      const msg = payMessage(p), { upcoming } = payPlan(p), next = upcoming[0], isRem = next && linkStatus(next.l) === 'requested';
-      if (msg) h += row(isRem ? 'תזכורת תשלום' : 'בקשת תשלום', next ? 'מפגש ' + dm(next.m) + ' · ' + priceFor(next.m) + ' ₪' : 'חוב ממפגשים שעברו', base + '?text=' + encodeURIComponent(msg), 'שליחה', msg, ' id="waPay" data-pay="1"');
-      else h += '<div class="crow off"><div class="ct"><b>בקשת תשלום</b><span>אין חוב פתוח: הכול שולם או "לא משלם"</span></div></div>';
-    }
+    h += '<div class="clabel">קישור לתשלום</div>' +
+      '<div class="crow"><div class="ct"><b>קבוצת פייבוקס</b><span dir="ltr" style="text-align:right">' + esc(PAYBOX.replace('https://', '')) + '</span></div>' +
+      '<button type="button" class="ccopy" data-copy="0" aria-label="העתקת הקישור" title="העתקת הקישור">' + COPY_ICON + '</button></div>';
     box.innerHTML = h;
   }
   $('#pMsgs').addEventListener('click', (e) => {
     const c = e.target.closest('[data-copy]');
-    if (c) { const txt = msgTexts[Number(c.dataset.copy)] || ''; (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast('ההודעה הועתקה'), () => toast('אי אפשר להעתיק מכאן')); return; }
+    if (c) { const txt = copyTexts[Number(c.dataset.copy)] || ''; (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast('הקישור הועתק'), () => toast('אי אפשר להעתיק מכאן')); }
   });
-  /* אחרי לחיצה על וואטסאפ עם הודעת תשלום: כשחוזרים לדשבורד נשאלים "האם ההודעה נשלחה?", ורק על "כן" הסטטוס עובר ל"בקשה נשלחה" */
-  const PEND_KEY = 'harpatka_wa_pending';
-  let pend = null, leftPage = false;
-  const savePend = () => { try { if (pend) sessionStorage.setItem(PEND_KEY, JSON.stringify(pend)); else sessionStorage.removeItem(PEND_KEY); } catch (e) {} };
-  try { pend = JSON.parse(sessionStorage.getItem(PEND_KEY) || 'null'); } catch (e) {}
-  $('#pMsgs').addEventListener('click', (e) => {
-    const a = e.target.closest('#waPay[data-pay]'); if (!a || !sheet || !sheet.id) return;
-    const { upcoming, past } = payPlan(state.participants.find((x) => x.id === sheet.id));
-    const mids = [...upcoming, ...past].filter((x) => linkStatus(x.l) === 'unpaid').map((x) => x.m.id);
-    if (!mids.length) return;
-    pend = { pid: sheet.id, mids, t: Date.now() }; leftPage = false; savePend();
-  });
-  function askSent() {
-    if (!pend || $('#cDlg').open) return;
-    if (Date.now() - pend.t > 6 * 36e5) { pend = null; savePend(); return; }
-    const p = state.participants.find((x) => x.id === pend.pid);
-    const mids = pend.mids.filter((mid) => { const l = linkOf(pend.pid, mid); return l && !l.paid && !l.exempt; });
-    if (!p || !mids.length) { pend = null; savePend(); return; }
-    const dlg = $('#cDlg'), yes = $('#cYes'), no = $('#cNo'), pid = pend.pid;
-    $('#cTitle').textContent = 'האם ההודעה נשלחה?';
-    $('#cText').innerHTML = 'בקשת התשלום ל' + nameB(p.name) + '. רק אם נשלחה, הסטטוס יעבור ל"בקשה נשלחה"';
-    yes.textContent = 'כן, בקשה נשלחה'; no.textContent = 'עדיין לא';
-    const reset = () => { yes.textContent = 'אישור'; no.textContent = 'ביטול'; pend = null; savePend(); };
-    yes.onclick = () => { dlg.close(); reset(); mids.forEach((mid) => setPayStatus(pid, mid, 'requested')); toast('סומן: נשלחה בקשת תשלום'); };
-    no.onclick = () => { dlg.close(); reset(); };
-    dlg.addEventListener('close', () => { yes.textContent = 'אישור'; no.textContent = 'ביטול'; }, { once: true });
-    dlg.showModal();
+
+  /* לשונית "הערות": הוספה, רשימה מהחדשה לישנה (מי כתב ומתי), ומחיקה */
+  function renderNotes() {
+    const list = $('#nList'); if (!list) return;
+    const p = sheet && sheet.id ? state.participants.find((x) => x.id === sheet.id) : null;
+    if (!p) { list.innerHTML = ''; return; }
+    const ns = notesOf(p.id);
+    const cnt = $('#pTabs [data-tab="notes"] .tcount'); if (cnt) cnt.textContent = ns.length ? ns.length : '';
+    list.innerHTML = ns.length ? ns.map((n) => '<div class="nitem"><div class="nmeta"><span><b>' + esc(n.author_name || 'לא ידוע') + '</b> · ' + esc(fmtDT(n.created_at)) + '</span>' +
+      '<button type="button" class="ndel" data-del="' + n.id + '" aria-label="מחיקת הערה" title="מחיקת הערה">×</button></div><div class="ntext">' + esc(n.body) + '</div></div>').join('')
+      : '<p class="mnone">עוד אין הערות. אפשר לרשום למעלה מה דיברתם, מה הוחלט ומה צריך לזכור</p>';
   }
-  document.addEventListener('visibilitychange', () => { if (document.hidden) leftPage = true; else if (leftPage) { leftPage = false; setTimeout(askSent, 250); } });
-  window.addEventListener('blur', () => { if (pend) leftPage = true; });
-  window.addEventListener('focus', () => { if (pend && leftPage) { leftPage = false; setTimeout(askSent, 250); } });
+  $('#nAdd').addEventListener('click', async () => {
+    if (!sheet || !sheet.id) return;
+    const ta = $('#nText'), body = ta.value.trim(); if (!body) { ta.focus(); return; }
+    const btn = $('#nAdd'); btn.disabled = true;
+    try {
+      const [row] = await api(T.n, { method: 'POST', body: { participant_id: sheet.id, body, author_email: emailOf(), author_name: authorName() }, prefer: 'return=representation' });
+      if (row && !state.notes.some((x) => x.id === row.id)) state.notes.push(row);
+      rebuildNotes(); ta.value = ''; renderNotes(); render(); toast('ההערה נשמרה');
+    } catch (err) { fail(err); }
+    btn.disabled = false;
+  });
+  $('#nList').addEventListener('click', async (e) => {
+    const d = e.target.closest('[data-del]'); if (!d) return;
+    if (!confirm('למחוק את ההערה?')) return;
+    const id = d.dataset.del, prev = state.notes;
+    state.notes = state.notes.filter((n) => n.id !== id); rebuildNotes(); renderNotes(); render();
+    try { await api(T.n + '?id=eq.' + id, { method: 'DELETE' }); } catch (err) { state.notes = prev; rebuildNotes(); renderNotes(); render(); fail(err); }
+  });
 
   let pTab = 'contact';
   function setPTab(tab) {
@@ -1311,6 +1283,7 @@
     document.querySelectorAll('#pTabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
     document.querySelectorAll('#pDlg [data-panel]').forEach((d) => { d.hidden = d.dataset.panel !== tab; });
     if (tab === 'contact') renderContact();
+    if (tab === 'notes') renderNotes();
     syncUrl();
   }
   $('#pTabs').addEventListener('click', (e) => { const b = e.target.closest('[data-tab]'); if (b) setPTab(b.dataset.tab); });
@@ -1323,12 +1296,14 @@
     pForm.phone.value = p ? localPhone(p.phone) : '';
     pForm.age.value = p ? (shownAge(p) ?? '') : '';
     if (p && p.gender) pForm.gender.value = p.gender;
-    pForm.note.value = p ? p.note : '';
     $('#pTitle').textContent = p ? p.name : 'משתתף חדש';
     $('#pRegLine').textContent = p && regDate(p) ? ('תאריך הרשמה: ' + regDateTime(p) + (p.source === 'site' ? ' (דרך האתר)' : p.source === 'site-ad' ? ' (דרך האתר, ממומן)' : '')) : '';
     renderContact();
     $('#pSubmit').hidden = !!p;
     $('#pTabs [data-tab="contact"]').hidden = !p;
+    $('#pTabs [data-tab="notes"]').hidden = !p;
+    $('#nText').value = '';
+    if (p) { const c = notesOf(p.id).length, el = $('#pTabs [data-tab="notes"] .tcount'); if (el) el.textContent = c ? c : ''; }
     $('#pDelete').hidden = !p;
     $('#savedMark').classList.remove('on');
     refreshSheetMeetings();
@@ -1374,7 +1349,6 @@
       phone: pForm.phone.value.trim(),
       age: Number.isFinite(age) ? age : null,
       gender: pForm.gender.value || null,
-      note: pForm.note.value.trim(),
     };
   }
 
