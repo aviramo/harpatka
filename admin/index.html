@@ -421,7 +421,7 @@
 
   <!-- משתתף -->
   <dialog id="pDlg" aria-labelledby="pTitle">
-    <button class="close" type="button" data-close aria-label="סגירה">×</button>
+    <button class="close" type="button" id="pClose" aria-label="סגירה">×</button>
     <form class="sheet" id="pForm" method="dialog" novalidate>
       <div class="sheet-head">
         <h2 id="pTitle">משתתף חדש</h2>
@@ -1288,7 +1288,39 @@
   }
   $('#pTabs').addEventListener('click', (e) => { const b = e.target.closest('[data-tab]'); if (b) setPTab(b.dataset.tab); });
 
-  function openParticipant(id, tab) {
+  /* הפופאפ נפתח מהכרטיס: כאילו הכרטיס הקיים גדל (ובסגירה מתכווץ חזרה אליו) */
+  const reducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function cardMorph(el, closing) {
+    if (reducedMotion() || !el || !el.isConnected) return null;
+    const r = el.getBoundingClientRect(), d = pDlg.getBoundingClientRect();
+    if (!d.width || !d.height) return null;
+    const sx = Math.max(.05, r.width / d.width), sy = Math.max(.05, r.height / d.height);
+    const dx = (r.left + r.width / 2) - (d.left + d.width / 2), dy = (r.top + r.height / 2) - (d.top + d.height / 2);
+    const from = { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + sx + ',' + sy + ')', borderRadius: '20px' };
+    const opts = { duration: closing ? 260 : 380, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both', direction: closing ? 'reverse' : 'normal' };
+    pDlg.getAnimations().forEach((a) => a.cancel());
+    const sheet = pDlg.querySelector('.sheet'), x = pDlg.querySelector('.close');
+    const fade = [{ opacity: 0 }, { opacity: 0, offset: .35 }, { opacity: 1 }];
+    if (sheet) sheet.animate(fade, opts);
+    if (x) x.animate(fade, opts);
+    return pDlg.animate([from, { transform: 'none', borderRadius: '28px' }], opts);
+  }
+  function closePDlg() {
+    if (!pDlg.open || pClosing) return;
+    let el = pFromEl && pFromEl.isConnected ? pFromEl : null;
+    if (!el && openPid) { const m = document.querySelector('#list [data-edit="' + openPid + '"]'); el = m ? m.closest('li.row') : null; }
+    const a = cardMorph(el, true);
+    if (!a) { pDlg.close(); return; }
+    pClosing = true;
+    const done = () => { pClosing = false; pDlg.close(); pDlg.getAnimations().forEach((x) => x.cancel()); pDlg.querySelectorAll('.sheet, .close').forEach((n) => n.getAnimations().forEach((x) => x.cancel())); };
+    a.onfinish = done; a.oncancel = done;
+  }
+  $('#pClose').addEventListener('click', closePDlg);
+  pDlg.addEventListener('click', (e) => { if (e.target === pDlg) closePDlg(); });
+
+  let pFromEl = null, pClosing = false;
+  function openParticipant(id, tab, fromEl) {
+    pFromEl = fromEl || null; pClosing = false;
     const p = id ? state.participants.find((x) => x.id === id) : null;
     sheet = p ? { id: p.id } : { id: null, links: new Map(state.filter ? [[state.filter, false]] : []) };
     pForm.reset();
@@ -1310,6 +1342,7 @@
     openPid = p ? p.id : null;
     pDlg.showModal();
     pDlg.setAttribute('tabindex', '-1'); pDlg.focus({ preventScroll: true });   // בלי טבעת פוקוס על כפתור הסגירה
+    if (fromEl) cardMorph(fromEl, false);
     setPTab(p ? (tab || 'contact') : 'info');
     if (!p) setTimeout(() => pForm.name.focus(), 50);
   }
@@ -1458,7 +1491,7 @@
 
   /* ---------- אירועים כלליים ---------- */
   document.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => b.closest('dialog').close()));
-  document.querySelectorAll('dialog').forEach((d) => d.addEventListener('click', (e) => { if (e.target === d) d.close(); }));
+  document.querySelectorAll('dialog:not(#pDlg)').forEach((d) => d.addEventListener('click', (e) => { if (e.target === d) d.close(); }));
   pDlg.addEventListener('close', () => { sheet = null; openPid = null; syncUrl(); });
   mDlg.addEventListener('close', syncUrl);
   pForm.phone.addEventListener('input', () => badPhone(false));
@@ -1485,7 +1518,7 @@
   });
 
   $('#list').addEventListener('keydown', (e) => {
-    if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-edit]')) { e.preventDefault(); openParticipant(e.target.dataset.edit); }
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-edit]')) { e.preventDefault(); openParticipant(e.target.dataset.edit, undefined, e.target.closest('li.row')); }
   });
   $('#list').addEventListener('click', (e) => {
     const am = e.target.closest('[data-addm]');
@@ -1496,7 +1529,7 @@
       return;
     }
     const row = e.target.closest('li.row'), ed = row && row.querySelector('[data-edit]');   // לחיצה בכל מקום בכרטיס פותחת את פרטי המשתתף
-    if (ed) openParticipant(ed.dataset.edit);
+    if (ed) openParticipant(ed.dataset.edit, undefined, row);
   });
 
   const goGoogle = () => { location.href = DB.url + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(location.origin + location.pathname); };
