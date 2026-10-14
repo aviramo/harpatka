@@ -219,10 +219,12 @@
     .sttable td { padding: 7px 4px; border-top: 1px solid var(--line); }
     .sttable td.num { font-family: "Rubik", sans-serif; font-weight: 600; }
     .up { color: var(--green); } .down { color: var(--red); }
-    .ptabs { display: flex; gap: 4px; background: rgba(63,56,47,.07); border-radius: 999px; padding: 3px; margin-bottom: 14px; }
+    .ptabs { position: relative; display: flex; gap: 4px; background: rgba(63,56,47,.07); border-radius: 999px; padding: 3px; margin-bottom: 14px; }
     .ptab { flex: 1 1 0; height: 38px; border-radius: 999px; font-weight: 700; font-size: 15px; color: var(--ink); }
     .ptab[hidden] { display: none; }
-    .ptab[aria-selected="true"] { background: var(--ink); color: var(--paper); }
+    .ptab { position: relative; z-index: 1; transition: color .25s; }
+    .ptab[aria-selected="true"] { color: var(--paper); }
+    .pind { position: absolute; z-index: 0; top: 3px; bottom: 3px; left: 0; width: 0; border-radius: 999px; background: var(--ink); transition: transform .3s cubic-bezier(.22,.8,.2,1), width .3s cubic-bezier(.22,.8,.2,1); pointer-events: none; }
     /* גובה קבוע לפופאפ המשתתף בכל הלשוניות: הכותרת והלשוניות לא זזות, והתוכן נגלל בתוך הלשונית */
     #pDlg { height: min(84vh, 520px); overflow: visible; }
     #pDlg:focus { outline: none; }
@@ -237,7 +239,7 @@
     #pDlg .ppanel { scrollbar-width: thin; scrollbar-color: rgba(63,56,47,.22) transparent; }
     #pDlg #pSubmit { flex: 0 0 auto; margin-top: 10px; }
     .ppanel[hidden] { display: none; }
-    .ptab .tcount { font-size: 12px; opacity: .75; }
+    .ptab .tcount { display: inline-block; min-width: 20px; height: 20px; line-height: 20px; padding: 0 5px; margin-inline-start: 4px; border-radius: 10px; background: var(--terra); color: #fff; font-size: 12px; font-weight: 700; text-align: center; vertical-align: 1px; }
     .ptab .tcount:empty { display: none; }
     .nform { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 14px; }
     .nform textarea { flex: 1 1 auto; min-width: 0; min-height: 46px; max-height: 140px; resize: none; border-radius: 14px; border: 1.5px solid var(--line); background: #fff; padding: 10px 12px; font-size: 16px; line-height: 1.4; }
@@ -433,7 +435,8 @@
         <span class="saved" id="savedMark">נשמר ✓</span>
       </div>
       <div class="ptabs" id="pTabs" role="tablist" aria-label="עריכת משתתף">
-        <button type="button" role="tab" class="ptab" data-tab="meets" aria-selected="true">מפגשים</button>
+        <i class="pind" aria-hidden="true"></i>
+        <button type="button" role="tab" class="ptab" data-tab="meets" aria-selected="true">מפגשים <span class="tcount"></span></button>
         <button type="button" role="tab" class="ptab" data-tab="contact" aria-selected="false">התקשרות <span class="tcount"></span></button>
         <button type="button" role="tab" class="ptab" data-tab="info" aria-selected="false">פרטים</button>
       </div>
@@ -1279,9 +1282,16 @@
   });
 
   let pTab = 'contact';
+  function moveInd(instant) {
+    const ind = $('#pTabs .pind'), b = $('#pTabs [data-tab][aria-selected="true"]'); if (!ind || !b || !b.offsetWidth) return;
+    if (instant) ind.style.transition = 'none';
+    ind.style.width = b.offsetWidth + 'px'; ind.style.transform = 'translateX(' + b.offsetLeft + 'px)';
+    if (instant) { void ind.offsetWidth; ind.style.transition = ''; }
+  }
   function setPTab(tab) {
     pTab = tab;
     document.querySelectorAll('#pTabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
+    moveInd();
     document.querySelectorAll('#pDlg [data-panel]').forEach((d) => { d.hidden = d.dataset.panel !== tab; });
     if (tab === 'contact') { renderContact(); renderNotes(); }
     syncUrl();
@@ -1371,11 +1381,13 @@
     pDlg.showModal();
     pDlg.setAttribute('tabindex', '-1'); pDlg.focus({ preventScroll: true });   // בלי טבעת פוקוס על כפתור הסגירה
     setPTab(p ? (tab || 'contact') : 'info');
+    requestAnimationFrame(() => moveInd(true));
     if (!p) setTimeout(() => pForm.name.focus(), 50);
   }
 
   function refreshSheetMeetings() {
     if (!sheet) return;
+    { const n = sheet.id ? linksOf(sheet.id).length : sheet.links.size, el = $('#pTabs [data-tab="meets"] .tcount'); if (el) el.textContent = n ? n : ''; moveInd(true); }
     renderContact();
     const box = $('#pMeetings');
     box.innerHTML = state.meetings.map((m) => {
