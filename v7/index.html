@@ -248,6 +248,7 @@
     .pt-lab span{ font-size:.85rem; color:#6b6254; }
     .pt-lab.l{ transform:none; text-align:left; } .pt-lab.r{ transform:none; text-align:right; }
     /* ===== סרטון פתיחה על ההזמנה: אותו גודל בדיוק, בלי קפיצות; נעלם (דהייה) ברגע שההזמנה בסרטון נכנסת ===== */
+    html.no-hero #hero{ display:none; }
     #heroStage{ position:relative; width:100%; }
     /* הסרטון לכל הרוחב, בלי פינות מעוגלות: ממשיך את הבאנר. בדסקטופ הגובה מוגבל והצדדים נצבעים מקצוות הפריים */
     .hs-media{ position:relative; width:100%; aspect-ratio:4/5; max-height:88vh; overflow:hidden; background:var(--cream); }
@@ -489,6 +490,8 @@
   <script>
     /* סרטון פתיחה: אם הדפדפן מאפשר, מסתירים את ההזמנה (בלי להזיז את הדף) עד שהסרטון נגמר; רשת ביטחון אחרי 9 שניות */
     (function(){
+      /* סרטון הפתיחה מוסתר (17.10.26): ההזמנה היא הסקשן הראשון. להחזרה: למחוק את שורת no-hero הבאה ואת הכלל html.no-hero בסגנון */
+      document.documentElement.classList.add('no-hero'); return;
       try {
         var c = navigator.connection || {};
         var skip = (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) || c.saveData || /2g/.test(c.effectiveType || '');
@@ -620,12 +623,12 @@
     </section>
 
     <!-- סרטון — מיד אחרי ההזמנה -->
-    <section id="human" class="relative pt-10 md:pt-14 pb-0">
+    <section id="human" class="relative pt-10 md:pt-14 pb-0" hidden>
       <div class="relative z-10 max-w-6xl mx-auto px-5">
         <div class="grid items-center">
           <div class="reveal">
             <div class="imgframe rounded-[32px] aspect-[3/4] relative max-w-md mx-auto shadow-soft">
-              <video id="motionVid" aria-label="סרטון קצר מתוך מפגש תנועה" class="cursor-pointer" playsinline loop muted preload="auto">
+              <video id="motionVid" aria-label="סרטון קצר מתוך מפגש תנועה" class="cursor-pointer" playsinline loop muted preload="none">
                 <source src="../images/motion.mp4#t=0.1" type="video/mp4">
               </video>
               <button id="motionToggle" type="button" aria-label="הפעלה / השהיה"
@@ -1037,6 +1040,7 @@
     (function(){
       const root = document.documentElement;
       const box = document.getElementById('heroVid');
+      if (root.classList.contains('no-hero')) return;
       const pending = root.classList.contains('vid-pending');   // false: חיסכון בנתונים / הפחתת תנועה / אין תמיכה: רק התמונה
       const img = document.getElementById('heroImg');
       const v = document.getElementById('heroVideo');
