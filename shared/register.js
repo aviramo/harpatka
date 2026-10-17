@@ -68,7 +68,12 @@
       </div>
     </div>
   </div>`.replace(/__BASE__/g, BASE);
-  document.body.insertAdjacentHTML('beforeend', MODAL_HTML);
+  /* v7: מגדר כרשימה נפתחת רגילה במקום שני כפתורים (window.REGISTER_GENDER = 'select', מוגדר לפני הסקריפט הזה) */
+  const GENDER_SELECT = '<select data-su="gender" name="cmGender" class="su-input su-select" aria-label="מגדר" required><option value="" selected disabled>מגדר</option><option value="male">גבר</option><option value="female">אישה</option></select>';
+  const MODAL_FINAL = window.REGISTER_GENDER === 'select'
+    ? MODAL_HTML.replace(/<div class="su-seg eq" data-su="gender"[\s\S]*?<\/div>(?=\s*<div data-su="genderErr")/, GENDER_SELECT)
+    : MODAL_HTML;
+  document.body.insertAdjacentHTML('beforeend', MODAL_FINAL);
 
   /* ===== מנגנון פופאפ כללי (משותף לכל ה-.modal) ===== */
   let modalLastFocus = null, urlBeforeReg = null;
@@ -177,7 +182,7 @@
       if (!norm) { setErr(phoneI, q('phoneErr'), 'מספר לא תקין'); ok = false; }
       const age = parseInt(ageI.value, 10);
       if (!(age >= 18 && age <= 99)) { setErr(ageI, q('ageErr'), 'גיל לא תקין'); ok = false; }
-      const gEl = genderBox.querySelector('input:checked'), gender = gEl ? gEl.value : null;
+      const gEl = genderBox.matches('select') ? genderBox : genderBox.querySelector('input:checked'), gender = gEl && gEl.value ? gEl.value : null;
       if (!gender) { genderBox.classList.add('bad'); q('genderErr').textContent = 'נא לבחור'; ok = false; }
       if (!ok) return;
       const allDone = () => { suRoots.forEach(f => f()); };   // בלי שמירה בדפדפן: בכל טעינה של הדף הטופס מוצג מחדש
