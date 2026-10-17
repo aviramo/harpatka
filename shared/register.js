@@ -32,7 +32,7 @@
             <input type="text" name="website" data-su="hp" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
             <div class="su-grid">
               <div class="su-cell">
-                <input id="cmName" data-su="name" name="name" type="text" class="su-input" autocomplete="name" maxlength="60" placeholder="שם" aria-label="שם" required>
+                <input id="cmName" data-autofocus data-su="name" name="name" type="text" class="su-input" autocomplete="name" maxlength="60" placeholder="שם" aria-label="שם" required>
                 <div data-su="nameErr" class="su-err" role="alert"></div>
               </div>
               <div class="su-cell">
