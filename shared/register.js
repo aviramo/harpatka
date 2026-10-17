@@ -73,6 +73,7 @@
   const MODAL_FINAL = window.REGISTER_GENDER === 'select'
     ? MODAL_HTML.replace(/<div class="su-seg eq" data-su="gender"[\s\S]*?<\/div>(?=\s*<div data-su="genderErr")/, GENDER_SELECT)
     : MODAL_HTML;
+  if (window.REGISTER_MIN) document.documentElement.classList.add('reg-min');
   document.body.insertAdjacentHTML('beforeend', MODAL_FINAL);
 
   /* ===== מנגנון פופאפ כללי (משותף לכל ה-.modal) ===== */
