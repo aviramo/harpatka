@@ -104,16 +104,37 @@
     const f = m.querySelector('[data-autofocus]') || m.querySelector('.modal-box');
     if (f) { if (f.matches('.modal-box')) f.setAttribute('tabindex', '-1'); f.focus({ preventScroll: true }); }
   }
+  /* החלקה למעלה בפס שבתחתית סוגרת (אותו מנגנון כמו המגירות בדף הניהול, הפוך: נפתח מלמעלה) */
+  function bindGrab(m){
+    const box = m.querySelector('.modal-box'); if (!box) return;
+    const g = document.createElement('div'); g.className = 'modal-grab'; g.setAttribute('aria-hidden', 'true'); g.innerHTML = '<i></i>';
+    box.appendChild(g);
+    let sy = 0, dy = 0, t0 = 0, drag = false;
+    g.addEventListener('pointerdown', (e) => {
+      if (e.button > 0) return; drag = true; sy = e.clientY; dy = 0; t0 = performance.now();
+      box.style.transition = 'none'; try { g.setPointerCapture(e.pointerId); } catch (x) {}
+    });
+    g.addEventListener('pointermove', (e) => { if (!drag) return; dy = Math.max(0, sy - e.clientY); box.style.transform = 'translateY(' + (-dy) + 'px)'; });
+    const end = () => {
+      if (!drag) return; drag = false;
+      const v = dy / Math.max(1, performance.now() - t0), tap = dy < 4;
+      box.style.transition = '';
+      if (tap || dy > 90 || (v > 0.6 && dy > 30)) { box.style.transform = 'translateY(-110%)'; closeModal(m); setTimeout(() => { box.style.transform = ''; }, 400); }
+      else box.style.transform = '';
+    };
+    g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
+  }
   function closeModal(m){
     if (m.id === 'contactModal') regUrl(false);
     m.classList.remove('open');
-    setTimeout(() => { m.hidden = true; if (!document.querySelector('.modal:not([hidden])')) unlockPage(); }, 320);
+    setTimeout(() => { m.hidden = true; if (!document.querySelector('.modal:not([hidden])')) unlockPage(); }, 360);
     if (modalLastFocus) modalLastFocus.focus();
   }
   // כל פופאפ נסגר ב-X, בלחיצה על הרקע, וב-Esc
   document.querySelectorAll('.modal').forEach(m => {
     m.querySelectorAll('[data-close-modal]').forEach(b => b.addEventListener('click', () => closeModal(m)));
     m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); });
+    bindGrab(m);
   });
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
