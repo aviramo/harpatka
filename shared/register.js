@@ -68,12 +68,12 @@
       </div>
     </div>
   </div>`.replace(/__BASE__/g, BASE);
-  /* v7: מגדר כרשימה נפתחת רגילה במקום שני כפתורים (window.REGISTER_GENDER = 'select', מוגדר לפני הסקריפט הזה) */
+  /* v7: מגדר כרשימה נפתחת רגילה במקום שני כפתורים (ברירת מחדל לכל העמודים; window.REGISTER_GENDER = 'buttons' מחזיר את הכפתורים) */
   const GENDER_SELECT = '<select data-su="gender" name="cmGender" class="su-input su-select" aria-label="מגדר" required><option value="" selected disabled>מגדר</option><option value="male">גבר</option><option value="female">אישה</option></select>';
-  const MODAL_FINAL = window.REGISTER_GENDER === 'select'
+  const MODAL_FINAL = window.REGISTER_GENDER !== 'buttons'
     ? MODAL_HTML.replace(/<div class="su-seg eq" data-su="gender"[\s\S]*?<\/div>(?=\s*<div data-su="genderErr")/, GENDER_SELECT)
     : MODAL_HTML;
-  if (window.REGISTER_MIN) document.documentElement.classList.add('reg-min');
+  if (window.REGISTER_MIN !== false) document.documentElement.classList.add('reg-min');
   document.body.insertAdjacentHTML('beforeend', MODAL_FINAL);
 
   /* ===== מנגנון פופאפ כללי (משותף לכל ה-.modal) ===== */
