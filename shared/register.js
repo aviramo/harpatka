@@ -84,12 +84,16 @@
       } else if (urlBeforeReg) { history.replaceState(history.state, '', urlBeforeReg); urlBeforeReg = null; }
     } catch (e) {}
   }
+  /* נעילת גלילת הדף מאחורי הפופאפ (גם במובייל); הפופאפ עצמו נגלל, למשל כשהמקלדת פתוחה */
+  let locked = false;
+  function lockPage(){ locked = true; document.documentElement.classList.add('modal-lock'); }
+  function unlockPage(){ locked = false; document.documentElement.classList.remove('modal-lock'); }
   function openModal(m){
     if (m.id === 'contactModal') regUrl(true);
     modalLastFocus = document.activeElement;
     m.hidden = false;
     requestAnimationFrame(() => m.classList.add('open'));
-    document.body.style.overflow = 'hidden';
+    lockPage();
     /* הפוקוס עובר לקופסת הפופאפ (בלי טבעת פוקוס מכוערת על כפתור הסגירה) */
     const f = m.querySelector('[data-autofocus]') || m.querySelector('.modal-box');
     if (f) { if (f.matches('.modal-box')) f.setAttribute('tabindex', '-1'); f.focus({ preventScroll: true }); }
@@ -97,8 +101,7 @@
   function closeModal(m){
     if (m.id === 'contactModal') regUrl(false);
     m.classList.remove('open');
-    document.body.style.overflow = '';
-    setTimeout(() => { m.hidden = true; }, 320);
+    setTimeout(() => { m.hidden = true; if (!document.querySelector('.modal:not([hidden])')) unlockPage(); }, 320);
     if (modalLastFocus) modalLastFocus.focus();
   }
   // כל פופאפ נסגר ב-X, בלחיצה על הרקע, וב-Esc
