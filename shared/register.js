@@ -94,14 +94,15 @@
   let locked = false;
   function lockPage(){ locked = true; document.documentElement.classList.add('modal-lock'); }
   function unlockPage(){ locked = false; document.documentElement.classList.remove('modal-lock'); }
-  function openModal(m){
+  function openModal(m, noFocus){
     if (m.id === 'contactModal') regUrl(true);
     modalLastFocus = document.activeElement;
     m.hidden = false;
     requestAnimationFrame(() => m.classList.add('open'));
     lockPage();
     /* הפוקוס עובר לקופסת הפופאפ (בלי טבעת פוקוס מכוערת על כפתור הסגירה) */
-    const f = m.querySelector('[data-autofocus]') || m.querySelector('.modal-box');
+    /* פתיחה על ידי המשתמש (לחיצה על כפתור): הפוקוס עובר לשדה השם והמקלדת עולה. בכניסה ישירה ל-/register/ בלי פוקוס אוטומטי */
+    const f = (!noFocus && m.querySelector('[data-autofocus]')) || m.querySelector('.modal-box');
     if (f) { if (f.matches('.modal-box')) f.setAttribute('tabindex', '-1'); f.focus({ preventScroll: true }); }
   }
   /* החלקה למעלה בפס שבתחתית סוגרת (אותו מנגנון כמו המגירות בדף הניהול, הפוך: נפתח מלמעלה) */
@@ -257,8 +258,8 @@
     el.setAttribute('href', waLinks[el.dataset.wa]);
   });
   const contactModal = document.getElementById('contactModal');
-  window.HarpatkaRegister = { open: () => { if (contactModal) openModal(contactModal); } };   // לשימוש עמודים אחרים
-  if (new URLSearchParams(location.search).has('register')) setTimeout(() => window.HarpatkaRegister.open(), 500);   // הגעה דרך /register/: דף הבית נטען והפופאפ נפתח עליו
+  window.HarpatkaRegister = { open: (auto) => { if (contactModal) openModal(contactModal, auto === true); } };   // לשימוש עמודים אחרים
+  if (new URLSearchParams(location.search).has('register')) setTimeout(() => window.HarpatkaRegister.open(true), 500);   // הגעה דרך /register/: דף הבית נטען והפופאפ נפתח עליו
   document.querySelectorAll('[data-contact]').forEach(el => {
     el.setAttribute('href', '#');
     el.addEventListener('click', (e) => { e.preventDefault(); if (contactModal) openModal(contactModal); });
