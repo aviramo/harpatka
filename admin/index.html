@@ -352,6 +352,8 @@
     .seg span { display: block; height: 48px; line-height: 45px; padding: 0 12px; border-radius: 14px; border: 1.5px solid var(--line); background: #fff; font-weight: 700; font-size: 16px; }
     .seg input:checked + span { background: var(--terra); border-color: var(--terra); color: #fff; }
     .field select { width: 100%; height: 48px; border-radius: 14px; border: 1.5px solid var(--line); background: #fff; padding: 0 8px; font-size: 17px; }
+    .gfield { flex: 0 0 112px !important; }
+    .gfield select { appearance: none; -webkit-appearance: none; padding: 0 12px 0 30px; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23686A48' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: left 9px center; background-size: 16px; }
     .field input {
       width: 100%; height: 48px; border-radius: 14px; border: 1.5px solid var(--line);
       background: #fff; padding: 0 12px; font-size: 17px;
@@ -460,10 +462,7 @@
       <div class="ppanel" data-panel="info" role="tabpanel">
         <div class="name-row">
           <label class="field"><span>שם</span><input name="name" required maxlength="60" autocomplete="off" /></label>
-          <div class="seg" role="radiogroup" aria-label="מגדר">
-            <label><input type="radio" name="gender" value="male" /><span>גבר</span></label>
-            <label><input type="radio" name="gender" value="female" /><span>אישה</span></label>
-          </div>
+          <label class="field gfield"><span>מגדר</span><select name="gender"><option value="">לא צוין</option><option value="male">גבר</option><option value="female">אישה</option></select></label>
         </div>
         <div class="two">
           <label class="field"><span>טלפון</span><input name="phone" type="tel" inputmode="tel" maxlength="20" autocomplete="off" /></label>
@@ -1398,7 +1397,7 @@
     pForm.name.value = p ? p.name : '';
     pForm.phone.value = p ? localPhone(p.phone) : '';
     pForm.age.value = p ? (shownAge(p) ?? '') : '';
-    if (p && p.gender) pForm.gender.value = p.gender;
+    pForm.gender.value = p && p.gender ? p.gender : '';
     $('#pTitle').textContent = p ? p.name : 'משתתף חדש';
     $('#pRegLine').textContent = p && regDate(p) ? ('תאריך הרשמה: ' + regDateTime(p) + (p.source === 'site' ? ' (דרך האתר)' : p.source === 'site-ad' ? ' (דרך האתר, ממומן)' : '')) : '';
     renderContact();
