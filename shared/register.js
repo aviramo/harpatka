@@ -52,7 +52,7 @@
                 <div data-su="ageErr" class="su-err" role="alert"></div>
               </div>
             </div>
-            <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-3.5 text-[1.2rem] whitespace-nowrap w-full mt-4">שמירת מקום</button>
+            <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-3.5 text-[1.2rem] whitespace-nowrap w-full mt-4">הרשמה</button>
             <div data-su="fail" class="su-err mt-3 text-center" role="alert"></div>
           </form>
         </div>
@@ -233,7 +233,7 @@
         q('fail').innerHTML = 'משהו השתבש, אפשר ליצור קשר ישירות: <a href="#" class="underline font-bold">שיחה בוואטסאפ</a>';
         q('fail').querySelector('a').addEventListener('click', ev => { ev.preventDefault(); const m = document.getElementById('contactModal'); if (m) { if (m.hidden) openModal(m); showChoose(); } });
       }
-      if (!finished) { btn.disabled = false; btn.textContent = 'שמירת מקום'; }
+      if (!finished) { btn.disabled = false; btn.textContent = 'הרשמה'; }
     });
   }
   /* פופאפ יצירת קשר: כפתור שלישי "השאירו פרטים" מחליף את הבחירה בטופס (באותו פופאפ) */
