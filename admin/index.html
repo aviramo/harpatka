@@ -249,6 +249,16 @@
     .nform textarea { flex: 1 1 auto; min-width: 0; min-height: 46px; max-height: 140px; resize: none; border-radius: 14px; border: 1.5px solid var(--line); background: #fff; padding: 10px 12px; font-size: 16px; line-height: 1.4; }
     .nform textarea:focus { border-color: var(--terra); outline: none; }
     #pDlg .nform .nadd { flex: 0 0 auto; width: auto; height: 46px; padding: 0 18px; margin: 0; font-size: 16px; }
+    .nattach { flex: 0 0 auto; width: 46px; height: 46px; border-radius: 14px; border: 1.5px solid var(--line); background: #fff; color: var(--muted); display: grid; place-items: center; }
+    .nattach svg { width: 22px; height: 22px; }
+    .nprev { position: relative; flex: 1 1 auto; min-width: 0; height: 60px; display: flex; align-items: center; }
+    .nprev[hidden] { display: none; }
+    .nprev img { height: 60px; width: 60px; object-fit: cover; border-radius: 10px; border: 1.5px solid var(--line); }
+    .nprev button { position: absolute; top: -7px; inset-inline-start: -7px; width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: #fff; font-size: 15px; line-height: 1; }
+    .nimg { display: block; margin-top: 6px; }
+    .nimg img { display: block; width: 100%; max-height: 220px; object-fit: cover; object-position: top; border-radius: 12px; border: 1px solid var(--line); cursor: zoom-in; background: #fff; min-height: 60px; }
+    .nimg .nload { color: var(--muted); font-size: 13px; padding: 14px 0; text-align: center; }
+    .row .note svg { width: 13px; height: 13px; vertical-align: -2px; margin-inline-end: 3px; }
     .nitem { background: var(--cream); border-radius: 16px; padding: 10px 14px 12px; margin-bottom: 8px; }
     .nmeta { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); margin-bottom: 4px; }
     .nmeta b { color: var(--ink); }
@@ -481,6 +491,9 @@
         <div class="clabel">הערות</div>
         <div class="nform">
           <textarea id="nText" rows="2" maxlength="1000" aria-label="הערה חדשה" placeholder="הערה חדשה..."></textarea>
+          <div class="nprev" id="nPrev" hidden><img id="nPrevImg" alt="תצוגה מקדימה" /><button type="button" id="nPrevX" aria-label="הסרת התמונה">×</button></div>
+          <button type="button" class="nattach" id="nAttach" aria-label="צירוף צילום מסך" title="צירוף צילום מסך"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="11" r="1.8"/><path d="M21 16l-5-5-8 8"/></svg></button>
+          <input type="file" id="nFile" accept="image/*" hidden />
           <button type="button" class="btn nadd" id="nAdd">הוספה</button>
         </div>
         <div id="nList"></div>
@@ -533,6 +546,10 @@
       </div>
       <div id="stBody"></div>
     </div>
+  </dialog>
+
+  <dialog id="iDlg" aria-label="צילום מסך" style="max-width:520px">
+    <div class="sheet" style="padding-bottom:20px"><img id="iImg" alt="צילום מסך" style="width:100%;max-height:78vh;object-fit:contain;border-radius:12px;display:block" /></div>
   </dialog>
 
   <dialog id="cDlg" aria-labelledby="cTitle" style="max-width:420px">
@@ -803,7 +820,7 @@
         api(T.p + '?select=*'),
         api(T.m + '?select=*'),
         api(T.a + '?select=participant_id,meeting_id,paid,pay_requested_at,created_at,exempt'),
-        api(T.n + '?select=*&order=created_at.desc'),
+        api(T.n + '?select=id,participant_id,body,author_email,author_name,created_at,has_image&order=created_at.desc'),
       ]);
       state.participants = p; state.meetings = m; state.att = a; state.notes = nn; rebuildNotes();
       sortMeetings();
@@ -1009,7 +1026,7 @@
         '<div class="main" role="button" tabindex="0" data-edit="' + p.id + '">' +
           '<div class="nm"><bdi class="name">' + esc(p.name) + '</bdi>' + (p.source === 'site-ad' ? '<span class="adtag" title="ממומן: הגיע ממודעה בתשלום" aria-label="ממומן"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 9a4 4 0 0 1 0 6"/></svg></span>' : '') + '</div>' +
           (true ? '<div class="meta">' + (true ? '<span class="age" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? '<b class="gl">' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : (p.gender ? '' : '—')) + '</bdi></span>' : '') + side + tags + '</div>' : '') +
-          (noteLatest.get(p.id) ? '<div class="note" title="' + esc(noteLatest.get(p.id).author_name || '') + '">' + esc(noteLatest.get(p.id).body) + '</div>' : '') +
+          (noteLatest.get(p.id) ? '<div class="note" title="' + esc(noteLatest.get(p.id).author_name || '') + '">' + (noteLatest.get(p.id).has_image && !noteLatest.get(p.id).body ? IMG_ICON + 'צילום מסך' : esc(noteLatest.get(p.id).body)) + '</div>' : '') +
         '</div>' +
       '</li>';
     }).join('');
@@ -1237,12 +1254,13 @@
 
 
   /* ---------- הערות (CRM): כמה הערות לכל משתתף, עם מי כתב ומתי; בכרטיס מוצגת האחרונה ---------- */
-  const noteLatest = new Map(), noteText = new Map();
+  const IMG_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="11" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg>';
+  const noteLatest = new Map(), noteText = new Map(), imgCache = new Map();
   function rebuildNotes() {
     noteLatest.clear(); noteText.clear();
     state.notes.slice().sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).forEach((n) => {   // מהחדשה לישנה
       if (!noteLatest.has(n.participant_id)) noteLatest.set(n.participant_id, n);
-      noteText.set(n.participant_id, ((noteText.get(n.participant_id) || '') + ' ' + n.body).toLowerCase());
+      noteText.set(n.participant_id, ((noteText.get(n.participant_id) || '') + ' ' + (n.body || '')).toLowerCase());
     });
   }
   const notesOf = (pid) => state.notes.filter((n) => n.participant_id === pid).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
@@ -1260,7 +1278,7 @@
   const dm = (m) => { const [, mo, d] = m.meeting_date.split('-').map(Number); return d + '.' + mo; };
   const authorName = () => SENDERS[emailOf()] || emailOf().split('@')[0] || 'לא ידוע';
 
-  /* לשונית "התקשרות": וואטסאפ וחיוג (רק פותחים שיחה/מחייגים) וקישור קבוצת הפייבוקס להעתקה */
+  /* לשונית "התקשרות": וואטסאפ וחיוג (רק פותחים שיחה/מחייגים), ומתחתיהם ההערות */
   let copyTexts = [];
   function renderContact() {
     const box = $('#pMsgs'); if (!box) return;
@@ -1273,9 +1291,6 @@
       (base ? '<a class="cbtn cb-wa" href="' + base + '" target="_blank" rel="noopener">' + WA_ICON + 'וואטסאפ</a>' : '<span class="cbtn off">' + WA_ICON + 'וואטסאפ</span>') +
       (tel ? '<a class="cbtn cb-call" href="' + tel + '">' + CALL_ICON + 'חיוג</a>' : '<span class="cbtn off">' + CALL_ICON + 'חיוג</span>') + '</div>';
     if (!base) h += '<p class="mnone">אין מספר טלפון תקין למשתתף. אפשר להוסיף בלשונית "פרטים"</p>';
-    h += '<div class="clabel">קישור לתשלום</div>' +
-      '<div class="crow"><div class="ct"><b>קבוצת פייבוקס</b><span dir="ltr" style="text-align:right">' + esc(PAYBOX.replace('https://', '')) + '</span></div>' +
-      '<button type="button" class="ccopy" data-copy="0" aria-label="העתקת הקישור" title="העתקת הקישור">' + COPY_ICON + '</button></div>';
     box.innerHTML = h;
   }
   $('#pMsgs').addEventListener('click', (e) => {
@@ -1291,17 +1306,54 @@
     const ns = notesOf(p.id);
     const cnt = $('#pTabs [data-tab="contact"] .tcount'); if (cnt) cnt.textContent = ns.length ? ns.length : '';
     list.innerHTML = ns.length ? ns.map((n) => '<div class="nitem"><div class="nmeta"><span><b>' + esc(n.author_name || 'לא ידוע') + '</b> · ' + esc(fmtDT(n.created_at)) + '</span>' +
-      '<button type="button" class="ndel" data-del="' + n.id + '" aria-label="מחיקת הערה" title="מחיקת הערה">×</button></div><div class="ntext">' + esc(n.body) + '</div></div>').join('')
-      : '<p class="mnone">עוד אין הערות. אפשר לרשום למעלה מה דיברתם, מה הוחלט ומה צריך לזכור</p>';
+      '<button type="button" class="ndel" data-del="' + n.id + '" aria-label="מחיקת הערה" title="מחיקת הערה">×</button></div>' +
+      (n.has_image ? '<a class="nimg" data-img="' + n.id + '"><div class="nload">טוען תמונה…</div></a>' : '<div class="ntext">' + esc(n.body) + '</div>') + '</div>').join('')
+      : '<p class="mnone">עוד אין הערות. אפשר לרשום למעלה מה דיברתם, מה הוחלט ומה צריך לזכור, או לצרף צילום מסך משיחה</p>';
+    list.querySelectorAll('[data-img]').forEach(loadNoteImg);
   }
+  /* תמונת ההערה נטענת רק כשרואים אותה (לא נכללת בטעינה הכללית) */
+  async function loadNoteImg(a) {
+    const id = a.dataset.img;
+    try {
+      if (!imgCache.has(id)) { const [r] = await api(T.n + '?id=eq.' + id + '&select=image'); imgCache.set(id, r && r.image); }
+      const src = imgCache.get(id); if (!src || !a.isConnected) return;
+      a.innerHTML = '<img alt="צילום מסך" loading="lazy" />'; a.firstChild.src = src;
+    } catch (e) { if (a.isConnected) a.innerHTML = '<div class="nload">לא ניתן לטעון את התמונה</div>'; }
+  }
+  /* צירוף תמונה: דחיסה בדפדפן (עד 1600px, JPEG) כדי שהשמירה תהיה קטנה ומהירה */
+  let pendingImg = null;
+  function setPending(src) {
+    pendingImg = src || null;
+    $('#nPrev').hidden = !pendingImg; $('#nText').hidden = !!pendingImg;
+    if (pendingImg) $('#nPrevImg').src = pendingImg; else $('#nFile').value = '';
+  }
+  function compressImage(file) {
+    return new Promise((ok, no) => {
+      const url = URL.createObjectURL(file), im = new Image();
+      im.onload = () => {
+        const k = Math.min(1, 1600 / Math.max(im.width, im.height)), c = document.createElement('canvas');
+        c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+        const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(im, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url); ok(c.toDataURL('image/jpeg', 0.74));
+      };
+      im.onerror = () => { URL.revokeObjectURL(url); no(new Error('bad image')); };
+      im.src = url;
+    });
+  }
+  async function takeFile(f) { if (!f || !/^image\//.test(f.type)) return; try { setPending(await compressImage(f)); } catch (e) { toast('לא ניתן לקרוא את התמונה'); } }
+  $('#nAttach').addEventListener('click', () => $('#nFile').click());
+  $('#nFile').addEventListener('change', (e) => takeFile(e.target.files[0]));
+  $('#nPrevX').addEventListener('click', () => setPending(null));
+  $('#nText').addEventListener('paste', (e) => { const f = [...(e.clipboardData ? e.clipboardData.files : [])].find((x) => /^image\//.test(x.type)); if (f) { e.preventDefault(); takeFile(f); } });
+  $('#nList').addEventListener('click', (e) => { const a = e.target.closest('[data-img] img'); if (!a) return; $('#iImg').src = a.src; $('#iDlg').showModal(); });
   $('#nAdd').addEventListener('click', async () => {
     if (!sheet || !sheet.id) return;
-    const ta = $('#nText'), body = ta.value.trim(); if (!body) { ta.focus(); return; }
+    const ta = $('#nText'), body = pendingImg ? '' : ta.value.trim(); if (!body && !pendingImg) { ta.focus(); return; }
     const btn = $('#nAdd'); btn.disabled = true;
     try {
-      const [row] = await api(T.n, { method: 'POST', body: { participant_id: sheet.id, body, author_email: emailOf(), author_name: authorName() }, prefer: 'return=representation' });
-      if (row && !state.notes.some((x) => x.id === row.id)) state.notes.push(row);
-      rebuildNotes(); ta.value = ''; renderNotes(); render(); toast('ההערה נשמרה');
+      const [row] = await api(T.n, { method: 'POST', body: Object.assign({ participant_id: sheet.id, body, author_email: emailOf(), author_name: authorName() }, pendingImg ? { image: pendingImg } : {}), prefer: 'return=representation' });
+      if (row) { if (row.image) { imgCache.set(row.id, row.image); delete row.image; row.has_image = true; } if (!state.notes.some((x) => x.id === row.id)) state.notes.push(row); }
+      rebuildNotes(); ta.value = ''; setPending(null); renderNotes(); render(); toast('ההערה נשמרה');
     } catch (err) { fail(err); }
     btn.disabled = false;
   });
@@ -1431,7 +1483,7 @@
     $('#pSubmit').hidden = !!p;
     $('#pTabs [data-tab="contact"]').hidden = !p;
     pager.querySelector('[data-panel="contact"]').hidden = !p;
-    $('#nText').value = '';
+    $('#nText').value = ''; setPending(null);
     if (p) { const c = notesOf(p.id).length, el = $('#pTabs [data-tab="contact"] .tcount'); if (el) el.textContent = c ? c : ''; }
     $('#pDelete').hidden = !p;
     $('#savedMark').classList.remove('on');
