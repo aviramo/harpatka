@@ -407,6 +407,7 @@
     .row .meta > * { text-align: center; grid-row: 1; }
     .row .meta .age { grid-column: 1; margin-inline-end: 8px; }
     .row .meta .ptag { grid-column: 5; }
+    .row .meta .age:not([title]) { grid-column: 5; margin-inline-end: 0; }   /* "ללא מפגש": בעמודת הסטטוס, לא בעמודת הגיל */
     .row .name { font-size: 15.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .row .nm .name { overflow-wrap: normal; }
     .row .adtag { width: 18px; height: 18px; }
@@ -1007,7 +1008,7 @@
       return '<li class="row">' +
         '<div class="main" role="button" tabindex="0" data-edit="' + p.id + '">' +
           '<div class="nm"><bdi class="name">' + esc(p.name) + '</bdi>' + (p.source === 'site-ad' ? '<span class="adtag" title="ממומן: הגיע ממודעה בתשלום" aria-label="ממומן"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 9a4 4 0 0 1 0 6"/></svg></span>' : '') + '</div>' +
-          ((age != null || side || tags) ? '<div class="meta">' + ((age != null || p.gender) ? '<span class="age" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? '<b class="gl">' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : '') + '</bdi></span>' : '') + side + tags + '</div>' : '') +
+          (true ? '<div class="meta">' + (true ? '<span class="age" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? '<b class="gl">' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : (p.gender ? '' : '—')) + '</bdi></span>' : '') + side + tags + '</div>' : '') +
           (noteLatest.get(p.id) ? '<div class="note" title="' + esc(noteLatest.get(p.id).author_name || '') + '">' + esc(noteLatest.get(p.id).body) + '</div>' : '') +
         '</div>' +
       '</li>';
