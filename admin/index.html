@@ -831,9 +831,10 @@
   const MAN_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="3.4" r="2.4"/><rect x="8" y="7" width="8" height="8.6" rx="1.3"/><rect x="4.9" y="7.4" width="2.2" height="7.6" rx="1.1"/><rect x="16.9" y="7.4" width="2.2" height="7.6" rx="1.1"/><rect x="8.3" y="16" width="3.2" height="7" rx="1.2"/><rect x="12.5" y="16" width="3.2" height="7" rx="1.2"/></svg>';
   const WOMAN_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="3.4" r="2.4"/><path d="M9.7 7h4.6c.7 0 1.2.4 1.4 1l3.1 9H5.2l3.1-9c.2-.6.7-1 1.4-1z"/><rect x="9.4" y="17.2" width="2.2" height="5.8" rx="1"/><rect x="12.4" y="17.2" width="2.2" height="5.8" rx="1"/></svg>';
   const FREE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><circle cx="12" cy="12" r="8.5"/><path d="M6 18L18 6"/></svg>';
-  const REQ_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></svg>';
+  const REQ_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5.5 5.5"/></svg>';   // בבדיקה: זכוכית מגדלת
+  const NEW_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><path d="M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"/></svg>';   // חדש: ניצוץ
   const linkStatus = (l) => l.exempt ? 'exempt' : l.paid ? 'paid' : (l.pay_requested_at ? 'requested' : 'unpaid');   // לא משלם (בחינם ביודעין) / שילם / נשלחה בקשת תשלום / טרם שילם
-  const STATUS_LABEL = { paid: 'שילם', requested: 'בקשה נשלחה', unpaid: 'טרם שילם', exempt: 'לא משלם' };
+  const STATUS_LABEL = { paid: 'שילם', requested: 'בבדיקה', unpaid: 'חדש', exempt: 'לא משלם' };
   /* סינון "שילמו" כולל גם את מי שמסומן "לא משלם" (הסדירו הכול); שאר הסטטוסים נבדקים כמו שהם */
   const payMatch = (ps, f) => f === 'paid' ? (ps === 'paid' || ps === 'exempt') : ps === f;
   function paidState(p) {
@@ -865,8 +866,8 @@
       btn('g', 'female', '<span class="lw gen-lw">נשים</span><span class="gi gf">' + WOMAN_ICON + '</span>', nG('female'), '', state.gender === 'female', 'נשים') +
       (none || state.gender === 'none' ? btn('g', 'none', 'ללא', none, '', state.gender === 'none', 'ללא מגדר') : '') + '</div>';
     h += '<div class="fgroup">' +
-      btn('p', 'unpaid', '<span class="lw pay-lw">טרם שילמו</span><span class="li">₪</span>', nP('unpaid'), 'no', state.pay === 'unpaid', 'טרם שילמו') +
-      btn('p', 'requested', '<span class="lw pay-lw">בקשה נשלחה</span><span class="li">' + REQ_ICON + '</span>', nP('requested'), 'wait', state.pay === 'requested', 'נשלחה בקשת תשלום') +
+      btn('p', 'unpaid', '<span class="lw pay-lw">חדשים</span><span class="li">' + NEW_ICON + '</span>', nP('unpaid'), 'no', state.pay === 'unpaid', 'חדשים') +
+      btn('p', 'requested', '<span class="lw pay-lw">בבדיקה</span><span class="li">' + REQ_ICON + '</span>', nP('requested'), 'wait', state.pay === 'requested', 'בבדיקה') +
       btn('p', 'paid', '<span class="lw pay-lw">שילמו</span><span class="li">✓</span>', nP('paid'), 'ok', state.pay === 'paid', 'שילמו') + '</div>';
     $('#facets').innerHTML = base.length || state.gender || state.pay ? h : '';
   }
@@ -874,7 +875,7 @@
   /* מיון הרשימה */
   const SORTS = [
     ['new', 'חדשים ראשונים'], ['old', 'ישנים ראשונים'], ['name', 'שם (א עד ת)'],
-    ['age_asc', 'גיל: מהצעיר'], ['age_desc', 'גיל: מהמבוגר'], ['unpaid', 'טרם שילמו קודם'],
+    ['age_asc', 'גיל: מהצעיר'], ['age_desc', 'גיל: מהמבוגר'], ['unpaid', 'חדשים קודם'],
   ];
   function sortCmp() {
     const byNew = (a, b) => String(b.created_at || '').localeCompare(String(a.created_at || ''));
@@ -906,16 +907,16 @@
     const g = state.gender, pay = state.pay, scope = state.filter ? ' במפגש הזה' : '';
     const clear = '<button type="button" class="link-btn" id="clearFx" style="margin-top:14px">ניקוי סינונים</button>';
     if (g || pay) {
-      if (!g && pay === 'requested' && !state.q) return '<b>אין בקשות תשלום פתוחות</b>כשנשלחת הודעת תשלום בוואטסאפ מתוך פרטי המשתתף, הסטטוס מסומן כאן' + '<br>' + clear;
+      if (!g && pay === 'requested' && !state.q) return '<b>אין משתתפים בבדיקה</b>כשנשלחת הודעת תשלום בוואטסאפ מתוך פרטי המשתתף, הסטטוס מסומן כאן' + '<br>' + clear;
       if (!g && pay === 'unpaid' && !state.q) {
         const nReq = state.participants.filter((x) => (!state.filter || linkOf(x.id, state.filter)) && paidState(x) === 'requested').length;
         return nReq
-          ? '<b>אין משתתפים בלי בקשת תשלום</b>על כל מי שטרם שילם' + scope + ' כבר נשלחה בקשה (' + nReq + ')<br>' + clear
-          : '<b>כולם שילמו</b>אין משתתפים שטרם שילמו' + scope + '<br>' + clear;
+          ? '<b>אין משתתפים חדשים</b>כל מי שטרם שילם' + scope + ' כבר בבדיקה (' + nReq + ')<br>' + clear
+          : '<b>כולם שילמו</b>אין משתתפים חדשים' + scope + '<br>' + clear;
       }
-      if (!g && pay === 'paid' && !state.q) return '<b>עוד אף אחד לא שילם</b>' + (state.filter ? 'אפשר לסמן תשלום בלחיצה על התגית "טרם שילם" בכרטיס' : 'תשלום מסמנים בפרטי המשתתף, בתוך המפגש') + '<br>' + clear;
+      if (!g && pay === 'paid' && !state.q) return '<b>עוד אף אחד לא שילם</b>' + (state.filter ? 'אפשר לסמן תשלום בלחיצה על התגית "חדש" בכרטיס' : 'תשלום מסמנים בפרטי המשתתף, בתוך המפגש') + '<br>' + clear;
       const who = g === 'male' ? 'גברים' : g === 'female' ? 'נשים' : g === 'none' ? 'משתתפים ללא מגדר' : 'משתתפים';
-      const what = pay === 'paid' ? ' ששילמו' : pay === 'unpaid' ? ' שטרם שילמו' : pay === 'requested' ? ' שנשלחה להם בקשת תשלום' : '';
+      const what = pay === 'paid' ? ' ששילמו' : pay === 'unpaid' ? ' חדשים' : pay === 'requested' ? ' בבדיקה' : '';
       return '<b>אין ' + who + what + scope + (state.q ? ' שמתאימים לחיפוש' : '') + '</b>אפשר לנקות את הסינון ולנסות שוב<br>' + clear;
     }
     if (state.q) return '<b>לא נמצא אף אחד</b>אפשר לנסות שם או מספר אחר';
@@ -975,7 +976,7 @@
         if (ls.length) {
           const payable = ls.filter((l) => !l.exempt), np = payable.filter((l) => l.paid).length, ps = paidState(p);
           tags = '<span class="ptag ' + ps + '" title="תשלום לפי מפגשים">' +
-            (ls.length === 1 || ps === 'exempt' ? STATUS_LABEL[ps] : (ps === 'requested' ? 'בקשה נשלחה' : '<bdi>' + np + '/' + payable.length + '</bdi> שילמו')) + '</span>';
+            (ls.length === 1 || ps === 'exempt' ? STATUS_LABEL[ps] : (ps === 'requested' ? 'בבדיקה' : '<bdi>' + np + '/' + payable.length + '</bdi> שילמו')) + '</span>';
         } else tags = '<span class="age">ללא מפגש</span>';
       }
       return '<li class="row">' +
@@ -1066,15 +1067,15 @@
     const adLinks = links.filter((l) => src(l.p) === 'ad'), adPaidN = adLinks.filter((l) => l.st === 'paid').length;
     kp.push(kpi(adLinks.length, 'הגיעו מפרסום ממומן', Ps(adLinks.length, n) + ' מההרשמות' + (adLinks.length ? ' · ' + adPaidN + ' שילמו' : '')));
     kp.push(kpi(paid.length, 'שילמו', Ps(paid.length, nPay) + ' ממי שמשלמים', 'good'));
-    kp.push(kpi(req.length, 'נשלחה בקשת תשלום', Ps(req.length, nPay), 'warn'));
-    kp.push(kpi(unp.length, 'טרם שילמו (בלי בקשה)', Ps(unp.length, nPay), unp.length ? 'bad' : ''));
+    kp.push(kpi(req.length, 'בבדיקה', Ps(req.length, nPay), 'warn'));
+    kp.push(kpi(unp.length, 'חדשים', Ps(unp.length, nPay), unp.length ? 'bad' : ''));
     if (exm.length) kp.push(kpi(exm.length, 'לא משלמים', Ps(exm.length, n) + ' מההרשמות (נרשמו בחינם)'));
     kp.push(kpi('₪' + nfm(rev), 'הכנסה משוערת', 'חוב פתוח משוער ₪' + nfm(owed)));
     kp.push(kpi(nfm(n / Math.max(1, pm.length)), 'ממוצע נרשמים למפגש', 'ממוצע ששילמו ' + (paid.length / Math.max(1, pm.length)).toFixed(1)));
     out.push('<div class="stkpis">' + kp.join('') + '</div>');
 
     // ---- המרה וגבייה ----
-    let conv = barRow(exm.length ? 'נרשמו (בלי לא משלמים)' : 'נרשמו', nPay, nPay, '#9A9A75') + barRow('נשלחה בקשה או שילמו', req.length + paid.length, nPay, '#B7791F') + barRow('שילמו', paid.length, nPay, '#2F7D4F');
+    let conv = barRow(exm.length ? 'נרשמו (בלי לא משלמים)' : 'נרשמו', nPay, nPay, '#9A9A75') + barRow('בבדיקה או שילמו', req.length + paid.length, nPay, '#B7791F') + barRow('שילמו', paid.length, nPay, '#2F7D4F');
     conv += '<p class="stline">ממתינים לתשלום מעל 3 ימים: <b>' + waiting3.length + '</b>' + (reqHours.length ? ' · זמן ממוצע משליחת בקשה מההרשמה: <b>' + (reqHours.reduce((a, b) => a + b, 0) / reqHours.length < 48 ? (reqHours.reduce((a, b) => a + b, 0) / reqHours.length).toFixed(1) + ' שעות' : (reqHours.reduce((a, b) => a + b, 0) / reqHours.length / 24).toFixed(1) + ' ימים') + '</b>' : '') + '</p>';
     out.push(sec('המרה וגבייה', 'כמה מהנרשמים הגיעו עד תשלום, והיכן "נתקעים"', conv));
 
