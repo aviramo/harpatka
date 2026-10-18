@@ -400,18 +400,20 @@
     .row { display: block; background: transparent; border-radius: 0; box-shadow: none; padding: 0; border-bottom: 1px solid var(--line); }
     .row:last-child { border-bottom: 0; }
     .row:nth-child(even) { background: rgba(246,239,228,.45); }
-    .row .main { padding: 7px 12px; display: grid; grid-template-columns: 46px minmax(0, 1.15fr) minmax(0, .85fr) 74px; column-gap: 8px; align-items: center; height: 44px; box-sizing: border-box; }
-    .row .nm { grid-column: 2; grid-row: 1; }
+    .row .main { padding: 7px 12px; display: grid; grid-template-columns: 54px minmax(0, max-content) minmax(0, 1fr) 24px 66px; column-gap: 0; align-items: center; height: 44px; box-sizing: border-box; }
+    .row .nm { display: contents; }
+    .row .nm .name { grid-column: 2; grid-row: 1; }
+    .row .nm .adtag { grid-column: 4; grid-row: 1; justify-self: center; }
     .row .meta { display: contents; }
     .row .meta > * { text-align: center; grid-row: 1; }
-    .row .meta .age { grid-column: 1; }
-    .row .meta .ptag { grid-column: 4; }
+    .row .meta .age { grid-column: 1; margin-inline-end: 8px; }
+    .row .meta .ptag { grid-column: 5; }
     .row .name { font-size: 15.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .row .nm .name { overflow-wrap: normal; }
     .row .adtag { width: 18px; height: 18px; }
     .row .adtag svg { width: 11px; height: 11px; }
     .row .meta .age, .row .meta .ptag { font-size: 12.5px; padding: 1px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .row .note { grid-column: 3; grid-row: 1; font-size: 12.5px; margin: 0; min-width: 0; }
+    .row .note { grid-column: 3; grid-row: 1; font-size: 12.5px; margin: 0; margin-inline-start: 6px; min-width: 0; }
     .row .acts { padding: 0 12px 7px; border-top: 0; }
     .row.other { border: 0; border-bottom: 1.5px dashed var(--coral); background: transparent; }
     .list .group.newp { background: transparent; }
@@ -858,7 +860,7 @@
   const REQ_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5.5 5.5"/></svg>';   // בבדיקה: זכוכית מגדלת
   const NEW_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><path d="M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"/></svg>';   // חדש: ניצוץ
   const linkStatus = (l) => l.exempt ? 'exempt' : l.paid ? 'paid' : (l.pay_requested_at ? 'requested' : 'unpaid');   // לא משלם (בחינם ביודעין) / שילם / נשלחה בקשת תשלום / טרם שילם
-  const STATUS_LABEL = { paid: 'שילם', requested: 'בבדיקה', unpaid: 'חדש', exempt: 'לא משלם' };
+  const STATUS_LABEL = { paid: 'שילם', requested: 'בבדיקה', unpaid: 'חדש', exempt: 'חינם' };
   /* סינון "שילמו" כולל גם את מי שמסומן "לא משלם" (הסדירו הכול); שאר הסטטוסים נבדקים כמו שהם */
   const payMatch = (ps, f) => f === 'paid' ? (ps === 'paid' || ps === 'exempt') : ps === f;
   function paidState(p) {
