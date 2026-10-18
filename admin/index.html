@@ -33,6 +33,17 @@
       position: sticky; top: 0; z-index: 5; background: var(--cream);
       padding: 16px 0 10px; margin: 0 -16px; padding-inline: 16px;
     }
+    .msel { position: relative; }
+    #mSel { font: inherit; display: inline-flex; align-items: center; gap: 8px; background: none; color: inherit; padding: 0; cursor: pointer; }
+    #mSel svg { width: 20px; height: 20px; color: var(--terra); transition: transform .2s; }
+    #mSel[aria-expanded="true"] svg { transform: rotate(180deg); }
+    .mmenu { left: auto; right: 0; min-width: 270px; max-height: 70vh; overflow-y: auto; }
+    .mmenu button .mc { color: var(--muted); font-weight: 600; font-size: 14px; margin-inline-start: auto; padding-inline: 8px; }
+    .mmenu button[aria-checked="true"] .mc { color: inherit; }
+    .mmenu button { white-space: nowrap; }
+    .mmenu button.past { opacity: .6; }
+    .mmenu button.addm2 { color: var(--terra); font-weight: 700; border-top: 1px solid var(--line); border-radius: 0 0 12px 12px; margin-top: 4px; }
+    .mmenu button.addm2::after { content: none !important; }
     .title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
     h1 { font-family: "Rubik", sans-serif; font-size: 26px; margin: 0; }
     .brand { color: var(--muted); font-size: 14px; }
@@ -444,10 +455,12 @@
   <div class="wrap">
     <header class="top">
       <div class="title-row">
-        <h1>משתתפים</h1>
+        <div class="msel">
+          <h1><button type="button" id="mSel" aria-haspopup="menu" aria-expanded="false"><span id="mSelTxt">כל המשתתפים</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></h1>
+          <div class="sortmenu mmenu" id="mMenu" role="menu" hidden></div>
+        </div>
         <button type="button" class="signout" id="signOut">יציאה</button>
       </div>
-      <nav class="chips" id="chips" aria-label="סינון לפי מפגש"></nav>
       <div class="tools">
         <label class="search">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
@@ -855,17 +868,18 @@
   /* ---------- רינדור ---------- */
   function render() { renderChips(); renderSort(); renderList(); { const fab = $('#addBtn'); fab.classList.toggle('edit', !!state.filter); fab.textContent = state.filter ? 'עריכת מפגש' : '+ משתתף'; } syncUrl(); }   // בתוך מפגש מוסיפים דרך החיפוש
 
+  /* בורר המפגש בכותרת (במקום שורת התגיות): כל המשתתפים, מפגש אחד לסינון, או יצירת מפגש */
   function renderChips() {
-    const all = '<button type="button" class="chip" data-filter="" aria-pressed="' + (state.filter === null) + '">הכל <span class="count">' + state.participants.length + '</span></button>';
-    const ms = state.meetings.map((m) => {
-      const n = state.att.filter((a) => a.meeting_id === m.id).length;
-      return '<button type="button" class="chip' + (isPast(m) ? ' past' : '') + '" data-filter="' + m.id + '" aria-pressed="' + (state.filter === m.id) + '">' +
-        '<span class="cd"><b>' + esc(meetingLabel(m).split(' · ')[0]) + '</b><small>' + esc(meetingLabel(m, true).split(' ').slice(0, 2).join(' ')) + ' · ' + esc(String(m.meeting_time).slice(0, 5)) + '</small></span> <span class="count">' + n + '</span></button>';
-    }).join('');
-    $('#chips').innerHTML = all + '<button type="button" class="chip add" id="addMeeting">+ מפגש</button>' + ms;
-    const sel = $('#chips [aria-pressed="true"]');
-    if (sel) sel.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    const cur = state.filter ? state.meetings.find((m) => m.id === state.filter) : null;
+    $('#mSelTxt').textContent = cur ? 'מפגש ' + meetingLabel(cur).split(' · ')[0] : 'כל המשתתפים';
+    const dayTime = (m) => esc(meetingLabel(m).split(' · ')[0]) + ' · ' + esc(meetingLabel(m, true).split(' ').slice(0, 2).join(' ')) + ' · ' + esc(String(m.meeting_time).slice(0, 5));
+    $('#mMenu').innerHTML = '<button type="button" role="menuitemradio" data-filter="" aria-checked="' + (state.filter === null) + '">כל המשתתפים <span class="mc">' + state.participants.length + '</span></button>' +
+      state.meetings.map((m) => '<button type="button" role="menuitemradio" class="' + (isPast(m) ? 'past' : '') + '" data-filter="' + m.id + '" aria-checked="' + (state.filter === m.id) + '">' + dayTime(m) + ' <span class="mc">' + state.att.filter((a) => a.meeting_id === m.id).length + '</span></button>').join('') +
+      '<button type="button" role="menuitem" class="addm2" id="addMeeting">+ מפגש חדש</button>';
   }
+  const closeMSel = () => { $('#mMenu').hidden = true; $('#mSel').setAttribute('aria-expanded', 'false'); };
+  $('#mSel').addEventListener('click', (e) => { e.stopPropagation(); const m = $('#mMenu'); m.hidden = !m.hidden; $('#mSel').setAttribute('aria-expanded', String(!m.hidden)); });
+  document.addEventListener('click', (e) => { if (!e.target.closest('.msel')) closeMSel(); });
 
   const WA_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.5c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.6.9 1-3.5-.2-.4C3.2 15.6 2.7 13.8 2.7 12c0-5.1 4.2-9.3 9.3-9.3 2.5 0 4.8 1 6.6 2.7 1.8 1.8 2.7 4.1 2.7 6.6 0 5.2-4.2 9.5-9.3 9.5zM20 4C17.9 1.8 15 .7 12 .7 5.8.7.7 5.8.7 12c0 2 .5 3.9 1.5 5.6L.6 23.4l6-1.6c1.6.9 3.5 1.4 5.4 1.4 6.2 0 11.3-5.1 11.3-11.3 0-3-1.2-5.8-3.3-7.9z"/></svg>';
 
@@ -1649,10 +1663,11 @@
   $('#q').addEventListener('input', (e) => { state.q = e.target.value; renderList(); syncUrl(); });
   $('#addBtn').addEventListener('click', () => (state.filter ? openMeeting(state.filter) : openParticipant(null)));
 
-  $('#chips').addEventListener('click', (e) => {
-    if (e.target.closest('#addMeeting')) return openMeeting(null);
+  $('#mMenu').addEventListener('click', (e) => {
+    if (e.target.closest('#addMeeting')) { closeMSel(); return openMeeting(null); }
     const c = e.target.closest('[data-filter]');
     if (!c) return;
+    closeMSel();
     state.filter = c.dataset.filter || null;
     render();
   });
