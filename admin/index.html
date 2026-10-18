@@ -391,7 +391,32 @@
     }
     .toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
     .test-note { font-size: 13px; color: var(--muted); text-align: center; margin-top: 28px; }
-  </style>
+      /* ===== תצוגת טבלה קומפקטית (במקום כרטיסים): שורה לכל משתתף, עמודות מיושרות ===== */
+    .list { display: block; margin-top: 10px; background: var(--paper); border-radius: 16px; box-shadow: 0 0 0 1px rgba(232,213,190,.6); overflow: hidden; }
+    @media (min-width: 760px) { .list { display: block; } }
+    .list .group { padding: 8px 12px 4px; background: var(--cream); font-size: 13px; }
+    .list .empty { padding: 24px 12px; }
+    .row { display: block; background: transparent; border-radius: 0; box-shadow: none; padding: 0; border-bottom: 1px solid var(--line); }
+    .row:last-child { border-bottom: 0; }
+    .row:nth-child(even) { background: rgba(246,239,228,.45); }
+    .row .main { padding: 7px 12px; display: grid; grid-template-columns: 54px minmax(0, max-content) minmax(0, 1fr) 24px 66px; column-gap: 0; align-items: center; height: 44px; box-sizing: border-box; }
+    .row .nm { display: contents; }
+    .row .nm .name { grid-column: 2; grid-row: 1; }
+    .row .nm .adtag { grid-column: 4; grid-row: 1; justify-self: center; }
+    .row .meta { display: contents; }
+    .row .meta > * { text-align: center; grid-row: 1; }
+    .row .meta .age { grid-column: 1; margin-inline-end: 8px; }
+    .row .meta .ptag { grid-column: 5; }
+    .row .name { font-size: 15.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .row .nm .name { overflow-wrap: normal; }
+    .row .adtag { width: 18px; height: 18px; }
+    .row .adtag svg { width: 11px; height: 11px; }
+    .row .meta .age, .row .meta .ptag { font-size: 12.5px; padding: 1px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .row .note { grid-column: 3; grid-row: 1; font-size: 12.5px; margin: 0; margin-inline-start: 6px; min-width: 0; }
+    .row .acts { padding: 0 12px 7px; border-top: 0; }
+    .row.other { border: 0; border-bottom: 1.5px dashed var(--coral); background: transparent; }
+    .list .group.newp { background: transparent; }
+</style>
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -834,7 +859,7 @@
   const REQ_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><path d="M6 3h12M6 21h12"/><path d="M7 3v3.5c0 1.6 1.1 2.8 2.7 3.6L12 12l2.3-1.9C15.9 9.3 17 8.1 17 6.5V3"/><path d="M7 21v-3.5c0-1.6 1.1-2.8 2.7-3.6L12 12l2.3 1.9c1.6.8 2.7 2 2.7 3.6V21"/></svg>';   // בבדיקה: שעון חול
   const NEW_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><path d="M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"/></svg>';   // חדש: ניצוץ
   const linkStatus = (l) => l.exempt ? 'exempt' : l.paid ? 'paid' : (l.pay_requested_at ? 'requested' : 'unpaid');   // לא משלם (בחינם ביודעין) / שילם / נשלחה בקשת תשלום / טרם שילם
-  const STATUS_LABEL = { paid: 'שילם', requested: 'בבדיקה', unpaid: 'חדש', exempt: 'לא משלם' };
+  const STATUS_LABEL = { paid: 'שילם', requested: 'בבדיקה', unpaid: 'חדש', exempt: 'חינם' };
   /* סינון "שילמו" כולל גם את מי שמסומן "לא משלם" (הסדירו הכול); שאר הסטטוסים נבדקים כמו שהם */
   const payMatch = (ps, f) => f === 'paid' ? (ps === 'paid' || ps === 'exempt') : ps === f;
   function paidState(p) {
