@@ -26,45 +26,42 @@
       </div>
       <div id="cmFormView" data-su-root>
         <div data-su="formWrap">
-          <h2 class="su-title">הרשמה ליוצאים להרפתקה</h2>
-          <div class="mt-badge" role="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><b data-meeting-when>המפגש הקרוב</b><span data-meeting-place></span></div>
-          <p class="muted mb-5 text-[.95rem]">מספר המקומות מוגבל, והמקום נשמר אחרי מילוי הפרטים ותשלום</p>
+          <div class="su-fold"><div>
+            <h2 class="su-title">הרשמה ליוצאים להרפתקה</h2>
+            <div class="mt-badge" role="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><b data-meeting-when>המפגש הקרוב</b><span data-meeting-place></span></div>
+          </div></div>
           <form data-su="form" novalidate class="text-start">
             <input type="text" name="website" data-su="hp" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
-            <div class="su-grid">
-              <div class="su-cell">
-                <input id="cmName" data-autofocus data-su="name" name="name" type="text" class="su-input" autocomplete="name" maxlength="60" placeholder="שם" aria-label="שם" required>
-                <div data-su="nameErr" class="su-err" role="alert"></div>
-              </div>
-              <div class="su-cell">
-                <div class="su-seg eq" data-su="gender" role="radiogroup" aria-label="מגדר">
-                  <label><input type="radio" name="cmGender" value="male"><span>גבר</span></label>
-                  <label><input type="radio" name="cmGender" value="female"><span>אישה</span></label>
+            <div class="su-fold"><div>
+              <div class="su-grid">
+                <div class="su-cell">
+                  <input id="cmName" data-autofocus data-su="name" name="name" type="text" class="su-input" autocomplete="name" maxlength="60" placeholder="שם" aria-label="שם" required>
+                  <div data-su="nameErr" class="su-err" role="alert"></div>
                 </div>
-                <div data-su="genderErr" class="su-err" role="alert"></div>
+                <div class="su-cell">
+                  <div class="su-seg eq" data-su="gender" role="radiogroup" aria-label="מגדר">
+                    <label><input type="radio" name="cmGender" value="male"><span>גבר</span></label>
+                    <label><input type="radio" name="cmGender" value="female"><span>אישה</span></label>
+                  </div>
+                  <div data-su="genderErr" class="su-err" role="alert"></div>
+                </div>
+                <div class="su-cell">
+                  <input id="cmPhone" data-su="phone" name="phone" type="tel" dir="ltr" inputmode="tel" class="su-input text-end" autocomplete="tel" maxlength="24" placeholder="טלפון" aria-label="טלפון" required>
+                  <div data-su="phoneErr" class="su-err" role="alert"></div>
+                </div>
+                <div class="su-cell">
+                  <input id="cmAge" data-su="age" name="age" type="number" inputmode="numeric" min="18" max="99" class="su-input" autocomplete="off" placeholder="גיל" aria-label="גיל" required>
+                  <div data-su="ageErr" class="su-err" role="alert"></div>
+                </div>
               </div>
-              <div class="su-cell">
-                <input id="cmPhone" data-su="phone" name="phone" type="tel" dir="ltr" inputmode="tel" class="su-input text-end" autocomplete="tel" maxlength="24" placeholder="טלפון" aria-label="טלפון" required>
-                <div data-su="phoneErr" class="su-err" role="alert"></div>
-              </div>
-              <div class="su-cell">
-                <input id="cmAge" data-su="age" name="age" type="number" inputmode="numeric" min="18" max="99" class="su-input" autocomplete="off" placeholder="גיל" aria-label="גיל" required>
-                <div data-su="ageErr" class="su-err" role="alert"></div>
-              </div>
-            </div>
+            </div></div>
             <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-3.5 text-[1.2rem] whitespace-nowrap w-full mt-4">הרשמה</button>
             <div data-su="fail" class="su-err mt-3 text-center" role="alert"></div>
+            <div class="su-fold su-after shut" data-su="after"><div>
+              <p class="su-paynote">ההרשמה תושלם רק לאחר תשלום <span data-price>80 ₪</span> בפייבוקס</p>
+              <a href="#" target="_blank" rel="noopener" data-paybox class="btn-primary rounded-full px-8 py-4 text-[1.2rem] block text-center w-full">לתשלום <span data-price>80 ₪</span> בפייבוקס</a>
+            </div></div>
           </form>
-        </div>
-        <div data-su="done" hidden>
-          <h2 class="h-sect text-[1.7rem] md:text-[2.2rem] mb-3">עוד צעד אחד ושומרים לכם מקום</h2>
-          <div class="mt-badge" role="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><b data-meeting-when>המפגש הקרוב</b><span data-meeting-place></span></div>
-          <p class="lead mb-1" style="color:var(--ink);font-weight:700">המקום נשמר רק אחרי תשלום</p>
-          <p class="lead muted mb-5">מספר המקומות מוגבל, ומי ששילם קודם מקבל קודם</p>
-          <a href="#" target="_blank" rel="noopener" data-paybox class="btn-primary rounded-full px-8 py-4 text-[1.3rem] inline-block">לתשלום <span data-price>80 ₪</span> ושמירת מקום</a>
-          <p class="muted text-[.95rem] mt-3">בהערה לתשלום כדאי לכתוב את השם, כדי שנדע מי שילם</p>
-          <p class="lead muted mt-8 mb-4">ובינתיים אפשר להצטרף לקבוצת העדכונים בוואטסאפ</p>
-          <a href="#" target="_blank" rel="noopener" data-updates class="btn-green">הצטרפות לקבוצת העדכונים</a>
         </div>
       </div>
     </div>
@@ -191,7 +188,15 @@
     const form = q('form'); if (!form) return;
     const nameI = q('name'), phoneI = q('phone'), ageI = q('age'), btn = q('btn'), t0 = Date.now();
     const setErr = (input, errEl, msg) => { errEl.textContent = msg || ''; input.classList.toggle('bad', !!msg); };
-    const showDone = () => { q('formWrap').hidden = true; q('done').hidden = false; };
+    /* אחרי הרשמה: התוכן נסגר מלמעלה, הכפתור מתחלף ל"נשמר זמנית" ואז נחשפים הטקסט וכפתור התשלום בפייבוקס (הכול באנימציה) */
+    let saved = false;
+    const showDone = () => {
+      if (saved) return; saved = true;
+      root.querySelectorAll('.su-fold:not(.su-after)').forEach(f => f.classList.add('shut'));
+      btn.disabled = true; btn.classList.add('swap');
+      setTimeout(() => { btn.textContent = 'נשמר זמנית'; btn.classList.remove('swap'); btn.classList.add('saved'); }, 260);
+      setTimeout(() => { const a = q('after'); if (a) a.classList.remove('shut'); }, 700);
+    };
     suRoots.push(showDone);
     nameI.addEventListener('input', () => setErr(nameI, q('nameErr'), ''));
     phoneI.addEventListener('input', () => setErr(phoneI, q('phoneErr'), ''));

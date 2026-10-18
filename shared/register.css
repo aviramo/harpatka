@@ -67,3 +67,15 @@ html.reg-min .mt-badge span{ font-size:1rem; font-weight:500; }
 html.reg-min .mt-badge span:not(:empty)::before{ content:'· '; }
 
 .su-title{ font-family:Rubik,sans-serif; font-weight:700; font-size:1.45rem; line-height:1.2; color:var(--ink); margin:0 0 .7rem; }
+
+/* אחרי ההרשמה: התוכן נסגר מלמעלה (קיפול), הכפתור הופך ל"נשמר זמנית", ואז נחשפים טקסט וכפתור תשלום */
+.su-fold{ display:grid; grid-template-rows:1fr; opacity:1; transition:grid-template-rows .55s cubic-bezier(.22,.8,.2,1), opacity .4s ease; }
+.su-fold > div{ min-height:0; overflow:hidden; }
+.su-fold.shut{ grid-template-rows:0fr; opacity:0; }
+.su-after.shut{ pointer-events:none; }
+.su-after > div{ padding-top:1rem; }
+.su-paynote{ font-size:1.1rem; font-weight:700; line-height:1.45; color:var(--ink); margin:0 0 1rem; text-align:center; }
+[data-su="btn"]{ transition:opacity .25s ease, background-color .4s ease; }
+[data-su="btn"].swap{ opacity:0; }
+[data-su="btn"].saved{ opacity:1 !important; background:#686A48; box-shadow:none; cursor:default; }
+@media (prefers-reduced-motion:reduce){ .su-fold, [data-su="btn"]{ transition:none; } }
