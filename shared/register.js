@@ -27,7 +27,7 @@
       <div id="cmFormView" data-su-root>
         <div data-su="formWrap">
           <div class="su-fold"><div>
-            <h2 class="su-title">הרשמה ליוצאים להרפתקה</h2>
+            <h2 class="su-title">יוצאים להרפתקה</h2>
             <div class="mt-badge" role="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><b data-meeting-when>המפגש הקרוב</b><span data-meeting-place></span></div>
           </div></div>
           <form data-su="form" novalidate class="text-start">
