@@ -1374,11 +1374,21 @@
   }
   document.addEventListener('visibilitychange', () => { if (!document.hidden && markAwait) setTimeout(askMarkRequested, 250); });
   window.addEventListener('focus', () => { if (markAwait) setTimeout(askMarkRequested, 250); });
+  /* הודעת הפתיחה בוואטסאפ (תבנית שהמשתמש קבע): למשתתף שטרם טופל. המחיר: 80 ₪ עד שלושה ימים לפני המפגש (לא כולל), ומאז 100 ₪ */
   const chaseMessage = (p) => {
-    const who = SENDERS[emailOf()] || authorName(), ask = p.gender === 'female' ? 'את מתכוונת להגיע?' : p.gender === 'male' ? 'אתה מתכוון להגיע?' : 'האם בכוונתך להגיע?';
+    const who = SENDERS[emailOf()] || authorName(), first = String(p.name || '').trim().split(/\s+/)[0] || '';
     const ms = pendingLinks(p).map((l) => state.meetings.find((x) => x.id === l.meeting_id)).filter(Boolean).sort((x, y) => (x.meeting_date + x.meeting_time).localeCompare(y.meeting_date + y.meeting_time)), m = ms[0];
-    const when = m ? ' למפגש ביום ' + HE_DAYS[new Date(m.meeting_date + 'T12:00:00Z').getUTCDay()] + ' ' + dm(m) + ' בשעה ' + String(m.meeting_time).slice(0, 5) + ' בהרצליה' : '';
-    return 'היי, זה ' + who + ' מיוצאים להרפתקה (harpatka.co.il). ראיתי שנרשמת' + when + ' אך לא העברת תשלום. ' + ask;
+    let lines = ['היי ' + first + ', כאן ' + who + ' מיוצאים להרפתקה 🙂'];
+    if (m) {
+      const dmy = (iso) => { const [, mo, d] = iso.split('-').map(Number); return d + '.' + mo; };
+      const day = HE_DAYS[new Date(m.meeting_date + 'T12:00:00Z').getUTCDay()];
+      const mt = new Date(m.meeting_date + 'T12:00:00Z'), raise = new Date(mt.getTime() - 3 * 864e5), last = new Date(raise.getTime() - 864e5);
+      const iso = (d) => d.toISOString().slice(0, 10), early = todayISO() < iso(raise);
+      lines.push('שמחתי שנרשמת למפגש ביום ' + day + ' ' + dmy(m.meeting_date) + ', ' + String(m.meeting_time).slice(0, 5) + ', בהרצליה!', '',
+        early ? 'כדי לשמור את המקום: 80 ₪ בפייבוקס עד ' + dmy(iso(last)) + ', ומ־' + dmy(iso(raise)) + ' המחיר 100 ₪.' : 'כדי לשמור את המקום: 100 ₪ בפייבוקס.');
+    } else lines.push('שמחתי שנרשמת!', '');
+    lines.push(PAYBOX, '', 'המקום נשמר ברגע שהתשלום מתקבל. אם יש שאלה, אני כאן.');
+    return lines.join('\n');
   };
   function renderContact() {
     const box = $('#pMsgs'); if (!box) return;
