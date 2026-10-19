@@ -1384,6 +1384,10 @@
   });
 
   let pTab = 'contact';
+  /* הלשונית האחרונה שנבחרה בפופאפ המשתתף נזכרת בפתיחה הבאה (נשמר בדפדפן) */
+  const PT_KEY = 'harpatka_admin_ptab';
+  const lastTab = () => { try { const v = localStorage.getItem(PT_KEY); return ['meets', 'contact', 'info'].includes(v) ? v : null; } catch (e) { return null; } };
+  const rememberTab = (v) => { try { localStorage.setItem(PT_KEY, v); } catch (e) {} };
   /* פייג'ר: הלשוניות והדפים מחוברים. החלקה ימינה ושמאלה בין הדפים, או בחירת לשונית, והמחוון נע יחד עם הגלילה */
   const reducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const pager = $('#pPager');
@@ -1401,7 +1405,7 @@
   }
   function setPTab(tab, instant) {
     const names = pagerTabs(); if (names.indexOf(tab) < 0) tab = names[0];
-    pTab = tab;
+    pTab = tab; if (!instant) rememberTab(tab);
     document.querySelectorAll('#pTabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
     const i = names.indexOf(tab);
     pagerTarget = i;
@@ -1417,7 +1421,7 @@
     clearTimeout(pagerSettle);
     pagerSettle = setTimeout(() => {
       const n = names[idx]; if (!n || n === pTab) return;
-      pTab = n;
+      pTab = n; rememberTab(n);
       document.querySelectorAll('#pTabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === n)));
       if (n === 'contact') { renderContact(); renderNotes(); }
       syncUrl();
@@ -1509,7 +1513,7 @@
     openPid = p ? p.id : null;
     pDlg.showModal();
     pDlg.setAttribute('tabindex', '-1'); pDlg.focus({ preventScroll: true });   // בלי טבעת פוקוס על כפתור הסגירה
-    setPTab(p ? (tab || 'contact') : 'info', true);
+    setPTab(p ? (tab || lastTab() || 'contact') : 'info', true);
     requestAnimationFrame(() => setPTab(pTab, true));
     if (!p) setTimeout(() => pForm.name.focus(), 50);
   }
