@@ -1322,7 +1322,9 @@
   window.addEventListener('focus', () => { if (markAwait) setTimeout(askMarkRequested, 250); });
   const chaseMessage = (p) => {
     const who = SENDERS[emailOf()] || authorName(), ask = p.gender === 'female' ? 'את מתכוונת להגיע?' : p.gender === 'male' ? 'אתה מתכוון להגיע?' : 'האם בכוונתך להגיע?';
-    return 'היי, זה ' + who + ' מיוצאים להרפתקה (harpatka.co.il). ראיתי שנרשמת אך לא העברת תשלום. ' + ask;
+    const ms = pendingLinks(p).map((l) => state.meetings.find((x) => x.id === l.meeting_id)).filter(Boolean).sort((x, y) => (x.meeting_date + x.meeting_time).localeCompare(y.meeting_date + y.meeting_time)), m = ms[0];
+    const when = m ? ' למפגש ביום ' + HE_DAYS[new Date(m.meeting_date + 'T12:00:00Z').getUTCDay()] + ' ' + dm(m) + ' בשעה ' + String(m.meeting_time).slice(0, 5) + ' בהרצליה' : '';
+    return 'היי, זה ' + who + ' מיוצאים להרפתקה (harpatka.co.il). ראיתי שנרשמת' + when + ' אך לא העברת תשלום. ' + ask;
   };
   function renderContact() {
     const box = $('#pMsgs'); if (!box) return;
