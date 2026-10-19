@@ -1298,6 +1298,32 @@
 
   /* לשונית "התקשרות": וואטסאפ וחיוג (רק פותחים שיחה/מחייגים), ומתחתיהם ההערות */
   let copyTexts = [];
+  const pendingLinks = (p) => {
+    const ls = linksOf(p.id).filter((l) => linkStatus(l) === 'unpaid');
+    const up = ls.filter((l) => { const m = state.meetings.find((x) => x.id === l.meeting_id); return m && !isPast(m); });
+    return up.length ? up : ls;
+  };
+  /* אחרי שליחת הודעת הוואטסאפ: כשחוזרים לדשבורד שואלים את המנהל אם להעביר את הסטטוס ל"בטיפול" (לא אוטומטי) */
+  let markAwait = null;
+  function askMarkRequested() {
+    if (!markAwait) return;
+    const p = state.participants.find((x) => x.id === markAwait); markAwait = null; if (!p) return;
+    const ls = pendingLinks(p); if (!ls.length) return;
+    const dlg = $('#cDlg'), yes = $('#cYes'), no = $('#cNo');
+    $('#cTitle').textContent = 'להעביר לסטטוס "בטיפול"?';
+    $('#cText').innerHTML = 'נשלחה הודעה ל' + nameB(p.name) + '?';
+    yes.textContent = 'כן, ההודעה נשלחה';
+    const reset = () => { yes.textContent = 'אישור'; };
+    yes.onclick = () => { dlg.close(); reset(); ls.forEach((l) => setPayStatus(p.id, l.meeting_id, 'requested')); toast('הסטטוס עבר ל"בטיפול"'); };
+    no.onclick = () => { dlg.close(); reset(); };
+    dlg.showModal();
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && markAwait) setTimeout(askMarkRequested, 250); });
+  window.addEventListener('focus', () => { if (markAwait) setTimeout(askMarkRequested, 250); });
+  const chaseMessage = (p) => {
+    const who = SENDERS[emailOf()] || authorName(), ask = p.gender === 'female' ? 'את מתכוונת להגיע?' : p.gender === 'male' ? 'אתה מתכוון להגיע?' : 'האם בכוונתך להגיע?';
+    return 'היי, זה ' + who + ' מיוצאים להרפתקה. ראיתי שנרשמת אך לא העברת תשלום. ' + ask;
+  };
   function renderContact() {
     const box = $('#pMsgs'); if (!box) return;
     const p = sheet && sheet.id ? state.participants.find((x) => x.id === sheet.id) : null;
@@ -1305,13 +1331,18 @@
     const base = waLink(p.phone), tel = telLink(p.phone);
     copyTexts = [PAYBOX];
     const COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="3"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>';
+    /* משתתף בסטטוס "טרם טופל": הוואטסאפ נפתח עם הודעה מובנית (בלשון זכר/נקבה); אחרי החזרה לדשבורד שואלים אם להעביר ל"בטיפול" */
+    const pend = pendingLinks(p);
+    const waHref = base && pend.length ? base + '?text=' + encodeURIComponent(chaseMessage(p)) : base;
     let h = '<div class="ctop">' +
-      (base ? '<a class="cbtn cb-wa" href="' + base + '" target="_blank" rel="noopener">' + WA_ICON + 'וואטסאפ</a>' : '<span class="cbtn off">' + WA_ICON + 'וואטסאפ</span>') +
+      (base ? '<a class="cbtn cb-wa" href="' + waHref + '"' + (pend.length ? ' data-markreq="' + p.id + '"' : '') + ' target="_blank" rel="noopener">' + WA_ICON + 'וואטסאפ</a>' : '<span class="cbtn off">' + WA_ICON + 'וואטסאפ</span>') +
       (tel ? '<a class="cbtn cb-call" href="' + tel + '">' + CALL_ICON + 'חיוג</a>' : '<span class="cbtn off">' + CALL_ICON + 'חיוג</span>') + '</div>';
     if (!base) h += '<p class="mnone">אין מספר טלפון תקין למשתתף. אפשר להוסיף בלשונית "פרטים"</p>';
     box.innerHTML = h;
   }
   $('#pMsgs').addEventListener('click', (e) => {
+    const w = e.target.closest('[data-markreq]');
+    if (w) { markAwait = w.dataset.markreq; return; }   // הוואטסאפ נפתח; כשחוזרים לדשבורד שואלים אם להעביר ל"בטיפול"
     const c = e.target.closest('[data-copy]');
     if (c) { const txt = copyTexts[Number(c.dataset.copy)] || ''; (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast('הקישור הועתק'), () => toast('אי אפשר להעתיק מכאן')); }
   });
