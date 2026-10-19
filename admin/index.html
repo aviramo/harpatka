@@ -37,17 +37,21 @@
     #mSel { font: inherit; display: inline-flex; align-items: center; gap: 8px; background: none; color: inherit; padding: 0; cursor: pointer; }
     #mSel svg { width: 20px; height: 20px; color: var(--terra); transition: transform .2s; }
     #mSel[aria-expanded="true"] svg { transform: rotate(180deg); }
-    .mmenu { left: auto; right: 0; min-width: 270px; max-height: 70vh; overflow-y: auto; }
-    .mmenu button .mc { color: var(--muted); font-weight: 600; font-size: 14px; margin-inline-start: auto; padding-inline: 8px; }
-    .mmenu button[aria-checked="true"] .mc { color: inherit; }
-    .mmenu button { white-space: nowrap; display: grid; grid-template-columns: minmax(0, 1fr) 32px 18px; align-items: center; column-gap: 4px; justify-content: stretch; }
-    .mmenu button::after { content: "" !important; display: inline-block; width: 18px; flex: 0 0 18px; text-align: center; }
-    .mmenu button[aria-checked="true"]::after { content: "✓" !important; }
-    .mmenu button .mc { margin: 0; padding: 0; text-align: center; }
-    .mmenu button.addm2 { display: block; }
-    .mmenu button.past { opacity: .6; }
-    .mmenu button.addm2 { color: var(--terra); font-weight: 700; border-top: 1px solid var(--line); border-radius: 0 0 12px 12px; margin-top: 4px; }
-    .mmenu button.addm2::after { content: none !important; }
+    .mmenu { left: auto; right: 0; width: min(380px, calc(100vw - 32px)); max-height: 72vh; overflow-y: auto; padding: 6px; }
+    .mtr { display: grid; grid-template-columns: minmax(0, 1fr) 50px 50px 38px; align-items: center; column-gap: 4px; padding: 0 6px; border-radius: 12px; }
+    .mtr.mhead { font-size: 12.5px; font-weight: 700; color: var(--muted); padding-block: 4px 6px; border-bottom: 1px solid var(--line); border-radius: 0; margin-bottom: 4px; }
+    .mtr.mhead span { text-align: center; }
+    .mtr.mhead span:first-child { text-align: right; }
+    .mtr.mrow2 { min-height: 46px; cursor: pointer; font-size: 16px; }
+    .mtr.mrow2:hover { background: rgba(63,56,47,.05); }
+    .mtr.mrow2[aria-checked="true"] { background: rgba(201,111,82,.13); color: var(--terra); font-weight: 700; }
+    .mtr.mrow2.past { opacity: .6; }
+    .mtr .mc { text-align: center; font-weight: 600; font-size: 15px; font-variant-numeric: tabular-nums; }
+    .mtr .mc.dim { color: var(--muted); }
+    .mtr .medit { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); }
+    .mtr .medit svg { width: 18px; height: 18px; }
+    .mtr .medit:hover { background: rgba(63,56,47,.08); color: var(--ink); }
+    .mmenu button.addm2 { display: block; width: 100%; color: var(--terra); font-weight: 700; border-top: 1px solid var(--line); border-radius: 0 0 12px 12px; margin-top: 4px; text-align: right; padding: 12px 10px; }
     .title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
     h1 { font-family: "Rubik", sans-serif; font-size: 26px; margin: 0; }
     .brand { color: var(--muted); font-size: 14px; }
@@ -336,7 +340,7 @@
     .call { background: #3F6FB5; }   /* שיחת טלפון */
 
     /* ---------- כניסה עם גוגל ---------- */
-    body.locked .wrap, body.locked #addBtn, body.locked #statsBtn { display: none !important; }
+    body.locked .wrap, body.locked #statsBtn { display: none !important; }
     .gate { max-width: 420px; margin: 0 auto; padding: 72px 20px; text-align: center; }
     .gate[hidden] { display: none; }
     .gate h1 { font-size: 30px; margin-bottom: 6px; }
@@ -506,7 +510,6 @@
     <ul class="list" id="list"></ul>
   </div>
 
-  <button class="fab" id="addBtn" type="button">+ משתתף</button>
   <button class="fab round" id="statsBtn" type="button" aria-label="סטטיסטיקות" title="סטטיסטיקות"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6"/></svg></button>
 
   <!-- משתתף -->
@@ -887,15 +890,22 @@
   }
 
   /* ---------- רינדור ---------- */
-  function render() { renderChips(); renderSort(); renderList(); { const fab = $('#addBtn'); fab.classList.toggle('edit', !!state.filter); fab.textContent = state.filter ? 'עריכת מפגש' : '+ משתתף'; } syncUrl(); }   // בתוך מפגש מוסיפים דרך החיפוש
+  function render() { renderChips(); renderSort(); renderList();  syncUrl(); }   // בתוך מפגש מוסיפים דרך החיפוש
 
   /* בורר המפגש בכותרת (במקום שורת התגיות): כל המשתתפים, מפגש אחד לסינון, או יצירת מפגש */
   function renderChips() {
     const cur = state.filter ? state.meetings.find((m) => m.id === state.filter) : null;
     $('#mSelTxt').textContent = cur ? 'מפגש ' + meetingLabel(cur).split(' · ')[0] : 'כל המשתתפים';
     const dayTime = (m) => esc(meetingLabel(m).split(' · ')[0]) + ' · ' + esc(meetingLabel(m, true).split(' ').slice(0, 2).join(' ')) + ' · ' + esc(String(m.meeting_time).slice(0, 5));
-    $('#mMenu').innerHTML = '<button type="button" role="menuitemradio" data-filter="" aria-checked="' + (state.filter === null) + '"><span>כל המשתתפים</span><span class="mc">' + state.participants.length + '</span></button>' +
-      state.meetings.map((m) => '<button type="button" role="menuitemradio" class="' + (isPast(m) ? 'past' : '') + '" data-filter="' + m.id + '" aria-checked="' + (state.filter === m.id) + '"><span>' + dayTime(m) + '</span><span class="mc">' + state.att.filter((a) => a.meeting_id === m.id).length + '</span></button>').join('') +
+    const EDIT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"/><path d="M14 7l3 3"/></svg>';
+    const paidAll = state.participants.filter((x) => { const ls = linksOf(x.id).filter((l) => !l.exempt); return ls.length && ls.every((l) => l.paid); }).length;
+    $('#mMenu').innerHTML = '<div class="mtr mhead" aria-hidden="true"><span>מפגש</span><span>נרשמו</span><span>שילמו</span><span></span></div>' +
+      '<div class="mtr mrow2" role="menuitemradio" tabindex="0" data-filter="" aria-checked="' + (state.filter === null) + '"><span>כל המשתתפים</span><span class="mc">' + state.participants.length + '</span><span class="mc dim">' + paidAll + '</span><span></span></div>' +
+      state.meetings.map((m) => {
+        const ls = state.att.filter((a) => a.meeting_id === m.id);
+        return '<div class="mtr mrow2' + (isPast(m) ? ' past' : '') + '" role="menuitemradio" tabindex="0" data-filter="' + m.id + '" aria-checked="' + (state.filter === m.id) + '"><span>' + dayTime(m) + '</span><span class="mc">' + ls.length + '</span><span class="mc dim">' + ls.filter((a) => a.paid).length + '</span>' +
+          '<button type="button" class="medit" data-edit-m="' + m.id + '" aria-label="עריכת מפגש" title="עריכת מפגש">' + EDIT_ICON + '</button></div>';
+      }).join('') +
       '<button type="button" role="menuitem" class="addm2" id="addMeeting">+ מפגש חדש</button>';
   }
   const closeMSel = () => { $('#mMenu').hidden = true; $('#mSel').setAttribute('aria-expanded', 'false'); };
@@ -1733,10 +1743,12 @@
   $('#qClear').addEventListener('mousedown', (e) => e.preventDefault());
   $('#qClear').addEventListener('click', () => { const q = $('#q'); q.value = ''; state.q = ''; renderList(); syncUrl(); q.focus(); });
   $('#q').addEventListener('input', (e) => { state.q = e.target.value; renderList(); syncUrl(); });
-  $('#addBtn').addEventListener('click', () => (state.filter ? openMeeting(state.filter) : openParticipant(null)));
 
+  $('#mMenu').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-filter]')) { e.preventDefault(); e.target.click(); } });
   $('#mMenu').addEventListener('click', (e) => {
     if (e.target.closest('#addMeeting')) { closeMSel(); return openMeeting(null); }
+    const ed = e.target.closest('[data-edit-m]');
+    if (ed) { closeMSel(); return openMeeting(ed.dataset.editM); }
     const c = e.target.closest('[data-filter]');
     if (!c) return;
     closeMSel();
