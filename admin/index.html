@@ -251,6 +251,10 @@
     #pDlg .sheet-head .ctop { margin: 0; gap: 8px; }
     #pDlg .sheet-head .cico { width: 40px; height: 40px; }
     #pDlg .sheet-head .cico svg { width: 21px; height: 21px; }
+    #pDlg .sheet-head h2 { display: flex; align-items: center; gap: 8px; }
+    #pDlg .tname { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    .tchip { flex: 0 0 auto; display: inline-block; color: var(--muted); background: #EFE4D3; border-radius: 999px; padding: 1px 10px; font-weight: 600; font-size: 14px; white-space: nowrap; }
+    .tchip b { font-weight: 800; color: var(--ink); }
     #pMsgs { display: contents; }
     #pMsgs[hidden] { display: none; }
     #pDlg .sheet-head .saved { position: absolute; left: 0; top: 50%; transform: translateY(-50%); }
@@ -1544,6 +1548,13 @@
     });
   })();
 
+  /* כותרת הפופאפ: צ'יפ מגדר (ז/נ) וגיל לפני השם */
+  function setTitle(p) {
+    const h = $('#pTitle');
+    if (!p) { h.textContent = 'משתתף חדש'; return; }
+    const age = shownAge(p);
+    h.innerHTML = (age != null || p.gender ? '<span class="tchip"><bdi>' + (p.gender ? '<b>' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : '') + '</bdi></span>' : '') + '<span class="tname">' + esc(p.name) + '</span>';
+  }
   function openParticipant(id, tab, fromEl) {
     const p = id ? state.participants.find((x) => x.id === id) : null;
     sheet = p ? { id: p.id } : { id: null, links: new Map(state.filter ? [[state.filter, false]] : []) };
@@ -1552,7 +1563,7 @@
     pForm.phone.value = p ? localPhone(p.phone) : '';
     pForm.age.value = p ? (shownAge(p) ?? '') : '';
     pForm.gender.value = p && p.gender ? p.gender : '';
-    $('#pTitle').textContent = p ? p.name : 'משתתף חדש';
+    setTitle(p);
     $('#pRegLine').textContent = p && regDate(p) ? ('תאריך הרשמה: ' + regDateTime(p) + (p.source === 'site' ? ' (דרך האתר)' : p.source === 'site-ad' ? ' (דרך האתר, ממומן)' : '')) : '';
     renderContact();
     $('#pSubmit').hidden = !!p;
@@ -1627,7 +1638,7 @@
     if (field === 'age') patch.age_set_at = todayISO();
     const prev = { ...p };
     Object.assign(p, patch); render();
-    if (field === 'name') $('#pTitle').textContent = p.name;
+    if (field === 'name' || field === 'age' || field === 'gender') setTitle(p);
     try {
       await api(T.p + '?id=eq.' + p.id, { method: 'PATCH', body: patch });
       const mark = $('#savedMark');
