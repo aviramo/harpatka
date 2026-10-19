@@ -1505,6 +1505,40 @@
       };
       const bind = (el) => { el.addEventListener('pointerdown', down); el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); };
       bind(g);
+      /* החלקה למטה מכל מקום בפופאפ סוגרת, כשהתוכן שנוגעים בו גלול לראש (אחרת זו גלילה רגילה) */
+      let ty0 = 0, tx0 = 0, tt0 = 0, tdy = 0, tOn = false, tOk = false;
+      const scrolledDown = (el) => {
+        for (let n = el; n; n = n.parentElement) {
+          if (n.scrollHeight > n.clientHeight + 1 && /(auto|scroll)/.test(getComputedStyle(n).overflowY) && n.scrollTop > 0) return true;
+          if (n === d) break;
+        }
+        return false;
+      };
+      d.addEventListener('touchstart', (e) => {
+        tOn = false; tdy = 0;
+        tOk = e.touches.length === 1 && !d._closing && !e.target.closest('.grab, .sheet-head') && !scrolledDown(e.target);
+        if (tOk) { ty0 = e.touches[0].clientY; tx0 = e.touches[0].clientX; tt0 = performance.now(); }
+      }, { passive: true });
+      d.addEventListener('touchmove', (e) => {
+        if (!tOk) return;
+        const dy = e.touches[0].clientY - ty0, dx = e.touches[0].clientX - tx0;
+        if (!tOn) {
+          if (dy < -4 || Math.abs(dx) > Math.abs(dy) + 4) { tOk = false; return; }   // גלילה כלפי מעלה או תנועה אופקית
+          if (dy > 10) { if (scrolledDown(e.target)) { tOk = false; return; } tOn = true; d.getAnimations().forEach((x) => x.cancel()); }
+          else return;
+        }
+        tdy = Math.max(0, dy); d.style.transform = 'translateY(' + tdy + 'px)';
+        if (e.cancelable) e.preventDefault();
+      }, { passive: false });
+      const tEnd = () => {
+        if (!tOn) { tOk = false; return; }
+        tOn = false; tOk = false;
+        const v = tdy / Math.max(1, performance.now() - tt0);
+        if (tdy > 110 || (v > 0.6 && tdy > 30)) { d.style.transform = ''; d.close(undefined, tdy); return; }
+        d.style.transition = 'transform .2s ease'; d.style.transform = '';
+        setTimeout(() => { d.style.transition = ''; }, 220);
+      };
+      d.addEventListener('touchend', tEnd); d.addEventListener('touchcancel', tEnd);
       d.querySelectorAll('.sheet-head').forEach((h) => { h.style.touchAction = 'none'; bind(h); });
     });
   })();
