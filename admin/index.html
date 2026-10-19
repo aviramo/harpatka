@@ -241,7 +241,7 @@
     .ptab[aria-selected="true"] { color: var(--ink); }
     .pind { position: absolute; z-index: 2; bottom: -1.5px; height: 3px; left: 0; width: 0; border-radius: 3px; background: var(--terra); pointer-events: none; will-change: transform, width; }
     /* גובה קבוע לפופאפ המשתתף בכל הלשוניות: הכותרת והלשוניות לא זזות, והתוכן נגלל בתוך הלשונית */
-    #pDlg { height: min(84vh, 520px); overflow: visible; }
+    #pDlg { height: min(88vh, 640px); overflow: visible; }
     #pDlg:focus { outline: none; }
     #pDlg .close, #pDlg .close:focus, #pDlg .close:focus-visible { outline: none; }   /* בלי מסגרת כהה סביב כפתור הסגירה */
     #pDlg .sheet { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; border-radius: inherit; overflow: hidden; padding: 30px 24px 24px; }
@@ -250,9 +250,18 @@
     #pDlg .sheet-head .saved { position: absolute; left: 0; top: 50%; transform: translateY(-50%); }
     #pDlg .close { position: absolute; top: -3.5rem; left: 50%; margin-left: -22px; width: 44px; height: 44px; background: var(--paper); box-shadow: 0 4px 14px rgba(0,0,0,.25); font-size: 26px; }
     #pDlg .sheet-head, #pDlg .ptabs { flex: 0 0 auto; }
-    #pDlg .pager { flex: 1 1 auto; min-height: 0; display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; }
-    #pDlg .pager::-webkit-scrollbar { display: none; }
-    #pDlg .ppanel { flex: 0 0 100%; height: 100%; box-sizing: border-box; scroll-snap-align: start; scroll-snap-stop: always; overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: contain; padding: 4px 1px; }
+    #pDlg .ppanel { flex: 1 1 auto; min-height: 0; box-sizing: border-box; overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: contain; padding: 4px 1px; }
+    #pDlg .ppanel.enter-l { animation: pviewL .3s cubic-bezier(.22,.8,.2,1); }
+    #pDlg .ppanel.enter-r { animation: pviewR .3s cubic-bezier(.22,.8,.2,1); }
+    @keyframes pviewL { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: none; } }
+    @keyframes pviewR { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+    .hbtn { position: absolute; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--cream); color: var(--ink); }
+    .hbtn svg { width: 22px; height: 22px; }
+    .hbtn[hidden] { display: none; }
+    .hback { right: 0; } .hinfo { left: 0; }
+    #pDlg .sheet-head .saved { pointer-events: none; }
+    .more { display: block; width: 100%; height: 40px; margin: 2px 0 6px; border-radius: 12px; background: transparent; border: 1.5px dashed var(--coral); color: var(--terra); font-weight: 700; font-size: 15px; }
+    .more[hidden] { display: none; }
     dialog, #pDlg .ppanel { scrollbar-width: none; }
     dialog::-webkit-scrollbar, #pDlg .ppanel::-webkit-scrollbar { display: none; }
     #pDlg #pSubmit { flex: 0 0 auto; margin-top: 10px; }
@@ -279,7 +288,12 @@
     .nmeta b { color: var(--ink); }
     .ndel { width: 26px; height: 26px; border-radius: 50%; font-size: 18px; line-height: 1; color: var(--muted); }
     .ntext { white-space: pre-wrap; font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
-    .ctop { display: flex; gap: 10px; margin-bottom: 18px; }
+    .ctop { display: flex; justify-content: center; gap: 18px; margin-bottom: 14px; }
+    .cico { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; }
+    .cico svg { width: 26px; height: 26px; }
+    .cico.cb-wa { background: #E3F4E9; color: #1E7A45; }
+    .cico.cb-call { background: #E4ECF8; color: #2F5EA8; }
+    .cico.off { background: var(--line); color: var(--muted); }
     .cbtn { flex: 1 1 0; height: 46px; border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 16px; text-decoration: none; }
     .cbtn svg { width: 20px; height: 20px; }
     .cbtn.cb-wa { background: #E3F4E9; color: #1E7A45; }
@@ -490,24 +504,19 @@
   <dialog id="pDlg" aria-labelledby="pTitle">
     <form class="sheet" id="pForm" method="dialog" novalidate>
       <div class="sheet-head">
+        <button type="button" class="hbtn hback" id="pBack" aria-label="חזרה" title="חזרה" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
         <h2 id="pTitle">משתתף חדש</h2>
+        <button type="button" class="hbtn hinfo" id="pInfoBtn" aria-label="פרטי המשתתף" title="פרטי המשתתף" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.8-3.6 3.7-5.5 7-5.5s6.2 1.9 7 5.5"/></svg></button>
         <span class="saved" id="savedMark">נשמר ✓</span>
       </div>
-      <div class="ptabs" id="pTabs" role="tablist" aria-label="עריכת משתתף">
-        <i class="pind" aria-hidden="true"></i>
-        <button type="button" role="tab" class="ptab" data-tab="meets" aria-selected="true">מפגשים <span class="tcount"></span></button>
-        <button type="button" role="tab" class="ptab" data-tab="contact" aria-selected="false">התקשרות <span class="tcount"></span></button>
-        <button type="button" role="tab" class="ptab" data-tab="info" aria-selected="false">פרטים</button>
-      </div>
-      <div class="pager" id="pPager">
-      <div class="ppanel" data-panel="meets" role="tabpanel">
-        <div class="mlist" id="pMeetings"></div>
-      </div>
-      <div class="ppanel" data-panel="contact" role="tabpanel">
+      <div class="ppanel" data-panel="main">
         <div id="pMsgs"></div>
+        <div class="clabel">מפגשים</div>
+        <div class="mlist" id="pMeetings"></div>
+        <button type="button" class="more" id="pMore" hidden>טען עוד</button>
         <div class="clabel">הערות</div>
         <div class="nform">
-          <textarea id="nText" rows="2" maxlength="1000" aria-label="הערה חדשה" placeholder="הערה חדשה..."></textarea>
+          <textarea id="nText" rows="1" maxlength="1000" aria-label="הערה חדשה" placeholder="הערה חדשה..."></textarea>
           <div class="nprev" id="nPrev" hidden><img id="nPrevImg" alt="תצוגה מקדימה" /><button type="button" id="nPrevX" aria-label="הסרת התמונה">×</button></div>
           <button type="button" class="nattach" id="nAttach" aria-label="צירוף צילום מסך" title="צירוף צילום מסך"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="11" r="1.8"/><path d="M21 16l-5-5-8 8"/></svg></button>
           <input type="file" id="nFile" accept="image/*" hidden />
@@ -515,7 +524,7 @@
         </div>
         <div id="nList"></div>
       </div>
-      <div class="ppanel" data-panel="info" role="tabpanel">
+      <div class="ppanel" data-panel="info" hidden>
         <div class="name-row">
           <label class="field"><span>שם</span><input name="name" required maxlength="60" autocomplete="off" /></label>
           <label class="field gfield"><span>מגדר</span><select name="gender"><option value="">לא צוין</option><option value="male">גבר</option><option value="female">אישה</option></select></label>
@@ -526,7 +535,6 @@
         </div>
         <div class="note" id="pRegLine" style="color:var(--muted);font-size:14px;margin:2px 4px 10px"></div>
         <button class="btn ghost" id="pDelete" type="button">מחיקת משתתף</button>
-      </div>
       </div>
       <button class="btn" id="pSubmit" type="submit">הוספה</button>
     </form>
@@ -609,7 +617,7 @@
     if (state.gender) sp.set('g', state.gender);
     if (state.sort !== 'new') sp.set('s', state.sort);
     if (state.q.trim()) sp.set('q', state.q.trim());
-    if (openPid) { sp.set('p', openPid); if (pTab !== 'contact') sp.set('pt', pTab); }
+    if (openPid) { sp.set('p', openPid); if (pTab === 'info') sp.set('pt', 'info'); }
     if (editingMeeting && mDlg.open) sp.set('em', editingMeeting.id);
     if ($('#stDlg').open) sp.set('st', '1');
     const s = sp.toString();
@@ -1337,8 +1345,8 @@
     const pend = pendingLinks(p);
     const waHref = base && pend.length ? base + '?text=' + encodeURIComponent(chaseMessage(p)) : base;
     let h = '<div class="ctop">' +
-      (base ? '<a class="cbtn cb-wa" href="' + waHref + '"' + (pend.length ? ' data-markreq="' + p.id + '"' : '') + ' target="_blank" rel="noopener">' + WA_ICON + 'וואטסאפ</a>' : '<span class="cbtn off">' + WA_ICON + 'וואטסאפ</span>') +
-      (tel ? '<a class="cbtn cb-call" href="' + tel + '">' + CALL_ICON + 'חיוג</a>' : '<span class="cbtn off">' + CALL_ICON + 'חיוג</span>') + '</div>';
+      (base ? '<a class="cico cb-wa" href="' + waHref + '"' + (pend.length ? ' data-markreq="' + p.id + '"' : '') + ' target="_blank" rel="noopener" aria-label="וואטסאפ" title="וואטסאפ">' + WA_ICON + '</a>' : '<span class="cico off" aria-label="וואטסאפ">' + WA_ICON + '</span>') +
+      (tel ? '<a class="cico cb-call" href="' + tel + '" aria-label="חיוג" title="חיוג">' + CALL_ICON + '</a>' : '<span class="cico off" aria-label="חיוג">' + CALL_ICON + '</span>') + '</div>';
     if (!base) h += '<p class="mnone">אין מספר טלפון תקין למשתתף. אפשר להוסיף בלשונית "פרטים"</p>';
     box.innerHTML = h;
   }
@@ -1354,8 +1362,7 @@
     const list = $('#nList'); if (!list) return;
     const p = sheet && sheet.id ? state.participants.find((x) => x.id === sheet.id) : null;
     if (!p) { list.innerHTML = ''; return; }
-    const ns = notesOf(p.id);
-    const cnt = $('#pTabs [data-tab="contact"] .tcount'); if (cnt) cnt.textContent = ns.length ? ns.length : '';
+    const all = notesOf(p.id), ns = all.filter((n) => !n.has_image).concat(all.filter((n) => n.has_image));   // הערות טקסט קודם, צילומי המסך בסוף
     list.innerHTML = ns.length ? ns.map((n) => '<div class="nitem"><div class="nmeta"><span><b>' + esc(n.author_name || 'לא ידוע') + '</b> · ' + esc(fmtDT(n.created_at)) + '</span>' +
       '<button type="button" class="ndel" data-del="' + n.id + '" aria-label="מחיקת הערה" title="מחיקת הערה">×</button></div>' +
       (n.has_image ? '<a class="nimg" data-img="' + n.id + '"><div class="nload">טוען תמונה…</div></a>' : '<div class="ntext">' + esc(n.body) + '</div>') + '</div>').join('')
@@ -1416,52 +1423,24 @@
     try { await api(T.n + '?id=eq.' + id, { method: 'DELETE' }); } catch (err) { state.notes = prev; rebuildNotes(); renderNotes(); render(); fail(err); }
   });
 
-  let pTab = 'contact';
-  /* הלשונית האחרונה שנבחרה בפופאפ המשתתף נזכרת בפתיחה הבאה (נשמר בדפדפן) */
-  const PT_KEY = 'harpatka_admin_ptab';
-  const lastTab = () => { try { const v = localStorage.getItem(PT_KEY); return ['meets', 'contact', 'info'].includes(v) ? v : null; } catch (e) { return null; } };
-  const rememberTab = (v) => { try { localStorage.setItem(PT_KEY, v); } catch (e) {} };
-  /* פייג'ר: הלשוניות והדפים מחוברים. החלקה ימינה ושמאלה בין הדפים, או בחירת לשונית, והמחוון נע יחד עם הגלילה */
+  /* מסך אחד: ראשי (וואטסאפ וחיוג, מפגשים אחרונים, הערות) או פרטים (אייקון בכותרת; חץ חזרה בתוכו) */
+  let pTab = 'main', mLimit = 3;
   const reducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const pager = $('#pPager');
-  const pagerTabs = () => [...pager.children].filter((c) => !c.hidden).map((c) => c.dataset.panel);
-  const pagerSign = () => (getComputedStyle(pager).direction === 'rtl' ? -1 : 1);
-  let pagerTarget = null, pagerSettle = 0;
-  function moveInd() {
-    const ind = $('#pTabs .pind'), names = pagerTabs(); if (!ind || !names.length) return;
-    const w = pager.clientWidth || 1, pos = Math.min(names.length - 1, Math.max(0, Math.abs(pager.scrollLeft) / w));
-    const el = (n) => $('#pTabs [data-tab="' + n + '"]');
-    const a = el(names[Math.floor(pos)]), b = el(names[Math.min(names.length - 1, Math.ceil(pos))]), f = pos - Math.floor(pos);
-    if (!a || !b || !a.offsetWidth) return;
-    ind.style.width = (a.offsetWidth + (b.offsetWidth - a.offsetWidth) * f) + 'px';
-    ind.style.transform = 'translateX(' + (a.offsetLeft + (b.offsetLeft - a.offsetLeft) * f) + 'px)';
-  }
   function setPTab(tab, instant) {
-    const names = pagerTabs(); if (names.indexOf(tab) < 0) tab = names[0];
-    pTab = tab; if (!instant) rememberTab(tab);
-    document.querySelectorAll('#pTabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
-    const i = names.indexOf(tab);
-    pagerTarget = i;
-    pager.scrollTo({ left: pagerSign() * i * pager.clientWidth, behavior: instant || reducedMotion() ? 'instant' : 'smooth' });
-    if (instant) { pagerTarget = null; moveInd(); }
-    if (tab === 'contact') { renderContact(); renderNotes(); }
+    if (!sheet || !sheet.id) tab = 'info';
+    const prev = pTab; pTab = tab;
+    document.querySelectorAll('#pDlg [data-panel]').forEach((d) => {
+      const show = d.dataset.panel === tab; d.hidden = !show;
+      d.classList.remove('enter-l', 'enter-r');
+      if (show && !instant && prev !== tab && !reducedMotion()) { void d.offsetWidth; d.classList.add(tab === 'info' ? 'enter-l' : 'enter-r'); }
+    });
+    const ex = !!(sheet && sheet.id);
+    $('#pBack').hidden = !(ex && tab === 'info'); $('#pInfoBtn').hidden = !(ex && tab === 'main');
+    if (tab === 'main') { renderContact(); renderNotes(); }
     syncUrl();
   }
-  pager.addEventListener('scroll', () => {
-    moveInd();
-    const names = pagerTabs(), pos = Math.abs(pager.scrollLeft) / (pager.clientWidth || 1), idx = Math.round(pos);
-    if (pagerTarget != null) { if (Math.abs(pos - pagerTarget) < 0.02) pagerTarget = null; return; }
-    clearTimeout(pagerSettle);
-    pagerSettle = setTimeout(() => {
-      const n = names[idx]; if (!n || n === pTab) return;
-      pTab = n; rememberTab(n);
-      document.querySelectorAll('#pTabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === n)));
-      if (n === 'contact') { renderContact(); renderNotes(); }
-      syncUrl();
-    }, 60);
-  }, { passive: true });
-  window.addEventListener('resize', () => { if (pDlg.open) setPTab(pTab, true); });
-  $('#pTabs').addEventListener('click', (e) => { const b = e.target.closest('[data-tab]'); if (b) setPTab(b.dataset.tab); });
+  $('#pInfoBtn').addEventListener('click', () => setPTab('info'));
+  $('#pBack').addEventListener('click', () => setPTab('main'));
 
   /* מעטפת אחת לכל הפופאפים (משתתף, מפגש, סטטיסטיקה, אישור): עולים מלמטה, נסגרים באנימציה,
      פס גרירה בראש כמו מגירה (אפשר להחליק למטה לסגירה), לחיצה בחוץ סוגרת, והדף מאחור נעול לגלילה */
@@ -1499,9 +1478,10 @@
       d.insertBefore(g, d.firstChild);
       d.addEventListener('cancel', (e) => { e.preventDefault(); d.close(); });   // Escape
       d.addEventListener('click', (e) => { if (e.target === d) d.close(); });    // לחיצה בחוץ
-      let sy = 0, dy = 0, t0 = 0, drag = false, moved = false;
+      let sy = 0, dy = 0, t0 = 0, drag = false, moved = false, tapOK = true;
       const down = (e) => {
-        if (e.button > 0 || d._closing) return;
+        if (e.button > 0 || d._closing || e.target.closest('button, a, input, select, textarea')) return;
+        tapOK = e.currentTarget === g;   // הקשה (בלי גרירה) סוגרת רק על הפס, לא על הכותרת
         drag = true; moved = false; sy = e.clientY; dy = 0; t0 = performance.now();
         d.getAnimations().forEach((a) => a.cancel());
         try { e.currentTarget.setPointerCapture(e.pointerId); } catch (x) {}
@@ -1514,6 +1494,7 @@
       const up = () => {
         if (!drag) return; drag = false;
         const v = dy / Math.max(1, performance.now() - t0), tap = !moved;
+        if (tap && !tapOK) { d.style.transform = ''; return; }
         if (tap || dy > 110 || (v > 0.6 && dy > 30)) { d.style.transform = ''; d.close(undefined, tap ? 0 : dy); return; }
         d.style.transition = 'transform .2s ease'; d.style.transform = '';
         setTimeout(() => { d.style.transition = ''; }, 220);
@@ -1536,27 +1517,26 @@
     $('#pRegLine').textContent = p && regDate(p) ? ('תאריך הרשמה: ' + regDateTime(p) + (p.source === 'site' ? ' (דרך האתר)' : p.source === 'site-ad' ? ' (דרך האתר, ממומן)' : '')) : '';
     renderContact();
     $('#pSubmit').hidden = !!p;
-    $('#pTabs [data-tab="contact"]').hidden = !p;
-    pager.querySelector('[data-panel="contact"]').hidden = !p;
+    mLimit = 3;
     $('#nText').value = ''; setPending(null);
-    if (p) { const c = notesOf(p.id).length, el = $('#pTabs [data-tab="contact"] .tcount'); if (el) el.textContent = c ? c : ''; }
     $('#pDelete').hidden = !p;
     $('#savedMark').classList.remove('on');
     refreshSheetMeetings();
     openPid = p ? p.id : null;
     pDlg.showModal();
     pDlg.setAttribute('tabindex', '-1'); pDlg.focus({ preventScroll: true });   // בלי טבעת פוקוס על כפתור הסגירה
-    setPTab(p ? (tab || lastTab() || 'contact') : 'info', true);
-    requestAnimationFrame(() => setPTab(pTab, true));
+    setPTab(p ? (tab === 'info' ? 'info' : 'main') : 'info', true);
     if (!p) setTimeout(() => pForm.name.focus(), 50);
   }
 
   function refreshSheetMeetings() {
     if (!sheet) return;
-    { const n = sheet.id ? linksOf(sheet.id).length : sheet.links.size, el = $('#pTabs [data-tab="meets"] .tcount'); if (el) el.textContent = n ? n : ''; moveInd(true); }
     renderContact();
     const box = $('#pMeetings');
-    box.innerHTML = state.meetings.map((m) => {
+    /* שלושת המפגשים האחרונים (כל המפגשים, לא רק שלו) וכפתור לטעינת עוד */
+    const desc = state.meetings.slice().sort((a, b) => (b.meeting_date + b.meeting_time).localeCompare(a.meeting_date + a.meeting_time)), shown = desc.slice(0, mLimit);
+    $('#pMore').hidden = desc.length <= mLimit;
+    box.innerHTML = shown.map((m) => {
       let on, st;
       if (sheet.id) { const l = linkOf(sheet.id, m.id); on = !!l; st = l ? linkStatus(l) : 'unpaid'; }
       else { on = sheet.links.has(m.id); st = sheet.links.get(m.id) ? 'paid' : 'unpaid'; }
@@ -1567,6 +1547,7 @@
     }).join('');
   }
 
+  $('#pMore').addEventListener('click', () => { mLimit += 3; refreshSheetMeetings(); });
   $('#pMeetings').addEventListener('click', (e) => {
     const t = e.target.closest('[data-mt]'), pay = e.target.closest('[data-mp]');
     if (t) {
