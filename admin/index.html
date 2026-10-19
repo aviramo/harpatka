@@ -63,7 +63,7 @@
     }
     .search input::-webkit-search-cancel-button, .search input::-webkit-search-decoration { -webkit-appearance: none; appearance: none; display: none; }
     .sclear { display: none; position: absolute; left: 8px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; border-radius: 50%; background: rgba(63,56,47,.10); color: var(--ink); font-size: 20px; line-height: 1; place-items: center; }
-    .search input:not(:placeholder-shown) ~ .sclear { display: grid; }
+    .search input:not(:placeholder-shown) ~ .sclear, .search:focus-within .sclear { display: grid; }
     .search input:focus { border-color: var(--terra); outline: none; }
     .search svg { position: absolute; right: 12px; top: 12px; width: 20px; height: 20px; color: var(--muted); }
 
@@ -1746,7 +1746,9 @@
   pForm.phone.addEventListener('input', () => badPhone(false));
 
   $('#qClear').addEventListener('mousedown', (e) => e.preventDefault());
-  $('#qClear').addEventListener('click', () => { const q = $('#q'); q.value = ''; state.q = ''; renderList(); syncUrl(); q.focus(); });
+  $('#qClear').addEventListener('mousedown', (e) => e.preventDefault());   // לא לגרום לפוקוס לקפוץ לפני הלחיצה
+  $('#qClear').addEventListener('click', () => { const q = $('#q'); q.value = ''; state.q = ''; renderList(); syncUrl(); q.blur(); });   // ביטול החיפוש: ניקוי, סגירת המקלדת וקיפול התיבה
+  $('#q').addEventListener('keydown', (e) => { if (e.key === 'Escape') $('#qClear').click(); });
   $('#q').addEventListener('input', (e) => { state.q = e.target.value; renderList(); syncUrl(); });
 
   $('#mMenu').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-filter]')) { e.preventDefault(); e.target.click(); } });
