@@ -101,7 +101,13 @@
     /* הפוקוס עובר לקופסת הפופאפ (בלי טבעת פוקוס מכוערת על כפתור הסגירה) */
     /* פתיחה על ידי המשתמש (לחיצה על כפתור): הפוקוס עובר לשדה השם והמקלדת עולה. בכניסה ישירה ל-/register/ בלי פוקוס אוטומטי */
     const f = (!noFocus && m.querySelector('[data-autofocus]')) || m.querySelector('.modal-box');
-    if (f) { if (f.matches('.modal-box')) f.setAttribute('tabindex', '-1'); f.focus({ preventScroll: true }); }
+    if (f) {
+      if (f.matches('.modal-box')) f.setAttribute('tabindex', '-1');
+      /* שדה השם מקבל פוקוס רק אחרי שהמגירה סיימה לרדת: אם המקלדת עולה בזמן שהטופס עוד מחוץ למסך, הדפדפן (אנדרואיד) מזיז את הדף והחלק העליון נחתך. ב-iOS חייבים מיד (בתוך הלחיצה) */
+      const ios = /iP(hone|ad|od)/.test(navigator.userAgent);
+      if (f.matches('input, select, textarea') && !ios) setTimeout(() => { if (!m.hidden && m.classList.contains('open')) f.focus({ preventScroll: true }); }, 420);
+      else f.focus({ preventScroll: true });
+    }
   }
   /* החלקה למעלה בפס שבתחתית סוגרת (אותו מנגנון כמו המגירות בדף הניהול, הפוך: נפתח מלמעלה) */
   function bindGrab(m){
