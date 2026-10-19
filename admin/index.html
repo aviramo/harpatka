@@ -1366,7 +1366,7 @@
     const list = $('#nList'); if (!list) return;
     const p = sheet && sheet.id ? state.participants.find((x) => x.id === sheet.id) : null;
     if (!p) { list.innerHTML = ''; return; }
-    const all = notesOf(p.id), ns = all.filter((n) => !n.has_image).concat(all.filter((n) => n.has_image));   // הערות טקסט קודם, צילומי המסך בסוף
+    const ns = notesOf(p.id);   // הערות וצילומי מסך יחד, מהחדש לישן
     list.innerHTML = ns.length ? ns.map((n) => '<div class="nitem"><div class="nmeta"><span><b>' + esc(n.author_name || 'לא ידוע') + '</b> · ' + esc(fmtDT(n.created_at)) + '</span>' +
       '<button type="button" class="ndel" data-del="' + n.id + '" aria-label="מחיקת הערה" title="מחיקת הערה">×</button></div>' +
       (n.has_image ? '<a class="nimg" data-img="' + n.id + '"><div class="nload">טוען תמונה…</div></a>' : '<div class="ntext">' + esc(n.body) + '</div>') + '</div>').join('')
