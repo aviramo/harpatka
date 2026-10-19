@@ -521,11 +521,11 @@
         <button type="button" class="more" id="pMore" hidden>טען עוד</button>
         <div class="clabel">הערות</div>
         <div class="nform">
-          <textarea id="nText" rows="1" maxlength="1000" aria-label="הערה חדשה" placeholder="הערה חדשה..."></textarea>
+          <textarea id="nText" rows="1" maxlength="1000" enterkeyhint="send" aria-label="הערה חדשה" placeholder="הערה חדשה, אנטר לשמירה"></textarea>
           <div class="nprev" id="nPrev" hidden><img id="nPrevImg" alt="תצוגה מקדימה" /><button type="button" id="nPrevX" aria-label="הסרת התמונה">×</button></div>
           <button type="button" class="nattach" id="nAttach" aria-label="צירוף צילום מסך" title="צירוף צילום מסך"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="11" r="1.8"/><path d="M21 16l-5-5-8 8"/></svg></button>
           <input type="file" id="nFile" accept="image/*" hidden />
-          <button type="button" class="btn nadd" id="nAdd">הוספה</button>
+          <button type="button" id="nAdd" hidden aria-hidden="true" tabindex="-1">הוספה</button>
         </div>
         <div id="nList"></div>
       </div>
@@ -1404,6 +1404,7 @@
   }
   async function takeFile(f) { if (!f || !/^image\//.test(f.type)) return; try { setPending(await compressImage(f)); } catch (e) { toast('לא ניתן לקרוא את התמונה'); return; } $('#nAdd').click(); }   // תמונה נשמרת מיד, בלי ללחוץ על הוספה
   $('#nAttach').addEventListener('click', () => $('#nFile').click());
+  $('#nText').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); $('#nAdd').click(); } });   // אנטר שומר את ההערה (שיפט+אנטר: שורה חדשה)
   $('#nFile').addEventListener('change', (e) => takeFile(e.target.files[0]));
   $('#nPrevX').addEventListener('click', () => setPending(null));
   $('#nText').addEventListener('paste', (e) => { const f = [...(e.clipboardData ? e.clipboardData.files : [])].find((x) => /^image\//.test(x.type)); if (f) { e.preventDefault(); takeFile(f); } });
