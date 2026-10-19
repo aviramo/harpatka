@@ -40,7 +40,11 @@
     .mmenu { left: auto; right: 0; min-width: 270px; max-height: 70vh; overflow-y: auto; }
     .mmenu button .mc { color: var(--muted); font-weight: 600; font-size: 14px; margin-inline-start: auto; padding-inline: 8px; }
     .mmenu button[aria-checked="true"] .mc { color: inherit; }
-    .mmenu button { white-space: nowrap; }
+    .mmenu button { white-space: nowrap; display: grid; grid-template-columns: minmax(0, 1fr) 32px 18px; align-items: center; column-gap: 4px; justify-content: stretch; }
+    .mmenu button::after { content: "" !important; display: inline-block; width: 18px; flex: 0 0 18px; text-align: center; }
+    .mmenu button[aria-checked="true"]::after { content: "✓" !important; }
+    .mmenu button .mc { margin: 0; padding: 0; text-align: center; }
+    .mmenu button.addm2 { display: block; }
     .mmenu button.past { opacity: .6; }
     .mmenu button.addm2 { color: var(--terra); font-weight: 700; border-top: 1px solid var(--line); border-radius: 0 0 12px 12px; margin-top: 4px; }
     .mmenu button.addm2::after { content: none !important; }
@@ -873,8 +877,8 @@
     const cur = state.filter ? state.meetings.find((m) => m.id === state.filter) : null;
     $('#mSelTxt').textContent = cur ? 'מפגש ' + meetingLabel(cur).split(' · ')[0] : 'כל המשתתפים';
     const dayTime = (m) => esc(meetingLabel(m).split(' · ')[0]) + ' · ' + esc(meetingLabel(m, true).split(' ').slice(0, 2).join(' ')) + ' · ' + esc(String(m.meeting_time).slice(0, 5));
-    $('#mMenu').innerHTML = '<button type="button" role="menuitemradio" data-filter="" aria-checked="' + (state.filter === null) + '">כל המשתתפים <span class="mc">' + state.participants.length + '</span></button>' +
-      state.meetings.map((m) => '<button type="button" role="menuitemradio" class="' + (isPast(m) ? 'past' : '') + '" data-filter="' + m.id + '" aria-checked="' + (state.filter === m.id) + '">' + dayTime(m) + ' <span class="mc">' + state.att.filter((a) => a.meeting_id === m.id).length + '</span></button>').join('') +
+    $('#mMenu').innerHTML = '<button type="button" role="menuitemradio" data-filter="" aria-checked="' + (state.filter === null) + '"><span>כל המשתתפים</span><span class="mc">' + state.participants.length + '</span></button>' +
+      state.meetings.map((m) => '<button type="button" role="menuitemradio" class="' + (isPast(m) ? 'past' : '') + '" data-filter="' + m.id + '" aria-checked="' + (state.filter === m.id) + '"><span>' + dayTime(m) + '</span><span class="mc">' + state.att.filter((a) => a.meeting_id === m.id).length + '</span></button>').join('') +
       '<button type="button" role="menuitem" class="addm2" id="addMeeting">+ מפגש חדש</button>';
   }
   const closeMSel = () => { $('#mMenu').hidden = true; $('#mSel').setAttribute('aria-expanded', 'false'); };
