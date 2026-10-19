@@ -38,7 +38,7 @@
     #mSel svg { width: 20px; height: 20px; color: var(--terra); transition: transform .2s; }
     #mSel[aria-expanded="true"] svg { transform: rotate(180deg); }
     .mmenu { left: auto; right: 0; width: min(380px, calc(100vw - 32px)); max-height: 72vh; overflow-y: auto; padding: 6px; }
-    .mtr { display: grid; grid-template-columns: minmax(0, 1fr) 46px 46px 36px 36px; align-items: center; column-gap: 4px; padding: 0 6px; border-radius: 12px; }
+    .mtr { display: grid; grid-template-columns: minmax(0, 1fr) 50px 50px 38px; align-items: center; column-gap: 4px; padding: 0 6px; border-radius: 12px; }
     .mtr.mhead { font-size: 12.5px; font-weight: 700; color: var(--muted); padding-block: 4px 6px; border-bottom: 1px solid var(--line); border-radius: 0; margin-bottom: 4px; }
     .mtr.mhead span { text-align: center; }
     .mtr.mhead span:first-child { text-align: right; }
@@ -48,10 +48,9 @@
     .mtr.mrow2.past { opacity: .6; }
     .mtr .mc { text-align: center; font-weight: 600; font-size: 15px; font-variant-numeric: tabular-nums; }
     .mtr .mc.dim { color: var(--muted); }
-    .mtr .medit, .mtr .mshare { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); }
-    .mtr .medit svg, .mtr .mshare svg { width: 18px; height: 18px; }
-    .mtr .mshare { height: 34px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); }
-    .mtr .mshare:hover, .mtr .medit:hover { background: rgba(63,56,47,.08); color: var(--ink); }
+    .mtr .medit { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); }
+    .mtr .medit svg { width: 18px; height: 18px; }
+    .mtr .medit:hover { background: rgba(63,56,47,.08); color: var(--ink); }
     .mmenu button.addm2 { display: block; width: 100%; color: var(--terra); font-weight: 700; border-top: 1px solid var(--line); border-radius: 0 0 12px 12px; margin-top: 4px; text-align: right; padding: 12px 10px; }
     .title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
     h1 { font-family: "Rubik", sans-serif; font-size: 26px; margin: 0; }
@@ -525,7 +524,6 @@
         <button type="button" class="hbtn hback" id="pBack" aria-label="חזרה" title="חזרה" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
         <h2 id="pTitle">משתתף חדש</h2>
         <div id="pMsgs"></div>
-        <button type="button" class="hbtn" id="pShareBtn" aria-label="שיתוף המשתתף" title="שיתוף המשתתף" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 12v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button>
         <button type="button" class="hbtn hinfo" id="pInfoBtn" aria-label="פרטי המשתתף" title="פרטי המשתתף" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.8-3.6 3.7-5.5 7-5.5s6.2 1.9 7 5.5"/></svg></button>
         <span class="saved" id="savedMark">נשמר ✓</span>
       </div>
@@ -587,7 +585,6 @@
     <div class="sheet stsheet">
       <div class="sheet-head">
         <h2 id="stTitle">סטטיסטיקות</h2>
-        <button type="button" class="hbtn" id="stShare" aria-label="שיתוף הסטטיסטיקות" title="שיתוף הסטטיסטיקות" style="position:static"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 12v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg></button>
       </div>
       <div id="stBody"></div>
     </div>
@@ -905,15 +902,13 @@
     const cur = state.filter ? state.meetings.find((m) => m.id === state.filter) : null;
     $('#mSelTxt').textContent = cur ? 'מפגש ' + meetingLabel(cur).split(' · ')[0] : 'לא נבחר מפגש';
     const dayTime = (m) => esc(meetingLabel(m).split(' · ')[0]) + ' · ' + esc(meetingLabel(m, true).split(' ').slice(0, 2).join(' ')) + ' · ' + esc(String(m.meeting_time).slice(0, 5));
-    const SHARE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 12v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>';
     const EDIT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"/><path d="M14 7l3 3"/></svg>';
     const paidAll = state.participants.filter((x) => { const ls = linksOf(x.id).filter((l) => !l.exempt); return ls.length && ls.every((l) => l.paid); }).length;
-    $('#mMenu').innerHTML = '<div class="mtr mhead" aria-hidden="true"><span>מפגש</span><span>נרשמו</span><span>שילמו</span><span></span><span></span></div>' +
-      '<div class="mtr mrow2" role="menuitemradio" tabindex="0" data-filter="" aria-checked="' + (state.filter === null) + '"><span>כל המשתתפים</span><span class="mc">' + state.participants.length + '</span><span class="mc dim">' + paidAll + '</span><span></span><span></span></div>' +
+    $('#mMenu').innerHTML = '<div class="mtr mhead" aria-hidden="true"><span>מפגש</span><span>נרשמו</span><span>שילמו</span><span></span></div>' +
+      '<div class="mtr mrow2" role="menuitemradio" tabindex="0" data-filter="" aria-checked="' + (state.filter === null) + '"><span>כל המשתתפים</span><span class="mc">' + state.participants.length + '</span><span class="mc dim">' + paidAll + '</span><span></span></div>' +
       state.meetings.map((m) => {
         const ls = state.att.filter((a) => a.meeting_id === m.id);
         return '<div class="mtr mrow2' + (isPast(m) ? ' past' : '') + '" role="menuitemradio" tabindex="0" data-filter="' + m.id + '" aria-checked="' + (state.filter === m.id) + '"><span>' + dayTime(m) + '</span><span class="mc">' + ls.length + '</span><span class="mc dim">' + ls.filter((a) => a.paid).length + '</span>' +
-          '<button type="button" class="mshare" data-share-m="' + m.id + '" aria-label="שיתוף המפגש" title="שיתוף המפגש">' + SHARE_ICON + '</button>' +
           '<button type="button" class="medit" data-edit-m="' + m.id + '" aria-label="עריכת מפגש" title="עריכת מפגש">' + EDIT_ICON + '</button></div>';
       }).join('') +
       '<button type="button" role="menuitem" class="addm2" id="addMeeting">+ מפגש חדש</button>';
@@ -1464,7 +1459,7 @@
       if (show && !instant && prev !== tab && !reducedMotion()) { void d.offsetWidth; d.classList.add(tab === 'info' ? 'enter-l' : 'enter-r'); }
     });
     const ex = !!(sheet && sheet.id);
-    $('#pBack').hidden = !(ex && tab === 'info'); $('#pInfoBtn').hidden = !(ex && tab === 'main'); $('#pShareBtn').hidden = !(ex && tab === 'main'); $('#pMsgs').hidden = tab !== 'main';
+    $('#pBack').hidden = !(ex && tab === 'info'); $('#pInfoBtn').hidden = !(ex && tab === 'main'); $('#pMsgs').hidden = tab !== 'main';
     if (tab === 'main') { renderContact(); renderNotes(); }
     syncUrl();
   }
@@ -1568,35 +1563,6 @@
     });
   })();
 
-  /* שיתוף: כרטיס התצוגה של וואטסאפ לא יכול להיות שונה לכל קישור באתר סטטי, ולכן שולחים הודעה עם מה שרלוונטי לעמוד
-     (שם ופרטים / פרטי המפגש / סיכום), והקישור בסוף. הפרטים עוברים רק לצ'אט שנבחר, ולא נחשפים בציבור */
-  async function shareView(title, lines, params) {
-    const url = location.origin + location.pathname + (params ? '?' + params : '');
-    const text = [title].concat(lines.filter(Boolean)).join('\n');
-    try {
-      if (navigator.share) { await navigator.share({ title, text, url }); return; }
-      throw new Error('no share');
-    } catch (e) {
-      if (e && e.name === 'AbortError') return;
-      try { await navigator.clipboard.writeText(text + '\n' + url); toast('ההודעה הועתקה'); } catch (x) { toast('אי אפשר לשתף מכאן'); }
-    }
-  }
-  function shareParticipant(id) {
-    const p = state.participants.find((x) => x.id === id); if (!p) return;
-    const age = shownAge(p), g = p.gender === 'male' ? 'גבר' : p.gender === 'female' ? 'אישה' : '';
-    shareView(p.name, [[age != null ? 'גיל ' + age : '', g, p.phone ? 'טלפון ' + localPhone(p.phone) : ''].filter(Boolean).join(' · ')], 'p=' + p.id);
-  }
-  function shareMeeting(id) {
-    const m = state.meetings.find((x) => x.id === id); if (!m) return;
-    const ls = state.att.filter((a) => a.meeting_id === id);
-    shareView('מפגש ' + meetingLabel(m, true).split(' ').slice(0, 2).join(' ') + ' · ' + String(m.meeting_time).slice(0, 5), ['נרשמו ' + ls.length + ' · שילמו ' + ls.filter((a) => a.paid).length], 'm=' + id);
-  }
-  function shareStats() {
-    const nP = state.participants.length, paid = state.att.filter((a) => a.paid).length;
-    shareView('סטטיסטיקות יוצאים להרפתקה', [nP + ' משתתפים · ' + state.meetings.length + ' מפגשים · ' + paid + ' תשלומים'], 'st=1');
-  }
-  $('#pShareBtn').addEventListener('click', () => { if (sheet && sheet.id) shareParticipant(sheet.id); });
-  $('#stShare').addEventListener('click', shareStats);
   /* כותרת הפופאפ: צ'יפ מגדר (ז/נ) וגיל לפני השם */
   function setTitle(p) {
     const h = $('#pTitle');
@@ -1788,8 +1754,6 @@
   $('#mMenu').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-filter]')) { e.preventDefault(); e.target.click(); } });
   $('#mMenu').addEventListener('click', (e) => {
     if (e.target.closest('#addMeeting')) { closeMSel(); return openMeeting(null); }
-    const sh = e.target.closest('[data-share-m]');
-    if (sh) { closeMSel(); return shareMeeting(sh.dataset.shareM); }
     const ed = e.target.closest('[data-edit-m]');
     if (ed) { closeMSel(); return openMeeting(ed.dataset.editM); }
     const c = e.target.closest('[data-filter]');
