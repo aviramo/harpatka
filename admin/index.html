@@ -359,6 +359,8 @@
     .sortmenu button { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 12px; text-align: right; font-size: 16px; font-weight: 600; }
     .sortmenu button[aria-checked="true"] { background: rgba(201,111,82,.12); color: var(--terra); }
     .sortmenu button[aria-checked="true"]::after { content: "✓"; font-weight: 800; }
+    .promolink { display: inline-block; height: 34px; padding: 0 14px; margin: 0 0 14px; border-radius: 999px; background: transparent; border: 1.5px dashed var(--coral); color: var(--terra); font-weight: 700; font-size: 14px; }
+    .promolink[hidden] { display: none; }
     .pquick { display: flex; gap: 8px; margin: -4px 0 12px; }
     .pquick button { height: 34px; padding: 0 14px; border-radius: 999px; background: var(--cream); font-weight: 700; font-size: 14px; border: 1.5px solid var(--line); }
     .prrow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 12px 12px; border-radius: 14px; background: var(--cream); margin-bottom: 8px; cursor: pointer; }
@@ -650,8 +652,11 @@
       <p id="payText" style="color:var(--muted);margin:0 0 14px"></p>
       <label class="field"><span>סכום ששולם (₪)</span><input name="amount" type="number" inputmode="decimal" min="0" step="any" /></label>
       <div class="pquick" id="payQuick"></div>
-      <label class="field"><span>יחצן</span><select name="promoter"></select></label>
-      <label class="field" id="commField"><span>עמלה ליחצן (₪)</span><input name="commission" type="number" inputmode="decimal" min="0" step="any" /></label>
+      <button type="button" class="promolink" id="promoToggle">+ דרך יחצן</button>
+      <div id="promoBox" hidden>
+        <label class="field"><span>יחצן</span><select name="promoter"></select></label>
+        <label class="field" id="commField"><span>עמלה ליחצן (₪)</span><input name="commission" type="number" inputmode="decimal" min="0" step="any" /></label>
+      </div>
       <button class="btn" id="paySave" type="submit">שמירה</button>
       <button class="btn ghost" id="payNo" type="button" style="color:var(--muted)">ביטול</button>
     </form>
@@ -1518,6 +1523,10 @@
     f.commission.value = l.commission != null ? Number(l.commission) : calcCommission(promoterOf(f.promoter.value), amount);
     const sync = () => { $('#commField').hidden = !f.promoter.value; };
     sync();
+    /* רוב המשלמים בלי יחצן: השדות מוסתרים, ונפתחים בלחיצה על "+ דרך יחצן" (או מראש אם יש יחצן למשתתף/לתשלום) */
+    const showBox = (on) => { $('#promoBox').hidden = !on; $('#promoToggle').hidden = on; };
+    showBox(!!f.promoter.value);
+    $('#promoToggle').onclick = () => { showBox(true); f.promoter.focus(); };
     $('#payQuick').innerHTML = [PRICE_EARLY, PRICE_LATE].map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
     const recalc = () => { if (!dirty) f.commission.value = calcCommission(promoterOf(f.promoter.value), f.amount.value); };
     let lastPr = f.promoter.value;
@@ -1531,7 +1540,7 @@
     f.onsubmit = (e) => {
       e.preventDefault();
       const amt = parseFloat(f.amount.value); if (!(amt >= 0)) { f.amount.focus(); return; }
-      const pr = f.promoter.value || null, cm = pr && f.commission.value !== '' ? parseFloat(f.commission.value) : null;
+      const pr = $('#promoBox').hidden ? null : (f.promoter.value || null), cm = pr && f.commission.value !== '' ? parseFloat(f.commission.value) : null;
       dlg.close();
       setPayStatus(pid, mid, 'paid', { paid_amount: amt, promoter_id: pr, commission: Number.isFinite(cm) ? cm : null, paid_at: l.paid_at || new Date().toISOString() });
     };
