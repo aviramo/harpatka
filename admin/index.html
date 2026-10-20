@@ -433,6 +433,10 @@
     .pmv.ph { grid-template-columns: 52px minmax(0, 1fr) auto; }
     .pmv .bl { color: var(--muted); font-size: 13px; text-align: left; font-variant-numeric: tabular-nums; }
     .pmv .x { grid-column: 1 / -1; }
+    .bq { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 4px; border-bottom: 1px solid var(--line); }
+    .bq .n { font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pst { flex: 0 0 auto; border-radius: 999px; padding: 2px 12px; font-weight: 700; font-size: 13.5px; background: var(--red-bg); color: var(--red); }
+    .pst.paid { background: var(--green-bg); color: var(--green); } .pst.requested { background: #FBEBC8; color: #8A5A00; } .pst.exempt { background: #E4E9EE; color: #4B5A6A; } .pst.none { background: #EFE4D3; color: var(--muted); }
     .prnew { width: 100%; height: 44px; border-radius: 14px; border: 1.5px dashed var(--coral); color: var(--terra); font-weight: 700; margin-top: 4px; }
     .hicons { display: flex; gap: 8px; align-self: center; }
     .hicon { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: var(--paper); color: var(--ink); box-shadow: 0 0 0 1.5px var(--line); }
@@ -722,6 +726,8 @@
           <button class="btn" type="submit">שמירת תשלום</button>
           <button class="btn ghost" id="ppCancel" type="button" style="color:var(--muted)">ביטול</button>
         </form>
+        <div class="clabel" id="prBroughtLbl" style="margin-top:14px"></div>
+        <div id="prBrought"></div>
         <div class="clabel" style="margin-top:14px">תנועות (מהחדשה לישנה)</div>
         <div id="prMoves"></div>
         <div style="display:flex;gap:8px;margin-top:12px">
@@ -1439,6 +1445,11 @@
     $('#prSum').innerHTML = '<div class="bigbal' + (L.balance > 0 ? '' : ' ok') + '"><small>' + (L.balance > 0 ? 'יתרה לתשלום ליחצן' : 'מסולק') + '</small><b>' + ils(Math.max(L.balance, 0)) + '</b></div>';
     $('#prMoves').innerHTML = L.rows.length ? L.rows.map((r) => '<div class="pmv"><span class="d">' + fmtD(r.date) + '</span><span class="w">' + esc(r.who) + (r.sub ? '<small>' + esc(r.sub) + '</small>' : '') + '</span><span class="a ' + r.kind + '"><bdi dir="ltr">' + (r.amount > 0 ? '+' : '−') + nfm(Math.abs(r.amount)) + '</bdi></span>' +
       (r.kind === 'p' ? '<button type="button" class="ndel" data-delpay="' + r.id + '" aria-label="מחיקת תשלום" title="מחיקת תשלום">×</button>' : '<span class="bl" title="יתרה אחרי התנועה">' + nfm(r.bal) + '</span>') + '</div>').join('') : '<p class="mnone">עוד אין תנועות. עמלה נרשמת אוטומטית כשמסמנים תשלום של משתתף שהביא היחצן</p>';
+    /* משתתפים שהגיעו דרך היחצן, ומי שילם ומי לא */
+    const brought = state.participants.filter((q) => q.promoter_id === id).sort((a, b) => a.name.localeCompare(b.name, 'he'));
+    const stOf = (q) => { const ls = linksOf(q.id); if (ls.some((l) => l.paid && !l.exempt)) return ['paid', 'שילם']; if (ls.some((l) => linkStatus(l) === 'requested')) return ['requested', 'בטיפול']; if (ls.some((l) => l.exempt)) return ['exempt', 'חינם']; return ls.length ? ['unpaid', 'טרם טופל'] : ['none', 'ללא מפגש']; };
+    $('#prBroughtLbl').textContent = 'משתתפים שהגיעו דרך ' + x.name + ' (' + brought.length + ', ' + brought.filter((q) => stOf(q)[0] === 'paid').length + ' שילמו)';
+    $('#prBrought').innerHTML = brought.length ? brought.map((q) => { const s = stOf(q); return '<div class="bq"><span class="n">' + esc(q.name) + '</span><span class="pst ' + s[0] + '">' + s[1] + '</span></div>'; }).join('') : '<p class="mnone">עוד אין משתתפים עם היחצן הזה. בוחרים יחצן באייקון המגפון בכותרת הפופאפ של המשתתף</p>';
     $('#ppForm').hidden = true; $('#ppOpen').hidden = false;
     show('#prDetail');
   }
