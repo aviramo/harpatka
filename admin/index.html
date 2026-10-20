@@ -194,6 +194,24 @@
     .stscope::-webkit-scrollbar { display: none; }
     .stchip { flex: 0 0 auto; height: 38px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--paper); font-weight: 700; font-size: 15px; white-space: nowrap; }
     .stchip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+    .stbottom { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+    .stbottom > div { background: var(--ink); color: var(--paper); border-radius: 16px; padding: 12px 6px; text-align: center; }
+    .stbottom b { display: block; font-family: "Rubik", sans-serif; font-size: 21px; line-height: 1.15; }
+    .stbottom small { color: var(--sand); font-weight: 700; font-size: 13px; }
+    .topic { display: block; width: 100%; text-align: right; background: var(--cream); border-radius: 20px; padding: 14px 14px 10px; margin-bottom: 10px; }
+    .topic .th { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+    .topic .th b { font-family: "Rubik", sans-serif; font-size: 19px; }
+    .topic .tnums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+    .topic .tnums > div { background: #fff; border-radius: 14px; padding: 9px 4px; text-align: center; }
+    .topic .tnums b { display: block; font-family: "Rubik", sans-serif; font-size: 19px; line-height: 1.15; white-space: nowrap; }
+    .topic .tnums small { color: var(--muted); font-weight: 700; font-size: 12.5px; white-space: nowrap; }
+    .topic .tmore { display: block; margin-top: 8px; color: var(--terra); font-weight: 700; font-size: 14px; }
+    .stp { margin-bottom: 16px; } .stp h4 { margin: 0 0 8px; font-size: 15px; color: var(--muted); font-weight: 800; }
+    .tb { background: #fff; border-radius: 14px; box-shadow: 0 0 0 1px var(--line); overflow: hidden; }
+    .tb .tr { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); padding: 9px 10px; border-top: 1px solid var(--line); font-size: 15px; font-variant-numeric: tabular-nums; }
+    .tb .tr > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+    .tb .tr > span:first-child { text-align: right; font-weight: 700; }
+    .tb .th2 { border-top: 0; background: var(--cream); color: var(--muted); font-weight: 800; font-size: 13px; }
     .stkpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
     @media (min-width: 640px) { .stkpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
     .kpi { background: var(--cream); border-radius: 18px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
@@ -269,6 +287,8 @@
     .ppanel.enter-r { animation: pviewR .3s cubic-bezier(.22,.8,.2,1); }
     @keyframes pviewL { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: none; } }
     @keyframes pviewR { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+    #stDlg .sheet-head { position: relative; justify-content: flex-start; gap: 8px; min-height: 40px; }
+    #stDlg .sheet-head h2 { flex: 1 1 auto; }
     .hbtn { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--cream); color: var(--ink); }
     .hbtn svg { width: 22px; height: 22px; }
     .hbtn[hidden] { display: none; }
@@ -670,6 +690,7 @@
   <dialog id="stDlg" aria-labelledby="stTitle" style="max-width:760px">
     <div class="sheet stsheet">
       <div class="sheet-head">
+        <button type="button" class="hbtn hback" id="stArrow" aria-label="חזרה" title="חזרה" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
         <h2 id="stTitle">סטטיסטיקות</h2>
       </div>
       <div id="stBody"></div>
@@ -1261,133 +1282,74 @@
   const colsChart = (items, color, dense) => { const max = Math.max(1, ...items.map((i) => i.v)); return '<div class="cols' + (dense ? ' dense' : '') + '">' + items.map((i) => '<div class="col">' + (dense ? '' : '<span class="cv">' + (i.v || '') + '</span>') + '<i style="height:' + Math.round(i.v / max * 72) + 'px;background:' + (i.color || color) + '"></i><span class="cl">' + i.l + '</span></div>').join('') + '</div>'; };
   const median = (a) => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y), h = s.length >> 1; return s.length % 2 ? s[h] : (s[h - 1] + s[h]) / 2; };
 
+  /* סטטיסטיקות: שלושה נושאים (כספים, יחצנים ופרסום, דמוגרפיה); במסך הראשי השורה התחתונה של כל נושא, ולחיצה פותחת פירוט (אותה מעטפת כמו פרטי המשתתף, חץ חזרה) */
+  const ST_TITLES = { main: 'סטטיסטיקות', money: 'כספים', promo: 'יחצנים ופרסום', demo: 'דמוגרפיה' };
+  let stCur = 'main';
+  function stView(v, instant) {
+    const forward = v !== 'main'; stCur = v;
+    document.querySelectorAll('#stBody [data-sp]').forEach((d) => { const on = d.dataset.sp === v; d.hidden = !on; d.classList.remove('enter-l', 'enter-r'); if (on && !instant && !reducedMotion()) { void d.offsetWidth; d.classList.add(forward ? 'enter-l' : 'enter-r'); } });
+    $('#stArrow').hidden = v === 'main'; $('#stTitle').textContent = ST_TITLES[v] || ST_TITLES.main;
+    const dlg = $('#stDlg'); dlg.scrollTop = 0;
+  }
+  $('#stArrow').addEventListener('click', () => stView('main'));
+  $('#stBody').addEventListener('click', (e) => { const b = e.target.closest('[data-topic]'); if (b) stView(b.dataset.topic); });
   function renderStats() {
-    const S = computeStats(), links = S.links;   // תמיד התמונה הכוללת של כל המפגשים
-    if (!links.length) { $('#stBody').innerHTML = '<div class="empty"><b>אין עדיין נתונים</b>כשיהיו הרשמות, הסטטיסטיקות יופיעו כאן</div>'; return; }
+    const S = computeStats(), links = S.links;
+    if (!links.length) { $('#stBody').innerHTML = '<div class="empty"><b>אין עדיין נתונים</b>כשיהיו הרשמות, הסטטיסטיקות יופיעו כאן</div>'; $('#stArrow').hidden = true; return; }
+    const ilsB = (n) => '<bdi dir="ltr">₪' + nfm(n) + '</bdi>';
+    const dlab = (m) => meetingLabel(m).split(' · ')[0];
+    const price = (l) => (l.st === 'paid' && l.paid_amount != null) ? Number(l.paid_amount) : priceAtReg(l.m, l.created_at);
+    const trend = (a, b) => { if (!(b > 0)) return ''; const ch = Math.round((a - b) / b * 100), up = ch >= 0; return '<span class="trend ' + (up ? 'up' : 'down') + '"><i>' + (up ? '▲' : '▼') + '</i><b>' + Math.abs(ch) + '%</b></span>'; };
+    const num = (v, label) => '<div><b>' + v + '</b><small>' + label + '</small></div>';
+    const topic = (key, title, tr, nums, hint) => '<button type="button" class="topic" data-topic="' + key + '"><div class="th"><b>' + title + '</b>' + (tr || '') + '</div><div class="tnums">' + nums + '</div><span class="tmore">' + (hint || 'פרטים') + ' ›</span></button>';
+    const tbl = (head, rows) => '<div class="tb"><div class="tr th2">' + head.map((h) => '<span>' + h + '</span>').join('') + '</div>' + rows.map((r) => '<div class="tr">' + r.map((c) => '<span>' + c + '</span>').join('') + '</div>').join('') + '</div>';
+    const part = (title, body) => '<section class="stp"><h4>' + title + '</h4>' + body + '</section>';
 
     const n = links.length, uniq = new Set(links.map((l) => l.participant_id)), people = [...uniq].map((id) => state.participants.find((x) => x.id === id));
-    const paid = links.filter((l) => l.st === 'paid'), req = links.filter((l) => l.st === 'requested'), unp = links.filter((l) => l.st === 'unpaid'), exm = links.filter((l) => l.st === 'exempt'), nPay = n - exm.length;   // nPay: הרשמות שמשלמים (בלי "לא משלם")
-    const price = (l) => (l.st === 'paid' && l.paid_amount != null) ? Number(l.paid_amount) : priceAtReg(l.m, l.created_at);
-    const comm = paid.reduce((s, l) => s + (l.commission != null ? Number(l.commission) : 0), 0);
-    const rev = paid.reduce((s, l) => s + price(l), 0), owed = [...req, ...unp].reduce((s, l) => s + price(l), 0);
-    const today = dnum(todayISO());
-    const waiting3 = links.filter((l) => (l.st === 'unpaid' || l.st === 'requested') && l.created_at && today - dnum(ilDay(l.created_at)) > 3);
-    const reqHours = req.concat(paid.filter((l) => l.pay_requested_at)).filter((l) => l.pay_requested_at && l.created_at).map((l) => (new Date(l.pay_requested_at) - new Date(l.created_at)) / 36e5).filter((h) => h >= 0);
-    const male = people.filter((p) => p.gender === 'male'), female = people.filter((p) => p.gender === 'female'), noG = people.length - male.length - female.length;
-    const ages = people.map(shownAge).filter((a) => a != null), target = ages.filter((a) => a >= 40 && a <= 49);
+    const paid = links.filter((l) => l.st === 'paid'), req = links.filter((l) => l.st === 'requested'), unp = links.filter((l) => l.st === 'unpaid'), exm = links.filter((l) => l.st === 'exempt'), nPay = n - exm.length;
+    const rev = paid.reduce((s, l) => s + price(l), 0), comm = state.payments.reduce((s, x) => s + (x.promoter_id && x.commission != null ? (x.kind === 'payment' ? 1 : -1) * Number(x.commission) : 0), 0), owed = req.reduce((s, l) => s + price(l), 0);
+    const pm = S.perMeeting.filter((r) => r.regs), last = pm[pm.length - 1], prev = pm[pm.length - 2];
+    const conv = P(paid.length, nPay);
+
+    // ----- כספים -----
+    const credit = state.participants.reduce((s, q) => s + Math.max(0, creditOf(q.id)), 0);
+    const refunds = state.payments.filter((x) => x.kind === 'refund').reduce((s, x) => s + Number(x.amount), 0);
+    const maxRev = Math.max(1, ...pm.map((r) => r.rev));
+    const money = part('הכנסה לפי מפגש', tbl(['מפגש', 'הכנסה', 'שילמו', 'מגמה'], pm.map((r, k) => [dlab(r.m), ilsB(r.rev), r.paid + '/' + (r.regs - r.ex), k ? trend(r.rev, pm[k - 1].rev) : '—']))) +
+      part('מצב תשלומים', '<div class="stkpis">' + kpi(paid.length, 'שילמו', Ps(paid.length, nPay), 'good') + kpi(req.length, 'בטיפול', ilsB(owed), 'warn') + kpi(unp.length, 'טרם טופלו', '', unp.length ? 'bad' : '') + kpi(exm.length, 'חינם', '') + '</div>') +
+      part('גבייה', tbl(['מדד', 'ערך'], [['המרה לתשלום', Ps(paid.length, nPay)], ['ממוצע לתשלום', paid.length ? ilsB(rev / paid.length) : '—'], ['נטו אחרי עמלות', ilsB(rev - comm)], ['עמלות ליחצנים', ilsB(comm)], ['קרדיט פתוח', ilsB(credit)], ['הוחזר', ilsB(refunds)]])) +
+      (() => { const byM = {}; paid.forEach((l) => { const k = ilDay(l.paid_at || l.created_at || new Date().toISOString()).slice(0, 7); byM[k] = (byM[k] || 0) + price(l); }); const ks = Object.keys(byM).sort(), mx = Math.max(1, ...ks.map((k) => byM[k])); return ks.length > 1 ? part('הכנסה לפי חודש', ks.map((k) => barRow(k.slice(5) + '/' + k.slice(2, 4), byM[k], mx, '#2F7D4F', ilsB(byM[k]))).join('')) : ''; })();
+
+    // ----- יחצנים ופרסום -----
+    const src = (l) => (l.promoter_id || (l.p && l.p.promoter_id)) ? 'promo' : l.p.source === 'site-ad' ? 'ad' : l.p.source === 'site' ? 'site' : 'other';
+    const adL = links.filter((l) => l.p.source === 'site-ad'), adPaid = adL.filter((l) => l.paid && !l.exempt);
+    const proRows = state.promoters.map((x) => { const L = ledgerOf(x.id), recs = state.payments.filter((q) => q.promoter_id === x.id), inc = recs.reduce((s, q) => s + (q.kind === 'payment' ? 1 : -1) * Number(q.amount), 0), cm = recs.reduce((s, q) => s + (q.kind === 'payment' ? 1 : -1) * (Number(q.commission) || 0), 0), cnt = recs.filter((q) => q.kind === 'payment').length; return { x, inc, cm, cnt, bal: L.balance }; });
+    const proOwed = proRows.reduce((s, r) => s + Math.max(0, r.bal), 0), proInc = proRows.reduce((s, r) => s + r.inc, 0);
+    const srcCount = (r, k) => links.filter((l) => l.meeting_id === r.m.id && src(l) === k).length;
+    const promo = part('נתונים עיקריים', '<div class="stkpis">' + kpi(ilsB(proInc), 'הכנסה דרך יחצנים', Ps(proInc, rev) + ' מההכנסה') + kpi(ilsB(proOwed), 'נשאר לשלם ליחצנים', '', proOwed ? 'warn' : '') + kpi(adL.length, 'נרשמו ממודעה', Ps(adL.length, n) + ' מההרשמות') + kpi(Ps(adPaid.length, adL.filter((l) => !l.exempt).length), 'המרה ממודעה', adPaid.length + ' שילמו') + '</div>') +
+      (proRows.length ? part('יחצנים', tbl(['יחצן', 'הכנסה', 'עמלה', 'יתרה'], proRows.map((r) => [esc(r.x.name), ilsB(r.inc), ilsB(r.cm), r.bal > 0 ? ilsB(r.bal) : '✓']))) : part('יחצנים', '<p class="sthint">עוד אין יחצנים. אפשר להוסיף באייקון המגפון</p>')) +
+      part('מקורות לפי מפגש', tbl(['מפגש', 'אתר', 'מודעה', 'יחצן', 'אחר'], pm.map((r) => [dlab(r.m), srcCount(r, 'site'), srcCount(r, 'ad'), srcCount(r, 'promo'), srcCount(r, 'other')])));
+
+    // ----- דמוגרפיה -----
+    const male = people.filter((q) => q.gender === 'male'), female = people.filter((q) => q.gender === 'female'), noG = people.length - male.length - female.length;
+    const ages = people.map(shownAge).filter((a) => a != null), avgAge = ages.length ? ages.reduce((a, b) => a + b, 0) / ages.length : 0, target = ages.filter((a) => a >= 40 && a <= 49);
+    const bucket = (lo, hi) => ages.filter((a) => a >= lo && a <= hi).length;
     const convBy = (pred) => { const ls = links.filter((l) => pred(l.p) && l.st !== 'exempt'); return { n: ls.length, paid: ls.filter((l) => l.paid).length }; };
-    const cM = convBy((p) => p.gender === 'male'), cF = convBy((p) => p.gender === 'female');
-    const src = (p) => p.source === 'site-ad' ? 'ad' : p.source === 'site' ? 'site' : 'other';
-    const SRC = { site: ['אתר (אורגני)', '#686A48'], ad: ['מודעה ממומנת', '#C96F52'], other: ['ידני או אחר', '#9A9A75'] };
-    const regs = links.filter((l) => l.created_at);
-    const last3 = regs.filter((l) => dnum(l.m.meeting_date) - dnum(ilDay(l.created_at)) <= 3);
-    const out = [];
+    const cM = convBy((q) => q.gender === 'male'), cF = convBy((q) => q.gender === 'female');
+    const demo = part('מגדר', barRow('נשים', female.length, people.length, '#C2547A') + barRow('גברים', male.length, people.length, '#3F6FB5') + (noG ? barRow('לא צוין', noG, people.length, '#B9B2A5') : '') +
+        tbl(['המרה לתשלום', 'ערך'], [['נשים', Ps(cF.paid, cF.n)], ['גברים', Ps(cM.paid, cM.n)]])) +
+      part('גילאים', barRow('עד 39', bucket(0, 39), ages.length, '#9A9A75') + barRow('40 עד 44', bucket(40, 44), ages.length, '#686A48') + barRow('45 עד 49', bucket(45, 49), ages.length, '#686A48') + barRow('50 ומעלה', bucket(50, 120), ages.length, '#B7791F') + '<p class="stline">בטווח היעד 40–49: <b>' + Ps(target.length, ages.length) + '</b> · גיל ממוצע <b>' + avgAge.toFixed(1) + '</b></p>') +
+      part('חדשים וחוזרים', tbl(['מפגש', 'חדשים', 'חוזרים', 'מגמה'], pm.map((r, k) => [dlab(r.m), r.news, r.ret, k ? trend(r.news + r.ret, pm[k - 1].news + pm[k - 1].ret) : '—'])));
 
-    // ---- תובנות: כל תובנה עם טבעת אחוז או תג מגמה, כותרת ופירוט ----
-    const ring = (pctVal, color) => { const v = Math.max(0, Math.min(100, pctVal || 0)); return '<span class="ring"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="none" stroke="rgba(63,56,47,.10)" stroke-width="6"/><circle cx="24" cy="24" r="20" fill="none" stroke="' + color + '" stroke-width="6" stroke-linecap="round" stroke-dasharray="' + (v * 1.2566).toFixed(1) + ' 125.7" transform="rotate(-90 24 24)"/></svg><b>' + (pctVal == null ? '—' : v + '%') + '</b></span>'; };
-    const insItem = (visual, title, detail) => '<li class="ins">' + visual + '<div class="itx"><b>' + title + '</b><span>' + detail + '</span></div></li>';
-    const ins = [];
-    ins.push(insItem(ring(P(paid.length, nPay), '#2F7D4F'), 'המרה לתשלום', paid.length + ' מתוך ' + nPay + ' הרשמות שולמו' + (exm.length ? ' (בלי ' + exm.length + ' שלא משלמים)' : '') + (waiting3.length ? '<br>' + waiting3.length + ' ממתינים מעל 3 ימים' : '')));
-    if (male.length + female.length) ins.push(insItem(ring(P(female.length, male.length + female.length), '#C2547A'), 'הרכב מגדרי', P(female.length, male.length + female.length) + '% נשים · ' + P(male.length, male.length + female.length) + '% גברים' + (cM.n && cF.n ? '<br>המרה: נשים ' + Ps(cF.paid, cF.n) + ' · גברים ' + Ps(cM.paid, cM.n) : '')));
-    if (ages.length) ins.push(insItem(ring(P(target.length, ages.length), '#686A48'), 'בטווח היעד 40–49', 'גיל ממוצע ' + (ages.reduce((a, b) => a + b, 0) / ages.length).toFixed(1) + ' · חציון ' + median(ages)));
-    if (regs.length >= 5) ins.push(insItem(ring(P(last3.length, regs.length), '#C96F52'), 'נרשמים ברגע האחרון', 'ב-3 הימים שלפני המפגש' + (last3.length / regs.length > .4 ? '<br>כדאי לחזק פרסום ותזכורות בימים האחרונים' : '')));
-    const adN = links.filter((l) => src(l.p) === 'ad').length;
-    if (adN) ins.push(insItem(ring(P(adN, n), '#B7791F'), 'מגיעים ממודעה ממומנת', 'המרה לתשלום ממודעות: ' + Ps(links.filter((l) => src(l.p) === 'ad' && l.paid).length, links.filter((l) => src(l.p) === 'ad' && l.st !== 'exempt').length)));
-    const pm = S.perMeeting.filter((r) => r.regs);
-    if (pm.length >= 2) { const a = pm[pm.length - 1], b = pm[pm.length - 2], ch = P(a.regs - b.regs, b.regs) || 0, up = a.regs >= b.regs;
-      ins.push(insItem('<span class="trend ' + (up ? 'up' : 'down') + '"><i>' + (up ? '▲' : '▼') + '</i><b>' + Math.abs(ch) + '%</b></span>', 'המפגש האחרון ' + (up ? 'בעלייה' : 'בירידה'), a.regs + ' נרשמים לעומת ' + b.regs + ' במפגש שלפניו')); }
-    out.push(sec('תובנות מרכזיות', '', '<ul class="insights">' + ins.join('') + '</ul>').replace('<section class="stsec">', '<section class="stsec flat">').replace(/<h3>.*?<\/h3>/, ''));
+    // ----- מסך ראשי: שורה תחתונה לכל נושא -----
+    const bottom = '<div class="stbottom"><div><b>' + ilsB(rev - comm) + '</b><small>הכנסה נטו</small></div><div><b>' + paid.length + '/' + nPay + '</b><small>שילמו</small></div><div><b>' + (conv == null ? '—' : conv + '%') + '</b><small>המרה</small></div></div>';
+    const main = bottom +
+      topic('money', 'כספים', last && prev ? trend(last.rev, prev.rev) : '', num(ilsB(rev), 'הכנסה') + num(ilsB(owed), 'בטיפול') + num(ilsB(credit), 'קרדיט')) +
+      topic('promo', 'יחצנים ופרסום', '', num(ilsB(proInc), 'דרך יחצנים') + num(adL.length, 'ממודעה') + num(ilsB(proOwed), 'לתשלום ליחצנים')) +
+      topic('demo', 'דמוגרפיה', last && prev ? trend(last.news, prev.news) : '', num(Ps(female.length, people.length), 'נשים') + num(avgAge ? avgAge.toFixed(0) : '—', 'גיל ממוצע') + num(Ps(target.length, ages.length), '40 עד 49'));
 
-    // ---- מדדים ראשיים ----
-    const kp = [];
-    kp.push(kpi(n, 'הרשמות', uniq.size + ' אנשים ייחודיים'));
-    const adLinks = links.filter((l) => src(l.p) === 'ad'), adPaidN = adLinks.filter((l) => l.st === 'paid').length;
-    kp.push(kpi(adLinks.length, 'הגיעו מפרסום ממומן', Ps(adLinks.length, n) + ' מההרשמות' + (adLinks.length ? ' · ' + adPaidN + ' שילמו' : '')));
-    kp.push(kpi(paid.length, 'שילמו', Ps(paid.length, nPay) + ' ממי שמשלמים', 'good'));
-    kp.push(kpi(req.length, 'בטיפול', Ps(req.length, nPay), 'warn'));
-    kp.push(kpi(unp.length, 'טרם טופלו', Ps(unp.length, nPay), unp.length ? 'bad' : ''));
-    if (exm.length) kp.push(kpi(exm.length, 'לא משלמים', Ps(exm.length, n) + ' מההרשמות (נרשמו בחינם)'));
-    if (comm) kp.push(kpi('₪' + nfm(comm), 'עמלות ליחצנים', 'נטו אחרי עמלות ₪' + nfm(rev - comm)));
-    kp.push(kpi('₪' + nfm(rev), 'הכנסה משוערת', 'חוב פתוח משוער ₪' + nfm(owed)));
-    kp.push(kpi(nfm(n / Math.max(1, pm.length)), 'ממוצע נרשמים למפגש', 'ממוצע ששילמו ' + (paid.length / Math.max(1, pm.length)).toFixed(1)));
-    out.push('<div class="stkpis">' + kp.join('') + '</div>');
-
-    // ---- המרה וגבייה ----
-    let conv = barRow(exm.length ? 'נרשמו (בלי לא משלמים)' : 'נרשמו', nPay, nPay, '#9A9A75') + barRow('בטיפול או שילמו', req.length + paid.length, nPay, '#B7791F') + barRow('שילמו', paid.length, nPay, '#2F7D4F');
-    conv += '<p class="stline">ממתינים לתשלום מעל 3 ימים: <b>' + waiting3.length + '</b>' + (reqHours.length ? ' · זמן ממוצע משליחת בקשה מההרשמה: <b>' + (reqHours.reduce((a, b) => a + b, 0) / reqHours.length < 48 ? (reqHours.reduce((a, b) => a + b, 0) / reqHours.length).toFixed(1) + ' שעות' : (reqHours.reduce((a, b) => a + b, 0) / reqHours.length / 24).toFixed(1) + ' ימים') + '</b>' : '') + '</p>';
-    out.push(sec('המרה וגבייה', 'כמה מהנרשמים הגיעו עד תשלום, והיכן "נתקעים"', conv));
-
-    // ---- קהל ----
-    let aud = barRow('נשים', female.length, people.length, '#C2547A') + barRow('גברים', male.length, people.length, '#3F6FB5') + (noG ? barRow('לא צוין', noG, people.length, '#B9B2A5') : '');
-    if (male.length && female.length) aud += '<p class="stline">יחס גברים:נשים <b>1:' + (female.length / male.length).toFixed(1) + '</b></p>';
-    const convRows = (cF.n ? barRow('המרה נשים', cF.paid, cF.n, '#C2547A') : '') + (cM.n ? barRow('המרה גברים', cM.paid, cM.n, '#3F6FB5') : '');
-    if (convRows) aud += '<p class="sthint" style="margin-top:10px">אחוז ששילמו מכל מין</p>' + convRows;
-    out.push(sec('הרכב הקהל לפי מגדר', 'אנשים ייחודיים בטווח הנבחר', aud));
-    if (ages.length) {
-      const bk = [['עד 39', (a) => a < 40], ['40 עד 44', (a) => a >= 40 && a < 45], ['45 עד 49', (a) => a >= 45 && a < 50], ['50 ומעלה', (a) => a >= 50]];
-      let ag = bk.map(([l, f]) => barRow(l, ages.filter(f).length, ages.length, l === '50 ומעלה' || l === 'עד 39' ? '#B9B2A5' : '#686A48')).join('');
-      ag += '<p class="stline">גיל ממוצע <b>' + (ages.reduce((a, b) => a + b, 0) / ages.length).toFixed(1) + '</b> · חציון <b>' + median(ages) + '</b> · טווח <b>' + Math.min(...ages) + '–' + Math.max(...ages) + '</b> · בטווח היעד 40–49: <b>' + Ps(target.length, ages.length) + '</b></p>';
-      out.push(sec('גילאים', 'האם אנחנו מגיעים לקהל היעד', ag));
-    }
-
-    // ---- מקורות ----
-    const sk = ['site', 'ad', 'other'].map((k) => { const ls = links.filter((l) => src(l.p) === k); return { k, n: ls.length, nx: ls.filter((l) => l.st !== 'exempt').length, paid: ls.filter((l) => l.paid).length }; });
-    out.push(sec('מקורות הגעה', 'איפה נרשמים ואיזה מקור נסגר בתשלום', sk.map((x) => barRow(SRC[x.k][0], x.n, n, SRC[x.k][1], 'שילמו ' + Ps(x.paid, x.nx))).join('')));
-
-    // ---- מתי נרשמים ----
-    if (regs.length) {
-      const wd = [0, 1, 2, 3, 4, 5, 6].map((d) => ({ l: HE_DAYS[d].slice(0, 3), v: regs.filter((l) => wdayOf(dnum(ilDay(l.created_at))) === d).length }));
-      const tb = [['בוקר 6 עד 12', (h) => h >= 6 && h < 12], ['צהריים 12 עד 17', (h) => h >= 12 && h < 17], ['ערב 17 עד 22', (h) => h >= 17 && h < 22], ['לילה 22 עד 6', (h) => h >= 22 || h < 6]];
-      out.push(sec('מתי נרשמים', 'ימי השבוע ושעות היום (שעון ישראל), לתזמון פרסום והודעות', colsChart(wd, '#686A48') + tb.map(([l, f]) => barRow(l, regs.filter((x) => f(ilHour(x.created_at))).length, regs.length, '#9A9A75')).join('')));
-    }
-
-    // ---- ציר זמן ----
-    {
-      const pmr = S.perMeeting.filter((r) => r.regs);
-
-      // הרשמות לפי יום על ציר הזמן (ימי מפגש בסגול)
-      const byDay = new Map(); regs.forEach((x) => { const d = dnum(ilDay(x.created_at)); byDay.set(d, (byDay.get(d) || 0) + 1); });
-      if (byDay.size) {
-        const lastD = Math.max(dnum(todayISO()), ...byDay.keys()), from = Math.max(Math.min(...byDay.keys()), lastD - 44);
-        const mdays = new Set(S.asc.map((m) => dnum(m.meeting_date))), dl = (d) => { const x = new Date(d * 864e5); return x.getUTCDate() + '.' + (x.getUTCMonth() + 1); };
-        const items = []; for (let d = from; d <= lastD; d++) items.push({ l: ((d - from) % 6 === 0 || mdays.has(d)) ? dl(d) : '', v: byDay.get(d) || 0, color: mdays.has(d) ? '#663F4C' : '#C96F52', dense: true });
-        const total = items.reduce((s, x) => s + x.v, 0), peak = items.slice().sort((a, b) => b.v - a.v)[0];
-        out.push(sec('הרשמות לאורך זמן', 'כל יום, עד 45 הימים האחרונים. בסגול: ימי מפגש', colsChart(items, '#C96F52', true) + '<p class="stline">' + total + ' הרשמות בתקופה, ממוצע <b>' + (total / items.length).toFixed(1) + '</b> ליום' + (peak && peak.v ? ' · היום החזק: <b>' + peak.l.replace(/^$/, '') + '</b>' : '') + '</p>'));
-      }
-      // קצב הרשמה מצטבר לפני כל מפגש, מונח זה על זה
-      const curves = pmr.map((r) => { const ls = regs.filter((x) => x.meeting_id === r.m.id); const arr = []; for (let d = 14; d >= 0; d--) arr.push(ls.filter((x) => dnum(r.m.meeting_date) - dnum(ilDay(x.created_at)) >= d).length); return { r, arr }; }).filter((c) => c.arr[14] > 0);
-      if (curves.length) {
-        const W = 320, H = 130, maxY = Math.max(...curves.map((c) => c.arr[14])), COL = ['#C96F52', '#3F6FB5', '#686A48', '#C2547A', '#B7791F', '#663F4C'];
-        const X = (i) => (W - 6) - (i / 14) * (W - 12), Y = (v) => H - 4 - (v / maxY) * (H - 12);   // ימין = 14 ימים לפני, שמאל = יום המפגש
-        const lines = curves.map((c, k) => '<polyline fill="none" stroke="' + COL[(curves.length - 1 - k) % COL.length] + '" stroke-width="' + (k === curves.length - 1 ? 3.2 : 2) + '" stroke-linecap="round" stroke-linejoin="round" points="' + c.arr.map((v, i) => X(i).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ') + '"/>').join('');
-        const grid = [0, .5, 1].map((f) => '<line x1="0" x2="' + W + '" y1="' + Y(maxY * f).toFixed(1) + '" y2="' + Y(maxY * f).toFixed(1) + '" stroke="rgba(63,56,47,.12)"/>').join('');
-        const legend = curves.map((c, k) => '<span style="display:inline-flex;align-items:center;gap:5px;margin:4px 0 0 12px"><i style="width:14px;height:4px;border-radius:2px;background:' + COL[(curves.length - 1 - k) % COL.length] + '"></i>' + esc(dm(c.r.m)) + ' <b>' + c.arr[14] + '</b></span>').join('');
-        out.push(sec('קצב ההרשמה לפני כל מפגש', 'הרשמות מצטברות לפי ימים שנותרו עד המפגש. רואים אם ההרשמה מתחילה מוקדם או מאוחר יותר ממפגש למפגש', '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;direction:ltr" role="img" aria-label="קצב הרשמה">' + grid + lines + '</svg><div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted)"><span>יום המפגש</span><span>14 ימים לפני</span></div><div>' + legend + '</div>'));
-      }
-      let tb = '<table class="sttable"><tr><th>מפגש</th><th>נרשמו</th><th>ממומן</th><th>שילמו</th><th>המרה</th><th>חדשים/חוזרים</th><th>הכנסה</th></tr>' +
-        pmr.slice().reverse().map((r, i, arr) => { const b = arr[i + 1]; const tr = b ? (r.regs > b.regs ? ' <span class="up">▲</span>' : r.regs < b.regs ? ' <span class="down">▼</span>' : '') : ''; return '<tr><td>' + esc(dm(r.m)) + '</td><td class="num">' + r.regs + tr + '</td><td class="num">' + r.ad + '</td><td class="num">' + r.paid + '</td><td class="num">' + Ps(r.paid, r.regs - r.ex) + '</td><td class="num">' + r.news + '/' + r.ret + '</td><td class="num">₪' + nfm(r.rev) + '</td></tr>'; }).join('') + '</table>';
-      out.push(sec('המפגשים לאורך זמן', 'כל מפגש, מהחדש לישן. החצים משווים למפגש הקודם', colsChart(pmr.map((r) => ({ l: dm(r.m), v: r.regs })), '#686A48') + tb));
-      // נאמנות
-      const per = new Map(); S.all.forEach((l) => per.set(l.participant_id, (per.get(l.participant_id) || 0) + 1));
-      const rep2 = [...per.values()].filter((c) => c >= 2).length;
-      const kept = pmr.filter((r) => r.prevN);
-      out.push(sec('נאמנות וחזרה', 'האם אנשים חוזרים ממפגש למפגש', barRow('נרשמו ליותר ממפגש אחד', rep2, per.size, '#3F6FB5') + '<p class="stline">ממוצע מפגשים לאדם: <b>' + (S.all.length / Math.max(1, per.size)).toFixed(2) + '</b>' + (kept.length ? ' · שימור ממוצע בין מפגשים עוקבים: <b>' + Ps(kept.reduce((a, r) => a + r.kept, 0), kept.reduce((a, r) => a + r.prevN, 0)) + '</b>' : '') + '</p>' +
-        colsChart(pmr.map((r) => ({ l: dm(r.m), v: r.ret, color: '#3F6FB5' })), '#3F6FB5') + '<p class="sthint">כחול: חוזרים לכל מפגש. החדשים: ' + pmr.map((r) => dm(r.m) + ' ' + r.news).join(' · ') + '</p>'));
-      // צמיחה שבועית
-      const wk = (arr, f) => { const m = new Map(); arr.forEach((x) => { const dn = dnum(ilDay(f(x))); const ws = dn - wdayOf(dn); m.set(ws, (m.get(ws) || 0) + 1); }); return m; };
-      const wp = wk(state.participants.filter((x) => x.created_at), (x) => x.created_at), wl = wk(regs, (x) => x.created_at);
-      const keys = [...new Set([...wp.keys(), ...wl.keys()])].sort((a, b) => a - b); const lastK = keys.slice(-12);
-      if (lastK.length) {
-        const wl2 = lastK.map((k) => ({ l: (() => { const d = new Date(k * 864e5); return d.getUTCDate() + '.' + (d.getUTCMonth() + 1); })(), v: wp.get(k) || 0 }));
-        let cum = 0; const tot = state.participants.length;
-        out.push(sec('צמיחה שבועית', 'אנשים חדשים במאגר בכל שבוע (תחילת שבוע, יום ראשון)', colsChart(wl2, '#C96F52') + '<p class="stline">סה"כ אנשים במאגר: <b>' + tot + '</b> · ' + 'בשבוע האחרון: <b>' + (wp.get(keys[keys.length - 1]) || 0) + '</b></p>'));
-      }
-    }
-
-    // ---- איכות נתונים ----
-    const allP = state.participants;
-    out.push(sec('איכות נתונים', 'כמה מהמאגר מלא', barRow('עם מגדר', allP.filter((p) => p.gender).length, allP.length, '#686A48') + barRow('עם גיל', allP.filter((p) => p.age != null).length, allP.length, '#686A48') + barRow('עם טלפון', allP.filter((p) => p.phone).length, allP.length, '#686A48')));
-    $('#stBody').innerHTML = out.join('');
+    $('#stBody').innerHTML = '<div class="ppanel" data-sp="main">' + main + '</div><div class="ppanel" data-sp="money" hidden>' + money + '</div><div class="ppanel" data-sp="promo" hidden>' + promo + '</div><div class="ppanel" data-sp="demo" hidden>' + demo + '</div>';
+    stView('main', true);
   }
   $('#statsBtn').addEventListener('click', () => { renderStats(); $('#stDlg').showModal(); syncUrl(); });
   $('#stDlg').addEventListener('close', syncUrl);
