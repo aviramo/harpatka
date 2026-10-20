@@ -379,6 +379,9 @@
     .pmv .w small { display: block; color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; }
     .pmv .a { font-weight: 800; font-variant-numeric: tabular-nums; text-align: left; }
     .pmv .a.c { color: var(--terra); } .pmv .a.p { color: var(--green); } .pmv .a.r { color: var(--red); }
+    .paychip { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 999px; margin: 0 0 10px; font-weight: 800; font-size: 14.5px; background: rgba(201,111,82,.14); color: #A9533A; }
+    .paychip.ok { background: var(--green-bg); color: var(--green); }
+    .paychip[hidden] { display: none; }
     .pmv.ph { grid-template-columns: 52px minmax(0, 1fr) auto; }
     .pmv .bl { color: var(--muted); font-size: 13px; text-align: left; font-variant-numeric: tabular-nums; }
     .pmv .x { grid-column: 1 / -1; }
@@ -563,14 +566,15 @@
         <button type="button" class="hbtn hback" id="pBack" aria-label="חזרה" title="חזרה" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
         <h2 id="pTitle">משתתף חדש</h2>
         <div id="pMsgs"></div>
+        <button type="button" class="hbtn" id="pPayBtn" aria-label="תשלומים והחזרים" title="תשלומים והחזרים" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18M16 14.5h2"/></svg></button>
         <button type="button" class="hbtn hinfo" id="pInfoBtn" aria-label="פרטי המשתתף" title="פרטי המשתתף" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.8-3.6 3.7-5.5 7-5.5s6.2 1.9 7 5.5"/></svg></button>
         <span class="saved" id="savedMark">נשמר ✓</span>
       </div>
       <div class="ppanel" data-panel="main">
+        <button type="button" class="paychip" id="pPayChip" hidden></button>
         <div class="clabel">מפגשים</div>
         <div class="mlist" id="pMeetings"></div>
         <button type="button" class="more" id="pMore" hidden>טען עוד</button>
-        <div id="pPayHistWrap" hidden><div class="clabel">תשלומים והחזרים</div><div id="pPayHist"></div></div>
         <div class="clabel">הערות</div>
         <div class="nform">
           <textarea id="nText" rows="1" maxlength="1000" enterkeyhint="send" aria-label="הערה חדשה" placeholder="הערה חדשה, אנטר לשמירה"></textarea>
@@ -580,6 +584,11 @@
           <button type="button" id="nAdd" hidden aria-hidden="true" tabindex="-1">הוספה</button>
         </div>
         <div id="nList"></div>
+      </div>
+      <div class="ppanel" data-panel="pay" hidden>
+        <div class="prsum" id="pPaySum"></div>
+        <div class="clabel">תשלומים והחזרים</div>
+        <div id="pPayHist"></div>
       </div>
       <div class="ppanel" data-panel="info" hidden>
         <div class="name-row">
@@ -1739,14 +1748,16 @@
     document.querySelectorAll('#pDlg [data-panel]').forEach((d) => {
       const show = d.dataset.panel === tab; d.hidden = !show;
       d.classList.remove('enter-l', 'enter-r');
-      if (show && !instant && prev !== tab && !reducedMotion()) { void d.offsetWidth; d.classList.add(tab === 'info' ? 'enter-l' : 'enter-r'); }
+      if (show && !instant && prev !== tab && !reducedMotion()) { void d.offsetWidth; d.classList.add(tab !== 'main' ? 'enter-l' : 'enter-r'); }
     });
     const ex = !!(sheet && sheet.id);
-    $('#pBack').hidden = !(ex && tab === 'info'); $('#pInfoBtn').hidden = !(ex && tab === 'main'); $('#pMsgs').hidden = tab !== 'main';
+    $('#pBack').hidden = !(ex && tab !== 'main'); $('#pInfoBtn').hidden = !(ex && tab === 'main'); $('#pPayBtn').hidden = !(ex && tab === 'main'); $('#pMsgs').hidden = tab !== 'main';
     if (tab === 'main') { renderContact(); renderNotes(); }
     syncUrl();
   }
   $('#pInfoBtn').addEventListener('click', () => setPTab('info'));
+  $('#pPayBtn').addEventListener('click', () => setPTab('pay'));
+  $('#pPayChip').addEventListener('click', () => setPTab('pay'));
   $('#pBack').addEventListener('click', () => setPTab('main'));
 
   /* מעטפת אחת לכל הפופאפים (משתתף, מפגש, סטטיסטיקה, אישור): עולים מלמטה, נסגרים באנימציה,
@@ -1898,9 +1909,16 @@
     const desc = state.meetings.slice().sort((a, b) => (b.meeting_date + b.meeting_time).localeCompare(a.meeting_date + a.meeting_time)), shown = desc.slice(0, mLimit);
     $('#pMore').hidden = desc.length <= mLimit;
     { const hist = sheet.id ? state.payments.filter((x) => x.participant_id === sheet.id).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))) : [];
-      $('#pPayHistWrap').hidden = !hist.length;
-      $('#pPayHist').innerHTML = hist.map((x) => { const m = state.meetings.find((q) => q.id === x.meeting_id), pr = promoterOf(x.promoter_id), isR = x.kind === 'refund';
-        return '<div class="pmv ph"><span class="d">' + fmtD(ilDay(x.created_at)) + '</span><span class="w">' + (isR ? 'החזר תשלום' : 'תשלום') + (m ? ' · מפגש ' + esc(meetingLabel(m).split(' · ')[0]) : '') + (pr ? '<small>יחצן: ' + esc(pr.name) + (x.commission ? ' · עמלה ₪' + nfm(x.commission) : '') + '</small>' : '') + '</span><span class="a ' + (isR ? 'r' : 'p') + '"><bdi dir="ltr">' + (isR ? '−' : '+') + nfm(x.amount) + '</bdi></span></div>'; }).join(''); }
+      /* סיכום כספי של המשתתף: שולם נטו (תשלומים פחות החזרים), הוחזר, ומה שנשאר לשלם (מפגשים רשומים שלא שולמו, לפי המחיר הנוכחי) */
+      const paidSum = hist.filter((x) => x.kind === 'payment').reduce((s, x) => s + Number(x.amount), 0), refSum = hist.filter((x) => x.kind === 'refund').reduce((s, x) => s + Number(x.amount), 0);
+      const owed = sheet.id ? linksOf(sheet.id).filter((l) => !l.paid && !l.exempt).reduce((s, l) => { const m = state.meetings.find((q) => q.id === l.meeting_id); return s + (m ? defaultPrice(m) : PRICE_EARLY); }, 0) : 0;
+      const chip = $('#pPayChip');
+      chip.hidden = !sheet.id || (!owed && !hist.length);
+      chip.className = 'paychip' + (owed ? '' : ' ok');
+      chip.textContent = owed ? 'נשאר לשלם ₪' + nfm(owed) : 'מסולק · שולם ₪' + nfm(paidSum - refSum);
+      $('#pPaySum').innerHTML = '<div><small>שולם (נטו)</small><b>' + ils(paidSum - refSum) + '</b></div><div><small>הוחזר</small><b>' + ils(refSum) + '</b></div><div class="bal' + (owed ? '' : ' ok') + '"><small>' + (owed ? 'נשאר לשלם' : 'מסולק') + '</small><b>' + ils(owed) + '</b></div>';
+      $('#pPayHist').innerHTML = hist.length ? hist.map((x) => { const m = state.meetings.find((q) => q.id === x.meeting_id), pr = promoterOf(x.promoter_id), isR = x.kind === 'refund';
+        return '<div class="pmv ph"><span class="d">' + fmtD(ilDay(x.created_at)) + '</span><span class="w">' + (isR ? 'החזר תשלום' : 'תשלום') + (m ? ' · מפגש ' + esc(meetingLabel(m).split(' · ')[0]) : '') + (pr ? '<small>יחצן: ' + esc(pr.name) + (x.commission ? ' · עמלה ₪' + nfm(x.commission) : '') + '</small>' : '') + '</span><span class="a ' + (isR ? 'r' : 'p') + '"><bdi dir="ltr">' + (isR ? '−' : '+') + nfm(x.amount) + '</bdi></span></div>'; }).join('') : '<p class="mnone">עוד אין תשלומים או החזרים</p>'; }
     box.innerHTML = shown.map((m) => {
       let on, st;
       if (sheet.id) { const l = linkOf(sheet.id, m.id); on = !!l; st = l ? linkStatus(l) : 'unpaid'; }
