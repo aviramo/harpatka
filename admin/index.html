@@ -1421,7 +1421,7 @@
     return { rows: all.reverse(), accrued, paid, balance: accrued - paid };
   }
   function renderPromoters() {
-    $('#prList').innerHTML = (state.promoters.length ? state.promoters.map((x) => { const L = ledgerOf(x.id), rt = x.rate_type === 'percent' ? Number(x.rate) + '% מהתשלום' : '₪' + Number(x.rate) + ' למשתתף'; return '<div class="prrow" data-pr="' + x.id + '" role="button" tabindex="0"><div><b>' + esc(x.name) + '</b><small>עמלה ' + rt + ' · ' + L.rows.filter((r) => r.kind === 'c').length + ' תשלומים</small></div>' + (L.balance > 0 ? '<span class="prearn" title="יתרה לתשלום ליחצן">' + ils(L.balance) + '<small>לתשלום</small></span>' : '<span class="prok">מסולק ✓</span>') + '</div>'; }).join('')
+    $('#prList').innerHTML = (state.promoters.length ? state.promoters.map((x) => { const L = ledgerOf(x.id), brought = state.participants.filter((q) => q.promoter_id === x.id), rt = x.rate_type === 'percent' ? Number(x.rate) + '% מהתשלום' : '₪' + Number(x.rate) + ' למשתתף'; return '<div class="prrow" data-pr="' + x.id + '" role="button" tabindex="0"><div><b>' + esc(x.name) + '</b><small>עמלה ' + rt + '</small><small>' + brought.length + ' משתתפים · ' + brought.filter((q) => linksOf(q.id).some((l) => l.paid && !l.exempt)).length + ' שילמו</small></div>' + (L.balance > 0 ? '<span class="prearn" title="יתרה לתשלום ליחצן">' + ils(L.balance) + '<small>לתשלום</small></span>' : '<span class="prok">מסולק ✓</span>') + '</div>'; }).join('')
       : '<p class="mnone">עוד אין יחצנים. אפשר להוסיף יחצן עם עמלה קבועה בשקלים או באחוזים מהתשלום</p>') + '<button type="button" class="prnew" id="prNew">+ יחצן חדש</button>';
   }
   let prView = '#prList';
