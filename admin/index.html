@@ -613,6 +613,7 @@
           <label class="field"><span>סכום ששולם (₪)</span><input name="pay_amount" type="number" inputmode="decimal" min="0" step="any" /></label>
           <div class="pquick" id="payQuick"></div>
         </div>
+        <button type="button" class="promolink" id="creditToggle" hidden aria-pressed="false"></button>
         <button type="button" class="promolink" id="promoToggle">+ דרך יחצן</button>
         <div class="payact"><button class="btn" id="paySave" type="button">שמירה</button></div>
       </div>
@@ -623,7 +624,7 @@
       </div>
       <div class="ppanel" data-panel="refund" hidden>
         <p id="refundText" style="margin:2px 0 16px;line-height:1.55"></p>
-        <div class="payact"><button class="btn" id="refundYes" type="button">כן, להחזיר תשלום</button><button class="btn ghost" id="refundNo" type="button" style="color:var(--muted)">ביטול</button></div>
+        <div class="payact" style="flex-direction:column"><button class="btn" id="refundYes" type="button">להחזיר תשלום</button><button class="btn" id="creditYes" type="button" style="background:#686A48">להשאיר כקרדיט (בלי להחזיר כסף)</button><button class="btn ghost" id="refundNo" type="button" style="color:var(--muted)">ביטול</button></div>
       </div>
       <div class="ppanel" data-panel="info" hidden>
         <div class="name-row">
@@ -712,6 +713,7 @@
       <h2 id="cTitle" style="margin-bottom:6px"></h2>
       <p id="cText" style="color:var(--muted);margin:0 0 16px"></p>
       <button class="btn" id="cYes" type="button">אישור</button>
+      <button class="btn ghost" id="cAlt" type="button" hidden>אפשרות נוספת</button>
       <button class="btn ghost" id="cNo" type="button" style="color:var(--muted)">ביטול</button>
     </form>
   </dialog>
@@ -952,6 +954,8 @@
   /* מחיר ברירת מחדל לפי מועד התשלום: 80 ₪ עד יומיים לפני ההתייקרות, ומשלושה ימים לפני המפגש 100 ₪ */
   const PRICE_EARLY = 80, PRICE_LATE = 100;
   const defaultPrice = (m, iso) => { const d = new Date(m.meeting_date + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() - 3); return (iso || todayISO()) < d.toISOString().slice(0, 10) ? PRICE_EARLY : PRICE_LATE; };
+  /* קרדיט משתתף: סכומים שנשארו אצלנו בביטול בלי החזר כסף, פחות מה ששימש לתשלום חדש */
+  const creditOf = (pid) => state.payments.filter((x) => x.participant_id === pid).reduce((s, x) => s + (x.kind === 'credit' ? Number(x.amount) : (x.kind === 'payment' && x.from_credit ? -Number(x.amount) : 0)), 0);
   const promoterOf = (id) => state.promoters.find((x) => x.id === id);
   const rateLabel = (pr) => pr ? (pr.rate_type === 'percent' ? Number(pr.rate) + '%' : '₪' + Number(pr.rate)) : '';
   const calcCommission = (pr, amount) => { if (!pr) return ''; const v = pr.rate_type === 'percent' ? Math.round((Number(amount) || 0) * Number(pr.rate)) / 100 : Number(pr.rate); return Number.isFinite(v) ? v : ''; };
@@ -1383,12 +1387,13 @@
 
   /* ---------- אישור לפני שינוי: סטטוס תשלום, הוספה למפגש והסרה ממנו ---------- */
   const nameB = (n) => '<b style="color:var(--ink);font-weight:800">' + esc(n) + '</b>';   // שם מודגש בפופאפים
-  function confirmAct(title, pid, mid, fn, extraHtml, yesLabel) {
+  function confirmAct(title, pid, mid, fn, extraHtml, yesLabel, alt) {
     const p = state.participants.find((x) => x.id === pid), m = state.meetings.find((x) => x.id === mid);
     $('#cTitle').textContent = title;
     $('#cText').innerHTML = nameB(p ? p.name : '') + ' · ' + esc(m ? meetingLabel(m, true) : '') + (extraHtml ? '<br><br>' + extraHtml : '');
     $('#cYes').textContent = yesLabel || 'אישור';
     const dlg = $('#cDlg');
+    $('#cAlt').hidden = !alt; if (alt) { $('#cAlt').textContent = alt.label; $('#cAlt').onclick = () => { dlg.close(); alt.fn(); }; }
     $('#cYes').onclick = () => { dlg.close(); fn(); };
     $('#cNo').onclick = () => dlg.close();
     dlg.showModal();
@@ -1409,8 +1414,9 @@
     setPTab('status');
   }
   function openRefundView(pid, mid, st) {
-    $('#refundText').innerHTML = refundNote(pid, mid);
-    $('#refundYes').onclick = () => { setPayStatus(pid, mid, st); toMain(); };
+    $('#refundText').innerHTML = refundNote(pid, mid) + '<br><br>או: <b>לא להחזיר כסף</b>, והסכום יישאר כקרדיט למשתתף לתשלום על מפגש אחר.';
+    $('#refundYes').onclick = () => { setPayStatus(pid, mid, st, null, { mode: 'refund' }); toMain(); };
+    $('#creditYes').onclick = () => { setPayStatus(pid, mid, st, null, { mode: 'credit' }); toMain(); };
     $('#refundNo').onclick = () => setPTab(viewStack.pop() || 'main');
     goView('refund');
   }
@@ -1420,8 +1426,8 @@
     return 'המערכת תבצע <b>החזרה של תשלום בסך ₪' + nfm(amt) + '</b>. תירשם רשומת החזר ביומן התשלומים' + (pr && l.commission ? ', והעמלה ליחצן ' + esc(pr.name) + ' (₪' + nfm(l.commission) + ') תבוטל' : '') + '.';
   }
   function confirmRefund(pid, mid, fn) { confirmAct('החזרת תשלום', pid, mid, fn, refundNote(pid, mid), 'כן, להחזיר תשלום'); }
-  $('#cDlg').addEventListener('close', () => { $('#cYes').textContent = 'אישור'; });
-  const confirmLink = (pid, mid, on, after) => (!on && (linkOf(pid, mid) || {}).paid && !(linkOf(pid, mid) || {}).exempt) ? confirmAct('הסרה מהמפגש והחזרת תשלום', pid, mid, () => { setLinked(pid, mid, false); if (after) after(); }, refundNote(pid, mid), 'כן, להסיר ולהחזיר') : confirmAct(on ? 'להוסיף למפגש?' : 'להסיר מהמפגש?', pid, mid, () => { setLinked(pid, mid, on); if (after) after(); });
+  $('#cDlg').addEventListener('close', () => { $('#cYes').textContent = 'אישור'; $('#cAlt').hidden = true; });
+  const confirmLink = (pid, mid, on, after) => (!on && (linkOf(pid, mid) || {}).paid && !(linkOf(pid, mid) || {}).exempt) ? confirmAct('הסרה מהמפגש: מה עם התשלום?', pid, mid, () => { setLinked(pid, mid, false, 'refund'); if (after) after(); }, refundNote(pid, mid) + '<br><br>אפשר גם להשאיר את הסכום כקרדיט למשתתף, בלי להחזיר כסף.', 'הסר והחזר תשלום', { label: 'הסר ושמור קרדיט (בלי החזר)', fn: () => { setLinked(pid, mid, false, 'credit'); if (after) after(); } }) : confirmAct(on ? 'להוסיף למפגש?' : 'להסיר מהמפגש?', pid, mid, () => { setLinked(pid, mid, on); if (after) after(); });
 
   /* סימון הגעה למפגש (זמן אמת: מעדכן מיד, נשמר ומתעדכן אצל כולם) */
   /* יחצנים: רשימה עם יתרה, דף התחשבנות לכל יחצן (עמלות שנצברו מול תשלומים ליחצן), הוספה, עריכה ומחיקה */
@@ -1431,8 +1437,8 @@
   /* תנועות היחצן: עמלות שנצברו (חיובי, אנחנו חייבים) ותשלומים אליו (שלילי), עם יתרה מצטברת */
   function ledgerOf(id) {
     const acc = state.payments.filter((x) => x.promoter_id === id && x.commission != null && Number(x.commission) > 0).map((x) => {
-      const pp = state.participants.find((q) => q.id === x.participant_id), m = state.meetings.find((q) => q.id === x.meeting_id), isR = x.kind === 'refund';
-      return { kind: isR ? 'r' : 'c', date: ilDay(x.created_at), amount: (isR ? -1 : 1) * Number(x.commission), who: pp ? pp.name : '', sub: (isR ? 'החזר תשלום · ' : '') + (m ? 'מפגש ' + meetingLabel(m).split(' · ')[0] + ' · ' : '') + (isR ? 'הוחזר ' : 'שילם ') + Number(x.amount), key: x.id };
+      const pp = state.participants.find((q) => q.id === x.participant_id), m = state.meetings.find((q) => q.id === x.meeting_id), isR = x.kind === 'refund' || x.kind === 'credit';
+      return { kind: isR ? 'r' : 'c', date: ilDay(x.created_at), amount: (isR ? -1 : 1) * Number(x.commission), who: pp ? pp.name : '', sub: (isR ? (x.kind === 'credit' ? 'ביטול לקרדיט · ' : 'החזר תשלום · ') : '') + (m ? 'מפגש ' + meetingLabel(m).split(' · ')[0] + ' · ' : '') + (isR ? 'הוחזר ' : 'שילם ') + Number(x.amount), key: x.id };
     });
     const pays = state.promoPays.filter((x) => x.promoter_id === id).map((x) => ({ kind: 'p', date: x.paid_at, amount: -Number(x.amount), who: 'תשלום ליחצן', sub: x.note || '', id: x.id, key: x.id }));
     const all = acc.concat(pays).sort((a, b) => String(a.date).localeCompare(String(b.date)) || (a.kind === 'c' ? -1 : 1));
@@ -1539,6 +1545,12 @@
     const label = () => { const pr = promoterOf(f.pay_promoter.value); $('#promoToggle').textContent = pr ? 'יחצן: ' + pr.name + (f.pay_commission.value !== '' ? ' · עמלה ₪' + f.pay_commission.value : '') + ' (עריכה)' : '+ דרך יחצן'; };
     label();
     $('#promoToggle').onclick = () => goView('promo');
+    /* קרדיט קיים: כפתור "שימוש בקרדיט" משלם (גם) מהקרדיט שנשאר מביטול קודם */
+    const credit = creditOf(pid); let useCredit = false;
+    const ct = $('#creditToggle'); ct.hidden = !(credit > 0);
+    const paintCredit = () => { ct.textContent = useCredit ? '✓ משלם מהקרדיט (₪' + nfm(credit) + ' זמין)' : 'שימוש בקרדיט: ₪' + nfm(credit) + ' זמין'; ct.classList.toggle('on', useCredit); };
+    paintCredit();
+    ct.onclick = () => { useCredit = !useCredit; if (useCredit) { f.pay_amount.value = Math.min(credit, parseFloat(f.pay_amount.value) || credit); recalc(); } paintCredit(); };
     $('#promoOk').onclick = () => { label(); setPTab(viewStack.pop() || 'pay'); };
     $('#payQuick').innerHTML = [PRICE_EARLY, PRICE_LATE].map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
     const recalc = () => { if (!dirty) f.pay_commission.value = calcCommission(promoterOf(f.pay_promoter.value), f.pay_amount.value); label(); };
@@ -1553,13 +1565,14 @@
     const save = () => {
       const amt = parseFloat(f.pay_amount.value); if (!(amt >= 0)) { f.pay_amount.focus(); return; }
       const pr = f.pay_promoter.value || null, cm = pr && f.pay_commission.value !== '' ? parseFloat(f.pay_commission.value) : null;
-      setPayStatus(pid, mid, 'paid', { paid_amount: amt, promoter_id: pr, commission: Number.isFinite(cm) ? cm : null, paid_at: l.paid_at || new Date().toISOString() });
+      const fromCredit = useCredit && credit > 0, amtFinal = fromCredit ? Math.min(amt, credit) : amt;
+      setPayStatus(pid, mid, 'paid', { paid_amount: amtFinal, promoter_id: pr, commission: Number.isFinite(cm) ? cm : null, paid_at: l.paid_at || new Date().toISOString() }, { fromCredit });
       toMain();
     };
     $('#paySave').onclick = save;
     goView('pay');
   }
-  async function setPayStatus(pid, mid, st, extra) {
+  async function setPayStatus(pid, mid, st, extra, opts) {
     const l = linkOf(pid, mid);
     if (!l) return;
     const prev = { paid: l.paid, pay_requested_at: l.pay_requested_at, exempt: l.exempt, paid_amount: l.paid_amount, promoter_id: l.promoter_id, commission: l.commission, paid_at: l.paid_at };
@@ -1569,23 +1582,24 @@
     try {
       await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body });
     } catch (err) { Object.assign(l, prev); render(); refreshSheetMeetings(); fail(err); return; }
-    try { await recordLedger(pid, mid, prev, st, extra); } catch (err) { fail(err); }
+    try { await recordLedger(pid, mid, prev, st, extra, opts); } catch (err) { fail(err); }
   }
   /* יומן תשלומים: כל סימון תשלום או החזר יוצר רשומה חדשה (תיקון תשלום = החזר של הישן + תשלום חדש) */
-  async function addPayRecord(pid, mid, kind, amount, promoterId, commission) {
-    const body = { participant_id: pid, meeting_id: mid || null, kind, amount: Number(amount) || 0, promoter_id: promoterId || null, commission: commission != null && commission !== '' ? Number(commission) : null, author_name: authorName() };
+  async function addPayRecord(pid, mid, kind, amount, promoterId, commission, fromCredit) {
+    const body = { participant_id: pid, meeting_id: mid || null, kind, from_credit: !!fromCredit, amount: Number(amount) || 0, promoter_id: promoterId || null, commission: commission != null && commission !== '' ? Number(commission) : null, author_name: authorName() };
     const [row] = await api(T.pay, { method: 'POST', body, prefer: 'return=representation' });
     if (row && !state.payments.some((x) => x.id === row.id)) state.payments.push(row);
     if (sheet && sheet.id) refreshSheetMeetings();
   }
-  async function recordLedger(pid, mid, prev, st, extra) {
+  async function recordLedger(pid, mid, prev, st, extra, opts) {
+    opts = opts || {};
     const wasPaid = !!prev.paid && !prev.exempt, oldAmt = prev.paid_amount != null ? Number(prev.paid_amount) : PRICE_EARLY;
     const changed = st === 'paid' && wasPaid && extra && (Number(prev.paid_amount != null ? prev.paid_amount : PRICE_EARLY) !== Number(extra.paid_amount) || (prev.promoter_id || null) !== (extra.promoter_id || null) || Number(prev.commission || 0) !== Number(extra.commission || 0));
-    if (wasPaid && (st !== 'paid' || changed)) await addPayRecord(pid, mid, 'refund', oldAmt, prev.promoter_id, prev.commission);
-    if (st === 'paid' && (!wasPaid || changed)) await addPayRecord(pid, mid, 'payment', extra.paid_amount, extra.promoter_id, extra.commission);
+    if (wasPaid && (st !== 'paid' || changed)) await addPayRecord(pid, mid, (opts.mode === 'credit' && st !== 'paid') ? 'credit' : 'refund', oldAmt, prev.promoter_id, prev.commission);
+    if (st === 'paid' && (!wasPaid || changed)) await addPayRecord(pid, mid, 'payment', extra.paid_amount, extra.promoter_id, extra.commission, opts.fromCredit);
   }
 
-  async function setLinked(pid, mid, on) {
+  async function setLinked(pid, mid, on, mode) {
     if (on) {
       const row = { participant_id: pid, meeting_id: mid, paid: false };
       state.att.push(row); render(); refreshSheetMeetings();
@@ -1597,7 +1611,7 @@
       render(); refreshSheetMeetings();
       try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'DELETE' }); }
       catch (err) { state.att = prev; render(); refreshSheetMeetings(); fail(err); return; }
-      if (oldL && oldL.paid && !oldL.exempt) { try { await addPayRecord(pid, mid, 'refund', oldL.paid_amount != null ? oldL.paid_amount : PRICE_EARLY, oldL.promoter_id, oldL.commission); } catch (err) { fail(err); } }
+      if (oldL && oldL.paid && !oldL.exempt) { try { await addPayRecord(pid, mid, mode === 'credit' ? 'credit' : 'refund', oldL.paid_amount != null ? oldL.paid_amount : PRICE_EARLY, oldL.promoter_id, oldL.commission); } catch (err) { fail(err); } }
     }
   }
 
@@ -1763,7 +1777,7 @@
   /* מסך אחד: ראשי (וואטסאפ וחיוג, מפגשים אחרונים, הערות) או פרטים (אייקון בכותרת; חץ חזרה בתוכו) */
   let pTab = 'main', mLimit = 3;
   const reducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const SUBVIEW = { status: 'סטטוס תשלום', pay: 'פרטי תשלום', promo: 'יחצן ועמלה', refund: 'החזרת תשלום' };
+  const SUBVIEW = { status: 'סטטוס תשלום', pay: 'פרטי תשלום', promo: 'יחצן ועמלה', refund: 'ביטול תשלום' };
   let viewStack = [], payCtx = null;
   function setPTab(tab, instant) {
     if (!sheet || !sheet.id) tab = 'info';
@@ -1942,14 +1956,15 @@
       const chip = $('#pPayChip');
       chip.hidden = !sheet.id || !linksOf(sheet.id).length;
       chip.className = 'paychip' + (owed ? '' : ' ok');
-      chip.textContent = owed ? 'יתרה: ₪' + nfm(owed) : 'יתרה: ₪0 (מסולק)'; }
-    const rfd = (mid) => (sheet.id && st0(mid)) || 0, st0 = (mid) => { const l = linkOf(sheet.id, mid); if (l && l.paid) return 0; return state.payments.filter((x) => x.participant_id === sheet.id && x.meeting_id === mid && x.kind === 'refund').reduce((s, x) => s + Number(x.amount), 0); };
+      const cr = sheet.id ? creditOf(sheet.id) : 0;
+      chip.textContent = (owed ? 'יתרה: ₪' + nfm(owed) : 'יתרה: ₪0 (מסולק)') + (cr > 0 ? ' · קרדיט ₪' + nfm(cr) : ''); }
+    const rfd = (mid) => (sheet.id && st0(mid)) || 0, st0 = (mid) => { const l = linkOf(sheet.id, mid); if (l && l.paid) return 0; return state.payments.filter((x) => x.participant_id === sheet.id && x.meeting_id === mid && (x.kind === 'refund' || x.kind === 'credit')).reduce((s, x) => s + Number(x.amount), 0); };
     box.innerHTML = shown.map((m) => {
       let on, st;
       if (sheet.id) { const l = linkOf(sheet.id, m.id); on = !!l; st = l ? linkStatus(l) : 'unpaid'; }
       else { on = sheet.links.has(m.id); st = sheet.links.get(m.id) ? 'paid' : 'unpaid'; }
       return '<div class="mrow' + (on ? ' on' : '') + '">' +
-        '<button type="button" class="mtoggle" data-mt="' + m.id + '" aria-pressed="' + on + '"><span class="box">' + (on ? '✓' : '') + '</span>' + (rfd(m.id) ? '<span class="ml">' + esc(meetingLabel(m, true)) + '<small>הוחזר ₪' + nfm(rfd(m.id)) + '</small></span>' : esc(meetingLabel(m, true))) + '</button>' +
+        '<button type="button" class="mtoggle" data-mt="' + m.id + '" aria-pressed="' + on + '"><span class="box">' + (on ? '✓' : '') + '</span>' + (rfd(m.id) ? '<span class="ml">' + esc(meetingLabel(m, true)) + '<small>' + (state.payments.some((x) => x.participant_id === sheet.id && x.meeting_id === m.id && x.kind === 'credit') && !state.payments.some((x) => x.participant_id === sheet.id && x.meeting_id === m.id && x.kind === 'refund') ? 'נשאר כקרדיט ₪' : 'הוחזר ₪') + nfm(rfd(m.id)) + '</small></span>' : esc(meetingLabel(m, true))) + '</button>' +
         '<button type="button" class="pay ' + st + '" data-mp="' + m.id + '"' + (on ? '' : ' hidden') + '>' + STATUS_LABEL[st] + (st === 'paid' && sheet.id && (linkOf(sheet.id, m.id) || {}).paid_amount != null ? ' ' + Number(linkOf(sheet.id, m.id).paid_amount) : '') + '</button>' +
         (sheet.id && on && attendOpen(m) ? '<button type="button" class="here sm" data-ht="' + m.id + '" aria-pressed="' + !!(linkOf(sheet.id, m.id) || {}).attended + '">' + ((linkOf(sheet.id, m.id) || {}).attended ? '✓ הגיע' : 'לא הגיע') + '</button>' : '') +
       '</div>';
