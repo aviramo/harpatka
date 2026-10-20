@@ -1957,13 +1957,12 @@
     /* שלושת המפגשים האחרונים (כל המפגשים, לא רק שלו) וכפתור לטעינת עוד */
     const desc = state.meetings.slice().sort((a, b) => (b.meeting_date + b.meeting_time).localeCompare(a.meeting_date + a.meeting_time)), shown = desc.slice(0, mLimit);
     $('#pMore').hidden = desc.length <= mLimit;
-    { /* מספר אחד: היתרה של המשתתף (מה שנשאר לשלם על מפגשים רשומים שלא שולמו, לפי המחיר הנוכחי); פירוט התשלומים בכל מפגש בשורה שלו */
-      const owed = sheet.id ? linksOf(sheet.id).filter((l) => !l.paid && !l.exempt).reduce((s, l) => { const m = state.meetings.find((q) => q.id === l.meeting_id); return s + (m ? defaultPrice(m) : PRICE_EARLY); }, 0) : 0;
-      const chip = $('#pPayChip');
-      chip.hidden = !sheet.id || !linksOf(sheet.id).length;
-      chip.className = 'paychip' + (owed ? '' : ' ok');
-      const cr = sheet.id ? creditOf(sheet.id) : 0;
-      chip.textContent = (owed ? 'יתרה: ₪' + nfm(owed) : 'יתרה: ₪0 (מסולק)') + (cr > 0 ? ' · קרדיט ₪' + nfm(cr) : ''); }
+    { /* מספר אחד: יתרה = חוב פחות קרדיט. חוב רק על מפגשים שביקשנו עליהם תשלום (סטטוס "בטיפול"); רשום בלבד (טרם טופל) הוא עוד לא חוב */
+      const owed = sheet.id ? linksOf(sheet.id).filter((l) => linkStatus(l) === 'requested').reduce((s, l) => { const m = state.meetings.find((q) => q.id === l.meeting_id); return s + (m ? defaultPrice(m) : PRICE_EARLY); }, 0) : 0;
+      const net = owed - (sheet.id ? creditOf(sheet.id) : 0), chip = $('#pPayChip');
+      chip.hidden = !sheet.id || net === 0;
+      chip.className = 'paychip' + (net > 0 ? '' : ' ok');
+      chip.textContent = net > 0 ? 'יתרה: ₪' + nfm(net) : 'קרדיט: ₪' + nfm(-net); }
     box.innerHTML = shown.map((m) => {
       let on, st;
       if (sheet.id) { const l = linkOf(sheet.id, m.id); on = !!l; st = l ? linkStatus(l) : 'unpaid'; }
