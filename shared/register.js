@@ -196,12 +196,12 @@
     const setErr = (input, errEl, msg) => { errEl.textContent = msg || ''; input.classList.toggle('bad', !!msg); };
     /* אחרי הרשמה: התוכן נסגר מלמעלה, הכפתור מתחלף ל"נשמר זמנית" ואז נחשפים הטקסט וכפתור התשלום בפייבוקס (הכול באנימציה) */
     let saved = false;
-    const showDone = () => {
+    const showDone = (payOk = true) => {
       if (saved) return; saved = true;
       root.querySelectorAll('.su-fold:not(.su-after)').forEach(f => f.classList.add('shut'));
       btn.disabled = true; btn.classList.add('swap');
-      setTimeout(() => { btn.textContent = 'נשמר זמנית'; btn.classList.remove('swap'); btn.classList.add('saved'); }, 260);
-      setTimeout(() => { const a = q('after'); if (a) a.classList.remove('shut'); }, 700);
+      setTimeout(() => { btn.textContent = payOk ? 'נשמר זמנית' : 'הפרטים נשלחו'; btn.classList.remove('swap'); btn.classList.add('saved'); }, 260);
+      if (payOk) setTimeout(() => { const a = q('after'); if (a) a.classList.remove('shut'); }, 700);
     };
     suRoots.push(showDone);
     nameI.addEventListener('input', () => setErr(nameI, q('nameErr'), ''));
@@ -220,7 +220,9 @@
       const gEl = genderBox.matches('select') ? genderBox : genderBox.querySelector('input:checked'), gender = gEl && gEl.value ? gEl.value : null;
       if (!gender) { genderBox.classList.add('bad'); q('genderErr').textContent = 'נא לבחור'; ok = false; }
       if (!ok) return;
-      const allDone = () => { suRoots.forEach(f => f()); };   // בלי שמירה בדפדפן: בכל טעינה של הדף הטופס מוצג מחדש
+      /* אפשרות תשלום רק בטווח הגילאים שמתאים למפגש: גברים 40 עד 55, נשים 37 עד 50 (ההרשמה עצמה נשמרת תמיד) */
+      const payOk = gender === 'male' ? (age >= 40 && age <= 55) : (age >= 37 && age <= 50);
+      const allDone = () => { suRoots.forEach(f => f(payOk)); };   // בלי שמירה בדפדפן: בכל טעינה של הדף הטופס מוצג מחדש
       if (q('hp').value || Date.now() - t0 < 1500) { allDone(); return; }   // בוט: מציגים הצלחה בלי לשמור
       btn.disabled = true; btn.textContent = 'שולחים...';
       let finished = false;
