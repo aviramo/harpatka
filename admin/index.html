@@ -404,6 +404,8 @@
     .paychip { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 999px; margin: 0 0 10px; font-weight: 800; font-size: 14.5px; background: rgba(201,111,82,.14); color: #A9533A; }
     .paychip.ok { background: var(--green-bg); color: var(--green); }
     .paychip[hidden] { display: none; }
+    .paychip[data-credit="1"] { cursor: pointer; }
+    .paychip[data-credit="1"]::after { content: " ›"; }
     .pmv.ph { grid-template-columns: 52px minmax(0, 1fr) auto; }
     .pmv .bl { color: var(--muted); font-size: 13px; text-align: left; font-variant-numeric: tabular-nums; }
     .pmv .x { grid-column: 1 / -1; }
@@ -623,6 +625,11 @@
         <label class="field"><span>יחצן</span><select name="pay_promoter"></select></label>
         <label class="field" id="commField"><span>עמלה ליחצן (₪)</span><input name="pay_commission" type="number" inputmode="decimal" min="0" step="any" /></label>
         <div class="payact"><button class="btn" id="promoOk" type="button">אישור</button></div>
+      </div>
+      <div class="ppanel" data-panel="credit" hidden>
+        <p id="creditText" style="margin:2px 0 14px;line-height:1.55"></p>
+        <label class="field"><span>סכום להחזרה למשתתף (₪)</span><input name="pay_refund" type="number" inputmode="decimal" min="0" step="any" /></label>
+        <div class="payact"><button class="btn" id="creditRefundBtn" type="button">להחזיר את הכסף למשתתף</button></div>
       </div>
       <div class="ppanel" data-panel="refund" hidden>
         <p id="refundText" style="margin:2px 0 16px;line-height:1.55"></p>
@@ -955,7 +962,7 @@
   const PRICE_EARLY = 80, PRICE_LATE = 100;
   const defaultPrice = (m, iso) => { const d = new Date(m.meeting_date + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() - 3); return (iso || todayISO()) < d.toISOString().slice(0, 10) ? PRICE_EARLY : PRICE_LATE; };
   /* קרדיט משתתף: סכומים שנשארו אצלנו בביטול בלי החזר כסף, פחות מה ששימש לתשלום חדש */
-  const creditOf = (pid) => state.payments.filter((x) => x.participant_id === pid).reduce((s, x) => s + (x.kind === 'credit' ? Number(x.amount) : (x.kind === 'payment' && x.from_credit ? -Number(x.amount) : 0)), 0);
+  const creditOf = (pid) => state.payments.filter((x) => x.participant_id === pid).reduce((s, x) => s + (x.kind === 'credit' ? Number(x.amount) : ((x.kind === 'payment' || x.kind === 'refund') && x.from_credit ? -Number(x.amount) : 0)), 0);
   const promoterOf = (id) => state.promoters.find((x) => x.id === id);
   const rateLabel = (pr) => pr ? (pr.rate_type === 'percent' ? Number(pr.rate) + '%' : '₪' + Number(pr.rate)) : '';
   const calcCommission = (pr, amount) => { if (!pr) return ''; const v = pr.rate_type === 'percent' ? Math.round((Number(amount) || 0) * Number(pr.rate)) / 100 : Number(pr.rate); return Number.isFinite(v) ? v : ''; };
@@ -1783,7 +1790,7 @@
   /* מסך אחד: ראשי (וואטסאפ וחיוג, מפגשים אחרונים, הערות) או פרטים (אייקון בכותרת; חץ חזרה בתוכו) */
   let pTab = 'main', mLimit = 3;
   const reducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const SUBVIEW = { status: 'סטטוס תשלום', pay: 'פרטי תשלום', promo: 'יחצן ועמלה', refund: 'ביטול תשלום' };
+  const SUBVIEW = { status: 'סטטוס תשלום', pay: 'פרטי תשלום', promo: 'יחצן ועמלה', refund: 'ביטול תשלום', credit: 'החזרת קרדיט' };
   let viewStack = [], payCtx = null;
   function setPTab(tab, instant) {
     if (!sheet || !sheet.id) tab = 'info';
@@ -1802,7 +1809,18 @@
     if (tab === 'main') { renderContact(); renderNotes(); }
     syncUrl();
   }
-  pForm.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.name && e.target.name.startsWith('pay_')) { e.preventDefault(); if (pTab === 'pay') $('#paySave').click(); else $('#promoOk').click(); } });
+  pForm.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.name && e.target.name.startsWith('pay_')) { e.preventDefault(); if (pTab === 'pay') $('#paySave').click(); else if (pTab === 'credit') $('#creditRefundBtn').click(); else $('#promoOk').click(); } });
+  /* החזרת קרדיט: מחזירים למשתתף את הכסף שנשאר אצלנו (נרשם כהחזר מהקרדיט) */
+  $('#pPayChip').addEventListener('click', () => {
+    if (!sheet || !sheet.id) return; const cr = creditOf(sheet.id); if (!(cr > 0)) return;
+    $('#creditText').innerHTML = 'למשתתף יש <b>קרדיט של ₪' + nfm(cr) + '</b> (כסף ששילם ונשאר אצלכם אחרי ביטול). אפשר להחזיר לו את הכסף, כולו או חלקו. תירשם רשומת החזר, והקרדיט יקטן.';
+    pForm.pay_refund.value = cr; payCtx = null; viewStack = ['main'];
+    $('#creditRefundBtn').onclick = async () => {
+      const amt = Math.min(parseFloat(pForm.pay_refund.value) || 0, cr); if (!(amt > 0)) { pForm.pay_refund.focus(); return; }
+      try { await addPayRecord(sheet.id, null, 'refund', amt, null, null, true); toast('הוחזרו ₪' + nfm(amt) + ' למשתתף'); toMain(); } catch (err) { fail(err); }
+    };
+    setPTab('credit');
+  });
   $('#pInfoBtn').addEventListener('click', () => { viewStack = []; setPTab('info'); });
   $('#pBack').addEventListener('click', () => setPTab(viewStack.pop() || 'main'));
   const goView = (v) => { viewStack.push(pTab); setPTab(v); };
@@ -1961,6 +1979,7 @@
       const owed = sheet.id ? linksOf(sheet.id).filter((l) => linkStatus(l) === 'requested').reduce((s, l) => { const m = state.meetings.find((q) => q.id === l.meeting_id); return s + (m ? defaultPrice(m) : PRICE_EARLY); }, 0) : 0;
       const net = owed - (sheet.id ? creditOf(sheet.id) : 0), chip = $('#pPayChip');
       chip.hidden = !sheet.id || net === 0;
+      chip.dataset.credit = sheet.id && creditOf(sheet.id) > 0 ? '1' : '';
       chip.className = 'paychip' + (net > 0 ? '' : ' ok');
       chip.textContent = net > 0 ? 'יתרה: ₪' + nfm(net) : 'קרדיט: ₪' + nfm(-net); }
     box.innerHTML = shown.map((m) => {
