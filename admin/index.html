@@ -366,6 +366,21 @@
     .prrow small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
     .prrate { background: #fff; border-radius: 999px; padding: 2px 10px; font-weight: 700; font-size: 14px; }
     .prearn { font-weight: 800; color: var(--terra); min-width: 54px; text-align: left; }
+    .prsum { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 8px; margin-bottom: 12px; }
+    .prsum > div { background: var(--cream); border-radius: 14px; padding: 10px 8px; text-align: center; }
+    .prsum small { display: block; color: var(--muted); font-size: 12.5px; font-weight: 700; }
+    .prsum b { font-family: "Rubik", sans-serif; font-size: 18px; }
+    .prsum .bal { background: rgba(201,111,82,.13); }
+    .prsum .bal b { color: var(--terra); font-size: 21px; }
+    .prsum .bal.ok { background: var(--green-bg); } .prsum .bal.ok b { color: var(--green); }
+    .pmv { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto 64px; align-items: center; gap: 8px; padding: 9px 4px; border-bottom: 1px solid var(--line); font-size: 14.5px; }
+    .pmv .d { color: var(--muted); font-size: 13px; }
+    .pmv .w { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pmv .w small { display: block; color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; }
+    .pmv .a { font-weight: 800; font-variant-numeric: tabular-nums; text-align: left; }
+    .pmv .a.c { color: var(--terra); } .pmv .a.p { color: var(--green); }
+    .pmv .bl { color: var(--muted); font-size: 13px; text-align: left; font-variant-numeric: tabular-nums; }
+    .pmv .x { grid-column: 1 / -1; }
     .prnew { width: 100%; height: 44px; border-radius: 14px; border: 1.5px dashed var(--coral); color: var(--terra); font-weight: 700; margin-top: 4px; }
     .hicons { display: flex; gap: 8px; align-self: center; }
     .hicon { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: var(--paper); color: var(--ink); box-shadow: 0 0 0 1.5px var(--line); }
@@ -415,10 +430,11 @@
     .seg span { display: block; height: 48px; line-height: 45px; padding: 0 12px; border-radius: 14px; border: 1.5px solid var(--line); background: #fff; font-weight: 700; font-size: 16px; }
     .seg input:checked + span { background: var(--terra); border-color: var(--terra); color: #fff; }
     .field select { width: 100%; height: 48px; border-radius: 14px; border: 1.5px solid var(--line); background-color: #fff; padding: 0 14px 0 34px; font-size: 17px; font-family: inherit; color: var(--ink); appearance: none; -webkit-appearance: none; cursor: pointer; text-align: start;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23686A48' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: left 11px center; background-size: 17px; }
-    .field select:focus { border-color: var(--terra); outline: none; }
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.4l5 5.2 5-5.2z' fill='%23686A48'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: left 15px center; background-size: 12px 8px; }
+    .field select, .field input { -webkit-tap-highlight-color: transparent; }
+    .field select:focus, .field select:focus-visible, .field select:active { border-color: var(--terra); outline: none !important; box-shadow: 0 0 0 3px rgba(201,111,82,.16); }
     .gfield { flex: 0 0 112px !important; }
-    .gfield select { appearance: none; -webkit-appearance: none; padding: 0 12px 0 30px; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23686A48' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: left 9px center; background-size: 16px; }
+    .gfield select { padding: 0 12px 0 34px; }
     .field input {
       width: 100%; height: 48px; border-radius: 14px; border: 1.5px solid var(--line);
       background: #fff; padding: 0 12px; font-size: 17px;
@@ -634,6 +650,25 @@
     <div class="sheet">
       <div class="sheet-head"><h2 id="prTitle">יחצנים</h2></div>
       <div id="prList"></div>
+      <div id="prDetail" hidden>
+        <div class="prsum" id="prSum"></div>
+        <button type="button" class="prnew" id="ppOpen">+ רישום תשלום ליחצן</button>
+        <form id="ppForm" novalidate hidden>
+          <div class="two">
+            <label class="field"><span>סכום ששולם (₪)</span><input name="amount" type="number" inputmode="decimal" min="0" step="any" /></label>
+            <label class="field"><span>תאריך</span><input name="date" type="date" /></label>
+          </div>
+          <label class="field"><span>הערה (אופציונלי)</span><input name="note" maxlength="120" autocomplete="off" /></label>
+          <button class="btn" type="submit">שמירת תשלום</button>
+          <button class="btn ghost" id="ppCancel" type="button" style="color:var(--muted)">ביטול</button>
+        </form>
+        <div class="clabel" style="margin-top:14px">תנועות (מהחדשה לישנה)</div>
+        <div id="prMoves"></div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button type="button" class="btn ghost" id="prEdit" style="flex:1">עריכת יחצן</button>
+          <button type="button" class="btn ghost" id="prDetBack" style="flex:1;color:var(--muted)">חזרה</button>
+        </div>
+      </div>
       <form id="prForm" novalidate hidden>
         <label class="field"><span>שם היחצן</span><input name="name" maxlength="60" autocomplete="off" /></label>
         <div class="seg" role="radiogroup" aria-label="סוג עמלה" style="margin-bottom:12px">
@@ -666,9 +701,9 @@
     url: 'https://ezakarwqstnldqixgreb.supabase.co',
     key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6YWthcndxc3RubGRxaXhncmViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTA3MzIsImV4cCI6MjEwNjc4NjczMn0.Bg0eFBC4zKjyJc5kBw3wLgSP-PkxLFVv3o7-4YUdq4c',
   };
-  const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance', n: 'harpatka_notes', pr: 'harpatka_promoters' };
+  const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance', n: 'harpatka_notes', pr: 'harpatka_promoters', pp: 'harpatka_promoter_payments' };
 
-  const state = { participants: [], meetings: [], att: [], notes: [], promoters: [], filter: null, q: '', pay: null, gender: null, sort: 'new' };
+  const state = { participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], filter: null, q: '', pay: null, gender: null, sort: 'new' };
   /* קישור עמוק מהמייל: ?m=<מפגש>&p=<משתתף>; נשמר בזמן הכניסה עם גוגל (שמחזירה בלי הפרמטרים) */
   let deep = null;
   try {
@@ -732,7 +767,7 @@
     ws.onopen = () => {
       rtRetry = 1000;
       rtSend({ topic: RT_TOPIC, event: 'phx_join', ref: '1', payload: { config: { broadcast: { ack: false, self: false }, presence: { key: '' }, private: false,
-        postgres_changes: [T.p, T.m, T.a, T.n, T.pr].map((table) => ({ event: '*', schema: 'public', table })) }, access_token: session.access_token } });
+        postgres_changes: [T.p, T.m, T.a, T.n, T.pr, T.pp].map((table) => ({ event: '*', schema: 'public', table })) }, access_token: session.access_token } });
       rtHb = setInterval(() => rtSend({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(Date.now()) }), 25000);
     };
     ws.onmessage = (e) => {
@@ -926,14 +961,15 @@
   async function load(silent) {
     if (!silent) $('#status').innerHTML = '<div class="empty">טוען…</div>';
     try {
-      const [p, m, a, nn, prs] = await Promise.all([
+      const [p, m, a, nn, prs, pps] = await Promise.all([
         api(T.p + '?select=*'),
         api(T.m + '?select=*'),
         api(T.a + '?select=participant_id,meeting_id,paid,pay_requested_at,created_at,exempt,attended,paid_amount,promoter_id,commission,paid_at'),
         api(T.n + '?select=id,participant_id,body,author_email,author_name,created_at,has_image&order=created_at.desc'),
         api(T.pr + '?select=*&order=name.asc'),
+        api(T.pp + '?select=*&order=paid_at.desc'),
       ]);
-      state.participants = p; state.meetings = m; state.att = a; state.notes = nn; state.promoters = prs; rebuildNotes();
+      state.participants = p; state.meetings = m; state.att = a; state.notes = nn; state.promoters = prs; state.promoPays = pps; rebuildNotes();
       sortMeetings();
       if (!silent) $('#status').innerHTML = '';
       if (deep) {
@@ -1346,30 +1382,55 @@
   const confirmLink = (pid, mid, on, after) => confirmAct(on ? 'להוסיף למפגש?' : 'להסיר מהמפגש?', pid, mid, () => { setLinked(pid, mid, on); if (after) after(); });
 
   /* סימון הגעה למפגש (זמן אמת: מעדכן מיד, נשמר ומתעדכן אצל כולם) */
-  /* יחצנים: רשימה (עם כמה עמלות נצברו), הוספה, עריכה ומחיקה */
-  let prEditing = null, prAfterSave = null;
-  /* הוספת יחצן מתוך שדה בחירה (משתתף / תשלום): פותח את טופס היחצן, ואחרי שמירה בוחר אותו בשדה */
-  function openNewPromoter(cb) { prAfterSave = cb || null; showPromoterForm(null); $('#prDlg').showModal(); }
+  /* יחצנים: רשימה עם יתרה, דף התחשבנות לכל יחצן (עמלות שנצברו מול תשלומים ליחצן), הוספה, עריכה ומחיקה */
+  let prEditing = null, prAfterSave = null, prCur = null;
+  const fmtD = (iso) => { if (!iso) return ''; const [y, m, d] = String(iso).slice(0, 10).split('-'); return Number(d) + '.' + Number(m) + '.' + y.slice(2); };
+  const ils = (n) => '₪' + nfm(n);
+  /* תנועות היחצן: עמלות שנצברו (חיובי, אנחנו חייבים) ותשלומים אליו (שלילי), עם יתרה מצטברת */
+  function ledgerOf(id) {
+    const acc = state.att.filter((a) => a.promoter_id === id && a.paid && a.commission != null).map((a) => {
+      const pp = state.participants.find((q) => q.id === a.participant_id), m = state.meetings.find((q) => q.id === a.meeting_id);
+      return { kind: 'c', date: (a.paid_at || a.created_at || '').slice(0, 10) ? ilDay(a.paid_at || a.created_at) : '', amount: Number(a.commission), who: pp ? pp.name : '', sub: m ? 'מפגש ' + meetingLabel(m).split(' · ')[0] + (a.paid_amount != null ? ' · שילם ' + Number(a.paid_amount) : '') : '', key: a.participant_id + a.meeting_id };
+    });
+    const pays = state.promoPays.filter((x) => x.promoter_id === id).map((x) => ({ kind: 'p', date: x.paid_at, amount: -Number(x.amount), who: 'תשלום ליחצן', sub: x.note || '', id: x.id, key: x.id }));
+    const all = acc.concat(pays).sort((a, b) => String(a.date).localeCompare(String(b.date)) || (a.kind === 'c' ? -1 : 1));
+    let run = 0; all.forEach((r) => { run += r.amount; r.bal = run; });
+    const accrued = acc.reduce((s, r) => s + r.amount, 0), paid = -pays.reduce((s, r) => s + r.amount, 0);
+    return { rows: all.reverse(), accrued, paid, balance: accrued - paid };
+  }
   function renderPromoters() {
-    const earned = (id) => state.att.filter((a) => a.promoter_id === id && a.paid && a.commission != null).reduce((s, a) => s + Number(a.commission), 0);
-    const cnt = (id) => state.att.filter((a) => a.promoter_id === id && a.paid).length;
-    $('#prList').innerHTML = (state.promoters.length ? state.promoters.map((x) => '<div class="prrow" data-pr="' + x.id + '" role="button" tabindex="0"><div><b>' + esc(x.name) + '</b><small>' + cnt(x.id) + ' תשלומים</small></div><span class="prrate">' + rateLabel(x) + '</span><span class="prearn" title="עמלות שנצברו">₪' + nfm(earned(x.id)) + '</span></div>').join('')
+    $('#prList').innerHTML = (state.promoters.length ? state.promoters.map((x) => { const L = ledgerOf(x.id); return '<div class="prrow" data-pr="' + x.id + '" role="button" tabindex="0"><div><b>' + esc(x.name) + '</b><small>' + L.rows.filter((r) => r.kind === 'c').length + ' תשלומים של משתתפים</small></div><span class="prrate">' + rateLabel(x) + '</span><span class="prearn" title="יתרה לתשלום ליחצן">' + (L.balance > 0 ? ils(L.balance) : '✓') + '</span></div>'; }).join('')
       : '<p class="mnone">עוד אין יחצנים. אפשר להוסיף יחצן עם עמלה קבועה בשקלים או באחוזים מהתשלום</p>') + '<button type="button" class="prnew" id="prNew">+ יחצן חדש</button>';
+  }
+  function show(view) { ['#prList', '#prDetail', '#prForm'].forEach((s) => { $(s).hidden = s !== view; }); }
+  function showPromoterDetail(id) {
+    prCur = id; const x = promoterOf(id); if (!x) return showPromoterList();
+    const L = ledgerOf(id);
+    $('#prTitle').textContent = x.name;
+    $('#prSum').innerHTML = '<div><small>נצבר</small><b>' + ils(L.accrued) + '</b></div><div><small>שולם ליחצן</small><b>' + ils(L.paid) + '</b></div><div class="bal' + (L.balance > 0 ? '' : ' ok') + '"><small>' + (L.balance > 0 ? 'יתרה לתשלום' : 'מסולק') + '</small><b>' + ils(Math.max(L.balance, 0)) + '</b></div>';
+    $('#prMoves').innerHTML = L.rows.length ? L.rows.map((r) => '<div class="pmv"><span class="d">' + fmtD(r.date) + '</span><span class="w">' + esc(r.who) + (r.sub ? '<small>' + esc(r.sub) + '</small>' : '') + '</span><span class="a ' + r.kind + '"><bdi dir="ltr">' + (r.amount > 0 ? '+' : '−') + nfm(Math.abs(r.amount)) + '</bdi></span>' +
+      (r.kind === 'p' ? '<button type="button" class="ndel" data-delpay="' + r.id + '" aria-label="מחיקת תשלום" title="מחיקת תשלום">×</button>' : '<span class="bl" title="יתרה אחרי התנועה">' + nfm(r.bal) + '</span>') + '</div>').join('') : '<p class="mnone">עוד אין תנועות. עמלה נרשמת אוטומטית כשמסמנים תשלום של משתתף שהביא היחצן</p>';
+    $('#ppForm').hidden = true; $('#ppOpen').hidden = false;
+    show('#prDetail');
   }
   function showPromoterForm(id) {
     prEditing = id || null;
     const x = id ? promoterOf(id) : null, f = $('#prForm');
     f.name.value = x ? x.name : ''; f.rate.value = x ? Number(x.rate) : ''; f.rtype.value = x ? x.rate_type : 'fixed';
     $('#prRateLbl').textContent = (f.rtype.value === 'percent') ? 'אחוז מהתשלום (%)' : 'עמלה לכל משתתף (₪)';
-    $('#prDel').hidden = !x; f.hidden = false; $('#prList').hidden = true; $('#prTitle').textContent = x ? x.name : 'יחצן חדש';
+    $('#prDel').hidden = !x; show('#prForm'); $('#prTitle').textContent = x ? 'עריכת ' + x.name : 'יחצן חדש';
     if (!x) setTimeout(() => f.name.focus(), 50);
   }
+  function showPromoterList() { prCur = null; $('#prTitle').textContent = 'יחצנים'; renderPromoters(); show('#prList'); }
+  /* הוספת יחצן מתוך שדה בחירה (משתתף / תשלום): פותח את טופס היחצן, ואחרי שמירה בוחר אותו בשדה */
+  function openNewPromoter(cb) { prAfterSave = cb || null; showPromoterForm(null); $('#prDlg').showModal(); }
   $('#prDlg').addEventListener('close', () => { prAfterSave = null; });
-  function showPromoterList() { $('#prForm').hidden = true; $('#prList').hidden = false; $('#prTitle').textContent = 'יחצנים'; renderPromoters(); }
   $('#prBtn').addEventListener('click', () => { showPromoterList(); $('#prDlg').showModal(); });
-  $('#prList').addEventListener('click', (e) => { if (e.target.closest('#prNew')) return showPromoterForm(null); const r = e.target.closest('[data-pr]'); if (r) showPromoterForm(r.dataset.pr); });
-  $('#prList').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-pr]')) { e.preventDefault(); showPromoterForm(e.target.dataset.pr); } });
-  $('#prBack').addEventListener('click', () => { if (prAfterSave) { prAfterSave = null; $('#prDlg').close(); } else showPromoterList(); });
+  $('#prList').addEventListener('click', (e) => { if (e.target.closest('#prNew')) return showPromoterForm(null); const r = e.target.closest('[data-pr]'); if (r) showPromoterDetail(r.dataset.pr); });
+  $('#prList').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-pr]')) { e.preventDefault(); showPromoterDetail(e.target.dataset.pr); } });
+  $('#prDetBack').addEventListener('click', showPromoterList);
+  $('#prEdit').addEventListener('click', () => showPromoterForm(prCur));
+  $('#prBack').addEventListener('click', () => { if (prAfterSave) { prAfterSave = null; $('#prDlg').close(); } else if (prEditing) showPromoterDetail(prEditing); else showPromoterList(); });
   $('#prForm').addEventListener('change', (e) => { if (e.target.name === 'rtype') $('#prRateLbl').textContent = e.target.value === 'percent' ? 'אחוז מהתשלום (%)' : 'עמלה לכל משתתף (₪)'; });
   $('#prForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -1378,17 +1439,39 @@
     if (!(rate >= 0)) { f.rate.focus(); return; }
     const body = { name, rate_type: f.rtype.value, rate };
     try {
-      if (prEditing) { await api(T.pr + '?id=eq.' + prEditing, { method: 'PATCH', body }); Object.assign(promoterOf(prEditing), body); }
-      else { const [row] = await api(T.pr, { method: 'POST', body, prefer: 'return=representation' }); if (row && !promoterOf(row.id)) state.promoters.push(row); }
+      let saved;
+      if (prEditing) { await api(T.pr + '?id=eq.' + prEditing, { method: 'PATCH', body }); saved = promoterOf(prEditing); Object.assign(saved, body); }
+      else { const [row] = await api(T.pr, { method: 'POST', body, prefer: 'return=representation' }); saved = row; if (row && !promoterOf(row.id)) state.promoters.push(row); }
       state.promoters.sort((a, b) => a.name.localeCompare(b.name, 'he'));
-      const savedRow = prEditing ? promoterOf(prEditing) : state.promoters.find((x) => x.name === name && x.rate_type === body.rate_type && Number(x.rate) === rate);
       const cb = prAfterSave; prAfterSave = null;
-      if (cb && savedRow) { $('#prDlg').close(); cb(savedRow); toast('היחצן נוסף'); } else { showPromoterList(); toast('נשמר'); }
+      if (cb && saved) { $('#prDlg').close(); cb(saved); toast('היחצן נוסף'); }
+      else { toast('נשמר'); if (prEditing) showPromoterDetail(prEditing); else showPromoterList(); }
     } catch (err) { fail(err); }
   });
   $('#prDel').addEventListener('click', () => {
-    const x = promoterOf(prEditing); if (!x || !confirm('למחוק את היחצן ' + x.name + '? התשלומים הקיימים יישארו בלי יחצן.')) return;
-    api(T.pr + '?id=eq.' + x.id, { method: 'DELETE' }).then(() => { state.promoters = state.promoters.filter((y) => y.id !== x.id); state.att.forEach((a) => { if (a.promoter_id === x.id) a.promoter_id = null; }); state.participants.forEach((q) => { if (q.promoter_id === x.id) q.promoter_id = null; }); showPromoterList(); toast('נמחק'); }).catch(fail);
+    const x = promoterOf(prEditing); if (!x || !confirm('למחוק את היחצן ' + x.name + '? ההתחשבנות איתו תימחק, והתשלומים של המשתתפים יישארו בלי יחצן.')) return;
+    api(T.pr + '?id=eq.' + x.id, { method: 'DELETE' }).then(() => { state.promoters = state.promoters.filter((y) => y.id !== x.id); state.promoPays = state.promoPays.filter((y) => y.promoter_id !== x.id); state.att.forEach((a) => { if (a.promoter_id === x.id) a.promoter_id = null; }); state.participants.forEach((q) => { if (q.promoter_id === x.id) q.promoter_id = null; }); prEditing = null; showPromoterList(); toast('נמחק'); }).catch(fail);
+  });
+  /* תשלום ליחצן: סכום (ברירת מחדל: היתרה), תאריך והערה */
+  $('#ppOpen').addEventListener('click', () => {
+    const f = $('#ppForm'), L = ledgerOf(prCur);
+    f.amount.value = L.balance > 0 ? L.balance : ''; f.date.value = todayISO(); f.note.value = '';
+    f.hidden = false; $('#ppOpen').hidden = true; setTimeout(() => f.amount.focus(), 50);
+  });
+  $('#ppCancel').addEventListener('click', () => { $('#ppForm').hidden = true; $('#ppOpen').hidden = false; });
+  $('#ppForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const f = e.target, amount = parseFloat(f.amount.value);
+    if (!(amount > 0)) { f.amount.focus(); return; }
+    const body = { promoter_id: prCur, amount, paid_at: f.date.value || todayISO(), note: f.note.value.trim() || null };
+    try { const [row] = await api(T.pp, { method: 'POST', body, prefer: 'return=representation' }); if (row && !state.promoPays.some((q) => q.id === row.id)) state.promoPays.push(row); toast('התשלום נרשם'); showPromoterDetail(prCur); }
+    catch (err) { fail(err); }
+  });
+  $('#prMoves').addEventListener('click', (e) => {
+    const d = e.target.closest('[data-delpay]'); if (!d || !confirm('למחוק את התשלום ליחצן?')) return;
+    const id = d.dataset.delpay, prev = state.promoPays;
+    state.promoPays = state.promoPays.filter((q) => q.id !== id); showPromoterDetail(prCur);
+    api(T.pp + '?id=eq.' + id, { method: 'DELETE' }).catch((err) => { state.promoPays = prev; showPromoterDetail(prCur); fail(err); });
   });
   async function setAttended(pid, mid, val) {
     const l = linkOf(pid, mid); if (!l) return;
