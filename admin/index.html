@@ -397,11 +397,14 @@
     .payact #payNo { flex: 0 0 auto; width: auto; padding: 0 20px; }
     .pquick { display: flex; gap: 6px; margin: 0 0 12px; flex: 0 0 auto; }
     .pquick button { height: 48px; padding: 0 12px; border-radius: 999px; background: var(--cream); font-weight: 700; font-size: 14px; border: 1.5px solid var(--line); }
-    .prrow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 12px 12px; border-radius: 14px; background: var(--cream); margin-bottom: 8px; cursor: pointer; }
+    .prrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 12px 12px; border-radius: 14px; background: var(--cream); margin-bottom: 8px; cursor: pointer; }
     .prrow b { font-size: 16px; }
     .prrow small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
     .prrate { background: #fff; border-radius: 999px; padding: 2px 10px; font-weight: 700; font-size: 14px; }
-    .prearn { font-weight: 800; color: var(--terra); min-width: 54px; text-align: left; }
+    .prearn { font-weight: 800; color: var(--terra); text-align: left; font-size: 17px; line-height: 1.1; }
+    .prearn small { display: block; margin: 0; font-size: 12px; font-weight: 700; color: var(--muted); }
+    .prok { color: var(--green); font-weight: 800; font-size: 14.5px; }
+    #prSum { display: block; }
     .prsum { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 8px; margin-bottom: 12px; }
     .prsum > div { background: var(--cream); border-radius: 14px; padding: 10px 8px; text-align: center; }
     .prsum small { display: block; color: var(--muted); font-size: 12.5px; font-weight: 700; }
@@ -1402,7 +1405,7 @@
   /* יחצנים: רשימה עם יתרה, דף התחשבנות לכל יחצן (עמלות שנצברו מול תשלומים ליחצן), הוספה, עריכה ומחיקה */
   let prEditing = null, prAfterSave = null, prCur = null;
   const fmtD = (iso) => { if (!iso) return ''; const [y, m, d] = String(iso).slice(0, 10).split('-'); return Number(d) + '.' + Number(m) + '.' + y.slice(2); };
-  const ils = (n) => '₪' + nfm(n);
+  const ils = (n) => '<bdi dir="ltr">₪' + nfm(n) + '</bdi>';   // בלי היפוך סימן השקל בטקסט מימין לשמאל
   /* תנועות היחצן: עמלות שנצברו (חיובי, אנחנו חייבים) ותשלומים אליו (שלילי), עם יתרה מצטברת */
   function ledgerOf(id) {
     const acc = state.payments.filter((x) => x.promoter_id === id && x.commission != null && Number(x.commission) > 0).map((x) => {
@@ -1416,7 +1419,7 @@
     return { rows: all.reverse(), accrued, paid, balance: accrued - paid };
   }
   function renderPromoters() {
-    $('#prList').innerHTML = (state.promoters.length ? state.promoters.map((x) => { const L = ledgerOf(x.id); return '<div class="prrow" data-pr="' + x.id + '" role="button" tabindex="0"><div><b>' + esc(x.name) + '</b><small>' + L.rows.filter((r) => r.kind === 'c').length + ' תשלומים של משתתפים' + (L.rows.some((r) => r.kind === 'r') ? ' · ' + L.rows.filter((r) => r.kind === 'r').length + ' החזרים' : '') + '</small></div><span class="prrate">' + rateLabel(x) + '</span><span class="prearn" title="יתרה לתשלום ליחצן">' + (L.balance > 0 ? ils(L.balance) : '✓') + '</span></div>'; }).join('')
+    $('#prList').innerHTML = (state.promoters.length ? state.promoters.map((x) => { const L = ledgerOf(x.id), rt = x.rate_type === 'percent' ? Number(x.rate) + '% מהתשלום' : '₪' + Number(x.rate) + ' למשתתף'; return '<div class="prrow" data-pr="' + x.id + '" role="button" tabindex="0"><div><b>' + esc(x.name) + '</b><small>עמלה ' + rt + ' · ' + L.rows.filter((r) => r.kind === 'c').length + ' תשלומים</small></div>' + (L.balance > 0 ? '<span class="prearn" title="יתרה לתשלום ליחצן">' + ils(L.balance) + '<small>לתשלום</small></span>' : '<span class="prok">מסולק ✓</span>') + '</div>'; }).join('')
       : '<p class="mnone">עוד אין יחצנים. אפשר להוסיף יחצן עם עמלה קבועה בשקלים או באחוזים מהתשלום</p>') + '<button type="button" class="prnew" id="prNew">+ יחצן חדש</button>';
   }
   let prView = '#prList';
@@ -1431,7 +1434,7 @@
     prCur = id; const x = promoterOf(id); if (!x) return showPromoterList();
     const L = ledgerOf(id);
     $('#prTitle').textContent = x.name;
-    $('#prSum').innerHTML = '<div><small>נצבר</small><b>' + ils(L.accrued) + '</b></div><div><small>שולם ליחצן</small><b>' + ils(L.paid) + '</b></div><div class="bal' + (L.balance > 0 ? '' : ' ok') + '"><small>' + (L.balance > 0 ? 'יתרה לתשלום' : 'מסולק') + '</small><b>' + ils(Math.max(L.balance, 0)) + '</b></div>';
+    $('#prSum').innerHTML = '<div class="bigbal' + (L.balance > 0 ? '' : ' ok') + '"><small>' + (L.balance > 0 ? 'יתרה לתשלום ליחצן' : 'מסולק') + '</small><b>' + ils(Math.max(L.balance, 0)) + '</b></div>';
     $('#prMoves').innerHTML = L.rows.length ? L.rows.map((r) => '<div class="pmv"><span class="d">' + fmtD(r.date) + '</span><span class="w">' + esc(r.who) + (r.sub ? '<small>' + esc(r.sub) + '</small>' : '') + '</span><span class="a ' + r.kind + '"><bdi dir="ltr">' + (r.amount > 0 ? '+' : '−') + nfm(Math.abs(r.amount)) + '</bdi></span>' +
       (r.kind === 'p' ? '<button type="button" class="ndel" data-delpay="' + r.id + '" aria-label="מחיקת תשלום" title="מחיקת תשלום">×</button>' : '<span class="bl" title="יתרה אחרי התנועה">' + nfm(r.bal) + '</span>') + '</div>').join('') : '<p class="mnone">עוד אין תנועות. עמלה נרשמת אוטומטית כשמסמנים תשלום של משתתף שהביא היחצן</p>';
     $('#ppForm').hidden = true; $('#ppOpen').hidden = false;
