@@ -265,8 +265,8 @@
     #pDlg .close { position: absolute; top: -3.5rem; left: 50%; margin-left: -22px; width: 44px; height: 44px; background: var(--paper); box-shadow: 0 4px 14px rgba(0,0,0,.25); font-size: 26px; }
     #pDlg .sheet-head, #pDlg .ptabs { flex: 0 0 auto; }
     #pDlg .ppanel { flex: 1 1 auto; min-height: 0; box-sizing: border-box; overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: contain; padding: 4px 1px; }
-    #pDlg .ppanel.enter-l { animation: pviewL .3s cubic-bezier(.22,.8,.2,1); }
-    #pDlg .ppanel.enter-r { animation: pviewR .3s cubic-bezier(.22,.8,.2,1); }
+    .ppanel.enter-l { animation: pviewL .3s cubic-bezier(.22,.8,.2,1); }
+    .ppanel.enter-r { animation: pviewR .3s cubic-bezier(.22,.8,.2,1); }
     @keyframes pviewL { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: none; } }
     @keyframes pviewR { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
     .hbtn { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--cream); color: var(--ink); }
@@ -359,10 +359,20 @@
     .sortmenu button { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 12px; text-align: right; font-size: 16px; font-weight: 600; }
     .sortmenu button[aria-checked="true"] { background: rgba(201,111,82,.12); color: var(--terra); }
     .sortmenu button[aria-checked="true"]::after { content: "✓"; font-weight: 800; }
-    .promolink { display: inline-block; height: 34px; padding: 0 14px; margin: 0 0 14px; border-radius: 999px; background: transparent; border: 1.5px dashed var(--coral); color: var(--terra); font-weight: 700; font-size: 14px; }
+    .promolink { display: block; width: 100%; text-align: center; height: 32px; padding: 0 14px; margin: 0 0 10px; border-radius: 999px; background: transparent; border: 1.5px dashed var(--coral); color: var(--terra); font-weight: 700; font-size: 14px; }
     .promolink[hidden] { display: none; }
-    .pquick { display: flex; gap: 8px; margin: -4px 0 12px; }
-    .pquick button { height: 34px; padding: 0 14px; border-radius: 999px; background: var(--cream); font-weight: 700; font-size: 14px; border: 1.5px solid var(--line); }
+    #payDlg .sheet { padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+    #payDlg .sheet-head { position: relative; justify-content: flex-start; gap: 8px; min-height: 40px; margin-bottom: 0; }
+    #payDlg .sheet-head h2 { flex: 1 1 auto; font-size: 20px; }
+    #payDlg .ppanel[hidden] { display: none; }
+    .payrow { display: flex; gap: 8px; align-items: flex-end; }
+    .payrow .field { flex: 1 1 auto; min-width: 0; }
+    .payact { display: flex; gap: 8px; margin-top: 2px; }
+    .payact .btn { margin: 0; }
+    .payact #paySave { flex: 1 1 auto; }
+    .payact #payNo { flex: 0 0 auto; width: auto; padding: 0 20px; }
+    .pquick { display: flex; gap: 6px; margin: 0 0 12px; flex: 0 0 auto; }
+    .pquick button { height: 48px; padding: 0 12px; border-radius: 999px; background: var(--cream); font-weight: 700; font-size: 14px; border: 1.5px solid var(--line); }
     .prrow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 12px 12px; border-radius: 14px; background: var(--cream); margin-bottom: 8px; cursor: pointer; }
     .prrow b { font-size: 16px; }
     .prrow small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
@@ -648,17 +658,27 @@
 
   <dialog id="payDlg" aria-labelledby="payTitle" style="max-width:420px">
     <form class="sheet" id="payForm" method="dialog" novalidate>
-      <h2 id="payTitle" style="margin-bottom:6px">פרטי תשלום</h2>
-      <p id="payText" style="color:var(--muted);margin:0 0 14px"></p>
-      <label class="field"><span>סכום ששולם (₪)</span><input name="amount" type="number" inputmode="decimal" min="0" step="any" /></label>
-      <div class="pquick" id="payQuick"></div>
-      <button type="button" class="promolink" id="promoToggle">+ דרך יחצן</button>
-      <div id="promoBox" hidden>
+      <div class="sheet-head">
+        <button type="button" class="hbtn hback" id="payBack" aria-label="חזרה" title="חזרה" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+        <h2 id="payTitle">פרטי תשלום</h2>
+      </div>
+      <p id="payText" style="color:var(--muted);margin:0 0 10px;font-size:15px"></p>
+      <div class="ppanel" data-pview="main">
+        <div class="payrow">
+          <label class="field"><span>סכום ששולם (₪)</span><input name="amount" type="number" inputmode="decimal" min="0" step="any" /></label>
+          <div class="pquick" id="payQuick"></div>
+        </div>
+        <button type="button" class="promolink" id="promoToggle">+ דרך יחצן</button>
+        <div class="payact">
+          <button class="btn" id="paySave" type="submit">שמירה</button>
+          <button class="btn ghost" id="payNo" type="button" style="color:var(--muted)">ביטול</button>
+        </div>
+      </div>
+      <div class="ppanel" data-pview="promo" hidden>
         <label class="field"><span>יחצן</span><select name="promoter"></select></label>
         <label class="field" id="commField"><span>עמלה ליחצן (₪)</span><input name="commission" type="number" inputmode="decimal" min="0" step="any" /></label>
+        <div class="payact"><button class="btn" id="promoOk" type="button">אישור</button></div>
       </div>
-      <button class="btn" id="paySave" type="submit">שמירה</button>
-      <button class="btn ghost" id="payNo" type="button" style="color:var(--muted)">ביטול</button>
     </form>
   </dialog>
 
@@ -1523,10 +1543,16 @@
     f.commission.value = l.commission != null ? Number(l.commission) : calcCommission(promoterOf(f.promoter.value), amount);
     const sync = () => { $('#commField').hidden = !f.promoter.value; };
     sync();
-    /* רוב המשלמים בלי יחצן: השדות מוסתרים, ונפתחים בלחיצה על "+ דרך יחצן" (או מראש אם יש יחצן למשתתף/לתשלום) */
-    const showBox = (on) => { $('#promoBox').hidden = !on; $('#promoToggle').hidden = on; };
-    showBox(!!f.promoter.value);
-    $('#promoToggle').onclick = () => { showBox(true); f.promoter.focus(); };
+    /* רוב המשלמים בלי יחצן: במסך הראשי רק כפתור קטן "+ דרך יחצן"; הלחיצה מחליקה למסך היחצן (אותה מעטפת כמו פרטי המשתתף) וחץ בכותרת מחזיר */
+    const label = () => { const pr = promoterOf(f.promoter.value); $('#promoToggle').textContent = pr ? 'יחצן: ' + pr.name + (f.commission.value !== '' ? ' · עמלה ₪' + f.commission.value : '') + ' (עריכה)' : '+ דרך יחצן'; $('#promoToggle').classList.toggle('on', !!pr); };
+    const view = (v, instant) => {
+      document.querySelectorAll('#payForm [data-pview]').forEach((d) => { const show = d.dataset.pview === v; d.hidden = !show; d.classList.remove('enter-l', 'enter-r'); if (show && !instant && !reducedMotion()) { void d.offsetWidth; d.classList.add(v === 'promo' ? 'enter-l' : 'enter-r'); } });
+      $('#payBack').hidden = v === 'main'; $('#payTitle').textContent = v === 'main' ? 'פרטי תשלום' : 'יחצן ועמלה';
+      if (v === 'main') label();
+    };
+    view('main', true);
+    $('#promoToggle').onclick = () => view('promo');
+    $('#payBack').onclick = () => view('main'); $('#promoOk').onclick = () => view('main');
     $('#payQuick').innerHTML = [PRICE_EARLY, PRICE_LATE].map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
     const recalc = () => { if (!dirty) f.commission.value = calcCommission(promoterOf(f.promoter.value), f.amount.value); };
     let lastPr = f.promoter.value;
@@ -1540,7 +1566,7 @@
     f.onsubmit = (e) => {
       e.preventDefault();
       const amt = parseFloat(f.amount.value); if (!(amt >= 0)) { f.amount.focus(); return; }
-      const pr = $('#promoBox').hidden ? null : (f.promoter.value || null), cm = pr && f.commission.value !== '' ? parseFloat(f.commission.value) : null;
+      const pr = f.promoter.value || null, cm = pr && f.commission.value !== '' ? parseFloat(f.commission.value) : null;
       dlg.close();
       setPayStatus(pid, mid, 'paid', { paid_amount: amt, promoter_id: pr, commission: Number.isFinite(cm) ? cm : null, paid_at: l.paid_at || new Date().toISOString() });
     };
