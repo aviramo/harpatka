@@ -365,6 +365,8 @@
     #payDlg .sheet-head { position: relative; justify-content: flex-start; gap: 8px; min-height: 40px; margin-bottom: 0; }
     #payDlg .sheet-head h2 { flex: 1 1 auto; font-size: 20px; }
     #payDlg .ppanel[hidden] { display: none; }
+    #prDlg .sheet-head { position: relative; justify-content: flex-start; gap: 8px; min-height: 40px; }
+    #prDlg .sheet-head h2 { flex: 1 1 auto; min-width: 0; }
     .pviewsub { margin: 0 0 10px; color: var(--muted); font-size: 15px; }
     .pviewsub[hidden] { display: none; }
     .payrow { display: flex; gap: 8px; align-items: flex-end; }
@@ -673,9 +675,9 @@
 
   <dialog id="prDlg" aria-labelledby="prTitle" style="max-width:480px">
     <div class="sheet">
-      <div class="sheet-head"><h2 id="prTitle">יחצנים</h2></div>
-      <div id="prList"></div>
-      <div id="prDetail" hidden>
+      <div class="sheet-head"><button type="button" class="hbtn hback" id="prArrow" aria-label="חזרה" title="חזרה" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button><h2 id="prTitle">יחצנים</h2></div>
+      <div id="prList" class="ppanel"></div>
+      <div id="prDetail" class="ppanel" hidden>
         <div class="prsum" id="prSum"></div>
         <button type="button" class="prnew" id="ppOpen">+ רישום תשלום ליחצן</button>
         <form id="ppForm" novalidate hidden>
@@ -691,10 +693,9 @@
         <div id="prMoves"></div>
         <div style="display:flex;gap:8px;margin-top:12px">
           <button type="button" class="btn ghost" id="prEdit" style="flex:1">עריכת יחצן</button>
-          <button type="button" class="btn ghost" id="prDetBack" style="flex:1;color:var(--muted)">חזרה</button>
         </div>
       </div>
-      <form id="prForm" novalidate hidden>
+      <form id="prForm" class="ppanel" novalidate hidden>
         <label class="field"><span>שם היחצן</span><input name="name" maxlength="60" autocomplete="off" /></label>
         <div class="seg" role="radiogroup" aria-label="סוג עמלה" style="margin-bottom:12px">
           <label><input type="radio" name="rtype" value="fixed" checked /><span>סכום קבוע (₪)</span></label>
@@ -703,7 +704,6 @@
         <label class="field"><span id="prRateLbl">עמלה לכל משתתף (₪)</span><input name="rate" type="number" inputmode="decimal" min="0" step="any" /></label>
         <button class="btn" id="prSave" type="submit">שמירה</button>
         <button class="btn ghost" id="prDel" type="button" style="color:var(--red)" hidden>מחיקת יחצן</button>
-        <button class="btn ghost" id="prBack" type="button" style="color:var(--muted)">חזרה</button>
       </form>
     </div>
   </dialog>
@@ -1450,7 +1450,14 @@
     $('#prList').innerHTML = (state.promoters.length ? state.promoters.map((x) => { const L = ledgerOf(x.id); return '<div class="prrow" data-pr="' + x.id + '" role="button" tabindex="0"><div><b>' + esc(x.name) + '</b><small>' + L.rows.filter((r) => r.kind === 'c').length + ' תשלומים של משתתפים' + (L.rows.some((r) => r.kind === 'r') ? ' · ' + L.rows.filter((r) => r.kind === 'r').length + ' החזרים' : '') + '</small></div><span class="prrate">' + rateLabel(x) + '</span><span class="prearn" title="יתרה לתשלום ליחצן">' + (L.balance > 0 ? ils(L.balance) : '✓') + '</span></div>'; }).join('')
       : '<p class="mnone">עוד אין יחצנים. אפשר להוסיף יחצן עם עמלה קבועה בשקלים או באחוזים מהתשלום</p>') + '<button type="button" class="prnew" id="prNew">+ יחצן חדש</button>';
   }
-  function show(view) { ['#prList', '#prDetail', '#prForm'].forEach((s) => { $(s).hidden = s !== view; }); }
+  let prView = '#prList';
+  const RANK = { '#prList': 0, '#prDetail': 1, '#prForm': 2 };
+  /* מעבר בין מסכי היחצנים: אותה מעטפת כמו פרטי המשתתף (החלקה וחץ חזרה בכותרת) */
+  function show(view) {
+    const forward = RANK[view] > RANK[prView]; prView = view;
+    ['#prList', '#prDetail', '#prForm'].forEach((s) => { const d = $(s), on = s === view; d.hidden = !on; d.classList.remove('enter-l', 'enter-r'); if (on && !reducedMotion()) { void d.offsetWidth; d.classList.add(forward ? 'enter-l' : 'enter-r'); } });
+    $('#prArrow').hidden = view === '#prList';
+  }
   function showPromoterDetail(id) {
     prCur = id; const x = promoterOf(id); if (!x) return showPromoterList();
     const L = ledgerOf(id);
@@ -1476,9 +1483,8 @@
   $('#prBtn').addEventListener('click', () => { showPromoterList(); $('#prDlg').showModal(); });
   $('#prList').addEventListener('click', (e) => { if (e.target.closest('#prNew')) return showPromoterForm(null); const r = e.target.closest('[data-pr]'); if (r) showPromoterDetail(r.dataset.pr); });
   $('#prList').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-pr]')) { e.preventDefault(); showPromoterDetail(e.target.dataset.pr); } });
-  $('#prDetBack').addEventListener('click', showPromoterList);
   $('#prEdit').addEventListener('click', () => showPromoterForm(prCur));
-  $('#prBack').addEventListener('click', () => { if (prAfterSave) { prAfterSave = null; $('#prDlg').close(); } else if (prEditing) showPromoterDetail(prEditing); else showPromoterList(); });
+  $('#prArrow').addEventListener('click', () => { if (prAfterSave) { prAfterSave = null; $('#prDlg').close(); } else if (prView === '#prForm' && prEditing) showPromoterDetail(prEditing); else showPromoterList(); });
   $('#prForm').addEventListener('change', (e) => { if (e.target.name === 'rtype') $('#prRateLbl').textContent = e.target.value === 'percent' ? 'אחוז מהתשלום (%)' : 'עמלה לכל משתתף (₪)'; });
   $('#prForm').addEventListener('submit', async (e) => {
     e.preventDefault();
