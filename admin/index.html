@@ -365,6 +365,8 @@
     #payDlg .sheet-head { position: relative; justify-content: flex-start; gap: 8px; min-height: 40px; margin-bottom: 0; }
     #payDlg .sheet-head h2 { flex: 1 1 auto; font-size: 20px; }
     #payDlg .ppanel[hidden] { display: none; }
+    .pviewsub { margin: 0 0 10px; color: var(--muted); font-size: 15px; }
+    .pviewsub[hidden] { display: none; }
     .payrow { display: flex; gap: 8px; align-items: flex-end; }
     .payrow .field { flex: 1 1 auto; min-width: 0; }
     .payact { display: flex; gap: 8px; margin-top: 2px; }
@@ -587,6 +589,7 @@
         <button type="button" class="hbtn hinfo" id="pInfoBtn" aria-label="פרטי המשתתף" title="פרטי המשתתף" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.8-3.6 3.7-5.5 7-5.5s6.2 1.9 7 5.5"/></svg></button>
         <span class="saved" id="savedMark">נשמר ✓</span>
       </div>
+      <p id="pViewSub" class="pviewsub" hidden></p>
       <div class="ppanel" data-panel="main">
         <div class="paychip" id="pPayChip" hidden></div>
         <div class="clabel">מפגשים</div>
@@ -601,6 +604,26 @@
           <button type="button" id="nAdd" hidden aria-hidden="true" tabindex="-1">הוספה</button>
         </div>
         <div id="nList"></div>
+      </div>
+      <div class="ppanel" data-panel="status" hidden>
+        <div class="sopts" id="sOpts"></div>
+      </div>
+      <div class="ppanel" data-panel="pay" hidden>
+        <div class="payrow">
+          <label class="field"><span>סכום ששולם (₪)</span><input name="pay_amount" type="number" inputmode="decimal" min="0" step="any" /></label>
+          <div class="pquick" id="payQuick"></div>
+        </div>
+        <button type="button" class="promolink" id="promoToggle">+ דרך יחצן</button>
+        <div class="payact"><button class="btn" id="paySave" type="button">שמירה</button></div>
+      </div>
+      <div class="ppanel" data-panel="promo" hidden>
+        <label class="field"><span>יחצן</span><select name="pay_promoter"></select></label>
+        <label class="field" id="commField"><span>עמלה ליחצן (₪)</span><input name="pay_commission" type="number" inputmode="decimal" min="0" step="any" /></label>
+        <div class="payact"><button class="btn" id="promoOk" type="button">אישור</button></div>
+      </div>
+      <div class="ppanel" data-panel="refund" hidden>
+        <p id="refundText" style="margin:2px 0 16px;line-height:1.55"></p>
+        <div class="payact"><button class="btn" id="refundYes" type="button">כן, להחזיר תשלום</button><button class="btn ghost" id="refundNo" type="button" style="color:var(--muted)">ביטול</button></div>
       </div>
       <div class="ppanel" data-panel="info" hidden>
         <div class="name-row">
@@ -634,15 +657,6 @@
     </form>
   </dialog>
 
-  <dialog id="sDlg" aria-labelledby="sTitle" style="max-width:420px">
-    <form class="sheet" method="dialog" novalidate>
-      <h2 id="sTitle" style="margin-bottom:6px">סטטוס תשלום</h2>
-      <p id="sText" style="color:var(--muted);margin:0 0 14px"></p>
-      <div class="sopts" id="sOpts"></div>
-      <button class="btn ghost" id="sNo" type="button" style="color:var(--muted)">ביטול</button>
-    </form>
-  </dialog>
-
   <dialog id="stDlg" aria-labelledby="stTitle" style="max-width:760px">
     <div class="sheet stsheet">
       <div class="sheet-head">
@@ -654,32 +668,6 @@
 
   <dialog id="iDlg" aria-label="צילום מסך" style="max-width:520px">
     <div class="sheet" style="padding-bottom:20px"><img id="iImg" alt="צילום מסך" style="width:100%;max-height:78vh;object-fit:contain;border-radius:12px;display:block" /></div>
-  </dialog>
-
-  <dialog id="payDlg" aria-labelledby="payTitle" style="max-width:420px">
-    <form class="sheet" id="payForm" method="dialog" novalidate>
-      <div class="sheet-head">
-        <button type="button" class="hbtn hback" id="payBack" aria-label="חזרה" title="חזרה" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
-        <h2 id="payTitle">פרטי תשלום</h2>
-      </div>
-      <p id="payText" style="color:var(--muted);margin:0 0 10px;font-size:15px"></p>
-      <div class="ppanel" data-pview="main">
-        <div class="payrow">
-          <label class="field"><span>סכום ששולם (₪)</span><input name="amount" type="number" inputmode="decimal" min="0" step="any" /></label>
-          <div class="pquick" id="payQuick"></div>
-        </div>
-        <button type="button" class="promolink" id="promoToggle">+ דרך יחצן</button>
-        <div class="payact">
-          <button class="btn" id="paySave" type="submit">שמירה</button>
-          <button class="btn ghost" id="payNo" type="button" style="color:var(--muted)">ביטול</button>
-        </div>
-      </div>
-      <div class="ppanel" data-pview="promo" hidden>
-        <label class="field"><span>יחצן</span><select name="promoter"></select></label>
-        <label class="field" id="commField"><span>עמלה ליחצן (₪)</span><input name="commission" type="number" inputmode="decimal" min="0" step="any" /></label>
-        <div class="payact"><button class="btn" id="promoOk" type="button">אישור</button></div>
-      </div>
-    </form>
   </dialog>
 
   <dialog id="prDlg" aria-labelledby="prTitle" style="max-width:480px">
@@ -1406,20 +1394,25 @@
     dlg.showModal();
   }
   /* בחירת סטטוס תשלום (שילם / נשלחה בקשת תשלום / טרם שילם), עם פופאפ */
+  /* בחירת סטטוס תשלום: מסך בתוך פופאפ המשתתף (אותה מעטפת כמו פרטי המשתתף, חץ חזרה בכותרת) */
   function pickPayStatus(pid, mid) {
     const l = linkOf(pid, mid); if (!l) return;
-    const p = state.participants.find((x) => x.id === pid), m = state.meetings.find((x) => x.id === mid);
     const cur = linkStatus(l);
-    $('#sText').innerHTML = nameB(p ? p.name : '') + ' · ' + esc(m ? meetingLabel(m, true) : '');
+    payCtx = { pid, mid }; viewStack = ['main'];
     $('#sOpts').innerHTML = ['paid', 'requested', 'unpaid', 'exempt'].map((s) => '<button type="button" class="sopt ' + s + '" data-st="' + s + '" aria-pressed="' + (s === cur) + '">' + STATUS_LABEL[s] + '</button>').join('');
-    const dlg = $('#sDlg');
-    dlg.querySelectorAll('[data-st]').forEach((b) => b.onclick = () => {
-      dlg.close();
-      if (b.dataset.st === 'paid') openPayDialog(pid, mid);
-      else if (b.dataset.st !== cur) { if (cur === 'paid') confirmRefund(pid, mid, () => setPayStatus(pid, mid, b.dataset.st)); else setPayStatus(pid, mid, b.dataset.st); }
+    $('#sOpts').querySelectorAll('[data-st]').forEach((b) => b.onclick = () => {
+      if (b.dataset.st === 'paid') openPayView(pid, mid);
+      else if (b.dataset.st === cur) toMain();
+      else if (cur === 'paid') openRefundView(pid, mid, b.dataset.st);
+      else { setPayStatus(pid, mid, b.dataset.st); toMain(); }
     });
-    $('#sNo').onclick = () => dlg.close();
-    dlg.showModal();
+    setPTab('status');
+  }
+  function openRefundView(pid, mid, st) {
+    $('#refundText').innerHTML = refundNote(pid, mid);
+    $('#refundYes').onclick = () => { setPayStatus(pid, mid, st); toMain(); };
+    $('#refundNo').onclick = () => setPTab(viewStack.pop() || 'main');
+    goView('refund');
   }
   /* יציאה מסטטוס "שילם" (או הסרה ממפגש) = החזר תשלום: מתריעים בבירור, והמערכת רושמת רשומת החזר */
   function refundNote(pid, mid) {
@@ -1531,47 +1524,40 @@
     catch (err) { Object.assign(l, prev); render(); if (sheet && sheet.id) refreshSheetMeetings(); fail(err); }
   }
   /* פרטי תשלום: סכום (ברירת מחדל לפי מועד), יחצן (ברירת מחדל של המשתתף) ועמלה (ברירת מחדל לפי תעריף היחצן), כולם ניתנים לשינוי לתשלום הזה */
-  function openPayDialog(pid, mid) {
+  function openPayView(pid, mid) {
     const l = linkOf(pid, mid); if (!l) return;
     const p = state.participants.find((x) => x.id === pid), m = state.meetings.find((x) => x.id === mid);
-    const f = $('#payForm'), dlg = $('#payDlg');
-    $('#payText').innerHTML = nameB(p ? p.name : '') + ' · ' + esc(m ? meetingLabel(m, true) : '');
+    const f = pForm;
     const amount = l.paid_amount != null ? Number(l.paid_amount) : (m ? defaultPrice(m) : PRICE_EARLY);
-    f.amount.value = amount;
-    fillPromoterSelect(f.promoter, l.promoter_id || (p && p.promoter_id) || '');
+    f.pay_amount.value = amount;
+    fillPromoterSelect(f.pay_promoter, l.promoter_id || (p && p.promoter_id) || '');
     let dirty = l.commission != null;
-    f.commission.value = l.commission != null ? Number(l.commission) : calcCommission(promoterOf(f.promoter.value), amount);
-    const sync = () => { $('#commField').hidden = !f.promoter.value; };
+    f.pay_commission.value = l.commission != null ? Number(l.commission) : calcCommission(promoterOf(f.pay_promoter.value), amount);
+    const sync = () => { $('#commField').hidden = !f.pay_promoter.value; };
     sync();
-    /* רוב המשלמים בלי יחצן: במסך הראשי רק כפתור קטן "+ דרך יחצן"; הלחיצה מחליקה למסך היחצן (אותה מעטפת כמו פרטי המשתתף) וחץ בכותרת מחזיר */
-    const label = () => { const pr = promoterOf(f.promoter.value); $('#promoToggle').textContent = pr ? 'יחצן: ' + pr.name + (f.commission.value !== '' ? ' · עמלה ₪' + f.commission.value : '') + ' (עריכה)' : '+ דרך יחצן'; $('#promoToggle').classList.toggle('on', !!pr); };
-    const view = (v, instant) => {
-      document.querySelectorAll('#payForm [data-pview]').forEach((d) => { const show = d.dataset.pview === v; d.hidden = !show; d.classList.remove('enter-l', 'enter-r'); if (show && !instant && !reducedMotion()) { void d.offsetWidth; d.classList.add(v === 'promo' ? 'enter-l' : 'enter-r'); } });
-      $('#payBack').hidden = v === 'main'; $('#payTitle').textContent = v === 'main' ? 'פרטי תשלום' : 'יחצן ועמלה';
-      if (v === 'main') label();
-    };
-    view('main', true);
-    $('#promoToggle').onclick = () => view('promo');
-    $('#payBack').onclick = () => view('main'); $('#promoOk').onclick = () => view('main');
+    /* רוב המשלמים בלי יחצן: רק כפתור קטן "+ דרך יחצן" שמחליק למסך יחצן ועמלה */
+    const label = () => { const pr = promoterOf(f.pay_promoter.value); $('#promoToggle').textContent = pr ? 'יחצן: ' + pr.name + (f.pay_commission.value !== '' ? ' · עמלה ₪' + f.pay_commission.value : '') + ' (עריכה)' : '+ דרך יחצן'; };
+    label();
+    $('#promoToggle').onclick = () => goView('promo');
+    $('#promoOk').onclick = () => { label(); setPTab(viewStack.pop() || 'pay'); };
     $('#payQuick').innerHTML = [PRICE_EARLY, PRICE_LATE].map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
-    const recalc = () => { if (!dirty) f.commission.value = calcCommission(promoterOf(f.promoter.value), f.amount.value); };
-    let lastPr = f.promoter.value;
-    f.amount.oninput = recalc;
-    f.promoter.onchange = () => {
-      if (f.promoter.value === '__new') { f.promoter.value = lastPr; openNewPromoter((row) => { fillPromoterSelect(f.promoter, row.id); lastPr = row.id; sync(); dirty = false; recalc(); }); return; }
-      lastPr = f.promoter.value; sync(); dirty = false; recalc();
+    const recalc = () => { if (!dirty) f.pay_commission.value = calcCommission(promoterOf(f.pay_promoter.value), f.pay_amount.value); label(); };
+    let lastPr = f.pay_promoter.value;
+    f.pay_amount.oninput = recalc;
+    f.pay_promoter.onchange = () => {
+      if (f.pay_promoter.value === '__new') { f.pay_promoter.value = lastPr; openNewPromoter((row) => { fillPromoterSelect(f.pay_promoter, row.id); lastPr = row.id; sync(); dirty = false; recalc(); }); return; }
+      lastPr = f.pay_promoter.value; sync(); dirty = false; recalc();
     };
-    f.commission.oninput = () => { dirty = true; };
-    $('#payQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) { f.amount.value = b.dataset.q; recalc(); } };
-    f.onsubmit = (e) => {
-      e.preventDefault();
-      const amt = parseFloat(f.amount.value); if (!(amt >= 0)) { f.amount.focus(); return; }
-      const pr = f.promoter.value || null, cm = pr && f.commission.value !== '' ? parseFloat(f.commission.value) : null;
-      dlg.close();
+    f.pay_commission.oninput = () => { dirty = true; label(); };
+    $('#payQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) { f.pay_amount.value = b.dataset.q; recalc(); } };
+    const save = () => {
+      const amt = parseFloat(f.pay_amount.value); if (!(amt >= 0)) { f.pay_amount.focus(); return; }
+      const pr = f.pay_promoter.value || null, cm = pr && f.pay_commission.value !== '' ? parseFloat(f.pay_commission.value) : null;
       setPayStatus(pid, mid, 'paid', { paid_amount: amt, promoter_id: pr, commission: Number.isFinite(cm) ? cm : null, paid_at: l.paid_at || new Date().toISOString() });
+      toMain();
     };
-    $('#payNo').onclick = () => dlg.close();
-    dlg.showModal();
+    $('#paySave').onclick = save;
+    goView('pay');
   }
   async function setPayStatus(pid, mid, st, extra) {
     const l = linkOf(pid, mid);
@@ -1777,21 +1763,30 @@
   /* מסך אחד: ראשי (וואטסאפ וחיוג, מפגשים אחרונים, הערות) או פרטים (אייקון בכותרת; חץ חזרה בתוכו) */
   let pTab = 'main', mLimit = 3;
   const reducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const SUBVIEW = { status: 'סטטוס תשלום', pay: 'פרטי תשלום', promo: 'יחצן ועמלה', refund: 'החזרת תשלום' };
+  let viewStack = [], payCtx = null;
   function setPTab(tab, instant) {
     if (!sheet || !sheet.id) tab = 'info';
     const prev = pTab; pTab = tab;
     document.querySelectorAll('#pDlg [data-panel]').forEach((d) => {
       const show = d.dataset.panel === tab; d.hidden = !show;
       d.classList.remove('enter-l', 'enter-r');
-      if (show && !instant && prev !== tab && !reducedMotion()) { void d.offsetWidth; d.classList.add(tab === 'info' ? 'enter-l' : 'enter-r'); }
+      if (show && !instant && prev !== tab && !reducedMotion()) { void d.offsetWidth; d.classList.add(tab === 'main' ? 'enter-r' : 'enter-l'); }
     });
     const ex = !!(sheet && sheet.id);
-    $('#pBack').hidden = !(ex && tab === 'info'); $('#pInfoBtn').hidden = !(ex && tab === 'main'); $('#pMsgs').hidden = tab !== 'main';
+    $('#pBack').hidden = !(ex && tab !== 'main'); $('#pInfoBtn').hidden = !(ex && tab === 'main'); $('#pMsgs').hidden = tab !== 'main';
+    { const sub = SUBVIEW[tab], pp0 = ex ? state.participants.find((x) => x.id === sheet.id) : null;
+      $('#pViewSub').hidden = !sub;
+      if (sub) { $('#pTitle').textContent = sub; const pm = payCtx && state.meetings.find((x) => x.id === payCtx.mid); $('#pViewSub').innerHTML = nameB(pp0 ? pp0.name : '') + (pm ? ' · ' + esc(meetingLabel(pm, true)) : ''); }
+      else if (ex) setTitle(pp0); }
     if (tab === 'main') { renderContact(); renderNotes(); }
     syncUrl();
   }
-  $('#pInfoBtn').addEventListener('click', () => setPTab('info'));
-  $('#pBack').addEventListener('click', () => setPTab('main'));
+  pForm.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.name && e.target.name.startsWith('pay_')) { e.preventDefault(); if (pTab === 'pay') $('#paySave').click(); else $('#promoOk').click(); } });
+  $('#pInfoBtn').addEventListener('click', () => { viewStack = []; setPTab('info'); });
+  $('#pBack').addEventListener('click', () => setPTab(viewStack.pop() || 'main'));
+  const goView = (v) => { viewStack.push(pTab); setPTab(v); };
+  const toMain = () => { viewStack = []; setPTab('main'); };
 
   /* מעטפת אחת לכל הפופאפים (משתתף, מפגש, סטטיסטיקה, אישור): עולים מלמטה, נסגרים באנימציה,
      פס גרירה בראש כמו מגירה (אפשר להחליק למטה לסגירה), לחיצה בחוץ סוגרת, והדף מאחור נעול לגלילה */
@@ -1930,6 +1925,7 @@
     openPid = p ? p.id : null;
     pDlg.showModal();
     pDlg.setAttribute('tabindex', '-1'); pDlg.focus({ preventScroll: true });   // בלי טבעת פוקוס על כפתור הסגירה
+    viewStack = []; payCtx = null;
     setPTab(p ? (tab === 'info' ? 'info' : 'main') : 'info', true);
     if (!p) setTimeout(() => pForm.name.focus(), 50);
   }
@@ -1996,7 +1992,7 @@
       openNewPromoter((row) => { fillPromoterSelect(sel, row.id); sel.dispatchEvent(new Event('change', { bubbles: true })); });
       return;
     }
-    if (!sheet || !sheet.id || !e.target.name) return;
+    if (!sheet || !sheet.id || !e.target.name || e.target.name.startsWith('pay_')) return;
     const p = state.participants.find((x) => x.id === sheet.id);
     const v = readForm();
     const field = e.target.name;
