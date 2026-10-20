@@ -1667,6 +1667,18 @@
       const fin = () => { d._closing = false; d.getAnimations().forEach((x) => x.cancel()); rawClose.call(d, rv); unlock(); };
       a.onfinish = fin; a.oncancel = () => { if (d._closing) fin(); };
     };
+    /* כשהמקלדת פתוחה (אנדרואיד/iOS) הפופאפ מתכווץ לאזור הנראה ומתרומם מעל המקלדת, כך שאפשר לגלול בתוכו ולהגיע לכל השדות והכפתורים */
+    const vv = window.visualViewport;
+    if (vv) {
+      const fit = () => {
+        const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+        document.querySelectorAll('dialog[open]').forEach((d) => {
+          if (kb > 80) { d.style.marginBottom = kb + 'px'; d.style.maxHeight = Math.round(vv.height - 12) + 'px'; }
+          else { d.style.marginBottom = ''; d.style.maxHeight = ''; }
+        });
+      };
+      vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit);
+    }
     document.querySelectorAll('dialog').forEach((d) => {
       const g = document.createElement('div'); g.className = 'grab'; g.innerHTML = '<i></i>'; g.setAttribute('aria-hidden', 'true');
       d.insertBefore(g, d.firstChild);
