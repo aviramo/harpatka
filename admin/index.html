@@ -359,6 +359,14 @@
     .sortmenu button { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 12px; text-align: right; font-size: 16px; font-weight: 600; }
     .sortmenu button[aria-checked="true"] { background: rgba(201,111,82,.12); color: var(--terra); }
     .sortmenu button[aria-checked="true"]::after { content: "✓"; font-weight: 800; }
+    .pquick { display: flex; gap: 8px; margin: -4px 0 12px; }
+    .pquick button { height: 34px; padding: 0 14px; border-radius: 999px; background: var(--cream); font-weight: 700; font-size: 14px; border: 1.5px solid var(--line); }
+    .prrow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 12px 12px; border-radius: 14px; background: var(--cream); margin-bottom: 8px; cursor: pointer; }
+    .prrow b { font-size: 16px; }
+    .prrow small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+    .prrate { background: #fff; border-radius: 999px; padding: 2px 10px; font-weight: 700; font-size: 14px; }
+    .prearn { font-weight: 800; color: var(--terra); min-width: 54px; text-align: left; }
+    .prnew { width: 100%; height: 44px; border-radius: 14px; border: 1.5px dashed var(--coral); color: var(--terra); font-weight: 700; margin-top: 4px; }
     .hicons { display: flex; gap: 8px; align-self: center; }
     .hicon { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: var(--paper); color: var(--ink); box-shadow: 0 0 0 1.5px var(--line); }
     .hicon svg { width: 21px; height: 21px; }
@@ -505,6 +513,7 @@
           <div class="sortmenu mmenu" id="mMenu" role="menu" hidden></div>
         </div>
         <div class="hicons">
+          <button type="button" class="hicon" id="prBtn" aria-label="יחצנים" title="יחצנים"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4a1 1 0 0 0 1 1h2.5l5.5 4V5L7.5 9H5a1 1 0 0 0-1 1z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg></button>
           <button type="button" class="hicon" id="statsBtn" aria-label="סטטיסטיקות" title="סטטיסטיקות"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6"/></svg></button>
           <button type="button" class="hicon" id="signOut" aria-label="יציאה" title="יציאה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><path d="M15 8l4 4-4 4M19 12H9"/></svg></button>
         </div>
@@ -561,6 +570,7 @@
           <label class="field"><span>טלפון</span><input name="phone" type="tel" inputmode="tel" maxlength="20" autocomplete="off" /></label>
           <label class="field"><span>גיל</span><input name="age" type="number" inputmode="numeric" min="18" max="99" /></label>
         </div>
+        <label class="field"><span>יחצן (מי שהביא אותו)</span><select name="promoter_id" id="pPromoter"><option value="">ללא</option></select></label>
         <div class="note" id="pRegLine" style="color:var(--muted);font-size:14px;margin:2px 4px 10px"></div>
         <button class="btn ghost" id="pDelete" type="button">מחיקת משתתף</button>
       </div>
@@ -605,6 +615,37 @@
     <div class="sheet" style="padding-bottom:20px"><img id="iImg" alt="צילום מסך" style="width:100%;max-height:78vh;object-fit:contain;border-radius:12px;display:block" /></div>
   </dialog>
 
+  <dialog id="payDlg" aria-labelledby="payTitle" style="max-width:420px">
+    <form class="sheet" id="payForm" method="dialog" novalidate>
+      <h2 id="payTitle" style="margin-bottom:6px">פרטי תשלום</h2>
+      <p id="payText" style="color:var(--muted);margin:0 0 14px"></p>
+      <label class="field"><span>סכום ששולם (₪)</span><input name="amount" type="number" inputmode="decimal" min="0" step="any" /></label>
+      <div class="pquick" id="payQuick"></div>
+      <label class="field"><span>יחצן</span><select name="promoter"></select></label>
+      <label class="field" id="commField"><span>עמלה ליחצן (₪)</span><input name="commission" type="number" inputmode="decimal" min="0" step="any" /></label>
+      <button class="btn" id="paySave" type="submit">שמירה</button>
+      <button class="btn ghost" id="payNo" type="button" style="color:var(--muted)">ביטול</button>
+    </form>
+  </dialog>
+
+  <dialog id="prDlg" aria-labelledby="prTitle" style="max-width:480px">
+    <div class="sheet">
+      <div class="sheet-head"><h2 id="prTitle">יחצנים</h2></div>
+      <div id="prList"></div>
+      <form id="prForm" novalidate hidden>
+        <label class="field"><span>שם היחצן</span><input name="name" maxlength="60" autocomplete="off" /></label>
+        <div class="seg" role="radiogroup" aria-label="סוג עמלה" style="margin-bottom:12px">
+          <label><input type="radio" name="rtype" value="fixed" checked /><span>סכום קבוע (₪)</span></label>
+          <label><input type="radio" name="rtype" value="percent" /><span>אחוז מהתשלום (%)</span></label>
+        </div>
+        <label class="field"><span id="prRateLbl">עמלה לכל משתתף (₪)</span><input name="rate" type="number" inputmode="decimal" min="0" step="any" /></label>
+        <button class="btn" id="prSave" type="submit">שמירה</button>
+        <button class="btn ghost" id="prDel" type="button" style="color:var(--red)" hidden>מחיקת יחצן</button>
+        <button class="btn ghost" id="prBack" type="button" style="color:var(--muted)">חזרה</button>
+      </form>
+    </div>
+  </dialog>
+
   <dialog id="cDlg" aria-labelledby="cTitle" style="max-width:420px">
     <form class="sheet" method="dialog" novalidate>
       <h2 id="cTitle" style="margin-bottom:6px"></h2>
@@ -623,9 +664,9 @@
     url: 'https://ezakarwqstnldqixgreb.supabase.co',
     key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6YWthcndxc3RubGRxaXhncmViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTA3MzIsImV4cCI6MjEwNjc4NjczMn0.Bg0eFBC4zKjyJc5kBw3wLgSP-PkxLFVv3o7-4YUdq4c',
   };
-  const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance', n: 'harpatka_notes' };
+  const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance', n: 'harpatka_notes', pr: 'harpatka_promoters' };
 
-  const state = { participants: [], meetings: [], att: [], notes: [], filter: null, q: '', pay: null, gender: null, sort: 'new' };
+  const state = { participants: [], meetings: [], att: [], notes: [], promoters: [], filter: null, q: '', pay: null, gender: null, sort: 'new' };
   /* קישור עמוק מהמייל: ?m=<מפגש>&p=<משתתף>; נשמר בזמן הכניסה עם גוגל (שמחזירה בלי הפרמטרים) */
   let deep = null;
   try {
@@ -689,7 +730,7 @@
     ws.onopen = () => {
       rtRetry = 1000;
       rtSend({ topic: RT_TOPIC, event: 'phx_join', ref: '1', payload: { config: { broadcast: { ack: false, self: false }, presence: { key: '' }, private: false,
-        postgres_changes: [T.p, T.m, T.a, T.n].map((table) => ({ event: '*', schema: 'public', table })) }, access_token: session.access_token } });
+        postgres_changes: [T.p, T.m, T.a, T.n, T.pr].map((table) => ({ event: '*', schema: 'public', table })) }, access_token: session.access_token } });
       rtHb = setInterval(() => rtSend({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(Date.now()) }), 25000);
     };
     ws.onmessage = (e) => {
@@ -847,6 +888,13 @@
     return (withDay ? 'יום ' + day + ' ' : '') + d + '.' + mo + ' · ' + String(m.meeting_time).slice(0, 5);
   }
   const isPast = (m) => m.meeting_date < todayISO();
+  /* מחיר ברירת מחדל לפי מועד התשלום: 80 ₪ עד יומיים לפני ההתייקרות, ומשלושה ימים לפני המפגש 100 ₪ */
+  const PRICE_EARLY = 80, PRICE_LATE = 100;
+  const defaultPrice = (m, iso) => { const d = new Date(m.meeting_date + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() - 3); return (iso || todayISO()) < d.toISOString().slice(0, 10) ? PRICE_EARLY : PRICE_LATE; };
+  const promoterOf = (id) => state.promoters.find((x) => x.id === id);
+  const rateLabel = (pr) => pr ? (pr.rate_type === 'percent' ? Number(pr.rate) + '%' : '₪' + Number(pr.rate)) : '';
+  const calcCommission = (pr, amount) => { if (!pr) return ''; const v = pr.rate_type === 'percent' ? Math.round((Number(amount) || 0) * Number(pr.rate)) / 100 : Number(pr.rate); return Number.isFinite(v) ? v : ''; };
+  const fillPromoterSelect = (sel, val, none) => { sel.innerHTML = '<option value="">' + (none || 'ללא') + '</option>' + state.promoters.map((x) => '<option value="' + x.id + '">' + esc(x.name) + ' (' + rateLabel(x) + ')</option>').join(''); sel.value = val || ''; };
   /* תצוגת ההגעה (מונה, הדגשת שורה, כפתור "הגיע") מופיעה החל מחצי שעה לפני תחילת המפגש (שעון ישראל) */
   const nowIL = () => {
     const s = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Jerusalem', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
@@ -876,13 +924,14 @@
   async function load(silent) {
     if (!silent) $('#status').innerHTML = '<div class="empty">טוען…</div>';
     try {
-      const [p, m, a, nn] = await Promise.all([
+      const [p, m, a, nn, prs] = await Promise.all([
         api(T.p + '?select=*'),
         api(T.m + '?select=*'),
-        api(T.a + '?select=participant_id,meeting_id,paid,pay_requested_at,created_at,exempt,attended'),
+        api(T.a + '?select=participant_id,meeting_id,paid,pay_requested_at,created_at,exempt,attended,paid_amount,promoter_id,commission,paid_at'),
         api(T.n + '?select=id,participant_id,body,author_email,author_name,created_at,has_image&order=created_at.desc'),
+        api(T.pr + '?select=*&order=name.asc'),
       ]);
-      state.participants = p; state.meetings = m; state.att = a; state.notes = nn; rebuildNotes();
+      state.participants = p; state.meetings = m; state.att = a; state.notes = nn; state.promoters = prs; rebuildNotes();
       sortMeetings();
       if (!silent) $('#status').innerHTML = '';
       if (deep) {
@@ -1124,7 +1173,7 @@
     const perMeeting = asc.map((m) => {
       const ls = all.filter((l) => l.meeting_id === m.id), S = new Set(ls.map((l) => l.participant_id));
       const ret = [...S].filter((id) => seen.has(id)).length, kept = [...S].filter((id) => prev.has(id)).length;
-      const row = { m, regs: ls.length, ad: ls.filter((l) => l.p.source === 'site-ad').length, ex: ls.filter((l) => l.exempt).length, paid: ls.filter((l) => l.paid && !l.exempt).length, rev: ls.filter((l) => l.paid && !l.exempt).reduce((s, l) => s + priceAtReg(m, l.created_at), 0),
+      const row = { m, regs: ls.length, ad: ls.filter((l) => l.p.source === 'site-ad').length, ex: ls.filter((l) => l.exempt).length, paid: ls.filter((l) => l.paid && !l.exempt).length, rev: ls.filter((l) => l.paid && !l.exempt).reduce((s, l) => s + (l.paid_amount != null ? Number(l.paid_amount) : priceAtReg(m, l.created_at)), 0),
         news: S.size - ret, ret, kept, prevN: prev.size };
       S.forEach((id) => seen.add(id)); prev = S;
       return row;
@@ -1144,7 +1193,8 @@
 
     const n = links.length, uniq = new Set(links.map((l) => l.participant_id)), people = [...uniq].map((id) => state.participants.find((x) => x.id === id));
     const paid = links.filter((l) => l.st === 'paid'), req = links.filter((l) => l.st === 'requested'), unp = links.filter((l) => l.st === 'unpaid'), exm = links.filter((l) => l.st === 'exempt'), nPay = n - exm.length;   // nPay: הרשמות שמשלמים (בלי "לא משלם")
-    const price = (l) => priceAtReg(l.m, l.created_at);
+    const price = (l) => (l.st === 'paid' && l.paid_amount != null) ? Number(l.paid_amount) : priceAtReg(l.m, l.created_at);
+    const comm = paid.reduce((s, l) => s + (l.commission != null ? Number(l.commission) : 0), 0);
     const rev = paid.reduce((s, l) => s + price(l), 0), owed = [...req, ...unp].reduce((s, l) => s + price(l), 0);
     const today = dnum(todayISO());
     const waiting3 = links.filter((l) => (l.st === 'unpaid' || l.st === 'requested') && l.created_at && today - dnum(ilDay(l.created_at)) > 3);
@@ -1183,6 +1233,7 @@
     kp.push(kpi(req.length, 'בטיפול', Ps(req.length, nPay), 'warn'));
     kp.push(kpi(unp.length, 'טרם טופלו', Ps(unp.length, nPay), unp.length ? 'bad' : ''));
     if (exm.length) kp.push(kpi(exm.length, 'לא משלמים', Ps(exm.length, n) + ' מההרשמות (נרשמו בחינם)'));
+    if (comm) kp.push(kpi('₪' + nfm(comm), 'עמלות ליחצנים', 'נטו אחרי עמלות ₪' + nfm(rev - comm)));
     kp.push(kpi('₪' + nfm(rev), 'הכנסה משוערת', 'חוב פתוח משוער ₪' + nfm(owed)));
     kp.push(kpi(nfm(n / Math.max(1, pm.length)), 'ממוצע נרשמים למפגש', 'ממוצע ששילמו ' + (paid.length / Math.max(1, pm.length)).toFixed(1)));
     out.push('<div class="stkpis">' + kp.join('') + '</div>');
@@ -1286,13 +1337,52 @@
     $('#sText').innerHTML = nameB(p ? p.name : '') + ' · ' + esc(m ? meetingLabel(m, true) : '');
     $('#sOpts').innerHTML = ['paid', 'requested', 'unpaid', 'exempt'].map((s) => '<button type="button" class="sopt ' + s + '" data-st="' + s + '" aria-pressed="' + (s === cur) + '">' + STATUS_LABEL[s] + '</button>').join('');
     const dlg = $('#sDlg');
-    dlg.querySelectorAll('[data-st]').forEach((b) => b.onclick = () => { dlg.close(); if (b.dataset.st !== cur) setPayStatus(pid, mid, b.dataset.st); });
+    dlg.querySelectorAll('[data-st]').forEach((b) => b.onclick = () => { dlg.close(); if (b.dataset.st === 'paid') openPayDialog(pid, mid); else if (b.dataset.st !== cur) setPayStatus(pid, mid, b.dataset.st); });
     $('#sNo').onclick = () => dlg.close();
     dlg.showModal();
   }
   const confirmLink = (pid, mid, on, after) => confirmAct(on ? 'להוסיף למפגש?' : 'להסיר מהמפגש?', pid, mid, () => { setLinked(pid, mid, on); if (after) after(); });
 
   /* סימון הגעה למפגש (זמן אמת: מעדכן מיד, נשמר ומתעדכן אצל כולם) */
+  /* יחצנים: רשימה (עם כמה עמלות נצברו), הוספה, עריכה ומחיקה */
+  let prEditing = null;
+  function renderPromoters() {
+    const earned = (id) => state.att.filter((a) => a.promoter_id === id && a.paid && a.commission != null).reduce((s, a) => s + Number(a.commission), 0);
+    const cnt = (id) => state.att.filter((a) => a.promoter_id === id && a.paid).length;
+    $('#prList').innerHTML = (state.promoters.length ? state.promoters.map((x) => '<div class="prrow" data-pr="' + x.id + '" role="button" tabindex="0"><div><b>' + esc(x.name) + '</b><small>' + cnt(x.id) + ' תשלומים</small></div><span class="prrate">' + rateLabel(x) + '</span><span class="prearn" title="עמלות שנצברו">₪' + nfm(earned(x.id)) + '</span></div>').join('')
+      : '<p class="mnone">עוד אין יחצנים. אפשר להוסיף יחצן עם עמלה קבועה בשקלים או באחוזים מהתשלום</p>') + '<button type="button" class="prnew" id="prNew">+ יחצן חדש</button>';
+  }
+  function showPromoterForm(id) {
+    prEditing = id || null;
+    const x = id ? promoterOf(id) : null, f = $('#prForm');
+    f.name.value = x ? x.name : ''; f.rate.value = x ? Number(x.rate) : ''; f.rtype.value = x ? x.rate_type : 'fixed';
+    $('#prRateLbl').textContent = (f.rtype.value === 'percent') ? 'אחוז מהתשלום (%)' : 'עמלה לכל משתתף (₪)';
+    $('#prDel').hidden = !x; f.hidden = false; $('#prList').hidden = true; $('#prTitle').textContent = x ? x.name : 'יחצן חדש';
+    if (!x) setTimeout(() => f.name.focus(), 50);
+  }
+  function showPromoterList() { $('#prForm').hidden = true; $('#prList').hidden = false; $('#prTitle').textContent = 'יחצנים'; renderPromoters(); }
+  $('#prBtn').addEventListener('click', () => { showPromoterList(); $('#prDlg').showModal(); });
+  $('#prList').addEventListener('click', (e) => { if (e.target.closest('#prNew')) return showPromoterForm(null); const r = e.target.closest('[data-pr]'); if (r) showPromoterForm(r.dataset.pr); });
+  $('#prList').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-pr]')) { e.preventDefault(); showPromoterForm(e.target.dataset.pr); } });
+  $('#prBack').addEventListener('click', showPromoterList);
+  $('#prForm').addEventListener('change', (e) => { if (e.target.name === 'rtype') $('#prRateLbl').textContent = e.target.value === 'percent' ? 'אחוז מהתשלום (%)' : 'עמלה לכל משתתף (₪)'; });
+  $('#prForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const f = e.target, name = f.name.value.trim(), rate = parseFloat(f.rate.value);
+    if (!name) { f.name.focus(); return; }
+    if (!(rate >= 0)) { f.rate.focus(); return; }
+    const body = { name, rate_type: f.rtype.value, rate };
+    try {
+      if (prEditing) { await api(T.pr + '?id=eq.' + prEditing, { method: 'PATCH', body }); Object.assign(promoterOf(prEditing), body); }
+      else { const [row] = await api(T.pr, { method: 'POST', body, prefer: 'return=representation' }); if (row && !promoterOf(row.id)) state.promoters.push(row); }
+      state.promoters.sort((a, b) => a.name.localeCompare(b.name, 'he'));
+      showPromoterList(); toast('נשמר');
+    } catch (err) { fail(err); }
+  });
+  $('#prDel').addEventListener('click', () => {
+    const x = promoterOf(prEditing); if (!x || !confirm('למחוק את היחצן ' + x.name + '? התשלומים הקיימים יישארו בלי יחצן.')) return;
+    api(T.pr + '?id=eq.' + x.id, { method: 'DELETE' }).then(() => { state.promoters = state.promoters.filter((y) => y.id !== x.id); state.att.forEach((a) => { if (a.promoter_id === x.id) a.promoter_id = null; }); state.participants.forEach((q) => { if (q.promoter_id === x.id) q.promoter_id = null; }); showPromoterList(); toast('נמחק'); }).catch(fail);
+  });
   async function setAttended(pid, mid, val) {
     const l = linkOf(pid, mid); if (!l) return;
     const prev = { attended: l.attended, attended_at: l.attended_at };
@@ -1301,11 +1391,40 @@
     try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body }); }
     catch (err) { Object.assign(l, prev); render(); if (sheet && sheet.id) refreshSheetMeetings(); fail(err); }
   }
-  async function setPayStatus(pid, mid, st) {
+  /* פרטי תשלום: סכום (ברירת מחדל לפי מועד), יחצן (ברירת מחדל של המשתתף) ועמלה (ברירת מחדל לפי תעריף היחצן), כולם ניתנים לשינוי לתשלום הזה */
+  function openPayDialog(pid, mid) {
+    const l = linkOf(pid, mid); if (!l) return;
+    const p = state.participants.find((x) => x.id === pid), m = state.meetings.find((x) => x.id === mid);
+    const f = $('#payForm'), dlg = $('#payDlg');
+    $('#payText').innerHTML = nameB(p ? p.name : '') + ' · ' + esc(m ? meetingLabel(m, true) : '');
+    const amount = l.paid_amount != null ? Number(l.paid_amount) : (m ? defaultPrice(m) : PRICE_EARLY);
+    f.amount.value = amount;
+    fillPromoterSelect(f.promoter, l.promoter_id || (p && p.promoter_id) || '');
+    let dirty = l.commission != null;
+    f.commission.value = l.commission != null ? Number(l.commission) : calcCommission(promoterOf(f.promoter.value), amount);
+    const sync = () => { $('#commField').hidden = !f.promoter.value; };
+    sync();
+    $('#payQuick').innerHTML = [PRICE_EARLY, PRICE_LATE].map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
+    const recalc = () => { if (!dirty) f.commission.value = calcCommission(promoterOf(f.promoter.value), f.amount.value); };
+    f.amount.oninput = recalc; f.promoter.onchange = () => { sync(); dirty = false; recalc(); };
+    f.commission.oninput = () => { dirty = true; };
+    $('#payQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) { f.amount.value = b.dataset.q; recalc(); } };
+    f.onsubmit = (e) => {
+      e.preventDefault();
+      const amt = parseFloat(f.amount.value); if (!(amt >= 0)) { f.amount.focus(); return; }
+      const pr = f.promoter.value || null, cm = pr && f.commission.value !== '' ? parseFloat(f.commission.value) : null;
+      dlg.close();
+      setPayStatus(pid, mid, 'paid', { paid_amount: amt, promoter_id: pr, commission: Number.isFinite(cm) ? cm : null, paid_at: l.paid_at || new Date().toISOString() });
+    };
+    $('#payNo').onclick = () => dlg.close();
+    dlg.showModal();
+  }
+  async function setPayStatus(pid, mid, st, extra) {
     const l = linkOf(pid, mid);
     if (!l) return;
-    const prev = { paid: l.paid, pay_requested_at: l.pay_requested_at, exempt: l.exempt };
-    const body = st === 'paid' ? { paid: true, exempt: false } : st === 'requested' ? { paid: false, exempt: false, pay_requested_at: new Date().toISOString() } : st === 'exempt' ? { paid: false, exempt: true, pay_requested_at: null } : { paid: false, exempt: false, pay_requested_at: null };
+    const prev = { paid: l.paid, pay_requested_at: l.pay_requested_at, exempt: l.exempt, paid_amount: l.paid_amount, promoter_id: l.promoter_id, commission: l.commission, paid_at: l.paid_at };
+    const CLR = { paid_amount: null, promoter_id: null, commission: null, paid_at: null };
+    const body = st === 'paid' ? Object.assign({ paid: true, exempt: false }, extra || {}) : st === 'requested' ? Object.assign({ paid: false, exempt: false, pay_requested_at: new Date().toISOString() }, CLR) : st === 'exempt' ? Object.assign({ paid: false, exempt: true, pay_requested_at: null }, CLR) : Object.assign({ paid: false, exempt: false, pay_requested_at: null }, CLR);
     Object.assign(l, body); render(); refreshSheetMeetings();
     try {
       await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body });
@@ -1617,6 +1736,7 @@
     pForm.phone.value = p ? localPhone(p.phone) : '';
     pForm.age.value = p ? (shownAge(p) ?? '') : '';
     pForm.gender.value = p && p.gender ? p.gender : '';
+    fillPromoterSelect(pForm.promoter_id, p && p.promoter_id);
     setTitle(p);
     $('#pRegLine').textContent = p && regDate(p) ? ('תאריך הרשמה: ' + regDateTime(p) + (p.source === 'site' ? ' (דרך האתר)' : p.source === 'site-ad' ? ' (דרך האתר, ממומן)' : '')) : '';
     renderContact();
@@ -1646,7 +1766,7 @@
       else { on = sheet.links.has(m.id); st = sheet.links.get(m.id) ? 'paid' : 'unpaid'; }
       return '<div class="mrow' + (on ? ' on' : '') + '">' +
         '<button type="button" class="mtoggle" data-mt="' + m.id + '" aria-pressed="' + on + '"><span class="box">' + (on ? '✓' : '') + '</span>' + esc(meetingLabel(m, true)) + '</button>' +
-        '<button type="button" class="pay ' + st + '" data-mp="' + m.id + '"' + (on ? '' : ' hidden') + '>' + STATUS_LABEL[st] + '</button>' +
+        '<button type="button" class="pay ' + st + '" data-mp="' + m.id + '"' + (on ? '' : ' hidden') + '>' + STATUS_LABEL[st] + (st === 'paid' && sheet.id && (linkOf(sheet.id, m.id) || {}).paid_amount != null ? ' ' + Number(linkOf(sheet.id, m.id).paid_amount) : '') + '</button>' +
         (sheet.id && on && attendOpen(m) ? '<button type="button" class="here sm" data-ht="' + m.id + '" aria-pressed="' + !!(linkOf(sheet.id, m.id) || {}).attended + '">' + ((linkOf(sheet.id, m.id) || {}).attended ? '✓ הגיע' : 'לא הגיע') + '</button>' : '') +
       '</div>';
     }).join('');
@@ -1675,6 +1795,7 @@
       phone: pForm.phone.value.trim(),
       age: Number.isFinite(age) ? age : null,
       gender: pForm.gender.value || null,
+      promoter_id: pForm.promoter_id.value || null,
     };
   }
 
