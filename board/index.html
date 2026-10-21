@@ -93,6 +93,8 @@
     dialog h2 { font-family: "Rubik", sans-serif; font-size: 20px; margin: 0 0 6px; }
     dialog p { margin: 0 0 12px; color: var(--muted); font-size: 15px; }
     dialog input { width: 100%; border: 1.5px solid var(--line); border-radius: 14px; padding: 11px 14px; font-size: 17px; background: #fff; direction: ltr; text-align: right; }
+    .regl { display: block; margin-top: 6px; color: var(--terra); font-weight: 700; text-decoration: underline; }
+    .regl[hidden] { display: none; }
     .err { color: #A3453A; font-size: 14px; min-height: 20px; margin-top: 6px; }
     .drow { display: flex; gap: 8px; margin-top: 10px; }
     .drow .btn { flex: 1; }
@@ -127,6 +129,7 @@
     <p>כדי לפרסם צריך לאמת שאתם משתתפים. הזינו את הטלפון שנרשמתם איתו. החיבור ייבדק ויאושר על ידינו, ובינתיים מה שתכתבו יהיה גלוי רק לכם</p>
     <input id="phoneIn" type="tel" inputmode="tel" autocomplete="tel" placeholder="050-0000000" aria-label="טלפון" />
     <div class="err" id="phoneErr" role="alert"></div>
+    <a class="regl" id="phoneReg" href="../?register=1" hidden>להרשמה למפגש</a>
     <div class="drow"><button type="button" class="btn" id="phoneOk">המשך</button><button type="button" class="btn ghost" id="phoneCancel">ביטול</button></div>
   </dialog>
 
@@ -208,7 +211,7 @@
         + (p.can_approve ? '<button type="button" class="act ok" data-approve="' + p.id + '">אישור ופרסום</button>' : '')
         + (p.can_delete ? (asking ? '<span>למחוק? <button type="button" class="act del" data-delyes="' + p.id + '">כן</button> <button type="button" class="act" data-delno="1">לא</button></span>' : '<button type="button" class="act del" data-del="' + p.id + '">מחיקה</button>') : '')
         + (p.pending ? '<span class="pend">ממתין לאישור, רק אתם רואים אותו</span>' : '') + '</span>';
-      const reply = openReply === p.id ? '<div class="reply"><textarea rows="1" maxlength="2000" data-rtext="' + p.id + '" placeholder="תגובה" aria-label="תגובה"></textarea>' + (canShare ? '<label class="share"><input type="checkbox" data-rshare="' + p.id + '"' + (shareOn ? ' checked' : '') + ' /> לשתף את הטלפון שלי עם בעל הפוסט</label>' : '') + '<div class="crow"><span></span><button type="button" class="btn" data-rsend="' + p.id + '">שליחה</button></div></div>' : '';
+      const reply = openReply === p.id ? '<div class="reply"><textarea rows="1" maxlength="2000" data-rtext="' + p.id + '" placeholder="תגובה" aria-label="תגובה"></textarea>' + (canShare ? '<label class="share"><input type="checkbox" data-rshare="' + p.id + '"' + (shareOn ? ' checked' : '') + ' /> לשתף את הטלפון שלי רק עם בעל הפוסט</label>' : '') + '<div class="crow"><span></span><button type="button" class="btn" data-rsend="' + p.id + '">שליחה</button></div></div>' : '';
       return '<div class="' + (depth ? 'cm' : 'card post') + '"><div class="body">' + esc(p.body) + '</div>' + (p.author ? '<div class="auth">' + (p.mine ? 'את/ה' : esc(p.author)) + '</div>' : '')
         + (p.phone ? '<div class="phone"><span>הטלפון של המגיב/ה:</span> <b dir="ltr">' + esc(p.phone) + '</b> <a href="https://wa.me/972' + esc(String(p.phone).replace(/^0/, '').replace(/\D/g, '')) + '" target="_blank" rel="noopener">וואטסאפ</a> <a href="tel:' + esc(p.phone) + '">חיוג</a></div>' : '')
         + (p.shared ? '<div class="auth">הטלפון שלך משותף עם בעל הפוסט</div>' : '') + act + reply
@@ -235,7 +238,7 @@
   async function submit(body, parent, share) {
     body = (body || '').trim(); if (!body) return false;
     if (!session) { try { sessionStorage.setItem(PKEY, JSON.stringify({ body, parent, share })); } catch (e) {} $('#loginDlg').showModal(); return false; }
-    if (!me) { pendingAct = { body, parent, share }; $('#phoneErr').textContent = ''; $('#phoneDlg').showModal(); $('#phoneIn').focus(); return false; }
+    if (!me || (me === 'pending' && !canShare)) { pendingAct = { body, parent, share }; $('#phoneErr').textContent = ''; $('#phoneReg').hidden = true; $('#phoneDlg').showModal(); $('#phoneIn').focus(); return false; }
     try {
       const r = await rpc('harpatka_board_post', { p_body: body, p_parent: parent || null, p_share: !!share });
       if (r === 'ok' || r === 'pending') { toast(r === 'ok' ? 'פורסם' : 'נשלח לאישור, יופיע לכולם אחרי שנאשר'); await load(); return true; }
@@ -310,7 +313,8 @@
     try {
       const r = await rpc('harpatka_board_claim', { p_phone: v });
       if (r === 'invalid_phone') { $('#phoneErr').textContent = 'מספר לא תקין'; return; }
-      me = r; $('#phoneDlg').close();
+      if (r === 'not_registered') { $('#phoneErr').textContent = 'המספר הזה עוד לא רשום למפגש. כדי להשתמש בלוח צריך להירשם תחילה למפגש, ורק אחר כך זה יעבוד'; $('#phoneReg').hidden = false; return; }
+      me = r; canShare = true; $('#phoneDlg').close();
       const a = pendingAct; pendingAct = null; if (a) { if (await submit(a.body, a.parent, a.share)) { $('#newText').value = ''; grow($('#newText')); openReply = null; closeCompose(); } }
       load();
     } catch (e) { $('#phoneErr').textContent = 'משהו השתבש, אפשר לנסות שוב'; }
