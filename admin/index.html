@@ -1066,7 +1066,7 @@
     try {
       [ms, ps] = await Promise.all([
         api('harpatka_members?select=user_id,email,google_name,phone_norm,participant_id,status,created_at,harpatka_participants(name,phone)&order=created_at.desc'),
-        api('harpatka_posts?select=id,body,parent_id,created_at,deleted_at,harpatka_members(google_name,email,status,harpatka_participants(name))&deleted_at=is.null&order=created_at.desc&limit=80'),
+        api('harpatka_posts?select=id,body,parent_id,created_at,deleted_at,harpatka_members!harpatka_posts_user_id_fkey(google_name,email,status,harpatka_participants(name))&deleted_at=is.null&order=created_at.desc&limit=80'),
       ]);
     } catch (e) { $('#bdBody').innerHTML = '<div class="empty">הלוח עוד לא הוקם (להריץ admin/board.sql)</div>'; return; }
     const pend = ms.filter((m) => m.status === 'pending'), appr = ms.filter((m) => m.status === 'approved'), blocked = ms.filter((m) => m.status === 'blocked');
