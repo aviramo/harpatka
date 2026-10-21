@@ -37,6 +37,12 @@
     .wrap > #status { flex: 0 0 auto; }
     .wrap > .list { flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin-bottom: calc(10px + env(safe-area-inset-bottom)); }
     .wrap { padding-bottom: 0; }
+    html { overscroll-behavior-y: none; }
+    .wrap > .list { touch-action: pan-y; }
+    #ptr { position: fixed; left: 50%; top: 0; width: 38px; height: 38px; margin-left: -19px; border-radius: 50%; background: var(--paper); color: var(--terra); box-shadow: 0 2px 10px rgba(63,56,47,.18), 0 0 0 1.5px var(--line); display: grid; place-items: center; opacity: 0; pointer-events: none; z-index: 4; }
+    #ptr svg { width: 20px; height: 20px; transition: transform .15s; }
+    #ptr.spin svg { animation: ptrSpin .7s linear infinite; }
+    @keyframes ptrSpin { to { transform: rotate(360deg); } }
 
     header.top {
       position: sticky; top: 0; z-index: 5; background: var(--cream);
@@ -615,6 +621,7 @@
     <button type="button" class="glink" id="gOut" hidden>יציאה והחלפת חשבון</button>
   </div>
 
+  <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v13M6 13l6 6 6-6"/></svg></div>
   <div class="wrap">
     <header class="top">
       <div class="title-row">
@@ -1099,6 +1106,36 @@
       + '<h3>מחוברים (' + appr.length + ')</h3>' + appr.map((m) => memCard(m, '<button class="no" data-mact="blocked">חסימה</button><button data-mact="reject">ניתוק</button>')).join('')
       + (blocked.length ? '<h3>חסומים</h3>' + blocked.map((m) => memCard(m, '<button class="ok" data-mact="approved">שחרור</button><button class="no" data-mact="reject">מחיקה</button>')).join('') : '');
   }
+  /* משיכה למטה ברשימה (כשהיא בראשה) מרענן את הדף: הרשימה גוללת בפני עצמה ולכן הרענון המובנה של הדפדפן לא עובד */
+  (function () {
+    const list = $('#list'), ptr = $('#ptr'), icon = ptr.querySelector('svg'), TH = 64;
+    let y0 = 0, x0 = 0, dist = 0, on = false, busy = false;
+    const paint = (d) => {
+      const top = list.getBoundingClientRect().top;
+      list.style.transform = d ? 'translateY(' + d + 'px)' : '';
+      ptr.style.opacity = d ? Math.min(1, d / 40) : 0;
+      ptr.style.transform = 'translateY(' + (top + Math.max(0, d - 46) + 4) + 'px)';
+      icon.style.transform = d >= TH ? 'rotate(180deg)' : '';
+    };
+    list.addEventListener('touchstart', (e) => {
+      if (busy || list.scrollTop > 0 || document.querySelector('dialog[open]') || e.touches.length !== 1) { on = false; return; }
+      y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; dist = 0; on = true; list.style.transition = 'none';
+    }, { passive: true });
+    list.addEventListener('touchmove', (e) => {
+      if (!on) return;
+      const dy = e.touches[0].clientY - y0, dx = Math.abs(e.touches[0].clientX - x0);
+      if (list.scrollTop > 0 || dy <= 0 || dx > dy) { if (dist) { dist = 0; paint(0); } if (dy <= 0) on = false; return; }
+      if (e.cancelable) e.preventDefault();
+      dist = Math.min(dy * 0.5, 96); paint(dist);
+    }, { passive: false });
+    const end = () => {
+      if (!on) return; on = false;
+      list.style.transition = 'transform .2s';
+      if (dist >= TH) { busy = true; ptr.classList.add('spin'); paint(TH * 0.75); setTimeout(() => location.reload(), 250); }
+      else { paint(0); }
+    };
+    list.addEventListener('touchend', end); list.addEventListener('touchcancel', end);
+  })();
   const closeHMenu = () => { $('#hMenu').hidden = true; $('#menuBtn').setAttribute('aria-expanded', 'false'); };
   $('#menuBtn').addEventListener('click', (e) => { e.stopPropagation(); const m = $('#hMenu'); m.hidden = !m.hidden; $('#menuBtn').setAttribute('aria-expanded', String(!m.hidden)); });
   $('#hMenu').addEventListener('click', closeHMenu);
