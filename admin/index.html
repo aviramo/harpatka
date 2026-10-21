@@ -626,7 +626,7 @@
         <div class="hicons">
           <button type="button" class="hicon" id="menuBtn" aria-label="תפריט" title="תפריט" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.8"/></svg><span class="bdbadge" id="menuBadge" hidden></span></button>
           <div class="hmenu" id="hMenu" role="menu" hidden>
-            <button type="button" role="menuitem" class="hmi" id="bdBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.4A8 8 0 1 1 21 12z"/></svg><span>לוח שיתופים</span><span class="bdbadge" id="bdBadge" hidden></span></button>
+            <button type="button" role="menuitem" class="hmi" id="bdBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.4A8 8 0 1 1 21 12z"/></svg><span>התחברויות ללוח</span><span class="bdbadge" id="bdBadge" hidden></span></button>
             <button type="button" role="menuitem" class="hmi" id="prBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4a1 1 0 0 0 1 1h2.5l5.5 4V5L7.5 9H5a1 1 0 0 0-1 1z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg><span>יחצנים</span></button>
             <button type="button" role="menuitem" class="hmi" id="statsBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6"/></svg><span>סטטיסטיקות</span></button>
             <button type="button" role="menuitem" class="hmi out" id="signOut"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><path d="M15 8l4 4-4 4M19 12H9"/></svg><span>יציאה</span></button>
@@ -751,7 +751,7 @@
 
   <dialog id="bdDlg" aria-labelledby="bdTitle" style="max-width:520px">
     <div class="sheet">
-      <div class="sheet-head"><h2 id="bdTitle">לוח שיתופים</h2></div>
+      <div class="sheet-head"><h2 id="bdTitle">התחברויות ללוח השיתופים</h2></div>
       <div id="bdBody"></div>
     </div>
   </dialog>
@@ -1073,28 +1073,20 @@
   /* ---------- לוח שיתופים (board/): אישור חיבור גוגל לטלפון ומחיקת פוסטים ---------- */
   async function boardBadge() {
     try {
-      const [pm, pp] = await Promise.all([api('harpatka_members?select=user_id&status=eq.pending'), api('harpatka_posts?select=user_id&approved_at=is.null&deleted_at=is.null')]);
-      const withPost = new Set(pp.map((x) => x.user_id)), n = pp.length + pm.filter((m) => !withPost.has(m.user_id)).length;
+      const pm = await api('harpatka_members?select=user_id&status=eq.pending'), n = pm.length;
       ['#bdBadge', '#menuBadge'].forEach((s) => { const b = $(s); b.textContent = n; b.hidden = !n; });
     } catch (e) {}
   }
   async function boardOpen() {
     $('#bdBody').innerHTML = '<div class="empty">טוען…</div>'; if (!$('#bdDlg').open) $('#bdDlg').showModal();
-    let ms, ps;
+    let ms;
     try {
-      [ms, ps] = await Promise.all([
+      [ms] = await Promise.all([
         api('harpatka_members?select=user_id,email,google_name,phone_norm,participant_id,status,created_at,harpatka_participants(name,phone)&order=created_at.desc'),
-        api('harpatka_posts?select=id,body,parent_id,created_at,deleted_at,approved_at,user_id,harpatka_members!harpatka_posts_user_id_fkey(google_name,email,status,phone_norm,participant_id,harpatka_participants(name,phone))&deleted_at=is.null&order=created_at.desc&limit=120'),
       ]);
     } catch (e) { $('#bdBody').innerHTML = '<div class="empty">הלוח עוד לא הוקם (להריץ admin/board.sql)</div>'; return; }
     const pend = ms.filter((m) => m.status === 'pending'), appr = ms.filter((m) => m.status === 'approved'), blocked = ms.filter((m) => m.status === 'blocked');
     const taken = new Set(appr.map((m) => m.participant_id).filter(Boolean));
-    const postCard = (x, pend) => {
-      const m = x.harpatka_members || {}, pa = m.harpatka_participants;
-      return '<div class="bdc" data-pid="' + x.id + '" data-uid="' + x.user_id + '"><div class="who">' + esc(pa ? pa.name : (m.google_name || m.email)) + (x.parent_id ? ' · תגובה' : ' · פוסט') + '</div>'
-        + '<small>' + esc(m.email || '') + (pa ? '' : ' · <span class="bad">הטלפון ' + esc(String(m.phone_norm || '').replace(/^\+972/, '0')) + ' לא נמצא בין המשתתפים</span>') + ' · ' + esc(new Date(x.created_at).toLocaleString('he-IL', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem' })) + '</small>'
-        + '<div class="txt">' + esc(x.body) + '</div><div class="bar">' + (pend ? '<button class="ok" data-papprove="' + x.id + '">אישור ופרסום</button>' : '') + '<button class="no" data-pdel="' + x.id + '">מחיקה</button></div></div>';
-    };
     const memCard = (m, act) => {
       const pa = m.harpatka_participants;
       return '<div class="bdc" data-mid="' + m.user_id + '"><div class="who">' + esc(m.google_name || m.email) + '</div><small>' + esc(m.email) + '</small>'
@@ -1104,28 +1096,23 @@
     };
     $('#bdBody').innerHTML =
       '<h3>ממתינים לאישור (' + pend.length + ')</h3>' + (pend.length ? pend.map((m) => memCard(m, '<button class="ok" data-mact="approved">אישור</button><button class="no" data-mact="reject">דחייה</button>')).join('') : '<div class="empty" style="padding:10px">אין</div>')
-      + '<h3>פוסטים ותגובות שממתינים לאישור (' + ps.filter((x) => !x.approved_at).length + ')</h3>' + (ps.some((x) => !x.approved_at) ? ps.filter((x) => !x.approved_at).map((x) => postCard(x, true)).join('') : '<div class="empty" style="padding:10px">אין</div>')
-      + '<h3>פורסמו</h3>' + (ps.some((x) => x.approved_at) ? ps.filter((x) => x.approved_at).map((x) => postCard(x, false)).join('') : '<div class="empty" style="padding:10px">אין</div>')
       + '<h3>מחוברים (' + appr.length + ')</h3>' + appr.map((m) => memCard(m, '<button class="no" data-mact="blocked">חסימה</button><button data-mact="reject">ניתוק</button>')).join('')
       + (blocked.length ? '<h3>חסומים</h3>' + blocked.map((m) => memCard(m, '<button class="ok" data-mact="approved">שחרור</button><button class="no" data-mact="reject">מחיקה</button>')).join('') : '');
   }
   const closeHMenu = () => { $('#hMenu').hidden = true; $('#menuBtn').setAttribute('aria-expanded', 'false'); };
   $('#menuBtn').addEventListener('click', (e) => { e.stopPropagation(); const m = $('#hMenu'); m.hidden = !m.hidden; $('#menuBtn').setAttribute('aria-expanded', String(!m.hidden)); });
   $('#hMenu').addEventListener('click', closeHMenu);
-  document.addEventListener('click', (e) => { if (!e.target.closest('.hicons')) closeHMenu(); });
+  /* תפריט פתוח: לחיצה בחוץ רק סוגרת אותו (לא מפעילה את מה שמתחתיו); הלחיצה הבאה פועלת כרגיל */
+  document.addEventListener('click', (e) => {
+    if (!$('#hMenu').hidden && !e.target.closest('.hicons')) { e.preventDefault(); e.stopPropagation(); closeHMenu(); }
+    else if (!$('#sortMenu').hidden && !e.target.closest('.sortwrap')) { e.preventDefault(); e.stopPropagation(); closeSort(); }
+  }, true);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeHMenu(); });
   $('#bdBtn').addEventListener('click', boardOpen);
   $('#bdBody').addEventListener('click', async (e) => {
     const b = e.target.closest('button'); if (!b) return;
     try {
-      if (b.dataset.papprove) {
-        const card = b.closest('[data-pid]');
-        const now = new Date().toISOString();
-        await api('harpatka_posts?id=eq.' + b.dataset.papprove, { method: 'PATCH', body: { approved_at: now } });
-        try { await api('harpatka_members?user_id=eq.' + card.dataset.uid + '&status=eq.pending', { method: 'PATCH', body: { status: 'approved' } }); } catch (e2) {}
-        toast('פורסם');
-      } else if (b.dataset.pdel) { await api('harpatka_posts?id=eq.' + b.dataset.pdel, { method: 'DELETE' }); toast('נמחק'); }
-      else if (b.dataset.mact) {
+      if (b.dataset.mact) {
         const id = b.closest('[data-mid]').dataset.mid;
         if (b.dataset.mact === 'reject') await api('harpatka_members?user_id=eq.' + id, { method: 'DELETE' });
         else await api('harpatka_members?user_id=eq.' + id, { method: 'PATCH', body: { status: b.dataset.mact } });

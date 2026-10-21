@@ -188,7 +188,7 @@ begin
       'who', coalesce(pa.name, nullif(m.google_name, ''), m.email),
       'identity', case when pa.id is not null then 'משתתף/ת במערכת, טלפון ' || coalesce(pa.phone, '') || ' · חשבון גוגל ' || m.email
                        else 'הטלפון שהוזן (' || m.phone_norm || ') לא נמצא בין המשתתפים · חשבון גוגל ' || m.email end,
-      'admin_link', 'https://harpatka.co.il/admin/?bd=1'));
+      'admin_link', 'https://harpatka.co.il/board/'));
   exception when others then null; end; end if;
   return 'pending';
 end $$;

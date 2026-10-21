@@ -70,6 +70,8 @@
     .act.liked { color: var(--heart); }
     .act.liked svg { fill: var(--heart); stroke: var(--heart); }
     .act.del { color: #A3453A; }
+    .act.ok { color: #2F7D4F; }
+    .auth { margin-top: 6px; font-size: 13px; color: var(--muted); }
     .pend { display: inline-block; font-size: 12.5px; font-weight: 700; background: #FBE9C7; color: #7A5410; padding: 2px 9px; border-radius: 999px; }
     .kids { margin-top: 10px; padding-right: 14px; border-right: 2px solid var(--sand); }
     .kids .kids { margin-top: 8px; }
@@ -198,10 +200,11 @@
         + '<span>' + ago(p.created_at) + '</span>'
         + '<button type="button" class="act' + (p.liked ? ' liked' : '') + '" data-like="' + p.id + '" aria-pressed="' + p.liked + '" aria-label="לב">' + LIKE + '<span>' + (p.likes || '') + '</span></button>'
         + '<button type="button" class="act" data-reply="' + p.id + '">תגובה</button>'
+        + (p.can_approve ? '<button type="button" class="act ok" data-approve="' + p.id + '">אישור ופרסום</button>' : '')
         + (p.can_delete ? (asking ? '<span>למחוק? <button type="button" class="act del" data-delyes="' + p.id + '">כן</button> <button type="button" class="act" data-delno="1">לא</button></span>' : '<button type="button" class="act del" data-del="' + p.id + '">מחיקה</button>') : '')
         + (p.pending ? '<span class="pend">ממתין לאישור, רק אתם רואים אותו</span>' : '') + '</span>';
       const reply = openReply === p.id ? '<div class="reply"><textarea rows="1" maxlength="2000" data-rtext="' + p.id + '" placeholder="תגובה" aria-label="תגובה"></textarea><div class="crow"><span></span><button type="button" class="btn" data-rsend="' + p.id + '">שליחה</button></div></div>' : '';
-      return '<div class="' + (depth ? 'cm' : 'card post') + '"><div class="body">' + esc(p.body) + '</div>' + act + reply
+      return '<div class="' + (depth ? 'cm' : 'card post') + '"><div class="body">' + esc(p.body) + '</div>' + (p.author ? '<div class="auth">' + (p.mine ? 'את/ה' : esc(p.author)) + '</div>' : '') + act + reply
         + (ch.length ? '<div class="kids' + (depth >= 3 ? ' flat' : '') + '">' + ch.map((c) => node(c, depth + 1)).join('') + '</div>' : '') + '</div>';
     };
     $('#feed').innerHTML = roots.length ? roots.map((p) => node(p, 0)).join('') : '<div class="empty">עוד אין פוסטים. אפשר להיות הראשונים</div>';
@@ -275,6 +278,10 @@
       p.liked = !p.liked; p.likes = Math.max(0, (p.likes || 0) + (p.liked ? 1 : -1)); render();
       try { await rpc('harpatka_board_like', { p_id: p.id }); } catch (err) { p.liked = !p.liked; p.likes += p.liked ? 1 : -1; render(); }
       return;
+    }
+    if (t.dataset.approve) {
+      try { await rpc('harpatka_board_approve', { p_id: t.dataset.approve }); toast('פורסם'); } catch (err) { toast('משהו השתבש'); }
+      load(); return;
     }
     if (t.dataset.del) { delAsk = t.dataset.del; render(); return; }
     if (t.dataset.delno) { delAsk = null; render(); return; }
