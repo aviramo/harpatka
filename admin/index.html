@@ -35,7 +35,8 @@
     html { scrollbar-width: none; }
     html::-webkit-scrollbar { display: none; }
     .wrap > #status { flex: 0 0 auto; }
-    .wrap > .list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin-bottom: calc(14px + env(safe-area-inset-bottom)); }
+    .wrap > .list { flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin-bottom: calc(10px + env(safe-area-inset-bottom)); }
+    .wrap { padding-bottom: 0; }
 
     header.top {
       position: sticky; top: 0; z-index: 5; background: var(--cream);
@@ -395,6 +396,20 @@
     #payDlg .sheet-head { position: relative; justify-content: flex-start; gap: 8px; min-height: 40px; margin-bottom: 0; }
     #payDlg .sheet-head h2 { flex: 1 1 auto; font-size: 20px; }
     #payDlg .ppanel[hidden] { display: none; }
+    .bdbadge { position: absolute; top: -3px; left: -3px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #C96F52; color: #fff; font-size: 11px; font-weight: 800; display: grid; place-items: center; box-sizing: border-box; }
+    .bdbadge[hidden] { display: none; }
+    #bdDlg .sheet-head { position: relative; justify-content: flex-start; gap: 8px; min-height: 40px; }
+    #bdDlg .sheet-head h2 { flex: 1 1 auto; }
+    #bdDlg h3 { font-size: 15px; margin: 14px 0 6px; color: var(--muted); }
+    .bdc { background: var(--paper); border-radius: 14px; box-shadow: 0 0 0 1px rgba(232,213,190,.7); padding: 10px 12px; margin-bottom: 8px; }
+    .bdc .who { font-weight: 700; }
+    .bdc small { display: block; color: var(--muted); font-size: 13.5px; }
+    .bdc .bad { color: #A3453A; font-weight: 700; }
+    .bdc .txt { white-space: pre-wrap; overflow-wrap: anywhere; margin: 4px 0; }
+    .bdc .bar { display: flex; gap: 8px; margin-top: 8px; }
+    .bdc .bar button { flex: 1; height: 38px; border-radius: 999px; font-weight: 700; background: var(--sand); }
+    .bdc .bar .ok { background: #2F7D4F; color: #fff; }
+    .bdc .bar .no { background: #F3D9D4; color: #A3453A; }
     #prDlg .sheet-head { position: relative; justify-content: flex-start; gap: 8px; min-height: 40px; }
     #prDlg .sheet-head h2 { flex: 1 1 auto; min-width: 0; }
     .pviewsub { margin: 0 0 10px; color: var(--muted); font-size: 15px; }
@@ -598,6 +613,7 @@
           <div class="sortmenu mmenu" id="mMenu" role="menu" hidden></div>
         </div>
         <div class="hicons">
+          <button type="button" class="hicon" id="bdBtn" aria-label="לוח שיתופים" title="לוח שיתופים" style="position:relative"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.500l1.400-4.400A8 8 0 1 1 21 12z"/></svg><span class="bdbadge" id="bdBadge" hidden></span></button>
           <button type="button" class="hicon" id="prBtn" aria-label="יחצנים" title="יחצנים"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4a1 1 0 0 0 1 1h2.5l5.5 4V5L7.5 9H5a1 1 0 0 0-1 1z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg></button>
           <button type="button" class="hicon" id="statsBtn" aria-label="סטטיסטיקות" title="סטטיסטיקות"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6"/></svg></button>
           <button type="button" class="hicon" id="signOut" aria-label="יציאה" title="יציאה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><path d="M15 8l4 4-4 4M19 12H9"/></svg></button>
@@ -717,6 +733,13 @@
 
   <dialog id="iDlg" aria-label="צילום מסך" style="max-width:520px">
     <div class="sheet" style="padding-bottom:20px"><img id="iImg" alt="צילום מסך" style="width:100%;max-height:78vh;object-fit:contain;border-radius:12px;display:block" /></div>
+  </dialog>
+
+  <dialog id="bdDlg" aria-labelledby="bdTitle" style="max-width:520px">
+    <div class="sheet">
+      <div class="sheet-head"><h2 id="bdTitle">לוח שיתופים</h2></div>
+      <div id="bdBody"></div>
+    </div>
   </dialog>
 
   <dialog id="prDlg" aria-labelledby="prTitle" style="max-width:480px">
@@ -1033,6 +1056,50 @@
     toast('משהו השתבש, לא נשמר. נסו שוב');
   }
 
+  /* ---------- לוח שיתופים (board/): אישור חיבור גוגל לטלפון ומחיקת פוסטים ---------- */
+  async function boardBadge() {
+    try { const r = await api('harpatka_members?select=user_id&status=eq.pending'); const b = $('#bdBadge'); b.textContent = r.length; b.hidden = !r.length; } catch (e) {}
+  }
+  async function boardOpen() {
+    $('#bdBody').innerHTML = '<div class="empty">טוען…</div>'; if (!$('#bdDlg').open) $('#bdDlg').showModal();
+    let ms, ps;
+    try {
+      [ms, ps] = await Promise.all([
+        api('harpatka_members?select=user_id,email,google_name,phone_norm,participant_id,status,created_at,harpatka_participants(name,phone)&order=created_at.desc'),
+        api('harpatka_posts?select=id,body,parent_id,created_at,deleted_at,harpatka_members(google_name,email,status,harpatka_participants(name))&deleted_at=is.null&order=created_at.desc&limit=80'),
+      ]);
+    } catch (e) { $('#bdBody').innerHTML = '<div class="empty">הלוח עוד לא הוקם (להריץ admin/board.sql)</div>'; return; }
+    const pend = ms.filter((m) => m.status === 'pending'), appr = ms.filter((m) => m.status === 'approved'), blocked = ms.filter((m) => m.status === 'blocked');
+    const taken = new Set(appr.map((m) => m.participant_id).filter(Boolean));
+    const memCard = (m, act) => {
+      const pa = m.harpatka_participants;
+      return '<div class="bdc" data-mid="' + m.user_id + '"><div class="who">' + esc(m.google_name || m.email) + '</div><small>' + esc(m.email) + '</small>'
+        + '<small>טלפון שהוזן: ' + esc(m.phone_norm.replace(/^\+972/, '0')) + '</small>'
+        + (pa ? '<small>משתתף במערכת: <b>' + esc(pa.name) + '</b>' + (m.status === 'pending' && taken.has(m.participant_id) ? ' <span class="bad">(כבר מחובר לחשבון אחר)</span>' : '') + '</small>' : '<small class="bad">הטלפון לא נמצא אצלנו בין המשתתפים</small>')
+        + '<div class="bar">' + act + '</div></div>';
+    };
+    $('#bdBody').innerHTML =
+      '<h3>ממתינים לאישור (' + pend.length + ')</h3>' + (pend.length ? pend.map((m) => memCard(m, '<button class="ok" data-mact="approved">אישור</button><button class="no" data-mact="reject">דחייה</button>')).join('') : '<div class="empty" style="padding:10px">אין</div>')
+      + '<h3>פוסטים ותגובות אחרונים</h3>' + (ps.length ? ps.map((x) => { const m = x.harpatka_members || {}, pa = m.harpatka_participants;
+        return '<div class="bdc"><small>' + esc(pa ? pa.name : (m.google_name || m.email)) + (x.parent_id ? ' · תגובה' : '') + (m.status !== 'approved' ? ' · <span class="bad">ממתין</span>' : '') + ' · ' + esc(new Date(x.created_at).toLocaleString('he-IL', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem' })) + '</small><div class="txt">' + esc(x.body) + '</div><div class="bar"><button class="no" data-pdel="' + x.id + '">מחיקה</button></div></div>'; }).join('') : '<div class="empty" style="padding:10px">אין</div>')
+      + '<h3>מחוברים (' + appr.length + ')</h3>' + appr.map((m) => memCard(m, '<button class="no" data-mact="blocked">חסימה</button><button data-mact="reject">ניתוק</button>')).join('')
+      + (blocked.length ? '<h3>חסומים</h3>' + blocked.map((m) => memCard(m, '<button class="ok" data-mact="approved">שחרור</button><button class="no" data-mact="reject">מחיקה</button>')).join('') : '');
+  }
+  $('#bdBtn').addEventListener('click', boardOpen);
+  $('#bdBody').addEventListener('click', async (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    try {
+      if (b.dataset.pdel) { await api('harpatka_posts?id=eq.' + b.dataset.pdel, { method: 'DELETE' }); toast('נמחק'); }
+      else if (b.dataset.mact) {
+        const id = b.closest('[data-mid]').dataset.mid;
+        if (b.dataset.mact === 'reject') await api('harpatka_members?user_id=eq.' + id, { method: 'DELETE' });
+        else await api('harpatka_members?user_id=eq.' + id, { method: 'PATCH', body: { status: b.dataset.mact } });
+        toast('עודכן');
+      } else return;
+      boardBadge(); boardOpen();
+    } catch (err) { fail(err); }
+  });
+
   /* ---------- טעינה ---------- */
   async function load(silent) {
     if (!silent) $('#status').innerHTML = '<div class="empty">טוען…</div>';
@@ -1046,6 +1113,7 @@
         api(T.pp + '?select=*&order=paid_at.desc'),
         api(T.pay + '?select=*&order=created_at.desc'),
       ]);
+      boardBadge();
       state.participants = p; state.meetings = m; state.att = a; state.notes = nn; state.promoters = prs; state.promoPays = pps; state.payments = pays; rebuildNotes();
       sortMeetings();
       if (!silent) $('#status').innerHTML = '';
