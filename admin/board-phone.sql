@@ -4,7 +4,8 @@ alter table public.harpatka_posts add column if not exists share_phone boolean n
 
 create or replace function public.harpatka_board_profile()
 returns jsonb language sql stable security definer set search_path = public as $$
-  select jsonb_build_object('status', m.status, 'can_share', m.participant_id is not null) from public.harpatka_members m where m.user_id = auth.uid();
+  select jsonb_build_object('status', m.status, 'can_share', m.participant_id is not null,
+    'can_post', public.harpatka_is_admin() or exists (select 1 from public.harpatka_attendance at where at.participant_id = m.participant_id)) from public.harpatka_members m where m.user_id = auth.uid();
 $$;
 revoke all on function public.harpatka_board_profile() from public;
 grant execute on function public.harpatka_board_profile() to authenticated;
@@ -28,6 +29,7 @@ begin
   select * into m from public.harpatka_members where user_id = uid;
   if not found then return 'no_member'; end if;
   if m.status = 'blocked' then return 'blocked'; end if;
+  if not adm and not exists (select 1 from public.harpatka_attendance at where at.participant_id = m.participant_id) then return 'no_meeting'; end if;   -- רק מי שרשום לפחות למפגש אחד
   if body = '' then return 'empty'; end if;
   if length(body) > 2000 then return 'long'; end if;
   if not adm and (select count(*) from public.harpatka_posts where user_id = uid and deleted_at is null and approved_at is null) >= 5 then return 'limit'; end if;
