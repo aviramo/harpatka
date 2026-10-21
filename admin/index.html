@@ -819,7 +819,7 @@
   let deep = null;
   try {
     const sp = new URLSearchParams(location.search);
-    if (['m', 'p', 'pay', 'q', 'em', 'g', 's', 'st', 'pt'].some((k) => sp.get(k))) { deep = { m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g'), s: sp.get('s'), st: sp.get('st'), pt: sp.get('pt') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
+    if (['m', 'p', 'pay', 'q', 'em', 'g', 's', 'st', 'pt', 'bd'].some((k) => sp.get(k))) { deep = { m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g'), s: sp.get('s'), st: sp.get('st'), pt: sp.get('pt'), bd: sp.get('bd') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
     else { deep = JSON.parse(sessionStorage.getItem('harpatka_deep') || 'null'); }
   } catch (e) {}
   const $ = (s) => document.querySelector(s);
@@ -1072,7 +1072,11 @@
 
   /* ---------- לוח שיתופים (board/): אישור חיבור גוגל לטלפון ומחיקת פוסטים ---------- */
   async function boardBadge() {
-    try { const r = await api('harpatka_members?select=user_id&status=eq.pending'); ['#bdBadge', '#menuBadge'].forEach((s) => { const b = $(s); b.textContent = r.length; b.hidden = !r.length; }); } catch (e) {}
+    try {
+      const [pm, pp] = await Promise.all([api('harpatka_members?select=user_id&status=eq.pending'), api('harpatka_posts?select=user_id&approved_at=is.null&deleted_at=is.null')]);
+      const withPost = new Set(pp.map((x) => x.user_id)), n = pp.length + pm.filter((m) => !withPost.has(m.user_id)).length;
+      ['#bdBadge', '#menuBadge'].forEach((s) => { const b = $(s); b.textContent = n; b.hidden = !n; });
+    } catch (e) {}
   }
   async function boardOpen() {
     $('#bdBody').innerHTML = '<div class="empty">טוען…</div>'; if (!$('#bdDlg').open) $('#bdDlg').showModal();
@@ -1080,11 +1084,17 @@
     try {
       [ms, ps] = await Promise.all([
         api('harpatka_members?select=user_id,email,google_name,phone_norm,participant_id,status,created_at,harpatka_participants(name,phone)&order=created_at.desc'),
-        api('harpatka_posts?select=id,body,parent_id,created_at,deleted_at,harpatka_members!harpatka_posts_user_id_fkey(google_name,email,status,harpatka_participants(name))&deleted_at=is.null&order=created_at.desc&limit=80'),
+        api('harpatka_posts?select=id,body,parent_id,created_at,deleted_at,approved_at,user_id,harpatka_members!harpatka_posts_user_id_fkey(google_name,email,status,phone_norm,participant_id,harpatka_participants(name,phone))&deleted_at=is.null&order=created_at.desc&limit=120'),
       ]);
     } catch (e) { $('#bdBody').innerHTML = '<div class="empty">הלוח עוד לא הוקם (להריץ admin/board.sql)</div>'; return; }
     const pend = ms.filter((m) => m.status === 'pending'), appr = ms.filter((m) => m.status === 'approved'), blocked = ms.filter((m) => m.status === 'blocked');
     const taken = new Set(appr.map((m) => m.participant_id).filter(Boolean));
+    const postCard = (x, pend) => {
+      const m = x.harpatka_members || {}, pa = m.harpatka_participants;
+      return '<div class="bdc" data-pid="' + x.id + '" data-uid="' + x.user_id + '"><div class="who">' + esc(pa ? pa.name : (m.google_name || m.email)) + (x.parent_id ? ' · תגובה' : ' · פוסט') + '</div>'
+        + '<small>' + esc(m.email || '') + (pa ? '' : ' · <span class="bad">הטלפון ' + esc(String(m.phone_norm || '').replace(/^\+972/, '0')) + ' לא נמצא בין המשתתפים</span>') + ' · ' + esc(new Date(x.created_at).toLocaleString('he-IL', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem' })) + '</small>'
+        + '<div class="txt">' + esc(x.body) + '</div><div class="bar">' + (pend ? '<button class="ok" data-papprove="' + x.id + '">אישור ופרסום</button>' : '') + '<button class="no" data-pdel="' + x.id + '">מחיקה</button></div></div>';
+    };
     const memCard = (m, act) => {
       const pa = m.harpatka_participants;
       return '<div class="bdc" data-mid="' + m.user_id + '"><div class="who">' + esc(m.google_name || m.email) + '</div><small>' + esc(m.email) + '</small>'
@@ -1094,8 +1104,8 @@
     };
     $('#bdBody').innerHTML =
       '<h3>ממתינים לאישור (' + pend.length + ')</h3>' + (pend.length ? pend.map((m) => memCard(m, '<button class="ok" data-mact="approved">אישור</button><button class="no" data-mact="reject">דחייה</button>')).join('') : '<div class="empty" style="padding:10px">אין</div>')
-      + '<h3>פוסטים ותגובות אחרונים</h3>' + (ps.length ? ps.map((x) => { const m = x.harpatka_members || {}, pa = m.harpatka_participants;
-        return '<div class="bdc"><small>' + esc(pa ? pa.name : (m.google_name || m.email)) + (x.parent_id ? ' · תגובה' : '') + (m.status !== 'approved' ? ' · <span class="bad">ממתין</span>' : '') + ' · ' + esc(new Date(x.created_at).toLocaleString('he-IL', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem' })) + '</small><div class="txt">' + esc(x.body) + '</div><div class="bar"><button class="no" data-pdel="' + x.id + '">מחיקה</button></div></div>'; }).join('') : '<div class="empty" style="padding:10px">אין</div>')
+      + '<h3>פוסטים ותגובות שממתינים לאישור (' + ps.filter((x) => !x.approved_at).length + ')</h3>' + (ps.some((x) => !x.approved_at) ? ps.filter((x) => !x.approved_at).map((x) => postCard(x, true)).join('') : '<div class="empty" style="padding:10px">אין</div>')
+      + '<h3>פורסמו</h3>' + (ps.some((x) => x.approved_at) ? ps.filter((x) => x.approved_at).map((x) => postCard(x, false)).join('') : '<div class="empty" style="padding:10px">אין</div>')
       + '<h3>מחוברים (' + appr.length + ')</h3>' + appr.map((m) => memCard(m, '<button class="no" data-mact="blocked">חסימה</button><button data-mact="reject">ניתוק</button>')).join('')
       + (blocked.length ? '<h3>חסומים</h3>' + blocked.map((m) => memCard(m, '<button class="ok" data-mact="approved">שחרור</button><button class="no" data-mact="reject">מחיקה</button>')).join('') : '');
   }
@@ -1108,7 +1118,13 @@
   $('#bdBody').addEventListener('click', async (e) => {
     const b = e.target.closest('button'); if (!b) return;
     try {
-      if (b.dataset.pdel) { await api('harpatka_posts?id=eq.' + b.dataset.pdel, { method: 'DELETE' }); toast('נמחק'); }
+      if (b.dataset.papprove) {
+        const card = b.closest('[data-pid]');
+        const now = new Date().toISOString();
+        await api('harpatka_posts?id=eq.' + b.dataset.papprove, { method: 'PATCH', body: { approved_at: now } });
+        try { await api('harpatka_members?user_id=eq.' + card.dataset.uid + '&status=eq.pending', { method: 'PATCH', body: { status: 'approved' } }); } catch (e2) {}
+        toast('פורסם');
+      } else if (b.dataset.pdel) { await api('harpatka_posts?id=eq.' + b.dataset.pdel, { method: 'DELETE' }); toast('נמחק'); }
       else if (b.dataset.mact) {
         const id = b.closest('[data-mid]').dataset.mid;
         if (b.dataset.mact === 'reject') await api('harpatka_members?user_id=eq.' + id, { method: 'DELETE' });
@@ -1149,6 +1165,7 @@
         if (d.p && state.participants.some((x) => x.id === d.p)) openParticipant(d.p, ['meets', 'contact', 'info'].includes(d.pt) ? d.pt : 'contact');
         else if (d.em && state.meetings.some((x) => x.id === d.em)) openMeeting(d.em);
         else if (d.st) { renderStats(); $('#stDlg').showModal(); syncUrl(); }
+        else if (d.bd) boardOpen();
         return;
       }
       urlReady = true;
