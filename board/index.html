@@ -28,7 +28,7 @@
     .banner[hidden] { display: none; }
     .card { background: var(--paper); border-radius: 20px; box-shadow: 0 0 0 1px rgba(232,213,190,.7); padding: 14px; }
     .composer { margin-top: 16px; }
-    textarea { width: 100%; min-height: 84px; resize: vertical; border: 0; background: transparent; font-size: 17px; line-height: 1.45; padding: 2px; }
+    textarea { width: 100%; min-height: 28px; height: 28px; resize: none; overflow: hidden; display: block; border: 0; background: transparent; font-size: 17px; line-height: 1.45; padding: 2px; }
     textarea:focus-visible { outline: none; }
     .crow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; }
     .cnt { font-size: 13px; color: var(--muted); }
@@ -50,7 +50,6 @@
     .cm { margin-top: 10px; }
     .cm .body { font-size: 16px; }
     .reply { margin-top: 10px; background: var(--cream); border-radius: 14px; padding: 8px 10px; }
-    .reply textarea { min-height: 56px; }
     .empty { text-align: center; color: var(--muted); padding: 30px 10px; }
     dialog { border: 0; border-radius: 24px; padding: 20px; width: min(420px, calc(100vw - 32px)); background: var(--paper); color: var(--ink); box-shadow: 0 20px 60px rgba(63,56,47,.3); }
     dialog::backdrop { background: rgba(63,56,47,.5); }
@@ -80,7 +79,7 @@
     <div class="banner" id="banner" hidden></div>
 
     <div class="card composer">
-      <textarea id="newText" maxlength="2000" placeholder="אפשר לשתף כאן כל דבר: טרמפ למפגש, המלצה, שאלה או מחשבה. כל מי שנכנס לאתר יראה את זה, בלי שם" aria-label="פוסט חדש"></textarea>
+      <textarea id="newText" rows="1" maxlength="2000" placeholder="אפשר לשתף כאן כל דבר: טרמפ למפגש, המלצה, שאלה או מחשבה. כל מי שנכנס לאתר יראה את זה, בלי שם" aria-label="פוסט חדש"></textarea>
       <div class="crow"><span class="cnt" id="newCnt"></span><button type="button" class="btn" id="newBtn">פרסום</button></div>
     </div>
 
@@ -172,7 +171,7 @@
         + '<button type="button" class="act" data-reply="' + p.id + '">תגובה</button>'
         + (p.can_delete ? (asking ? '<span>למחוק? <button type="button" class="act del" data-delyes="' + p.id + '">כן</button> <button type="button" class="act" data-delno="1">לא</button></span>' : '<button type="button" class="act del" data-del="' + p.id + '">מחיקה</button>') : '')
         + (p.pending ? '<span class="pend">ממתין לאישור, רק אתם רואים</span>' : '') + '</span>';
-      const reply = openReply === p.id ? '<div class="reply"><textarea maxlength="2000" data-rtext="' + p.id + '" placeholder="תגובה" aria-label="תגובה"></textarea><div class="crow"><span></span><button type="button" class="btn" data-rsend="' + p.id + '">שליחה</button></div></div>' : '';
+      const reply = openReply === p.id ? '<div class="reply"><textarea rows="1" maxlength="2000" data-rtext="' + p.id + '" placeholder="תגובה" aria-label="תגובה"></textarea><div class="crow"><span></span><button type="button" class="btn" data-rsend="' + p.id + '">שליחה</button></div></div>' : '';
       return '<div class="' + (depth ? 'cm' : 'card post') + '"><div class="body">' + esc(p.body) + '</div>' + act + reply
         + (ch.length ? '<div class="kids' + (depth >= 3 ? ' flat' : '') + '">' + ch.map((c) => node(c, depth + 1)).join('') + '</div>' : '') + '</div>';
     };
@@ -206,7 +205,10 @@
     } catch (e) { toast('משהו השתבש, אפשר לנסות שוב'); }
     return false;
   }
-  $('#newBtn').addEventListener('click', async () => { if (await submit($('#newText').value, null)) $('#newText').value = ''; $('#newCnt').textContent = ''; });
+  $('#newBtn').addEventListener('click', async () => { if (await submit($('#newText').value, null)) { $('#newText').value = ''; grow($('#newText')); } $('#newCnt').textContent = ''; });
+  /* התיבה מתחילה בשורה אחת ומתארכת לפי הטקסט */
+  const grow = (ta) => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; };
+  document.addEventListener('input', (e) => { if (e.target.tagName === 'TEXTAREA') grow(e.target); });
   $('#newText').addEventListener('input', (e) => { const n = e.target.value.length; $('#newCnt').textContent = n > 1700 ? n + ' / 2000' : ''; });
 
   $('#feed').addEventListener('click', async (e) => {
@@ -242,7 +244,7 @@
       const r = await rpc('harpatka_board_claim', { p_phone: v });
       if (r === 'invalid_phone') { $('#phoneErr').textContent = 'מספר לא תקין'; return; }
       me = r; $('#phoneDlg').close();
-      const a = pendingAct; pendingAct = null; if (a) { if (await submit(a.body, a.parent)) { $('#newText').value = ''; openReply = null; } }
+      const a = pendingAct; pendingAct = null; if (a) { if (await submit(a.body, a.parent)) { $('#newText').value = ''; grow($('#newText')); openReply = null; } }
       load();
     } catch (e) { $('#phoneErr').textContent = 'משהו השתבש, אפשר לנסות שוב'; }
     finally { $('#phoneOk').disabled = false; }
@@ -258,7 +260,7 @@
     await load();
     /* חזרה מהכניסה: ממשיכים מה שהתחילו לכתוב */
     let p = null; try { p = JSON.parse(sessionStorage.getItem(PKEY) || 'null'); sessionStorage.removeItem(PKEY); } catch (e) {}
-    if (p && session) { if (!p.parent) $('#newText').value = p.body; if (await submit(p.body, p.parent) && !p.parent) $('#newText').value = ''; }
+    if (p && session) { if (!p.parent) { $('#newText').value = p.body; grow($('#newText')); } if (await submit(p.body, p.parent) && !p.parent) { $('#newText').value = ''; grow($('#newText')); } }
   })();
   </script>
 </body>
