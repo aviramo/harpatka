@@ -8,14 +8,16 @@ declare
   m public.harpatka_members;
   pid uuid;
   adm boolean := public.harpatka_is_admin();
+  had boolean;
 begin
   if uid is null then raise exception 'auth'; end if;
   select * into m from public.harpatka_members where user_id = uid;
-  if found and (m.participant_id is not null or m.status = 'approved') then return m.status; end if;
+  had := found;
+  if had and (m.participant_id is not null or m.status = 'approved') then return m.status; end if;
   if norm = '' then return 'invalid_phone'; end if;
   select id into pid from public.harpatka_participants where phone_norm = norm order by created_at limit 1;
   if pid is null and not adm then return 'not_registered'; end if;
-  if found then
+  if had then
     update public.harpatka_members set participant_id = pid, phone_norm = norm where user_id = uid;
     return m.status;
   end if;
