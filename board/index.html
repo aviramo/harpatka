@@ -334,6 +334,29 @@
   $('#phoneIn').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); claim(); } });
   $('#out').addEventListener('click', () => { clearSession(); location.reload(); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden && !keepTyping()) load(); });
+  /* זמן אמת: אות ריק בערוץ ציבורי "board" (admin/board-realtime.sql) מרענן את הלוח; בזמן הקלדה מחכים לסיום כדי לא לאבד טקסט */
+  let rtWs = null, rtHb = 0, rtRetry = 1000, rtDirty = false, rtTimer = 0;
+  const RT_TOPIC = 'realtime:board';
+  const refreshNow = () => { if (keepTyping() || document.querySelector('dialog[open]')) { rtDirty = true; return; } rtDirty = false; load(); };
+  document.addEventListener('focusout', () => { if (rtDirty) setTimeout(refreshNow, 300); });
+  function startRealtime() {
+    if (rtWs) return;
+    let ws; try { ws = new WebSocket(DB.url.replace(/^http/, 'ws') + '/realtime/v1/websocket?apikey=' + encodeURIComponent(DB.key) + '&vsn=1.0.0'); } catch (e) { return; }
+    rtWs = ws;
+    const send = (o) => { if (ws.readyState === 1) ws.send(JSON.stringify(o)); };
+    ws.onopen = () => {
+      rtRetry = 1000;
+      send({ topic: RT_TOPIC, event: 'phx_join', ref: '1', payload: { config: { broadcast: { ack: false, self: false }, presence: { key: '' }, private: false }, access_token: DB.key } });
+      rtHb = setInterval(() => send({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(Date.now()) }), 25000);
+    };
+    ws.onmessage = (e) => {
+      let m; try { m = JSON.parse(e.data); } catch (x) { return; }
+      if (m.topic === RT_TOPIC && m.event === 'broadcast') { clearTimeout(rtTimer); rtTimer = setTimeout(refreshNow, 250); }
+    };
+    ws.onclose = () => { clearInterval(rtHb); rtWs = null; setTimeout(startRealtime, rtRetry); rtRetry = Math.min(rtRetry * 2, 30000); };
+    ws.onerror = () => { try { ws.close(); } catch (x) {} };
+  }
+  startRealtime();
   setInterval(() => { if (!document.hidden && !keepTyping() && !document.querySelector('dialog[open]')) load(); }, 60000);
 
   (async () => {
