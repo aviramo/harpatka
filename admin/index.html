@@ -301,6 +301,7 @@
     .hbtn svg { width: 22px; height: 22px; }
     .hbtn[hidden] { display: none; }
     .hbtn.on { background: var(--terra); color: #fff; }
+    .hbtn.on.ad { background: #3B8FB0; }
     #pDlg .sheet-head .saved { pointer-events: none; }
     .more { display: block; width: 100%; height: 40px; margin: 2px 0 6px; border-radius: 12px; background: transparent; border: 1.5px dashed var(--coral); color: var(--terra); font-weight: 700; font-size: 15px; }
     .more[hidden] { display: none; }
@@ -1803,15 +1804,18 @@
   function openPromoterPick() {
     if (!sheet || !sheet.id) return;
     const p = state.participants.find((x) => x.id === sheet.id); if (!p) return;
-    const opts = [{ id: '', label: 'ללא יחצן' }].concat(state.promoters.map((x) => ({ id: x.id, label: esc(x.name) + ' <small>(' + rateLabel(x) + ')</small>' })));
-    $('#pPromoOpts').innerHTML = opts.map((o) => '<button type="button" class="sopt" data-pp="' + o.id + '" aria-pressed="' + ((p.promoter_id || '') === o.id) + '">' + o.label + '</button>').join('');
+    const opts = [{ id: '', label: 'ללא יחצן' }, { id: '__fb', label: 'פרסום בפייסבוק <small>(בלי עמלה)</small>' }].concat(state.promoters.map((x) => ({ id: x.id, label: esc(x.name) + ' <small>(' + rateLabel(x) + ')</small>' })));
+    $('#pPromoOpts').innerHTML = opts.map((o) => '<button type="button" class="sopt" data-pp="' + o.id + '" aria-pressed="' + (o.id === '__fb' ? p.source === 'site-ad' && !p.promoter_id : !(p.source === 'site-ad' && !p.promoter_id) && (p.promoter_id || '') === o.id) + '">' + o.label + '</button>').join('');
     payCtx = null; viewStack = ['main']; setPTab('promoter');
   }
+  /* "פייסבוק" הוא עוד יחצן בלי עמלות: מסמן את המשתתף כממומן (source=site-ad) ומנקה יחצן; בחירה אחרת מוציאה מהממומן */
   async function setParticipantPromoter(id) {
     const p = state.participants.find((x) => x.id === (sheet && sheet.id)); if (!p) return;
-    const prev = p.promoter_id || null; p.promoter_id = id || null; setTitle(p); render();
-    try { await api(T.p + '?id=eq.' + p.id, { method: 'PATCH', body: { promoter_id: id || null } }); toast(id ? 'היחצן עודכן' : 'הוסר יחצן'); }
-    catch (err) { p.promoter_id = prev; setTitle(p); render(); fail(err); }
+    const fb = id === '__fb', prev = { promoter_id: p.promoter_id || null, source: p.source };
+    const next = { promoter_id: fb || !id ? null : id, source: fb ? 'site-ad' : (p.source === 'site-ad' ? 'site' : p.source) };
+    Object.assign(p, next); setTitle(p); render();
+    try { await api(T.p + '?id=eq.' + p.id, { method: 'PATCH', body: next }); toast(fb ? 'סומן: פרסום בפייסבוק' : id ? 'היחצן עודכן' : 'הוסר היחצן'); }
+    catch (err) { Object.assign(p, prev); setTitle(p); render(); fail(err); }
   }
   $('#pPromoBtn').addEventListener('click', openPromoterPick);
   $('#pPromoOpts').addEventListener('click', (e) => { const b = e.target.closest('[data-pp]'); if (!b) return; setParticipantPromoter(b.dataset.pp); toMain(); });
@@ -1932,7 +1936,7 @@
 
   /* כותרת הפופאפ: צ'יפ מגדר (ז/נ) וגיל לפני השם */
   function setTitle(p) {
-    $('#pPromoBtn').classList.toggle('on', !!(p && p.promoter_id)); if (p && p.promoter_id) { const pr = promoterOf(p.promoter_id); $('#pPromoBtn').title = 'יחצן: ' + (pr ? pr.name : ''); } else $('#pPromoBtn').title = 'יחצן';
+    const fbP = !!(p && p.source === 'site-ad' && !p.promoter_id); $('#pPromoBtn').classList.toggle('on', !!(p && (p.promoter_id || fbP))); $('#pPromoBtn').classList.toggle('ad', fbP); if (fbP) $('#pPromoBtn').title = 'פרסום בפייסבוק'; else if (p && p.promoter_id) { const pr = promoterOf(p.promoter_id); $('#pPromoBtn').title = 'יחצן: ' + (pr ? pr.name : ''); } else $('#pPromoBtn').title = 'יחצן';
     const h = $('#pTitle');
     if (!p) { h.textContent = 'משתתף חדש'; return; }
     const age = shownAge(p);
