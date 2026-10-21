@@ -462,7 +462,18 @@
     .pst { flex: 0 0 auto; border-radius: 999px; padding: 2px 12px; font-weight: 700; font-size: 13.5px; background: var(--red-bg); color: var(--red); }
     .pst.paid { background: var(--green-bg); color: var(--green); } .pst.requested { background: #FBEBC8; color: #8A5A00; } .pst.exempt { background: #E4E9EE; color: #4B5A6A; } .pst.none { background: #EFE4D3; color: var(--muted); }
     .prnew { width: 100%; height: 44px; border-radius: 14px; border: 1.5px dashed var(--coral); color: var(--terra); font-weight: 700; margin-top: 4px; }
-    .hicons { display: flex; gap: 8px; align-self: center; }
+    .hicons { position: relative; display: flex; align-self: center; }
+    .hicon { position: relative; }
+    .hmenu { position: absolute; top: calc(100% + 8px); left: 0; z-index: 30; min-width: 210px; background: var(--paper); border-radius: 18px; border: 1.5px solid var(--line); box-shadow: 0 12px 34px rgba(63,56,47,.2); padding: 6px; transform-origin: top left; animation: hmIn .16s ease-out; }
+    .hmenu[hidden] { display: none; }
+    @keyframes hmIn { from { opacity: 0; transform: scale(.94) translateY(-4px); } }
+    .hmi { display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 12px; border-radius: 12px; font-size: 17px; font-weight: 600; text-align: right; }
+    .hmi:active { background: rgba(201,111,82,.12); }
+    .hmi svg { width: 21px; height: 21px; color: var(--terra); flex: 0 0 auto; }
+    .hmi span:not(.bdbadge) { flex: 1 1 auto; }
+    .hmi .bdbadge { position: static; }
+    .hmi.out { margin-top: 4px; border-top: 1px solid var(--line); border-radius: 0 0 12px 12px; color: var(--muted); }
+    .hmi.out svg { color: var(--muted); }
     .hicon { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: var(--paper); color: var(--ink); box-shadow: 0 0 0 1.5px var(--line); }
     .hicon svg { width: 21px; height: 21px; }
     .signout { background: none; color: var(--muted); text-decoration: underline; font-size: 14px; cursor: pointer; margin-inline-start: 12px; }
@@ -613,10 +624,13 @@
           <div class="sortmenu mmenu" id="mMenu" role="menu" hidden></div>
         </div>
         <div class="hicons">
-          <button type="button" class="hicon" id="bdBtn" aria-label="לוח שיתופים" title="לוח שיתופים" style="position:relative"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.500l1.400-4.400A8 8 0 1 1 21 12z"/></svg><span class="bdbadge" id="bdBadge" hidden></span></button>
-          <button type="button" class="hicon" id="prBtn" aria-label="יחצנים" title="יחצנים"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4a1 1 0 0 0 1 1h2.5l5.5 4V5L7.5 9H5a1 1 0 0 0-1 1z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg></button>
-          <button type="button" class="hicon" id="statsBtn" aria-label="סטטיסטיקות" title="סטטיסטיקות"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6"/></svg></button>
-          <button type="button" class="hicon" id="signOut" aria-label="יציאה" title="יציאה"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><path d="M15 8l4 4-4 4M19 12H9"/></svg></button>
+          <button type="button" class="hicon" id="menuBtn" aria-label="תפריט" title="תפריט" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.8"/></svg><span class="bdbadge" id="menuBadge" hidden></span></button>
+          <div class="hmenu" id="hMenu" role="menu" hidden>
+            <button type="button" role="menuitem" class="hmi" id="bdBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.4A8 8 0 1 1 21 12z"/></svg><span>לוח שיתופים</span><span class="bdbadge" id="bdBadge" hidden></span></button>
+            <button type="button" role="menuitem" class="hmi" id="prBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4a1 1 0 0 0 1 1h2.5l5.5 4V5L7.5 9H5a1 1 0 0 0-1 1z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg><span>יחצנים</span></button>
+            <button type="button" role="menuitem" class="hmi" id="statsBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6"/></svg><span>סטטיסטיקות</span></button>
+            <button type="button" role="menuitem" class="hmi out" id="signOut"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><path d="M15 8l4 4-4 4M19 12H9"/></svg><span>יציאה</span></button>
+          </div>
         </div>
       </div>
       <div class="tools">
@@ -1058,7 +1072,7 @@
 
   /* ---------- לוח שיתופים (board/): אישור חיבור גוגל לטלפון ומחיקת פוסטים ---------- */
   async function boardBadge() {
-    try { const r = await api('harpatka_members?select=user_id&status=eq.pending'); const b = $('#bdBadge'); b.textContent = r.length; b.hidden = !r.length; } catch (e) {}
+    try { const r = await api('harpatka_members?select=user_id&status=eq.pending'); ['#bdBadge', '#menuBadge'].forEach((s) => { const b = $(s); b.textContent = r.length; b.hidden = !r.length; }); } catch (e) {}
   }
   async function boardOpen() {
     $('#bdBody').innerHTML = '<div class="empty">טוען…</div>'; if (!$('#bdDlg').open) $('#bdDlg').showModal();
@@ -1085,6 +1099,11 @@
       + '<h3>מחוברים (' + appr.length + ')</h3>' + appr.map((m) => memCard(m, '<button class="no" data-mact="blocked">חסימה</button><button data-mact="reject">ניתוק</button>')).join('')
       + (blocked.length ? '<h3>חסומים</h3>' + blocked.map((m) => memCard(m, '<button class="ok" data-mact="approved">שחרור</button><button class="no" data-mact="reject">מחיקה</button>')).join('') : '');
   }
+  const closeHMenu = () => { $('#hMenu').hidden = true; $('#menuBtn').setAttribute('aria-expanded', 'false'); };
+  $('#menuBtn').addEventListener('click', (e) => { e.stopPropagation(); const m = $('#hMenu'); m.hidden = !m.hidden; $('#menuBtn').setAttribute('aria-expanded', String(!m.hidden)); });
+  $('#hMenu').addEventListener('click', closeHMenu);
+  document.addEventListener('click', (e) => { if (!e.target.closest('.hicons')) closeHMenu(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeHMenu(); });
   $('#bdBtn').addEventListener('click', boardOpen);
   $('#bdBody').addEventListener('click', async (e) => {
     const b = e.target.closest('button'); if (!b) return;
