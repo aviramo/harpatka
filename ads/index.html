@@ -42,8 +42,9 @@
     .grid .playing img{ display:none; }
     .grid .playing video{ display:block; }
     /* סרטון מוביל בראש העמוד (9:16, לא מודעה ממוספרת). לא ב-videos.json, כדי שלא ייבחר לסרטון הפתיחה של עמוד הבית */
-    .searchbar{ position:sticky; top:0; z-index:30; display:flex; align-items:center; gap:.6rem; padding:.7rem 1rem; background:rgba(36,32,28,.94); backdrop-filter:blur(6px); }
-    .searchbar .box{ position:relative; flex:1 1 auto; max-width:34rem; }
+    .searchbar{ position:sticky; top:0; z-index:30; display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:.6rem; padding:.7rem 1rem; background:rgba(36,32,28,.94); backdrop-filter:blur(6px); }
+    .searchbar .brk{ flex:0 0 100%; height:0; margin:-.3rem 0; }
+    .searchbar .box{ position:relative; flex:0 0 100%; max-width:34rem; }
     .searchbar input{ width:100%; height:2.7rem; padding:0 2.6rem 0 2.6rem; border-radius:999px; border:1.5px solid rgba(168,159,144,.45); background:#2E2924; color:var(--ink); font:500 1.05rem Assistant,Rubik,sans-serif; }
     .searchbar input::-webkit-search-cancel-button{ display:none; }
     .searchbar input::placeholder{ color:#8C8374; }
@@ -54,8 +55,13 @@
     .searchbar .cnt{ flex:none; color:#A89F90; font:600 .95rem Assistant,Rubik,sans-serif; white-space:nowrap; }
     .none{ padding:2.5rem 1rem; text-align:center; color:#A89F90; font:600 1.1rem Assistant,Rubik,sans-serif; }
     .grid figure[hidden]{ display:none; }
-    .grid.feature{ grid-template-columns:repeat(auto-fill,minmax(16rem,24rem)); padding-bottom:0; }
-    .grid.feature img, .grid.feature video{ aspect-ratio:9/16; }
+    /* סרטון מסוג "תמונות" (9:16) באותו גריד של המודעות, תופס שתי שורות */
+    .grid figure.tall{ grid-row:span 2; }
+    .grid figure.tall img, .grid figure.tall video{ aspect-ratio:9/16; }
+    .types{ display:flex; gap:.4rem; flex:none; }
+    .types button{ height:2.4rem; padding:0 .95rem; border-radius:999px; border:1.5px solid rgba(168,159,144,.45); background:none; color:#C9C0B1; font:600 .98rem Assistant,Rubik,sans-serif; cursor:pointer; white-space:nowrap; }
+    .types button[aria-pressed="true"]{ background:var(--terra); border-color:var(--terra); color:#FFFDF9; }
+    .types button:focus-visible{ outline:3px solid var(--paper); outline-offset:1px; }
   </style>
 </head>
 <body>
@@ -65,9 +71,14 @@
       <input id="q" type="search" placeholder="חיפוש בטקסט המודעות (בתמונות ובסרטונים)" autocomplete="off" aria-label="חיפוש במודעות" />
       <button type="button" class="clr" id="qClr" aria-label="ניקוי החיפוש" hidden>×</button>
     </div>
+    <div class="brk" aria-hidden="true"></div>
+    <div class="types" id="types" role="group" aria-label="סינון לפי סוג">
+      <button type="button" data-type="" aria-pressed="true">הכל</button>
+      <button type="button" data-type="msg" aria-pressed="false">מסרים</button>
+      <button type="button" data-type="photo" aria-pressed="false">תמונות</button>
+    </div>
     <span class="cnt" id="cnt"></span>
   </div>
-  <div id="feature" class="grid feature"></div>
   <div id="grid" class="grid"></div>
   <div id="none" class="none" hidden>לא נמצאו מודעות עם הטקסט הזה</div>
   <script>
@@ -136,7 +147,7 @@
     }
 
     // סרטונים שמופיעים ראשונים, לפני המודעות הממוספרות. סרטון מעודכן = שם קובץ חדש (cache)
-    const FEATURED = [{ label: 'ביודנסה', name: 'הסרטון ביודנסה', base: 'biodanza', w: 1080, h: 1920,
+    const FEATURED = [{ label: 'יש רגעים שמפספסים', name: 'הסרטון יש רגעים שמפספסים', type: 'photo', tall: true, base: 'biodanza', w: 1080, h: 1920,
       img: 'img/biodanza-f7b85b45.jpg', vid: 'video/biodanza-f-99d0bce2.mp4', alt: 'יש רגעים שמפספסים. ויש רגעים שבוחרים להיות בהם. ביודנסה: להיות, לנוע, להיפגש' }];
 
     const stops = [];   // סרטון אחד בכל פעם: כשאחד מתחיל לנגן, כל השאר עוצרים וחוזרים לתמונה
@@ -149,7 +160,8 @@
     function card(g, c) {
       const f = document.createElement('figure');
       /* טקסט לחיפוש: מספר, נוסח המודעה (זהה בתמונה ובסרטון) ובמודעה עם סרטון גם הטקסטים הקבועים שבסרטון */
-      f.dataset.text = [c.label, c.name, c.alt, c.vid ? 'מפגש מסוג אחר לגילאי 40 עד 50 בפרק פתוח בחיים הזמנה יוצאים להרפתקה' : ''].join(' ');
+      f.dataset.type = c.type || 'msg'; if (c.tall) f.classList.add('tall');
+      f.dataset.text = [c.label, c.name, c.alt, c.vid && c.type !== 'photo' ? 'מפגש מסוג אחר לגילאי 40 עד 50 בפרק פתוח בחיים הזמנה יוצאים להרפתקה' : ''].join(' ');
       const head = document.createElement('div'); head.className = 'head';
       const n = document.createElement('span'); n.className = 'n'; n.textContent = c.label;
       head.appendChild(n);
@@ -185,8 +197,7 @@
       g.appendChild(f);
     }
 
-    const feature = document.getElementById('feature');
-    FEATURED.forEach(c => card(feature, c));
+    FEATURED.forEach(c => card(document.getElementById('grid'), c));
     Promise.all([json('ads.json'), json('videos.json')]).then(([items, videos]) => {
       const g = document.getElementById('grid');
       (Array.isArray(items) ? items : []).forEach(it => {
@@ -199,16 +210,21 @@
     /* חיפוש: כל המילים שנכתבו חייבות להופיע (בלי ניקוד ופיסוק), על כל המודעות והסרטונים */
     const norm = s => String(s || '').toLowerCase().replace(/[֑-ׇ]/g, '').replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
     const qEl = document.getElementById('q'), qClr = document.getElementById('qClr'), cntEl = document.getElementById('cnt'), noneEl = document.getElementById('none');
+    let typeSel = '';
+    document.getElementById('types').addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return; typeSel = b.dataset.type;
+      document.querySelectorAll('#types button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); applySearch();
+    });
     function applySearch() {
       const words = norm(qEl.value).split(' ').filter(Boolean);
       let shown = 0, total = 0;
-      document.querySelectorAll('#feature figure, #grid figure').forEach(f => {
-        const hay = norm(f.dataset.text), ok = words.every(w => hay.includes(w));
+      document.querySelectorAll('#grid figure').forEach(f => {
+        const hay = norm(f.dataset.text), ok = (!typeSel || f.dataset.type === typeSel) && words.every(w => hay.includes(w));
         f.hidden = !ok; total++; if (ok) shown++;
         if (!ok) f.querySelector('.media') && f.querySelector('.media')._stop && f.querySelector('.media')._stop();
       });
-      qClr.hidden = !qEl.value; cntEl.textContent = words.length ? shown + ' מתוך ' + total : '';
-      noneEl.hidden = !words.length || shown > 0;
+      qClr.hidden = !qEl.value; cntEl.textContent = words.length || typeSel ? shown + ' מתוך ' + total : '';
+      noneEl.hidden = (!words.length && !typeSel) || shown > 0;
     }
     qEl.addEventListener('input', applySearch);
     qClr.addEventListener('click', () => { qEl.value = ''; applySearch(); qEl.focus(); });
