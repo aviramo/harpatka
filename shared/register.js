@@ -148,7 +148,16 @@
   });
 
   /* ===== הצטרפות לעדכונים — קישור ישיר לקבוצת הוואטסאפ (עד גיל 50), בלי פופאפ בחירה ===== */
-  document.querySelectorAll('[data-updates]').forEach(el => { el.setAttribute('href', CONFIG.updatesGroupLink); });
+  document.querySelectorAll('[data-updates]').forEach(el => {
+    el.setAttribute('href', CONFIG.updatesGroupLink);
+    /* JoinGroup ל-Pixel בלחיצה על הצטרפות לקבוצה: ערך 1, פעם אחת בלבד לכל מכשיר */
+    el.addEventListener('click', () => {
+      if (!window.fbq) return;
+      const K = 'harpatka_join_sent';
+      try { if (localStorage.getItem(K)) return; localStorage.setItem(K, '1'); } catch (e) {}
+      try { fbq('trackCustom', 'JoinGroup', { value: 1, currency: 'ILS' }); } catch (e) {}
+    });
+  });
   /* ===== תשלום בפייבוקס (בהודעת התודה אחרי ההרשמה): קישור לקבוצת התשלום, ו-InitiateCheckout ל-Pixel בלחיצה ===== */
   document.querySelectorAll('[data-paybox]').forEach(el => {
     el.setAttribute('href', CONFIG.payboxLink);
@@ -236,7 +245,12 @@
         if (!res.ok && PAID) res = await send({});   // אם הפונקציה בבסיס הנתונים עוד לא עודכנה (admin/source.sql): ההרשמה נשמרת בלי הסימון
         const out = res.ok ? await res.json() : null;
         if (out === 'created' || out === 'exists') {   // כפילות: אותה הודעה, בלי לחשוף שהמספר כבר רשום
-          if (out === 'created') leadOnce();   // Lead רק על מספר חדש (חד ערכי), לא על כפילות
+          if (out === 'created') {   // Lead רק על מספר חדש (חד ערכי), לא על כפילות
+            leadOnce();
+            /* RegistrationValue: ערך 3 למי שבטווח (נשים 40 עד 50, גברים 40 עד 55), 1 למי שמחוץ לטווח */
+            const inRange = gender === 'male' ? (age >= 40 && age <= 55) : (age >= 40 && age <= 50);
+            try { if (window.fbq) fbq('trackCustom', 'RegistrationValue', { value: inRange ? 3 : 1, currency: 'ILS' }); } catch (e) {}
+          }
           finished = true; allDone();
         } else if (out === 'invalid_phone') setErr(phoneI, q('phoneErr'), 'מספר לא תקין');
         else if (out === 'invalid_name') setErr(nameI, q('nameErr'), 'נא למלא שם');
