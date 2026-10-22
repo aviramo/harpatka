@@ -297,9 +297,8 @@
       if (await submit(ta.value, t.dataset.rsend, !!(sh && sh.checked))) openReply = null; render(); return;
     }
     if (t.dataset.like) {
-      if (me === 'blocked' || me === 'removed') { toast('אין אפשרות'); return; }
       const p = posts.find((x) => x.id === t.dataset.like); if (!p) return;
-      const member = !!(session && me);   // מחובר ומאושר: לב רגיל; אחרת לב אנונימי לפי מכשיר (בלי התחברות)
+      const member = !!(session && me && me !== 'blocked' && me !== 'removed');   // מחובר ומאושר: לב רגיל; אחרת לב אנונימי לפי מכשיר (בלי התחברות)
       p.liked = !p.liked; p.likes = Math.max(0, (p.likes || 0) + (p.liked ? 1 : -1)); render();
       try { if (member) await rpc('harpatka_board_like', { p_id: p.id }); else await rpc('harpatka_board_like_anon', { p_id: p.id, p_device: deviceId() }); } catch (err) { p.liked = !p.liked; p.likes += p.liked ? 1 : -1; render(); }
       return;
