@@ -38,7 +38,7 @@ begin
 ', '<br>'),
           'who', coalesce(pa.name, nullif(m.google_name, ''), m.email),
           'identity', coalesce('טלפון ' || pa.phone || ' · ', '') || 'חשבון גוגל ' || m.email,
-          'admin_link', 'https://harpatka.co.il/board/'));
+          'admin_link', 'https://harpatka.co.il/board/', 'hide_link', 'https://harpatka.co.il/board/?hide=' || p.id));
       exception when others then null; end; end if;
     end if;
     return 'ok';
@@ -54,7 +54,7 @@ begin
         'body_html', replace(public.harpatka_html_esc(nb), E'\n', '<br>'),
         'who', coalesce(pa.name, nullif(m.google_name, ''), m.email),
         'identity', coalesce('טלפון ' || pa.phone || ' · ', '') || 'חשבון גוגל ' || m.email,
-        'admin_link', 'https://harpatka.co.il/board/'));
+        'admin_link', 'https://harpatka.co.il/board/', 'hide_link', 'https://harpatka.co.il/board/?hide=' || p.id));
     exception when others then null; end; end if;
   end if;
   return 'pending';

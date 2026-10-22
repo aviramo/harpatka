@@ -209,6 +209,8 @@
         + '<button type="button" class="act' + (p.liked ? ' liked' : '') + '" data-like="' + p.id + '" aria-pressed="' + p.liked + '" aria-label="לב">' + LIKE + '<span>' + (p.likes || '') + '</span></button>'
         + '<button type="button" class="act" data-reply="' + p.id + '">תגובה</button>'
         + (p.mine && editId !== p.id ? '<button type="button" class="act" data-edit="' + p.id + '">עריכה</button>' : '')
+        + (p.author != null ? (p.hidden ? '<button type="button" class="act" data-unhide="' + p.id + '">ביטול הסתרה</button>' : '<button type="button" class="act" data-hide="' + p.id + '">הסתרה</button>') : '')
+        + (p.hidden ? '<span class="pend" style="background:#E9DCE3;color:#663F4C">מוסתר, רק מנהלים רואים</span>' : '')
         + (p.can_approve ? '<button type="button" class="act ok" data-approve="' + p.id + '">אישור ופרסום</button>' : '')
         + (p.can_delete ? (asking ? '<span>למחוק? <button type="button" class="act del" data-delyes="' + p.id + '">כן</button> <button type="button" class="act" data-delno="1">לא</button></span>' : '<button type="button" class="act del" data-del="' + p.id + '">מחיקה</button>') : '')
         + (p.pending ? '<span class="pend">' + (p.pending_edit ? 'העריכה ממתינה לאישור, עד אז מוצג הנוסח הקודם' : 'ממתין לאישור, רק אתם רואים אותו') + '</span>' : '') + '</span>';
@@ -290,6 +292,11 @@
       } catch (err) { toast('משהו השתבש, אפשר לנסות שוב'); }
       return;
     }
+    if (t.dataset.hide || t.dataset.unhide) {
+      const id = t.dataset.hide || t.dataset.unhide;
+      try { await rpc('harpatka_board_hide', { p_id: id, p_hide: !!t.dataset.hide }); toast(t.dataset.hide ? 'הוסתר, רק מנהלים רואים' : 'ההסתרה בוטלה'); } catch (err) { toast('משהו השתבש'); }
+      load(); return;
+    }
     if (t.dataset.approve) {
       try { await rpc('harpatka_board_approve', { p_id: t.dataset.approve }); toast('פורסם'); } catch (err) { toast('משהו השתבש'); }
       load(); return;
@@ -352,6 +359,14 @@
 
   (async () => {
     await startAuth();
+    /* קישור "הסתרת הפוסט" מהמייל (?hide=<מזהה>): מנהל מחובר מסתיר מיד; אחרת עוברים קודם התחברות עם גוגל */
+    try { const hp = new URLSearchParams(location.search).get('hide'); if (hp) { sessionStorage.setItem('hb_hide', hp); history.replaceState(null, '', location.pathname); } } catch (e) {}
+    let hid = null; try { hid = sessionStorage.getItem('hb_hide'); } catch (e) {}
+    if (hid) {
+      if (!session) { goGoogle(); return; }
+      try { sessionStorage.removeItem('hb_hide'); } catch (e) {}
+      try { const r = await rpc('harpatka_board_hide', { p_id: hid, p_hide: true }); toast(r === 'ok' ? 'הפוסט הוסתר, רק מנהלים רואים אותו' : r === 'denied' ? 'אין הרשאה להסתיר (נדרשת כניסה של מנהל)' : 'הפוסט לא נמצא'); } catch (e) { toast('משהו השתבש'); }
+    }
     await load();
     /* חזרה מהכניסה: ממשיכים מה שהתחילו לכתוב */
     let p = null; try { p = JSON.parse(sessionStorage.getItem(PKEY) || 'null'); sessionStorage.removeItem(PKEY); } catch (e) {}
