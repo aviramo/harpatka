@@ -512,6 +512,9 @@
     .sheet h2 { font-family: "Rubik", sans-serif; font-size: 21px; margin: 0; }
     .close { width: 40px; height: 40px; border-radius: 50%; background: var(--cream); font-size: 22px; line-height: 1; }
     .field { display: block; margin-bottom: 12px; }
+    .field[hidden] { display: none; }
+    .smalllink { display: block; margin: 2px auto 12px; padding: 4px 8px; font-size: 14px; font-weight: 600; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+    .smalllink[hidden] { display: none; }
     .field span { display: block; font-size: 14px; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
     .name-row { display: flex; gap: 8px; align-items: flex-end; }
     .name-row .field { flex: 1; min-width: 0; }
@@ -688,6 +691,7 @@
           <div class="pquick" id="payQuick"></div>
         </div>
         <button type="button" class="promolink" id="creditToggle" hidden aria-pressed="false"></button>
+        <button type="button" class="smalllink" id="payPromoLink" hidden>+ דרך יחצן</button>
         <label class="field" id="commField" hidden><span id="commLabel">עמלה ליחצן (₪)</span><input name="pay_commission" type="number" inputmode="decimal" min="0" step="any" /></label>
         <div class="payact"><button class="btn" id="paySave" type="button">שמירה</button></div>
       </div>
@@ -1622,18 +1626,21 @@
     catch (err) { Object.assign(l, prev); render(); if (sheet && sheet.id) refreshSheetMeetings(); fail(err); }
   }
   /* פרטי תשלום: סכום (ברירת מחדל לפי מועד), יחצן (ברירת מחדל של המשתתף) ועמלה (ברירת מחדל לפי תעריף היחצן), כולם ניתנים לשינוי לתשלום הזה */
-  function openPayView(pid, mid) {
+  function openPayView(pid, mid, opts) {
     const l = linkOf(pid, mid); if (!l) return;
     const p = state.participants.find((x) => x.id === pid), m = state.meetings.find((x) => x.id === mid);
     const f = pForm;
     const amount = l.paid_amount != null ? Number(l.paid_amount) : (m ? defaultPrice(m) : PRICE_EARLY);
-    f.pay_amount.value = amount;
+    f.pay_amount.value = opts && opts.amount != null ? opts.amount : amount;
     /* היחצן הוא של המשתתף (האייקון בכותרת); עמלה מוצגת ונערכת רק כשיש יחצן */
     const prId = (p && p.promoter_id) || l.promoter_id || '', pr = promoterOf(prId);
     /* עמלה ליחצן רק על המפגש הראשון של המשתתף: אם כבר יש לו תשלום על מפגש אחר, אין עמלה (ההכנסה עדיין משויכת ליחצן) */
     const isFirst = !state.payments.some((x) => x.participant_id === pid && x.kind === 'payment' && x.meeting_id && x.meeting_id !== mid), commPr = isFirst ? pr : null;
     let dirty = l.commission != null;
     f.pay_commission.value = l.commission != null ? Number(l.commission) : calcCommission(commPr, amount);
+    /* בלי יחצן: אין שדה עמלה, רק קישור קטן ל"בחירת יחצן" (אותו מסך כמו הרמקול בכותרת, חץ חזרה מחזיר לכאן) */
+    $('#payPromoLink').hidden = !!pr || !!(p && p.source === 'site-ad');
+    $('#payPromoLink').onclick = () => openPromoterPickFromPay(pid, mid);
     $('#commField').hidden = !commPr; $('#commLabel').textContent = pr ? 'עמלה ל' + pr.name + ' (₪)' : 'עמלה ליחצן (₪)';
     $('#payQuick').innerHTML = [PRICE_EARLY, PRICE_LATE].map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
     const recalc = () => { if (!dirty) f.pay_commission.value = calcCommission(commPr, f.pay_amount.value); };
@@ -1654,7 +1661,7 @@
       toMain();
     };
     $('#paySave').onclick = save;
-    goView('pay');
+    if (opts && opts.keep) setPTab('pay'); else goView('pay');
   }
   async function setPayStatus(pid, mid, st, extra, opts) {
     const l = linkOf(pid, mid);
@@ -1893,11 +1900,22 @@
     setPTab('credit');
   });
   /* יחצן הוא ברמת המשתתף: אייקון בכותרת (מואר כשיש יחצן) פותח בחירת יחצן */
-  function openPromoterPick() {
+  let promoFromPay = null;
+  function openPromoterPickFromPay(pid, mid) {
+    promoFromPay = { pid, mid, amount: pForm.pay_amount.value };
+    const keep = payCtx; openPromoterPick(true); payCtx = keep;
+  }
+  function afterPromoPick() {
+    if (promoFromPay) { const c = promoFromPay; promoFromPay = null; viewStack = ['main']; payCtx = { pid: c.pid, mid: c.mid }; openPayView(c.pid, c.mid, { keep: true, amount: c.amount }); }
+    else toMain();
+  }
+  function openPromoterPick(fromPay) {
     if (!sheet || !sheet.id) return;
+    if (fromPay !== true) promoFromPay = null;
     const p = state.participants.find((x) => x.id === sheet.id); if (!p) return;
     const opts = [{ id: '', label: 'ללא יחצן' }, { id: '__fb', label: 'פרסום בפייסבוק <small>(בלי עמלה)</small>' }].concat(state.promoters.map((x) => ({ id: x.id, label: esc(x.name) + ' <small>(' + rateLabel(x) + ')</small>' })));
     $('#pPromoOpts').innerHTML = opts.map((o) => '<button type="button" class="sopt" data-pp="' + o.id + '" aria-pressed="' + (o.id === '__fb' ? p.source === 'site-ad' && !p.promoter_id : !(p.source === 'site-ad' && !p.promoter_id) && (p.promoter_id || '') === o.id) + '">' + o.label + '</button>').join('');
+    if (fromPay === true) { viewStack.push(pTab); setPTab('promoter'); return; }
     payCtx = null; viewStack = ['main']; setPTab('promoter');
   }
   /* "פייסבוק" הוא עוד יחצן בלי עמלות: מסמן את המשתתף כממומן (source=site-ad) ומנקה יחצן; בחירה אחרת מוציאה מהממומן */
@@ -1909,11 +1927,11 @@
     try { await api(T.p + '?id=eq.' + p.id, { method: 'PATCH', body: next }); toast(fb ? 'סומן: פרסום בפייסבוק' : id ? 'היחצן עודכן' : 'הוסר היחצן'); }
     catch (err) { Object.assign(p, prev); setTitle(p); render(); fail(err); }
   }
-  $('#pPromoBtn').addEventListener('click', openPromoterPick);
-  $('#pPromoOpts').addEventListener('click', (e) => { const b = e.target.closest('[data-pp]'); if (!b) return; setParticipantPromoter(b.dataset.pp); toMain(); });
-  $('#pPromoNew').addEventListener('click', () => openNewPromoter((row) => { setParticipantPromoter(row.id); toMain(); }));
+  $('#pPromoBtn').addEventListener('click', () => openPromoterPick());
+  $('#pPromoOpts').addEventListener('click', (e) => { const b = e.target.closest('[data-pp]'); if (!b) return; setParticipantPromoter(b.dataset.pp); afterPromoPick(); });
+  $('#pPromoNew').addEventListener('click', () => openNewPromoter((row) => { setParticipantPromoter(row.id); afterPromoPick(); }));
   $('#pInfoBtn').addEventListener('click', () => { viewStack = []; setPTab('info'); });
-  $('#pBack').addEventListener('click', () => setPTab(viewStack.pop() || 'main'));
+  $('#pBack').addEventListener('click', () => { if (pTab === 'promoter') promoFromPay = null; setPTab(viewStack.pop() || 'main'); });
   const goView = (v) => { viewStack.push(pTab); setPTab(v); };
   const toMain = () => { viewStack = []; setPTab('main'); };
 
@@ -2054,7 +2072,7 @@
     openPid = p ? p.id : null;
     pDlg.showModal();
     pDlg.setAttribute('tabindex', '-1'); pDlg.focus({ preventScroll: true });   // בלי טבעת פוקוס על כפתור הסגירה
-    viewStack = []; payCtx = null;
+    viewStack = []; payCtx = null; promoFromPay = null;
     setPTab(p ? (tab === 'info' ? 'info' : 'main') : 'info', true);
     if (!p) setTimeout(() => pForm.name.focus(), 50);
   }
