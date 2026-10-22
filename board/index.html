@@ -222,7 +222,7 @@
         + (p.can_approve ? '<button type="button" class="act ok" data-approve="' + p.id + '">אישור ופרסום</button>' : '')
         + (p.can_delete ? (asking ? '<span>למחוק? <button type="button" class="act del" data-delyes="' + p.id + '">כן</button> <button type="button" class="act" data-delno="1">לא</button></span>' : '<button type="button" class="act del" data-del="' + p.id + '">מחיקה</button>') : '')
         + (p.pending ? '<span class="pend">' + (p.pending_edit ? 'העריכה ממתינה לאישור, עד אז מוצג הנוסח הקודם' : 'ממתין לאישור, רק אתם רואים אותו') + '</span>' : '') + '</span>';
-      const reply = openReply === p.id ? '<div class="reply"><textarea rows="1" maxlength="2000" data-rtext="' + p.id + '" placeholder="תגובה" aria-label="תגובה"></textarea>' + (canShare && !ownThread(p) ? '<label class="share"><input type="checkbox" data-rshare="' + p.id + '"' + (shareOn ? ' checked' : '') + ' /> לשתף את הטלפון שלי רק עם בעל הפוסט</label>' : '') + '<div class="crow"><span></span><button type="button" class="nchip" ' + (meFirst && !meAdmin ? '' : 'hidden') + '>' + chipHTML() + '</button><button type="button" class="btn" data-rsend="' + p.id + '">שליחה</button></div></div>' : '';
+      const reply = openReply === p.id ? '<div class="reply"><textarea rows="1" maxlength="2000" data-rtext="' + p.id + '" placeholder="תגובה" aria-label="תגובה"></textarea>' + (canShare && !ownThread(p) ? '<label class="share"><input type="checkbox" data-rshare="' + p.id + '"' + (shareOn ? ' checked' : '') + ' /> לשתף את הטלפון שלי רק עם בעל הפוסט</label>' : '') + '<div class="crow"><span></span><button type="button" class="nchip" ' + (meFirst && !meAdmin ? '' : 'hidden') + '>' + chipHTML() + '</button><button type="button" class="btn ghost" data-rcancel="1">ביטול</button><button type="button" class="btn" data-rsend="' + p.id + '">שליחה</button></div></div>' : '';
       return '<div class="' + (depth ? 'cm' : 'card post') + '">' + (p.admin_post ? '<div class="pname adm">★ מנהל</div>' : p.first_name ? '<div class="pname">' + esc(p.first_name) + '</div>' : '') + (editId === p.id ? '<div class="reply"><textarea rows="1" maxlength="2000" data-etext="' + p.id + '" aria-label="עריכה">' + esc(editText) + '</textarea><div class="crow"><button type="button" class="btn ghost" data-ecancel="1">ביטול</button><button type="button" class="btn" data-esave="' + p.id + '">שמירה</button></div></div>' : '<div class="body">' + esc(p.body) + '</div>') + (p.author ? '<div class="auth">' + (p.mine ? 'את/ה' : esc(p.author)) + '</div>' : '')
         + (p.phone ? '<div class="phone"><span>הטלפון של המגיב/ה:</span> <b dir="ltr">' + esc(p.phone) + '</b> <a href="https://wa.me/972' + esc(String(p.phone).replace(/^0/, '').replace(/\D/g, '')) + '" target="_blank" rel="noopener">וואטסאפ</a> <a href="tel:' + esc(p.phone) + '">חיוג</a></div>' : '')
         + (p.shared ? '<div class="auth">הטלפון שלך משותף עם בעל הפוסט</div>' : '') + act + reply
@@ -274,6 +274,7 @@
   $('#newBtn').addEventListener('click', async () => { if (await submit($('#newText').value, null)) closeCompose(); });
   /* התיבה מתחילה בשורה אחת ומתארכת לפי הטקסט */
   const grow = (ta) => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; };
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && (openReply || editId) && !document.querySelector('dialog[open]')) { openReply = null; editId = null; render(); } });
   document.addEventListener('input', (e) => { if (e.target.tagName === 'TEXTAREA') { grow(e.target); if (e.target.dataset.etext) editText = e.target.value; } });
   $('#newText').addEventListener('input', (e) => { const n = e.target.value.length; $('#newCnt').textContent = n > 1700 ? n + ' / 2000' : ''; syncComposer(); });
 
@@ -293,6 +294,7 @@
       return;
     }
     if (t.dataset.edit) { const p = posts.find((x) => x.id === t.dataset.edit); if (!p) return; editId = p.id; editText = p.body; openReply = null; render(); return; }
+    if (t.dataset.rcancel) { openReply = null; render(); return; }
     if (t.dataset.ecancel) { editId = null; render(); return; }
     if (t.dataset.esave) {
       const ta = $('[data-etext="' + t.dataset.esave + '"]'), txt = (ta && ta.value || '').trim(); if (!txt) return;
