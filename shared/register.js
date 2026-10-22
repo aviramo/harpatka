@@ -247,8 +247,8 @@
         if (out === 'created' || out === 'exists') {   // כפילות: אותה הודעה, בלי לחשוף שהמספר כבר רשום
           if (out === 'created') {   // Lead רק על מספר חדש (חד ערכי), לא על כפילות
             leadOnce();
-            /* RegistrationValue: ערך 3 למי שבטווח (נשים 40 עד 50, גברים 40 עד 55), 1 למי שמחוץ לטווח */
-            const inRange = gender === 'male' ? (age >= 40 && age <= 55) : (age >= 40 && age <= 50);
+            /* RegistrationValue: ערך 3 למי שבטווח (נשים 37 עד 50, גברים 40 עד 55, זהה ל-payOk), 1 למי שמחוץ לטווח */
+            const inRange = gender === 'male' ? (age >= 40 && age <= 55) : (age >= 37 && age <= 50);
             try { if (window.fbq) fbq('trackCustom', 'RegistrationValue', { value: inRange ? 3 : 1, currency: 'ILS' }); } catch (e) {}
           }
           finished = true; allDone();
