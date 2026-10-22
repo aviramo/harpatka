@@ -8,7 +8,7 @@ CHROME = next(p for p in [r"C:\Program Files\Google\Chrome\Application\chrome.ex
 OUT = ROOT / "ads" / "social"; OUT.mkdir(parents=True, exist_ok=True)
 W, H = 1080, 1350
 
-EVENT = {"file": "2026-10-25-v3", "day": "ראשון 25.10", "time": "20:00", "place": "הרצליה", "seats": "עד 30"}
+EVENT = {"file": "2026-10-25-v4", "day": "ראשון 25.10", "time": "20:00", "place": "הרצליה", "seats": "עד 30"}
 
 STAMP = '<svg viewBox="0 0 48 52" fill="#C96F52"><g stroke="#C96F52" stroke-width="1.8" stroke-linecap="round" fill="none"><path d="M15 21Q8 17 6 9"/><path d="M15 21Q21 18 24 12"/><path d="M34 22Q40 17 42 11"/><path d="M34 22Q29 19 27 14"/></g><circle cx="15" cy="12" r="3.4"/><path d="M15 17C9 22 8 33 5 42L25 42C22 33 21 22 15 17Z"/><circle cx="34" cy="13" r="3.2" fill="#C98D86"/><path d="M34 18C28.5 23 28 33 26 42L42 42C40 33 39.5 23 34 18Z" fill="#9A9A75"/></svg>'
 
