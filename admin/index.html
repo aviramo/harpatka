@@ -1161,7 +1161,10 @@
         api(T.pay + '?select=*&order=created_at.desc'),
       ]);
       boardBadge();
-      state.participants = p; state.meetings = m; state.att = a; state.notes = nn; state.promoters = prs; state.promoPays = pps; state.payments = pays; rebuildNotes();
+      /* משתתף לא פעיל (הוסר) מוסתר מכל המסכים; הנתונים נשמרים ויחזרו אם יירשם שוב עם אותו טלפון. תשלומים נשארים (כספים) */
+      state.inactiveNames = new Map(p.filter((x) => x.active === false).map((x) => [x.id, x.name]));
+      const act = p.filter((x) => x.active !== false), actIds = new Set(act.map((x) => x.id));
+      state.participants = act; state.meetings = m; state.att = a.filter((x) => actIds.has(x.participant_id)); state.notes = nn.filter((x) => actIds.has(x.participant_id)); state.promoters = prs; state.promoPays = pps; state.payments = pays; rebuildNotes();
       sortMeetings();
       if (!silent) $('#status').innerHTML = '';
       if (deep) {
@@ -1543,7 +1546,7 @@
   function ledgerOf(id) {
     const acc = state.payments.filter((x) => x.promoter_id === id && x.commission != null && Number(x.commission) > 0).map((x) => {
       const pp = state.participants.find((q) => q.id === x.participant_id), m = state.meetings.find((q) => q.id === x.meeting_id), isR = x.kind === 'refund' || x.kind === 'credit';
-      return { kind: isR ? 'r' : 'c', date: ilDay(x.created_at), amount: (isR ? -1 : 1) * Number(x.commission), who: pp ? pp.name : '', sub: (isR ? (x.kind === 'credit' ? 'ביטול לקרדיט · ' : 'החזר תשלום · ') : '') + (m ? 'מפגש ' + meetingLabel(m).split(' · ')[0] + ' · ' : '') + (isR ? 'הוחזר ' : 'שילם ') + Number(x.amount), key: x.id };
+      return { kind: isR ? 'r' : 'c', date: ilDay(x.created_at), amount: (isR ? -1 : 1) * Number(x.commission), who: pp ? pp.name : (state.inactiveNames && state.inactiveNames.get(x.participant_id)) || '', sub: (isR ? (x.kind === 'credit' ? 'ביטול לקרדיט · ' : 'החזר תשלום · ') : '') + (m ? 'מפגש ' + meetingLabel(m).split(' · ')[0] + ' · ' : '') + (isR ? 'הוחזר ' : 'שילם ') + Number(x.amount), key: x.id };
     });
     const pays = state.promoPays.filter((x) => x.promoter_id === id).map((x) => ({ kind: 'p', date: x.paid_at, amount: -Number(x.amount), who: 'תשלום ליחצן', sub: x.note || '', id: x.id, key: x.id }));
     const all = acc.concat(pays).sort((a, b) => String(a.date).localeCompare(String(b.date)) || (a.kind === 'c' ? -1 : 1));
@@ -2222,7 +2225,15 @@
     v.phone = ph;
     const btn = $('#pSubmit'); btn.disabled = true;
     try {
-      const [p] = await api(T.p, { method: 'POST', body: { ...v, age_set_at: todayISO() }, prefer: 'return=representation' });
+      let p;
+      try { [p] = await api(T.p, { method: 'POST', body: { ...v, age_set_at: todayISO() }, prefer: 'return=representation' }); }
+      catch (err) {
+        /* הטלפון קיים אצל משתתף לא פעיל: מחזירים אותו להיות פעיל (בלי לעדכן את שאר השדות) */
+        const norm = v.phone.replace(/^0/, '+972').replace(/[^+\d]/g, '');
+        const [back] = await api(T.p + '?phone_norm=eq.' + encodeURIComponent(norm) + '&active=eq.false', { method: 'PATCH', body: { active: true }, prefer: 'return=representation' });
+        if (!back) throw err;
+        toast('המשתתף הלא פעיל חזר להיות פעיל'); pDlg.close(); load(true); btn.disabled = false; return;
+      }
       state.participants.push(p);
       const rows = [...sheet.links].map(([mid, paid]) => ({ participant_id: p.id, meeting_id: mid, paid: !!paid }));
       if (rows.length) { await api(T.a, { method: 'POST', body: rows }); state.att.push(...rows); }
@@ -2233,12 +2244,13 @@
 
   $('#pDelete').addEventListener('click', async () => {
     const p = state.participants.find((x) => x.id === sheet.id);
-    if (!p || !confirm('למחוק את ' + p.name + '?')) return;
+    if (!p || !confirm('להסיר את ' + p.name + '? הוא יוסתר מכל המסכים, והנתונים נשמרים ויחזרו אם יירשם שוב עם אותו טלפון')) return;
     try {
-      await api(T.p + '?id=eq.' + p.id, { method: 'DELETE' });
+      await api(T.p + '?id=eq.' + p.id, { method: 'PATCH', body: { active: false } });
       state.participants = state.participants.filter((x) => x !== p);
+      if (state.inactiveNames) state.inactiveNames.set(p.id, p.name);
       state.att = state.att.filter((a) => a.participant_id !== p.id);
-      pDlg.close(); render(); toast('נמחק');
+      pDlg.close(); render(); toast('הוסר');
     } catch (err) { fail(err); }
   });
 

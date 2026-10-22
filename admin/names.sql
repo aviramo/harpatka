@@ -22,7 +22,7 @@ declare
   n   text := public.harpatka_normalize_phone(p_phone);
   fullname text := btrim(regexp_replace(coalesce(p_name, ''), '\s+', ' ', 'g'));
   fn  text; ln text; nm text;
-  pid uuid; mid uuid; md date; mt time;
+  pid uuid; mid uuid; md date; mt time; act boolean;
   res text := 'created';
 begin
   if p_first is not null or p_last is not null then
@@ -40,11 +40,11 @@ begin
     where meeting_date >= (now() at time zone 'Asia/Jerusalem')::date
     order by meeting_date, meeting_time limit 1;
 
-  select id into pid from public.harpatka_participants where phone_norm = n limit 1;
+  select id, active, name into pid, act, nm from public.harpatka_participants where phone_norm = n limit 1;
   if pid is not null then
-    res := 'exists';
-    update public.harpatka_participants set age = p_age, age_set_at = current_date where id = pid and age is null;
-    update public.harpatka_participants set gender = p_gender where id = pid and gender is null and p_gender is not null;
+    -- הטלפון הוא המפתח: משתתף קיים לא מתעדכן. משתתף לא פעיל (הוסר) חוזר להיות פעיל, בלי שינוי בשאר השדות
+    if act then res := 'exists';
+    else update public.harpatka_participants set active = true where id = pid; res := 'created'; end if;
   else
     begin
       insert into public.harpatka_participants (first_name, last_name, phone, age, age_set_at, source, gender)

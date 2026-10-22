@@ -30,7 +30,7 @@ begin
   select * into m from public.harpatka_members where user_id = uid;
   if not found then return 'no_member'; end if;
   if m.status = 'blocked' then return 'blocked'; end if;
-  if not adm and not exists (select 1 from public.harpatka_attendance at where at.participant_id = m.participant_id) then return 'no_meeting'; end if;   -- רק מי שרשום לפחות למפגש אחד
+  if not adm and not exists (select 1 from public.harpatka_attendance at join public.harpatka_participants pp on pp.id = at.participant_id where at.participant_id = m.participant_id and pp.active) then return 'no_meeting'; end if;   -- רק מי שרשום לפחות למפגש אחד
   if body = '' then return 'empty'; end if;
   if length(body) > 2000 then return 'long'; end if;
   if not adm and (select count(*) from public.harpatka_posts where user_id = uid and deleted_at is null and approved_at is null) >= 5 then return 'limit'; end if;
