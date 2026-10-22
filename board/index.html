@@ -35,6 +35,9 @@
     .bar h1 { flex: 1 1 auto; min-width: 0; font-size: 24px; white-space: nowrap; }
     .back { flex: 0 0 auto; width: 36px; height: 44px; display: grid; place-items: center; color: var(--terra); margin-right: -8px; }
     .back svg { width: 26px; height: 26px; }
+    .who { margin: 2px 0 0; font-size: 14px; color: var(--muted); min-height: 20px; }
+    .who b { color: var(--ink); font-weight: 600; }
+    .who a, .who button { color: var(--terra); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; padding: 0; font-size: inherit; }
     .btns { display: flex; gap: 8px; flex: 0 0 auto; }
     .toprow .home { margin-bottom: 0; }
     .titlerow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 6px 0 8px; }
@@ -52,9 +55,6 @@
     html.modal-lock { overflow: hidden; overscroll-behavior: none; }
     header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
     h1 { font-family: "Rubik", sans-serif; font-size: 26px; margin: 0; }
-    .out { width: 42px; height: 42px; border-radius: 50%; background: var(--paper); color: var(--ink); display: grid; place-items: center; box-shadow: 0 0 0 1.5px var(--line); }
-    .out[hidden] { display: none; }
-    .out svg { width: 21px; height: 21px; }
     .banner { margin-top: 14px; padding: 11px 14px; border-radius: 14px; background: #FBE9C7; color: #7A5410; font-size: 15px; font-weight: 600; }
     .banner[hidden] { display: none; }
     .card { background: var(--paper); border-radius: 20px; box-shadow: 0 0 0 1px rgba(232,213,190,.7); padding: 14px; }
@@ -109,8 +109,10 @@
     <div class="bar">
       <a class="back" href="../" aria-label="חזרה לעמוד הבית" title="חזרה לעמוד הבית"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>
       <h1>לוח שיתופים</h1>
-      <div class="btns"><button type="button" class="out" id="out" aria-label="יציאה" title="יציאה" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><path d="M15 8l4 4-4 4M19 12H9"/></svg></button><button type="button" class="plus" id="plus" aria-label="פוסט חדש" title="פוסט חדש"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div>
+      <div class="btns"><button type="button" class="plus" id="plus" aria-label="פוסט חדש" title="פוסט חדש"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div>
     </div>
+
+    <div class="who" id="who"></div>
 
     <div class="banner" id="banner" hidden></div>
 
@@ -160,7 +162,7 @@
   const $ = (s) => document.querySelector(s);
   const SKEY = 'harpatka_board_session', PKEY = 'harpatka_board_pending';
   const LIKE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4C1.7 7.700 3.900 4.500 7.200 4.500c2 0 3.700 1.100 4.800 2.800 1.100-1.700 2.800-2.800 4.800-2.800 3.300 0 5.500 3.200 4.400 6.600-1.700 4.800-9.200 9.400-9.200 9.400z"/></svg>';
-  let editId = null, editText = '', shareOn = false, session = null, me = null, canShare = false, canPost = true, posts = [], pendingAct = null, openReply = null, delAsk = null;
+  let meName = '', editId = null, editText = '', shareOn = false, session = null, me = null, canShare = false, canPost = true, posts = [], pendingAct = null, openReply = null, delAsk = null;
 
   /* ---------- כניסה עם גוגל (הזדהות של Supabase, בלי SDK) ---------- */
   const jwtData = (tok) => { try { return JSON.parse(decodeURIComponent(escape(atob(tok.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))))); } catch (e) { return {}; } };
@@ -233,13 +235,17 @@
     const b = $('#banner');
     if (me === 'blocked') { b.textContent = 'אין אפשרות לפרסם בחשבון הזה'; b.hidden = false; }
     else b.hidden = true;
-    $('#out').hidden = !session;
+    const w = $('#who');
+    if (session) {
+      let nm = meName; if (!nm) { const u = jwtData(session.access_token); nm = (u.user_metadata && (u.user_metadata.full_name || u.user_metadata.name)) || u.email || ''; }
+      w.innerHTML = (nm ? '<b>' + esc(nm) + '</b> · ' : '') + '<button type="button" id="out">יציאה</button>';
+    } else w.innerHTML = 'לא מחובר · <button type="button" id="inBtn">התחברות</button>';
   }
 
   async function load() {
     try {
       const [feed, st] = await Promise.all([rpc('harpatka_board_feed'), session ? rpc('harpatka_board_profile') : Promise.resolve(null)]);
-      posts = feed || []; me = st ? st.status : null; canShare = !!(st && st.can_share); canPost = !st || st.can_post !== false;
+      posts = feed || []; me = st ? st.status : null; canShare = !!(st && st.can_share); canPost = !st || st.can_post !== false; meName = (st && st.name) || '';
     } catch (e) { if (e.message === 'auth') { /* נכנס מחדש כמבקר */ } }
     render();
   }
@@ -348,7 +354,7 @@
   }
   $('#phoneOk').addEventListener('click', claim);
   $('#phoneIn').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); claim(); } });
-  $('#out').addEventListener('click', () => { clearSession(); location.reload(); });
+  $('#who').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; if (b.id === 'out') { clearSession(); location.reload(); } else if (b.id === 'inBtn') goGoogle(); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden && !keepTyping()) load(); });
   /* זמן אמת: אות ריק בערוץ ציבורי "board" (admin/board-realtime.sql) מרענן את הלוח; בזמן הקלדה מחכים לסיום כדי לא לאבד טקסט */
   let rtWs = null, rtHb = 0, rtRetry = 1000, rtDirty = false, rtTimer = 0;
