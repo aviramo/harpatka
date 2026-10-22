@@ -41,7 +41,6 @@
     .grid .has-video img:focus-visible, .grid video:focus-visible{ outline:3px solid var(--paper); outline-offset:2px; }
     .grid .playing img{ display:none; }
     .grid .playing video{ display:block; }
-    /* סרטון מוביל בראש העמוד (9:16, לא מודעה ממוספרת). לא ב-videos.json, כדי שלא ייבחר לסרטון הפתיחה של עמוד הבית */
     .searchbar{ position:sticky; top:0; z-index:30; display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:.6rem; padding:.7rem 1rem; background:rgba(36,32,28,.94); backdrop-filter:blur(6px); }
     .searchbar .brk{ flex:0 0 100%; height:0; margin:-.3rem 0; }
     .searchbar .box{ position:relative; flex:0 0 100%; max-width:34rem; }
@@ -55,9 +54,7 @@
     .searchbar .cnt{ flex:none; color:#A89F90; font:600 .95rem Assistant,Rubik,sans-serif; white-space:nowrap; }
     .none{ padding:2.5rem 1rem; text-align:center; color:#A89F90; font:600 1.1rem Assistant,Rubik,sans-serif; }
     .grid figure[hidden]{ display:none; }
-    /* סרטון מסוג "תמונות" (9:16) באותו גריד של המודעות, תופס שתי שורות */
-    .grid figure.tall{ grid-row:span 2; }
-    .grid figure.tall img, .grid figure.tall video{ aspect-ratio:9/16; }
+    /* כל הכרטיסים באותו גודל (4:5), גם סרטוני "תמונות" (FEATURED): גריד אחיד */
     .types{ display:flex; gap:.4rem; flex:none; }
     .types button{ height:2.4rem; padding:0 .95rem; border-radius:999px; border:1.5px solid rgba(168,159,144,.45); background:none; color:#C9C0B1; font:600 .98rem Assistant,Rubik,sans-serif; cursor:pointer; white-space:nowrap; }
     .types button[aria-pressed="true"]{ background:var(--terra); border-color:var(--terra); color:#FFFDF9; }
@@ -147,8 +144,10 @@
     }
 
     // סרטונים שמופיעים ראשונים, לפני המודעות הממוספרות. סרטון מעודכן = שם קובץ חדש (cache)
-    const FEATURED = [{ label: 'יש רגעים שמפספסים', name: 'הסרטון יש רגעים שמפספסים', type: 'photo', tall: true, base: 'biodanza', w: 1080, h: 1920,
-      img: 'img/biodanza-f7b85b45.jpg', vid: 'video/biodanza-f-99d0bce2.mp4', alt: 'יש רגעים שמפספסים. ויש רגעים שבוחרים להיות בהם. ביודנסה: להיות, לנוע, להיפגש' }];
+    const FEATURED = [{ label: 'עוד סוויפ?', name: 'הסרטון עוד סוויפ', type: 'photo', base: 'sweeps', w: 1080, h: 1350,
+      img: 'img/sweeps-c9326222.jpg', vid: 'video/sweeps-c9326222.mp4', alt: 'עוד סוויפ? מרימים את המבט, מתחילים לנוע. ביודנסה: מפגש דרך מוזיקה, תנועה וקשר' },
+      { label: 'יש רגעים שמפספסים', name: 'הסרטון יש רגעים שמפספסים', type: 'photo', base: 'biodanza', w: 1080, h: 1350,
+      img: 'img/biodanza-feed-c3694d86.jpg', vid: 'video/biodanza-feed-c3694d86.mp4', alt: 'יש רגעים שמפספסים. ויש רגעים שבוחרים להיות בהם. ביודנסה: להיות, לנוע, להיפגש' }];
 
     const stops = [];   // סרטון אחד בכל פעם: כשאחד מתחיל לנגן, כל השאר עוצרים וחוזרים לתמונה
     // גלילה: סרטון שיוצא מהמסך (נשאר ממנו פחות מרבע) נעצר וחוזר לתמונה
@@ -160,7 +159,7 @@
     function card(g, c) {
       const f = document.createElement('figure');
       /* טקסט לחיפוש: מספר, נוסח המודעה (זהה בתמונה ובסרטון) ובמודעה עם סרטון גם הטקסטים הקבועים שבסרטון */
-      f.dataset.type = c.type || 'msg'; if (c.tall) f.classList.add('tall');
+      f.dataset.type = c.type || 'msg';
       f.dataset.text = [c.label, c.name, c.alt, c.vid && c.type !== 'photo' ? 'מפגש מסוג אחר לגילאי 40 עד 50 בפרק פתוח בחיים הזמנה יוצאים להרפתקה' : ''].join(' ');
       const head = document.createElement('div'); head.className = 'head';
       const n = document.createElement('span'); n.className = 'n'; n.textContent = c.label;
