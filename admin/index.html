@@ -718,7 +718,10 @@
       </div>
       <div class="ppanel" data-panel="info" hidden>
         <div class="name-row">
-          <label class="field"><span>שם</span><input name="name" required maxlength="60" autocomplete="off" /></label>
+          <div class="two">
+            <label class="field"><span>שם פרטי</span><input name="first_name" required maxlength="40" autocomplete="off" /></label>
+            <label class="field"><span>שם משפחה</span><input name="last_name" maxlength="40" autocomplete="off" /></label>
+          </div>
           <label class="field gfield"><span>מגדר</span><select name="gender"><option value="">לא צוין</option><option value="male">גבר</option><option value="female">אישה</option></select></label>
         </div>
         <div class="two">
@@ -2100,7 +2103,7 @@
     const p = id ? state.participants.find((x) => x.id === id) : null;
     sheet = p ? { id: p.id } : { id: null, links: new Map(state.filter ? [[state.filter, false]] : []) };
     pForm.reset();
-    pForm.name.value = p ? p.name : '';
+    { const nm = p ? splitName(p) : ['', '']; pForm.first_name.value = nm[0]; pForm.last_name.value = nm[1]; }
     pForm.phone.value = p ? localPhone(p.phone) : '';
     pForm.age.value = p ? (shownAge(p) ?? '') : '';
     pForm.gender.value = p && p.gender ? p.gender : '';
@@ -2118,7 +2121,7 @@
     pDlg.setAttribute('tabindex', '-1'); pDlg.focus({ preventScroll: true });   // בלי טבעת פוקוס על כפתור הסגירה
     viewStack = []; payCtx = null; promoFromPay = null;
     setPTab(p ? (tab === 'info' ? 'info' : 'main') : 'info', true);
-    if (!p) setTimeout(() => pForm.name.focus(), 50);
+    if (!p) setTimeout(() => pForm.first_name.focus(), 50);
   }
 
   function refreshSheetMeetings() {
@@ -2163,10 +2166,17 @@
     }
   });
 
+  /* שם פרטי ושם משפחה של משתתף (נתונים ישנים בלי הפיצול: המילה הראשונה = שם פרטי) */
+  function splitName(p) {
+    if (p.first_name != null && (p.first_name || p.last_name)) return [p.first_name, p.last_name || ''];
+    const w = String(p.name || '').trim().replace(/\s+/g, ' '), i = w.indexOf(' ');
+    return i < 0 ? [w, ''] : [w.slice(0, i), w.slice(i + 1)];
+  }
   function readForm() {
     const age = parseInt(pForm.age.value, 10);
     return {
-      name: pForm.name.value.trim(),
+      first_name: pForm.first_name.value.trim().replace(/\s+/g, ' '),
+      last_name: pForm.last_name.value.trim().replace(/\s+/g, ' '),
       phone: pForm.phone.value.trim(),
       age: Number.isFinite(age) ? age : null,
       gender: pForm.gender.value || null,
@@ -2180,19 +2190,21 @@
     const p = state.participants.find((x) => x.id === sheet.id);
     const v = readForm();
     const field = e.target.name;
-    if (field === 'name' && !v.name) { pForm.name.value = p.name; return; }
+    const isName = field === 'first_name' || field === 'last_name';
+    if (isName && !v.first_name) { pForm.first_name.value = splitName(p)[0]; return; }
     if (field === 'phone') {
       const ph = phoneToSave(pForm.phone.value);
       if (ph === null) { badPhone(true); return; }
       v.phone = ph; pForm.phone.value = ph;
     }
-    const patch = { [field]: v[field] };
+    const patch = isName ? { first_name: v.first_name, last_name: v.last_name } : { [field]: v[field] };
+    if (isName) patch.name = (v.first_name + ' ' + v.last_name).trim();   // השם המלא מחושב בשרת; כאן רק לתצוגה מיידית
     if (field === 'age') patch.age_set_at = todayISO();
     const prev = { ...p };
     Object.assign(p, patch); render();
-    if (field === 'name' || field === 'age' || field === 'gender') setTitle(p);
+    if (isName || field === 'age' || field === 'gender') setTitle(p);
     try {
-      await api(T.p + '?id=eq.' + p.id, { method: 'PATCH', body: patch });
+      { const { name, ...serverPatch } = patch; await api(T.p + '?id=eq.' + p.id, { method: 'PATCH', body: serverPatch }); }
       const mark = $('#savedMark');
       mark.classList.add('on'); clearTimeout(savedTimer);
       savedTimer = setTimeout(() => mark.classList.remove('on'), 1500);
@@ -2204,7 +2216,7 @@
     e.preventDefault();
     if (!sheet || sheet.id) { pDlg.close(); return; }
     const v = readForm();
-    if (!v.name) { pForm.name.focus(); toast('חסר שם'); return; }
+    if (!v.first_name) { pForm.first_name.focus(); toast('חסר שם פרטי'); return; }
     const ph = phoneToSave(pForm.phone.value);
     if (ph === null) { badPhone(true); return; }
     v.phone = ph;
@@ -2316,7 +2328,7 @@
     if (am) { confirmLink(am.dataset.addm, state.filter, true, () => { state.q = ''; $('#q').value = ''; renderList(); toast('נוסף למפגש'); }); return; }
     if (e.target.closest('#addNew')) {
       const q = state.q.trim(); openParticipant(null);
-      if (digits(q).length >= 6) pForm.phone.value = q; else pForm.name.value = q;
+      if (digits(q).length >= 6) pForm.phone.value = q; else { const w = q.replace(/\s+/g, ' '), i = w.indexOf(' '); pForm.first_name.value = i < 0 ? w : w.slice(0, i); pForm.last_name.value = i < 0 ? '' : w.slice(i + 1); }
       return;
     }
     const row = e.target.closest('li.row'), ed = row && row.querySelector('[data-edit]');   // לחיצה בכל מקום בכרטיס פותחת את פרטי המשתתף

@@ -34,16 +34,12 @@
             <input type="text" name="website" data-su="hp" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
             <div class="su-fold"><div>
               <div class="su-grid">
-                <div class="su-cell">
-                  <input id="cmName" data-autofocus data-su="name" name="name" type="text" class="su-input" autocomplete="name" maxlength="60" placeholder="שם" aria-label="שם" required>
-                  <div data-su="nameErr" class="su-err" role="alert"></div>
-                </div>
-                <div class="su-cell">
-                  <div class="su-seg eq" data-su="gender" role="radiogroup" aria-label="מגדר">
-                    <label><input type="radio" name="cmGender" value="male"><span>גבר</span></label>
-                    <label><input type="radio" name="cmGender" value="female"><span>אישה</span></label>
+                <div class="su-cell su-wide">
+                  <div class="su-names">
+                    <input id="cmFirst" data-autofocus data-su="first" name="first" type="text" class="su-input" autocomplete="given-name" maxlength="40" placeholder="שם פרטי" aria-label="שם פרטי" required>
+                    <input id="cmLast" data-su="last" name="last" type="text" class="su-input" autocomplete="family-name" maxlength="40" placeholder="שם משפחה" aria-label="שם משפחה" required>
                   </div>
-                  <div data-su="genderErr" class="su-err" role="alert"></div>
+                  <div data-su="nameErr" class="su-err" role="alert"></div>
                 </div>
                 <div class="su-cell">
                   <input id="cmPhone" data-su="phone" name="phone" type="tel" dir="ltr" inputmode="tel" class="su-input text-end" autocomplete="tel" maxlength="24" placeholder="טלפון" aria-label="טלפון" required>
@@ -52,6 +48,13 @@
                 <div class="su-cell">
                   <input id="cmAge" data-su="age" name="age" type="number" inputmode="numeric" min="18" max="99" class="su-input" autocomplete="off" placeholder="גיל" aria-label="גיל" required>
                   <div data-su="ageErr" class="su-err" role="alert"></div>
+                </div>
+                <div class="su-cell su-wide">
+                  <div class="su-seg eq" data-su="gender" role="radiogroup" aria-label="מגדר">
+                    <label><input type="radio" name="cmGender" value="male"><span>גבר</span></label>
+                    <label><input type="radio" name="cmGender" value="female"><span>אישה</span></label>
+                  </div>
+                  <div data-su="genderErr" class="su-err" role="alert"></div>
                 </div>
               </div>
             </div></div>
@@ -201,7 +204,7 @@
   function initSignup(root) {
     const q = k => root.querySelector('[data-su="' + k + '"]');
     const form = q('form'); if (!form) return;
-    const nameI = q('name'), phoneI = q('phone'), ageI = q('age'), btn = q('btn'), t0 = Date.now();
+    const firstI = q('first'), lastI = q('last'), phoneI = q('phone'), ageI = q('age'), btn = q('btn'), t0 = Date.now();
     const setErr = (input, errEl, msg) => { errEl.textContent = msg || ''; input.classList.toggle('bad', !!msg); };
     /* אחרי הרשמה: התוכן נסגר מלמעלה, הכפתור מתחלף ל"נשמר זמנית" ואז נחשפים הטקסט וכפתור התשלום בפייבוקס (הכול באנימציה) */
     let saved = false;
@@ -213,16 +216,17 @@
       if (payOk) setTimeout(() => { const a = q('after'); if (a) a.classList.remove('shut'); }, 700);
     };
     suRoots.push(showDone);
-    nameI.addEventListener('input', () => setErr(nameI, q('nameErr'), ''));
+    const clrName = () => { q('nameErr').textContent = ''; firstI.classList.remove('bad'); lastI.classList.remove('bad'); };
+    firstI.addEventListener('input', clrName); lastI.addEventListener('input', clrName);
     phoneI.addEventListener('input', () => setErr(phoneI, q('phoneErr'), ''));
     ageI.addEventListener('input', () => setErr(ageI, q('ageErr'), ''));
     const genderBox = q('gender');
     genderBox.addEventListener('change', () => { genderBox.classList.remove('bad'); q('genderErr').textContent = ''; });
     form.addEventListener('submit', async (e) => {
       e.preventDefault(); q('fail').textContent = '';
-      const name = nameI.value.trim().replace(/\s+/g, ' '), norm = normPhone(phoneI.value);
+      const first = firstI.value.trim().replace(/\s+/g, ' '), last = lastI.value.trim().replace(/\s+/g, ' '), norm = normPhone(phoneI.value);
       let ok = true;
-      if (name.length < 2) { setErr(nameI, q('nameErr'), 'נא למלא שם'); ok = false; }
+      if (first.length < 2 || last.length < 2) { q('nameErr').textContent = 'נא למלא שם פרטי ושם משפחה'; firstI.classList.toggle('bad', first.length < 2); lastI.classList.toggle('bad', last.length < 2); ok = false; }
       if (!norm) { setErr(phoneI, q('phoneErr'), 'מספר לא תקין'); ok = false; }
       const age = parseInt(ageI.value, 10);
       if (!(age >= 18 && age <= 99)) { setErr(ageI, q('ageErr'), 'גיל לא תקין'); ok = false; }
@@ -239,7 +243,7 @@
         const send = (extra) => fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_signup', {
           method: 'POST',
           headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' },
-          body: JSON.stringify(Object.assign({ p_name: name, p_phone: norm, p_age: age, p_gender: gender }, extra))
+          body: JSON.stringify(Object.assign({ p_first: first, p_last: last, p_phone: norm, p_age: age, p_gender: gender }, extra))
         });
         let res = await send(PAID ? { p_src: 'p' } : {});
         if (!res.ok && PAID) res = await send({});   // אם הפונקציה בבסיס הנתונים עוד לא עודכנה (admin/source.sql): ההרשמה נשמרת בלי הסימון
@@ -253,7 +257,7 @@
           }
           finished = true; allDone();
         } else if (out === 'invalid_phone') setErr(phoneI, q('phoneErr'), 'מספר לא תקין');
-        else if (out === 'invalid_name') setErr(nameI, q('nameErr'), 'נא למלא שם');
+        else if (out === 'invalid_name') q('nameErr').textContent = 'נא למלא שם פרטי ושם משפחה';
         else if (out === 'invalid_age') setErr(ageI, q('ageErr'), 'גיל לא תקין');
         else throw new Error('signup failed');
       } catch (err) {
@@ -269,7 +273,7 @@
   function showForm() { if (!cmChoose) return; cmChoose.hidden = true; cmFormView.hidden = false; }
   document.querySelectorAll('[data-su-root]').forEach(initSignup);
   if (cmChoose) {
-    document.getElementById('cmShowForm').addEventListener('click', () => { showForm(); const i = cmFormView.querySelector('[data-su="name"]'); if (i) i.focus(); });
+    document.getElementById('cmShowForm').addEventListener('click', () => { showForm(); const i = cmFormView.querySelector('[data-su="first"]'); if (i) i.focus(); });
     new MutationObserver(() => { if (document.getElementById('contactModal').hidden) showForm(); }).observe(document.getElementById('contactModal'), { attributes: true, attributeFilter: ['hidden'] });
   }
 
