@@ -513,6 +513,14 @@
     .close { width: 40px; height: 40px; border-radius: 50%; background: var(--cream); font-size: 22px; line-height: 1; }
     .field { display: block; margin-bottom: 12px; }
     .field[hidden] { display: none; }
+    .idate { text-align: center; font-size: 13px; color: var(--muted); margin: 0 0 8px; min-height: 18px; }
+    .iwrap { position: relative; touch-action: pan-y; }
+    .iwrap img { width: 100%; max-height: 74vh; object-fit: contain; border-radius: 12px; display: block; }
+    .inav { position: absolute; top: 50%; transform: translateY(-50%); width: 38px; height: 38px; border-radius: 50%; background: rgba(255,253,249,.88); color: var(--ink); display: grid; place-items: center; box-shadow: 0 2px 10px rgba(63,56,47,.25); }
+    .inav svg { width: 20px; height: 20px; }
+    .inav[hidden] { display: none; }
+    .iprev { right: 8px; }
+    .inext { left: 8px; }
     .smalllink { display: block; margin: 2px auto 12px; padding: 4px 8px; font-size: 14px; font-weight: 600; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
     .smalllink[hidden] { display: none; }
     .field span { display: block; font-size: 14px; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
@@ -750,7 +758,14 @@
   </dialog>
 
   <dialog id="iDlg" aria-label="צילום מסך" style="max-width:520px">
-    <div class="sheet" style="padding-bottom:20px"><img id="iImg" alt="צילום מסך" style="width:100%;max-height:78vh;object-fit:contain;border-radius:12px;display:block" /></div>
+    <div class="sheet" style="padding-bottom:20px">
+      <div class="idate" id="iDate"></div>
+      <div class="iwrap" id="iWrap">
+        <button type="button" class="inav inext" id="iNext" aria-label="הבאה" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <img id="iImg" alt="צילום מסך" />
+        <button type="button" class="inav iprev" id="iPrev" aria-label="הקודמת" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+    </div>
   </dialog>
 
   <dialog id="bdDlg" aria-labelledby="bdTitle" style="max-width:520px">
@@ -1845,7 +1860,34 @@
   $('#nFile').addEventListener('change', (e) => takeFile(e.target.files[0]));
   $('#nPrevX').addEventListener('click', () => setPending(null));
   $('#nText').addEventListener('paste', (e) => { const f = [...(e.clipboardData ? e.clipboardData.files : [])].find((x) => /^image\//.test(x.type)); if (f) { e.preventDefault(); takeFile(f); } });
-  $('#nList').addEventListener('click', (e) => { const a = e.target.closest('[data-img] img'); if (!a) return; $('#iImg').src = a.src; $('#iDlg').showModal(); });
+  /* צופה התמונות: דפדוף בין צילומי המסך של המשתתף (החלקה או חצים), ולמעלה רק מועד ההעלאה בקטן */
+  let gal = [], galI = 0;
+  async function showGal(i) {
+    galI = Math.max(0, Math.min(gal.length - 1, i)); const n = gal[galI]; if (!n) return;
+    $('#iDate').textContent = fmtDT(n.created_at);
+    $('#iPrev').hidden = galI === 0; $('#iNext').hidden = galI === gal.length - 1;
+    $('#iPrev').style.visibility = $('#iNext').style.visibility = gal.length > 1 ? '' : 'hidden';
+    if (!imgCache.has(n.id)) { try { const [r] = await api(T.n + '?id=eq.' + n.id + '&select=image'); imgCache.set(n.id, r && r.image); } catch (e) {} }
+    if (gal[galI] === n) $('#iImg').src = imgCache.get(n.id) || '';
+  }
+  $('#nList').addEventListener('click', (e) => {
+    const a = e.target.closest('[data-img] img'); if (!a) return;
+    const id = a.closest('[data-img]').dataset.img, p = sheet && sheet.id ? state.participants.find((x) => x.id === sheet.id) : null;
+    gal = p ? notesOf(p.id).filter((n) => n.has_image) : []; const i = gal.findIndex((n) => n.id === id);
+    if (i < 0) { $('#iImg').src = a.src; $('#iDate').textContent = ''; $('#iPrev').hidden = $('#iNext').hidden = true; } else { $('#iImg').src = a.src; showGal(i); }
+    $('#iDlg').showModal();
+  });
+  $('#iPrev').addEventListener('click', () => showGal(galI - 1));
+  $('#iNext').addEventListener('click', () => showGal(galI + 1));
+  (function () {
+    const w = $('#iWrap'); let x0 = 0, y0 = 0;
+    w.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+    w.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) showGal(dx < 0 ? galI + 1 : galI - 1);
+    }, { passive: true });
+  })();
+  document.addEventListener('keydown', (e) => { if ($('#iDlg').open && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) showGal(e.key === 'ArrowLeft' ? galI + 1 : galI - 1); });
   $('#nAdd').addEventListener('click', async () => {
     if (!sheet || !sheet.id) return;
     const ta = $('#nText'), body = pendingImg ? '' : ta.value.trim(); if (!body && !pendingImg) { ta.focus(); return; }
