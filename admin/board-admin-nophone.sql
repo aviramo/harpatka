@@ -17,7 +17,7 @@ begin
   if uid is null then raise exception 'auth'; end if;
   perform public.harpatka_ensure_admin_member();
   select * into m from public.harpatka_members where user_id = uid;
-  if not found or m.status = 'blocked' then return false; end if;
+  if not found or m.status in ('blocked', 'removed') then return false; end if;
   if exists (select 1 from public.harpatka_likes where post_id = p_id and user_id = uid) then
     delete from public.harpatka_likes where post_id = p_id and user_id = uid; return false;
   end if;
@@ -59,7 +59,7 @@ begin
   if adm then perform public.harpatka_ensure_admin_member(); end if;   -- מנהל מפרסם בלי להזין טלפון
   select * into m from public.harpatka_members where user_id = uid;
   if not found then return 'no_member'; end if;
-  if m.status = 'blocked' then return 'blocked'; end if;
+  if m.status in ('blocked', 'removed') then return 'blocked'; end if;
   if not adm and not exists (select 1 from public.harpatka_attendance at join public.harpatka_participants pp on pp.id = at.participant_id where at.participant_id = m.participant_id and pp.active) then return 'no_meeting'; end if;   -- רק מי שרשום לפחות למפגש אחד
   if body = '' then return 'empty'; end if;
   if length(body) > 2000 then return 'long'; end if;

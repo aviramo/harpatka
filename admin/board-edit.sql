@@ -20,7 +20,7 @@ begin
   if not found then return 'none'; end if;
   if p.user_id <> uid then return 'denied'; end if;
   select * into m from public.harpatka_members where user_id = uid;
-  if not found or m.status = 'blocked' then return 'blocked'; end if;
+  if not found or m.status in ('blocked', 'removed') then return 'blocked'; end if;
   if nb = '' then return 'empty'; end if;
   if length(nb) > 2000 then return 'long'; end if;
   if nb = p.body and p.pending_body is null then return 'ok'; end if;

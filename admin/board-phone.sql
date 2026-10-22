@@ -30,7 +30,7 @@ begin
   if adm then perform public.harpatka_ensure_admin_member(); end if;   -- מנהל מפרסם בלי להזין טלפון
   select * into m from public.harpatka_members where user_id = uid;
   if not found then return 'no_member'; end if;
-  if m.status = 'blocked' then return 'blocked'; end if;
+  if m.status in ('blocked', 'removed') then return 'blocked'; end if;
   if not adm and not exists (select 1 from public.harpatka_attendance at join public.harpatka_participants pp on pp.id = at.participant_id where at.participant_id = m.participant_id and pp.active) then return 'no_meeting'; end if;   -- רק מי שרשום לפחות למפגש אחד
   if body = '' then return 'empty'; end if;
   if length(body) > 2000 then return 'long'; end if;
@@ -42,8 +42,8 @@ begin
     if (pm.status <> 'approved' or par.approved_at is null) and par.user_id <> uid then return 'no_parent'; end if;
   end if;
   share := coalesce(p_share, false) and p_parent is not null and m.participant_id is not null;
-  insert into public.harpatka_posts (id, parent_id, root_id, user_id, body, approved_at, share_phone, show_name)
-  values (new_id, p_parent, coalesce(par.root_id, new_id), uid, body, case when adm or m.status = 'approved' then now() end, share, coalesce(p_show_name, true));   -- משתמש מקושר מתפרסם מיד
+  insert into public.harpatka_posts (id, parent_id, root_id, user_id, body, approved_at, share_phone, show_name, author_first)
+  values (new_id, p_parent, coalesce(par.root_id, new_id), uid, body, case when adm or m.status = 'approved' then now() end, share, coalesce(p_show_name, true), coalesce(nullif((select first_name from public.harpatka_participants where id = m.participant_id), ''), nullif(split_part(btrim(m.google_name), ' ', 1), ''), ''));   -- משתמש מקושר מתפרסם מיד
   if adm then return 'ok'; end if;
   select value into mail_on from public.harpatka_settings where key = 'mail_v2';
   if mail_on = '1' and p_parent is null then begin   -- מייל למנהלים רק על פוסטים, לא על תגובות

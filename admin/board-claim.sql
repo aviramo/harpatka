@@ -14,6 +14,12 @@ begin
   if uid is null then raise exception 'auth'; end if;
   select * into m from public.harpatka_members where user_id = uid;
   had := found;
+  if had and m.status = 'removed' then
+    update public.harpatka_members set status = 'pending', phone_norm = case when norm = '' then phone_norm else norm end,
+      participant_id = (select id from public.harpatka_participants where phone_norm = norm and active order by created_at limit 1) where user_id = uid;
+    perform public.harpatka_notify_member(uid);
+    return 'pending';
+  end if;
   if had and (m.participant_id is not null or m.status = 'approved') then return m.status; end if;
   if norm = '' then return 'invalid_phone'; end if;
   select id into pid from public.harpatka_participants where phone_norm = norm and active order by created_at limit 1;

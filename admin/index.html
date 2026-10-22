@@ -1108,7 +1108,7 @@
         api('harpatka_posts?select=user_id,body,parent_id&approved_at=is.null&deleted_at=is.null&order=created_at.asc').catch(() => []),
       ]);
     } catch (e) { $('#bdBody').innerHTML = '<div class="empty">הלוח עוד לא הוקם (להריץ admin/board.sql)</div>'; return; }
-    const pend = ms.filter((m) => m.status === 'pending'), appr = ms.filter((m) => m.status === 'approved'), blocked = ms.filter((m) => m.status === 'blocked');
+    const pend = ms.filter((m) => m.status === 'pending'), appr = ms.filter((m) => m.status === 'approved'), blocked = ms.filter((m) => m.status === 'blocked'), removed = ms.filter((m) => m.status === 'removed');
     const taken = new Set(appr.map((m) => m.participant_id).filter(Boolean));
     const memCard = (m, act) => {
       const pa = m.harpatka_participants;
@@ -1121,7 +1121,8 @@
     $('#bdBody').innerHTML =
       '<h3>ממתינים לאישור (' + pend.length + ')</h3>' + (pend.length ? pend.map((m) => memCard(m, '<button class="ok" data-mact="approved">אישור</button><button class="no" data-mact="reject">דחייה</button>')).join('') : '<div class="empty" style="padding:10px">אין</div>')
       + '<h3>מחוברים (' + appr.length + ')</h3>' + appr.map((m) => memCard(m, '<button class="no" data-mact="blocked">חסימה</button><button data-mact="reject">ניתוק</button>')).join('')
-      + (blocked.length ? '<h3>חסומים</h3>' + blocked.map((m) => memCard(m, '<button class="ok" data-mact="approved">שחרור</button><button class="no" data-mact="reject">מחיקה</button>')).join('') : '');
+      + (blocked.length ? '<h3>חסומים</h3>' + blocked.map((m) => memCard(m, '<button class="ok" data-mact="approved">שחרור</button><button class="no" data-mact="reject">ניתוק</button>')).join('') : '')
+      + (removed.length ? '<h3>מנותקים (' + removed.length + ') · הפוסטים שלהם נשארים</h3>' + removed.map((m) => memCard(m, '<button class="ok" data-mact="approved">חיבור מחדש</button>')).join('') : '');
   }
   const closeHMenu = () => { $('#hMenu').hidden = true; $('#menuBtn').setAttribute('aria-expanded', 'false'); };
   $('#menuBtn').addEventListener('click', (e) => { e.stopPropagation(); const m = $('#hMenu'); m.hidden = !m.hidden; $('#menuBtn').setAttribute('aria-expanded', String(!m.hidden)); });
@@ -1139,8 +1140,8 @@
     try {
       if (b.dataset.mact) {
         const id = b.closest('[data-mid]').dataset.mid;
-        if (b.dataset.mact === 'reject') await api('harpatka_members?user_id=eq.' + id, { method: 'DELETE' });
-        else await api('harpatka_members?user_id=eq.' + id, { method: 'PATCH', body: { status: b.dataset.mact } });
+        /* אין מחיקה: ניתוק/דחייה = removed. הפוסטים והתגובות נשארים מוצגים עם השם שנשמר בעת הפרסום */
+        await api('harpatka_members?user_id=eq.' + id, { method: 'PATCH', body: { status: b.dataset.mact === 'reject' ? 'removed' : b.dataset.mact } });
         toast('עודכן');
       } else return;
       boardBadge(); boardOpen();
