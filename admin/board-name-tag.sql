@@ -1,6 +1,6 @@
 -- תגית שם פרטי בפוסט/תגובה: לא אוטומטית. הכותב בוחר (ברירת מחדל בטופס: מופיעה, ואפשר להסיר), ויכול להסיר/להחזיר אחרי הפרסום.
 
-alter table public.harpatka_posts add column if not exists show_name boolean not null default false;
+alter table public.harpatka_posts add column if not exists show_name boolean not null default true;
 
 -- הפרופיל: גם שם פרטי להצגה בתגית
 create or replace function public.harpatka_board_profile()
@@ -25,3 +25,6 @@ revoke all on function public.harpatka_board_set_name(uuid, boolean) from public
 grant execute on function public.harpatka_board_set_name(uuid, boolean) to authenticated;
 
 -- (הפונקציות harpatka_board_post ו-harpatka_board_feed המעודכנות ב-board-phone.sql וב-board-hide.sql)
+
+-- ברירת מחדל: השם מוצג (הכותב יכול להסיר). פוסטים שנכתבו לפני כן עודכנו להציג שם.
+alter table public.harpatka_posts alter column show_name set default true;
