@@ -1098,10 +1098,11 @@
   }
   async function boardOpen() {
     $('#bdBody').innerHTML = '<div class="empty">טוען…</div>'; if (!$('#bdDlg').open) $('#bdDlg').showModal();
-    let ms;
+    let ms, pend_posts = [];
     try {
-      [ms] = await Promise.all([
+      [ms, pend_posts] = await Promise.all([
         api('harpatka_members?select=user_id,email,google_name,phone_norm,participant_id,status,created_at,harpatka_participants(name,phone)&order=created_at.desc'),
+        api('harpatka_posts?select=user_id,body,parent_id&approved_at=is.null&deleted_at=is.null&order=created_at.asc').catch(() => []),
       ]);
     } catch (e) { $('#bdBody').innerHTML = '<div class="empty">הלוח עוד לא הוקם (להריץ admin/board.sql)</div>'; return; }
     const pend = ms.filter((m) => m.status === 'pending'), appr = ms.filter((m) => m.status === 'approved'), blocked = ms.filter((m) => m.status === 'blocked');
@@ -1111,6 +1112,7 @@
       return '<div class="bdc" data-mid="' + m.user_id + '"><div class="who">' + esc(m.google_name || m.email) + '</div><small>' + esc(m.email) + '</small>'
         + '<small>טלפון שהוזן: ' + esc(m.phone_norm.replace(/^\+972/, '0')) + '</small>'
         + (pa ? '<small>משתתף במערכת: <b>' + esc(pa.name) + '</b>' + (m.status === 'pending' && taken.has(m.participant_id) ? ' <span class="bad">(כבר מחובר לחשבון אחר)</span>' : '') + '</small>' : '<small class="bad">הטלפון לא נמצא אצלנו בין המשתתפים</small>')
+        + (m.status === 'pending' ? pend_posts.filter((x) => x.user_id === m.user_id).map((x) => '<div class="txt" style="border-right:3px solid var(--line);padding-right:10px;margin:8px 0"><small>' + (x.parent_id ? 'תגובה שתתפרסם באישור' : 'פוסט שיתפרסם באישור') + '</small>' + esc(x.body) + '</div>').join('') : '')
         + '<div class="bar">' + act + '</div></div>';
     };
     $('#bdBody').innerHTML =
