@@ -35,6 +35,9 @@
     .bar h1 { flex: 1 1 auto; min-width: 0; font-size: 24px; white-space: nowrap; }
     .back { flex: 0 0 auto; width: 36px; height: 44px; display: grid; place-items: center; color: var(--terra); margin-right: -8px; }
     .back svg { width: 26px; height: 26px; }
+    .cmp { margin-top: 12px; padding: 12px 16px; }
+    .cmp textarea { min-height: 26px; height: 26px; }
+    .cmp .crow { margin-top: 8px; }
     .who { margin: 2px 0 0; padding-right: 36px; font-size: 14px; color: var(--muted); min-height: 20px; }
     .who b { color: var(--ink); font-weight: 600; }
     .who a, .who button { color: var(--terra); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; padding: 0; font-size: inherit; }
@@ -42,17 +45,6 @@
     .toprow .home { margin-bottom: 0; }
     .titlerow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 6px 0 8px; }
     .titlerow h1 { font-size: 24px; }
-    .plus { width: 44px; height: 44px; border-radius: 50%; background: var(--terra); color: #fff; display: grid; place-items: center; box-shadow: 0 4px 12px rgba(201,111,82,.35); }
-    .plus svg { width: 22px; height: 22px; }
-    /* מגירה מלמעלה, כמו פופאפ ההרשמה באתר: פס בתחתית (החלקה למעלה או לחיצה סוגרות) */
-    .modal { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-start; justify-content: center; background: rgba(30,25,20,.78); opacity: 0; transition: opacity .3s ease; overscroll-behavior: contain; }
-    .modal[hidden] { display: none; }
-    .modal.open { opacity: 1; }
-    .modal-box { position: relative; width: 100%; max-width: 640px; background: var(--paper); border-radius: 0; padding: calc(1.1rem + env(safe-area-inset-top)) 1.1rem 2.8rem; transform: translateY(-110%); transition: transform .34s cubic-bezier(.22,.8,.2,1); will-change: transform; }
-    .modal.open .modal-box { transform: none; }
-    .modal-grab { position: absolute; left: 0; right: 0; bottom: 0; height: 2.2rem; display: grid; place-items: center; cursor: grab; touch-action: none; }
-    .modal-grab i { width: 2.7rem; height: .3rem; border-radius: .2rem; background: rgba(63,56,47,.28); }
-    html.modal-lock { overflow: hidden; overscroll-behavior: none; }
     header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
     h1 { font-family: "Rubik", sans-serif; font-size: 26px; margin: 0; }
     .banner { margin-top: 14px; padding: 11px 14px; border-radius: 14px; background: #FBE9C7; color: #7A5410; font-size: 15px; font-weight: 600; }
@@ -109,21 +101,18 @@
     <div class="bar">
       <a class="back" href="../" aria-label="חזרה לעמוד הבית" title="חזרה לעמוד הבית"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>
       <h1>לוח שיתופים</h1>
-      <div class="btns"><button type="button" class="plus" id="plus" aria-label="פוסט חדש" title="פוסט חדש"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div>
     </div>
 
     <div class="who" id="who"></div>
 
+    <div class="card cmp" id="cmp">
+      <textarea id="newText" rows="1" maxlength="2000" placeholder="שתפו משהו עם הקהילה" aria-label="פוסט חדש"></textarea>
+      <div class="crow" id="cmpAct" hidden><span class="cnt" id="newCnt">יוצג באופן אנונימי</span><button type="button" class="btn" id="newBtn">פרסום</button></div>
+    </div>
+
     <div class="banner" id="banner" hidden></div>
 
     <div id="feed"></div>
-  </div>
-
-  <div class="modal" id="composeM" hidden>
-    <div class="modal-box" role="dialog" aria-label="פוסט חדש">
-      <textarea id="newText" rows="1" maxlength="2000" placeholder="אפשר לשתף כאן כל דבר: טרמפ למפגש, המלצה, שאלה או מחשבה. כל מי שנכנס לאתר יראה את זה, באופן אנונימי" aria-label="פוסט חדש"></textarea>
-      <div class="crow"><span class="cnt" id="newCnt"></span><button type="button" class="btn" id="newBtn">פרסום</button></div>
-    </div>
   </div>
 
   <dialog id="noMeetDlg" aria-labelledby="noMeetTitle">
@@ -265,34 +254,14 @@
     } catch (e) { toast('משהו השתבש, אפשר לנסות שוב'); }
     return false;
   }
-  /* מגירת הכתיבה */
-  const cm = $('#composeM'), cbox = cm.querySelector('.modal-box');
-  function openCompose() {
-    cm.hidden = false; document.documentElement.classList.add('modal-lock'); void cm.offsetWidth; cm.classList.add('open');
-    const f = () => { const ta = $('#newText'); ta.focus(); grow(ta); };
-    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) f(); else setTimeout(f, 360);
-  }
-  function closeCompose() { cm.classList.remove('open'); setTimeout(() => { cm.hidden = true; document.documentElement.classList.remove('modal-lock'); }, 360); }
-  $('#plus').addEventListener('click', openCompose);
-  cm.addEventListener('click', (e) => { if (e.target === cm) closeCompose(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && cm.classList.contains('open') && !document.querySelector('dialog[open]')) closeCompose(); });
-  (function () {
-    const g = document.createElement('div'); g.className = 'modal-grab'; g.setAttribute('aria-hidden', 'true'); g.innerHTML = '<i></i>'; cbox.appendChild(g);
-    let sy = 0, dy = 0, t0 = 0, drag = false;
-    g.addEventListener('pointerdown', (e) => { if (e.button > 0) return; drag = true; sy = e.clientY; dy = 0; t0 = performance.now(); cbox.style.transition = 'none'; try { g.setPointerCapture(e.pointerId); } catch (x) {} });
-    g.addEventListener('pointermove', (e) => { if (!drag) return; dy = Math.max(0, sy - e.clientY); cbox.style.transform = 'translateY(' + (-dy) + 'px)'; });
-    const end = () => {
-      if (!drag) return; drag = false;
-      const v = dy / Math.max(1, performance.now() - t0), tap = dy < 4; cbox.style.transition = '';
-      if (tap || dy > 90 || (v > 0.6 && dy > 30)) { cbox.style.transform = 'translateY(-110%)'; closeCompose(); setTimeout(() => { cbox.style.transform = ''; }, 400); } else cbox.style.transform = '';
-    };
-    g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
-  })();
-  $('#newBtn').addEventListener('click', async () => { if (await submit($('#newText').value, null)) { $('#newText').value = ''; grow($('#newText')); closeCompose(); } $('#newCnt').textContent = ''; });
+  /* שורת כתיבה: מתחילה בשורה אחת ומתרחבת, וכפתור הפרסום מופיע ברגע שמתחילים להקליד */
+  const syncComposer = () => { $('#cmpAct').hidden = !$('#newText').value.trim(); };
+  function closeCompose() { const ta = $('#newText'); ta.value = ''; grow(ta); syncComposer(); }
+  $('#newBtn').addEventListener('click', async () => { if (await submit($('#newText').value, null)) closeCompose(); });
   /* התיבה מתחילה בשורה אחת ומתארכת לפי הטקסט */
   const grow = (ta) => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; };
   document.addEventListener('input', (e) => { if (e.target.tagName === 'TEXTAREA') { grow(e.target); if (e.target.dataset.etext) editText = e.target.value; } });
-  $('#newText').addEventListener('input', (e) => { const n = e.target.value.length; $('#newCnt').textContent = n > 1700 ? n + ' / 2000' : ''; });
+  $('#newText').addEventListener('input', (e) => { const n = e.target.value.length; $('#newCnt').textContent = n > 1700 ? n + ' / 2000' : 'יוצג באופן אנונימי'; syncComposer(); });
 
   $('#feed').addEventListener('click', async (e) => {
     const t = e.target.closest('button'); if (!t) return;
@@ -347,7 +316,7 @@
       if (r === 'invalid_phone') { $('#phoneErr').textContent = 'מספר לא תקין'; return; }
       if (r === 'not_registered') { $('#phoneErr').textContent = 'המספר הזה עוד לא רשום למפגש. כדי להשתמש בלוח צריך להירשם תחילה למפגש, ורק אחר כך זה יעבוד'; $('#phoneReg').hidden = false; return; }
       me = r; canShare = true; $('#phoneDlg').close();
-      const a = pendingAct; pendingAct = null; if (a) { if (await submit(a.body, a.parent, a.share)) { $('#newText').value = ''; grow($('#newText')); openReply = null; closeCompose(); } }
+      const a = pendingAct; pendingAct = null; if (a) { if (await submit(a.body, a.parent, a.share)) { openReply = null; if (!a.parent) closeCompose(); } }
       load();
     } catch (e) { $('#phoneErr').textContent = 'משהו השתבש, אפשר לנסות שוב'; }
     finally { $('#phoneOk').disabled = false; }
@@ -386,7 +355,7 @@
     await load();
     /* חזרה מהכניסה: ממשיכים מה שהתחילו לכתוב */
     let p = null; try { p = JSON.parse(sessionStorage.getItem(PKEY) || 'null'); sessionStorage.removeItem(PKEY); } catch (e) {}
-    if (p && session) { if (!p.parent) { $('#newText').value = p.body; grow($('#newText')); } if (await submit(p.body, p.parent, p.share) && !p.parent) { $('#newText').value = ''; grow($('#newText')); } }
+    if (p && session) { if (!p.parent) { $('#newText').value = p.body; grow($('#newText')); syncComposer(); } if (await submit(p.body, p.parent, p.share) && !p.parent) { $('#newText').value = ''; grow($('#newText')); } }
   })();
   </script>
 </body>
