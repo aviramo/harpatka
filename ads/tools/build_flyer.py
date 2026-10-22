@@ -48,7 +48,7 @@ h1{{font-family:Rubik,sans-serif;font-weight:600;font-size:112px;line-height:1.0
   <p class="lead2">תנועות פשוטות בקבוצה, בהנחיה ולצלילי מוזיקה מיוחדת<br><b>הגוף משתחרר, המבוכה נעלמת וההיכרות קורית מעצמה</b></p>
   <p class="hand note">לא ערב הכרויות,<br>אבל כן ערב שאפשר להכיר בו אנשים חדשים</p>
   <div class="dots"></div>
-  <p class="who">נשים וגברים בגילאי <bdi>40–49</bdi> בפרק פתוח בחיים</p>
+  <p class="who">נשים וגברים בגילאי <bdi>40–50</bdi> בפרק פתוח בחיים</p>
   <div class="grid">{cell("יום", e["day"])}{cell("שעה", e["time"])}{cell("מקום", e["place"])}{cell("משתתפים", e["seats"])}</div>
   <p class="by">הדר ואופיר · <b>יוצאים להרפתקה</b></p>
 </div></div></body></html>'''
