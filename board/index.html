@@ -35,8 +35,10 @@
     .bar h1 { flex: 1 1 auto; min-width: 0; font-size: 24px; white-space: nowrap; }
     .back { flex: 0 0 auto; width: 36px; height: 44px; display: grid; place-items: center; color: var(--terra); margin-right: -8px; }
     .back svg { width: 26px; height: 26px; }
+    .crow[hidden] { display: none; }
     .cmp { margin-top: 12px; padding: 12px 16px; }
     .cmp textarea { min-height: 26px; height: 26px; }
+    .cmp textarea::placeholder { font-size: 15px; }
     .cmp .crow { margin-top: 8px; }
     .who { margin: 2px 0 0; padding-right: 36px; font-size: 14px; color: var(--muted); min-height: 20px; }
     .who b { color: var(--ink); font-weight: 600; }
@@ -106,8 +108,8 @@
     <div class="who" id="who"></div>
 
     <div class="card cmp" id="cmp">
-      <textarea id="newText" rows="1" maxlength="2000" placeholder="שתפו משהו עם הקהילה" aria-label="פוסט חדש"></textarea>
-      <div class="crow" id="cmpAct" hidden><span class="cnt" id="newCnt">יוצג באופן אנונימי</span><button type="button" class="btn" id="newBtn">פרסום</button></div>
+      <textarea id="newText" rows="1" maxlength="2000" placeholder="שתפו משהו, בקשות, טרמפים או דברים שבאים מהלב" aria-label="פוסט חדש"></textarea>
+      <div class="crow" id="cmpAct" hidden><span class="cnt" id="newCnt"></span><button type="button" class="btn" id="newBtn">פרסום</button></div>
     </div>
 
     <div class="banner" id="banner" hidden></div>
@@ -263,7 +265,7 @@
   /* התיבה מתחילה בשורה אחת ומתארכת לפי הטקסט */
   const grow = (ta) => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; };
   document.addEventListener('input', (e) => { if (e.target.tagName === 'TEXTAREA') { grow(e.target); if (e.target.dataset.etext) editText = e.target.value; } });
-  $('#newText').addEventListener('input', (e) => { const n = e.target.value.length; $('#newCnt').textContent = n > 1700 ? n + ' / 2000' : 'יוצג באופן אנונימי'; syncComposer(); });
+  $('#newText').addEventListener('input', (e) => { const n = e.target.value.length; $('#newCnt').textContent = n > 1700 ? n + ' / 2000' : ''; syncComposer(); });
 
   $('#feed').addEventListener('click', async (e) => {
     const t = e.target.closest('button'); if (!t) return;
