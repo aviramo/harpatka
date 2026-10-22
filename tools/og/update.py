@@ -2,7 +2,7 @@
 מעדכן את תמונת השיתוף של עמוד הבית (index.html ו-v7/index.html) לפי המפגש הקרוב בבסיס הנתונים.
 רץ אוטומטית כל לילה ב-GitHub Actions (.github/workflows/og-image.yml) ואפשר גם ידנית: python tools/og/update.py
 - יש מפגש קרוב: images/og-meeting-<תאריך>-<hash>.jpg (שם חדש בכל שינוי, בגלל cache של וואטסאפ ופייסבוק)
-- אין מפגש קרוב: חוזרים ל-images/og-v3.jpg
+- אין מפגש קרוב: images/og-general-<hash>.jpg (אותו עיצוב בלי פרטי המפגש)
 """
 import datetime, hashlib, json, pathlib, re, sys, urllib.request, zoneinfo
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
@@ -24,7 +24,7 @@ def next_meeting():
     return rows[0] if rows else None
 
 def main():
-    m = next_meeting()
+    m = None if '--none' in sys.argv else next_meeting()
     images = ROOT / 'images'
     if m:
         date, time = m['meeting_date'], m['meeting_time'][:5]
@@ -33,9 +33,12 @@ def main():
         name = f"og-meeting-{date.replace('-', '')}-{h}.jpg"
         if not (images / name).exists():
             render(date, time, PLACE, images / name)
-    else:
-        name = DEFAULT
-    for old in images.glob('og-meeting-*.jpg'):
+    else:   # אין מפגש קרוב: אותה תמונה בלי פרטי המפגש
+        tpl = (pathlib.Path(__file__).parent / 'og.html').read_bytes()
+        name = f"og-general-{hashlib.sha1(tpl).hexdigest()[:6]}.jpg"
+        if not (images / name).exists():
+            render(None, '', '', images / name)
+    for old in list(images.glob('og-meeting-*.jpg')) + list(images.glob('og-general-*.jpg')):
         if old.name != name: old.unlink()
     changed = False
     for page in PAGES:

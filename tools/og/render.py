@@ -4,9 +4,13 @@ from playwright.sync_api import sync_playwright
 HERE = pathlib.Path(__file__).parent; ROOT = HERE.parent.parent
 DAYS = ['שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת', 'ראשון']
 def render(date, time, place, out):
-    d = datetime.date.fromisoformat(date)
-    when = f"יום {DAYS[d.weekday()]}, {d.day}.{d.month}"
-    html = (HERE / 'og.html').read_text(encoding='utf-8').replace('__BG__', (ROOT / 'images' / 'og-v3.jpg').as_uri()).replace('__WHEN__', when).replace('__TIME__', time).replace('__PLACE__', place)
+    """בלי תאריך (date=None): אותו עיצוב בלי פרטי המפגש הקרוב"""
+    if date:
+        d = datetime.date.fromisoformat(date)
+        when = f"יום {DAYS[d.weekday()]}, {d.day}.{d.month}"; details = ''; cls = ''
+    else:
+        when = time = place = ''; details = 'hidden style="display:none"'; cls = 'nodetails'
+    html = (HERE / 'og.html').read_text(encoding='utf-8').replace('__BG__', (ROOT / 'images' / 'og-v3.jpg').as_uri()).replace('__WHEN__', when).replace('__TIME__', time).replace('__PLACE__', place).replace('__DETAILS__', details).replace('__CLS__', cls)
     tmp = HERE / '_og_tmp.html'; tmp.write_text(html, encoding='utf-8')
     with sync_playwright() as pw:
         b = pw.chromium.launch(); pg = b.new_page(viewport={'width': 1200, 'height': 1200})
