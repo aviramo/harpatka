@@ -42,13 +42,34 @@
     .grid .playing img{ display:none; }
     .grid .playing video{ display:block; }
     /* סרטון מוביל בראש העמוד (9:16, לא מודעה ממוספרת). לא ב-videos.json, כדי שלא ייבחר לסרטון הפתיחה של עמוד הבית */
+    .searchbar{ position:sticky; top:0; z-index:30; display:flex; align-items:center; gap:.6rem; padding:.7rem 1rem; background:rgba(36,32,28,.94); backdrop-filter:blur(6px); }
+    .searchbar .box{ position:relative; flex:1 1 auto; max-width:34rem; }
+    .searchbar input{ width:100%; height:2.7rem; padding:0 2.6rem 0 2.6rem; border-radius:999px; border:1.5px solid rgba(168,159,144,.45); background:#2E2924; color:var(--ink); font:500 1.05rem Assistant,Rubik,sans-serif; }
+    .searchbar input::-webkit-search-cancel-button{ display:none; }
+    .searchbar input::placeholder{ color:#8C8374; }
+    .searchbar input:focus-visible{ outline:3px solid var(--terra); outline-offset:1px; }
+    .searchbar .mag{ position:absolute; top:50%; right:.9rem; transform:translateY(-50%); width:1.2rem; height:1.2rem; color:#A89F90; pointer-events:none; }
+    .searchbar .clr{ position:absolute; top:50%; left:.5rem; transform:translateY(-50%); width:2rem; height:2rem; border-radius:50%; border:0; background:none; color:#A89F90; font-size:1.4rem; line-height:1; cursor:pointer; }
+    .searchbar .clr[hidden]{ display:none; }
+    .searchbar .cnt{ flex:none; color:#A89F90; font:600 .95rem Assistant,Rubik,sans-serif; white-space:nowrap; }
+    .none{ padding:2.5rem 1rem; text-align:center; color:#A89F90; font:600 1.1rem Assistant,Rubik,sans-serif; }
+    .grid figure[hidden]{ display:none; }
     .grid.feature{ grid-template-columns:repeat(auto-fill,minmax(16rem,24rem)); padding-bottom:0; }
     .grid.feature img, .grid.feature video{ aspect-ratio:9/16; }
   </style>
 </head>
 <body>
+  <div class="searchbar">
+    <div class="box">
+      <svg class="mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/></svg>
+      <input id="q" type="search" placeholder="חיפוש בטקסט המודעות (בתמונות ובסרטונים)" autocomplete="off" aria-label="חיפוש במודעות" />
+      <button type="button" class="clr" id="qClr" aria-label="ניקוי החיפוש" hidden>×</button>
+    </div>
+    <span class="cnt" id="cnt"></span>
+  </div>
   <div id="feature" class="grid feature"></div>
   <div id="grid" class="grid"></div>
+  <div id="none" class="none" hidden>לא נמצאו מודעות עם הטקסט הזה</div>
   <script>
     // ads.json נבנה על ידי ads/tools/build_ads.py. videos.json (ידני): מספר סידורי של מודעה → קובץ ב-video/.
     const json = u => fetch(u).then(r => r.ok ? r.json() : {}).catch(() => ({}));
@@ -127,6 +148,8 @@
     // c: {label (מעל התמונה), name (לתוויות נגישות), base (שם קובץ בהורדה), img, vid, w, h, alt}
     function card(g, c) {
       const f = document.createElement('figure');
+      /* טקסט לחיפוש: מספר, נוסח המודעה (זהה בתמונה ובסרטון) ובמודעה עם סרטון גם הטקסטים הקבועים שבסרטון */
+      f.dataset.text = [c.label, c.name, c.alt, c.vid ? 'מפגש מסוג אחר לגילאי 40 עד 50 בפרק פתוח בחיים הזמנה יוצאים להרפתקה' : ''].join(' ');
       const head = document.createElement('div'); head.className = 'head';
       const n = document.createElement('span'); n.className = 'n'; n.textContent = c.label;
       head.appendChild(n);
@@ -171,7 +194,24 @@
         card(g, { label: it.id, name: 'מודעה ' + it.id, base: 'ad-' + pad, img: 'img/' + it.file, vid: file ? 'video/' + file : '',
           w: 1080, h: 1350, alt: it.text });
       });
+      applySearch();
     });
+    /* חיפוש: כל המילים שנכתבו חייבות להופיע (בלי ניקוד ופיסוק), על כל המודעות והסרטונים */
+    const norm = s => String(s || '').toLowerCase().replace(/[֑-ׇ]/g, '').replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
+    const qEl = document.getElementById('q'), qClr = document.getElementById('qClr'), cntEl = document.getElementById('cnt'), noneEl = document.getElementById('none');
+    function applySearch() {
+      const words = norm(qEl.value).split(' ').filter(Boolean);
+      let shown = 0, total = 0;
+      document.querySelectorAll('#feature figure, #grid figure').forEach(f => {
+        const hay = norm(f.dataset.text), ok = words.every(w => hay.includes(w));
+        f.hidden = !ok; total++; if (ok) shown++;
+        if (!ok) f.querySelector('.media') && f.querySelector('.media')._stop && f.querySelector('.media')._stop();
+      });
+      qClr.hidden = !qEl.value; cntEl.textContent = words.length ? shown + ' מתוך ' + total : '';
+      noneEl.hidden = !words.length || shown > 0;
+    }
+    qEl.addEventListener('input', applySearch);
+    qClr.addEventListener('click', () => { qEl.value = ''; applySearch(); qEl.focus(); });
   </script>
 </body>
 </html>
