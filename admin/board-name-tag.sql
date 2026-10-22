@@ -8,6 +8,7 @@ returns jsonb language sql stable security definer set search_path = public as $
   select jsonb_build_object('status', m.status, 'can_share', m.participant_id is not null,
     'can_post', public.harpatka_is_admin() or exists (select 1 from public.harpatka_attendance at join public.harpatka_participants pp on pp.id = at.participant_id where at.participant_id = m.participant_id and pp.active),
     'name', coalesce(pa.name, nullif(m.google_name, ''), m.email),
+    'is_admin', public.harpatka_is_admin(),
     'first_name', coalesce(nullif(pa.first_name, ''), nullif(split_part(btrim(m.google_name), ' ', 1), ''), ''))
   from public.harpatka_members m left join public.harpatka_participants pa on pa.id = m.participant_id where m.user_id = auth.uid();
 $$;

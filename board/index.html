@@ -76,6 +76,7 @@
     .phone a { color: #1F5C3A; font-weight: 700; text-decoration: underline; }
     .nchip { flex: 0 0 auto; margin-inline-start: auto; margin-inline-end: 10px; height: 34px; padding: 0 12px; border-radius: 999px; background: #F3E3D1; color: #A9533A; font-weight: 700; font-size: 14px; }
     .nchip.off { background: transparent; color: var(--muted); border: 1.5px dashed var(--line); font-weight: 600; }
+    .pname.adm { background: var(--terra); color: #fff; padding: 3px 12px; letter-spacing: .2px; box-shadow: 0 2px 6px rgba(201,111,82,.35); }
     .pname { display: inline-block; font-weight: 700; font-size: 13.5px; color: #A9533A; background: #F3E3D1; padding: 2px 10px; border-radius: 999px; margin-bottom: 6px; }
     .auth { margin-top: 6px; font-size: 13px; color: var(--muted); }
     .pend { display: inline-block; font-size: 12.5px; font-weight: 700; background: #FBE9C7; color: #7A5410; padding: 2px 9px; border-radius: 999px; }
@@ -156,7 +157,7 @@
   const $ = (s) => document.querySelector(s);
   const SKEY = 'harpatka_board_session', PKEY = 'harpatka_board_pending';
   const LIKE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.2-9.4C1.7 7.700 3.900 4.500 7.200 4.500c2 0 3.700 1.100 4.800 2.800 1.100-1.700 2.800-2.800 4.800-2.800 3.300 0 5.500 3.200 4.400 6.600-1.700 4.800-9.200 9.400-9.200 9.400z"/></svg>';
-  let meFirst = '', showName = true, meName = '', editId = null, editText = '', shareOn = false, session = null, me = null, canShare = false, canPost = true, posts = [], pendingAct = null, openReply = null, delAsk = null;
+  let meAdmin = false, meFirst = '', showName = true, meName = '', editId = null, editText = '', shareOn = false, session = null, me = null, canShare = false, canPost = true, posts = [], pendingAct = null, openReply = null, delAsk = null;
 
   /* ---------- כניסה עם גוגל (הזדהות של Supabase, בלי SDK) ---------- */
   const jwtData = (tok) => { try { return JSON.parse(decodeURIComponent(escape(atob(tok.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))))); } catch (e) { return {}; } };
@@ -214,15 +215,15 @@
         + '<span>' + ago(p.created_at) + (p.edited ? ' · נערך' : '') + '</span>'
         + '<button type="button" class="act' + (p.liked ? ' liked' : '') + '" data-like="' + p.id + '" aria-pressed="' + p.liked + '" aria-label="לב">' + LIKE + '<span>' + (p.likes || '') + '</span></button>'
         + '<button type="button" class="act" data-reply="' + p.id + '">תגובה</button>'
-        + (p.mine && meFirst ? '<button type="button" class="act" data-setname="' + p.id + '" data-show="' + (p.first_name ? '0' : '1') + '">' + (p.first_name ? 'הסרת השם' : 'הצגת השם') + '</button>' : '')
+        + (p.mine && meFirst && !meAdmin ? '<button type="button" class="act" data-setname="' + p.id + '" data-show="' + (p.first_name ? '0' : '1') + '">' + (p.first_name ? 'הסרת השם' : 'הצגת השם') + '</button>' : '')
         + (p.mine && editId !== p.id ? '<button type="button" class="act" data-edit="' + p.id + '">עריכה</button>' : '')
         + (p.author != null ? (p.hidden ? '<button type="button" class="act" data-unhide="' + p.id + '">ביטול הסתרה</button>' : '<button type="button" class="act" data-hide="' + p.id + '">הסתרה</button>') : '')
         + (p.hidden ? '<span class="pend" style="background:#E9DCE3;color:#663F4C">מוסתר, רק מנהלים רואים</span>' : '')
         + (p.can_approve ? '<button type="button" class="act ok" data-approve="' + p.id + '">אישור ופרסום</button>' : '')
         + (p.can_delete ? (asking ? '<span>למחוק? <button type="button" class="act del" data-delyes="' + p.id + '">כן</button> <button type="button" class="act" data-delno="1">לא</button></span>' : '<button type="button" class="act del" data-del="' + p.id + '">מחיקה</button>') : '')
         + (p.pending ? '<span class="pend">' + (p.pending_edit ? 'העריכה ממתינה לאישור, עד אז מוצג הנוסח הקודם' : 'ממתין לאישור, רק אתם רואים אותו') + '</span>' : '') + '</span>';
-      const reply = openReply === p.id ? '<div class="reply"><textarea rows="1" maxlength="2000" data-rtext="' + p.id + '" placeholder="תגובה" aria-label="תגובה"></textarea>' + (canShare && !ownThread(p) ? '<label class="share"><input type="checkbox" data-rshare="' + p.id + '"' + (shareOn ? ' checked' : '') + ' /> לשתף את הטלפון שלי רק עם בעל הפוסט</label>' : '') + '<div class="crow"><span></span><button type="button" class="nchip" ' + (meFirst ? '' : 'hidden') + '>' + chipHTML() + '</button><button type="button" class="btn" data-rsend="' + p.id + '">שליחה</button></div></div>' : '';
-      return '<div class="' + (depth ? 'cm' : 'card post') + '">' + (p.first_name ? '<div class="pname">' + esc(p.first_name) + '</div>' : '') + (editId === p.id ? '<div class="reply"><textarea rows="1" maxlength="2000" data-etext="' + p.id + '" aria-label="עריכה">' + esc(editText) + '</textarea><div class="crow"><button type="button" class="btn ghost" data-ecancel="1">ביטול</button><button type="button" class="btn" data-esave="' + p.id + '">שמירה</button></div></div>' : '<div class="body">' + esc(p.body) + '</div>') + (p.author ? '<div class="auth">' + (p.mine ? 'את/ה' : esc(p.author)) + '</div>' : '')
+      const reply = openReply === p.id ? '<div class="reply"><textarea rows="1" maxlength="2000" data-rtext="' + p.id + '" placeholder="תגובה" aria-label="תגובה"></textarea>' + (canShare && !ownThread(p) ? '<label class="share"><input type="checkbox" data-rshare="' + p.id + '"' + (shareOn ? ' checked' : '') + ' /> לשתף את הטלפון שלי רק עם בעל הפוסט</label>' : '') + '<div class="crow"><span></span><button type="button" class="nchip" ' + (meFirst && !meAdmin ? '' : 'hidden') + '>' + chipHTML() + '</button><button type="button" class="btn" data-rsend="' + p.id + '">שליחה</button></div></div>' : '';
+      return '<div class="' + (depth ? 'cm' : 'card post') + '">' + (p.admin_post ? '<div class="pname adm">★ מנהל</div>' : p.first_name ? '<div class="pname">' + esc(p.first_name) + '</div>' : '') + (editId === p.id ? '<div class="reply"><textarea rows="1" maxlength="2000" data-etext="' + p.id + '" aria-label="עריכה">' + esc(editText) + '</textarea><div class="crow"><button type="button" class="btn ghost" data-ecancel="1">ביטול</button><button type="button" class="btn" data-esave="' + p.id + '">שמירה</button></div></div>' : '<div class="body">' + esc(p.body) + '</div>') + (p.author ? '<div class="auth">' + (p.mine ? 'את/ה' : esc(p.author)) + '</div>' : '')
         + (p.phone ? '<div class="phone"><span>הטלפון של המגיב/ה:</span> <b dir="ltr">' + esc(p.phone) + '</b> <a href="https://wa.me/972' + esc(String(p.phone).replace(/^0/, '').replace(/\D/g, '')) + '" target="_blank" rel="noopener">וואטסאפ</a> <a href="tel:' + esc(p.phone) + '">חיוג</a></div>' : '')
         + (p.shared ? '<div class="auth">הטלפון שלך משותף עם בעל הפוסט</div>' : '') + act + reply
         + (ch.length ? '<div class="kids' + (depth >= 3 ? ' flat' : '') + '">' + ch.map((c) => node(c, depth + 1)).join('') + '</div>' : '') + '</div>';
@@ -244,7 +245,7 @@
   async function load() {
     try {
       const [feed, st] = await Promise.all([rpc('harpatka_board_feed'), session ? rpc('harpatka_board_profile') : Promise.resolve(null)]);
-      posts = feed || []; me = st ? st.status : null; canShare = !!(st && st.can_share); canPost = !st || st.can_post !== false; meName = (st && st.name) || ''; meFirst = (st && st.first_name) || '';
+      posts = feed || []; me = st ? st.status : null; canShare = !!(st && st.can_share); canPost = !st || st.can_post !== false; meName = (st && st.name) || ''; meFirst = (st && st.first_name) || ''; meAdmin = !!(st && st.is_admin);
     } catch (e) { if (e.message === 'auth') { /* נכנס מחדש כמבקר */ } }
     render();
   }
@@ -266,7 +267,7 @@
   }
   /* שורת כתיבה: מתחילה בשורה אחת ומתרחבת, וכפתור הפרסום מופיע ברגע שמתחילים להקליד */
   const chipHTML = () => showName ? esc(meFirst) + ' ×' : 'הוספת שם';
-  function paintChips() { document.querySelectorAll('.nchip').forEach((c) => { c.hidden = !meFirst; c.classList.toggle('off', !showName); c.innerHTML = chipHTML(); c.title = showName ? 'הסרת השם מהפרסום' : 'הצגת השם הפרטי בפרסום'; }); }
+  function paintChips() { document.querySelectorAll('.nchip').forEach((c) => { c.hidden = !meFirst || meAdmin; c.classList.toggle('off', !showName); c.innerHTML = chipHTML(); c.title = showName ? 'הסרת השם מהפרסום' : 'הצגת השם הפרטי בפרסום'; }); }
   document.addEventListener('click', (e) => { const c = e.target.closest('.nchip'); if (!c) return; showName = !showName; try { localStorage.setItem('hb_showname', showName ? '1' : '0'); } catch (x) {} paintChips(); });
   const syncComposer = () => { $('#cmpAct').hidden = !$('#newText').value.trim(); paintChips(); };
   function closeCompose() { const ta = $('#newText'); ta.value = ''; grow(ta); syncComposer(); }

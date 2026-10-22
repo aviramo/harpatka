@@ -31,6 +31,7 @@ returns jsonb language sql stable security definer set search_path = public as $
       (p.edited_at is not null) as edited,
       case when p.show_name then coalesce(nullif(pa.first_name, ''), nullif(split_part(btrim(m.google_name), ' ', 1), ''), '') end as first_name,
       (p.show_name and p.user_id = auth.uid()) as name_shown,
+      exists (select 1 from public.harpatka_admins ad where lower(ad.email) = lower(m.email)) as admin_post,
       (p.hidden_at is not null) as hidden,
       (select count(*) from public.harpatka_likes l join public.harpatka_members lm on lm.user_id = l.user_id
          where l.post_id = p.id and (lm.status = 'approved' or l.user_id = auth.uid())) as likes,
