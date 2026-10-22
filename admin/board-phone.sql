@@ -41,20 +41,21 @@ begin
   end if;
   share := coalesce(p_share, false) and p_parent is not null and m.participant_id is not null;
   insert into public.harpatka_posts (id, parent_id, root_id, user_id, body, approved_at, share_phone)
-  values (new_id, p_parent, coalesce(par.root_id, new_id), uid, body, case when adm then now() end, share);
+  values (new_id, p_parent, coalesce(par.root_id, new_id), uid, body, case when adm or m.status = 'approved' then now() end, share);   -- משתמש מקושר מתפרסם מיד
   if adm then return 'ok'; end if;
   select value into mail_on from public.harpatka_settings where key = 'mail_v2';
   if mail_on = '1' then begin
     select * into pa from public.harpatka_participants where id = m.participant_id;
-    perform public.harpatka_send_mail('post_pending', jsonb_build_object(
+    perform public.harpatka_send_mail(case when m.status = 'approved' then 'post_published' else 'post_pending' end, jsonb_build_object(
       'kind', case when p_parent is null then 'פוסט' else 'תגובה' end,
       'body_html', replace(public.harpatka_html_esc(body), E'\n', '<br>') || case when share then '<br><br><i>(המגיב/ה בחר/ה לשתף את הטלפון עם בעל/ת הפוסט)</i>' else '' end,
       'who', coalesce(pa.name, nullif(m.google_name, ''), m.email),
-      'identity', case when pa.id is not null then 'משתתף/ת במערכת, טלפון ' || coalesce(pa.phone, '') || ' · חשבון גוגל ' || m.email
-                       else 'הטלפון שהוזן (' || m.phone_norm || ') לא נמצא בין המשתתפים · חשבון גוגל ' || m.email end,
+      'identity', (case when pa.id is not null then 'משתתף/ת במערכת, טלפון ' || coalesce(pa.phone, '') || ' · חשבון גוגל ' || m.email
+                       else 'הטלפון שהוזן (' || m.phone_norm || ') לא נמצא בין המשתתפים · חשבון גוגל ' || m.email end)
+                  || case when m.status = 'pending' then ' · החיבור של המשתמש/ת עוד לא אושר (נשלח מייל נפרד)' else '' end,
       'admin_link', 'https://harpatka.co.il/board/'));
   exception when others then null; end; end if;
-  return 'pending';
+  return case when m.status = 'approved' then 'ok' else 'pending' end;
 end $$;
 revoke all on function public.harpatka_board_post(text, uuid, boolean) from public;
 grant execute on function public.harpatka_board_post(text, uuid, boolean) to authenticated;

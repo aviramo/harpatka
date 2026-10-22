@@ -24,10 +24,23 @@ begin
   if nb = '' then return 'empty'; end if;
   if length(nb) > 2000 then return 'long'; end if;
   if nb = p.body and p.pending_body is null then return 'ok'; end if;
-  if adm or p.approved_at is null then
+  if adm or p.approved_at is null or m.status = 'approved' then
     -- עוד לא פורסם (או מנהל): נשמר מיד; "נערך" רק אם כבר היה מפורסם
     update public.harpatka_posts set body = nb, pending_body = null,
       edited_at = case when p.approved_at is not null and nb <> p.body then now() else p.edited_at end where id = p.id;
+    if not adm and p.approved_at is not null and nb <> p.body then
+      select value into mail_on from public.harpatka_settings where key = 'mail_v2';
+      if mail_on = '1' then begin
+        select * into pa from public.harpatka_participants where id = m.participant_id;
+        perform public.harpatka_send_mail('post_edited', jsonb_build_object(
+          'kind', case when p.parent_id is null then 'פוסט' else 'תגובה' end,
+          'body_html', replace(public.harpatka_html_esc(nb), E'
+', '<br>'),
+          'who', coalesce(pa.name, nullif(m.google_name, ''), m.email),
+          'identity', coalesce('טלפון ' || pa.phone || ' · ', '') || 'חשבון גוגל ' || m.email,
+          'admin_link', 'https://harpatka.co.il/board/'));
+      exception when others then null; end; end if;
+    end if;
     return 'ok';
   end if;
   -- פורסם: העריכה ממתינה לאישור; חזרה לנוסח המאושר מבטלת אותה
@@ -95,3 +108,11 @@ returns jsonb language sql stable security definer set search_path = public as $
   ) x;
 $$;
 notify pgrst, 'reload schema';
+insert into public.harpatka_mail_templates (key, subject, html)
+select 'post_published', '{{kind}} חדש/ה פורסם/ה בלוח השיתופים',
+  replace(replace(replace(html, 'ממתין/ה לאישור</div></div>', 'פורסם/ה בלוח</div></div>'), 'לאישור או מחיקה בלוח', 'לצפייה בלוח (אפשר גם למחוק משם)'), '#C96F52;color:#ffffff;text-decoration:none', '#686A48;color:#ffffff;text-decoration:none')
+from public.harpatka_mail_templates where key = 'post_pending' on conflict (key) do nothing;
+insert into public.harpatka_mail_templates (key, subject, html)
+select 'post_edited', '{{kind}} נערך/ה בלוח השיתופים',
+  replace(replace(html, 'עודכן/ה ומחכה לאישור</div></div>', 'נערך/ה בלוח</div></div>'), 'לאישור העריכה בלוח', 'לצפייה בלוח')
+from public.harpatka_mail_templates where key = 'post_edit' on conflict (key) do nothing;
