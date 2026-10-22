@@ -295,6 +295,7 @@
   document.querySelectorAll('[data-contact]').forEach(el => {
     el.setAttribute('href', '#');
     el.addEventListener('click', (e) => { e.preventDefault(); if (contactModal) openModal(contactModal); });
+    if (el.getAttribute('role') === 'button') el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (contactModal) openModal(contactModal); } });   // אלמנט שאינו קישור (למשל הבאנר העליון) נגיש גם במקלדת
   });
 
   /* ===== המפגש הקרוב (תאריך ושעה בולטים בפופאפ) ומחיר בכפתור התשלום: 100 ₪ ב-3 הימים האחרונים לפני המפגש, אחרת 80 ₪ ===== */
