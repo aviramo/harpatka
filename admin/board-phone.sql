@@ -46,7 +46,7 @@ begin
   values (new_id, p_parent, coalesce(par.root_id, new_id), uid, body, case when adm or m.status = 'approved' then now() end, share, coalesce(p_show_name, true));   -- משתמש מקושר מתפרסם מיד
   if adm then return 'ok'; end if;
   select value into mail_on from public.harpatka_settings where key = 'mail_v2';
-  if mail_on = '1' then begin
+  if mail_on = '1' and p_parent is null then begin   -- מייל למנהלים רק על פוסטים, לא על תגובות
     select * into pa from public.harpatka_participants where id = m.participant_id;
     perform public.harpatka_send_mail(case when m.status = 'approved' then 'post_published' else 'post_pending' end, jsonb_build_object(
       'kind', case when p_parent is null then 'פוסט' else 'תגובה' end,

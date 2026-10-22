@@ -30,7 +30,7 @@ begin
       edited_at = case when p.approved_at is not null and nb <> p.body then now() else p.edited_at end where id = p.id;
     if not adm and p.approved_at is not null and nb <> p.body then
       select value into mail_on from public.harpatka_settings where key = 'mail_v2';
-      if mail_on = '1' then begin
+      if mail_on = '1' and p.parent_id is null then begin
         select * into pa from public.harpatka_participants where id = m.participant_id;
         perform public.harpatka_send_mail('post_edited', jsonb_build_object(
           'kind', case when p.parent_id is null then 'פוסט' else 'תגובה' end,
@@ -47,7 +47,7 @@ begin
   update public.harpatka_posts set pending_body = case when nb = p.body then null else nb end where id = p.id;
   if nb <> p.body then
     select value into mail_on from public.harpatka_settings where key = 'mail_v2';
-    if mail_on = '1' then begin
+    if mail_on = '1' and p.parent_id is null then begin
       select * into pa from public.harpatka_participants where id = m.participant_id;
       perform public.harpatka_send_mail('post_edit', jsonb_build_object(
         'kind', case when p.parent_id is null then 'פוסט' else 'תגובה' end,
