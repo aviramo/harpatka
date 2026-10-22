@@ -11,7 +11,8 @@ revoke all on function public.harpatka_board_profile() from public;
 grant execute on function public.harpatka_board_profile() to authenticated;
 
 drop function if exists public.harpatka_board_post(text, uuid);
-create or replace function public.harpatka_board_post(p_body text, p_parent uuid default null, p_share boolean default false)
+drop function if exists public.harpatka_board_post(text, uuid, boolean);
+create or replace function public.harpatka_board_post(p_body text, p_parent uuid default null, p_share boolean default false, p_show_name boolean default false)
 returns text language plpgsql security definer set search_path = public as $$
 declare
   uid uuid := auth.uid();
@@ -40,8 +41,8 @@ begin
     if (pm.status <> 'approved' or par.approved_at is null) and par.user_id <> uid then return 'no_parent'; end if;
   end if;
   share := coalesce(p_share, false) and p_parent is not null and m.participant_id is not null;
-  insert into public.harpatka_posts (id, parent_id, root_id, user_id, body, approved_at, share_phone)
-  values (new_id, p_parent, coalesce(par.root_id, new_id), uid, body, case when adm or m.status = 'approved' then now() end, share);   -- משתמש מקושר מתפרסם מיד
+  insert into public.harpatka_posts (id, parent_id, root_id, user_id, body, approved_at, share_phone, show_name)
+  values (new_id, p_parent, coalesce(par.root_id, new_id), uid, body, case when adm or m.status = 'approved' then now() end, share, coalesce(p_show_name, false));   -- משתמש מקושר מתפרסם מיד
   if adm then return 'ok'; end if;
   select value into mail_on from public.harpatka_settings where key = 'mail_v2';
   if mail_on = '1' then begin
@@ -57,8 +58,8 @@ begin
   exception when others then null; end; end if;
   return case when m.status = 'approved' then 'ok' else 'pending' end;
 end $$;
-revoke all on function public.harpatka_board_post(text, uuid, boolean) from public;
-grant execute on function public.harpatka_board_post(text, uuid, boolean) to authenticated;
+revoke all on function public.harpatka_board_post(text, uuid, boolean, boolean) from public;
+grant execute on function public.harpatka_board_post(text, uuid, boolean, boolean) to authenticated;
 
 create or replace function public.harpatka_board_feed()
 returns jsonb language sql stable security definer set search_path = public as $$
