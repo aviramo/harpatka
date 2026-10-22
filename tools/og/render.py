@@ -10,7 +10,7 @@ def render(date, time, place, out):
     tmp = HERE / '_og_tmp.html'; tmp.write_text(html, encoding='utf-8')
     with sync_playwright() as pw:
         b = pw.chromium.launch(); pg = b.new_page(viewport={'width': 1200, 'height': 1200})
-        pg.goto(tmp.as_uri()); pg.wait_for_timeout(1200); pg.evaluate('document.fonts.ready')
+        pg.goto(tmp.as_uri()); pg.evaluate('document.fonts.ready.then(() => true)'); pg.wait_for_timeout(600)
         pg.screenshot(path=str(out), type='jpeg', quality=86); b.close()
     tmp.unlink()
 if __name__ == '__main__':
