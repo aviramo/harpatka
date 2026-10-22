@@ -233,8 +233,8 @@
       const gEl = genderBox.matches('select') ? genderBox : genderBox.querySelector('input:checked'), gender = gEl && gEl.value ? gEl.value : null;
       if (!gender) { genderBox.classList.add('bad'); q('genderErr').textContent = 'נא לבחור'; ok = false; }
       if (!ok) return;
-      /* אפשרות תשלום רק בטווח הגילאים שמתאים למפגש: גברים 40 עד 55, נשים 37 עד 50 (ההרשמה עצמה נשמרת תמיד) */
-      const payOk = gender === 'male' ? (age >= 40 && age <= 55) : (age >= 37 && age <= 50);
+      /* אפשרות תשלום רק בטווח הגילאים שמתאים למפגש: גברים 40 עד 55, נשים 35 עד 50 (ההרשמה עצמה נשמרת תמיד) */
+      const payOk = gender === 'male' ? (age >= 40 && age <= 55) : (age >= 35 && age <= 50);
       const allDone = () => { suRoots.forEach(f => f(payOk)); };   // בלי שמירה בדפדפן: בכל טעינה של הדף הטופס מוצג מחדש
       if (q('hp').value || Date.now() - t0 < 1500) { allDone(); return; }   // בוט: מציגים הצלחה בלי לשמור
       btn.disabled = true; btn.textContent = 'שולחים...';
@@ -251,8 +251,8 @@
         if (out === 'created' || out === 'exists') {   // כפילות: אותה הודעה, בלי לחשוף שהמספר כבר רשום
           if (out === 'created') {   // Lead רק על מספר חדש (חד ערכי), לא על כפילות
             leadOnce();
-            /* RegistrationValue: ערך 3 למי שבטווח (נשים 37 עד 50, גברים 40 עד 55, זהה ל-payOk), 1 למי שמחוץ לטווח */
-            const inRange = gender === 'male' ? (age >= 40 && age <= 55) : (age >= 37 && age <= 50);
+            /* RegistrationValue: ערך 3 למי שבטווח (נשים 35 עד 50, גברים 40 עד 55, זהה ל-payOk), 1 למי שמחוץ לטווח */
+            const inRange = gender === 'male' ? (age >= 40 && age <= 55) : (age >= 35 && age <= 50);
             try { if (window.fbq) fbq('trackCustom', 'RegistrationValue', { value: inRange ? 3 : 1, currency: 'ILS' }); } catch (e) {}
           }
           finished = true; allDone();
