@@ -205,6 +205,8 @@
   }
 
   /* ---------- רינדור: עץ של פוסטים ותגובות (טקסט בלבד, textContent דרך esc) ---------- */
+  /* בפוסט שאני כתבתי אין טעם לשתף לעצמי את הטלפון */
+  const ownThread = (p) => { const root = posts.find((x) => x.id === (p.root_id || p.id)); return !!(root && root.mine); };
   function render() {
     const kids = {}; posts.forEach((p) => { (kids[p.parent_id || 'root'] = kids[p.parent_id || 'root'] || []).push(p); });
     const roots = (kids.root || []).slice().sort((a, b) => b.created_at.localeCompare(a.created_at));
@@ -218,7 +220,7 @@
         + (p.can_approve ? '<button type="button" class="act ok" data-approve="' + p.id + '">אישור ופרסום</button>' : '')
         + (p.can_delete ? (asking ? '<span>למחוק? <button type="button" class="act del" data-delyes="' + p.id + '">כן</button> <button type="button" class="act" data-delno="1">לא</button></span>' : '<button type="button" class="act del" data-del="' + p.id + '">מחיקה</button>') : '')
         + (p.pending ? '<span class="pend">ממתין לאישור, רק אתם רואים אותו</span>' : '') + '</span>';
-      const reply = openReply === p.id ? '<div class="reply"><textarea rows="1" maxlength="2000" data-rtext="' + p.id + '" placeholder="תגובה" aria-label="תגובה"></textarea>' + (canShare ? '<label class="share"><input type="checkbox" data-rshare="' + p.id + '"' + (shareOn ? ' checked' : '') + ' /> לשתף את הטלפון שלי רק עם בעל הפוסט</label>' : '') + '<div class="crow"><span></span><button type="button" class="btn" data-rsend="' + p.id + '">שליחה</button></div></div>' : '';
+      const reply = openReply === p.id ? '<div class="reply"><textarea rows="1" maxlength="2000" data-rtext="' + p.id + '" placeholder="תגובה" aria-label="תגובה"></textarea>' + (canShare && !ownThread(p) ? '<label class="share"><input type="checkbox" data-rshare="' + p.id + '"' + (shareOn ? ' checked' : '') + ' /> לשתף את הטלפון שלי רק עם בעל הפוסט</label>' : '') + '<div class="crow"><span></span><button type="button" class="btn" data-rsend="' + p.id + '">שליחה</button></div></div>' : '';
       return '<div class="' + (depth ? 'cm' : 'card post') + '"><div class="body">' + esc(p.body) + '</div>' + (p.author ? '<div class="auth">' + (p.mine ? 'את/ה' : esc(p.author)) + '</div>' : '')
         + (p.phone ? '<div class="phone"><span>הטלפון של המגיב/ה:</span> <b dir="ltr">' + esc(p.phone) + '</b> <a href="https://wa.me/972' + esc(String(p.phone).replace(/^0/, '').replace(/\D/g, '')) + '" target="_blank" rel="noopener">וואטסאפ</a> <a href="tel:' + esc(p.phone) + '">חיוג</a></div>' : '')
         + (p.shared ? '<div class="auth">הטלפון שלך משותף עם בעל הפוסט</div>' : '') + act + reply
