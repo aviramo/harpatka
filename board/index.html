@@ -191,6 +191,11 @@
   }
 
   try { showName = localStorage.getItem('hb_showname') !== '0'; } catch (e) {}
+  /* מזהה מכשיר ללבבות בלי התחברות */
+  function deviceId() {
+    try { let d = localStorage.getItem('hb_device'); if (!d) { d = (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); })); localStorage.setItem('hb_device', d); } return d; }
+    catch (e) { return null; }
+  }
   let toastT = 0;
   function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2600); }
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -244,7 +249,7 @@
 
   async function load() {
     try {
-      const [feed, st] = await Promise.all([rpc('harpatka_board_feed'), session ? rpc('harpatka_board_profile') : Promise.resolve(null)]);
+      const [feed, st] = await Promise.all([rpc('harpatka_board_feed', { p_device: deviceId() }), session ? rpc('harpatka_board_profile') : Promise.resolve(null)]);
       posts = feed || []; me = st ? st.status : null; canShare = !!(st && st.can_share); canPost = !st || st.can_post !== false; meName = (st && st.name) || ''; meFirst = (st && st.first_name) || ''; meAdmin = !!(st && st.is_admin);
     } catch (e) { if (e.message === 'auth') { /* נכנס מחדש כמבקר */ } }
     render();
@@ -292,10 +297,11 @@
       if (await submit(ta.value, t.dataset.rsend, !!(sh && sh.checked))) openReply = null; render(); return;
     }
     if (t.dataset.like) {
-      if (!session || !me || me === 'blocked') { if (!session) $('#loginDlg').showModal(); else toast(me ? 'אין אפשרות' : 'צריך קודם לאמת טלפון בפרסום ראשון'); return; }
+      if (me === 'blocked') { toast('אין אפשרות'); return; }
       const p = posts.find((x) => x.id === t.dataset.like); if (!p) return;
+      const member = !!(session && me);   // מחובר ומאושר: לב רגיל; אחרת לב אנונימי לפי מכשיר (בלי התחברות)
       p.liked = !p.liked; p.likes = Math.max(0, (p.likes || 0) + (p.liked ? 1 : -1)); render();
-      try { await rpc('harpatka_board_like', { p_id: p.id }); } catch (err) { p.liked = !p.liked; p.likes += p.liked ? 1 : -1; render(); }
+      try { if (member) await rpc('harpatka_board_like', { p_id: p.id }); else await rpc('harpatka_board_like_anon', { p_id: p.id, p_device: deviceId() }); } catch (err) { p.liked = !p.liked; p.likes += p.liked ? 1 : -1; render(); }
       return;
     }
     if (t.dataset.edit) { const p = posts.find((x) => x.id === t.dataset.edit); if (!p) return; editId = p.id; editText = p.body; openReply = null; render(); return; }

@@ -19,7 +19,7 @@ update public.harpatka_mail_templates set html = replace(html, E'</a>
 </div></div></div>')
 where key in ('post_pending', 'post_published', 'post_edit', 'post_edited') and html not like '%{{hide_link}}%';
 
-create or replace function public.harpatka_board_feed()
+create or replace function public.harpatka_board_feed(p_device uuid default null)
 returns jsonb language sql stable security definer set search_path = public as $$
   select coalesce(jsonb_agg(x order by x.created_at desc), '[]'::jsonb) from (
     select p.id, p.parent_id, p.root_id, p.created_at,
@@ -34,8 +34,10 @@ returns jsonb language sql stable security definer set search_path = public as $
       exists (select 1 from public.harpatka_admins ad where lower(ad.email) = lower(m.email)) as admin_post,
       (p.hidden_at is not null) as hidden,
       (select count(*) from public.harpatka_likes l join public.harpatka_members lm on lm.user_id = l.user_id
-         where l.post_id = p.id and (lm.status = 'approved' or l.user_id = auth.uid())) as likes,
-      exists (select 1 from public.harpatka_likes l where l.post_id = p.id and l.user_id = auth.uid()) as liked,
+         where l.post_id = p.id and (lm.status = 'approved' or l.user_id = auth.uid()))
+        + (select count(*) from public.harpatka_anon_likes al where al.post_id = p.id) as likes,
+      (exists (select 1 from public.harpatka_likes l where l.post_id = p.id and l.user_id = auth.uid())
+        or (p_device is not null and exists (select 1 from public.harpatka_anon_likes al where al.post_id = p.id and al.device_id = p_device))) as liked,
       (public.harpatka_is_admin() or p.user_id = auth.uid() or exists (select 1 from public.harpatka_posts r where r.id = p.root_id and r.user_id = auth.uid())) as can_delete,
       (public.harpatka_is_admin() and (m.status <> 'approved' or p.approved_at is null or p.pending_body is not null)) as can_approve,
       case when public.harpatka_is_admin() then coalesce(pa.name, nullif(m.google_name, ''), m.email)
