@@ -27,6 +27,7 @@ declare
   share boolean;
 begin
   if uid is null then raise exception 'auth'; end if;
+  if adm then perform public.harpatka_ensure_admin_member(); end if;   -- מנהל מפרסם בלי להזין טלפון
   select * into m from public.harpatka_members where user_id = uid;
   if not found then return 'no_member'; end if;
   if m.status = 'blocked' then return 'blocked'; end if;
