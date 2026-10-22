@@ -50,12 +50,11 @@
     .searchbar .mag{ position:absolute; top:50%; right:.9rem; transform:translateY(-50%); width:1.2rem; height:1.2rem; color:#A89F90; pointer-events:none; }
     .searchbar .clr{ position:absolute; top:50%; left:.5rem; transform:translateY(-50%); width:2rem; height:2rem; border-radius:50%; border:0; background:none; color:#A89F90; font-size:1.4rem; line-height:1; cursor:pointer; }
     .searchbar .clr[hidden]{ display:none; }
-    .searchbar .cnt{ flex:none; width:5.2rem; text-align:start; font-variant-numeric:tabular-nums; color:#A89F90; font:600 .95rem Assistant,Rubik,sans-serif; white-space:nowrap; }
-    @media (max-width:560px){ .searchbar .cnt{ display:none; } .typesel{ width:6.6rem; } }
+    @media (max-width:560px){ .typesel{ width:8rem; } }
     .none{ padding:2.5rem 1rem; text-align:center; color:#A89F90; font:600 1.1rem Assistant,Rubik,sans-serif; }
     .grid figure[hidden]{ display:none; }
     /* כל הכרטיסים באותו גודל (4:5), גם סרטוני "תמונות" (FEATURED): גריד אחיד */
-    .typesel{ flex:none; width:7.6rem; height:2.7rem; padding:0 1rem 0 2rem; border-radius:999px; border:1.5px solid rgba(168,159,144,.45); color:var(--ink); font:600 1rem Assistant,Rubik,sans-serif; cursor:pointer; appearance:none; -webkit-appearance:none; background:#2E2924 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A89F90' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat .6rem center/1.1rem; }
+    .typesel{ flex:none; width:8.6rem; height:2.7rem; padding:0 1rem 0 2rem; border-radius:999px; border:1.5px solid rgba(168,159,144,.45); color:var(--ink); font:600 1rem Assistant,Rubik,sans-serif; cursor:pointer; appearance:none; -webkit-appearance:none; background:#2E2924 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A89F90' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat .6rem center/1.1rem; }
     .typesel:focus-visible{ outline:3px solid var(--terra); outline-offset:1px; }
     .typesel option{ background:#2E2924; color:var(--ink); }
   </style>
@@ -72,7 +71,6 @@
       <option value="msg">מסרים</option>
       <option value="photo">תמונות</option>
     </select>
-    <span class="cnt" id="cnt"></span>
   </div>
   <div id="grid" class="grid"></div>
   <div id="none" class="none" hidden>לא נמצאו מודעות עם הטקסט הזה</div>
@@ -206,19 +204,23 @@
     });
     /* חיפוש: כל המילים שנכתבו חייבות להופיע (בלי ניקוד ופיסוק), על כל המודעות והסרטונים */
     const norm = s => String(s || '').toLowerCase().replace(/[֑-ׇ]/g, '').replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
-    const qEl = document.getElementById('q'), qClr = document.getElementById('qClr'), cntEl = document.getElementById('cnt'), noneEl = document.getElementById('none');
+    const qEl = document.getElementById('q'), qClr = document.getElementById('qClr'), typesEl = document.getElementById('types'), noneEl = document.getElementById('none');
     let typeSel = '';
     document.getElementById('types').addEventListener('change', e => { typeSel = e.target.value; applySearch(); });
+    const TYPE_LABELS = { '': 'הכל', msg: 'מסרים', photo: 'תמונות' };
     function applySearch() {
-      const words = norm(qEl.value).split(' ').filter(Boolean);
-      let shown = 0, total = 0;
+      const words = norm(qEl.value).split(' ').filter(Boolean), count = { '': 0, msg: 0, photo: 0 };
+      let shown = 0;
       document.querySelectorAll('#grid figure').forEach(f => {
-        const hay = norm(f.dataset.text), ok = (!typeSel || f.dataset.type === typeSel) && words.every(w => hay.includes(w));
-        f.hidden = !ok; total++; if (ok) shown++;
+        const hay = norm(f.dataset.text), match = words.every(w => hay.includes(w)), ok = match && (!typeSel || f.dataset.type === typeSel);
+        f.hidden = !ok; if (ok) shown++;
+        if (match) { count[''] ++; count[f.dataset.type] = (count[f.dataset.type] || 0) + 1; }
         if (!ok) f.querySelector('.media') && f.querySelector('.media')._stop && f.querySelector('.media')._stop();
       });
-      qClr.hidden = !qEl.value; cntEl.textContent = words.length || typeSel ? shown + ' מתוך ' + total : '';
-      noneEl.hidden = (!words.length && !typeSel) || shown > 0;
+      /* המספרים בתוך התפריט (לפי החיפוש הנוכחי), בלי להזיז את הפריסה */
+      [...typesEl.options].forEach(o => { o.textContent = TYPE_LABELS[o.value] + ' (' + (count[o.value] || 0) + ')'; });
+      qClr.hidden = !qEl.value;
+      noneEl.hidden = shown > 0;
     }
     qEl.addEventListener('input', applySearch);
     qClr.addEventListener('click', () => { qEl.value = ''; applySearch(); qEl.focus(); });
