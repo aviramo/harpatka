@@ -421,8 +421,10 @@
     .payact .btn { margin: 0; }
     .payact #paySave { flex: 1 1 auto; }
     .payact #payNo { flex: 0 0 auto; width: auto; padding: 0 20px; }
-    .pquick { display: flex; gap: 6px; margin: 0 0 12px; flex: 0 0 auto; }
-    .pquick button { height: 48px; padding: 0 12px; border-radius: 999px; background: var(--cream); font-weight: 700; font-size: 14px; border: 1.5px solid var(--line); }
+    .pquick { display: flex; gap: 14px; margin: -4px 4px 12px; font-size: 14px; color: var(--muted); align-items: baseline; }
+    .pquick::before { content: 'הצעות:'; }
+    .payfield { flex: 0 0 8.2rem; }
+    .pquick button { height: auto; padding: 0; background: none; border: 0; color: var(--terra); font-weight: 700; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; }
     .prrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 12px 12px; border-radius: 14px; background: var(--cream); margin-bottom: 8px; cursor: pointer; }
     .prrow b { font-size: 16px; }
     .prrow small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
@@ -704,11 +706,11 @@
       <div class="ppanel" data-panel="pay" hidden>
         <div class="payrow">
           <label class="field"><span>סכום ששולם (₪)</span><input name="pay_amount" type="number" inputmode="decimal" min="0" step="any" /></label>
-          <div class="pquick" id="payQuick"></div>
+          <label class="field payfield"><span>דרך העברה</span><select name="pay_method"><option value="paybox">פייבוקס</option><option value="bit">ביט</option><option value="cash">מזומן</option><option value="bank">בנק</option><option value="other">אחר</option></select></label>
         </div>
+        <div class="pquick" id="payQuick"></div>
+        <label class="field" id="payOtherField" hidden><span>פירוט קצר</span><input name="pay_method_note" maxlength="60" autocomplete="off" placeholder="למשל: פייפאל, צ׳ק" /></label>
         <button type="button" class="promolink" id="creditToggle" hidden aria-pressed="false"></button>
-        <button type="button" class="smalllink" id="payPromoLink" hidden>+ דרך יחצן</button>
-        <label class="field" id="commField" hidden><span id="commLabel">עמלה ליחצן (₪)</span><input name="pay_commission" type="number" inputmode="decimal" min="0" step="any" /></label>
         <div class="payact"><button class="btn" id="paySave" type="button">שמירה</button></div>
       </div>
       <div class="ppanel" data-panel="promoter" hidden>
@@ -736,6 +738,7 @@
           <label class="field"><span>טלפון</span><input name="phone" type="tel" inputmode="tel" maxlength="20" autocomplete="off" /></label>
           <label class="field"><span>גיל</span><input name="age" type="number" inputmode="numeric" min="18" max="99" /></label>
         </div>
+        <label class="field"><span>יחצן</span><select name="promoter_sel" id="pPromoSel"></select></label>
         <div class="note" id="pRegLine" style="color:var(--muted);font-size:14px;margin:2px 4px 10px"></div>
         <button class="btn ghost" id="pDelete" type="button">מחיקת משתתף</button>
       </div>
@@ -1688,32 +1691,26 @@
     const f = pForm;
     const amount = l.paid_amount != null ? Number(l.paid_amount) : (m ? defaultPrice(m) : PRICE_EARLY);
     f.pay_amount.value = opts && opts.amount != null ? opts.amount : amount;
-    /* היחצן הוא של המשתתף (האייקון בכותרת); עמלה מוצגת ונערכת רק כשיש יחצן */
+    /* היחצן שייך למשתתף (לשונית הפרטים): העמלה מחושבת אוטומטית לפי התעריף על המפגש הראשון ששולם, בלי שדות כאן */
     const prId = (p && p.promoter_id) || l.promoter_id || '', pr = promoterOf(prId);
-    /* עמלה ליחצן רק על המפגש הראשון של המשתתף: אם כבר יש לו תשלום על מפגש אחר, אין עמלה (ההכנסה עדיין משויכת ליחצן) */
     const isFirst = !state.payments.some((x) => x.participant_id === pid && x.kind === 'payment' && x.meeting_id && x.meeting_id !== mid), commPr = isFirst ? pr : null;
-    let dirty = l.commission != null;
-    f.pay_commission.value = l.commission != null ? Number(l.commission) : calcCommission(commPr, amount);
-    /* בלי יחצן: אין שדה עמלה, רק קישור קטן ל"בחירת יחצן" (אותו מסך כמו הרמקול בכותרת, חץ חזרה מחזיר לכאן) */
-    $('#payPromoLink').hidden = !!pr || !!(p && p.source === 'site-ad');
-    $('#payPromoLink').onclick = () => openPromoterPickFromPay(pid, mid);
-    $('#commField').hidden = !commPr; $('#commLabel').textContent = pr ? 'עמלה ל' + pr.name + ' (₪)' : 'עמלה ליחצן (₪)';
     $('#payQuick').innerHTML = [PRICE_EARLY, PRICE_LATE].map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
-    const recalc = () => { if (!dirty) f.pay_commission.value = calcCommission(commPr, f.pay_amount.value); };
-    f.pay_amount.oninput = recalc;
-    f.pay_commission.oninput = () => { dirty = true; };
-    $('#payQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) { f.pay_amount.value = b.dataset.q; recalc(); } };
+    $('#payQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) f.pay_amount.value = b.dataset.q; };
+    f.pay_method.value = l.pay_method || 'paybox'; f.pay_method_note.value = l.pay_method_note || '';
+    const paintOther = () => { $('#payOtherField').hidden = f.pay_method.value !== 'other'; };
+    f.pay_method.onchange = () => { paintOther(); if (f.pay_method.value === 'other') f.pay_method_note.focus(); }; paintOther();
     /* קרדיט קיים: כפתור "שימוש בקרדיט" משלם (גם) מהקרדיט שנשאר מביטול קודם */
     const credit = creditOf(pid); let useCredit = false;
     const ct = $('#creditToggle'); ct.hidden = !(credit > 0);
     const paintCredit = () => { ct.textContent = useCredit ? '✓ משלם מהקרדיט (₪' + nfm(credit) + ' זמין)' : 'שימוש בקרדיט: ₪' + nfm(credit) + ' זמין'; ct.classList.toggle('on', useCredit); };
     paintCredit();
-    ct.onclick = () => { useCredit = !useCredit; if (useCredit) { f.pay_amount.value = Math.min(credit, parseFloat(f.pay_amount.value) || credit); recalc(); } paintCredit(); };
+    ct.onclick = () => { useCredit = !useCredit; if (useCredit) f.pay_amount.value = Math.min(credit, parseFloat(f.pay_amount.value) || credit); paintCredit(); };
     const save = () => {
       const amt = parseFloat(f.pay_amount.value); if (!(amt >= 0)) { f.pay_amount.focus(); return; }
-      const cm = commPr && f.pay_commission.value !== '' ? parseFloat(f.pay_commission.value) : null;
       const fromCredit = useCredit && credit > 0, amtFinal = fromCredit ? Math.min(amt, credit) : amt;
-      setPayStatus(pid, mid, 'paid', { paid_amount: amtFinal, promoter_id: pr ? pr.id : null, commission: Number.isFinite(cm) ? cm : null, paid_at: l.paid_at || new Date().toISOString() }, { fromCredit });
+      const cm = commPr ? ((l.commission != null && Number(l.paid_amount) === amtFinal) ? Number(l.commission) : calcCommission(commPr, amtFinal)) : null;
+      const method = f.pay_method.value, mnote = method === 'other' ? f.pay_method_note.value.trim().slice(0, 60) : '';
+      setPayStatus(pid, mid, 'paid', { paid_amount: amtFinal, promoter_id: pr ? pr.id : null, commission: Number.isFinite(cm) ? cm : null, paid_at: l.paid_at || new Date().toISOString(), pay_method: method, pay_method_note: mnote || null }, { fromCredit });
       toMain();
     };
     $('#paySave').onclick = save;
@@ -1722,8 +1719,8 @@
   async function setPayStatus(pid, mid, st, extra, opts) {
     const l = linkOf(pid, mid);
     if (!l) return;
-    const prev = { paid: l.paid, pay_requested_at: l.pay_requested_at, exempt: l.exempt, paid_amount: l.paid_amount, promoter_id: l.promoter_id, commission: l.commission, paid_at: l.paid_at };
-    const CLR = { paid_amount: null, promoter_id: null, commission: null, paid_at: null };
+    const prev = { paid: l.paid, pay_requested_at: l.pay_requested_at, exempt: l.exempt, paid_amount: l.paid_amount, promoter_id: l.promoter_id, commission: l.commission, paid_at: l.paid_at, pay_method: l.pay_method, pay_method_note: l.pay_method_note };
+    const CLR = { paid_amount: null, promoter_id: null, commission: null, paid_at: null, pay_method: null, pay_method_note: null };
     const body = st === 'paid' ? Object.assign({ paid: true, exempt: false }, extra || {}) : st === 'requested' ? Object.assign({ paid: false, exempt: false, pay_requested_at: new Date().toISOString() }, CLR) : st === 'exempt' ? Object.assign({ paid: false, exempt: true, pay_requested_at: null }, CLR) : Object.assign({ paid: false, exempt: false, pay_requested_at: null }, CLR);
     Object.assign(l, body); render(); refreshSheetMeetings();
     try {
@@ -1732,8 +1729,8 @@
     try { await recordLedger(pid, mid, prev, st, extra, opts); } catch (err) { fail(err); }
   }
   /* יומן תשלומים: כל סימון תשלום או החזר יוצר רשומה חדשה (תיקון תשלום = החזר של הישן + תשלום חדש) */
-  async function addPayRecord(pid, mid, kind, amount, promoterId, commission, fromCredit) {
-    const body = { participant_id: pid, meeting_id: mid || null, kind, from_credit: !!fromCredit, amount: Number(amount) || 0, promoter_id: promoterId || null, commission: commission != null && commission !== '' ? Number(commission) : null, author_name: authorName() };
+  async function addPayRecord(pid, mid, kind, amount, promoterId, commission, fromCredit, method, methodNote) {
+    const body = { participant_id: pid, meeting_id: mid || null, kind, from_credit: !!fromCredit, amount: Number(amount) || 0, promoter_id: promoterId || null, commission: commission != null && commission !== '' ? Number(commission) : null, author_name: authorName(), method: kind === 'payment' ? (method || null) : null, method_note: kind === 'payment' ? (methodNote || null) : null };
     const [row] = await api(T.pay, { method: 'POST', body, prefer: 'return=representation' });
     if (row && !state.payments.some((x) => x.id === row.id)) state.payments.push(row);
     if (sheet && sheet.id) refreshSheetMeetings();
@@ -1743,7 +1740,7 @@
     const wasPaid = !!prev.paid && !prev.exempt, oldAmt = prev.paid_amount != null ? Number(prev.paid_amount) : PRICE_EARLY;
     const changed = st === 'paid' && wasPaid && extra && (Number(prev.paid_amount != null ? prev.paid_amount : PRICE_EARLY) !== Number(extra.paid_amount) || (prev.promoter_id || null) !== (extra.promoter_id || null) || Number(prev.commission || 0) !== Number(extra.commission || 0));
     if (wasPaid && (st !== 'paid' || changed)) await addPayRecord(pid, mid, (opts.mode === 'credit' && st !== 'paid') ? 'credit' : 'refund', oldAmt, prev.promoter_id, prev.commission);
-    if (st === 'paid' && (!wasPaid || changed)) await addPayRecord(pid, mid, 'payment', extra.paid_amount, extra.promoter_id, extra.commission, opts.fromCredit);
+    if (st === 'paid' && (!wasPaid || changed)) await addPayRecord(pid, mid, 'payment', extra.paid_amount, extra.promoter_id, extra.commission, opts.fromCredit, extra.pay_method, extra.pay_method_note);
   }
 
   async function setLinked(pid, mid, on, mode) {
@@ -2135,6 +2132,12 @@
     const age = shownAge(p);
     h.innerHTML = '<span class="tname">' + esc(p.name) + '</span>' + (age != null || p.gender ? '<span class="tchip"><bdi>' + (p.gender ? '<b>' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : '') + '</bdi></span>' : '');
   }
+  /* בחירת יחצן במשתתף (לשונית הפרטים): ללא / פרסום בפייסבוק (בלי עמלה) / יחצנים / יחצן חדש */
+  function fillPromoSel(p) {
+    const sel = $('#pPromoSel'); if (!sel) return;
+    sel.innerHTML = '<option value="">ללא יחצן</option><option value="__fb">פרסום בפייסבוק (בלי עמלה)</option>' + state.promoters.map((x) => '<option value="' + x.id + '">' + esc(x.name) + ' (' + rateLabel(x) + ')</option>').join('') + '<option value="__new">+ יחצן חדש</option>';
+    sel.value = p ? (p.source === 'site-ad' && !p.promoter_id ? '__fb' : (p.promoter_id || '')) : (sheet && sheet.promoSel) || '';
+  }
   function openParticipant(id, tab, fromEl) {
     const p = id ? state.participants.find((x) => x.id === id) : null;
     sheet = p ? { id: p.id } : { id: null, links: new Map(state.filter ? [[state.filter, false]] : []) };
@@ -2143,6 +2146,7 @@
     pForm.phone.value = p ? localPhone(p.phone) : '';
     pForm.age.value = p ? (shownAge(p) ?? '') : '';
     pForm.gender.value = p && p.gender ? p.gender : '';
+    fillPromoSel(p);
     setTitle(p);
     $('#pRegLine').textContent = p && regDate(p) ? ('תאריך הרשמה: ' + regDateTime(p) + (p.source === 'site' ? ' (דרך האתר)' : p.source === 'site-ad' ? ' (דרך האתר, ממומן)' : '')) : '';
     renderContact();
@@ -2225,6 +2229,12 @@
   /* עריכה: שמירה אוטומטית של כל שדה ששונה */
   let savedTimer;
   pForm.addEventListener('change', async (e) => {
+    if (e.target.name === 'promoter_sel') {
+      const v = e.target.value;
+      if (v === '__new') { e.target.value = (sheet && sheet.id) ? ((state.participants.find((x) => x.id === sheet.id) || {}).promoter_id || '') : ''; openNewPromoter((row) => { fillPromoSel(sheet && sheet.id ? state.participants.find((x) => x.id === sheet.id) : null); $('#pPromoSel').value = row.id; $('#pPromoSel').dispatchEvent(new Event('change', { bubbles: true })); }); return; }
+      if (sheet && sheet.id) setParticipantPromoter(v); else if (sheet) sheet.promoSel = v;
+      return;
+    }
     if (!sheet || !sheet.id || !e.target.name || e.target.name.startsWith('pay_')) return;
     const p = state.participants.find((x) => x.id === sheet.id);
     const v = readForm();
@@ -2262,7 +2272,7 @@
     const btn = $('#pSubmit'); btn.disabled = true;
     try {
       let p;
-      try { [p] = await api(T.p, { method: 'POST', body: { ...v, age_set_at: todayISO() }, prefer: 'return=representation' }); }
+      try { [p] = await api(T.p, { method: 'POST', body: Object.assign({ ...v, age_set_at: todayISO() }, (() => { const ps = sheet.promoSel || ''; return ps === '__fb' ? { source: 'site-ad' } : ps ? { promoter_id: ps } : {}; })()), prefer: 'return=representation' }); }
       catch (err) {
         /* הטלפון קיים אצל משתתף לא פעיל: מחזירים אותו להיות פעיל (בלי לעדכן את שאר השדות) */
         const norm = v.phone.replace(/^0/, '+972').replace(/[^+\d]/g, '');
