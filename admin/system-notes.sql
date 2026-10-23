@@ -101,7 +101,7 @@ declare
   n   text := public.harpatka_normalize_phone(p_phone);
   fullname text := btrim(regexp_replace(coalesce(p_name, ''), '\s+', ' ', 'g'));
   fn  text; ln text; nm text;
-  pid uuid; mid uuid; md date; mt time; act boolean;
+  pid uuid; mid uuid; md date; mt time; act boolean; stored text;
   res text := 'created'; linked int := 0; react boolean := false; base text; tail text;
 begin
   perform set_config('harpatka.skip_note', '1', true);   -- הרשמה מהטופס = הערת מערכת אחת (נכתבת בסוף), בלי הערות של הטריגרים
@@ -120,7 +120,8 @@ begin
     where meeting_date >= (now() at time zone 'Asia/Jerusalem')::date
     order by meeting_date, meeting_time limit 1;
 
-  select id, active, name into pid, act, nm from public.harpatka_participants where phone_norm = n limit 1;
+  select id, active, name into pid, act, stored from public.harpatka_participants where phone_norm = n limit 1;
+  if pid is not null and coalesce(stored, '') <> '' then nm := stored; end if;   -- משתתף קיים: השם המלא שלו מהמערכת (לא מאפסים את nm כשלא נמצא)
   if pid is not null then
     -- הטלפון הוא המפתח: משתתף קיים לא מתעדכן. משתתף לא פעיל (הוסר) חוזר להיות פעיל, בלי שינוי בשאר השדות
     if act then res := 'exists';
