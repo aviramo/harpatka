@@ -23,8 +23,9 @@ declare
   fullname text := btrim(regexp_replace(coalesce(p_name, ''), '\s+', ' ', 'g'));
   fn  text; ln text; nm text;
   pid uuid; mid uuid; md date; mt time; act boolean;
-  res text := 'created';
+  res text := 'created'; linked int := 0; react boolean := false; base text; tail text;
 begin
+  perform set_config('harpatka.skip_note', '1', true);   -- הרשמה מהטופס = הערת מערכת אחת (נכתבת בסוף), בלי הערות של הטריגרים
   if p_first is not null or p_last is not null then
     fn := btrim(regexp_replace(coalesce(p_first, ''), '\s+', ' ', 'g')); ln := btrim(regexp_replace(coalesce(p_last, ''), '\s+', ' ', 'g'));
   else
@@ -44,7 +45,7 @@ begin
   if pid is not null then
     -- הטלפון הוא המפתח: משתתף קיים לא מתעדכן. משתתף לא פעיל (הוסר) חוזר להיות פעיל, בלי שינוי בשאר השדות
     if act then res := 'exists';
-    else update public.harpatka_participants set active = true where id = pid; res := 'created'; end if;
+    else update public.harpatka_participants set active = true where id = pid; res := 'created'; react := true; end if;
   else
     begin
       insert into public.harpatka_participants (first_name, last_name, phone, age, age_set_at, source, gender)
@@ -59,6 +60,14 @@ begin
   if mid is not null and pid is not null then
     insert into public.harpatka_attendance (participant_id, meeting_id, paid) values (pid, mid, false)
       on conflict (participant_id, meeting_id) do nothing;
+    get diagnostics linked = row_count;
+  end if;
+  if pid is not null then
+    base := case when res = 'exists' then 'נרשם/ה שוב דרך האתר' when react then 'חזר/ה להיות פעיל/ה בהרשמה חדשה דרך האתר'
+                 else 'נרשם/ה דרך האתר' || case when p_src = 'p' then ' (ממומן)' else '' end end;
+    tail := case when mid is null then ' (אין מפגש קרוב)' when linked > 0 then ' ושויך/ה למפגש ' || public.harpatka_meeting_label(mid)
+                 else ' (כבר משויך/ת למפגש ' || public.harpatka_meeting_label(mid) || ')' end;
+    perform public.harpatka_sys_note(pid, base || tail);
   end if;
 
   if res = 'created' then
