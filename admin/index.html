@@ -1156,6 +1156,14 @@
     } catch (err) { fail(err); }
   });
 
+  /* פופאפ משתתף פתוח: רשימת ההערות והמפגשים מתעדכנות בזמן אמת (רק כשמשהו השתנה, בלי לגעת בשדה ההקלדה) */
+  let sheetSig = '';
+  function refreshOpenSheet() {
+    if (!(sheet && sheet.id && pDlg.open)) { sheetSig = ''; return; }
+    const sig = notesOf(sheet.id).map((n) => n.id).join(',') + '|' + state.att.filter((a) => a.participant_id === sheet.id).map((a) => [a.meeting_id, a.paid, a.exempt, a.pay_requested_at, a.attended, a.paid_amount].join(':')).join(',');
+    if (sig === sheetSig) return; sheetSig = sig;
+    renderNotes(); refreshSheetMeetings();
+  }
   /* ---------- טעינה ---------- */
   async function load(silent) {
     if (!silent) $('#status').innerHTML = '<div class="empty">טוען…</div>';
@@ -1193,7 +1201,7 @@
         return;
       }
       urlReady = true;
-      render();
+      render(); refreshOpenSheet();
     } catch (err) {
       console.error(err);
       if (silent) return;   // רענון שקט שנכשל: משאירים את מה שמוצג
