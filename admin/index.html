@@ -1088,7 +1088,7 @@
     return Date.UTC(y, mo - 1, da, h % 24, mi);
   };
   /* מצב הגעה זמני (לבדיקה): admin/?att=1 פותח את סימון ההגעות בכל מפגש בלי להמתין לחצי שעה לפני; ?att=0 או לחיצה על התגית מכבים; נשמר רק בלשונית הנוכחית */
-  const FORCE_ATTEND_DEFAULT = true;   // זמני: מצב ההגעה פתוח תמיד (בלי להמתין לחצי שעה לפני המפגש). להחזרה לרגיל: false
+  const FORCE_ATTEND_DEFAULT = false;   // true = מצב הגעה פתוח תמיד (לבדיקות); false = רק מחצי שעה לפני המפגש (אפשר גם admin/?att=1 זמנית)
   let forceAttend = FORCE_ATTEND_DEFAULT;
   try { const ap = new URLSearchParams(location.search).get('att'); if (ap === '1') sessionStorage.setItem('harpatka_att', '1'); else if (ap === '0') { sessionStorage.removeItem('harpatka_att'); forceAttend = false; } if (ap !== '0') forceAttend = FORCE_ATTEND_DEFAULT || sessionStorage.getItem('harpatka_att') === '1'; } catch (e) {}
   const attendOpen = (m) => { if (!m) return false; if (forceAttend) return true; const [y, mo, da] = m.meeting_date.split('-').map(Number), [h, mi] = String(m.meeting_time).split(':').map(Number); return nowIL() >= Date.UTC(y, mo - 1, da, h, mi) - 30 * 60000; };
