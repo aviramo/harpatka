@@ -70,7 +70,6 @@
       <option value="">הכל</option>
       <option value="msg">מסרים</option>
       <option value="photo">תמונות</option>
-      <option value="video">וידאו</option>
     </select>
   </div>
   <div id="grid" class="grid"></div>
@@ -141,10 +140,7 @@
     }
 
     // סרטונים שמופיעים ראשונים, לפני המודעות הממוספרות. סרטון מעודכן = שם קובץ חדש (cache)
-    const FEATURED = [{ label: 'משניים למעגל', name: 'הסרטון משניים למעגל', type: 'video', base: 'motion-group', w: 1080, h: 1350,
-      img: 'img/motion-group-a0976d5d.jpg', vid: 'video/motion-group-a0976d5d.mp4',
-      alt: 'שניים בסטודיו מוצף אור: מבט, ריקוד, ידיים שנפגשות, ומשם קבוצה שלמה במעגל, ידיים מורמות ושורה ארוכה של ידיים אחוזות' },
-      { label: 'עוד סוויפ?', name: 'הסרטון עוד סוויפ', type: 'photo', base: 'sweeps', w: 1080, h: 1350,
+    const FEATURED = [{ label: 'עוד סוויפ?', name: 'הסרטון עוד סוויפ', type: 'photo', base: 'sweeps', w: 1080, h: 1350,
       img: 'img/sweeps-b626f2ff.jpg', vid: 'video/sweeps-b626f2ff.mp4', alt: 'עוד סוויפ? מרימים את המבט, מתחילים לנוע. יוצאים להרפתקה: מפגש דרך מוזיקה, תנועה וקשר' },
       { label: 'יש רגעים שמפספסים', name: 'הסרטון יש רגעים שמפספסים', type: 'photo', base: 'biodanza', w: 1080, h: 1350,
       img: 'img/biodanza-feed-cfba800c.jpg', vid: 'video/biodanza-feed-cfba800c.mp4', alt: 'יש רגעים שמפספסים. ויש רגעים שבוחרים להיות בהם. יוצאים להרפתקה: להיות, לנוע, להיפגש' }];
@@ -211,9 +207,9 @@
     const qEl = document.getElementById('q'), qClr = document.getElementById('qClr'), typesEl = document.getElementById('types'), noneEl = document.getElementById('none');
     let typeSel = '';
     document.getElementById('types').addEventListener('change', e => { typeSel = e.target.value; applySearch(); });
-    const TYPE_LABELS = { '': 'הכל', msg: 'מסרים', photo: 'תמונות', video: 'וידאו' };
+    const TYPE_LABELS = { '': 'הכל', msg: 'מסרים', photo: 'תמונות' };
     function applySearch() {
-      const words = norm(qEl.value).split(' ').filter(Boolean), count = { '': 0, msg: 0, photo: 0, video: 0 };
+      const words = norm(qEl.value).split(' ').filter(Boolean), count = { '': 0, msg: 0, photo: 0 };
       let shown = 0;
       document.querySelectorAll('#grid figure').forEach(f => {
         const hay = norm(f.dataset.text), match = words.every(w => hay.includes(w)), ok = match && (!typeSel || f.dataset.type === typeSel);
