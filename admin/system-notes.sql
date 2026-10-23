@@ -1,7 +1,7 @@
 -- הערות מערכת אוטומטיות על כל שינוי בסטטוס ועל כל הרשמה/שיוך של משתתף (מעכשיו). מי ביצע (מנהל) מצוין בסוף ההערה.
 alter table public.harpatka_notes add column if not exists system boolean not null default false;
 -- יומן אירועים מובנה (בנוסף לטקסט) כדי שאפשר יהיה לסנן/לצבוע לפי סוג אירוע וסטטוס:
--- event_type: registered | reregistered | reactivated | meeting_linked | status_changed | attended | attendance_cancelled | meeting_removed | deactivated
+-- event_type: registered | reregistered | reactivated | meeting_linked | walk_in | status_changed | attended | attendance_cancelled | meeting_removed | deactivated
 -- old_status/new_status: unpaid | requested | paid | exempt
 alter table public.harpatka_notes add column if not exists event_type text;
 alter table public.harpatka_notes add column if not exists meeting_id uuid;
@@ -50,7 +50,11 @@ declare os text; ns text;
 begin
   if current_setting('harpatka.skip_note', true) = '1' then return coalesce(new, old); end if;
   if tg_op = 'INSERT' then
-    perform public.harpatka_sys_note(new.participant_id, 'שויך/ה למפגש ' || public.harpatka_meeting_label(new.meeting_id), 'meeting_linked', new.meeting_id);
+    if coalesce(new.attended, false) then
+      perform public.harpatka_sys_note(new.participant_id, 'הגיע/ה למפגש ' || public.harpatka_meeting_label(new.meeting_id) || ' (ללא הרשמה מראש)', 'walk_in', new.meeting_id);
+    else
+      perform public.harpatka_sys_note(new.participant_id, 'שויך/ה למפגש ' || public.harpatka_meeting_label(new.meeting_id), 'meeting_linked', new.meeting_id);
+    end if;
   elsif tg_op = 'UPDATE' then
     os := public.harpatka_pay_status(old.paid, old.exempt, old.pay_requested_at); ns := public.harpatka_pay_status(new.paid, new.exempt, new.pay_requested_at);
     if os <> ns then

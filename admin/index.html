@@ -112,6 +112,7 @@
     .list .group.newp { padding: 0; }
     .row.other { background: transparent; box-shadow: none; border: 1.5px dashed var(--coral); }
     .addm { height: 30px; padding: 0 12px; border-radius: 999px; background: var(--terra); color: #fff; font-weight: 700; font-size: 14px; }
+    .addm.walk { background: #E3F4E9; color: #1E7A45; }
     .addm.wide { width: 100%; height: 38px; background: transparent; color: var(--terra); border: 1.5px dashed var(--coral); }
     .row {
       display: flex; flex-direction: column; justify-content: space-between; gap: 12px;
@@ -1362,7 +1363,7 @@
           const age = shownAge(p);
           return '<li class="row other"><div class="main" role="button" tabindex="0" data-edit="' + p.id + '"><div class="nm"><bdi class="name">' + esc(p.name) + '</bdi></div>' +
             ((age != null || p.gender) ? '<div class="meta">' + ((age != null || p.gender) ? '<span class="age" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? '<b class="gl">' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : '') + '</bdi></span>' : '') + '</div>' : '') + '</div>' +
-            '<div class="acts"><button type="button" class="addm" data-addm="' + p.id + '">+ הוספה למפגש</button></div></li>';
+            '<div class="acts"><button type="button" class="addm" data-addm="' + p.id + '">+ הוספה למפגש</button>' + (attendOpen(state.meetings.find((x) => x.id === state.filter)) ? '<button type="button" class="addm walk" data-walk="' + p.id + '">הגיע בלי הרשמה</button>' : '') + '</div></li>';
         }).join('')
       : '';
     const newBtn = q
@@ -1665,6 +1666,14 @@
     Object.assign(l, body); render(); if (sheet && sheet.id) refreshSheetMeetings();
     try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body }); }
     catch (err) { Object.assign(l, prev); render(); if (sheet && sheet.id) refreshSheetMeetings(); fail(err); }
+  }
+  /* הגיע בלי להיות רשום למפגש (הפתעה): נוצר שיוך עם הגעה מסומנת, סטטוס "טרם טופל" */
+  async function walkIn(pid, mid, after) {
+    if (linkOf(pid, mid)) { setAttended(pid, mid, true); if (after) after(); return; }
+    const row = { participant_id: pid, meeting_id: mid, paid: false, attended: true, attended_at: new Date().toISOString() };
+    state.att.push(row); render(); if (sheet && sheet.id) refreshSheetMeetings(); if (after) after();
+    try { await api(T.a, { method: 'POST', body: row }); toast('סומן שהגיע (לא היה רשום למפגש)'); }
+    catch (err) { state.att = state.att.filter((x) => x !== row); render(); if (sheet && sheet.id) refreshSheetMeetings(); fail(err); }
   }
   /* פרטי תשלום: סכום (ברירת מחדל לפי מועד), יחצן (ברירת מחדל של המשתתף) ועמלה (ברירת מחדל לפי תעריף היחצן), כולם ניתנים לשינוי לתשלום הזה */
   function openPayView(pid, mid, opts) {
@@ -2166,6 +2175,7 @@
       return '<div class="mrow' + (on ? ' on' : '') + '">' +
         '<button type="button" class="mtoggle" data-mt="' + m.id + '" aria-pressed="' + on + '"><span class="box">' + (on ? '✓' : '') + '</span>' + esc(meetingLabel(m, true)) + '</button>' +
         '<button type="button" class="pay ' + st + '" data-mp="' + m.id + '"' + (on ? '' : ' hidden') + '>' + STATUS_LABEL[st] + (st === 'paid' && sheet.id && (linkOf(sheet.id, m.id) || {}).paid_amount != null ? ' ' + Number(linkOf(sheet.id, m.id).paid_amount) : '') + '</button>' +
+        (sheet.id && !on && attendOpen(m) ? '<button type="button" class="here sm" data-hw="' + m.id + '">הגיע בלי הרשמה</button>' : '') +
         (sheet.id && on && attendOpen(m) ? '<button type="button" class="here sm" data-ht="' + m.id + '" aria-pressed="' + !!(linkOf(sheet.id, m.id) || {}).attended + '">' + ((linkOf(sheet.id, m.id) || {}).attended ? '✓ הגיע' : 'לא הגיע') + '</button>' : '') +
       '</div>';
     }).join('');
@@ -2173,6 +2183,8 @@
 
   $('#pMore').addEventListener('click', () => { mLimit += 3; refreshSheetMeetings(); });
   $('#pMeetings').addEventListener('click', (e) => {
+    const hw = e.target.closest('[data-hw]');
+    if (hw) { walkIn(sheet.id, hw.dataset.hw); return; }
     const ht = e.target.closest('[data-ht]');
     if (ht) { setAttended(sheet.id, ht.dataset.ht, ht.getAttribute('aria-pressed') !== 'true'); return; }
     const t = e.target.closest('[data-mt]'), pay = e.target.closest('[data-mp]');
@@ -2354,6 +2366,8 @@
     if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-edit]')) { e.preventDefault(); openParticipant(e.target.dataset.edit, undefined, e.target.closest('li.row')); }
   });
   $('#list').addEventListener('click', (e) => {
+    const wk = e.target.closest('[data-walk]');
+    if (wk) { walkIn(wk.dataset.walk, state.filter, () => { state.q = ''; $('#q').value = ''; renderList(); }); return; }
     const am = e.target.closest('[data-addm]');
     if (am) { confirmLink(am.dataset.addm, state.filter, true, () => { state.q = ''; $('#q').value = ''; renderList(); toast('נוסף למפגש'); }); return; }
     if (e.target.closest('#addNew')) {
