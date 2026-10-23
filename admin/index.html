@@ -605,6 +605,7 @@
     .mrow .here.sm[aria-pressed="true"] { color: #fff; }
     .hcount { display: inline-block; font-size: 13px; font-weight: 700; color: #2F7D4F; background: var(--green-bg); padding: 2px 10px; border-radius: 999px; }
     .hcount[hidden] { display: none; }
+    .attforce { background: #FBE9C7; color: #7A5410; cursor: pointer; }
     .row .meta .age:not([title]) { grid-column: 5; margin-inline-end: 0; }   /* "ללא מפגש": בעמודת הסטטוס, לא בעמודת הגיל */
     .row .name { font-size: 15.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .row .nm .name { overflow-wrap: normal; }
@@ -635,6 +636,7 @@
         <div class="msel">
           <h1><button type="button" id="mSel" aria-haspopup="menu" aria-expanded="false"><span id="mSelTxt">לא נבחר מפגש</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></h1>
           <div class="hcount" id="hereCount" hidden></div>
+          <button type="button" class="hcount attforce" id="attForce" hidden title="כיבוי מצב ההגעה הזמני">מצב הגעה זמני ✕</button>
           <div class="sortmenu mmenu" id="mMenu" role="menu" hidden></div>
         </div>
         <div class="hicons">
@@ -1076,7 +1078,10 @@
     const [d, tm] = s.split(' '), [y, mo, da] = d.split('-').map(Number), [h, mi] = tm.split(':').map(Number);
     return Date.UTC(y, mo - 1, da, h % 24, mi);
   };
-  const attendOpen = (m) => { if (!m) return false; const [y, mo, da] = m.meeting_date.split('-').map(Number), [h, mi] = String(m.meeting_time).split(':').map(Number); return nowIL() >= Date.UTC(y, mo - 1, da, h, mi) - 30 * 60000; };
+  /* מצב הגעה זמני (לבדיקה): admin/?att=1 פותח את סימון ההגעות בכל מפגש בלי להמתין לחצי שעה לפני; ?att=0 או לחיצה על התגית מכבים; נשמר רק בלשונית הנוכחית */
+  let forceAttend = false;
+  try { const ap = new URLSearchParams(location.search).get('att'); if (ap === '1') sessionStorage.setItem('harpatka_att', '1'); else if (ap === '0') sessionStorage.removeItem('harpatka_att'); forceAttend = sessionStorage.getItem('harpatka_att') === '1'; } catch (e) {}
+  const attendOpen = (m) => { if (!m) return false; if (forceAttend) return true; const [y, mo, da] = m.meeting_date.split('-').map(Number), [h, mi] = String(m.meeting_time).split(':').map(Number); return nowIL() >= Date.UTC(y, mo - 1, da, h, mi) - 30 * 60000; };
   const sortMeetings = () => state.meetings.sort((a, b) => (b.meeting_date + b.meeting_time).localeCompare(a.meeting_date + a.meeting_time));   // מהחדש לישן
 
   const linksOf = (pid) => state.att.filter((a) => a.participant_id === pid);
@@ -2351,6 +2356,8 @@
     if (ed) openParticipant(ed.dataset.edit, undefined, row);
   });
 
+  $('#attForce').hidden = !forceAttend;
+  $('#attForce').addEventListener('click', () => { forceAttend = false; try { sessionStorage.removeItem('harpatka_att'); } catch (e) {} $('#attForce').hidden = true; render(); if (sheet && sheet.id && pDlg.open) refreshSheetMeetings(); toast('מצב ההגעה הזמני כובה'); });
   let attendKey = '';
   setInterval(() => {
     const k = state.meetings.filter(attendOpen).map((m) => m.id).join(',');
