@@ -96,6 +96,7 @@ begin
          concat_ws('&', case when p_mid is not null then 'm=' || p_mid end, case when p_pid is not null then 'p=' || p_pid end) else '' end;
   perform public.harpatka_send_mail('signup',
     jsonb_build_object('name', p_name, 'phone', p_phone, 'age', p_age, 'meeting', meeting,
+      'gender', case p_gender when 'male' then 'גבר' when 'female' then 'אישה' else 'לא צוין' end,
       'when', to_char(now() at time zone 'Asia/Jerusalem', 'DD.MM.YYYY HH24:MI'),
       'wa_link', 'https://wa.me/' || regexp_replace(coalesce(p_phone, ''), '\D', '', 'g'), 'admin_link', lnk),
     null,
