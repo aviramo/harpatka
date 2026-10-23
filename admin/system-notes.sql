@@ -27,8 +27,9 @@ create or replace function public.harpatka_sys_note(p_pid uuid, p_body text, p_e
 returns void language plpgsql security definer set search_path = public as $$
 declare actor text := coalesce(nullif(auth.jwt() -> 'user_metadata' ->> 'full_name', ''), auth.jwt() ->> 'email');
 begin
+  -- כותב ההערה הוא מי שביצע את השינוי (מנהל); בהרשמה מהאתר, בלי מנהל: "מערכת". הטקסט בלי "בוצע על ידי".
   insert into public.harpatka_notes (participant_id, body, author_email, author_name, system, event_type, meeting_id, old_status, new_status, amount, source)
-  values (p_pid, p_body || case when actor is not null then ' · בוצע על ידי ' || actor else '' end, 'system', 'מערכת', true, p_event, p_meeting, p_old, p_new, p_amount, p_source);
+  values (p_pid, p_body, coalesce(auth.jwt() ->> 'email', 'system'), coalesce(actor, 'מערכת'), true, p_event, p_meeting, p_old, p_new, p_amount, p_source);
 exception when others then null;
 end $$;
 revoke all on function public.harpatka_sys_note(uuid, text, text, uuid, text, text, numeric, text) from public, anon, authenticated;
