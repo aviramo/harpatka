@@ -1835,10 +1835,12 @@
   };
   /* הודעת "היום זה קורה": רק למשתתף ששילם על מפגש שמתקיים היום (שעון ישראל). התאריך והשעות לפי המפגש; המקום קבוע */
   const PIN_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.6"/></svg>';
+  const FORCE_EVENT_BTN = true;   // זמני לבדיקה: מציג את כפתור פרטי הערב לכל משתתף (להחזיר ל-false)
   const todayEventFor = (p) => {
     const today = new Date(nowIL()).toISOString().slice(0, 10);
     const ms = linksOf(p.id).filter((l) => l.paid && !l.exempt).map((l) => state.meetings.find((x) => x.id === l.meeting_id)).filter((m) => m && m.meeting_date === today)
       .sort((x, y) => String(x.meeting_time).localeCompare(String(y.meeting_time)));
+    if (!ms[0] && FORCE_EVENT_BTN) return state.meetings.slice().sort((x, y) => (y.meeting_date + y.meeting_time).localeCompare(x.meeting_date + x.meeting_time)).find((m) => m.meeting_date >= today) || state.meetings[0] || null;
     return ms[0] || null;
   };
   const eventDayMessage = (m) => {
