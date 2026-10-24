@@ -1883,6 +1883,7 @@
   /* עיגול ברשימה: כחול, שליחת פרטי הערב (עד חצי שעה לפני המפגש; אז הוא הופך לעיגול הגעה הירוק); נעלם כשכולם קיבלו */
   const evCircle = (p) => {
     const m = eventMeeting(); if (!m || attendOpen(m)) return '';
+    const [ey, em, ed] = m.meeting_date.split('-').map(Number); if (nowIL() < Date.UTC(ey, em - 1, ed, 9, 0)) return '';   // מופיע רק מ-9:00 בבוקר של יום המפגש
     const l = evLink(p); if (!l || (!FORCE_EVENT_BTN && evAllSent(m))) return '';
     if (l.details_sent_at) return '<button type="button" class="evc sent" data-evun="' + p.id + '" title="פרטי הערב נשלחו (לחיצה מחזירה ללא נשלח)" aria-label="פרטי הערב נשלחו, לחיצה מחזירה ללא נשלח">✓</button>';
     const base = waLink(p.phone);
