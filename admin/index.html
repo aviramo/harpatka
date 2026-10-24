@@ -604,6 +604,11 @@
     .row .main.att { grid-template-columns: 54px minmax(0, max-content) minmax(0, 1fr) auto 66px 38px; }
     .row .main .here { width: 26px; height: 26px; border-width: 2px; font-size: 14px; justify-self: center; margin-inline-start: 6px; }
     .row .here.no { border-style: dashed; }
+    .evmark { grid-column: 6; grid-row: 1; justify-self: center; width: 26px; height: 26px; border-radius: 50%; background: #E4ECF8; color: #2F5EA8; display: grid; place-items: center; margin-inline-start: 6px; }
+    .evmark svg { width: 15px; height: 15px; }
+    .row .main.ev { grid-template-columns: 54px minmax(0, max-content) minmax(0, 1fr) auto 66px 38px; }
+    .row .main.att.ev { grid-template-columns: 54px minmax(0, max-content) minmax(0, 1fr) auto 66px 38px 38px; }
+    .row .main.att.ev .evmark { grid-column: 7; }
     .here:active { transform: scale(.92); }
     .here[aria-pressed="true"] { background: #2F7D4F; border-color: #2F7D4F; color: #fff; }
     .mrow .here.sm { width: auto; height: 32px; border-radius: 999px; padding: 0 9px; font-size: 13px; font-weight: 700; color: var(--muted); border-width: 1.5px; grid-column: auto; white-space: nowrap; flex: 0 0 auto; }
@@ -1171,7 +1176,7 @@
   let sheetSig = '';
   function refreshOpenSheet() {
     if (!(sheet && sheet.id && pDlg.open)) { sheetSig = ''; return; }
-    const sig = notesOf(sheet.id).map((n) => n.id).join(',') + '|' + state.att.filter((a) => a.participant_id === sheet.id).map((a) => [a.meeting_id, a.paid, a.exempt, a.pay_requested_at, a.attended, a.paid_amount].join(':')).join(',');
+    const sig = notesOf(sheet.id).map((n) => n.id).join(',') + '|' + state.att.filter((a) => a.participant_id === sheet.id).map((a) => [a.meeting_id, a.paid, a.exempt, a.pay_requested_at, a.attended, a.paid_amount, a.details_sent_at].join(':')).join(',');
     if (sig === sheetSig) return; sheetSig = sig;
     renderNotes(); refreshSheetMeetings();
   }
@@ -1182,7 +1187,7 @@
       const [p, m, a, nn, prs, pps, pays] = await Promise.all([
         api(T.p + '?select=*'),
         api(T.m + '?select=*'),
-        api(T.a + '?select=participant_id,meeting_id,paid,pay_requested_at,created_at,exempt,attended,paid_amount,promoter_id,commission,paid_at'),
+        api(T.a + '?select=participant_id,meeting_id,paid,pay_requested_at,created_at,exempt,attended,paid_amount,promoter_id,commission,paid_at,details_sent_at'),
         api(T.n + '?select=id,participant_id,body,author_email,author_name,created_at,has_image,system,event_type,old_status,new_status,meeting_id&order=created_at.desc'),
         api(T.pr + '?select=*&order=name.asc'),
         api(T.pp + '?select=*&order=paid_at.desc'),
@@ -1403,13 +1408,14 @@
         } else tags = '<span class="age">ללא מפגש</span>';
       }
       const hl = state.filter ? linkOf(p.id, state.filter) : null;
-      const tgm = attTarget(), tgl = tgm ? linkOf(p.id, tgm.id) : null, showHere = !!(tgm && attendOpen(tgm));
+      const tgm = attTarget(), tgl = tgm ? linkOf(p.id, tgm.id) : null, showHere = !!(tgm && attendOpen(tgm)), evPend = !!eventPending(p);
       return '<li class="row' + (hl && hl.attended && attendOpen(state.meetings.find((x) => x.id === state.filter)) ? ' arrived' : '') + '">' +
-        '<div class="main' + (showHere ? ' att' : '') + '" role="button" tabindex="0" data-edit="' + p.id + '">' +
+        '<div class="main' + (showHere ? ' att' : '') + (evPend ? ' ev' : '') + '" role="button" tabindex="0" data-edit="' + p.id + '">' +
           '<div class="nm"><bdi class="name">' + esc(p.name) + '</bdi>' + ((p.source === 'site-ad' || p.promoter_id) ? '<span class="ptags">' + (p.source === 'site-ad' ? '<span class="adtag" title="ממומן: הגיע ממודעה בתשלום" aria-label="ממומן"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 9a4 4 0 0 1 0 6"/></svg></span>' : '') + (p.promoter_id ? '<span class="prtag" title="יחצן: ' + esc((promoterOf(p.promoter_id) || {}).name || '') + '" aria-label="יחצן"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 9a4 4 0 0 1 0 6"/></svg></span>' : '') + '</span>' : '') + '</div>' +
           (true ? '<div class="meta">' + (true ? '<span class="age" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? '<b class="gl">' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : (p.gender ? '' : '—')) + '</bdi></span>' : '') + side + tags + '</div>' : '') +
           (noteLatest.get(p.id) ? '<div class="note" title="' + esc(noteLatest.get(p.id).author_name || '') + '">' + (noteLatest.get(p.id).has_image && !noteLatest.get(p.id).body ? IMG_ICON : esc(noteLatest.get(p.id).body)) + '</div>' : '') +
           (showHere ? '<button type="button" class="here' + (tgl && tgl.attended ? '' : ' no') + '" data-hr="' + p.id + '" data-hm="' + tgm.id + '" aria-pressed="' + !!(tgl && tgl.attended) + '" aria-label="' + (tgl && tgl.attended ? 'הגיע' : (tgl ? 'סימון הגעה' : 'הגיע בלי הרשמה')) + '" title="' + (tgl ? 'סימון הגעה' : 'לא רשום למפגש: סימון הגעה (הפתעה)') + '">✓</button>' : '') +
+          (evPend ? '<span class="evmark" title="טרם נשלחו פרטי הערב" aria-label="טרם נשלחו פרטי הערב">' + PIN_ICON + '</span>' : '') +
         '</div>' +
       '</li>';
     }).join('');
@@ -1813,8 +1819,30 @@
     no.onclick = () => { dlg.close(); reset(); };
     dlg.showModal();
   }
-  document.addEventListener('visibilitychange', () => { if (!document.hidden && markAwait) setTimeout(askMarkRequested, 250); });
-  window.addEventListener('focus', () => { if (markAwait) setTimeout(askMarkRequested, 250); });
+  /* אחרי שליחת הודעת פרטי הערב: כשחוזרים לדשבורד מאשרים שנשלחה, ואז הכפתור והסימון ברשימה נעלמים */
+  let evAwait = null;
+  async function setDetailsSent(pid, mid) {
+    const l = linkOf(pid, mid); if (!l) return;
+    const prev = l.details_sent_at; l.details_sent_at = new Date().toISOString(); render(); renderContact();
+    try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body: { details_sent_at: l.details_sent_at } }); }
+    catch (err) { l.details_sent_at = prev; render(); renderContact(); fail(err); }
+  }
+  function askEventSent() {
+    if (!evAwait) return;
+    const p = state.participants.find((x) => x.id === evAwait); evAwait = null; if (!p) return;
+    const m = eventPending(p); if (!m) return;
+    const dlg = $('#cDlg'), yes = $('#cYes'), no = $('#cNo');
+    $('#cTitle').textContent = 'לסמן שפרטי הערב נשלחו?';
+    $('#cText').innerHTML = 'נשלחה הודעת פרטי הערב ל' + nameB(p.name) + '?';
+    yes.textContent = 'כן, ההודעה נשלחה';
+    const reset = () => { yes.textContent = 'אישור'; };
+    yes.onclick = () => { dlg.close(); reset(); setDetailsSent(p.id, m.id); toast('סומן שפרטי הערב נשלחו'); };
+    no.onclick = () => { dlg.close(); reset(); };
+    dlg.showModal();
+  }
+  const askAwaited = () => { if (markAwait) askMarkRequested(); else if (evAwait) askEventSent(); };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && (markAwait || evAwait)) setTimeout(askAwaited, 250); });
+  window.addEventListener('focus', () => { if (markAwait || evAwait) setTimeout(askAwaited, 250); });
   /* הודעת הפתיחה בוואטסאפ (תבנית שהמשתמש קבע): למשתתף שטרם טופל. המחיר: 80 ₪ עד שלושה ימים לפני המפגש (לא כולל), ומאז 100 ₪ */
   const chaseMessage = (p) => {
     const who = SENDERS[emailOf()] || authorName(), first = String(p.name || '').trim().split(/\s+/)[0] || '';
@@ -1833,12 +1861,21 @@
   };
   /* הודעת "היום זה קורה": רק למשתתף ששילם על מפגש שמתקיים היום (שעון ישראל). התאריך והשעות לפי המפגש; המקום קבוע */
   const PIN_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.6"/></svg>';
-  const todayEventFor = (p) => {
-    const today = new Date(nowIL()).toISOString().slice(0, 10);
-    const ms = linksOf(p.id).filter((l) => l.paid || l.exempt).map((l) => state.meetings.find((x) => x.id === l.meeting_id)).filter((m) => m && m.meeting_date === today)
-      .sort((x, y) => String(x.meeting_time).localeCompare(String(y.meeting_time)));
-    return ms[0] || null;
+  const FORCE_EVENT_BTN = true;   // זמני לבדיקה: מציג את הכפתור והסימון גם בלי יום מפגש ותשלום (להחזיר ל-false)
+  /* מפגש "היום": מתקיים היום (שעון ישראל); בבדיקה הקרוב ביותר */
+  const eventMeeting = () => {
+    const today = new Date(nowIL()).toISOString().slice(0, 10), key = (m) => m.meeting_date + m.meeting_time;
+    const ms = state.meetings.filter((m) => m.meeting_date === today).sort((x, y) => key(x).localeCompare(key(y)));
+    if (ms[0]) return ms[0];
+    return FORCE_EVENT_BTN ? (state.meetings.filter((m) => m.meeting_date >= today).sort((x, y) => key(x).localeCompare(key(y)))[0] || state.meetings.slice().sort((x, y) => key(y).localeCompare(key(x)))[0] || null) : null;
   };
+  /* למשתתף ששילם (או חינם) על מפגש היום ועוד לא נשלחו לו הפרטים: המפגש; אחרת null */
+  const eventPending = (p) => {
+    const m = eventMeeting(); if (!m) return null;
+    const l = linkOf(p.id, m.id); if (!l || l.details_sent_at) return null;
+    return (l.paid || l.exempt || FORCE_EVENT_BTN) ? m : null;
+  };
+  const todayEventFor = eventPending;
   const eventDayMessage = (m) => {
     const [h, mi] = String(m.meeting_time).split(':').map(Number), hm = (min) => String(Math.floor(min / 60) % 24).padStart(2, '0') + ':' + String(min % 60).padStart(2, '0');
     const start = h * 60 + mi;
@@ -1857,12 +1894,14 @@
     const pend = pendingLinks(p);
     const waHref = base && pend.length ? base + '?text=' + encodeURIComponent(chaseMessage(p)) : base;
     let h = '<div class="ctop">' +
-      (base && todayEvt ? '<a class="cico cb-event" href="' + base + '?text=' + encodeURIComponent(eventDayMessage(todayEvt)) + '" target="_blank" rel="noopener" aria-label="שליחת פרטי הערב בוואטסאפ" title="שליחת פרטי הערב בוואטסאפ">' + PIN_ICON + '</a>' : '') +
+      (base && todayEvt ? '<a class="cico cb-event" data-evsent="' + p.id + '" href="' + base + '?text=' + encodeURIComponent(eventDayMessage(todayEvt)) + '" target="_blank" rel="noopener" aria-label="שליחת פרטי הערב בוואטסאפ" title="שליחת פרטי הערב בוואטסאפ">' + PIN_ICON + '</a>' : '') +
       (base ? '<a class="cico cb-wa" href="' + waHref + '"' + (pend.length ? ' data-markreq="' + p.id + '"' : '') + ' target="_blank" rel="noopener" aria-label="וואטסאפ" title="וואטסאפ">' + WA_ICON + '</a>' : '<span class="cico off" aria-label="וואטסאפ">' + WA_ICON + '</span>') + '</div>';
     box.innerHTML = h;
   }
   $('#pMsgs').addEventListener('click', (e) => {
     const w = e.target.closest('[data-markreq]');
+    const ev = e.target.closest('[data-evsent]');
+    if (ev) { evAwait = ev.dataset.evsent; return; }   // וואטסאפ עם פרטי הערב נפתח; בחזרה מאשרים שנשלח
     if (w) { markAwait = w.dataset.markreq; return; }   // הוואטסאפ נפתח; כשחוזרים לדשבורד שואלים אם להעביר ל"בטיפול"
     const c = e.target.closest('[data-copy]');
     if (c) { const txt = copyTexts[Number(c.dataset.copy)] || ''; (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast('הקישור הועתק'), () => toast('אי אפשר להעתיק מכאן')); }
