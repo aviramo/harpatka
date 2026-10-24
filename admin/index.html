@@ -1872,9 +1872,9 @@
     return FORCE_EVENT_BTN ? (state.meetings.filter((m) => m.meeting_date >= today).sort((x, y) => key(x).localeCompare(key(y)))[0] || state.meetings.slice().sort((x, y) => key(y).localeCompare(key(x)))[0] || null) : null;
   };
   /* השיוך של המשתתף למפגש היום, אם מגיע לו להודעה (שילם או חינם) */
-  const evLink = (p) => { const m = eventMeeting(), l = m && linkOf(p.id, m.id); return l && (l.paid || l.exempt || FORCE_EVENT_BTN) ? l : null; };
+  const evLink = (p) => { const m = eventMeeting(), l = m && linkOf(p.id, m.id); return l && (l.paid || l.exempt) ? l : null; };
   /* כל מי שמגיע לו (שילם/חינם) כבר קיבל את הפרטים */
-  const evAllSent = (m) => { const ls = state.att.filter((l) => l.meeting_id === m.id && (l.paid || l.exempt || FORCE_EVENT_BTN) && state.participants.some((p) => p.id === l.participant_id)); return !ls.some((l) => !l.details_sent_at); };
+  const evAllSent = (m) => { const ls = state.att.filter((l) => l.meeting_id === m.id && (l.paid || l.exempt) && state.participants.some((p) => p.id === l.participant_id)); return !ls.some((l) => !l.details_sent_at); };
   /* עיגול ברשימה: כחול, שליחת פרטי הערב (עד חצי שעה לפני המפגש; אז הוא הופך לעיגול הגעה הירוק); נעלם כשכולם קיבלו */
   const evCircle = (p) => {
     const m = eventMeeting(); if (!m || (!FORCE_EVENT_BTN && attendOpen(m))) return '';
