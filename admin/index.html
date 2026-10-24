@@ -1834,15 +1834,14 @@
     const box = $('#pMsgs'); if (!box) return;
     const p = sheet && sheet.id ? state.participants.find((x) => x.id === sheet.id) : null;
     if (!p) { box.innerHTML = ''; return; }
-    const base = waLink(p.phone), tel = telLink(p.phone);
+    const base = waLink(p.phone);
     copyTexts = [PAYBOX];
     const COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="3"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>';
     /* משתתף בסטטוס "טרם טופל": הוואטסאפ נפתח עם הודעה מובנית (בלשון זכר/נקבה); אחרי החזרה לדשבורד שואלים אם להעביר ל"בטיפול" */
     const pend = pendingLinks(p);
     const waHref = base && pend.length ? base + '?text=' + encodeURIComponent(chaseMessage(p)) : base;
     let h = '<div class="ctop">' +
-      (base ? '<a class="cico cb-wa" href="' + waHref + '"' + (pend.length ? ' data-markreq="' + p.id + '"' : '') + ' target="_blank" rel="noopener" aria-label="וואטסאפ" title="וואטסאפ">' + WA_ICON + '</a>' : '<span class="cico off" aria-label="וואטסאפ">' + WA_ICON + '</span>') +
-      (tel ? '<a class="cico cb-call" href="' + tel + '" aria-label="חיוג" title="חיוג">' + CALL_ICON + '</a>' : '<span class="cico off" aria-label="חיוג">' + CALL_ICON + '</span>') + '</div>';
+      (base ? '<a class="cico cb-wa" href="' + waHref + '"' + (pend.length ? ' data-markreq="' + p.id + '"' : '') + ' target="_blank" rel="noopener" aria-label="וואטסאפ" title="וואטסאפ">' + WA_ICON + '</a>' : '<span class="cico off" aria-label="וואטסאפ">' + WA_ICON + '</span>') + '</div>';
     box.innerHTML = h;
   }
   $('#pMsgs').addEventListener('click', (e) => {
