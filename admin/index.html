@@ -1877,7 +1877,7 @@
   const evAllSent = (m) => { const ls = state.att.filter((l) => l.meeting_id === m.id && (l.paid || l.exempt) && state.participants.some((p) => p.id === l.participant_id)); return !ls.some((l) => !l.details_sent_at); };
   /* עיגול ברשימה: כחול, שליחת פרטי הערב (עד חצי שעה לפני המפגש; אז הוא הופך לעיגול הגעה הירוק); נעלם כשכולם קיבלו */
   const evCircle = (p) => {
-    const m = eventMeeting(); if (!m || (!FORCE_EVENT_BTN && attendOpen(m))) return '';
+    const m = eventMeeting(); if (!m || attendOpen(m)) return '';
     const l = evLink(p); if (!l || (!FORCE_EVENT_BTN && evAllSent(m))) return '';
     if (l.details_sent_at) return '<span class="evc sent" title="פרטי הערב נשלחו" aria-label="פרטי הערב נשלחו">✓</span>';
     const base = waLink(p.phone);
