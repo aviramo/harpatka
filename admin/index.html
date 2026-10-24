@@ -603,6 +603,7 @@
     .row .main.att { grid-template-columns: 54px minmax(0, max-content) minmax(0, 1fr) auto 66px 38px; }
     .row .main .here { width: 26px; height: 26px; border-width: 2px; font-size: 14px; justify-self: center; margin-inline-start: 6px; }
     .row .here.no { border-style: dashed; }
+    #facets.searching .fx { opacity: .5; pointer-events: none; }
     .evc { grid-column: 6; grid-row: 1; justify-self: center; width: 26px; height: 26px; border-radius: 50%; border: 2px dashed #2F5EA8; background: #fff; color: #2F5EA8; display: grid; place-items: center; margin-inline-start: 6px; font-size: 14px; font-weight: 800; line-height: 1; text-decoration: none; transition: background .12s, transform .12s; }
     .evc svg { width: 14px; height: 14px; }
     .evc:active { transform: scale(.92); }
@@ -1278,28 +1279,32 @@
   }
 
   /* מונים וסינון: גברים/נשים ושילמו/טרם שילמו. כל מונה סופר לפי הסינון האחר והחיפוש, כך שהמספר הוא בדיוק מה שיוצג בלחיצה */
+  /* בזמן חיפוש טקסט, סינוני המגדר והתשלום מושהים (כדי למצוא מישהו בוודאות); הם נשמרים ב-state וחוזרים כשהחיפוש נסגר */
+  const effGender = () => state.q.trim() ? null : state.gender;
+  const effPay = () => state.q.trim() ? null : state.pay;
   function renderFacets() {
-    const q = state.q.trim().toLowerCase(), qd = digits(q);
+    const q = state.q.trim().toLowerCase(), qd = digits(q), eg = effGender(), ep = effPay();
     const base = state.participants.filter((p) => {
       if (state.filter && !linkOf(p.id, state.filter)) return false;
       if (!q) return true;
       return p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd)) || hasNote(p, q);
     });
-    const payOk = (p) => !state.pay || payMatch(paidState(p), state.pay);
-    const genOk = (p) => state.gender === 'none' ? !p.gender : (!state.gender || p.gender === state.gender);
+    const payOk = (p) => !ep || payMatch(paidState(p), ep);
+    const genOk = (p) => eg === 'none' ? !p.gender : (!eg || p.gender === eg);
     const nG = (g) => base.filter((p) => payOk(p) && (g === 'none' ? !p.gender : p.gender === g)).length;
     const nP = (st) => base.filter((p) => genOk(p) && payMatch(paidState(p), st)).length;
     const btn = (kind, val, label, n, cls, on, aria) => '<button type="button"' + (aria ? ' aria-label="' + aria + ' ' + n + '" title="' + aria + '"' : '') + ' class="fx' + (cls ? ' ' + cls : '') + (n ? '' : ' zero') + '" data-fx="' + kind + ':' + val + '" aria-pressed="' + on + '">' + label + ' <b>' + n + '</b></button>';
     const none = nG('none');
     let h = '<div class="fgroup">' +
-      btn('g', 'male', '<span class="lw gen-lw">גברים</span><span class="gi gm">' + MAN_ICON + '</span>', nG('male'), '', state.gender === 'male', 'גברים') +
-      btn('g', 'female', '<span class="lw gen-lw">נשים</span><span class="gi gf">' + WOMAN_ICON + '</span>', nG('female'), '', state.gender === 'female', 'נשים') +
-      (none || state.gender === 'none' ? btn('g', 'none', 'ללא', none, '', state.gender === 'none', 'ללא מגדר') : '') + '</div>';
+      btn('g', 'male', '<span class="lw gen-lw">גברים</span><span class="gi gm">' + MAN_ICON + '</span>', nG('male'), '', eg === 'male', 'גברים') +
+      btn('g', 'female', '<span class="lw gen-lw">נשים</span><span class="gi gf">' + WOMAN_ICON + '</span>', nG('female'), '', eg === 'female', 'נשים') +
+      (none || eg === 'none' ? btn('g', 'none', 'ללא', none, '', eg === 'none', 'ללא מגדר') : '') + '</div>';
     h += '<div class="fgroup">' +
-      btn('p', 'unpaid', '<span class="lw pay-lw">טרם טופלו</span><span class="li">' + NEW_ICON + '</span>', nP('unpaid'), 'no', state.pay === 'unpaid', 'טרם טופלו') +
-      btn('p', 'requested', '<span class="lw pay-lw">בטיפול</span><span class="li">' + REQ_ICON + '</span>', nP('requested'), 'wait', state.pay === 'requested', 'בטיפול') +
-      btn('p', 'paid', '<span class="lw pay-lw">שילמו</span><span class="li">✓</span>', nP('paid'), 'ok', state.pay === 'paid', 'שילמו') + '</div>';
-    $('#facets').innerHTML = base.length || state.gender || state.pay ? h : '';
+      btn('p', 'unpaid', '<span class="lw pay-lw">טרם טופלו</span><span class="li">' + NEW_ICON + '</span>', nP('unpaid'), 'no', ep === 'unpaid', 'טרם טופלו') +
+      btn('p', 'requested', '<span class="lw pay-lw">בטיפול</span><span class="li">' + REQ_ICON + '</span>', nP('requested'), 'wait', ep === 'requested', 'בטיפול') +
+      btn('p', 'paid', '<span class="lw pay-lw">שילמו</span><span class="li">✓</span>', nP('paid'), 'ok', ep === 'paid', 'שילמו') + '</div>';
+    $('#facets').classList.toggle('searching', !!q);
+    $('#facets').innerHTML = base.length || eg || ep ? h : '';
   }
 
   /* מיון הרשימה */
@@ -1334,7 +1339,7 @@
 
   /* הודעה כשאין תוצאות, לפי הסינון הפעיל */
   function emptyMsg() {
-    const g = state.gender, pay = state.pay, scope = state.filter ? ' במפגש הזה' : '';
+    const g = effGender(), pay = effPay(), scope = state.filter ? ' במפגש הזה' : '';
     const clear = '<button type="button" class="link-btn" id="clearFx" style="margin-top:14px">ניקוי סינונים</button>';
     if (g || pay) {
       if (!g && pay === 'requested' && !state.q) return '<b>אין משתתפים בטיפול</b>כשנשלחת הודעת תשלום בוואטסאפ מתוך פרטי המשתתף, הסטטוס מסומן כאן' + '<br>' + clear;
@@ -1360,8 +1365,8 @@
     const qd = digits(q);
     let rows = state.participants.filter((p) => {
       if (state.filter && !linkOf(p.id, state.filter)) return false;
-      if (state.pay && !payMatch(paidState(p), state.pay)) return false;
-      if (state.gender === 'none' ? p.gender : (state.gender && p.gender !== state.gender)) return false;
+      if (effPay() && !payMatch(paidState(p), effPay())) return false;
+      if (effGender() === 'none' ? p.gender : (effGender() && p.gender !== effGender())) return false;
       if (!q) return true;
       return p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd)) || hasNote(p, q);
     });
