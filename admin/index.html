@@ -2420,7 +2420,8 @@
 
   $('#qClear').addEventListener('mousedown', (e) => e.preventDefault());
   $('#qClear').addEventListener('mousedown', (e) => e.preventDefault());   // לא לגרום לפוקוס לקפוץ לפני הלחיצה
-  $('#qClear').addEventListener('click', () => { const q = $('#q'); q.value = ''; state.q = ''; renderList(); syncUrl(); q.blur(); });   // ביטול החיפוש: ניקוי, סגירת המקלדת וקיפול התיבה
+  /* שני שלבים: לחיצה ראשונה מוחקת את הטקסט (התיבה נשארת פתוחה), שנייה סוגרת את התיבה (קיפול וסגירת המקלדת) */
+  $('#qClear').addEventListener('click', () => { const q = $('#q'); if (q.value) { q.value = ''; state.q = ''; renderList(); syncUrl(); q.focus(); } else q.blur(); });
   $('#q').addEventListener('keydown', (e) => { if (e.key === 'Escape') $('#qClear').click(); });
   $('#q').addEventListener('input', (e) => { state.q = e.target.value; renderList(); syncUrl(); });
 
