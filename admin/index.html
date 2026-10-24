@@ -1823,9 +1823,9 @@
   }
   /* אחרי שליחת הודעת פרטי הערב: כשחוזרים לדשבורד מאשרים שנשלחה, ואז הכפתור והסימון ברשימה נעלמים */
   let evAwait = null;
-  async function setDetailsSent(pid, mid) {
+  async function setDetailsSent(pid, mid, val) {
     const l = linkOf(pid, mid); if (!l) return;
-    const prev = l.details_sent_at; l.details_sent_at = new Date().toISOString(); render(); renderContact();
+    const prev = l.details_sent_at; l.details_sent_at = val === false ? null : new Date().toISOString(); render(); renderContact();
     try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body: { details_sent_at: l.details_sent_at } }); }
     catch (err) { l.details_sent_at = prev; render(); renderContact(); fail(err); }
   }
@@ -1879,7 +1879,7 @@
   const evCircle = (p) => {
     const m = eventMeeting(); if (!m || attendOpen(m)) return '';
     const l = evLink(p); if (!l || (!FORCE_EVENT_BTN && evAllSent(m))) return '';
-    if (l.details_sent_at) return '<span class="evc sent" title="פרטי הערב נשלחו" aria-label="פרטי הערב נשלחו">✓</span>';
+    if (l.details_sent_at) return '<button type="button" class="evc sent" data-evun="' + p.id + '" title="פרטי הערב נשלחו (לחיצה מחזירה ללא נשלח)" aria-label="פרטי הערב נשלחו, לחיצה מחזירה ללא נשלח">✓</button>';
     const base = waLink(p.phone);
     return base ? '<a class="evc" data-evrow="' + p.id + '" href="' + base + '?text=' + encodeURIComponent(eventDayMessage(m)) + '" target="_blank" rel="noopener" title="שליחת פרטי הערב בוואטסאפ" aria-label="שליחת פרטי הערב בוואטסאפ">' + PIN_ICON + '</a>'
       : '<span class="evc off" title="אין טלפון" aria-label="אין טלפון">' + PIN_ICON + '</span>';
@@ -2443,6 +2443,8 @@
     if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-edit]')) { e.preventDefault(); openParticipant(e.target.dataset.edit, undefined, e.target.closest('li.row')); }
   });
   $('#list').addEventListener('click', (e) => {
+    const eu = e.target.closest('[data-evun]');
+    if (eu) { e.stopPropagation(); const l = evLink({ id: eu.dataset.evun }); if (l) setDetailsSent(eu.dataset.evun, l.meeting_id, false); return; }   // חזרה ללא נשלח
     const er = e.target.closest('[data-evrow]');
     if (er) { e.stopPropagation(); evAwait = er.dataset.evrow; return; }   // וואטסאפ נפתח; בחזרה מאשרים שנשלח
     const hr = e.target.closest('[data-hr]');
