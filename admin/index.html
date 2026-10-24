@@ -1437,7 +1437,7 @@
     const perMeeting = asc.map((m) => {
       const ls = all.filter((l) => l.meeting_id === m.id), S = new Set(ls.map((l) => l.participant_id));
       const ret = [...S].filter((id) => seen.has(id)).length, kept = [...S].filter((id) => prev.has(id)).length;
-      const row = { m, regs: ls.length, ad: ls.filter((l) => l.p.source === 'site-ad').length, ex: ls.filter((l) => l.exempt).length, paid: ls.filter((l) => l.paid && !l.exempt).length, rev: ls.filter((l) => l.paid && !l.exempt).reduce((s, l) => s + (l.paid_amount != null ? Number(l.paid_amount) : priceAtReg(m, l.created_at)), 0),
+      const row = { m, regs: ls.length, ad: ls.filter((l) => l.p.source === 'site-ad').length, ex: ls.filter((l) => l.exempt).length, paid: ls.filter((l) => l.paid || l.exempt).length, rev: ls.filter((l) => l.paid && !l.exempt).reduce((s, l) => s + (l.paid_amount != null ? Number(l.paid_amount) : priceAtReg(m, l.created_at)), 0),
         news: S.size - ret, ret, kept, prevN: prev.size };
       S.forEach((id) => seen.add(id)); prev = S;
       return row;
@@ -1491,7 +1491,7 @@
 
     // ----- יחצנים ופרסום -----
     const src = (l) => (l.promoter_id || (l.p && l.p.promoter_id)) ? 'promo' : l.p.source === 'site-ad' ? 'ad' : l.p.source === 'site' ? 'site' : 'other';
-    const adL = links.filter((l) => l.p.source === 'site-ad'), adPaid = adL.filter((l) => l.paid && !l.exempt);
+    const adL = links.filter((l) => l.p.source === 'site-ad'), adPaid = adL.filter((l) => l.paid || l.exempt);
     const proRows = state.promoters.map((x) => { const L = ledgerOf(x.id), recs = state.payments.filter((q) => q.promoter_id === x.id), inc = recs.reduce((s, q) => s + (q.kind === 'payment' ? 1 : -1) * Number(q.amount), 0), cm = recs.reduce((s, q) => s + (q.kind === 'payment' ? 1 : -1) * (Number(q.commission) || 0), 0), cnt = recs.filter((q) => q.kind === 'payment').length; return { x, inc, cm, cnt, bal: L.balance }; });
     const proOwed = proRows.reduce((s, r) => s + Math.max(0, r.bal), 0), proInc = proRows.reduce((s, r) => s + r.inc, 0);
     const srcCount = (r, k) => links.filter((l) => l.meeting_id === r.m.id && src(l) === k).length;
@@ -1835,7 +1835,7 @@
   const PIN_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.6"/></svg>';
   const todayEventFor = (p) => {
     const today = new Date(nowIL()).toISOString().slice(0, 10);
-    const ms = linksOf(p.id).filter((l) => l.paid && !l.exempt).map((l) => state.meetings.find((x) => x.id === l.meeting_id)).filter((m) => m && m.meeting_date === today)
+    const ms = linksOf(p.id).filter((l) => l.paid || l.exempt).map((l) => state.meetings.find((x) => x.id === l.meeting_id)).filter((m) => m && m.meeting_date === today)
       .sort((x, y) => String(x.meeting_time).localeCompare(String(y.meeting_time)));
     return ms[0] || null;
   };
