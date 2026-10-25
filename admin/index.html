@@ -1219,7 +1219,7 @@
         render();
         if (d.p && state.participants.some((x) => x.id === d.p)) openParticipant(d.p, ['meets', 'contact', 'info'].includes(d.pt) ? d.pt : 'contact');
         else if (d.em && state.meetings.some((x) => x.id === d.em)) openMeeting(d.em);
-        else if (d.st) { renderStats(); $('#stDlg').showModal(); syncUrl(); }
+        else if (d.st) { renderStats(); $('#stDlg').showModal(); if (document.activeElement && document.activeElement.closest('#stDlg')) document.activeElement.blur(); syncUrl(); }
         else if (d.bd) boardOpen();
         return;
       }
@@ -1548,7 +1548,7 @@
     $('#stBody').innerHTML = '<div class="ppanel" data-sp="main">' + main + '</div><div class="ppanel" data-sp="money" hidden>' + money + '</div><div class="ppanel" data-sp="promo" hidden>' + promo + '</div><div class="ppanel" data-sp="demo" hidden>' + demo + '</div>';
     stView('main', true);
   }
-  $('#statsBtn').addEventListener('click', () => { renderStats(); $('#stDlg').showModal(); syncUrl(); });
+  $('#statsBtn').addEventListener('click', () => { renderStats(); $('#stDlg').showModal(); if (document.activeElement && document.activeElement.closest('#stDlg')) document.activeElement.blur(); syncUrl(); });   // בלי מסגרת פוקוס על הכרטיס הראשון בפתיחה
   $('#stDlg').addEventListener('close', syncUrl);
 
   /* ---------- אישור לפני שינוי: סטטוס תשלום, הוספה למפגש והסרה ממנו ---------- */
