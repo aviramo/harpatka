@@ -736,6 +736,10 @@
         <p id="refundText" style="margin:2px 0 16px;line-height:1.55"></p>
         <div class="payact" style="flex-direction:column"><button class="btn" id="refundYes" type="button">להחזיר תשלום</button><button class="btn" id="creditYes" type="button" style="background:#686A48">להשאיר כקרדיט (בלי להחזיר כסף)</button><button class="btn ghost" id="refundNo" type="button" style="color:var(--muted)">ביטול</button></div>
       </div>
+      <div class="ppanel" data-panel="confirm" hidden>
+        <p id="cvText" style="margin:2px 0 16px;line-height:1.55"></p>
+        <div class="payact" style="flex-direction:column"><button class="btn" id="cvYes" type="button"></button><button class="btn ghost" id="cvNo" type="button" style="color:var(--muted)">ביטול</button></div>
+      </div>
       <div class="ppanel" data-panel="info" hidden>
         <div class="name-row">
           <div class="two">
@@ -1813,18 +1817,26 @@
   };
   /* אחרי שליחת הודעת הוואטסאפ: כשחוזרים לדשבורד שואלים את המנהל אם להעביר את הסטטוס ל"בטיפול" (לא אוטומטי) */
   let markAwait = null;
+  /* שאלת אישור אחרי חזרה מוואטסאפ: אם פופאפ המשתתף פתוח, השאלה היא מסך בתוכו (חץ חזרה בכותרת, כמו פרטי המשתתף); אחרת חלון אישור */
+  function askConfirm(p, title, textHtml, yesLabel, onYes) {
+    if ($('#pDlg').open && sheet && sheet.id === p.id) {
+      cvTitle = title; $('#cvText').innerHTML = textHtml; $('#cvYes').textContent = yesLabel;
+      $('#cvYes').onclick = () => { onYes(); setPTab(viewStack.pop() || 'main'); };
+      $('#cvNo').onclick = () => setPTab(viewStack.pop() || 'main');
+      goView('confirm'); return;
+    }
+    const dlg = $('#cDlg'), yes = $('#cYes'), no = $('#cNo');
+    $('#cTitle').textContent = title; $('#cText').innerHTML = textHtml; yes.textContent = yesLabel;
+    const reset = () => { yes.textContent = 'אישור'; };
+    yes.onclick = () => { dlg.close(); reset(); onYes(); };
+    no.onclick = () => { dlg.close(); reset(); };
+    dlg.showModal();
+  }
   function askMarkRequested() {
     if (!markAwait) return;
     const p = state.participants.find((x) => x.id === markAwait); markAwait = null; if (!p) return;
     const ls = pendingLinks(p); if (!ls.length) return;
-    const dlg = $('#cDlg'), yes = $('#cYes'), no = $('#cNo');
-    $('#cTitle').textContent = 'להעביר לסטטוס "בטיפול"?';
-    $('#cText').innerHTML = 'נשלחה הודעה ל' + nameB(p.name) + '?';
-    yes.textContent = 'כן, ההודעה נשלחה';
-    const reset = () => { yes.textContent = 'אישור'; };
-    yes.onclick = () => { dlg.close(); reset(); ls.forEach((l) => setPayStatus(p.id, l.meeting_id, 'requested')); toast('הסטטוס עבר ל"בטיפול"'); };
-    no.onclick = () => { dlg.close(); reset(); };
-    dlg.showModal();
+    askConfirm(p, 'להעביר לסטטוס "בטיפול"?', 'נשלחה הודעה ל' + nameB(p.name) + '?', 'כן, ההודעה נשלחה', () => { ls.forEach((l) => setPayStatus(p.id, l.meeting_id, 'requested')); toast('הסטטוס עבר ל"בטיפול"'); });
   }
   /* אחרי שליחת הודעת פרטי הערב: כשחוזרים לדשבורד מאשרים שנשלחה, ואז הכפתור והסימון ברשימה נעלמים */
   let evAwait = null;
@@ -1838,14 +1850,7 @@
     if (!evAwait) return;
     const p = state.participants.find((x) => x.id === evAwait); evAwait = null; if (!p) return;
     const l = evLink(p); if (!l || l.details_sent_at) return;
-    const dlg = $('#cDlg'), yes = $('#cYes'), no = $('#cNo');
-    $('#cTitle').textContent = 'לסמן שפרטי הערב נשלחו?';
-    $('#cText').innerHTML = 'נשלחה הודעת פרטי הערב ל' + nameB(p.name) + '?';
-    yes.textContent = 'כן, ההודעה נשלחה';
-    const reset = () => { yes.textContent = 'אישור'; };
-    yes.onclick = () => { dlg.close(); reset(); setDetailsSent(p.id, l.meeting_id); toast('סומן שפרטי הערב נשלחו'); };
-    no.onclick = () => { dlg.close(); reset(); };
-    dlg.showModal();
+    askConfirm(p, 'לסמן שפרטי הערב נשלחו?', 'נשלחה הודעת פרטי הערב ל' + nameB(p.name) + '?', 'כן, ההודעה נשלחה', () => { setDetailsSent(p.id, l.meeting_id); toast('סומן שפרטי הערב נשלחו'); });
   }
   const askAwaited = () => { if (markAwait) askMarkRequested(); else if (evAwait) askEventSent(); };
   document.addEventListener('visibilitychange', () => { if (!document.hidden && (markAwait || evAwait)) setTimeout(askAwaited, 250); });
@@ -2015,6 +2020,7 @@
   /* מסך אחד: ראשי (וואטסאפ וחיוג, מפגשים אחרונים, הערות) או פרטים (אייקון בכותרת; חץ חזרה בתוכו) */
   let pTab = 'main', mLimit = 3;
   const reducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let cvTitle = '';
   const SUBVIEW = { status: 'סטטוס תשלום', pay: 'פרטי תשלום', promoter: 'יחצן', refund: 'ביטול תשלום', credit: 'החזרת קרדיט' };
   let viewStack = [], payCtx = null;
   function setPTab(tab, instant) {
@@ -2027,7 +2033,7 @@
     });
     const ex = !!(sheet && sheet.id);
     $('#pBack').hidden = !(ex && tab !== 'main'); $('#pInfoBtn').hidden = !(ex && tab === 'main'); $('#pPromoBtn').hidden = !(ex && tab === 'main'); $('#pMsgs').hidden = tab !== 'main';
-    { const sub = SUBVIEW[tab], pp0 = ex ? state.participants.find((x) => x.id === sheet.id) : null;
+    { const sub = tab === 'confirm' ? cvTitle : SUBVIEW[tab], pp0 = ex ? state.participants.find((x) => x.id === sheet.id) : null;
       $('#pViewSub').hidden = !sub;
       if (sub) { $('#pTitle').textContent = sub; const pm = payCtx && state.meetings.find((x) => x.id === payCtx.mid); $('#pViewSub').innerHTML = nameB(pp0 ? pp0.name : '') + (pm ? ' · ' + esc(meetingLabel(pm, true)) : ''); }
       else if (ex) setTitle(pp0); }
