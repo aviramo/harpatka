@@ -1513,7 +1513,17 @@
     const proRows = state.promoters.map((x) => { const L = ledgerOf(x.id), recs = state.payments.filter((q) => q.promoter_id === x.id), inc = recs.reduce((s, q) => s + (q.kind === 'payment' ? 1 : -1) * Number(q.amount), 0), cm = recs.reduce((s, q) => s + (q.kind === 'payment' ? 1 : -1) * (Number(q.commission) || 0), 0), cnt = recs.filter((q) => q.kind === 'payment').length; return { x, inc, cm, cnt, bal: L.balance }; });
     const proOwed = proRows.reduce((s, r) => s + Math.max(0, r.bal), 0), proInc = proRows.reduce((s, r) => s + r.inc, 0);
     const srcCount = (r, k) => links.filter((l) => l.meeting_id === r.m.id && src(l) === k).length;
+    // שעות הרשמה (שעון ישראל): מתי ביום נרשמים דרך האתר, כדי לתזמן מודעות ופוסטים
+    const hourFmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jerusalem', hour: '2-digit', hour12: false });
+    const hrs = Array.from({ length: 24 }, () => 0), hrsAd = Array.from({ length: 24 }, () => 0);
+    state.participants.filter((q) => q.created_at && String(q.source || '').startsWith('site')).forEach((q) => { const h = Number(hourFmt.format(new Date(q.created_at))) % 24; hrs[h]++; if (q.source === 'site-ad') hrsAd[h]++; });
+    const hrsTotal = hrs.reduce((s, v) => s + v, 0), peak = hrs.indexOf(Math.max(...hrs)), hh = (h) => String(h % 24).padStart(2, '0') + ':00';
+    const win = (h0, h1) => hrs.slice(h0, h1).reduce((s, v) => s + v, 0);
+    const hoursPart = hrsTotal ? '<p class="sthint">כמה נרשמו בכל שעה ביום (שעון ישראל), לפי כל ההרשמות מהאתר</p>' +
+      colsChart(hrs.map((v, h) => ({ l: h % 3 === 0 ? String(h) : '', v, color: h === peak ? '#C96F52' : '#686A48' })), '#686A48', true) +
+      '<div class="stkpis">' + kpi('<bdi dir="ltr">' + hh(peak) + '</bdi>', 'שעת השיא', hrs[peak] + ' הרשמות (' + Ps(hrs[peak], hrsTotal) + ')', 'good') + kpi(Ps(win(18, 23), hrsTotal), '<bdi dir="ltr">18:00–23:00</bdi>', win(18, 23) + ' הרשמות') + kpi(Ps(win(6, 12), hrsTotal), '<bdi dir="ltr">06:00–12:00</bdi>', win(6, 12) + ' הרשמות') + '</div>' : '<p class="sthint">עוד אין הרשמות מהאתר</p>';
     const promo = part('נתונים עיקריים', '<div class="stkpis">' + kpi(ilsB(proInc), 'הכנסה דרך יחצנים', Ps(proInc, rev) + ' מההכנסה') + kpi(ilsB(proOwed), 'נשאר לשלם ליחצנים', '', proOwed ? 'warn' : '') + kpi(adL.length, 'נרשמו ממודעה', Ps(adL.length, n) + ' מההרשמות') + kpi(Ps(adPaid.length, adL.filter((l) => !l.exempt).length), 'המרה ממודעה', adPaid.length + ' שילמו') + '</div>') +
+      part('שעות הרשמה', hoursPart) +
       (proRows.length ? part('יחצנים', tbl(['יחצן', 'הכנסה', 'עמלה', 'יתרה'], proRows.map((r) => [esc(r.x.name), ilsB(r.inc), ilsB(r.cm), r.bal > 0 ? ilsB(r.bal) : '✓']))) : part('יחצנים', '<p class="sthint">עוד אין יחצנים. אפשר להוסיף באייקון המגפון</p>')) +
       part('מקורות לפי מפגש', tbl(['מפגש', 'אתר', 'מודעה', 'יחצן', 'אחר'], pm.map((r) => [dlab(r.m), srcCount(r, 'site'), srcCount(r, 'ad'), srcCount(r, 'promo'), srcCount(r, 'other')])));
 
