@@ -571,6 +571,8 @@
     .field input:focus { border-color: var(--terra); outline: none; }
     .field input[type="tel"] { direction: ltr; text-align: right; }
     .two { display: grid; grid-template-columns: 1fr 110px; gap: 10px; }
+    .three { display: grid; grid-template-columns: minmax(0, 1.5fr) 64px minmax(0, 1.05fr); gap: 8px; }   /* טלפון, גיל והגעה (משמאל) באותה שורה */
+    .three .field input, .three .field select { padding-inline: 10px; }
     .hint { font-size: 13px; color: var(--muted); margin-top: 4px; }
     .sect-title { font-size: 14px; font-weight: 700; color: var(--muted); margin: 6px 0 6px; }
     .mlist { display: grid; gap: 6px; margin-bottom: 14px; }
@@ -769,11 +771,11 @@
           </div>
           <label class="field gfield"><span>מגדר</span><select name="gender"><option value="">לא צוין</option><option value="male">גבר</option><option value="female">אישה</option></select></label>
         </div>
-        <div class="two">
+        <div class="three">
           <label class="field"><span>טלפון</span><input name="phone" type="tel" inputmode="tel" maxlength="20" autocomplete="off" /></label>
           <label class="field"><span>גיל</span><input name="age" type="number" inputmode="numeric" min="18" max="99" /></label>
+          <label class="field"><span>מקור</span><select name="promoter_sel" id="pPromoSel"></select></label>
         </div>
-        <label class="field"><span>יחצן</span><select name="promoter_sel" id="pPromoSel"></select></label>
         <div class="note" id="pRegLine" style="color:var(--muted);font-size:14px;margin:2px 4px 10px"></div>
         <button class="btn ghost" id="pDelete" type="button">מחיקת משתתף</button>
       </div>
@@ -2239,7 +2241,7 @@
   /* בחירת יחצן במשתתף (לשונית הפרטים): ללא / פרסום בפייסבוק (בלי עמלה) / יחצנים / יחצן חדש */
   function fillPromoSel(p) {
     const sel = $('#pPromoSel'); if (!sel) return;
-    sel.innerHTML = '<option value="">ללא יחצן</option><option value="__fb">פרסום בפייסבוק (בלי עמלה)</option>' + state.promoters.map((x) => '<option value="' + x.id + '">' + esc(x.name) + ' (' + rateLabel(x) + ')</option>').join('') + '<option value="__new">+ יחצן חדש</option>';
+    sel.innerHTML = '<option value="">ללא</option><option value="__fb">פייסבוק</option>' + state.promoters.map((x) => '<option value="' + x.id + '">' + esc(x.name) + '</option>').join('') + '<option value="__new">+ יחצן חדש</option>';   // "הגעה": ללא / פייסבוק / יחצן
     sel.value = p ? (p.source === 'site-ad' && !p.promoter_id ? '__fb' : (p.promoter_id || '')) : (sheet && sheet.promoSel) || '';
   }
   function openParticipant(id, tab, fromEl) {
