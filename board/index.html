@@ -403,6 +403,14 @@
       try { sessionStorage.removeItem('hb_hide'); } catch (e) {}
       try { const r = await rpc('harpatka_board_hide', { p_id: hid, p_hide: true }); toast(r === 'ok' ? 'הפוסט הוסתר, רק מנהלים רואים אותו' : r === 'denied' ? 'אין הרשאה להסתיר (נדרשת כניסה של מנהל)' : 'הפוסט לא נמצא'); } catch (e) { toast('משהו השתבש'); }
     }
+    /* קישור "אישור חיבור ופרסום" מהמייל (?approve=<מזהה פוסט/תגובה>): מנהל מחובר מאשר את החיבור ואת התוכן הראשון יחד; אחרת עוברים קודם התחברות עם גוגל */
+    try { const ap = new URLSearchParams(location.search).get('approve'); if (ap) { sessionStorage.setItem('hb_approve', ap); history.replaceState(null, '', location.pathname); } } catch (e) {}
+    let apid = null; try { apid = sessionStorage.getItem('hb_approve'); } catch (e) {}
+    if (apid) {
+      if (!session) { goGoogle(); return; }
+      try { sessionStorage.removeItem('hb_approve'); } catch (e) {}
+      try { const r = await rpc('harpatka_board_approve', { p_id: apid }); toast(r === 'ok' ? 'החיבור אושר והתוכן פורסם' : r === 'denied' ? 'אין הרשאה לאשר (נדרשת כניסה של מנהל)' : 'הפריט לא נמצא'); } catch (e) { toast('משהו השתבש'); }
+    }
     await load();
     /* חזרה מהכניסה: ממשיכים מה שהתחילו לכתוב */
     let p = null; try { p = JSON.parse(sessionStorage.getItem(PKEY) || 'null'); sessionStorage.removeItem(PKEY); } catch (e) {}

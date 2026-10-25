@@ -1126,7 +1126,7 @@
   /* ---------- לוח שיתופים (board/): אישור חיבור גוגל לטלפון ומחיקת פוסטים ---------- */
   async function boardBadge() {
     try {
-      const pm = await api('harpatka_members?select=user_id&status=eq.pending'), n = pm.length;
+      const [pm, pp] = await Promise.all([api('harpatka_members?select=user_id&status=eq.pending'), api('harpatka_posts?select=user_id&approved_at=is.null&deleted_at=is.null')]), withPosts = new Set(pp.map((x) => x.user_id)), n = pm.filter((m) => withPosts.has(m.user_id)).length;   // רק מי שכתב משהו וממתין לאישור
       ['#bdBadge', '#menuBadge'].forEach((s) => { const b = $(s); b.textContent = n; b.hidden = !n; });
     } catch (e) {}
   }
@@ -1139,7 +1139,7 @@
         api('harpatka_posts?select=user_id,body,parent_id&approved_at=is.null&deleted_at=is.null&order=created_at.asc').catch(() => []),
       ]);
     } catch (e) { $('#bdBody').innerHTML = '<div class="empty">הלוח עוד לא הוקם (להריץ admin/board.sql)</div>'; return; }
-    const pend = ms.filter((m) => m.status === 'pending'), appr = ms.filter((m) => m.status === 'approved'), blocked = ms.filter((m) => m.status === 'blocked'), removed = ms.filter((m) => m.status === 'removed');
+    const withPosts = new Set(pend_posts.map((x) => x.user_id)), allPend = ms.filter((m) => m.status === 'pending'), pend = allPend.filter((m) => withPosts.has(m.user_id)), linkedOnly = allPend.length - pend.length, appr = ms.filter((m) => m.status === 'approved'), blocked = ms.filter((m) => m.status === 'blocked'), removed = ms.filter((m) => m.status === 'removed');
     const taken = new Set(appr.map((m) => m.participant_id).filter(Boolean));
     const memCard = (m, act) => {
       const pa = m.harpatka_participants;
@@ -1150,7 +1150,7 @@
         + '<div class="bar">' + act + '</div></div>';
     };
     $('#bdBody').innerHTML =
-      '<h3>ממתינים לאישור (' + pend.length + ')</h3>' + (pend.length ? pend.map((m) => memCard(m, '<button class="ok" data-mact="approved">אישור</button><button class="no" data-mact="reject">דחייה</button>')).join('') : '<div class="empty" style="padding:10px">אין</div>')
+      '<h3>ממתינים לאישור (' + pend.length + ')</h3>' + (linkedOnly ? '<div class="empty" style="padding:0 0 10px;text-align:right"><small>' + linkedOnly + ' קישרו טלפון ועוד לא כתבו כלום, לא צריך לאשר אותם עד שיכתבו</small></div>' : '') + (pend.length ? pend.map((m) => memCard(m, '<button class="ok" data-mact="approved">אישור</button><button class="no" data-mact="reject">דחייה</button>')).join('') : '<div class="empty" style="padding:10px">אין</div>')
       + '<h3>מחוברים (' + appr.length + ')</h3>' + appr.map((m) => memCard(m, '<button class="no" data-mact="blocked">חסימה</button><button data-mact="reject">ניתוק</button>')).join('')
       + (blocked.length ? '<h3>חסומים</h3>' + blocked.map((m) => memCard(m, '<button class="ok" data-mact="approved">שחרור</button><button class="no" data-mact="reject">ניתוק</button>')).join('') : '')
       + (removed.length ? '<h3>מנותקים (' + removed.length + ') · הפוסטים שלהם נשארים</h3>' + removed.map((m) => memCard(m, '<button class="ok" data-mact="approved">חיבור מחדש</button>')).join('') : '');
