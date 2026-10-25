@@ -1455,7 +1455,7 @@
     const perMeeting = asc.map((m) => {
       const ls = all.filter((l) => l.meeting_id === m.id), S = new Set(ls.map((l) => l.participant_id));
       const ret = [...S].filter((id) => seen.has(id)).length, kept = [...S].filter((id) => prev.has(id)).length;
-      const row = { m, regs: ls.length, ad: ls.filter((l) => l.p.source === 'site-ad').length, ex: ls.filter((l) => l.exempt).length, paid: ls.filter((l) => l.paid && !l.exempt).length, rev: ls.filter((l) => l.paid && !l.exempt).reduce((s, l) => s + (l.paid_amount != null ? Number(l.paid_amount) : priceAtReg(m, l.created_at)), 0),
+      const row = { m, regs: ls.length, ad: ls.filter((l) => l.p.source === 'site-ad').length, ex: ls.filter((l) => l.exempt || l.will_pay).length, paid: ls.filter((l) => l.paid && !l.exempt).length, rev: ls.filter((l) => l.paid && !l.exempt).reduce((s, l) => s + (l.paid_amount != null ? Number(l.paid_amount) : priceAtReg(m, l.created_at)), 0),
         news: S.size - ret, ret, kept, prevN: prev.size };
       S.forEach((id) => seen.add(id)); prev = S;
       return row;
@@ -1493,7 +1493,7 @@
     const part = (title, body) => '<section class="stp"><h4>' + title + '</h4>' + body + '</section>';
 
     const n = links.length, uniq = new Set(links.map((l) => l.participant_id)), people = [...uniq].map((id) => state.participants.find((x) => x.id === id));
-    const paid = links.filter((l) => l.st === 'paid'), req = links.filter((l) => l.st === 'requested'), unp = links.filter((l) => l.st === 'unpaid'), exm = links.filter((l) => l.st === 'exempt'), nPay = n - exm.length;
+    const paid = links.filter((l) => l.st === 'paid'), req = links.filter((l) => l.st === 'requested'), unp = links.filter((l) => l.st === 'unpaid'), exm = links.filter((l) => l.st === 'exempt'), wpl = links.filter((l) => l.st === 'willpay'), nPay = n - exm.length - wpl.length;   // "חינם" ו"ישלם" לא נספרים בהמרה
     const rev = paid.reduce((s, l) => s + price(l), 0), comm = state.payments.reduce((s, x) => s + (x.promoter_id && x.commission != null ? (x.kind === 'payment' ? 1 : -1) * Number(x.commission) : 0), 0), owed = req.reduce((s, l) => s + price(l), 0);
     const pm = S.perMeeting.filter((r) => r.regs), last = pm[pm.length - 1], prev = pm[pm.length - 2];
     const conv = P(paid.length, nPay);
@@ -1503,7 +1503,7 @@
     const refunds = state.payments.filter((x) => x.kind === 'refund').reduce((s, x) => s + Number(x.amount), 0);
     const maxRev = Math.max(1, ...pm.map((r) => r.rev));
     const money = part('הכנסה לפי מפגש', tbl(['מפגש', 'הכנסה', 'שילמו', 'מגמה'], pm.map((r, k) => [dlab(r.m), ilsB(r.rev), r.paid + '/' + (r.regs - r.ex), k ? trend(r.rev, pm[k - 1].rev) : '—']))) +
-      part('מצב תשלומים', '<div class="stkpis">' + kpi(paid.length, 'שילמו', Ps(paid.length, nPay), 'good') + kpi(req.length, 'בטיפול', ilsB(owed), 'warn') + kpi(unp.length, 'טרם טופלו', '', unp.length ? 'bad' : '') + kpi(exm.length, 'חינם', '') + '</div>') +
+      part('מצב תשלומים', '<div class="stkpis">' + kpi(paid.length, 'שילמו', Ps(paid.length, nPay), 'good') + kpi(req.length, 'בטיפול', ilsB(owed), 'warn') + kpi(unp.length, 'טרם טופלו', '', unp.length ? 'bad' : '') + kpi(exm.length, 'חינם', '') + kpi(wpl.length, 'ישלם', '') + '</div>') +
       part('גבייה', tbl(['מדד', 'ערך'], [['המרה לתשלום', Ps(paid.length, nPay)], ['ממוצע לתשלום', paid.length ? ilsB(rev / paid.length) : '—'], ['נטו אחרי עמלות', ilsB(rev - comm)], ['עמלות ליחצנים', ilsB(comm)], ['קרדיט פתוח', ilsB(credit)], ['הוחזר', ilsB(refunds)]])) +
       (() => { const byM = {}; paid.forEach((l) => { const k = ilDay(l.paid_at || l.created_at || new Date().toISOString()).slice(0, 7); byM[k] = (byM[k] || 0) + price(l); }); const ks = Object.keys(byM).sort(), mx = Math.max(1, ...ks.map((k) => byM[k])); return ks.length > 1 ? part('הכנסה לפי חודש', ks.map((k) => barRow(k.slice(5) + '/' + k.slice(2, 4), byM[k], mx, '#2F7D4F', ilsB(byM[k]))).join('')) : ''; })();
 
@@ -1531,7 +1531,7 @@
     const male = people.filter((q) => q.gender === 'male'), female = people.filter((q) => q.gender === 'female'), noG = people.length - male.length - female.length;
     const ages = people.map(shownAge).filter((a) => a != null), avgAge = ages.length ? ages.reduce((a, b) => a + b, 0) / ages.length : 0, target = ages.filter((a) => a >= 40 && a <= 50);
     const bucket = (lo, hi) => ages.filter((a) => a >= lo && a <= hi).length;
-    const convBy = (pred) => { const ls = links.filter((l) => pred(l.p) && l.st !== 'exempt'); return { n: ls.length, paid: ls.filter((l) => l.paid).length }; };
+    const convBy = (pred) => { const ls = links.filter((l) => pred(l.p) && l.st !== 'exempt' && l.st !== 'willpay'); return { n: ls.length, paid: ls.filter((l) => l.paid).length }; };
     const cM = convBy((q) => q.gender === 'male'), cF = convBy((q) => q.gender === 'female');
     const demo = part('מגדר', barRow('נשים', female.length, people.length, '#C2547A') + barRow('גברים', male.length, people.length, '#3F6FB5') + (noG ? barRow('לא צוין', noG, people.length, '#B9B2A5') : '') +
         tbl(['המרה לתשלום', 'ערך'], [['נשים', Ps(cF.paid, cF.n)], ['גברים', Ps(cM.paid, cM.n)]])) +
