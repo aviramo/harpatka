@@ -698,7 +698,6 @@
         <button type="button" class="hbtn hback" id="pBack" aria-label="חזרה" title="חזרה" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
         <h2 id="pTitle">משתתף חדש</h2>
         <div id="pMsgs"></div>
-        <button type="button" class="hbtn" id="pPromoBtn" aria-label="יחצן" title="יחצן" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4a1 1 0 0 0 1 1h2.5l5.5 4V5L7.5 9H5a1 1 0 0 0-1 1z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg></button>
         <button type="button" class="hbtn hinfo" id="pInfoBtn" aria-label="פרטי המשתתף" title="פרטי המשתתף" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.8-3.6 3.7-5.5 7-5.5s6.2 1.9 7 5.5"/></svg></button>
         <span class="saved" id="savedMark">נשמר ✓</span>
       </div>
@@ -2045,7 +2044,7 @@
       if (show && !instant && prev !== tab && !reducedMotion()) { void d.offsetWidth; d.classList.add(tab === 'main' ? 'enter-r' : 'enter-l'); }
     });
     const ex = !!(sheet && sheet.id);
-    $('#pBack').hidden = !(ex && tab !== 'main'); $('#pInfoBtn').hidden = !(ex && tab === 'main'); $('#pPromoBtn').hidden = !(ex && tab === 'main'); $('#pMsgs').hidden = tab !== 'main';
+    $('#pBack').hidden = !(ex && tab !== 'main'); $('#pInfoBtn').hidden = !(ex && tab === 'main'); $('#pMsgs').hidden = tab !== 'main';
     { const sub = tab === 'confirm' ? cvTitle : SUBVIEW[tab], pp0 = ex ? state.participants.find((x) => x.id === sheet.id) : null;
       $('#pViewSub').hidden = !sub;
       if (sub) { $('#pTitle').textContent = sub; const pm = payCtx && state.meetings.find((x) => x.id === payCtx.mid); $('#pViewSub').innerHTML = nameB(pp0 ? pp0.name : '') + (pm ? ' · ' + esc(meetingLabel(pm, true)) : ''); }
@@ -2093,7 +2092,6 @@
     try { await api(T.p + '?id=eq.' + p.id, { method: 'PATCH', body: next }); toast(fb ? 'סומן: פרסום בפייסבוק' : id ? 'היחצן עודכן' : 'הוסר היחצן'); }
     catch (err) { Object.assign(p, prev); setTitle(p); render(); fail(err); }
   }
-  $('#pPromoBtn').addEventListener('click', () => openPromoterPick());
   $('#pPromoOpts').addEventListener('click', (e) => { const b = e.target.closest('[data-pp]'); if (!b) return; setParticipantPromoter(b.dataset.pp); afterPromoPick(); });
   $('#pPromoNew').addEventListener('click', () => openNewPromoter((row) => { setParticipantPromoter(row.id); afterPromoPick(); }));
   $('#pInfoBtn').addEventListener('click', () => { viewStack = []; setPTab('info'); });
@@ -2212,7 +2210,10 @@
 
   /* כותרת הפופאפ: צ'יפ מגדר (ז/נ) וגיל לפני השם */
   function setTitle(p) {
-    const fbP = !!(p && p.source === 'site-ad' && !p.promoter_id); $('#pPromoBtn').classList.toggle('on', !!(p && (p.promoter_id || fbP))); $('#pPromoBtn').classList.toggle('ad', fbP); if (fbP) $('#pPromoBtn').title = 'פרסום בפייסבוק'; else if (p && p.promoter_id) { const pr = promoterOf(p.promoter_id); $('#pPromoBtn').title = 'יחצן: ' + (pr ? pr.name : ''); } else $('#pPromoBtn').title = 'יחצן';
+    /* אייקון פרטי המשתתף נצבע לפי דרך ההגעה: ממומן (פייסבוק) כחול בהיר, יחצן כתום בהיר */
+    const fbP = !!(p && p.source === 'site-ad' && !p.promoter_id), hasPr = !!(p && p.promoter_id), ib = $('#pInfoBtn');
+    ib.classList.toggle('on', fbP || hasPr); ib.classList.toggle('ad', fbP);
+    ib.title = fbP ? 'פרטי המשתתף · פרסום בפייסבוק' : hasPr ? 'פרטי המשתתף · יחצן: ' + ((promoterOf(p.promoter_id) || {}).name || '') : 'פרטי המשתתף';
     const h = $('#pTitle');
     if (!p) { h.textContent = 'משתתף חדש'; return; }
     const age = shownAge(p);
