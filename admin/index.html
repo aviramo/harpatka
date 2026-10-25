@@ -130,6 +130,9 @@
     .row .adtag svg { width: 13px; height: 13px; }
     .row .meta > * { flex: 0 0 auto; }
     .row .age .gl { font-weight: 800; color: var(--ink); }
+    .row .age.ad { background: #E3EEF3; color: #1F5C6B; }   /* ממומן (פייסבוק): כחול בהיר */
+    .row .age.pr { background: #F8E4DA; color: #B8553A; }   /* יחצן: כתום בהיר */
+    .row .age.ad .gl, .row .age.pr .gl { color: inherit; }
     .row .nm .name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; line-height: 1.2; }
     .row .nm .age { margin-inline-start: 0; flex: 0 0 auto; }
     .row .ptag { display: inline-block; border-radius: 999px; padding: 1px 10px; font-weight: 700; font-size: 14px; white-space: nowrap; background: var(--red-bg); color: var(--red); }
@@ -1387,7 +1390,7 @@
       ? '<li class="group">לא רשומים למפגש הזה</li>' + others.map((p) => {
           const age = shownAge(p);
           return '<li class="row other"><div class="main" role="button" tabindex="0" data-edit="' + p.id + '"><div class="nm"><bdi class="name">' + esc(p.name) + '</bdi></div>' +
-            ((age != null || p.gender) ? '<div class="meta">' + ((age != null || p.gender) ? '<span class="age" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? '<b class="gl">' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : '') + '</bdi></span>' : '') + '</div>' : '') + '</div>' +
+            ((age != null || p.gender) ? '<div class="meta">' + ((age != null || p.gender) ? '<span class="age' + (p.promoter_id ? ' pr' : p.source === 'site-ad' ? ' ad' : '') + '" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? '<b class="gl">' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : '') + '</bdi></span>' : '') + '</div>' : '') + '</div>' +
             '<div class="acts"><button type="button" class="addm" data-addm="' + p.id + '">+ הוספה למפגש</button>' + (attendOpen(state.meetings.find((x) => x.id === state.filter)) ? '<button type="button" class="addm walk" data-walk="' + p.id + '">הגיע בלי הרשמה</button>' : '') + '</div></li>';
         }).join('')
       : '';
@@ -1423,8 +1426,8 @@
       const tgm = attTarget(), tgl = tgm ? linkOf(p.id, tgm.id) : null, showHere = !!(tgm && attendOpen(tgm)), evc = evCircle(p);
       return '<li class="row' + (hl && hl.attended && attendOpen(state.meetings.find((x) => x.id === state.filter)) ? ' arrived' : '') + '">' +
         '<div class="main' + (showHere ? ' att' : '') + (anyEv ? ' ev' : '') + '" role="button" tabindex="0" data-edit="' + p.id + '">' +
-          '<div class="nm"><bdi class="name">' + esc(p.name) + '</bdi>' + ((p.source === 'site-ad' || p.promoter_id) ? '<span class="ptags">' + (p.source === 'site-ad' ? '<span class="adtag" title="ממומן: הגיע ממודעה בתשלום" aria-label="ממומן"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 9a4 4 0 0 1 0 6"/></svg></span>' : '') + (p.promoter_id ? '<span class="prtag" title="יחצן: ' + esc((promoterOf(p.promoter_id) || {}).name || '') + '" aria-label="יחצן"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 9a4 4 0 0 1 0 6"/></svg></span>' : '') + '</span>' : '') + '</div>' +
-          (true ? '<div class="meta">' + (true ? '<span class="age" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? '<b class="gl">' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : (p.gender ? '' : '—')) + '</bdi></span>' : '') + side + tags + '</div>' : '') +
+          '<div class="nm"><bdi class="name">' + esc(p.name) + '</bdi>' + '</div>' +
+          (true ? '<div class="meta">' + (true ? '<span class="age' + (p.promoter_id ? ' pr' : p.source === 'site-ad' ? ' ad' : '') + '" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? '<b class="gl">' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : (p.gender ? '' : '—')) + '</bdi></span>' : '') + side + tags + '</div>' : '') +
           (noteLatest.get(p.id) ? '<div class="note" title="' + esc(noteLatest.get(p.id).author_name || '') + '">' + (noteLatest.get(p.id).has_image && !noteLatest.get(p.id).body ? IMG_ICON : esc(noteLatest.get(p.id).body)) + '</div>' : '') +
           (showHere ? '<button type="button" class="here' + (tgl && tgl.attended ? '' : ' no') + '" data-hr="' + p.id + '" data-hm="' + tgm.id + '" aria-pressed="' + !!(tgl && tgl.attended) + '" aria-label="' + (tgl && tgl.attended ? 'הגיע' : (tgl ? 'סימון הגעה' : 'הגיע בלי הרשמה')) + '" title="' + (tgl ? 'סימון הגעה' : 'לא רשום למפגש: סימון הגעה (הפתעה)') + '">✓</button>' : '') +
           evc +
