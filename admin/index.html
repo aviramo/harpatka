@@ -134,7 +134,7 @@
     .row .nm .age { margin-inline-start: 0; flex: 0 0 auto; }
     .row .ptag { display: inline-block; border-radius: 999px; padding: 1px 10px; font-weight: 700; font-size: 14px; white-space: nowrap; background: var(--red-bg); color: var(--red); }
     .row .ptag.paid { background: var(--green-bg); color: var(--green); }
-    .row .ptag.requested { background: #FBEBC8; color: #8A5A00; }
+    .row .ptag.requested, .row .ptag.willpay { background: #FBEBC8; color: #8A5A00; }
     .row .ptag.unpaid { background: var(--red-bg); color: var(--red); }
     .row .ptag.exempt { background: #E4E9EE; color: #4B5A6A; }
     .row { cursor: pointer; }
@@ -197,7 +197,7 @@
       background: var(--red-bg); color: var(--red);
     }
     .pay.paid { background: var(--green-bg); color: var(--green); }
-    .pay.requested { background: #FBEBC8; color: #8A5A00; }
+    .pay.requested, .pay.willpay { background: #FBEBC8; color: #8A5A00; }
     .pay.exempt { background: #E4E9EE; color: #4B5A6A; }
     .stsheet { padding-top: 14px; }
     .stscope { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 12px; scrollbar-width: none; position: sticky; top: 0; background: var(--paper); z-index: 2; }
@@ -358,7 +358,7 @@
     .sopts { display: grid; gap: 8px; margin-bottom: 8px; }
     .sopt { height: 50px; border-radius: 16px; font-size: 17px; font-weight: 700; border: 2px solid transparent; }
     .sopt.paid { background: var(--green-bg); color: var(--green); }
-    .sopt.requested { background: #FBEBC8; color: #8A5A00; }
+    .sopt.requested, .sopt.willpay { background: #FBEBC8; color: #8A5A00; }
     .sopt.unpaid { background: var(--red-bg); color: var(--red); }
     .sopt.exempt { background: #E4E9EE; color: #4B5A6A; }
     .sopt[aria-pressed="true"] { border-color: currentColor; }
@@ -463,7 +463,7 @@
     .bq { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 4px; border-bottom: 1px solid var(--line); }
     .bq .n { font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .pst { flex: 0 0 auto; border-radius: 999px; padding: 2px 12px; font-weight: 700; font-size: 13.5px; background: var(--red-bg); color: var(--red); }
-    .pst.paid { background: var(--green-bg); color: var(--green); } .pst.requested { background: #FBEBC8; color: #8A5A00; } .pst.exempt { background: #E4E9EE; color: #4B5A6A; } .pst.none { background: #EFE4D3; color: var(--muted); }
+    .pst.paid { background: var(--green-bg); color: var(--green); } .pst.requested, .pst.willpay { background: #FBEBC8; color: #8A5A00; } .pst.exempt { background: #E4E9EE; color: #4B5A6A; } .pst.none { background: #EFE4D3; color: var(--muted); }
     .prnew { width: 100%; height: 44px; border-radius: 14px; border: 1.5px dashed var(--coral); color: var(--terra); font-weight: 700; margin-top: 4px; }
     .hicons { position: relative; display: flex; align-self: center; }
     .hicon { position: relative; }
@@ -1183,7 +1183,7 @@
   let sheetSig = '';
   function refreshOpenSheet() {
     if (!(sheet && sheet.id && pDlg.open)) { sheetSig = ''; return; }
-    const sig = notesOf(sheet.id).map((n) => n.id).join(',') + '|' + state.att.filter((a) => a.participant_id === sheet.id).map((a) => [a.meeting_id, a.paid, a.exempt, a.pay_requested_at, a.attended, a.paid_amount, a.details_sent_at].join(':')).join(',');
+    const sig = notesOf(sheet.id).map((n) => n.id).join(',') + '|' + state.att.filter((a) => a.participant_id === sheet.id).map((a) => [a.meeting_id, a.paid, a.exempt, a.pay_requested_at, a.attended, a.paid_amount, a.details_sent_at, a.will_pay].join(':')).join(',');
     if (sig === sheetSig) return; sheetSig = sig;
     renderNotes(); refreshSheetMeetings();
   }
@@ -1194,7 +1194,7 @@
       const [p, m, a, nn, prs, pps, pays] = await Promise.all([
         api(T.p + '?select=*'),
         api(T.m + '?select=*'),
-        api(T.a + '?select=participant_id,meeting_id,paid,pay_requested_at,created_at,exempt,attended,paid_amount,promoter_id,commission,paid_at,details_sent_at'),
+        api(T.a + '?select=participant_id,meeting_id,paid,pay_requested_at,created_at,exempt,attended,paid_amount,promoter_id,commission,paid_at,details_sent_at,will_pay'),
         api(T.n + '?select=id,participant_id,body,author_email,author_name,created_at,has_image,system,event_type,old_status,new_status,meeting_id&order=created_at.desc'),
         api(T.pr + '?select=*&order=name.asc'),
         api(T.pp + '?select=*&order=paid_at.desc'),
@@ -1268,16 +1268,16 @@
   const FREE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><circle cx="12" cy="12" r="8.5"/><path d="M6 18L18 6"/></svg>';
   const REQ_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><path d="M6 3h12M6 21h12"/><path d="M7 3v3.5c0 1.6 1.1 2.8 2.7 3.6L12 12l2.3-1.9C15.9 9.3 17 8.1 17 6.5V3"/><path d="M7 21v-3.5c0-1.6 1.1-2.8 2.7-3.6L12 12l2.3 1.9c1.6.8 2.7 2 2.7 3.6V21"/></svg>';   // בבדיקה: שעון חול
   const NEW_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><path d="M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"/></svg>';   // חדש: ניצוץ
-  const linkStatus = (l) => l.exempt ? 'exempt' : l.paid ? 'paid' : (l.pay_requested_at ? 'requested' : 'unpaid');   // לא משלם (בחינם ביודעין) / שילם / נשלחה בקשת תשלום / טרם שילם
-  const STATUS_LABEL = { paid: 'שילם', requested: 'בטיפול', unpaid: 'טרם טופל', exempt: 'חינם' };
+  const linkStatus = (l) => l.exempt ? 'exempt' : l.paid ? 'paid' : l.will_pay ? 'willpay' : (l.pay_requested_at ? 'requested' : 'unpaid');   // לא משלם (בחינם ביודעין) / שילם / נשלחה בקשת תשלום / טרם שילם
+  const STATUS_LABEL = { paid: 'שילם', willpay: 'ישלם', requested: 'בטיפול', unpaid: 'טרם טופל', exempt: 'חינם' };
   /* סינון "שילמו" כולל גם את מי שמסומן "לא משלם" (הסדירו הכול); שאר הסטטוסים נבדקים כמו שהם */
-  const payMatch = (ps, f) => f === 'paid' ? (ps === 'paid' || ps === 'exempt') : ps === f;
+  const payMatch = (ps, f) => f === 'paid' ? (ps === 'paid' || ps === 'exempt' || ps === 'willpay') : ps === f;
   function paidState(p) {
     if (state.filter) { const l = linkOf(p.id, state.filter); return l ? linkStatus(l) : null; }
     const ls = linksOf(p.id);
     if (!ls.length) return null;
-    const st = ls.map(linkStatus).filter((s) => s !== 'exempt');   // "לא משלם" לא נספר בחוב ובהמרה
-    if (!st.length) return 'exempt';
+    const st = ls.map(linkStatus).filter((s) => s !== 'exempt' && s !== 'willpay');   // "לא משלם" ו"ישלם" לא נספרים בחוב ובהמרה
+    if (!st.length) return ls.every((l) => linkStatus(l) === 'willpay') ? 'willpay' : 'exempt';
     if (st.every((s) => s === 'paid')) return 'paid';
     return st.includes('unpaid') ? 'unpaid' : 'requested';   // בתצוגת הכל: טרם שילם = יש מפגש בלי בקשה, בקשה נשלחה = על כל החוסרים כבר נשלחה בקשה
   }
@@ -1326,7 +1326,7 @@
       case 'name': return byName;
       case 'age_asc': return (a, b) => byAge(1)(a, b) || byNew(a, b);
       case 'age_desc': return (a, b) => byAge(-1)(a, b) || byNew(a, b);
-      case 'unpaid': return (a, b) => { const o = { unpaid: 0, requested: 1, paid: 2, exempt: 3 }, x = o[paidState(a)] ?? 3, y = o[paidState(b)] ?? 3; return x - y || byNew(a, b); };
+      case 'unpaid': return (a, b) => { const o = { unpaid: 0, requested: 1, paid: 2, willpay: 3, exempt: 3 }, x = o[paidState(a)] ?? 3, y = o[paidState(b)] ?? 3; return x - y || byNew(a, b); };
       default: return (a, b) => byNew(a, b) || byName(a, b);
     }
   }
@@ -1414,9 +1414,9 @@
       if (!state.filter) {
         const ls = linksOf(p.id);
         if (ls.length) {
-          const payable = ls.filter((l) => !l.exempt), np = payable.filter((l) => l.paid).length, ps = paidState(p);
+          const payable = ls.filter((l) => !l.exempt && !l.will_pay), np = payable.filter((l) => l.paid).length, ps = paidState(p);
           tags = '<span class="ptag ' + ps + '" title="תשלום לפי מפגשים">' +
-            (ls.length === 1 || ps === 'exempt' ? STATUS_LABEL[ps] : (ps === 'requested' ? 'בטיפול' : '<bdi>' + np + '/' + payable.length + '</bdi> שילמו')) + '</span>';
+            (ls.length === 1 || ps === 'exempt' || ps === 'willpay' ? STATUS_LABEL[ps] : (ps === 'requested' ? 'בטיפול' : '<bdi>' + np + '/' + payable.length + '</bdi> שילמו')) + '</span>';
         } else tags = '<span class="age">ללא מפגש</span>';
       }
       const hl = state.filter ? linkOf(p.id, state.filter) : null;
@@ -1570,7 +1570,7 @@
     const l = linkOf(pid, mid); if (!l) return;
     const cur = linkStatus(l);
     payCtx = { pid, mid }; viewStack = ['main'];
-    $('#sOpts').innerHTML = ['paid', 'requested', 'unpaid', 'exempt'].map((s) => '<button type="button" class="sopt ' + s + '" data-st="' + s + '" aria-pressed="' + (s === cur) + '">' + STATUS_LABEL[s] + '</button>').join('');
+    $('#sOpts').innerHTML = ['paid', 'requested', 'willpay', 'unpaid', 'exempt'].map((s) => '<button type="button" class="sopt ' + s + '" data-st="' + s + '" aria-pressed="' + (s === cur) + '">' + STATUS_LABEL[s] + '</button>').join('');
     $('#sOpts').querySelectorAll('[data-st]').forEach((b) => b.onclick = () => {
       if (b.dataset.st === 'paid') openPayView(pid, mid);
       else if (b.dataset.st === cur) toMain();
@@ -1749,9 +1749,9 @@
   async function setPayStatus(pid, mid, st, extra, opts) {
     const l = linkOf(pid, mid);
     if (!l) return;
-    const prev = { paid: l.paid, pay_requested_at: l.pay_requested_at, exempt: l.exempt, paid_amount: l.paid_amount, promoter_id: l.promoter_id, commission: l.commission, paid_at: l.paid_at, pay_method: l.pay_method, pay_method_note: l.pay_method_note };
+    const prev = { paid: l.paid, pay_requested_at: l.pay_requested_at, exempt: l.exempt, will_pay: l.will_pay, paid_amount: l.paid_amount, promoter_id: l.promoter_id, commission: l.commission, paid_at: l.paid_at, pay_method: l.pay_method, pay_method_note: l.pay_method_note };
     const CLR = { paid_amount: null, promoter_id: null, commission: null, paid_at: null, pay_method: null, pay_method_note: null };
-    const body = st === 'paid' ? Object.assign({ paid: true, exempt: false }, extra || {}) : st === 'requested' ? Object.assign({ paid: false, exempt: false, pay_requested_at: new Date().toISOString() }, CLR) : st === 'exempt' ? Object.assign({ paid: false, exempt: true, pay_requested_at: null }, CLR) : Object.assign({ paid: false, exempt: false, pay_requested_at: null }, CLR);
+    const body = st === 'paid' ? Object.assign({ paid: true, exempt: false, will_pay: false }, extra || {}) : st === 'requested' ? Object.assign({ paid: false, exempt: false, will_pay: false, pay_requested_at: new Date().toISOString() }, CLR) : st === 'willpay' ? Object.assign({ paid: false, exempt: false, will_pay: true, pay_requested_at: null }, CLR) : st === 'exempt' ? Object.assign({ paid: false, exempt: true, will_pay: false, pay_requested_at: null }, CLR) : Object.assign({ paid: false, exempt: false, will_pay: false, pay_requested_at: null }, CLR);
     Object.assign(l, body); render(); refreshSheetMeetings();
     try {
       await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body });
@@ -1893,9 +1893,9 @@
     return FORCE_EVENT_BTN ? (state.meetings.filter((m) => m.meeting_date >= today).sort((x, y) => key(x).localeCompare(key(y)))[0] || state.meetings.slice().sort((x, y) => key(y).localeCompare(key(x)))[0] || null) : null;
   };
   /* השיוך של המשתתף למפגש היום, אם מגיע לו להודעה (שילם או חינם) */
-  const evLink = (p) => { const m = eventMeeting(), l = m && linkOf(p.id, m.id); return l && (l.paid || l.exempt) ? l : null; };
+  const evLink = (p) => { const m = eventMeeting(), l = m && linkOf(p.id, m.id); return l && (l.paid || l.exempt || l.will_pay) ? l : null; };
   /* כל מי שמגיע לו (שילם/חינם) כבר קיבל את הפרטים */
-  const evAllSent = (m) => { const ls = state.att.filter((l) => l.meeting_id === m.id && (l.paid || l.exempt) && state.participants.some((p) => p.id === l.participant_id)); return !ls.some((l) => !l.details_sent_at); };
+  const evAllSent = (m) => { const ls = state.att.filter((l) => l.meeting_id === m.id && (l.paid || l.exempt || l.will_pay) && state.participants.some((p) => p.id === l.participant_id)); return !ls.some((l) => !l.details_sent_at); };
   /* עיגול ברשימה: כחול, שליחת פרטי הערב (עד חצי שעה לפני המפגש; אז הוא הופך לעיגול הגעה הירוק); נעלם כשכולם קיבלו */
   const evCircle = (p) => {
     const m = eventMeeting(); if (!m || attendOpen(m)) return '';
