@@ -356,6 +356,8 @@
     .ccopy svg { width: 18px; height: 18px; }
     .mnone { color: var(--muted); font-size: 14.5px; margin: 0 4px 10px; }
     .sopts { display: grid; gap: 8px; margin-bottom: 8px; }
+    #sOpts { grid-template-columns: 1fr 1fr; }   /* בחירת סטטוס: שילם וחינם בשורה אחת, ישלם ואולי בשורה אחת, ושאר הסטטוסים ברוחב מלא */
+    #sOpts .sopt.requested, #sOpts .sopt.unpaid { grid-column: 1 / -1; }
     .sopt { height: 50px; border-radius: 16px; font-size: 17px; font-weight: 700; border: 2px solid transparent; }
     .sopt.paid { background: var(--green-bg); color: var(--green); }
     .sopt.requested, .sopt.willpay, .sopt.maybe { background: #FBEBC8; color: #8A5A00; }
@@ -1570,7 +1572,7 @@
     const l = linkOf(pid, mid); if (!l) return;
     const cur = linkStatus(l);
     payCtx = { pid, mid }; viewStack = ['main'];
-    $('#sOpts').innerHTML = ['paid', 'willpay', 'maybe', 'requested', 'unpaid', 'exempt'].map((s) => '<button type="button" class="sopt ' + s + '" data-st="' + s + '" aria-pressed="' + (s === cur) + '">' + STATUS_LABEL[s] + '</button>').join('');
+    $('#sOpts').innerHTML = ['paid', 'exempt', 'willpay', 'maybe', 'requested', 'unpaid'].map((s) => '<button type="button" class="sopt ' + s + '" data-st="' + s + '" aria-pressed="' + (s === cur) + '">' + STATUS_LABEL[s] + '</button>').join('');
     $('#sOpts').querySelectorAll('[data-st]').forEach((b) => b.onclick = () => {
       if (b.dataset.st === 'paid') openPayView(pid, mid);
       else if (b.dataset.st === cur) toMain();
