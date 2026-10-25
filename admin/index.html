@@ -1271,7 +1271,7 @@
   const linkStatus = (l) => l.exempt ? 'exempt' : l.paid ? 'paid' : l.will_pay ? 'willpay' : l.maybe ? 'maybe' : (l.pay_requested_at ? 'requested' : 'unpaid');   // לא משלם (בחינם ביודעין) / שילם / נשלחה בקשת תשלום / טרם שילם
   const STATUS_LABEL = { paid: 'שילם', willpay: 'ישלם', maybe: 'אולי', requested: 'בטיפול', unpaid: 'טרם טופל', exempt: 'חינם' };
   /* סינון "שילמו" כולל גם את מי שמסומן "לא משלם" (הסדירו הכול); שאר הסטטוסים נבדקים כמו שהם */
-  const payMatch = (ps, f) => f === 'paid' ? (ps === 'paid' || ps === 'exempt' || ps === 'willpay' || ps === 'maybe') : ps === f;
+  const payMatch = (ps, f) => f === 'paid' ? (ps === 'paid' || ps === 'exempt' || ps === 'willpay') : f === 'requested' ? (ps === 'requested' || ps === 'maybe') : ps === f;   // "אולי" נספר בסינון "בטיפול"
   function paidState(p) {
     if (state.filter) { const l = linkOf(p.id, state.filter); return l ? linkStatus(l) : null; }
     const ls = linksOf(p.id);
