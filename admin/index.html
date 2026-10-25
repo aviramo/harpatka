@@ -134,7 +134,7 @@
     .row .nm .age { margin-inline-start: 0; flex: 0 0 auto; }
     .row .ptag { display: inline-block; border-radius: 999px; padding: 1px 10px; font-weight: 700; font-size: 14px; white-space: nowrap; background: var(--red-bg); color: var(--red); }
     .row .ptag.paid { background: var(--green-bg); color: var(--green); }
-    .row .ptag.requested, .row .ptag.willpay { background: #FBEBC8; color: #8A5A00; }
+    .row .ptag.requested, .row .ptag.willpay, .row .ptag.maybe { background: #FBEBC8; color: #8A5A00; }
     .row .ptag.unpaid { background: var(--red-bg); color: var(--red); }
     .row .ptag.exempt { background: #E4E9EE; color: #4B5A6A; }
     .row { cursor: pointer; }
@@ -197,7 +197,7 @@
       background: var(--red-bg); color: var(--red);
     }
     .pay.paid { background: var(--green-bg); color: var(--green); }
-    .pay.requested, .pay.willpay { background: #FBEBC8; color: #8A5A00; }
+    .pay.requested, .pay.willpay, .pay.maybe { background: #FBEBC8; color: #8A5A00; }
     .pay.exempt { background: #E4E9EE; color: #4B5A6A; }
     .stsheet { padding-top: 14px; }
     .stscope { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 12px; scrollbar-width: none; position: sticky; top: 0; background: var(--paper); z-index: 2; }
@@ -358,7 +358,7 @@
     .sopts { display: grid; gap: 8px; margin-bottom: 8px; }
     .sopt { height: 50px; border-radius: 16px; font-size: 17px; font-weight: 700; border: 2px solid transparent; }
     .sopt.paid { background: var(--green-bg); color: var(--green); }
-    .sopt.requested, .sopt.willpay { background: #FBEBC8; color: #8A5A00; }
+    .sopt.requested, .sopt.willpay, .sopt.maybe { background: #FBEBC8; color: #8A5A00; }
     .sopt.unpaid { background: var(--red-bg); color: var(--red); }
     .sopt.exempt { background: #E4E9EE; color: #4B5A6A; }
     .sopt[aria-pressed="true"] { border-color: currentColor; }
@@ -463,7 +463,7 @@
     .bq { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 4px; border-bottom: 1px solid var(--line); }
     .bq .n { font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .pst { flex: 0 0 auto; border-radius: 999px; padding: 2px 12px; font-weight: 700; font-size: 13.5px; background: var(--red-bg); color: var(--red); }
-    .pst.paid { background: var(--green-bg); color: var(--green); } .pst.requested, .pst.willpay { background: #FBEBC8; color: #8A5A00; } .pst.exempt { background: #E4E9EE; color: #4B5A6A; } .pst.none { background: #EFE4D3; color: var(--muted); }
+    .pst.paid { background: var(--green-bg); color: var(--green); } .pst.requested, .pst.willpay, .pst.maybe { background: #FBEBC8; color: #8A5A00; } .pst.exempt { background: #E4E9EE; color: #4B5A6A; } .pst.none { background: #EFE4D3; color: var(--muted); }
     .prnew { width: 100%; height: 44px; border-radius: 14px; border: 1.5px dashed var(--coral); color: var(--terra); font-weight: 700; margin-top: 4px; }
     .hicons { position: relative; display: flex; align-self: center; }
     .hicon { position: relative; }
@@ -1183,7 +1183,7 @@
   let sheetSig = '';
   function refreshOpenSheet() {
     if (!(sheet && sheet.id && pDlg.open)) { sheetSig = ''; return; }
-    const sig = notesOf(sheet.id).map((n) => n.id).join(',') + '|' + state.att.filter((a) => a.participant_id === sheet.id).map((a) => [a.meeting_id, a.paid, a.exempt, a.pay_requested_at, a.attended, a.paid_amount, a.details_sent_at, a.will_pay].join(':')).join(',');
+    const sig = notesOf(sheet.id).map((n) => n.id).join(',') + '|' + state.att.filter((a) => a.participant_id === sheet.id).map((a) => [a.meeting_id, a.paid, a.exempt, a.pay_requested_at, a.attended, a.paid_amount, a.details_sent_at, a.will_pay, a.maybe].join(':')).join(',');
     if (sig === sheetSig) return; sheetSig = sig;
     renderNotes(); refreshSheetMeetings();
   }
@@ -1194,7 +1194,7 @@
       const [p, m, a, nn, prs, pps, pays] = await Promise.all([
         api(T.p + '?select=*'),
         api(T.m + '?select=*'),
-        api(T.a + '?select=participant_id,meeting_id,paid,pay_requested_at,created_at,exempt,attended,paid_amount,promoter_id,commission,paid_at,details_sent_at,will_pay'),
+        api(T.a + '?select=participant_id,meeting_id,paid,pay_requested_at,created_at,exempt,attended,paid_amount,promoter_id,commission,paid_at,details_sent_at,will_pay,maybe'),
         api(T.n + '?select=id,participant_id,body,author_email,author_name,created_at,has_image,system,event_type,old_status,new_status,meeting_id&order=created_at.desc'),
         api(T.pr + '?select=*&order=name.asc'),
         api(T.pp + '?select=*&order=paid_at.desc'),
@@ -1268,16 +1268,16 @@
   const FREE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><circle cx="12" cy="12" r="8.5"/><path d="M6 18L18 6"/></svg>';
   const REQ_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><path d="M6 3h12M6 21h12"/><path d="M7 3v3.5c0 1.6 1.1 2.8 2.7 3.6L12 12l2.3-1.9C15.9 9.3 17 8.1 17 6.5V3"/><path d="M7 21v-3.5c0-1.6 1.1-2.8 2.7-3.6L12 12l2.3 1.9c1.6.8 2.7 2 2.7 3.6V21"/></svg>';   // בבדיקה: שעון חול
   const NEW_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><path d="M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"/></svg>';   // חדש: ניצוץ
-  const linkStatus = (l) => l.exempt ? 'exempt' : l.paid ? 'paid' : l.will_pay ? 'willpay' : (l.pay_requested_at ? 'requested' : 'unpaid');   // לא משלם (בחינם ביודעין) / שילם / נשלחה בקשת תשלום / טרם שילם
-  const STATUS_LABEL = { paid: 'שילם', willpay: 'ישלם', requested: 'בטיפול', unpaid: 'טרם טופל', exempt: 'חינם' };
+  const linkStatus = (l) => l.exempt ? 'exempt' : l.paid ? 'paid' : l.will_pay ? 'willpay' : l.maybe ? 'maybe' : (l.pay_requested_at ? 'requested' : 'unpaid');   // לא משלם (בחינם ביודעין) / שילם / נשלחה בקשת תשלום / טרם שילם
+  const STATUS_LABEL = { paid: 'שילם', willpay: 'ישלם', maybe: 'אולי', requested: 'בטיפול', unpaid: 'טרם טופל', exempt: 'חינם' };
   /* סינון "שילמו" כולל גם את מי שמסומן "לא משלם" (הסדירו הכול); שאר הסטטוסים נבדקים כמו שהם */
-  const payMatch = (ps, f) => f === 'paid' ? (ps === 'paid' || ps === 'exempt' || ps === 'willpay') : ps === f;
+  const payMatch = (ps, f) => f === 'paid' ? (ps === 'paid' || ps === 'exempt' || ps === 'willpay' || ps === 'maybe') : ps === f;
   function paidState(p) {
     if (state.filter) { const l = linkOf(p.id, state.filter); return l ? linkStatus(l) : null; }
     const ls = linksOf(p.id);
     if (!ls.length) return null;
-    const st = ls.map(linkStatus).filter((s) => s !== 'exempt' && s !== 'willpay');   // "לא משלם" ו"ישלם" לא נספרים בחוב ובהמרה
-    if (!st.length) return ls.every((l) => linkStatus(l) === 'willpay') ? 'willpay' : 'exempt';
+    const st = ls.map(linkStatus).filter((s) => s !== 'exempt' && s !== 'willpay' && s !== 'maybe');   // "לא משלם", "ישלם" ו"אולי" לא נספרים בחוב ובהמרה
+    if (!st.length) { const all = ls.map(linkStatus); return all.every((s) => s === 'willpay') ? 'willpay' : all.every((s) => s === 'maybe') ? 'maybe' : 'exempt'; }
     if (st.every((s) => s === 'paid')) return 'paid';
     return st.includes('unpaid') ? 'unpaid' : 'requested';   // בתצוגת הכל: טרם שילם = יש מפגש בלי בקשה, בקשה נשלחה = על כל החוסרים כבר נשלחה בקשה
   }
@@ -1326,7 +1326,7 @@
       case 'name': return byName;
       case 'age_asc': return (a, b) => byAge(1)(a, b) || byNew(a, b);
       case 'age_desc': return (a, b) => byAge(-1)(a, b) || byNew(a, b);
-      case 'unpaid': return (a, b) => { const o = { unpaid: 0, requested: 1, paid: 2, willpay: 3, exempt: 3 }, x = o[paidState(a)] ?? 3, y = o[paidState(b)] ?? 3; return x - y || byNew(a, b); };
+      case 'unpaid': return (a, b) => { const o = { unpaid: 0, requested: 1, paid: 2, willpay: 3, maybe: 3, exempt: 3 }, x = o[paidState(a)] ?? 3, y = o[paidState(b)] ?? 3; return x - y || byNew(a, b); };
       default: return (a, b) => byNew(a, b) || byName(a, b);
     }
   }
@@ -1414,9 +1414,9 @@
       if (!state.filter) {
         const ls = linksOf(p.id);
         if (ls.length) {
-          const payable = ls.filter((l) => !l.exempt && !l.will_pay), np = payable.filter((l) => l.paid).length, ps = paidState(p);
+          const payable = ls.filter((l) => !l.exempt && !l.will_pay && !l.maybe), np = payable.filter((l) => l.paid).length, ps = paidState(p);
           tags = '<span class="ptag ' + ps + '" title="תשלום לפי מפגשים">' +
-            (ls.length === 1 || ps === 'exempt' || ps === 'willpay' ? STATUS_LABEL[ps] : (ps === 'requested' ? 'בטיפול' : '<bdi>' + np + '/' + payable.length + '</bdi> שילמו')) + '</span>';
+            (ls.length === 1 || ps === 'exempt' || ps === 'willpay' || ps === 'maybe' ? STATUS_LABEL[ps] : (ps === 'requested' ? 'בטיפול' : '<bdi>' + np + '/' + payable.length + '</bdi> שילמו')) + '</span>';
         } else tags = '<span class="age">ללא מפגש</span>';
       }
       const hl = state.filter ? linkOf(p.id, state.filter) : null;
@@ -1455,7 +1455,7 @@
     const perMeeting = asc.map((m) => {
       const ls = all.filter((l) => l.meeting_id === m.id), S = new Set(ls.map((l) => l.participant_id));
       const ret = [...S].filter((id) => seen.has(id)).length, kept = [...S].filter((id) => prev.has(id)).length;
-      const row = { m, regs: ls.length, ad: ls.filter((l) => l.p.source === 'site-ad').length, ex: ls.filter((l) => l.exempt || l.will_pay).length, paid: ls.filter((l) => l.paid && !l.exempt).length, rev: ls.filter((l) => l.paid && !l.exempt).reduce((s, l) => s + (l.paid_amount != null ? Number(l.paid_amount) : priceAtReg(m, l.created_at)), 0),
+      const row = { m, regs: ls.length, ad: ls.filter((l) => l.p.source === 'site-ad').length, ex: ls.filter((l) => l.exempt || l.will_pay || l.maybe).length, paid: ls.filter((l) => l.paid && !l.exempt).length, rev: ls.filter((l) => l.paid && !l.exempt).reduce((s, l) => s + (l.paid_amount != null ? Number(l.paid_amount) : priceAtReg(m, l.created_at)), 0),
         news: S.size - ret, ret, kept, prevN: prev.size };
       S.forEach((id) => seen.add(id)); prev = S;
       return row;
@@ -1493,7 +1493,7 @@
     const part = (title, body) => '<section class="stp"><h4>' + title + '</h4>' + body + '</section>';
 
     const n = links.length, uniq = new Set(links.map((l) => l.participant_id)), people = [...uniq].map((id) => state.participants.find((x) => x.id === id));
-    const paid = links.filter((l) => l.st === 'paid'), req = links.filter((l) => l.st === 'requested'), unp = links.filter((l) => l.st === 'unpaid'), exm = links.filter((l) => l.st === 'exempt'), wpl = links.filter((l) => l.st === 'willpay'), nPay = n - exm.length - wpl.length;   // "חינם" ו"ישלם" לא נספרים בהמרה
+    const paid = links.filter((l) => l.st === 'paid'), req = links.filter((l) => l.st === 'requested'), unp = links.filter((l) => l.st === 'unpaid'), exm = links.filter((l) => l.st === 'exempt'), wpl = links.filter((l) => l.st === 'willpay'), mby = links.filter((l) => l.st === 'maybe'), nPay = n - exm.length - wpl.length - mby.length;   // "חינם" ו"ישלם" לא נספרים בהמרה
     const rev = paid.reduce((s, l) => s + price(l), 0), comm = state.payments.reduce((s, x) => s + (x.promoter_id && x.commission != null ? (x.kind === 'payment' ? 1 : -1) * Number(x.commission) : 0), 0), owed = req.reduce((s, l) => s + price(l), 0);
     const pm = S.perMeeting.filter((r) => r.regs), last = pm[pm.length - 1], prev = pm[pm.length - 2];
     const conv = P(paid.length, nPay);
@@ -1503,7 +1503,7 @@
     const refunds = state.payments.filter((x) => x.kind === 'refund').reduce((s, x) => s + Number(x.amount), 0);
     const maxRev = Math.max(1, ...pm.map((r) => r.rev));
     const money = part('הכנסה לפי מפגש', tbl(['מפגש', 'הכנסה', 'שילמו', 'מגמה'], pm.map((r, k) => [dlab(r.m), ilsB(r.rev), r.paid + '/' + (r.regs - r.ex), k ? trend(r.rev, pm[k - 1].rev) : '—']))) +
-      part('מצב תשלומים', '<div class="stkpis">' + kpi(paid.length, 'שילמו', Ps(paid.length, nPay), 'good') + kpi(req.length, 'בטיפול', ilsB(owed), 'warn') + kpi(unp.length, 'טרם טופלו', '', unp.length ? 'bad' : '') + kpi(exm.length, 'חינם', '') + kpi(wpl.length, 'ישלם', '') + '</div>') +
+      part('מצב תשלומים', '<div class="stkpis">' + kpi(paid.length, 'שילמו', Ps(paid.length, nPay), 'good') + kpi(req.length, 'בטיפול', ilsB(owed), 'warn') + kpi(unp.length, 'טרם טופלו', '', unp.length ? 'bad' : '') + kpi(exm.length, 'חינם', '') + kpi(wpl.length, 'ישלם', '') + kpi(mby.length, 'אולי', '') + '</div>') +
       part('גבייה', tbl(['מדד', 'ערך'], [['המרה לתשלום', Ps(paid.length, nPay)], ['ממוצע לתשלום', paid.length ? ilsB(rev / paid.length) : '—'], ['נטו אחרי עמלות', ilsB(rev - comm)], ['עמלות ליחצנים', ilsB(comm)], ['קרדיט פתוח', ilsB(credit)], ['הוחזר', ilsB(refunds)]])) +
       (() => { const byM = {}; paid.forEach((l) => { const k = ilDay(l.paid_at || l.created_at || new Date().toISOString()).slice(0, 7); byM[k] = (byM[k] || 0) + price(l); }); const ks = Object.keys(byM).sort(), mx = Math.max(1, ...ks.map((k) => byM[k])); return ks.length > 1 ? part('הכנסה לפי חודש', ks.map((k) => barRow(k.slice(5) + '/' + k.slice(2, 4), byM[k], mx, '#2F7D4F', ilsB(byM[k]))).join('')) : ''; })();
 
@@ -1531,7 +1531,7 @@
     const male = people.filter((q) => q.gender === 'male'), female = people.filter((q) => q.gender === 'female'), noG = people.length - male.length - female.length;
     const ages = people.map(shownAge).filter((a) => a != null), avgAge = ages.length ? ages.reduce((a, b) => a + b, 0) / ages.length : 0, target = ages.filter((a) => a >= 40 && a <= 50);
     const bucket = (lo, hi) => ages.filter((a) => a >= lo && a <= hi).length;
-    const convBy = (pred) => { const ls = links.filter((l) => pred(l.p) && l.st !== 'exempt' && l.st !== 'willpay'); return { n: ls.length, paid: ls.filter((l) => l.paid).length }; };
+    const convBy = (pred) => { const ls = links.filter((l) => pred(l.p) && l.st !== 'exempt' && l.st !== 'willpay' && l.st !== 'maybe'); return { n: ls.length, paid: ls.filter((l) => l.paid).length }; };
     const cM = convBy((q) => q.gender === 'male'), cF = convBy((q) => q.gender === 'female');
     const demo = part('מגדר', barRow('נשים', female.length, people.length, '#C2547A') + barRow('גברים', male.length, people.length, '#3F6FB5') + (noG ? barRow('לא צוין', noG, people.length, '#B9B2A5') : '') +
         tbl(['המרה לתשלום', 'ערך'], [['נשים', Ps(cF.paid, cF.n)], ['גברים', Ps(cM.paid, cM.n)]])) +
@@ -1570,7 +1570,7 @@
     const l = linkOf(pid, mid); if (!l) return;
     const cur = linkStatus(l);
     payCtx = { pid, mid }; viewStack = ['main'];
-    $('#sOpts').innerHTML = ['paid', 'willpay', 'requested', 'unpaid', 'exempt'].map((s) => '<button type="button" class="sopt ' + s + '" data-st="' + s + '" aria-pressed="' + (s === cur) + '">' + STATUS_LABEL[s] + '</button>').join('');
+    $('#sOpts').innerHTML = ['paid', 'willpay', 'maybe', 'requested', 'unpaid', 'exempt'].map((s) => '<button type="button" class="sopt ' + s + '" data-st="' + s + '" aria-pressed="' + (s === cur) + '">' + STATUS_LABEL[s] + '</button>').join('');
     $('#sOpts').querySelectorAll('[data-st]').forEach((b) => b.onclick = () => {
       if (b.dataset.st === 'paid') openPayView(pid, mid);
       else if (b.dataset.st === cur) toMain();
@@ -1749,9 +1749,10 @@
   async function setPayStatus(pid, mid, st, extra, opts) {
     const l = linkOf(pid, mid);
     if (!l) return;
-    const prev = { paid: l.paid, pay_requested_at: l.pay_requested_at, exempt: l.exempt, will_pay: l.will_pay, paid_amount: l.paid_amount, promoter_id: l.promoter_id, commission: l.commission, paid_at: l.paid_at, pay_method: l.pay_method, pay_method_note: l.pay_method_note };
+    const prev = { paid: l.paid, pay_requested_at: l.pay_requested_at, exempt: l.exempt, will_pay: l.will_pay, maybe: l.maybe, paid_amount: l.paid_amount, promoter_id: l.promoter_id, commission: l.commission, paid_at: l.paid_at, pay_method: l.pay_method, pay_method_note: l.pay_method_note };
     const CLR = { paid_amount: null, promoter_id: null, commission: null, paid_at: null, pay_method: null, pay_method_note: null };
-    const body = st === 'paid' ? Object.assign({ paid: true, exempt: false, will_pay: false }, extra || {}) : st === 'requested' ? Object.assign({ paid: false, exempt: false, will_pay: false, pay_requested_at: new Date().toISOString() }, CLR) : st === 'willpay' ? Object.assign({ paid: false, exempt: false, will_pay: true, pay_requested_at: null }, CLR) : st === 'exempt' ? Object.assign({ paid: false, exempt: true, will_pay: false, pay_requested_at: null }, CLR) : Object.assign({ paid: false, exempt: false, will_pay: false, pay_requested_at: null }, CLR);
+    const OFF = { will_pay: false, maybe: false };
+    const body = st === 'paid' ? Object.assign({ paid: true, exempt: false }, OFF, extra || {}) : st === 'requested' ? Object.assign({ paid: false, exempt: false, pay_requested_at: new Date().toISOString() }, OFF, CLR) : st === 'willpay' ? Object.assign({ paid: false, exempt: false, pay_requested_at: null }, OFF, { will_pay: true }, CLR) : st === 'maybe' ? Object.assign({ paid: false, exempt: false, pay_requested_at: null }, OFF, { maybe: true }, CLR) : st === 'exempt' ? Object.assign({ paid: false, exempt: true, pay_requested_at: null }, OFF, CLR) : Object.assign({ paid: false, exempt: false, pay_requested_at: null }, OFF, CLR);
     Object.assign(l, body); render(); refreshSheetMeetings();
     try {
       await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body });
@@ -1893,9 +1894,9 @@
     return FORCE_EVENT_BTN ? (state.meetings.filter((m) => m.meeting_date >= today).sort((x, y) => key(x).localeCompare(key(y)))[0] || state.meetings.slice().sort((x, y) => key(y).localeCompare(key(x)))[0] || null) : null;
   };
   /* השיוך של המשתתף למפגש היום, אם מגיע לו להודעה (שילם או חינם) */
-  const evLink = (p) => { const m = eventMeeting(), l = m && linkOf(p.id, m.id); return l && (l.paid || l.exempt || l.will_pay) ? l : null; };
+  const evLink = (p) => { const m = eventMeeting(), l = m && linkOf(p.id, m.id); return l && (l.paid || l.exempt || l.will_pay || l.maybe) ? l : null; };
   /* כל מי שמגיע לו (שילם/חינם) כבר קיבל את הפרטים */
-  const evAllSent = (m) => { const ls = state.att.filter((l) => l.meeting_id === m.id && (l.paid || l.exempt || l.will_pay) && state.participants.some((p) => p.id === l.participant_id)); return !ls.some((l) => !l.details_sent_at); };
+  const evAllSent = (m) => { const ls = state.att.filter((l) => l.meeting_id === m.id && (l.paid || l.exempt || l.will_pay || l.maybe) && state.participants.some((p) => p.id === l.participant_id)); return !ls.some((l) => !l.details_sent_at); };
   /* עיגול ברשימה: כחול, שליחת פרטי הערב (עד חצי שעה לפני המפגש; אז הוא הופך לעיגול הגעה הירוק); נעלם כשכולם קיבלו */
   const evCircle = (p) => {
     const m = eventMeeting(); if (!m || attendOpen(m)) return '';
