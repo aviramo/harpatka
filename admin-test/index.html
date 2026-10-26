@@ -2274,15 +2274,20 @@
   function ledgerOf(id) {
     const acc = state.payments.filter((x) => x.promoter_id === id && x.commission != null && Number(x.commission) > 0).map((x) => {
       const pp = state.participants.find((q) => q.id === x.participant_id), m = state.meetings.find((q) => q.id === x.meeting_id), isR = x.kind === 'refund' || x.kind === 'credit';
-      return { kind: isR ? 'r' : 'c', date: ilDay(x.created_at), amount: (isR ? -1 : 1) * Number(x.commission), who: pp ? pp.name : (state.inactiveNames && state.inactiveNames.get(x.participant_id)) || '', sub: (isR ? (x.kind === 'credit' ? 'ביטול לקרדיט · ' : 'החזר תשלום · ') : '') + (m ? 'מפגש ' + meetingLabel(m).split(' · ')[0] + ' · ' : '') + (isR ? 'הוחזר ' : 'שילם ') + Number(x.amount), key: x.id };
+      return { kind: isR ? 'r' : 'c', ts: String(x.created_at || ''), date: ilDay(x.created_at), amount: (isR ? -1 : 1) * Number(x.commission), who: pp ? pp.name : (state.inactiveNames && state.inactiveNames.get(x.participant_id)) || '', sub: (isR ? (x.kind === 'credit' ? 'ביטול לקרדיט · ' : 'החזר תשלום · ') : '') + (m ? 'מפגש ' + meetingLabel(m).split(' · ')[0] + ' · ' : '') + (isR ? 'הוחזר ' : 'שילם ') + Number(x.amount), key: x.id };
     });
     const pays = state.promoPays.filter((x) => x.promoter_id === id).map((x) => ({ kind: 'p', date: x.paid_at, amount: -Number(x.amount), who: 'תשלום לדרך הגעה', sub: x.note || '', id: x.id, key: x.id }));
-    const all = acc.concat(pays).sort((a, b) => String(a.date).localeCompare(String(b.date)) || (a.kind === 'c' ? -1 : 1));
-    let run = 0; all.forEach((r) => { run += r.amount; r.bal = run; });
-    { const x = promoterOf(id); if (x && !x.cost_from_payment && Number(x.rate) > 0) { const n = state.participants.filter((q) => (channelOf(q) || {}).id === id).length; if (n) acc.push({ kind: 'c', date: todayISO(), amount: n * Number(x.rate), who: 'עלות לידים', sub: n + ' לידים × ₪' + Number(x.rate), key: 'leads' }); } }
-    const all2 = acc.concat(pays).sort((a, b) => String(a.date).localeCompare(String(b.date)) || (a.kind === 'c' ? -1 : 1)); { let run2 = 0; all2.forEach((r) => { run2 += r.amount; r.bal = run2; }); all.length = 0; all.push(...all2); }
-    const accrued = acc.reduce((s, r) => s + r.amount, 0), paid = -pays.reduce((s, r) => s + r.amount, 0);
-    return { rows: all.reverse(), accrued, paid, balance: accrued - paid };
+    /* ההתחשבנות מהתשלום האחרון ואילך: מה שלפניו נחשב מסולק, בלי חשיבות להיסטוריה. יתרה = עמלות ולידים שנוצרו אחרי התשלום האחרון (accrued / paid הם סכומים כוללים, לסטטיסטיקה) */
+    const x0 = promoterOf(id), rate = x0 ? Number(x0.rate) : 0, byLead = !!(x0 && !x0.cost_from_payment && rate > 0);
+    const myPays = state.promoPays.filter((x) => x.promoter_id === id).slice().sort((a, b) => String(b.created_at || b.paid_at).localeCompare(String(a.created_at || a.paid_at)));
+    const lp = myPays[0], lastTs = lp ? String(lp.created_at || (lp.paid_at + 'T23:59:59')) : '';
+    const leadsAll = byLead ? state.participants.filter((q) => (channelOf(q) || {}).id === id) : [], leadsNew = leadsAll.filter((q) => String(q.created_at || '') > lastTs);
+    const leadRow = (n) => ({ kind: 'c', date: todayISO(), amount: n * rate, who: 'עלות לידים', sub: n + ' לידים × ₪' + rate, key: 'leads' });
+    const accNew = acc.filter((r) => !lastTs || String(r.ts || '') > lastTs).concat(leadsNew.length ? [leadRow(leadsNew.length)] : []);
+    const lastRow = lp ? [{ kind: 'p', date: lp.paid_at, amount: -Number(lp.amount), who: 'תשלום לדרך הגעה', sub: lp.note || '', id: lp.id, key: lp.id }] : [];
+    const rows = accNew.concat(lastRow).sort((a, b) => String(a.date).localeCompare(String(b.date)) || (a.kind === 'c' ? -1 : 1)); { let run3 = 0; rows.forEach((r) => { run3 += r.amount; r.bal = run3; }); }
+    const accrued = acc.reduce((s, r) => s + r.amount, 0) + leadsAll.length * rate, paid = myPays.reduce((s, x) => s + Number(x.amount), 0);
+    return { rows: rows.reverse(), accrued, paid, balance: accNew.reduce((s, r) => s + r.amount, 0) };
   }
   function renderPromoters() {
     $('#prList').innerHTML = (state.promoters.length ? state.promoters.map((x) => { const L = ledgerOf(x.id), brought = state.participants.filter((q) => q.promoter_id === x.id), rt = x.rate_type === 'percent' ? Number(x.rate) + '% מהתשלום' : '₪' + Number(x.rate) + ' למשתתף'; return '<div class="prrow" data-pr="' + x.id + '" role="button" tabindex="0"><div><b>' + esc(x.name) + '</b><small>עמלה ' + rt + '</small><small>' + brought.length + ' משתתפים · ' + brought.filter((q) => linksOf(q.id).some((l) => l.paid && !l.exempt)).length + ' שילמו</small></div>' + (L.balance > 0 ? '<span class="prearn" title="יתרה לתשלום לדרך הגעה">' + ils(L.balance) + '<small>לתשלום</small></span>' : '<span class="prok">מסולק ✓</span>') + '</div>'; }).join('')
