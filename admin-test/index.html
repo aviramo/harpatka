@@ -132,13 +132,21 @@
     #setDlg #setIntroBox[hidden] { display: none; }   /* נוסח הוואטסאפ רק בלשונית סטטוס מפגש */
     /* חיפוש בראש הדף, משמאל לכפתור התפריט: אייקון שנפתח לכל רוחב השורה בלחיצה */
     /* חיפוש בשורת "מוצגים" מעל הרשימה: אייקון קטן שנפתח לכל רוחב השורה בלחיצה */
+    .hfilt { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; font-weight: 800; line-height: 1; padding: 0; cursor: pointer; }
+    .hfilt.yes { background: #2F7D4F; color: #fff; }
+    .hfilt.no { background: #fff; border: 2.5px dashed #D2C3AC; box-sizing: border-box; }
+    .hfilt.all { background: conic-gradient(#2F7D4F 0 50%, #fff 50% 100%); border: 2.5px dashed #D2C3AC; box-sizing: border-box; }
+    .genderchips .stc.gm, .genderchips .stc.gf { background: #fff; color: var(--ink); border-color: var(--line); }
+    .genderchips .stc.gm[aria-pressed="true"], .genderchips .stc.gf[aria-pressed="true"] { border-color: var(--ink); }
     .genderchips { display: flex; gap: 6px; align-items: center; }
     .genderchips:empty { display: none; }
     .genderchips .stc { height: 32px; padding: 0 10px; font-size: 14px; }
     .listpay { display: flex; gap: 6px; align-items: center; justify-self: center; }
     .listpay .stc { height: 32px; padding: 0 10px; font-size: 14px; }
     .listbar { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; margin-top: 8px; height: 36px; }   /* מוצגים בימין, שולם/לא שולם במרכז האופקי, חיפוש בשמאל */
-    .hsearch { margin: 0; width: 36px; height: 36px; justify-self: end; }
+    .hsearch { margin: 0; width: 36px; height: 36px; flex: 0 0 36px; }
+    .lbstart { display: flex; align-items: center; gap: 8px; justify-self: start; min-width: 0; }
+    .lbend { justify-self: end; margin-inline-end: 6px; }
     .hsearch input { display: block; width: 36px; height: 36px; padding: 0; border-radius: 999px; box-sizing: border-box; cursor: pointer; font-size: 16px; }
     .search.hsearch svg { right: 9px; top: 50%; margin-top: -9px; width: 18px; height: 18px; transform: none; }
     .hsearch:not(:focus-within) input:placeholder-shown::placeholder { color: transparent; }
@@ -959,12 +967,11 @@
     </header>
 
     <div id="status"></div>
-    <div class="listbar"><div class="listcount" id="listCount" aria-live="polite"></div><div class="listpay" id="listPay"></div>
-        <label class="search hsearch">
+    <div class="listbar"><div class="lbstart"><label class="search hsearch">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/><path d="M10.5 8v5M8 10.5h5" stroke-width="1.8"/></svg>
         <input id="q" type="search" placeholder="חיפוש או הוספת משתתף" autocomplete="off" aria-label="חיפוש" />
         <button type="button" class="sclear" id="qClear" aria-label="ניקוי החיפוש" tabindex="-1">×</button>
-      </label>
+      </label><div class="listcount" id="listCount" aria-live="polite"></div></div><div class="listpay" id="listPay"></div><div class="lbend" id="listHere"></div>
     </div>
     <ul class="list" id="list"></ul>
   </div>
@@ -1809,8 +1816,9 @@
     const hchip = (v, label, cls) => { const n = hereN(v); return '<button type="button" class="stc ' + cls + (n ? '' : ' zero') + '" data-sth="' + v + '" aria-pressed="' + (eh === v) + '">' + label + ' <small>' + n + '</small></button>'; };
     const editLink = '<button type="button" class="qeditlink" data-qedit="' + (state.filter ? 'meeting' : 'participant') + '" style="margin:0"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg> עריכה</button>';
     $('#stStrip').style.setProperty('--nd', String(Math.max(2, String(state.participants.length).length)));
+    $('#listHere').innerHTML = attOn ? '<button type="button" class="hfilt ' + (eh === '1' ? 'yes' : eh === '0' ? 'no' : 'all') + '" data-hcyc="1" aria-label="סינון הגעה: ' + (eh === '1' ? 'הגיעו' : eh === '0' ? 'לא הגיעו' : 'הכל') + '" title="' + (eh === '1' ? 'הגיעו (' + hereN('1') + ')' : eh === '0' ? 'לא הגיעו (' + hereN('0') + ')' : 'הכל: הגיעו ' + hereN('1') + ', לא הגיעו ' + hereN('0')) + ' (לחיצה לשינוי)">' + (eh === '1' ? '✓' : '') + '</button>' : '';   // אייקון הגעה כמו ברשימה: הכל / הגיעו / לא הגיעו
     $('#listPay').innerHTML = state.filter ? pchip('1', 'שולם', 'gh') + pchip('0', 'לא שולם', 'gn') : '';   // שולם / לא שולם בשורת החיפוש מעל הרשימה
-    $('#stStrip').innerHTML = true ? (state.filter ? statusList() : pstatusList().concat([{ key: PNONE, label: 'בלי תגיות' }])).filter((s) => epk.includes(s.key) || state.participants.some((p) => (!state.filter || linkOf(p.id, state.filter)) && stMatch(p, s.key))).map((s) => { const n = nP(s.key); return '<button type="button" class="stc ' + (s.key === PNONE || !state.filter ? 'tagc' : s.key) + (n ? '' : ' zero') + '" data-stc="' + s.key + '" aria-pressed="' + epk.includes(s.key) + '">' + esc(s.label) + ' <small>' + n + '</small></button>'; }).join('') + (state.filter && state.participants.some((q) => linkOf(q.id, state.filter) && noPayOf(q, linkOf(q.id, state.filter))) ? pchip('n', 'לא משלם', 'gn') : '') + (attOn ? hchip('1', 'הגיע', 'gh') + hchip('0', 'לא הגיע', 'gn') : '') : '';
+    $('#stStrip').innerHTML = true ? (state.filter ? statusList().slice().reverse() : pstatusList().slice().reverse().concat([{ key: PNONE, label: 'בלי תגיות' }])).filter((s) => epk.includes(s.key) || state.participants.some((p) => (!state.filter || linkOf(p.id, state.filter)) && stMatch(p, s.key))).map((s) => { const n = nP(s.key); return '<button type="button" class="stc ' + (s.key === PNONE || !state.filter ? 'tagc' : s.key) + (n ? '' : ' zero') + '" data-stc="' + s.key + '" aria-pressed="' + epk.includes(s.key) + '">' + esc(s.label) + ' <small>' + n + '</small></button>'; }).join('') + (state.filter && state.participants.some((q) => linkOf(q.id, state.filter) && noPayOf(q, linkOf(q.id, state.filter))) ? pchip('n', 'לא משלם', 'gn') : '') + '' : '';
     $('#listCount').innerHTML = base.length || epk.length || eg ? '<span class="stcount" title="כמה משתתפים מוצגים ברשימה">מוצגים <b>' + base.filter((p) => genOk(p) && payOk(p)).length + '</b></span>' : '';
   }
 
@@ -3220,6 +3228,7 @@
     render();
   });
   $('#genderChips').addEventListener('click', (e) => { const gb = e.target.closest('[data-stg]'); if (gb) { state.gender = state.gender === gb.dataset.stg ? null : gb.dataset.stg; render(); syncUrl(); } });
+  $('#listHere').addEventListener('click', (e) => { if (!e.target.closest('[data-hcyc]')) return; state.here = state.here === '1' ? '0' : state.here === '0' ? null : '1'; render(); syncUrl(); });
   $('#listPay').addEventListener('click', (e) => { const pb = e.target.closest('[data-stp]'); if (pb) { state.paidF = state.paidF === pb.dataset.stp ? null : pb.dataset.stp; render(); syncUrl(); } });
   $('#stStrip').addEventListener('click', (e) => {
     const pb = e.target.closest('[data-stp]'); if (pb) { state.paidF = state.paidF === pb.dataset.stp ? null : pb.dataset.stp; render(); syncUrl(); return; }
