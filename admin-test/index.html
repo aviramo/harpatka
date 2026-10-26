@@ -1562,7 +1562,7 @@
       return '<b>אין ' + who + (stl ? (pay === PNONE ? ' ' : ' בסטטוס "') + esc(stl) + (pay === PNONE ? '' : '"') : '') + scope + (state.q ? ' שמתאימים לחיפוש' : '') + '</b>אפשר לנקות את הסינון ולנסות שוב<br>' + clear;
     }
     if (state.q) return '<b>לא נמצא אף אחד</b>אפשר לנסות שם או מספר אחר';
-    return state.filter ? '<b>עוד אין משתתפים במפגש הזה</b>אפשר להוסיף דרך החיפוש: מחפשים שם או טלפון ולוחצים "הוספה למפגש"'
+    return state.filter ? '<b>עוד אין משתתפים במפגש הזה</b>אפשר לשייך דרך החיפוש: מחפשים שם או טלפון ובוחרים סטטוס'
                         : '<b>עוד אין משתתפים</b>לחיצה על "+ משתתף" למטה מוסיפה את הראשון';
   }
 
@@ -1587,14 +1587,6 @@
         (p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd)) || hasNote(p, q)));
       others.sort((a, b) => a.name.localeCompare(b.name, 'he'));
     }
-    const othersHtml = others.length
-      ? '<li class="group">לא רשומים למפגש הזה</li>' + others.map((p) => {
-          const age = shownAge(p);
-          return '<li class="row other"><div class="main" role="button" tabindex="0" data-edit="' + p.id + '"><div class="nm"><bdi class="name">' + esc(p.name) + '</bdi></div>' +
-            ((age != null || p.gender) ? '<div class="meta">' + ((age != null || p.gender) ? '<span class="age' + (p.promoter_id ? ' pr' : p.source === 'site-ad' ? ' ad' : '') + '" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? '<b class="gl">' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : '') + '</bdi></span>' : '') + '</div>' : '') + '</div>' +
-            '<div class="acts"><button type="button" class="addm" data-addm="' + p.id + '">+ הוספה למפגש</button>' + (attendOpen(state.meetings.find((x) => x.id === state.filter)) ? '<button type="button" class="addm walk" data-walk="' + p.id + '">הגיע בלי הרשמה</button>' : '') + '</div></li>';
-        }).join('')
-      : '';
     const newBtn = q
       ? '<li class="group newp"><button type="button" class="addm wide" id="addNew">+ משתתף חדש: ' + esc(state.q.trim()) + '</button></li>' : '';
 
@@ -1604,15 +1596,15 @@
     }
 
     const anyEv = rows.some((p) => evCircle(p));   // אם לפחות שורה אחת עם עיגול שליחה, שומרים את העמודה בכל השורות כדי שהתגיות יהיו באותו קו
-    const rowsHtml = rows.map((p) => {
+    const rowHtml = (p) => {
       const age = shownAge(p);
       const wa = waLink(p.phone);
       const tel = telLink(p.phone);
       let side = '';
       if (state.filter) {
         const l = linkOf(p.id, state.filter);
-        const st = linkStatus(l);
-        side = '<span class="ptag ' + st + '" data-qs="' + p.id + '" role="button" tabindex="0" title="סטטוס במפגש (לחיצה לשינוי)">' + STATUS_LABEL[st] + '</span>';   // תצוגה בלבד: לחיצה על הכרטיס פותחת את פרטי המשתתף, ושם משנים סטטוס
+        if (!l) side = '<span class="ptag empty" data-qs="' + p.id + '" role="button" tabindex="0" title="לא משויך למפגש (לחיצה לבחירת סטטוס ושיוך)">לא משויך</span>';
+        else { const st = linkStatus(l); side = '<span class="ptag ' + st + '" data-qs="' + p.id + '" role="button" tabindex="0" title="סטטוס במפגש (לחיצה לשינוי)">' + STATUS_LABEL[st] + '</span>'; }   // תצוגה בלבד: לחיצה על הכרטיס פותחת את פרטי המשתתף, ושם משנים סטטוס
       }
       let tags = '';
       if (!state.filter) {
@@ -1631,7 +1623,9 @@
           evc +
         '</div>' +
       '</li>';
-    }).join('');
+    };
+    const rowsHtml = rows.map(rowHtml).join('');
+    const othersHtml = others.length ? '<li class="group">לא משויכים למפגש הזה</li>' + others.map(rowHtml).join('') : '';
     $('#list').innerHTML = rowsHtml + othersHtml + newBtn;
   }
 
@@ -2854,12 +2848,12 @@
   });
 
   $('#list').addEventListener('keydown', (e) => {
-    if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-qs]')) { e.preventDefault(); e.stopPropagation(); openQuickMenu(e.target.dataset.qs, e.target); return; }
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-qs]')) { e.preventDefault(); e.stopPropagation(); openQuickMenu(e.target.dataset.qs, e.target, state.filter || undefined); return; }
     if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-edit]')) { e.preventDefault(); openParticipant(e.target.dataset.edit, undefined, e.target.closest('li.row')); }
   });
   $('#list').addEventListener('click', (e) => {
     const qs = e.target.closest('[data-qs]');
-    if (qs) { e.stopPropagation(); if (!$('#qMenu').hidden) { closeQ(); return; } openQuickMenu(qs.dataset.qs, qs); return; }
+    if (qs) { e.stopPropagation(); if (!$('#qMenu').hidden) { closeQ(); return; } openQuickMenu(qs.dataset.qs, qs, state.filter || undefined); return; }
     const eu = e.target.closest('[data-evun]');
     if (eu) { e.stopPropagation(); const l = evLink({ id: eu.dataset.evun }); if (l) setDetailsSent(eu.dataset.evun, l.meeting_id, false); return; }   // חזרה ללא נשלח
     const er = e.target.closest('[data-evrow]');
