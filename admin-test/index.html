@@ -3275,6 +3275,17 @@
     });
   }
   window.addEventListener('resize', alignFilters);
+  /* חזרה בדפדפן במצב חיפוש פתוח (בפוקוס או עם טקסט) סוגרת את החיפוש ומנקה אותו */
+  const searchNav = { id: 'search', close() { const i = NAV.stack.findIndex((x) => x.d === searchNav); if (i >= 0) NAV.stack.splice(i, 1); const q = $('#q'); q.value = ''; state.q = ''; q.blur(); renderList(); syncUrl(); } };
+  const searchOpen = () => { const q = $('#q'); return document.activeElement === q || !!q.value; };
+  function syncSearchNav() {
+    const has = NAV.stack.some((x) => x.d === searchNav), open = searchOpen();
+    if (open && !has) navOpen(searchNav); else if (!open && has) navClose(searchNav);
+  }
+  $('#q').addEventListener('focus', syncSearchNav);
+  $('#q').addEventListener('blur', () => setTimeout(syncSearchNav, 0));
+  $('#q').addEventListener('input', syncSearchNav);
+  $('#qClear').addEventListener('click', () => setTimeout(syncSearchNav, 0));
   /* פתיחת החיפוש (מקלדת) לא מזיזה את הדף */
   document.addEventListener('focusin', (e) => { if (!e.target.closest('.hsearch')) return; let n = 0; const f = () => { if (window.scrollY || document.documentElement.scrollTop) window.scrollTo(0, 0); if (++n < 20) setTimeout(f, 50); }; f(); });
   if (window.visualViewport) window.visualViewport.addEventListener('scroll', () => { if (document.activeElement && document.activeElement.closest && document.activeElement.closest('.hsearch')) window.scrollTo(0, 0); });
