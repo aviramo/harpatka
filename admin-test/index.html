@@ -1351,7 +1351,7 @@
         api(T.pf + '?select=*').catch(() => null),
       ]);
       if (pfs) state.prefs = Object.fromEntries(pfs.map((x) => [String(x.email).toLowerCase(), x]));
-      if (sts && sts.length) { const ps = sts.filter((x) => x.scope === 'participant'); if (ps.length) { state.pstatuses = ps.map((x) => Object.assign({}, x)); if (!state.pstatuses.some((x) => x.key === PSYSTEM)) state.pstatuses.push(Object.assign({}, DEFAULT_PSTATUSES[2])); state.pstatuses.forEach((x) => { if (x.key === PSYSTEM) x.sort = 99; }); } }
+      if (sts && sts.length) { const ps = sts.filter((x) => x.scope === 'participant'); if (ps.length) state.pstatuses = DEFAULT_PSTATUSES.map((d) => Object.assign({}, d, ps.find((x) => x.key === d.key) || {})); }
       if (sts && sts.length) { state.statuses = DEFAULT_STATUSES.map((d) => Object.assign({}, d, sts.find((x) => x.key === d.key && x.scope !== 'participant') || {}, d.key === SYSTEM_STATUS ? { sort: d.sort } : {})); applyStatuses(); }
       boardBadge();
       /* משתתף לא פעיל (הוסר) מוסתר מכל המסכים; הנתונים נשמרים ויחזרו אם יירשם שוב עם אותו טלפון. תשלומים נשארים (כספים) */
@@ -1426,11 +1426,12 @@
   /* ניהול סטטוסים (סביבת בדיקות): שם, צבע (מפתח בפלטה) וסדר לכל סטטוס; ההתנהגות בסינון ובסטטיסטיקות קבועה לפי המפתח */
   const PALETTE = { green: ['var(--green-bg)', 'var(--green)', 'ירוק'], red: ['var(--red-bg)', 'var(--red)', 'אדום'], amber: ['#FBEBC8', '#8A5A00', 'צהוב'], sky: ['var(--sky-bg)', 'var(--sky)', 'כחול'], orange: ['#F8E4DA', '#B8553A', 'כתום'], neutral: ['#EFE4D3', '#6B6055', 'ניטרלי'] };
   const DEFAULT_STATUSES = [['paid', 'שילם', 'green'], ['willpay', 'ישלם', 'neutral'], ['exempt', 'חינם', 'sky'], ['maybe', 'ספונטני', 'sky'], ['requested', 'בטיפול', 'amber'], ['unpaid', 'חדש', 'red']].map((x, i) => ({ key: x[0], label: x[1], color: x[2], sort: x[0] === 'unpaid' ? 99 : i + 1 }));
-  const DEFAULT_PSTATUSES = [['p_active', 'פעיל', 'green', 1], ['p_inactive', 'לא פעיל', 'neutral', 2], ['p_new', 'חדש', 'red', 99]].map((x) => ({ key: x[0], label: x[1], color: x[2], sort: x[3], scope: 'participant' }));
-  const PSYSTEM = 'p_new';   // סטטוס משתתף במערכת: ברירת מחדל, נעול ותמיד אחרון
+  const DEFAULT_PSTATUSES = [['p_active', 'פעיל', 'green', 1], ['p_inactive', 'לא פעיל', 'neutral', 2]].map((x) => ({ key: x[0], label: x[1], color: x[2], sort: x[3], scope: 'participant' }));
+  const PSYSTEM = '__none__';   // אין סטטוס מערכת למשתתף: רק פעיל / לא פעיל (ברירת המחדל: פעיל)
+  const PDEFAULT = 'p_active';
   state.pstatuses = DEFAULT_PSTATUSES.map((s) => Object.assign({}, s));
   const pstatusList = () => state.pstatuses.slice().sort((a, b) => ((a.key === PSYSTEM) - (b.key === PSYSTEM)) || (a.sort - b.sort));
-  const pstatusKey = (p) => (p.status_key && state.pstatuses.some((s) => s.key === p.status_key)) ? p.status_key : PSYSTEM;
+  const pstatusKey = (p) => (p.status_key && state.pstatuses.some((s) => s.key === p.status_key)) ? p.status_key : PDEFAULT;
   const isPKey = (k) => String(k).startsWith('p_');
   const SYSTEM_STATUS = 'unpaid';   // סטטוס מערכת: ברירת המחדל לכל הרשמה חדשה; נעול ותמיד אחרון
   state.statuses = DEFAULT_STATUSES.map((s) => Object.assign({}, s));
@@ -1965,7 +1966,7 @@
   /* סטטוס משתתף (כללי): נפרד מסטטוס המפגש */
   async function setParticipantStatus(pid, key) {
     const p = state.participants.find((x) => x.id === pid); if (!p) return;
-    const prev = p.status_key; p.status_key = key === PSYSTEM ? null : key; render();
+    const prev = p.status_key; p.status_key = key === PDEFAULT ? null : key; render();
     if (sheet && sheet.id === pid) fillPStatusSel(p);
     try { await api(T.p + '?id=eq.' + pid, { method: 'PATCH', body: { status_key: p.status_key } }); }
     catch (err) { p.status_key = prev; render(); fail(err); }
@@ -1973,7 +1974,7 @@
   function fillPStatusSel(p) {
     const sel = $('#pStatusSel'); if (!sel) return;
     sel.innerHTML = pstatusList().map((s) => '<option value="' + s.key + '">' + esc(s.label) + '</option>').join('');
-    sel.value = p ? pstatusKey(p) : PSYSTEM;
+    sel.value = p ? pstatusKey(p) : PDEFAULT;
   }
   function openStatusFilterMenu(anchor) {
     const menu = $('#qMenu'), eg = effGender();
@@ -2841,8 +2842,8 @@
   function renderStSettings() {
     const list = curSt(), sys = curSys();
     document.querySelectorAll('#setSt [data-sc]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.sc === stScope)));
-    $('#stHint').textContent = stScope === 'meeting' ? 'סטטוס של משתתף בתוך מפגש מסוים (כשבוחרים מפגש ברשימה). שם, צבע וסדר' : 'סטטוס כללי של המשתתף (ברשימה כשלא בוחרים מפגש). אפשר להוסיף ולמחוק';
-    $('#stAdd').hidden = stScope !== 'participant';
+    $('#stHint').textContent = stScope === 'meeting' ? 'סטטוס של משתתף בתוך מפגש מסוים (כשבוחרים מפגש ברשימה). שם, צבע וסדר' : 'סטטוס כללי של המשתתף: פעיל או לא פעיל (ברשימה כשלא בוחרים מפגש). אפשר לשנות שם, צבע וסדר';
+    $('#stAdd').hidden = true;
     $('#stList').innerHTML = list.map((s) => s.key === sys
       ? '<div class="strow locked" data-k="' + s.key + '">' +
       '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם סטטוס המערכת" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1] + '" />' +
@@ -2852,7 +2853,7 @@
       : '<div class="strow" data-k="' + s.key + '">' +
       '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם הסטטוס" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1] + '" />' +
       '<div class="stcols">' + Object.keys(PALETTE).map((c) => '<button type="button" class="sw" data-c="' + c + '" aria-label="' + PALETTE[c][2] + '" aria-pressed="' + (s.color === c) + '" style="background:' + PALETTE[c][0] + '"></button>').join('') + '</div>' +
-      '<button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg></button>' + (stScope === 'participant' ? '<button type="button" class="stdel" data-del="' + s.key + '" aria-label="מחיקת הסטטוס" title="מחיקת הסטטוס">×</button>' : '') + '</div>').join('');
+      '<button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg></button>' + '' + '</div>').join('');
   }
   async function saveStatus(key, patch) {
     const s = allSt().find((x) => x.key === key); if (!s) return;

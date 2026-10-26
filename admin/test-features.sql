@@ -68,3 +68,7 @@ insert into test.harpatka_statuses (key, label, color, sort, scope) values
   ('p_new', 'חדש', 'red', 99, 'participant')
 on conflict (key) do nothing;
 notify pgrst, 'reload schema';
+
+-- 8. סטטוס משתתף: רק פעיל / לא פעיל (בלי סטטוס מערכת "חדש"); ברירת המחדל פעיל
+update test.harpatka_participants set status_key = null where status_key is not null and status_key not in ('p_active', 'p_inactive');
+delete from test.harpatka_statuses where scope = 'participant' and key not in ('p_active', 'p_inactive');
