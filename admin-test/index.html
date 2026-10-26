@@ -616,8 +616,12 @@
     #depFields .field { margin-bottom: 8px; }
     #depFields .field input, #depFields .field select { height: 44px; }
     #depIntro { font-weight: 800; color: var(--ink); font-size: 15px; margin: 4px 2px 8px !important; }
-    #depFields .payact .btn { height: 46px; font-size: 17px; }
+    #depFields .payrow .field { flex: 1 1 0; margin-bottom: 8px; }
+    #depFields .payrow .field:first-child { flex: 1.3 1 0; }
+    #depFields .payrow .paygo { margin: 0 0 8px; height: 44px; }
     .payrow { display: flex; gap: 8px; align-items: flex-end; }
+    .payrow .paygo { flex: 0 0 auto; width: auto; height: 48px; padding: 0 18px; margin: 0 0 14px; background: var(--green-bg); color: var(--green); font-size: 17px; }
+    [data-panel="pay"] .payrow .field { flex: 1 1 0; }
     .payrow .field { flex: 1 1 auto; min-width: 0; }
     .payact { display: flex; gap: 8px; margin-top: 2px; }
     .payact .btn { margin: 0; }
@@ -962,12 +966,12 @@
         <div class="payrow">
           <label class="field"><span>סכום למפגש (₪)</span><input name="pay_amount" type="number" inputmode="decimal" min="0" step="any" /></label>
           <label class="field payfield"><span>דרך העברה</span><select name="pay_method"><option value="paybox">פייבוקס</option><option value="bit">ביט</option><option value="cash">מזומן</option><option value="bank">בנק</option><option value="other">אחר</option></select></label>
+          <button class="btn paygo" id="paySave" type="button">תשלום</button>
         </div>
         <div class="pquick" id="payQuick"></div>
         <label class="field" id="payOtherField" hidden><span>פירוט קצר</span><input name="pay_method_note" maxlength="60" autocomplete="off" placeholder="למשל: פייפאל, צ׳ק" /></label>
         <label class="field" id="payBalField" hidden><span id="payBalLabel">מהיתרה</span><input name="pay_bal" type="number" inputmode="decimal" min="0" step="any" /></label>
         <div class="payhint" id="payHint"></div>
-        <div class="payact"><button class="btn" id="paySave" type="button">שמירה</button></div>
       </div>
       <div class="ppanel" data-panel="wallet" hidden>
         <div class="walsum" id="walSum"></div>
@@ -981,14 +985,14 @@
         <p class="sthint" id="depIntro" style="margin:0 2px 12px">תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש</p>
         <div class="payrow">
           <label class="field"><span>סכום (₪)</span><input name="pay_dep" type="number" inputmode="decimal" min="0" step="any" /></label>
-          <label class="field"><span id="depPkgLbl">על כמה מפגשים</span><select name="pay_pkg" id="depPkgSel"><option value="">מפגש אחד</option><option value="2">2 מפגשים</option><option value="3">3 מפגשים</option><option value="4">4 מפגשים</option><option value="5">5 מפגשים</option><option value="6">6 מפגשים</option><option value="7">7 מפגשים</option><option value="8">8 מפגשים</option><option value="9">9 מפגשים</option><option value="10">10 מפגשים</option><option value="11">11 מפגשים</option><option value="12">12 מפגשים</option></select></label>
+          <label class="field"><span id="depPkgLbl">על כמה מפגשים</span><select name="pay_pkg" id="depPkgSel"><option value="">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select></label>
+          <button class="btn paygo" id="depSave" type="button">תשלום</button>
         </div>
         <div class="pquick" id="depQuick"></div>
         <div class="metchips" id="depMethods" role="radiogroup" aria-label="דרך העברה"></div>
         <label class="field payfield" id="depMethodSel" hidden><span>דרך העברה</span><select name="pay_depm"><option value="paybox">פייבוקס</option><option value="bit">ביט</option><option value="cash">מזומן</option><option value="bank">בנק</option><option value="other">אחר</option></select></label>
         <div class="payhint" id="depPkgHint"></div>
         <label class="field" id="depOtherField" hidden><span>פירוט קצר</span><input name="pay_depn" maxlength="60" autocomplete="off" placeholder="למשל: פייפאל, צ׳ק" /></label>
-        <div class="payact"><button class="btn" id="depSave" type="button">שמירה</button></div>
         </div>
       </div>
       <div class="ppanel" data-panel="zikuy" hidden>
@@ -2669,10 +2673,10 @@
     const f = pForm, pid = sheet && sheet.id, m = mid ? state.meetings.find((x) => x.id === mid) : null;
     sheet.depMid = m ? m.id : null;
     f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; f.pay_depm.value = 'paybox'; f.pay_depn.value = ''; $('#depOtherField').hidden = true;
-    f.pay_dep.value = m ? expectedPrice(pid, m) : '';
+    { const al = m ? Math.max(0, allocatedOf(pid, m.id)) : 0, pr0 = m ? expectedPrice(pid, m) : 0; f.pay_dep.value = !m ? '' : al <= 0 ? pr0 : al < pr0 ? pr0 - al : ''; }   // מפגש ששולם חלקית: המוצע הוא היתרה
     { const pp = state.participants.find((x) => x.id === pid), lk = m && linkOf(pid, m.id), np = !!(m && pp && noPayOf(pp, lk)); $('#depNoPayRow').hidden = !m; $('#depNoPay').setAttribute('aria-checked', String(np)); $('#depFields').hidden = np; }
     $('#depIntro').textContent = m ? 'מפגש ' + dmShort(m) : 'תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש';
-    $('#depPkgLbl').textContent = m ? 'על כמה מפגשים' : 'חבילה'; f.pay_pkg.options[0].textContent = m ? 'מפגש אחד' : 'בלי חבילה';
+    $('#depPkgLbl').textContent = m ? 'על כמה מפגשים' : 'חבילה'; f.pay_pkg.options[0].textContent = m ? '1' : '—';
     $('#depQuick').innerHTML = quickPrices().map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
     $('#depQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) { f.pay_dep.value = b.dataset.q; paintPkg(); } };
     const METH = [['paybox', 'פייבוקס'], ['bit', 'ביט'], ['cash', 'מזומן'], ['bank', 'בנק'], ['other', 'אחר']];
@@ -2976,7 +2980,7 @@
     if (ht) { setAttended(sheet.id, ht.dataset.ht, ht.getAttribute('aria-pressed') !== 'true'); return; }
     const pay = e.target.closest('[data-mp]'), mm = e.target.closest('[data-mm]');
     if (mm) {
-      if (sheet.id) openPayView(sheet.id, mm.dataset.mm);
+      if (sheet.id) openDeposit(mm.dataset.mm);   // מסך קבלת תשלום אחיד לכל מקום
     } else if (pay) {
       const mid = pay.dataset.mp;
       if (sheet.id) { if (!$('#qMenu').hidden) closeQ(); else openQuickMenu(sheet.id, pay, mid); }
