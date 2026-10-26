@@ -1971,13 +1971,16 @@
     return up || ls.slice().sort((a, b) => key(b).localeCompare(key(a)))[0] || null;
   };
   const closeQ = () => { $('#qMenu').hidden = true; };
-  function openQuickMenu(pid, anchor) {
-    const menu = $('#qMenu'), inMeeting = !!state.filter;
+  function openQuickMenu(pid, anchor, mid) {
+    const menu = $('#qMenu'), inMeeting = !!(mid || state.filter);
+    /* בתוך פופאפ התפריט צריך לשבת בתוכו (שכבת העל של הדיאלוג), אחרת הוא מוסתר מאחוריו */
+    const host = anchor.closest('dialog') || document.body; if (menu.parentNode !== host) host.appendChild(menu);
     let cur, head, apply;
     if (inMeeting) {
-      const l = quickLink(pid); if (!l) return;
-      const m = state.meetings.find((x) => x.id === l.meeting_id);
-      cur = linkStatus(l); head = 'סטטוס במפגש' + (m ? ' · ' + dmShort(m) : ''); apply = (k) => (k === '__none' ? confirmLink(pid, l.meeting_id, false) : setPayStatus(pid, l.meeting_id, k));
+      const l = mid ? linkOf(pid, mid) : quickLink(pid); if (!l && !mid) return;
+      const mId = mid || l.meeting_id, m = state.meetings.find((x) => x.id === mId);
+      cur = l ? linkStatus(l) : '__none'; head = 'סטטוס במפגש' + (m ? ' · ' + dmShort(m) : '');
+      apply = (k) => (k === '__none' ? (l && confirmLink(pid, mId, false)) : (l ? setPayStatus(pid, mId, k) : setLinkedWithStatus(pid, mId, k)));
     } else {
       const p = state.participants.find((x) => x.id === pid); if (!p) return;
       cur = pstatusKey(p) || '__none'; head = 'סטטוס משתתף'; apply = (k) => setParticipantStatus(pid, k === '__none' ? null : k);
@@ -2642,7 +2645,7 @@
       if (sheet.id) openPayView(sheet.id, mm.dataset.mm);
     } else if (pay) {
       const mid = pay.dataset.mp;
-      if (sheet.id) pickPayStatus(sheet.id, mid);
+      if (sheet.id) { if (!$('#qMenu').hidden) closeQ(); else openQuickMenu(sheet.id, pay, mid); }
       else { sheet.links.has(mid) ? sheet.links.delete(mid) : sheet.links.set(mid, false); refreshSheetMeetings(); }
     }
   });
