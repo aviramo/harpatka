@@ -2837,8 +2837,9 @@
       const fit = () => {
         const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
         document.querySelectorAll('dialog[open]').forEach((d) => {
-          if (kb > 80) { d.style.marginBottom = kb + 'px'; d.style.maxHeight = Math.round(vv.height - 12) + 'px'; }
-          else { d.style.marginBottom = ''; d.style.maxHeight = ''; }
+          const full = ['pDlg', 'setDlg', 'stDlg', 'prDlg'].includes(d.id);   // פופאפים בגובה מלא: ממלאים בדיוק את האזור שמעל המקלדת, בלי רווח למעלה
+          if (kb > 80) { d.style.marginBottom = kb + 'px'; d.style.maxHeight = Math.round(vv.height - (full ? 0 : 12)) + 'px'; if (full) d.style.height = Math.round(vv.height) + 'px'; }
+          else { d.style.marginBottom = ''; d.style.maxHeight = ''; d.style.height = ''; }
         });
       };
       vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit);
