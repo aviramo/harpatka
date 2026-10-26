@@ -1390,7 +1390,7 @@
         const d = deep; deep = null;
         try { sessionStorage.removeItem('harpatka_deep'); } catch (e) {}
         if (d.m && state.meetings.some((x) => x.id === d.m)) state.filter = d.m;
-        if (state.statuses.concat(state.pstatuses).some((x) => x.key === d.pay)) state.pay = d.pay;   // סינון לפי סטטוס אחד שנבחר מהרשימה
+        { const ks = payKeys(d.pay).filter((k) => k === PNONE || state.statuses.concat(state.pstatuses).some((x) => x.key === k)); if (ks.length) state.pay = ks.join(','); }   // סינון לפי סטטוס אחד שנבחר מהרשימה
         if (d.g === 'male' || d.g === 'female' || d.g === 'none') state.gender = d.g;
         if (d.s && SORTS.some((x) => x[0] === d.s)) state.sort = d.s;
         if (d.q) { state.q = d.q; $('#q').value = d.q; }
@@ -1491,8 +1491,9 @@
   /* מונים וסינון: גברים/נשים ושילמו/טרם שילמו. כל מונה סופר לפי הסינון האחר והחיפוש, כך שהמספר הוא בדיוק מה שיוצג בלחיצה */
   /* בזמן חיפוש טקסט, סינוני המגדר והתשלום מושהים (כדי למצוא מישהו בוודאות); הם נשמרים ב-state וחוזרים כשהחיפוש נסגר */
   const effGender = () => state.q.trim() ? null : state.gender;
+  const payKeys = (s) => s ? String(s).split(',').filter(Boolean) : [];   // סינון סטטוסים מרובה: state.pay הוא מפתחות מופרדים בפסיק
   const effPay = () => state.q.trim() ? null : state.pay;
-  const normFilter = () => { if (state.pay && isPKey(state.pay) === !!state.filter) state.pay = null; };   // סינון משתתף רק בתצוגת הכל, סינון מפגש רק בתוך מפגש
+  const normFilter = () => { if (state.pay) { const ks = payKeys(state.pay).filter((k) => isPKey(k) !== !!state.filter); state.pay = ks.length ? ks.join(',') : null; } };   // סינון משתתף רק בתצוגת הכל, סינון מפגש רק בתוך מפגש
   const stMatch = (p, key) => { if (key === PNONE) return !ptagsOf(p).length; if (isPKey(key)) return ptagsOf(p).includes(key); if (state.filter) { const l = linkOf(p.id, state.filter); return !!l && linkStatus(l) === key; } return linksOf(p.id).some((l) => linkStatus(l) === key); };
   function renderFacets() {
     normFilter();
@@ -1502,10 +1503,10 @@
       if (!q) return true;
       return p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd)) || hasNote(p, q);
     });
-    const payOk = (p) => !ep || stMatch(p, ep);
+    const epk = payKeys(ep), payOk = (p) => !epk.length || epk.some((k) => stMatch(p, k));
     const genOk = (p) => eg === 'none' ? !p.gender : (!eg || p.gender === eg);
     const nG = (g) => base.filter((p) => payOk(p) && (g === 'none' ? !p.gender : p.gender === g)).length;
-    const nP = (key) => base.filter((p) => genOk(p) && stMatch(p, key)).length;
+    const nP = (key) => base.filter((p) => genOk(p) && payKeys(key).some((k) => stMatch(p, k))).length;
     const btn = (kind, val, label, n, cls, on, aria) => '<button type="button"' + (aria ? ' aria-label="' + aria + ' ' + n + '" title="' + aria + '"' : '') + ' class="fx' + (cls ? ' ' + cls : '') + (n ? '' : ' zero') + '" data-fx="' + kind + ':' + val + '" aria-pressed="' + on + '">' + label + ' <b>' + n + '</b></button>';
     const none = nG('none');
     const genOkCount = () => base.filter(genOk).length;
@@ -1513,11 +1514,12 @@
       btn('g', 'male', '<span class="lw gen-lw">גברים</span><span class="gi gm">' + MAN_ICON + '</span>', nG('male'), '', eg === 'male', 'גברים') +
       btn('g', 'female', '<span class="lw gen-lw">נשים</span><span class="gi gf">' + WOMAN_ICON + '</span>', nG('female'), '', eg === 'female', 'נשים') +
       (none || eg === 'none' ? btn('g', 'none', 'ללא', none, '', eg === 'none', 'ללא מגדר') : '') + '</div>';
-    const sel = ep === PNONE ? { key: 'empty', label: 'בלי תגיות' } : ep ? state.statuses.concat(state.pstatuses).find((x) => x.key === ep) : null, nAll = genOkCount();
-    h += '<div class="fgroup" style="--n:2"><button type="button" class="fx stsel" data-fxs="1" aria-haspopup="menu" aria-label="סינון לפי ' + (state.filter ? 'סטטוס' : 'תגיות') + (sel ? ': ' + esc(sel.label) : '') + '" title="סינון לפי ' + (state.filter ? 'סטטוס' : 'תגיות') + '">' +
-      (sel ? '<span class="stpill ' + sel.key + '">' + esc(sel.label) + '</span><b>' + nP(ep) + '</b>' : '<span class="stlab">' + (state.filter ? 'סטטוס' : 'תגיות') + '</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>') + '</button></div>';
+    const selOf = (k) => k === PNONE ? { key: 'empty', label: 'בלי תגיות' } : state.statuses.concat(state.pstatuses).find((x) => x.key === k);
+    const sel = epk.length ? selOf(epk[0]) : null, nAll = genOkCount();
+    h += '<div class="fgroup" style="--n:2"><button type="button" class="fx stsel" data-fxs="1" aria-haspopup="menu" aria-label="סינון לפי ' + (state.filter ? 'סטטוס' : 'תגיות') + (sel ? ': ' + epk.map((k) => (selOf(k) || {}).label).filter(Boolean).map(esc).join(', ') : '') + '" title="סינון לפי ' + (state.filter ? 'סטטוס' : 'תגיות') + '">' +
+      (sel ? '<span class="stpill ' + sel.key + '">' + esc(sel.label) + (epk.length > 1 ? ' +' + (epk.length - 1) : '') + '</span><b>' + nP(ep) + '</b>' : '<span class="stlab">' + (state.filter ? 'סטטוס' : 'תגיות') + '</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>') + '</button></div>';
     $('#facets').classList.toggle('searching', !!q);
-    $('#facets').innerHTML = base.length || eg || ep ? h : '';
+    $('#facets').innerHTML = base.length || eg || epk.length ? h : '';
   }
 
   /* מיון הרשימה */
@@ -1556,7 +1558,7 @@
     const clear = '<button type="button" class="link-btn" id="clearFx" style="margin-top:14px">ניקוי סינונים</button>';
     if (g || pay) {
       const who = g === 'male' ? 'גברים' : g === 'female' ? 'נשים' : g === 'none' ? 'משתתפים ללא מגדר' : 'משתתפים';
-      const stl = pay === PNONE ? 'בלי תגיות' : pay ? STATUS_LABEL[pay] : '';
+      const pks = payKeys(pay), stl = pks.length === 1 && pks[0] === PNONE ? 'בלי תגיות' : pks.map((k) => k === PNONE ? 'בלי תגיות' : STATUS_LABEL[k]).filter(Boolean).join(', ');
       return '<b>אין ' + who + (stl ? (pay === PNONE ? ' ' : ' בסטטוס "') + esc(stl) + (pay === PNONE ? '' : '"') : '') + scope + (state.q ? ' שמתאימים לחיפוש' : '') + '</b>אפשר לנקות את הסינון ולנסות שוב<br>' + clear;
     }
     if (state.q) return '<b>לא נמצא אף אחד</b>אפשר לנסות שם או מספר אחר';
@@ -1571,7 +1573,7 @@
     const qd = digits(q);
     let rows = state.participants.filter((p) => {
       if (state.filter && !linkOf(p.id, state.filter)) return false;
-      if (effPay() && !stMatch(p, effPay())) return false;
+      if (effPay() && !payKeys(effPay()).some((k) => stMatch(p, k))) return false;
       if (effGender() === 'none' ? p.gender : (effGender() && p.gender !== effGender())) return false;
       if (!q) return true;
       return p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd)) || hasNote(p, q);
@@ -2038,14 +2040,15 @@
     const people = state.participants.filter((p) => (!state.filter || linkOf(p.id, state.filter)) && (eg === 'none' ? !p.gender : (!eg || p.gender === eg)));
     const cnt = (key) => people.filter((p) => stMatch(p, key)).length;
     menu.innerHTML = '<button type="button" role="menuitem" class="qi" data-sf="" aria-pressed="' + !state.pay + '" style="background:var(--cream);color:var(--ink)">הכל <small>' + people.length + '</small></button>' +
-      (state.filter ? statusList() : pstatusList()).map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-sf="' + s.key + '" aria-pressed="' + (state.pay === s.key) + '">' + esc(s.label) + ' <small>' + cnt(s.key) + '</small></button>').join('') +
-      (state.filter ? '' : '<button type="button" role="menuitem" class="qi" data-sf="' + PNONE + '" aria-pressed="' + (state.pay === PNONE) + '" style="background:var(--cream);color:var(--muted)">בלי תגיות <small>' + cnt(PNONE) + '</small></button>') + editBtn(state.filter ? 'meeting' : 'participant');
+      (state.filter ? statusList() : pstatusList()).map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-sf="' + s.key + '" aria-pressed="' + payKeys(state.pay).includes(s.key) + '">' + esc(s.label) + ' <small>' + cnt(s.key) + '</small></button>').join('') +
+      (state.filter ? '' : '<button type="button" role="menuitem" class="qi" data-sf="' + PNONE + '" aria-pressed="' + payKeys(state.pay).includes(PNONE) + '" style="background:var(--cream);color:var(--muted)">בלי תגיות <small>' + cnt(PNONE) + '</small></button>') + editBtn(state.filter ? 'meeting' : 'participant');
     menu.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
     let left = Math.min(Math.max(8, r.left + r.width / 2 - mw / 2), window.innerWidth - mw - 8), top = r.bottom + 6;
     if (top + mh > window.innerHeight - 8) top = Math.max(8, r.top - mh - 6);
     menu.style.left = left + 'px'; menu.style.top = top + 'px';
-    menu.onclick = (e) => { const ed = e.target.closest('[data-qedit]'); if (ed) { openStatusSettings(ed.dataset.qedit); return; } const b = e.target.closest('[data-sf]'); if (!b) return; closeQ(); state.pay = b.dataset.sf || null; render(); syncUrl(); };
+    menu.onclick = (e) => { const ed = e.target.closest('[data-qedit]'); if (ed) { openStatusSettings(ed.dataset.qedit); return; } const b = e.target.closest('[data-sf]'); if (!b) return; const k = b.dataset.sf; if (!k) { state.pay = null; closeQ(); } else { const cur = payKeys(state.pay), nx = cur.includes(k) ? cur.filter((x) => x !== k) : cur.concat(k); state.pay = nx.length ? nx.join(',') : null; }   /* בחירה מרובה: התפריט נשאר פתוח */
+      menu.querySelectorAll('[data-sf]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.sf ? payKeys(state.pay).includes(x.dataset.sf) : !state.pay))); render(); syncUrl(); };
   }
   document.addEventListener('click', (e) => { if (!$('#qMenu').hidden && !e.target.closest('#qMenu, [data-qs], [data-fxs]')) { e.preventDefault(); e.stopPropagation(); closeQ(); } }, true);   // תפריט פתוח: לחיצה בחוץ רק סוגרת אותו, ושום דבר אחר לא נפתח
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeQ(); });
