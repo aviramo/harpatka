@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Rubik:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     #testBar { position: fixed; top: 0; left: 0; right: 0; z-index: 9999; height: 22px; display: grid; place-items: center; background: #C96F52; color: #fff; font-size: 12px; font-weight: 800; letter-spacing: .02em; pointer-events: none; }
-    body { padding-top: 22px; }
+    body { padding-top: 0; }
     :root {
       --sky-bg: #E3EEF3; --sky: #1F5C6B;   /* פלטה אחידה: ממומן (פייסבוק), חינם וספונטני */
       --cream: #F6EFE4; --sand: #E8D5BE; --terra: #C96F52; --coral: #D98B70;
@@ -32,7 +32,7 @@
 
     .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px calc(20px + env(safe-area-inset-bottom)); }
     /* הגלילה רק ברשימה: העמוד בגובה המסך, הכותרת והחיפוש קבועים */
-    .wrap { height: 100vh; height: 100dvh; display: flex; flex-direction: column; box-sizing: border-box; }
+    .wrap { height: calc(100vh - 22px); height: calc(100dvh - 22px); margin-top: 22px; display: flex; flex-direction: column; box-sizing: border-box; }
     .wrap > header.top { flex: 0 0 auto; position: relative; }
     .list::-webkit-scrollbar { display: none; }
     html { scrollbar-width: none; }
@@ -1342,7 +1342,7 @@
       const [p, m, a, nn, prs, pps, pays, sts, pfs] = await Promise.all([
         api(T.p + '?select=*'),
         api(T.m + '?select=*'),
-        api(T.a + '?select=participant_id,meeting_id,paid,pay_requested_at,created_at,exempt,attended,paid_amount,promoter_id,commission,paid_at,details_sent_at,will_pay,maybe'),
+        api(T.a + '?select=participant_id,meeting_id,paid,pay_requested_at,status_key,created_at,exempt,attended,paid_amount,promoter_id,commission,paid_at,details_sent_at,will_pay,maybe'),
         api(T.n + '?select=id,participant_id,body,author_email,author_name,created_at,has_image,system,event_type,old_status,new_status,meeting_id&order=created_at.desc'),
         api(T.pr + '?select=*&order=name.asc'),
         api(T.pp + '?select=*&order=paid_at.desc'),
@@ -1352,7 +1352,7 @@
       ]);
       if (pfs) state.prefs = Object.fromEntries(pfs.map((x) => [String(x.email).toLowerCase(), x]));
       if (sts && sts.length) { const ps = sts.filter((x) => x.scope === 'participant'); if (ps.length) state.pstatuses = DEFAULT_PSTATUSES.map((d) => Object.assign({}, d, ps.find((x) => x.key === d.key) || {})); }
-      if (sts && sts.length) { state.statuses = DEFAULT_STATUSES.map((d) => Object.assign({}, d, sts.find((x) => x.key === d.key && x.scope !== 'participant') || {}, d.key === SYSTEM_STATUS ? { sort: d.sort } : {})); applyStatuses(); }
+      if (sts && sts.length) { const extra = sts.filter((x) => x.scope !== 'participant' && !BUILTIN.includes(x.key)).map((x) => Object.assign({}, x)); state.statuses = DEFAULT_STATUSES.map((d) => Object.assign({}, d, sts.find((x) => x.key === d.key && x.scope !== 'participant') || {}, d.key === SYSTEM_STATUS ? { sort: d.sort } : {})).concat(extra); applyStatuses(); }
       boardBadge();
       /* משתתף לא פעיל (הוסר) מוסתר מכל המסכים; הנתונים נשמרים ויחזרו אם יירשם שוב עם אותו טלפון. תשלומים נשארים (כספים) */
       state.inactiveNames = new Map(p.filter((x) => x.active === false).map((x) => [x.id, x.name]));
@@ -1421,7 +1421,7 @@
   const FREE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><circle cx="12" cy="12" r="8.5"/><path d="M6 18L18 6"/></svg>';
   const REQ_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><path d="M6 3h12M6 21h12"/><path d="M7 3v3.5c0 1.6 1.1 2.8 2.7 3.6L12 12l2.3-1.9C15.9 9.3 17 8.1 17 6.5V3"/><path d="M7 21v-3.5c0-1.6 1.1-2.8 2.7-3.6L12 12l2.3 1.9c1.6.8 2.7 2 2.7 3.6V21"/></svg>';   // בבדיקה: שעון חול
   const NEW_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><path d="M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"/></svg>';   // חדש: ניצוץ
-  const linkStatus = (l) => l.exempt ? 'exempt' : l.paid ? 'paid' : l.will_pay ? 'willpay' : l.maybe ? 'maybe' : (l.pay_requested_at ? 'requested' : 'unpaid');   // לא משלם (בחינם ביודעין) / שילם / נשלחה בקשת תשלום / טרם שילם
+  const linkStatus = (l) => (l.status_key && state.statuses.some((s) => s.key === l.status_key)) ? l.status_key : l.exempt ? 'exempt' : l.paid ? 'paid' : l.will_pay ? 'willpay' : l.maybe ? 'maybe' : (l.pay_requested_at ? 'requested' : 'unpaid');   // לא משלם (בחינם ביודעין) / שילם / נשלחה בקשת תשלום / טרם שילם
   const STATUS_LABEL = { paid: 'שילם', willpay: 'ישלם', maybe: 'ספונטני', requested: 'בטיפול', unpaid: 'חדש', exempt: 'חינם' };
   /* ניהול סטטוסים (סביבת בדיקות): שם, צבע (מפתח בפלטה) וסדר לכל סטטוס; ההתנהגות בסינון ובסטטיסטיקות קבועה לפי המפתח */
   const PALETTE = { green: ['var(--green-bg)', 'var(--green)', 'ירוק'], red: ['var(--red-bg)', 'var(--red)', 'אדום'], amber: ['#FBEBC8', '#8A5A00', 'צהוב'], sky: ['var(--sky-bg)', 'var(--sky)', 'כחול'], orange: ['#F8E4DA', '#B8553A', 'כתום'], neutral: ['#EFE4D3', '#6B6055', 'ניטרלי'] };
@@ -1433,6 +1433,7 @@
   const pstatusList = () => state.pstatuses.slice().sort((a, b) => ((a.key === PSYSTEM) - (b.key === PSYSTEM)) || (a.sort - b.sort));
   const pstatusKey = (p) => (p.status_key && state.pstatuses.some((s) => s.key === p.status_key)) ? p.status_key : PDEFAULT;
   const isPKey = (k) => String(k).startsWith('p_');
+  const BUILTIN = DEFAULT_STATUSES.map((s) => s.key);   // סטטוסי מפגש מובנים (מותאמים נוספים: מפתח m_...)
   const SYSTEM_STATUS = 'unpaid';   // סטטוס מערכת: ברירת המחדל לכל הרשמה חדשה; נעול ותמיד אחרון
   state.statuses = DEFAULT_STATUSES.map((s) => Object.assign({}, s));
   const statusList = () => state.statuses.slice().sort((a, b) => ((a.key === SYSTEM_STATUS) - (b.key === SYSTEM_STATUS)) || (a.sort - b.sort));
@@ -1996,8 +1997,8 @@
   async function setPayStatus(pid, mid, st) {
     const l = linkOf(pid, mid);
     if (!l) return;
-    const prev = { paid: l.paid, pay_requested_at: l.pay_requested_at, exempt: l.exempt, will_pay: l.will_pay, maybe: l.maybe };
-    const body = Object.assign({ paid: false, exempt: false, will_pay: false, maybe: false, pay_requested_at: null },
+    const prev = { paid: l.paid, pay_requested_at: l.pay_requested_at, exempt: l.exempt, will_pay: l.will_pay, maybe: l.maybe, status_key: l.status_key };
+    const body = Object.assign({ paid: false, exempt: false, will_pay: false, maybe: false, pay_requested_at: null, status_key: BUILTIN.includes(st) ? null : st },
       st === 'paid' ? { paid: true } : st === 'requested' ? { pay_requested_at: new Date().toISOString() } : st === 'willpay' ? { will_pay: true } : st === 'maybe' ? { maybe: true } : st === 'exempt' ? { exempt: true } : {});
     Object.assign(l, body); render(); refreshSheetMeetings();
     try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body }); }
@@ -2842,8 +2843,8 @@
   function renderStSettings() {
     const list = curSt(), sys = curSys();
     document.querySelectorAll('#setSt [data-sc]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.sc === stScope)));
-    $('#stHint').textContent = stScope === 'meeting' ? 'סטטוס של משתתף בתוך מפגש מסוים (כשבוחרים מפגש ברשימה). שם, צבע וסדר' : 'סטטוס כללי של המשתתף: פעיל או לא פעיל (ברשימה כשלא בוחרים מפגש). אפשר לשנות שם, צבע וסדר';
-    $('#stAdd').hidden = true;
+    $('#stHint').textContent = stScope === 'meeting' ? 'סטטוס של משתתף בתוך מפגש מסוים (כשבוחרים מפגש ברשימה). שם, צבע וסדר, ואפשר ליצור סטטוס חדש' : 'סטטוס כללי של המשתתף: פעיל או לא פעיל (ברשימה כשלא בוחרים מפגש). אפשר לשנות שם, צבע וסדר';
+    $('#stAdd').hidden = stScope !== 'meeting'; $('#stAdd').textContent = '+ סטטוס מפגש חדש';
     $('#stList').innerHTML = list.map((s) => s.key === sys
       ? '<div class="strow locked" data-k="' + s.key + '">' +
       '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם סטטוס המערכת" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1] + '" />' +
@@ -2853,7 +2854,7 @@
       : '<div class="strow" data-k="' + s.key + '">' +
       '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם הסטטוס" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1] + '" />' +
       '<div class="stcols">' + Object.keys(PALETTE).map((c) => '<button type="button" class="sw" data-c="' + c + '" aria-label="' + PALETTE[c][2] + '" aria-pressed="' + (s.color === c) + '" style="background:' + PALETTE[c][0] + '"></button>').join('') + '</div>' +
-      '<button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg></button>' + '' + '</div>').join('');
+      '<button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg></button>' + ((stScope === 'meeting' && !BUILTIN.includes(s.key)) ? '<button type="button" class="stdel" data-del="' + s.key + '" aria-label="מחיקת הסטטוס" title="מחיקת הסטטוס">×</button>' : '') + '</div>').join('');
   }
   async function saveStatus(key, patch) {
     const s = allSt().find((x) => x.key === key); if (!s) return;
@@ -2872,22 +2873,24 @@
     saveStatus(k, { label: v });
   });
   $('#stAdd').addEventListener('click', async () => {
-    const mx = Math.max(0, ...state.pstatuses.filter((x) => x.key !== PSYSTEM).map((x) => x.sort));
-    const row = { key: 'p_' + Math.random().toString(36).slice(2, 7), label: 'סטטוס חדש', color: 'neutral', sort: mx + 1, scope: 'participant' };
-    state.pstatuses.push(row); applyStatuses(); renderStSettings();
+    const isM = stScope === 'meeting', arr = isM ? state.statuses : state.pstatuses, sys = isM ? SYSTEM_STATUS : PSYSTEM;
+    const mx = Math.max(0, ...arr.filter((x) => x.key !== sys).map((x) => x.sort));
+    const row = { key: (isM ? 'm_' : 'p_') + Math.random().toString(36).slice(2, 7), label: 'סטטוס חדש', color: 'neutral', sort: mx + 1, scope: isM ? 'meeting' : 'participant' };
+    arr.push(row); applyStatuses(); renderStSettings();
     try { await api(T.st, { method: 'POST', body: row, prefer: 'return=minimal' }); }
-    catch (err) { state.pstatuses = state.pstatuses.filter((x) => x !== row); applyStatuses(); renderStSettings(); fail(err); return; }
+    catch (err) { const k = arr.indexOf(row); if (k >= 0) arr.splice(k, 1); applyStatuses(); renderStSettings(); fail(err); return; }
     const inp = document.querySelector('#stList .strow[data-k="' + row.key + '"] .stname'); if (inp) { inp.focus(); inp.select(); }
   });
   $('#stList').addEventListener('click', async (e) => {
     const del = e.target.closest('[data-del]');
     if (del) {
-      const k = del.dataset.del, s = state.pstatuses.find((x) => x.key === k); if (!s || k === PSYSTEM) return;
-      const used = state.participants.filter((p) => p.status_key === k);
-      if (used.length && !confirm('יש ' + used.length + ' משתתפים בסטטוס "' + s.label + '". הם יחזרו לסטטוס "חדש". למחוק?')) return;
-      used.forEach((p) => { p.status_key = null; });
-      state.pstatuses = state.pstatuses.filter((x) => x.key !== k); applyStatuses(); renderStSettings(); render();
-      try { if (used.length) await api(T.p + '?status_key=eq.' + k, { method: 'PATCH', body: { status_key: null } }); await api(T.st + '?key=eq.' + k, { method: 'DELETE' }); }
+      const k = del.dataset.del, isM = stScope === 'meeting', s = (isM ? state.statuses : state.pstatuses).find((x) => x.key === k); if (!s || BUILTIN.includes(k) || k === PSYSTEM) return;
+      const used = isM ? state.att.filter((l) => l.status_key === k) : state.participants.filter((p) => p.status_key === k);
+      if (used.length && !confirm('יש ' + used.length + (isM ? ' שיוכים' : ' משתתפים') + ' בסטטוס "' + s.label + '". הם יחזרו לסטטוס "חדש"' + (isM ? '' : ' (פעיל)') + '. למחוק?')) return;
+      used.forEach((x) => { x.status_key = null; });
+      if (isM) state.statuses = state.statuses.filter((x) => x.key !== k); else state.pstatuses = state.pstatuses.filter((x) => x.key !== k);
+      applyStatuses(); renderStSettings(); render(); if (sheet && sheet.id) { refreshSheetMeetings(); renderContact(); }
+      try { if (used.length) await api((isM ? T.a : T.p) + '?status_key=eq.' + k, { method: 'PATCH', body: { status_key: null } }); await api(T.st + '?key=eq.' + k, { method: 'DELETE' }); }
       catch (err) { fail(err); load(true); }
       return;
     }
