@@ -422,6 +422,19 @@
     #payDlg .ppanel[hidden] { display: none; }
     .bdbadge { position: absolute; top: -3px; left: -3px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #C96F52; color: #fff; font-size: 11px; font-weight: 800; display: grid; place-items: center; box-sizing: border-box; }
     .bdbadge[hidden] { display: none; }
+    /* הגדרות */
+    #setDlg .setgrp { background: var(--cream); border-radius: 18px; padding: 4px 14px; margin-bottom: 14px; }
+    #setDlg .settitle { font-size: 13px; font-weight: 800; color: var(--muted); padding: 10px 0 2px; }
+    #setDlg .setrow { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+    #setDlg .settitle + .setrow { border-top: 0; }
+    #setDlg .setl { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    #setDlg .setl b { font-size: 16.5px; }
+    #setDlg .setl small { font-size: 13.5px; color: var(--muted); line-height: 1.4; }
+    #setDlg .setv { font-weight: 800; font-size: 16px; color: var(--ink); }
+    .swt { flex: 0 0 auto; position: relative; width: 50px; height: 30px; border-radius: 999px; background: #D8CCBA; transition: background .18s; }
+    .swt i { position: absolute; top: 3px; right: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .18s; }
+    .swt[aria-checked="true"] { background: var(--green); }
+    .swt[aria-checked="true"] i { transform: translateX(-20px); }
     #bdDlg .sheet-head { position: relative; justify-content: flex-start; gap: 8px; min-height: 40px; }
     #bdDlg .sheet-head h2 { flex: 1 1 auto; }
     #bdDlg h3 { font-size: 15px; margin: 14px 0 6px; color: var(--muted); }
@@ -686,6 +699,7 @@
             <button type="button" role="menuitem" class="hmi" id="bdBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.4A8 8 0 1 1 21 12z"/></svg><span>התחברויות ללוח</span><span class="bdbadge" id="bdBadge" hidden></span></button>
             <button type="button" role="menuitem" class="hmi" id="prBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v4a1 1 0 0 0 1 1h2.5l5.5 4V5L7.5 9H5a1 1 0 0 0-1 1z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg><span>יחצנים</span></button>
             <button type="button" role="menuitem" class="hmi" id="statsBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6"/></svg><span>סטטיסטיקות</span></button>
+            <button type="button" role="menuitem" class="hmi" id="setBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>הגדרות</span></button>
             <button type="button" role="menuitem" class="hmi out" id="signOut"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><path d="M15 8l4 4-4 4M19 12H9"/></svg><span>יציאה</span></button>
           </div>
         </div>
@@ -824,6 +838,22 @@
     <div class="sheet">
       <div class="sheet-head"><h2 id="bdTitle">התחברויות ללוח השיתופים</h2></div>
       <div id="bdBody"></div>
+    </div>
+  </dialog>
+
+  <dialog id="setDlg" aria-labelledby="setTitle" style="max-width:480px">
+    <div class="sheet">
+      <div class="sheet-head"><h2 id="setTitle">הגדרות</h2></div>
+      <div class="setgrp">
+        <div class="settitle">חשבון</div>
+        <div class="setrow"><div class="setl"><b id="setWho">—</b><small id="setMail"></small></div></div>
+        <div class="setrow"><div class="setl"><b>שם השולח בהודעות</b><small>ההודעות בוואטסאפ נחתמות בשם הזה</small></div><span class="setv" id="setSender">—</span></div>
+      </div>
+      <div class="setgrp">
+        <div class="settitle">מפגשים</div>
+        <div class="setrow"><div class="setl"><b>סימון הגעה פתוח תמיד</b><small>פותח את סימון ההגעה בכל מפגש, בלי לחכות לחצי שעה לפני. חל עד סגירת הלשונית</small></div><button type="button" class="swt" id="setAtt" role="switch" aria-checked="false" aria-label="סימון הגעה פתוח תמיד"><i></i></button></div>
+      </div>
+      <button type="button" class="btn ghost" id="setOut" style="color:var(--red)">יציאה מהחשבון</button>
     </div>
   </dialog>
 
@@ -2522,6 +2552,21 @@
   const signOut = () => { clearSession(); try { if (rtWs) rtWs.close(); } catch (e) {} location.reload(); };
   $('#gOut').addEventListener('click', signOut);
   $('#signOut').addEventListener('click', signOut);
+  /* הגדרות: חשבון, שם השולח ומצב הגעה פתוח (לבדיקות, זמני ללשונית) */
+  function renderSettings() {
+    const em = emailOf();
+    $('#setWho').textContent = authorName(); $('#setMail').textContent = em; $('#setSender').textContent = SENDERS[em] || authorName();
+    $('#setAtt').setAttribute('aria-checked', String(!!forceAttend));
+  }
+  $('#setBtn').addEventListener('click', () => { renderSettings(); $('#setDlg').showModal(); });
+  $('#setAtt').addEventListener('click', () => {
+    forceAttend = !forceAttend;
+    try { if (forceAttend) sessionStorage.setItem('harpatka_att', '1'); else sessionStorage.removeItem('harpatka_att'); } catch (e) {}
+    $('#setAtt').setAttribute('aria-checked', String(!!forceAttend)); $('#attForce').hidden = !forceAttend; render(); if (sheet && sheet.id && pDlg.open) refreshSheetMeetings();
+    toast(forceAttend ? 'סימון ההגעה פתוח בכל מפגש' : 'סימון ההגעה חזר להיות חצי שעה לפני');
+  });
+  $('#setOut').addEventListener('click', () => signOut());
+
   startAuth();
   </script>
 </body>
