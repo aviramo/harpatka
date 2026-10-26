@@ -2012,7 +2012,7 @@
     const sentN = (v) => base.filter((p) => { if (!genOk(p) || !paidOk(p) || !hereOkNoSent(p) || !matchPay(p, epk)) return false; const l = linkOf(p.id, state.filter); return !!l && !!(l.paid || l.exempt || l.will_pay) && (l.details_sent_at ? '1' : '0') === v; }).length;
     $('#listHere').innerHTML = attOn ? fbtn('here', eh, hereN('1'), hereN('0')) : '';
     $('#listPay').innerHTML = state.filter ? fbtn('pay', state.paidF === '1' || state.paidF === '0' || state.paidF === 'n' ? state.paidF : null, paidN('1'), paidN('0')) : '';
-    { const tagsOn = state.showTags; $('#listTags').innerHTML = state.pstatuses.length ? '<button type="button" class="hfilt ' + (tagsOn ? 'on' : 'all') + '" data-tg="1" aria-pressed="' + tagsOn + '" aria-label="תגיות משתתף" title="' + (tagsOn ? 'הסתרת התגיות' : 'הצגת תגיות משתתף לסינון') + '">' + TAG_ICON + '</button>' : ''; }
+    { const tagsOn = state.showTags; const none = !state.pstatuses.length; $('#listTags').innerHTML = '<button type="button" class="hfilt ' + (!none && tagsOn ? 'on' : 'all') + '" data-tg="1" aria-pressed="' + (!none && tagsOn) + '" aria-label="תגיות משתתף" title="' + (none ? 'עוד לא הוגדרו תגיות: לחיצה פותחת את ההגדרות' : tagsOn ? 'הסתרת התגיות' : 'הצגת תגיות משתתף לסינון') + '">' + TAG_ICON + '</button>'; }
     $('#listBal').innerHTML = !state.filter ? fbtn('bal', effBal(), '', '') : '';
     $('#listSent').innerHTML = evOn ? fbtn('sent', effSent(), sentN('1'), sentN('0')) : '';
     requestAnimationFrame(alignFilters);   // שולם / לא שולם בשורת החיפוש מעל הרשימה
@@ -3554,6 +3554,7 @@
   });
   $('#listTags').addEventListener('click', (e) => {
     const tg = e.target.closest('[data-tg]');
+    if (tg && !state.pstatuses.length) { openStatusSettings('participant'); return; }   // אין תגיות מוגדרות: פותח את הגדרת התגיות
     if (tg) { state.showTags = !state.showTags; if (!state.showTags && state.pay) { const ks = payKeys(state.pay).filter((k) => !isPKey(k)); state.pay = ks.length ? ks.join(',') : null; } render(); syncUrl(); }   // הצגה / הסתרה של תגיות המשתתף בפס; הסתרה מנקה את בחירות התגיות
   });
   $('.listbar').addEventListener('click', (e) => { const b = e.target.closest('[data-fk]'); if (b) openF(b.dataset.fk, b); });
