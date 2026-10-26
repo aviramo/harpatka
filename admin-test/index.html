@@ -494,6 +494,7 @@
     .swt[aria-checked="true"] i { transform: translateX(-20px); }
     /* תפריט סטטוס מהיר מהרשימה */
     .row .ptag[data-qs] { cursor: pointer; }
+    .row .ptag.cnt { background: var(--cream); color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--line); }
     .row .ptag.empty { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--line); }
     .qmenu { position: fixed; z-index: 300; background: var(--paper); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 14px 36px rgba(63,56,47,.24); padding: 6px; display: grid; gap: 5px; min-width: 150px; }
     .qmenu[hidden] { display: none; }
@@ -1538,6 +1539,8 @@
   /* בזמן חיפוש טקסט, סינוני המגדר והתשלום מושהים (כדי למצוא מישהו בוודאות); הם נשמרים ב-state וחוזרים כשהחיפוש נסגר */
   const effGender = () => state.q.trim() ? null : state.gender;
   const payKeys = (s) => s ? String(s).split(',').filter(Boolean) : [];   // סינון סטטוסים מרובה: state.pay הוא מפתחות מופרדים בפסיק
+  /* סינון בתוך מפגש: איחוד (אחד מהסטטוסים). בתצוגת הכל: חיתוך (כל התגיות שנבחרו יחד) */
+  const matchPay = (p, keys) => !keys.length || (state.filter ? keys.some((k) => stMatch(p, k)) : keys.every((k) => stMatch(p, k)));
   const effPay = () => state.q.trim() ? null : state.pay;
   const effHere = () => (state.q.trim() || !state.filter || !attendOpen(state.meetings.find((x) => x.id === state.filter))) ? null : state.here;   // הגיע / לא הגיע, רק בתוך מפגש
   const hereOk = (p) => { const h = effHere(); return !h || (((linkOf(p.id, state.filter) || {}).attended) ? '1' : '0') === h; };
@@ -1551,10 +1554,10 @@
       if (!q) return true;
       return p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd)) || hasNote(p, q);
     });
-    const epk = payKeys(ep), eh = effHere(), payOk = (p) => hereOk(p) && (!epk.length || epk.some((k) => stMatch(p, k)));
+    const epk = payKeys(ep), eh = effHere(), payOk = (p) => hereOk(p) && matchPay(p, epk);
     const genOk = (p) => eg === 'none' ? !p.gender : (!eg || p.gender === eg);
     const nG = (g) => base.filter((p) => payOk(p) && (g === 'none' ? !p.gender : p.gender === g)).length;
-    const nP = (key) => base.filter((p) => genOk(p) && hereOk(p) && payKeys(key).some((k) => stMatch(p, k))).length;
+    const nP = (key) => base.filter((p) => genOk(p) && hereOk(p) && matchPay(p, state.filter ? payKeys(key) : [...new Set([...epk, ...payKeys(key)])])).length;
     const btn = (kind, val, label, n, cls, on, aria) => '<button type="button"' + (aria ? ' aria-label="' + aria + ' ' + n + '" title="' + aria + '"' : '') + ' class="fx' + (cls ? ' ' + cls : '') + (n ? '' : ' zero') + '" data-fx="' + kind + ':' + val + '" aria-pressed="' + on + '">' + label + ' <b>' + n + '</b></button>';
     const none = nG('none');
     const genOkCount = () => base.filter(genOk).length;
@@ -1571,7 +1574,7 @@
     /* כל הסטטוסים (בתוך מפגש) או התגיות (בתצוגת הכל) כצ'יפים מעל הסינונים, ממורכזים ועוברים שורה: לחיצה מסננת (בחירה מרובה) */
     const gchip = (g, label, cls) => { const n = nG(g); return '<button type="button" class="stc ' + cls + (n ? '' : ' zero') + '" data-stg="' + g + '" aria-pressed="' + (eg === g) + '">' + label + ' <small>' + n + '</small></button>'; };
     const attOn = !!(state.filter && attendOpen(state.meetings.find((x) => x.id === state.filter)));   // הגעה רק מחצי שעה לפני המפגש (או במצב הגעה פתוח)
-    const hereN = (v) => base.filter((p) => genOk(p) && (!epk.length || epk.some((k) => stMatch(p, k))) && ((((linkOf(p.id, state.filter) || {}).attended) ? '1' : '0') === v)).length;
+    const hereN = (v) => base.filter((p) => genOk(p) && matchPay(p, epk) && ((((linkOf(p.id, state.filter) || {}).attended) ? '1' : '0') === v)).length;
     const hchip = (v, label, cls) => { const n = hereN(v); return '<button type="button" class="stc ' + cls + (n ? '' : ' zero') + '" data-sth="' + v + '" aria-pressed="' + (eh === v) + '">' + label + ' <small>' + n + '</small></button>'; };
     const editLink = '<button type="button" class="qeditlink" data-qedit="' + (state.filter ? 'meeting' : 'participant') + '" style="margin:0"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg> עריכה</button>';
     $('#stStrip').style.setProperty('--nd', String(Math.max(2, String(state.participants.length).length)));
@@ -1629,7 +1632,7 @@
     const qd = digits(q);
     let rows = state.participants.filter((p) => {
       if (state.filter && !linkOf(p.id, state.filter)) return false;
-      if (effPay() && !payKeys(effPay()).some((k) => stMatch(p, k))) return false;
+      if (effPay() && !matchPay(p, payKeys(effPay()))) return false;
       if (!hereOk(p)) return false;
       if (effGender() === 'none' ? p.gender : (effGender() && p.gender !== effGender())) return false;
       if (!q) return true;
@@ -1665,9 +1668,8 @@
       }
       let tags = '';
       if (!state.filter) {
-        const pt = ptagsOf(p);
-        tags = pt.length ? '<span class="ptag ' + pt[0] + '" data-qs="' + p.id + '" role="button" tabindex="0" title="תגיות (לחיצה לשינוי)">' + esc(STATUS_LABEL[pt[0]]) + (pt.length > 1 ? ' +' + (pt.length - 1) : '') + '</span>'
-          : '<span class="ptag empty" data-qs="' + p.id + '" role="button" tabindex="0" title="בלי תגיות (לחיצה לבחירה)">תגיות</span>';
+        const ls = linksOf(p.id), came = ls.filter((l) => l.attended).length;
+        tags = '<span class="ptag cnt" title="הגיע ל-' + came + ' מתוך ' + ls.length + ' מפגשים">הגיע <bdi dir="ltr">' + came + '/' + ls.length + '</bdi></span>';
       }
       const hl = state.filter ? linkOf(p.id, state.filter) : null;
       const tgm = attTarget(), tgl = tgm ? linkOf(p.id, tgm.id) : null, showHere = !!(tgm && attendOpen(tgm)), evc = evCircle(p);
