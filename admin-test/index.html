@@ -2692,7 +2692,7 @@
     paintMeth();
     const paintPkg = () => { const n = parseInt(f.pay_pkg.value, 10), a = parseFloat(f.pay_dep.value); $('#depPkgHint').innerHTML = n >= 2 && a > 0 ? 'מחיר למפגש בחבילה: <b>₪' + nfm(Math.round(a / n)) + '</b>. ' + (m ? 'המפגש הזה ועוד עד ' + (n - 1) + ' מפגשים קרובים משויכים ייפרעו מיד, והשאר ייפרעו בשיוך' : 'כל שיוך למפגש ייקח את הסכום הזה מהיתרה, עד ' + n + ' מפגשים') : ''; };
     f.pay_pkg.oninput = paintPkg; f.pay_dep.oninput = paintPkg;
-    goView('deposit'); f.pay_dep.focus();
+    goView('deposit'); if (document.activeElement && document.activeElement.blur) document.activeElement.blur();   // בלי פוקוס אוטומטי: המקלדת לא עולה בכניסה למסך
   }
   $('#walAdd').addEventListener('click', () => openDeposit(null));
   /* "לא משלם" לפי מפגש: עקיפה בשיוך למפגש (true/false), מעל ברירת המחדל של המשתתף */
