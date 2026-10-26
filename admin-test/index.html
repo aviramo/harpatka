@@ -497,6 +497,9 @@
     .swt[aria-checked="true"] i { transform: translateX(-20px); }
     /* תפריט סטטוס מהיר מהרשימה */
     .row .ptag[data-qs] { cursor: pointer; }
+    .row .sidewrap { grid-column: 5; grid-row: 1; display: inline-flex; align-items: center; gap: 6px; justify-content: flex-end; }
+    .row .payic { display: inline-grid; place-items: center; flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%; font-size: 14px; font-weight: 800; color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--line); opacity: .75; }
+    .row .payic.ok { background: var(--green-bg); color: var(--green); box-shadow: none; opacity: 1; }
     .row .ptag.cnt { background: var(--cream); color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--line); }
     .row .ptag.cnt.g { background: var(--green-bg); color: var(--green); box-shadow: none; }
     .row .ptag.cnt.y { background: #FBEBC8; color: #8A5A00; box-shadow: none; }
@@ -734,7 +737,7 @@
     .row { display: block; background: transparent; border-radius: 0; box-shadow: none; padding: 0; border-bottom: 1px solid var(--line); }
     .row:last-child { border-bottom: 0; }
     .row:nth-child(even) { background: rgba(246,239,228,.45); }
-    .row .main { padding: 7px 12px; display: grid; grid-template-columns: 54px minmax(0, max-content) minmax(0, 1fr) auto 86px; column-gap: 0; align-items: center; height: 44px; box-sizing: border-box; }
+    .row .main { padding: 7px 12px; display: grid; grid-template-columns: 54px minmax(0, max-content) minmax(0, 1fr) auto 124px; column-gap: 0; align-items: center; height: 44px; box-sizing: border-box; }
     .row .nm { display: contents; }
     .row .nm .name { grid-column: 2; grid-row: 1; }
     .row .nm .ptags { grid-column: 4; grid-row: 1; justify-self: center; display: inline-flex; gap: 4px; margin-inline-end: 10px; }
@@ -745,7 +748,7 @@
     .row .meta .age { grid-column: 1; margin-inline-end: 8px; }
     .row .meta .ptag { grid-column: 5; }
     .here { grid-column: 6; grid-row: 1; justify-self: end; width: 38px; height: 38px; border-radius: 50%; border: 2.5px solid #D2C3AC; background: #fff; color: transparent; font-size: 20px; font-weight: 800; line-height: 1; display: grid; place-items: center; transition: background .12s, border-color .12s, transform .12s; }
-    .row .main.att { grid-template-columns: 54px minmax(0, max-content) minmax(0, 1fr) auto 86px 38px; }
+    .row .main.att { grid-template-columns: 54px minmax(0, max-content) minmax(0, 1fr) auto 124px 38px; }
     .row .main .here { width: 26px; height: 26px; border-width: 2px; font-size: 14px; justify-self: center; margin-inline-start: 6px; }
     .row .here.no { border-style: dashed; }
     #facets.searching .fx { opacity: .5; pointer-events: none; }
@@ -754,8 +757,8 @@
     .evc:active { transform: scale(.92); }
     .evc.sent { background: #2F5EA8; border-style: solid; color: #fff; }
     .evc.off { border-color: #D2C3AC; color: #B8A98F; }
-    .row .main.ev { grid-template-columns: 54px minmax(0, max-content) minmax(0, 1fr) auto 86px 38px; }
-    .row .main.att.ev { grid-template-columns: 54px minmax(0, max-content) minmax(0, 1fr) auto 86px 38px 38px; }
+    .row .main.ev { grid-template-columns: 54px minmax(0, max-content) minmax(0, 1fr) auto 124px 38px; }
+    .row .main.att.ev { grid-template-columns: 54px minmax(0, max-content) minmax(0, 1fr) auto 124px 38px 38px; }
     .row .main.att.ev .evc { grid-column: 7; }
     .here:active { transform: scale(.92); }
     .here[aria-pressed="true"] { background: #2F7D4F; border-color: #2F7D4F; color: #fff; }
@@ -1702,7 +1705,8 @@
         if (!l) side = '<span class="ptag empty" data-qs="' + p.id + '" role="button" tabindex="0" title="לא משויך למפגש (לחיצה לבחירת סטטוס ושיוך)">לא משויך</span>';
         else { const st = linkStatus(l); side = '<span class="ptag ' + st + '" data-qs="' + p.id + '" role="button" tabindex="0" title="סטטוס במפגש (לחיצה לשינוי)">' + STATUS_LABEL[st] + '</span>'; }   // תצוגה בלבד: לחיצה על הכרטיס פותחת את פרטי המשתתף, ושם משנים סטטוס
       }
-      let tags = '';
+      let tags = '', payIc = '';
+      if (state.filter && linkOf(p.id, state.filter)) { const al = allocatedOf(p.id, state.filter); payIc = al > 0 ? '<span class="payic ok" title="שולם ₪' + nfm(al) + '">₪</span>' : '<span class="payic" title="לא שולם">₪</span>'; }   // סמל תשלום (לפי רשומות התשלום, לא לפי סטטוס) מימין לסטטוס
       if (!state.filter) {
         const pr = persist(p), rate = pr.total ? pr.came / pr.total : 0, score = pr.total ? (pr.came + K * pAvg) / (pr.total + K) : 0, cls = !pr.total ? 'n' : score > pAvg + BAND ? 'g' : score < pAvg - BAND ? 'r' : 'y';
         tags = '<span class="ptag cnt ' + cls + '" title="התמדה: הגיע ל-' + pr.came + ' מתוך ' + pr.total + ' מפגשים מאז המפגש הראשון שלו (' + Math.round(rate * 100) + '%). ממוצע: ' + Math.round(pAvg * 100) + '%">הגיע <bdi dir="ltr">' + pr.came + '/' + pr.total + '</bdi></span>';
@@ -1712,7 +1716,7 @@
       return '<li class="row' + (hl && hl.attended && attendOpen(state.meetings.find((x) => x.id === state.filter)) ? ' arrived' : '') + '">' +
         '<div class="main' + (showHere ? ' att' : '') + (anyEv ? ' ev' : '') + '" role="button" tabindex="0" data-edit="' + p.id + '">' +
           '<div class="nm"><bdi class="name">' + esc(p.name) + '</bdi>' + '</div>' +
-          (true ? '<div class="meta">' + (true ? '<span class="age' + (p.promoter_id ? ' pr' : p.source === 'site-ad' ? ' ad' : '') + '" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? '<b class="gl">' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : (p.gender ? '' : '—')) + '</bdi></span>' : '') + side + tags + '</div>' : '') +
+          (true ? '<div class="meta">' + (true ? '<span class="age' + (p.promoter_id ? ' pr' : p.source === 'site-ad' ? ' ad' : '') + '" title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? '<b class="gl">' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : (p.gender ? '' : '—')) + '</bdi></span>' : '') + '<span class="sidewrap">' + payIc + side + tags + '</span>' + '</div>' : '') +
           (noteLatest.get(p.id) ? '<div class="note" title="' + esc(noteLatest.get(p.id).author_name || '') + '">' + (noteLatest.get(p.id).has_image && !noteLatest.get(p.id).body ? IMG_ICON : esc(noteLatest.get(p.id).body)) + '</div>' : '') +
           (showHere ? '<button type="button" class="here' + (tgl && tgl.attended ? '' : ' no') + '" data-hr="' + p.id + '" data-hm="' + tgm.id + '" aria-pressed="' + !!(tgl && tgl.attended) + '" aria-label="' + (tgl && tgl.attended ? 'הגיע' : (tgl ? 'סימון הגעה' : 'הגיע בלי הרשמה')) + '" title="' + (tgl ? 'סימון הגעה' : 'לא רשום למפגש: סימון הגעה (הפתעה)') + '">✓</button>' : '') +
           evc +
