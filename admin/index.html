@@ -835,6 +835,10 @@
     .row .main.hasw { padding-inline-start: 50px; }
     .rowwa { position: absolute; inset-inline-start: 12px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border-radius: 50%; background: var(--green-bg); color: var(--green); display: grid; place-items: center; z-index: 1; }
     .rowwa svg { width: 16px; height: 16px; }
+    .clrow { display: flex; align-items: center; }
+    #qMenu .qi[data-am] { display: inline-flex; align-items: center; justify-content: center; height: 32px; padding: 0 14px; border-radius: 999px; background: var(--cream); color: var(--ink); font-weight: 700; font-size: 15px; width: auto; }
+    .clrow .addm { margin-inline-start: auto; height: 28px; padding: 0 12px; border-radius: 999px; background: #fff; border: 1px solid var(--line); color: var(--terra); font-weight: 700; font-size: 14px; }
+    .clrow .addm[hidden] { display: none; }
     .mlist .mrow.hl { border-color: var(--ink); background: var(--cream); }   /* המפגש שממנו נפתח הכרטיס */
     .mlist .mrow { width: 174px; box-sizing: border-box; }   /* רוחב קבוע: מעבר בין הגיע ל-לא הגיע (או שינוי הסכום) לא משנה את הכרטיס */
     .mlist .mrow .mmoney, .mlist .mrow .here.sm { flex: 1 1 0; min-width: 0; width: auto; height: 34px; padding: 0 4px; font-size: 14px; justify-content: center; text-align: center; white-space: nowrap; }
@@ -1060,7 +1064,7 @@
       </div>
       <p id="pViewSub" class="pviewsub" hidden></p>
       <div class="ppanel" data-panel="main">
-        <div class="clabel">מפגשים <span id="pMeetN" class="pmeetn"></span></div>
+        <div class="clabel clrow">מפגשים <span id="pMeetN" class="pmeetn"></span><button type="button" class="addm" id="pAddMeet" hidden>+ שיוך למפגש</button></div>
         <div class="mlist" id="pMeetings"></div>
         <button type="button" class="more" id="pMore" hidden>טען עוד</button>
         <div class="clabel">הערות</div>
@@ -2474,6 +2478,19 @@
       apply(k); if (!(inMeeting && k === '__none')) toast(k === '__none' ? 'הסטטוס הוסר' : 'הסטטוס עודכן: ' + STATUS_LABEL[k]);
     };
   }
+  /* שיוך משתתף למפגש מתוך הכרטיס: תפריט צף עם המפגשים שעוד לא משויך אליהם; שיוך בסטטוס ברירת המחדל */
+  $('#pAddMeet').addEventListener('click', () => {
+    if (!sheet || !sheet.id) return; const pid = sheet.id, anchor = $('#pAddMeet'), menu = $('#qMenu');
+    if (!menu.hidden) { closeQ(); return; }
+    const free = state.meetings.filter((m) => !linkOf(pid, m.id)).sort((a, b) => (b.meeting_date + b.meeting_time).localeCompare(a.meeting_date + a.meeting_time));
+    if (!free.length) return;
+    const host = anchor.closest('dialog') || document.body; if (menu.parentNode !== host) host.appendChild(menu);
+    menu.innerHTML = free.map((m) => '<button type="button" role="menuitem" class="qi" data-am="' + m.id + '">' + esc(dmShort(m)) + ' · ' + esc(String(m.meeting_time).slice(0, 5)) + '</button>').join('');
+    menu.hidden = false;
+    const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
+    menu.style.left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8) + 'px'; menu.style.top = (r.bottom + 6 + mh > window.innerHeight - 8 ? Math.max(8, r.top - mh - 6) : r.bottom + 6) + 'px';
+    menu.onclick = (e) => { const b = e.target.closest('[data-am]'); if (!b) return; closeQ(); setLinkedWithStatus(pid, b.dataset.am, 'unpaid'); const m = state.meetings.find((x) => x.id === b.dataset.am); toast('שויך למפגש' + (m ? ' ' + dmShort(m) : '')); };
+  });
   /* סטטוס משתתף (כללי): נפרד מסטטוס המפגש */
   async function toggleTag(pid, key) {
     const p = state.participants.find((x) => x.id === pid); if (!p) return;
@@ -3160,6 +3177,7 @@
     const desc = state.meetings.slice().sort((a, b) => (b.meeting_date + b.meeting_time).localeCompare(a.meeting_date + a.meeting_time)), shown = sheet.id ? desc.filter((m) => linkOf(sheet.id, m.id)) : desc;   // רק מפגשים שהמשתתף משויך אליהם (משתתף חדש: כולם, כדי לשייך)
     $('#pMore').hidden = true;
     { const n = $('#pMeetN'); if (n) { n.textContent = sheet.id ? shown.length : ''; n.hidden = !sheet.id; } }
+    { const ab = $('#pAddMeet'); if (ab) ab.hidden = !(sheet.id && state.meetings.some((m) => !linkOf(sheet.id, m.id))); }   // שיוך למפגש מהכרטיס
     { /* מספר אחד: יתרה = חוב פחות קרדיט. חוב רק על מפגשים שביקשנו עליהם תשלום ("בטיפול") או שהמשתתף אמר שישלם ("ישלם"); רשום בלבד (חדש) הוא עוד לא חוב */
       const owed = sheet.id ? owedOf(sheet.id) : 0;
       const net = owed - (sheet.id ? creditOf(sheet.id) : 0), chip = $('#pPayChip');
