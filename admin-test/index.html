@@ -116,6 +116,8 @@
     .emvars { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 10px; }
     .emvars button { height: 30px; padding: 0 12px; border-radius: 999px; background: var(--cream); color: var(--ink); font-weight: 800; font-size: 14px; }
     .pmrow { display: flex; align-items: center; gap: 8px; background: var(--cream); border-radius: 16px; padding: 8px 12px; margin-bottom: 8px; }
+    .pmrow.dragging { position: relative; z-index: 5; background: #fff; box-shadow: 0 10px 28px rgba(63,56,47,.28); }
+    .pmrow .sthandle { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; background: #fff; border: 1.5px solid var(--line); color: var(--muted); display: grid; place-items: center; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
     .pmrow .pmname { flex: 1 1 auto; min-width: 0; height: 42px; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; padding: 0 14px; font-size: 17px; font-weight: 700; text-align: right; }
     .tierrow { display: grid; grid-template-columns: 30px 64px minmax(0, 1fr) 108px 30px; align-items: center; column-gap: 8px; background: var(--cream); border-radius: 16px; padding: 10px 12px; margin-bottom: 8px; }
     .tierrow .tierlbl { font-weight: 700; color: var(--muted); font-size: 15px; white-space: nowrap; }
@@ -3418,10 +3420,44 @@
   $('#setSrcBtn').addEventListener('click', () => showSetView('src'));
   /* דרכי תשלום: רשימה שהמנהל מגדיר (שם לכל דרך); מוצגת כצ'יפים בקבלת תשלום */
   function renderPm() {
-    $('#pmList').innerHTML = state.payMethods.map((x) => '<div class="pmrow" data-k="' + esc(x.key) + '"><input class="pmname" value="' + esc(x.name) + '" maxlength="20" aria-label="שם דרך התשלום" />' + (state.payMethods.length > 1 ? '<button type="button" class="stdel" data-pdel="' + esc(x.key) + '" aria-label="מחיקה" title="מחיקה">×</button>' : '') + '</div>').join('');
+    $('#pmList').innerHTML = state.payMethods.map((x) => '<div class="pmrow" data-k="' + esc(x.key) + '">' + '<button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg></button>' + '<input class="pmname" value="' + esc(x.name) + '" maxlength="20" aria-label="שם דרך התשלום" />' + (state.payMethods.length > 1 ? '<button type="button" class="stdel" data-pdel="' + esc(x.key) + '" aria-label="מחיקה" title="מחיקה">×</button>' : '') + '</div>').join('');
     $('#setPmHint').textContent = state.payMethods.map((x) => x.name).join(' · ');
   }
   $('#setPmBtn').addEventListener('click', () => showSetView('pm'));
+  /* סדר דרכי התשלום: גרירה או חצים; אותו סדר מוצג בקבלת תשלום */
+  async function commitPmOrder(keys) {
+    const before = state.payMethods.map((x) => ({ x, s: x.sort })), changed = [];
+    state.payMethods = keys.map((k) => state.payMethods.find((m) => m.key === k)).filter(Boolean);
+    state.payMethods.forEach((x, i) => { if (x.sort !== i + 1) { x.sort = i + 1; changed.push(x); } });
+    renderPm();
+    try { await Promise.all(changed.filter((x) => x.id).map((x) => api(T.pm + '?id=eq.' + x.id, { method: 'PATCH', body: { sort: x.sort } }))); }
+    catch (err) { before.forEach((b) => { b.x.sort = b.s; }); state.payMethods.sort((a, b) => (a.sort || 0) - (b.sort || 0)); renderPm(); fail(err); }
+  }
+  let pmDrag = null;
+  $('#pmList').addEventListener('pointerdown', (e) => {
+    const h = e.target.closest('.sthandle'); if (!h) return; const row = h.closest('.pmrow'); e.preventDefault(); h.setPointerCapture(e.pointerId);
+    pmDrag = { row, id: e.pointerId, grab: e.clientY - row.getBoundingClientRect().top }; row.classList.add('dragging');
+  });
+  $('#pmList').addEventListener('pointermove', (e) => {
+    const d = pmDrag; if (!d || e.pointerId !== d.id) return; const list = $('#pmList'), row = d.row;
+    const place = () => { row.style.transform = 'none'; const nat = row.getBoundingClientRect().top; row.style.transform = 'translateY(' + (e.clientY - d.grab - nat) + 'px)'; };
+    place();
+    for (let g = 0; g < 8; g++) {
+      const r = row.getBoundingClientRect(), prev = row.previousElementSibling, next = row.nextElementSibling;
+      if (prev && r.top + r.height / 2 < prev.getBoundingClientRect().top + prev.getBoundingClientRect().height / 2) { list.insertBefore(row, prev); place(); }
+      else if (next && r.top + r.height / 2 > next.getBoundingClientRect().top + next.getBoundingClientRect().height / 2) { list.insertBefore(next, row); place(); }
+      else break;
+    }
+  });
+  const pmDrop = (e) => { const d = pmDrag; if (!d || e.pointerId !== d.id) return; pmDrag = null; d.row.classList.remove('dragging'); d.row.style.transform = ''; commitPmOrder([...document.querySelectorAll('#pmList .pmrow')].map((r) => r.dataset.k)); };
+  $('#pmList').addEventListener('pointerup', pmDrop); $('#pmList').addEventListener('pointercancel', pmDrop);
+  ['touchstart', 'touchmove'].forEach((ev) => $('#pmList').addEventListener(ev, (e) => { if (e.target.closest('.sthandle')) { e.stopPropagation(); if (ev === 'touchmove' && e.cancelable) e.preventDefault(); } }, { passive: false }));
+  $('#pmList').addEventListener('keydown', (e) => {
+    const h = e.target.closest('.sthandle'); if (!h || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return; e.preventDefault();
+    const keys = state.payMethods.map((x) => x.key), k = h.closest('.pmrow').dataset.k, i = keys.indexOf(k), j = e.key === 'ArrowUp' ? i - 1 : i + 1;
+    if (j < 0 || j >= keys.length) return; keys.splice(i, 1); keys.splice(j, 0, k);
+    commitPmOrder(keys).then(() => { const nh = document.querySelector('#pmList .pmrow[data-k="' + k + '"] .sthandle'); if (nh) nh.focus(); });
+  });
   $('#setEmBtn').addEventListener('click', () => showSetView('em'));
   async function saveEventMsg(v) {
     const em = emailOf(), prev = state.prefs[em], val = (v || '').trim() ? v : null;
