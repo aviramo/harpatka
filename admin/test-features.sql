@@ -170,3 +170,7 @@ alter table test.harpatka_promoters add column if not exists color text not null
 alter table test.harpatka_participants add column if not exists source_code text;
 update test.harpatka_participants set source_code = 'p' where source = 'site-ad' and source_code is null;
 notify pgrst, 'reload schema';
+
+-- 17. משתתף שלא אמור לשלם על מפגשים (מארגן, אורח, פטור): לא נדרש ממנו תשלום ולא נספר בחוב
+alter table test.harpatka_participants add column if not exists no_pay boolean not null default false;
+notify pgrst, 'reload schema';
