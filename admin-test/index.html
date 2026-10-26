@@ -1225,7 +1225,7 @@
       <div id="setSt" hidden>
         <p class="sthint" id="stHint" style="margin:0 2px 12px"></p>
         <div id="stList"></div>
-        <label class="setfield" id="setIntroBox" style="flex:1 1 100%;padding:2px 4px 6px;margin:0"><div class="sethead"><span id="setIntroLbl">הודעת וואטסאפ</span></div><textarea class="setinp" id="setIntro" rows="2" maxlength="300" aria-label="נוסח הודעת ההצגה" style="height:auto;padding:10px 14px;line-height:1.5;font-size:16px;font-weight:600"></textarea><small class="sthint" style="margin:0">{שם} מוחלף בשם הפרטי של המשתתף, {שולח} בשם השולח</small><button type="button" class="qeditlink" id="setIntroReset" style="margin:2px 0 0;align-self:flex-start">שחזור נוסח ברירת מחדל</button></label>
+        <label class="setfield" id="setIntroBox" style="flex:1 1 100%;padding:2px 4px 6px;margin:0"><div class="sethead"><span id="setIntroLbl">הודעת וואטסאפ</span></div><textarea class="setinp" id="setIntro" rows="2" maxlength="300" aria-label="נוסח הודעת ההצגה" style="height:auto;padding:10px 14px;line-height:1.5;font-size:16px;font-weight:600"></textarea><div class="emvars" id="introVars" style="margin:6px 0 2px"><button type="button" data-v="{שם}">{שם}</button><button type="button" data-v="{שולח}">{שולח}</button></div><small class="sthint" style="margin:0">{שם} מוחלף בשם הפרטי של המשתתף, {שולח} בשם השולח</small><button type="button" class="qeditlink" id="setIntroReset" style="margin:2px 0 0;align-self:flex-start">שחזור נוסח ברירת מחדל</button></label>
         <button type="button" class="btn ghost" id="stAdd" hidden>+ תגית חדשה</button>
       </div>
     </div>
@@ -3601,6 +3601,7 @@
   });
   $('#emText').addEventListener('change', () => saveEventMsg($('#emText').value));
   $('#emReset').addEventListener('click', () => { $('#emText').value = DEFAULT_EVENT_MSG; saveEventMsg(''); });
+  $('#introVars').addEventListener('click', (e) => { const b = e.target.closest('[data-v]'); if (!b) return; e.preventDefault(); const ta = $('#setIntro'), s = ta.selectionStart == null ? ta.value.length : ta.selectionStart, en = ta.selectionEnd == null ? s : ta.selectionEnd; ta.setRangeText(b.dataset.v, s, en, 'end'); ta.focus(); ta.dispatchEvent(new Event('change')); });   // לחיצה על שדה מכניסה אותו לנוסח
   $('#emVars').addEventListener('click', (e) => { const b = e.target.closest('[data-v]'); if (!b) return; const ta = $('#emText'), s = ta.selectionStart == null ? ta.value.length : ta.selectionStart, en = ta.selectionEnd == null ? s : ta.selectionEnd; ta.setRangeText(b.dataset.v, s, en, 'end'); ta.focus(); ta.dispatchEvent(new Event('change')); });
   $('#pmList').addEventListener('change', async (e) => {
     const inp = e.target.closest('.pmname'); if (!inp) return; const k = inp.closest('.pmrow').dataset.k, x = state.payMethods.find((m) => m.key === k); if (!x) return;
