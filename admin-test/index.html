@@ -173,6 +173,10 @@
     .row.other { background: transparent; box-shadow: none; border: 1.5px dashed var(--coral); }
     .addm { height: 30px; padding: 0 12px; border-radius: 999px; background: var(--terra); color: #fff; font-weight: 700; font-size: 14px; }
     .addm.walk { background: #E3F4E9; color: #1E7A45; }
+    .list li.newrow { grid-column: 1 / -1; background: #fff; border-radius: 16px; border: 1.5px solid var(--line); overflow: hidden; }
+    .newbtn { display: flex; align-items: center; gap: 10px; width: 100%; height: 48px; padding: 0 14px; text-align: right; background: none; font-weight: 700; font-size: 16px; color: var(--ink); }
+    .newbtn .plus { flex: 0 0 auto; width: 28px; height: 28px; border-radius: 50%; background: var(--terra); color: #fff; display: grid; place-items: center; font-size: 22px; line-height: 1; padding-bottom: 2px; }
+    .newbtn b { color: var(--terra); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .addm.wide { width: 100%; height: 38px; background: transparent; color: var(--terra); border: 1.5px dashed var(--coral); }
     .row {
       display: flex; flex-direction: column; justify-content: space-between; gap: 12px;
@@ -1828,7 +1832,7 @@
       others.sort((a, b) => a.name.localeCompare(b.name, 'he'));
     }
     const newBtn = q
-      ? '<li class="group newp"><button type="button" class="addm wide" id="addNew">+ משתתף חדש: ' + esc(state.q.trim()) + '</button></li>' : '';
+      ? '<li class="newrow"><button type="button" class="newbtn" id="addNew"><span class="plus" aria-hidden="true">+</span><span>הוספת משתתף חדש</span><b>' + esc(state.q.trim()) + '</b></button></li>' : '';
 
     if (!rows.length && !others.length) {
       $('#list').innerHTML = newBtn || '<li class="empty">' + emptyMsg() + '</li>';
@@ -1854,7 +1858,7 @@
       let side = '';
       if (state.filter) {
         const l = linkOf(p.id, state.filter);
-        if (!l) side = '<span class="ptag empty" data-qs="' + p.id + '" role="button" tabindex="0" title="לא משויך למפגש (לחיצה לבחירת סטטוס ושיוך)">לא משויך</span>';
+        if (!l) side = '<span class="ptag unpaid" data-qs="' + p.id + '" role="button" tabindex="0" title="לא משויך למפגש (לחיצה לבחירת סטטוס ושיוך)">לא משויך</span>';
         else { const st = linkStatus(l); side = '<span class="ptag ' + st + '" data-qs="' + p.id + '" role="button" tabindex="0" title="סטטוס במפגש (לחיצה לשינוי)">' + STATUS_LABEL[st] + '</span>'; }   // תצוגה בלבד: לחיצה על הכרטיס פותחת את פרטי המשתתף, ושם משנים סטטוס
       }
       let tags = '', payIc = '';
