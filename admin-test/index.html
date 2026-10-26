@@ -2027,7 +2027,8 @@
         else payIc = al <= 0 ? '<span class="payic" title="לא שולם">₪</span>' : '<span class="payic ok" title="שולם ₪' + nfm(al) + '">₪</span>'; }   // אין "שולם חלקית": יש כסף שהוקצה למפגש = שולם   // סמל תשלום (לפי רשומות התשלום, לא לפי סטטוס) מימין לסטטוס
       if (!state.filter) {
         const pr = persist(p), rate = pr.total ? pr.came / pr.total : 0, score = pr.total ? (pr.came + K * pAvg) / (pr.total + K) : 0, cls = !pr.total ? 'n' : score > pAvg + BAND ? 'g' : score < pAvg - BAND ? 'r' : 'y';
-        tags = '<span class="ptag cnt ' + cls + '" title="התמדה: הגיע ל-' + pr.came + ' מתוך ' + pr.total + ' מפגשים מאז המפגש הראשון שלו (' + Math.round(rate * 100) + '%). ממוצע: ' + Math.round(pAvg * 100) + '%">הגיע <bdi dir="ltr">' + pr.came + '/' + pr.total + '</bdi></span>';
+        const fut = linksOf(p.id).filter((l) => { const m = state.meetings.find((x) => x.id === l.meeting_id); return m && !started(m); }).length;   // מפגשים עתידיים שהמשתתף רשום אליהם נספרים במכנה; הצבע נקבע רק לפי מפגשים שהתחילו
+        tags = '<span class="ptag cnt ' + cls + '" title="הגיע ל-' + pr.came + ' מתוך ' + (pr.total + fut) + ' מפגשים' + (fut ? ' (' + fut + ' עתידיים)' : '') + (pr.total ? '. התמדה בפועל: ' + Math.round(rate * 100) + '%, ממוצע: ' + Math.round(pAvg * 100) + '%' : '') + '">הגיע <bdi dir="ltr">' + pr.came + '/' + (pr.total + fut) + '</bdi></span>';
       }
       const hl = state.filter ? linkOf(p.id, state.filter) : null;
       const tgm = attTarget(), tgl = tgm ? linkOf(p.id, tgm.id) : null, showHere = !!(tgm && attendOpen(tgm)), evc = evCircle(p);
