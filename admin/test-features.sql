@@ -126,3 +126,7 @@ update test.harpatka_participants set status_key = null where status_key is not 
 alter table test.harpatka_participants add column if not exists tags text[] not null default '{}';
 update test.harpatka_participants set tags = array[status_key] where status_key is not null and cardinality(tags) = 0;
 notify pgrst, 'reload schema';
+
+-- 12. נוסח הודעת ההצגה בוואטסאפ (לכל מנהל): {שם} ו-{שולח} מוחלפים בעת השליחה
+alter table test.harpatka_admin_prefs add column if not exists wa_intro text;
+notify pgrst, 'reload schema';
