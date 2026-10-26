@@ -1009,7 +1009,7 @@
         <div class="stseg" role="tablist"><button type="button" role="tab" data-sc="meeting" aria-selected="true">סטטוס מפגש</button><button type="button" role="tab" data-sc="participant" aria-selected="false">תגיות</button></div>
         <p class="sthint" id="stHint" style="margin:0 2px 12px"></p>
         <div id="stList"></div>
-        <label class="setfield" id="setIntroBox" style="background:var(--cream);border-radius:16px;padding:12px 14px;margin-top:12px"><div class="sethead"><span>הודעת וואטסאפ למשתתף "משויך"</span></div><textarea class="setinp" id="setIntro" rows="2" maxlength="300" aria-label="נוסח הודעת ההצגה" style="height:auto;padding:10px 14px;line-height:1.5;font-size:16px;font-weight:600"></textarea><small class="sthint" style="margin:0">{שם} מוחלף בשם הפרטי של המשתתף, {שולח} בשם השולח</small><button type="button" class="qeditlink" id="setIntroReset" style="margin:2px 0 0;align-self:flex-start">שחזור נוסח ברירת מחדל</button></label>
+        <label class="setfield" id="setIntroBox" style="background:var(--cream);border-radius:16px;padding:12px 14px;margin-top:12px"><div class="sethead"><span id="setIntroLbl">הודעת וואטסאפ</span></div><textarea class="setinp" id="setIntro" rows="2" maxlength="300" aria-label="נוסח הודעת ההצגה" style="height:auto;padding:10px 14px;line-height:1.5;font-size:16px;font-weight:600"></textarea><small class="sthint" style="margin:0">{שם} מוחלף בשם הפרטי של המשתתף, {שולח} בשם השולח</small><button type="button" class="qeditlink" id="setIntroReset" style="margin:2px 0 0;align-self:flex-start">שחזור נוסח ברירת מחדל</button></label>
         <button type="button" class="btn ghost" id="stAdd" hidden>+ תגית חדשה</button>
       </div>
     </div>
@@ -1418,7 +1418,7 @@
       ]);
       if (pfs) state.prefs = Object.fromEntries(pfs.map((x) => [String(x.email).toLowerCase(), x]));
       if (sts && sts.length) { const ps = sts.filter((x) => x.scope === 'participant'); state.pstatuses = ps.map((x) => Object.assign({}, x)).sort((a, b) => a.sort - b.sort); }
-      if (sts && sts.length) { const extra = sts.filter((x) => x.scope !== 'participant' && !BUILTIN.includes(x.key)).map((x) => Object.assign({}, x)); state.statuses = DEFAULT_STATUSES.filter((d) => d.key === SYSTEM_STATUS || sts.some((x) => x.key === d.key && x.scope !== 'participant')).map((d) => Object.assign({}, d, sts.find((x) => x.key === d.key && x.scope !== 'participant') || {}, d.key === SYSTEM_STATUS ? { sort: d.sort, label: d.label } : {})).concat(extra); applyStatuses(); }
+      if (sts && sts.length) { const extra = sts.filter((x) => x.scope !== 'participant' && !BUILTIN.includes(x.key)).map((x) => Object.assign({}, x)); state.statuses = DEFAULT_STATUSES.filter((d) => d.key === SYSTEM_STATUS || sts.some((x) => x.key === d.key && x.scope !== 'participant')).map((d) => Object.assign({}, d, sts.find((x) => x.key === d.key && x.scope !== 'participant') || {}, d.key === SYSTEM_STATUS ? { sort: d.sort } : {})).concat(extra); applyStatuses(); }
       boardBadge();
       /* משתתף לא פעיל (הוסר) מוסתר מכל המסכים; הנתונים נשמרים ויחזרו אם יירשם שוב עם אותו טלפון. תשלומים נשארים (כספים) */
       state.inactiveNames = new Map(p.filter((x) => x.active === false).map((x) => [x.id, x.name]));
@@ -2988,11 +2988,12 @@
     const list = curSt(), sys = curSys();
     document.querySelectorAll('#setSt [data-sc]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.sc === stScope)));
     $('#stHint').textContent = stScope === 'meeting' ? 'סטטוס של משתתף בתוך מפגש מסוים (כשבוחרים מפגש ברשימה). שם, צבע וסדר, ואפשר ליצור סטטוס חדש' : 'תגיות של המשתתף (ברשימה כשלא בוחרים מפגש). אפשר לסמן כמה תגיות לכל משתתף. תווית בלבד, בלי לוגיקה מאחוריה. שם, צבע וסדר, ואפשר ליצור תגית חדשה';
+    $('#setIntroLbl').textContent = 'הודעת וואטסאפ למשתתף "' + (STATUS_LABEL.unpaid || 'משויך') + '"';
     $('#setIntroBox').hidden = stScope !== 'meeting'; { const ii = $('#setIntro'); if (document.activeElement !== ii) ii.value = introTemplate(); }
     $('#stAdd').hidden = false; $('#stAdd').textContent = stScope === 'meeting' ? '+ סטטוס מפגש חדש' : '+ תגית חדשה';
     $('#stList').innerHTML = list.map((s) => s.key === sys
       ? '<div class="strow locked" data-k="' + s.key + '">' +
-      '<input class="stname" value="' + esc(s.label) + '" maxlength="14" readonly aria-label="שם סטטוס המערכת (קבוע)" title="שם קבוע, אי אפשר לשנות" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1] + '" />' +
+      '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם סטטוס המערכת" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1] + '" />' +
       '<div class="stcols">' + Object.keys(PALETTE).map((c) => '<button type="button" class="sw" data-c="' + c + '" aria-label="' + PALETTE[c][2] + '" aria-pressed="' + (s.color === c) + '" style="background:' + PALETTE[c][0] + '"></button>').join('') + '</div>' +
       '<span class="stlockic" title="המיקום קבוע: תמיד אחרון"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>' +
       '<small class="stcap">' + 'סטטוס מערכת: ברירת המחדל בשיוך משתתף למפגש' + '</small></div>'
@@ -3002,7 +3003,7 @@
       '<button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg></button>' + (s.key !== SYSTEM_STATUS ? '<button type="button" class="stdel" data-del="' + s.key + '" aria-label="מחיקת הסטטוס" title="מחיקת הסטטוס">×</button>' : '') + '</div>').join('');
   }
   async function saveStatus(key, patch) {
-    const s = allSt().find((x) => x.key === key); if (!s) return; if (key === SYSTEM_STATUS) delete patch.label;   // שם סטטוס המערכת קבוע
+    const s = allSt().find((x) => x.key === key); if (!s) return;
     const prev = Object.assign({}, s); Object.assign(s, patch);
     applyStatuses(); renderStSettings(); render(); if (sheet && sheet.id) { refreshSheetMeetings(); renderContact(); }
     try { await api(T.st + '?key=eq.' + key, { method: 'PATCH', body: patch }); }
