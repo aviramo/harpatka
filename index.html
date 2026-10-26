@@ -283,6 +283,7 @@
     .hv video{ pointer-events:none; }    /* ===== טופס הרשמה קצר (שם + טלפון) ===== */
     /* ===== באנר עליון קבוע: ההצטמצמות צמודה לגלילה (--p = 0 בראש הדף, עד 1 אחרי ~110px) ===== */
     #tbWrap{ position:relative; z-index:50; }
+    #tbWrap[hidden]{ display:none; }
     #topbar{ --p:0; position:fixed; top:0; left:0; right:0; z-index:50; box-shadow:0 8px 20px -10px rgba(0,0,0,calc(var(--p) * .55)); }
     #topbar > div{ padding-top:calc(.75rem - .3rem * var(--p)); padding-bottom:calc(.75rem - .3rem * var(--p)); }
     #topbar .tb-pill{ overflow:hidden; max-height:calc(2rem * (1 - var(--p))); opacity:max(0, calc(1 - var(--p) * 1.7)); padding-top:calc(.25rem * (1 - var(--p))); padding-bottom:calc(.25rem * (1 - var(--p))); }
@@ -542,6 +543,9 @@
        סרגל ההתמלאות עולה באנימציה מ-0 עד הנקודה המתאימה. כשהמפגש מבסיס הנתונים מתקבל (meetingReady) הפונקציה רצה שוב עם הנתונים שלו. */
     window.applyBanner = function (m) {
       const el = id => document.getElementById(id);
+      /* אין מפגש עתידי: אין באנר */
+      if (!m) { if (el('tbWrap')) el('tbWrap').hidden = true; return; }
+      if (el('tbWrap')) el('tbWrap').hidden = false;
       const day = s => { const [y, mm, d] = s.split('-').map(Number); return Date.UTC(y, mm - 1, d) / 864e5; };
       const left = day(m.date) - day(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()));
       const [, mo, dd] = m.date.split('-');
@@ -561,7 +565,7 @@
       if (el('barEarly')) el('barEarly').hidden = price !== '80';
       if (el('barOld')) el('barOld').hidden = price !== '80';
     };
-    window.applyBanner({ date: '2026-10-25', time: '20:00' });   // חייב להתאים ל-MEETING_FALLBACK
+    window.applyBanner(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()) <= '2026-10-25' ? { date: '2026-10-25', time: '20:00' } : null);   // חייב להתאים ל-MEETING_FALLBACK
   </script>
 
   <!-- ====================== 1. HERO — מכתב הזמנה (מעטפת דואר בפסים): חוויה אנושית בלי מילים + מי מגיע + CTA ====================== -->
@@ -1080,8 +1084,9 @@
           { headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey } });
         const rows = r.ok ? await r.json() : [];
         if (rows && rows[0]) return { date: rows[0].meeting_date, time: String(rows[0].meeting_time).slice(0, 5) };
+        if (r.ok) return null;   // אין מפגש עתידי
       } catch (e) {}
-      return MEETING_FALLBACK;
+      return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()) <= MEETING_FALLBACK.date ? MEETING_FALLBACK : null;
     })();
     const heDay = iso => ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'][new Date(iso + 'T12:00:00Z').getUTCDay()];
 
@@ -1092,6 +1097,7 @@
     /* ===== ציר מחיר: 80 ₪ עד 21.10, 100 ₪ מ-22.10 (שלושת הימים האחרונים) ועד המפגש ב-25.10; הנקודה "היום" נעה על הציר.
        הציר לא לינארי בכוונה: השנתה (22.10) תמיד באמצע, חצי שמאלי = מתחילת הציר (START) עד 22.10, חצי ימני = 22.10 עד המפגש ===== */
     meetingReady.then(function(MEET){
+      if (!MEET) return;
       const START = '2026-09-27', EVENT = MEET.date, RAISE_DAYS = 3;   // המחיר עולה תמיד RAISE_DAYS ימים לפני המפגש (מחושב מהמפגש בבסיס הנתונים)
       const day = s => { const [y,m,d] = s.split('-').map(Number); return Date.UTC(y, m-1, d) / 864e5; };
       const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());   // YYYY-MM-DD בשעון ישראל
