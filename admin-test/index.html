@@ -3160,7 +3160,11 @@
     document.querySelectorAll('dialog').forEach((d) => {
       const g = document.createElement('div'); g.className = 'grab'; g.innerHTML = '<i></i>'; g.setAttribute('aria-hidden', 'true');
       d.insertBefore(g, d.firstChild);
-      d.addEventListener('cancel', (e) => { e.preventDefault(); d.close(); });   // Escape
+      d.addEventListener('cancel', (e) => {   // Escape או כפתור "חזרה" של הדפדפן/אנדרואיד (Chrome סוגר דיאלוג מודלי לפני ההיסטוריה): בתוך מסך משנה חוזרים צעד אחד כמו בחץ שבפופאפ, ורק במסך הראשי סוגרים
+        e.preventDefault();
+        const top = NAV.stack.find((x) => x.d === d), bk = top && top.sub > 0 && NAV_BACK[d.id] ? $(NAV_BACK[d.id]) : null;
+        if (bk && !bk.hidden) bk.click(); else d.close();
+      });
       d.addEventListener('click', (e) => { if (e.target === d) d.close(); });    // לחיצה בחוץ
       let sy = 0, dy = 0, t0 = 0, drag = false, moved = false, tapOK = true;
       const down = (e) => {
