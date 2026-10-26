@@ -439,6 +439,9 @@
     .stseg { display: flex; gap: 6px; background: var(--cream); border-radius: 999px; padding: 4px; margin-bottom: 12px; }
     .stseg button { flex: 1 1 0; height: 38px; border-radius: 999px; font-weight: 800; font-size: 15px; color: var(--muted); }
     .stseg button[aria-selected="true"] { background: var(--ink); color: var(--paper); }
+    .pstchips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pstchips .sopt { height: 44px; flex: 1 1 0; min-width: 84px; font-size: 16px; }
+    .pstchips .sopt.psnone { background: var(--cream); color: var(--muted); }
     .strow .stdel { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%; color: var(--muted); font-size: 20px; line-height: 1; background: transparent; }
     .strow.locked { flex-wrap: wrap; }
     .strow .stlockic { flex: 0 0 auto; width: 34px; height: 34px; display: grid; place-items: center; color: var(--muted); }
@@ -474,6 +477,7 @@
     .swt[aria-checked="true"] i { transform: translateX(-20px); }
     /* תפריט סטטוס מהיר מהרשימה */
     .row .ptag[data-qs] { cursor: pointer; }
+    .row .ptag.empty { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--line); }
     .qmenu { position: fixed; z-index: 300; background: var(--paper); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 14px 36px rgba(63,56,47,.24); padding: 6px; display: grid; gap: 5px; min-width: 150px; }
     .qmenu[hidden] { display: none; }
     .qmenu .qi { height: 42px; border-radius: 13px; font-weight: 700; font-size: 16px; padding: 0 16px; text-align: center; border: 2px solid transparent; }
@@ -481,6 +485,7 @@
     .qmenu .qi small { opacity: .7; font-weight: 700; margin-inline-start: 4px; }
     .fx.stsel { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
     .fx.stsel .stpill { padding: 3px 12px; border-radius: 999px; font-weight: 700; }
+    .fx.stsel .stpill.empty { background: var(--cream); color: var(--muted); }
     .fx.stsel .stlab { font-weight: 700; }
     /* יתרה ותשלומים */
     .paychip { cursor: pointer; }
@@ -875,7 +880,7 @@
           <label class="field"><span>מקור</span><select name="promoter_sel" id="pPromoSel"></select></label>
         </div>
         <div class="two" style="grid-template-columns:1fr">
-          <label class="field"><span>סטטוס משתתף</span><select name="pstatus" id="pStatusSel"></select></label>
+          <div class="field"><span>סטטוס משתתף</span><div class="pstchips" id="pStatusChips" role="radiogroup" aria-label="סטטוס משתתף"></div></div>
         </div>
         <div class="note" id="pRegLine" style="color:var(--muted);font-size:14px;margin:2px 4px 10px"></div>
         <button class="btn ghost" id="pDelete" type="button">מחיקת משתתף</button>
@@ -1427,12 +1432,13 @@
   const PALETTE = { green: ['var(--green-bg)', 'var(--green)', 'ירוק'], red: ['var(--red-bg)', 'var(--red)', 'אדום'], amber: ['#FBEBC8', '#8A5A00', 'צהוב'], sky: ['var(--sky-bg)', 'var(--sky)', 'כחול'], orange: ['#F8E4DA', '#B8553A', 'כתום'], neutral: ['#EFE4D3', '#6B6055', 'ניטרלי'] };
   const DEFAULT_STATUSES = [['paid', 'שילם', 'green'], ['willpay', 'ישלם', 'neutral'], ['exempt', 'חינם', 'sky'], ['maybe', 'ספונטני', 'sky'], ['requested', 'בטיפול', 'amber'], ['unpaid', 'חדש', 'red']].map((x, i) => ({ key: x[0], label: x[1], color: x[2], sort: x[0] === 'unpaid' ? 99 : i + 1 }));
   const DEFAULT_PSTATUSES = [['p_active', 'פעיל', 'green', 1], ['p_inactive', 'לא פעיל', 'neutral', 2]].map((x) => ({ key: x[0], label: x[1], color: x[2], sort: x[3], scope: 'participant' }));
-  const PSYSTEM = '__none__';   // אין סטטוס מערכת למשתתף: רק פעיל / לא פעיל (ברירת המחדל: פעיל)
-  const PDEFAULT = 'p_active';
+  const PSYSTEM = '__none__';   // אין סטטוס מערכת למשתתף; סטטוס משתתף הוא תווית בלבד, בלי לוגיקה, וברירת המחדל ריקה
+  const PDEFAULT = null;
   state.pstatuses = DEFAULT_PSTATUSES.map((s) => Object.assign({}, s));
   const pstatusList = () => state.pstatuses.slice().sort((a, b) => ((a.key === PSYSTEM) - (b.key === PSYSTEM)) || (a.sort - b.sort));
-  const pstatusKey = (p) => (p.status_key && state.pstatuses.some((s) => s.key === p.status_key)) ? p.status_key : PDEFAULT;
-  const isPKey = (k) => String(k).startsWith('p_');
+  const pstatusKey = (p) => (p.status_key && state.pstatuses.some((s) => s.key === p.status_key)) ? p.status_key : null;   // ריק = בלי סטטוס
+  const PNONE = '__pnone';   // סינון "בלי סטטוס"
+  const isPKey = (k) => String(k).startsWith('p_') || k === PNONE;
   const BUILTIN = DEFAULT_STATUSES.map((s) => s.key);   // סטטוסי מפגש מובנים (מותאמים נוספים: מפתח m_...)
   const SYSTEM_STATUS = 'unpaid';   // סטטוס מערכת: ברירת המחדל לכל הרשמה חדשה; נעול ותמיד אחרון
   state.statuses = DEFAULT_STATUSES.map((s) => Object.assign({}, s));
@@ -1466,7 +1472,7 @@
   const effGender = () => state.q.trim() ? null : state.gender;
   const effPay = () => state.q.trim() ? null : state.pay;
   const normFilter = () => { if (state.pay && isPKey(state.pay) === !!state.filter) state.pay = null; };   // סינון משתתף רק בתצוגת הכל, סינון מפגש רק בתוך מפגש
-  const stMatch = (p, key) => { if (isPKey(key)) return pstatusKey(p) === key; if (state.filter) { const l = linkOf(p.id, state.filter); return !!l && linkStatus(l) === key; } return linksOf(p.id).some((l) => linkStatus(l) === key); };
+  const stMatch = (p, key) => { if (key === PNONE) return pstatusKey(p) === null; if (isPKey(key)) return pstatusKey(p) === key; if (state.filter) { const l = linkOf(p.id, state.filter); return !!l && linkStatus(l) === key; } return linksOf(p.id).some((l) => linkStatus(l) === key); };
   function renderFacets() {
     normFilter();
     const q = state.q.trim().toLowerCase(), qd = digits(q), eg = effGender(), ep = effPay();
@@ -1486,9 +1492,9 @@
       btn('g', 'male', '<span class="lw gen-lw">גברים</span><span class="gi gm">' + MAN_ICON + '</span>', nG('male'), '', eg === 'male', 'גברים') +
       btn('g', 'female', '<span class="lw gen-lw">נשים</span><span class="gi gf">' + WOMAN_ICON + '</span>', nG('female'), '', eg === 'female', 'נשים') +
       (none || eg === 'none' ? btn('g', 'none', 'ללא', none, '', eg === 'none', 'ללא מגדר') : '') + '</div>';
-    const sel = ep ? state.statuses.concat(state.pstatuses).find((x) => x.key === ep) : null, nAll = genOkCount();
+    const sel = ep === PNONE ? { key: 'empty', label: 'בלי סטטוס' } : ep ? state.statuses.concat(state.pstatuses).find((x) => x.key === ep) : null, nAll = genOkCount();
     h += '<div class="fgroup" style="--n:2"><button type="button" class="fx stsel" data-fxs="1" aria-haspopup="menu" aria-label="סינון לפי סטטוס' + (sel ? ': ' + esc(sel.label) : '') + '" title="סינון לפי סטטוס">' +
-      (sel ? '<span class="stpill ' + sel.key + '">' + esc(sel.label) + '</span><b>' + nP(sel.key) + '</b>' : '<span class="stlab">סטטוס</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>') + '</button></div>';
+      (sel ? '<span class="stpill ' + sel.key + '">' + esc(sel.label) + '</span><b>' + nP(ep) + '</b>' : '<span class="stlab">סטטוס</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>') + '</button></div>';
     $('#facets').classList.toggle('searching', !!q);
     $('#facets').innerHTML = base.length || eg || ep ? h : '';
   }
@@ -1529,8 +1535,8 @@
     const clear = '<button type="button" class="link-btn" id="clearFx" style="margin-top:14px">ניקוי סינונים</button>';
     if (g || pay) {
       const who = g === 'male' ? 'גברים' : g === 'female' ? 'נשים' : g === 'none' ? 'משתתפים ללא מגדר' : 'משתתפים';
-      const stl = pay ? STATUS_LABEL[pay] : '';
-      return '<b>אין ' + who + (stl ? ' בסטטוס "' + esc(stl) + '"' : '') + scope + (state.q ? ' שמתאימים לחיפוש' : '') + '</b>אפשר לנקות את הסינון ולנסות שוב<br>' + clear;
+      const stl = pay === PNONE ? 'בלי סטטוס' : pay ? STATUS_LABEL[pay] : '';
+      return '<b>אין ' + who + (stl ? (pay === PNONE ? ' ' : ' בסטטוס "') + esc(stl) + (pay === PNONE ? '' : '"') : '') + scope + (state.q ? ' שמתאימים לחיפוש' : '') + '</b>אפשר לנקות את הסינון ולנסות שוב<br>' + clear;
     }
     if (state.q) return '<b>לא נמצא אף אחד</b>אפשר לנסות שם או מספר אחר';
     return state.filter ? '<b>עוד אין משתתפים במפגש הזה</b>אפשר להוסיף דרך החיפוש: מחפשים שם או טלפון ולוחצים "הוספה למפגש"'
@@ -1588,7 +1594,8 @@
       let tags = '';
       if (!state.filter) {
         const pk = pstatusKey(p);
-        tags = '<span class="ptag ' + pk + '" data-qs="' + p.id + '" role="button" tabindex="0" title="סטטוס משתתף (לחיצה לשינוי)">' + esc(STATUS_LABEL[pk]) + '</span>';
+        tags = pk ? '<span class="ptag ' + pk + '" data-qs="' + p.id + '" role="button" tabindex="0" title="סטטוס משתתף (לחיצה לשינוי)">' + esc(STATUS_LABEL[pk]) + '</span>'
+          : '<span class="ptag empty" data-qs="' + p.id + '" role="button" tabindex="0" title="בלי סטטוס (לחיצה לבחירה)">סטטוס</span>';
       }
       const hl = state.filter ? linkOf(p.id, state.filter) : null;
       const tgm = attTarget(), tgl = tgm ? linkOf(p.id, tgm.id) : null, showHere = !!(tgm && attendOpen(tgm)), evc = evCircle(p);
@@ -1949,10 +1956,11 @@
       cur = linkStatus(l); head = 'סטטוס במפגש' + (m ? ' · ' + meetingLabel(m) : ''); apply = (k) => setPayStatus(pid, l.meeting_id, k);
     } else {
       const p = state.participants.find((x) => x.id === pid); if (!p) return;
-      cur = pstatusKey(p); head = 'סטטוס משתתף'; apply = (k) => setParticipantStatus(pid, k);
+      cur = pstatusKey(p) || '__none'; head = 'סטטוס משתתף'; apply = (k) => setParticipantStatus(pid, k === '__none' ? null : k);
     }
     menu.innerHTML = '<button type="button" class="qi" style="background:transparent;color:var(--muted);font-size:13px;height:26px;cursor:default" tabindex="-1">' + esc(head) + '</button>' +
-      (inMeeting ? statusList() : pstatusList()).map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-qk="' + s.key + '" aria-pressed="' + (s.key === cur) + '">' + esc(s.label) + '</button>').join('');
+      (inMeeting ? statusList() : pstatusList()).map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-qk="' + s.key + '" aria-pressed="' + (s.key === cur) + '">' + esc(s.label) + '</button>').join('') +
+      (inMeeting ? '' : '<button type="button" role="menuitem" class="qi" data-qk="__none" aria-pressed="' + (cur === '__none') + '" style="background:var(--cream);color:var(--muted)">בלי סטטוס</button>');
     menu.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
     let left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8), top = r.bottom + 6;
@@ -1961,28 +1969,30 @@
     menu.onclick = (e) => {
       const b = e.target.closest('[data-qk]'); if (!b) return;
       const k = b.dataset.qk; closeQ(); if (k === cur) return;
-      apply(k); toast('הסטטוס עודכן: ' + STATUS_LABEL[k]);
+      apply(k); toast(k === '__none' ? 'הסטטוס הוסר' : 'הסטטוס עודכן: ' + STATUS_LABEL[k]);
     };
   }
   /* סטטוס משתתף (כללי): נפרד מסטטוס המפגש */
   async function setParticipantStatus(pid, key) {
     const p = state.participants.find((x) => x.id === pid); if (!p) return;
-    const prev = p.status_key; p.status_key = key === PDEFAULT ? null : key; render();
+    const prev = p.status_key; p.status_key = key || null; render();
     if (sheet && sheet.id === pid) fillPStatusSel(p);
     try { await api(T.p + '?id=eq.' + pid, { method: 'PATCH', body: { status_key: p.status_key } }); }
     catch (err) { p.status_key = prev; render(); fail(err); }
   }
   function fillPStatusSel(p) {
-    const sel = $('#pStatusSel'); if (!sel) return;
-    sel.innerHTML = pstatusList().map((s) => '<option value="' + s.key + '">' + esc(s.label) + '</option>').join('');
-    sel.value = p ? pstatusKey(p) : PDEFAULT;
+    const box = $('#pStatusChips'); if (!box) return;
+    const cur = p ? pstatusKey(p) : null;
+    box.innerHTML = pstatusList().map((s) => '<button type="button" role="radio" class="sopt ' + s.key + '" data-ps="' + s.key + '" aria-pressed="' + (s.key === cur) + '">' + esc(s.label) + '</button>').join('') +
+      '<button type="button" role="radio" class="sopt psnone" data-ps="" aria-pressed="' + (!cur) + '">ללא</button>';
   }
   function openStatusFilterMenu(anchor) {
     const menu = $('#qMenu'), eg = effGender();
     const people = state.participants.filter((p) => (!state.filter || linkOf(p.id, state.filter)) && (eg === 'none' ? !p.gender : (!eg || p.gender === eg)));
     const cnt = (key) => people.filter((p) => stMatch(p, key)).length;
     menu.innerHTML = '<button type="button" role="menuitem" class="qi" data-sf="" aria-pressed="' + !state.pay + '" style="background:var(--cream);color:var(--ink)">הכל <small>' + people.length + '</small></button>' +
-      (state.filter ? statusList() : pstatusList()).map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-sf="' + s.key + '" aria-pressed="' + (state.pay === s.key) + '">' + esc(s.label) + ' <small>' + cnt(s.key) + '</small></button>').join('');
+      (state.filter ? statusList() : pstatusList()).map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-sf="' + s.key + '" aria-pressed="' + (state.pay === s.key) + '">' + esc(s.label) + ' <small>' + cnt(s.key) + '</small></button>').join('') +
+      (state.filter ? '' : '<button type="button" role="menuitem" class="qi" data-sf="' + PNONE + '" aria-pressed="' + (state.pay === PNONE) + '" style="background:var(--cream);color:var(--muted)">בלי סטטוס <small>' + cnt(PNONE) + '</small></button>');
     menu.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
     let left = Math.min(Math.max(8, r.left + r.width / 2 - mw / 2), window.innerWidth - mw - 8), top = r.bottom + 6;
@@ -2614,8 +2624,12 @@
 
   /* עריכה: שמירה אוטומטית של כל שדה ששונה */
   let savedTimer;
+  $('#pStatusChips').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-ps]'); if (!b || !(sheet && sheet.id)) return;
+    const k = b.dataset.ps || null, p = state.participants.find((x) => x.id === sheet.id);
+    if (p && (pstatusKey(p) || null) !== k) setParticipantStatus(sheet.id, k); else if (p) fillPStatusSel(p);
+  });
   pForm.addEventListener('change', async (e) => {
-    if (e.target.name === 'pstatus') { if (sheet && sheet.id) setParticipantStatus(sheet.id, e.target.value); return; }
     if (e.target.name === 'promoter_sel') {
       const v = e.target.value;
       if (v === '__new') { e.target.value = (sheet && sheet.id) ? ((state.participants.find((x) => x.id === sheet.id) || {}).promoter_id || '') : ''; openNewPromoter((row) => { fillPromoSel(sheet && sheet.id ? state.participants.find((x) => x.id === sheet.id) : null); $('#pPromoSel').value = row.id; $('#pPromoSel').dispatchEvent(new Event('change', { bubbles: true })); }); return; }
@@ -2843,7 +2857,7 @@
   function renderStSettings() {
     const list = curSt(), sys = curSys();
     document.querySelectorAll('#setSt [data-sc]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.sc === stScope)));
-    $('#stHint').textContent = stScope === 'meeting' ? 'סטטוס של משתתף בתוך מפגש מסוים (כשבוחרים מפגש ברשימה). שם, צבע וסדר, ואפשר ליצור סטטוס חדש' : 'סטטוס כללי של המשתתף: פעיל או לא פעיל (ברשימה כשלא בוחרים מפגש). אפשר לשנות שם, צבע וסדר';
+    $('#stHint').textContent = stScope === 'meeting' ? 'סטטוס של משתתף בתוך מפגש מסוים (כשבוחרים מפגש ברשימה). שם, צבע וסדר, ואפשר ליצור סטטוס חדש' : 'סטטוס כללי של המשתתף (ברשימה כשלא בוחרים מפגש). תווית בלבד, בלי לוגיקה מאחוריה, וכברירת מחדל ריק. אפשר לשנות שם, צבע וסדר';
     $('#stAdd').hidden = stScope !== 'meeting'; $('#stAdd').textContent = '+ סטטוס מפגש חדש';
     $('#stList').innerHTML = list.map((s) => s.key === sys
       ? '<div class="strow locked" data-k="' + s.key + '">' +

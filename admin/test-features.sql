@@ -118,3 +118,6 @@ drop trigger if exists harpatka_att_notes on test.harpatka_attendance;
 create trigger harpatka_att_notes after insert or update of paid, exempt, pay_requested_at, will_pay, maybe, status_key, attended, details_sent_at or delete on test.harpatka_attendance
   for each row execute function test.harpatka_att_notes();
 notify pgrst, 'reload schema';
+
+-- 10. סטטוס משתתף הוא תווית בלבד: כל המשתתפים מועברים לריק (בלי סטטוס)
+update test.harpatka_participants set status_key = null where status_key is not null;
