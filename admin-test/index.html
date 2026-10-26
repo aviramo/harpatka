@@ -836,7 +836,7 @@
       </div>
       <div class="ppanel" data-panel="wallet" hidden>
         <div class="walsum" id="walSum"></div>
-        <div class="payact" style="margin:12px 0 4px"><button class="btn" id="walAdd" type="button">קבלת תשלום</button><button class="btn ghost" id="walRefund" type="button" hidden>החזרת כסף</button></div>
+        <div class="payact" style="margin:12px 0 4px"><button class="btn" id="walAdd" type="button">קבלת תשלום</button><button class="btn ghost" id="walRefund" type="button" hidden>החזרת כסף</button><button class="btn ghost" id="walZikuy" type="button" hidden>זיכוי</button></div>
         <div class="clabel">היסטוריית תשלומים</div>
         <div id="walHist"></div>
       </div>
@@ -849,6 +849,12 @@
         <div class="pquick" id="depQuick"></div>
         <label class="field" id="depOtherField" hidden><span>פירוט קצר</span><input name="pay_depn" maxlength="60" autocomplete="off" placeholder="למשל: פייפאל, צ׳ק" /></label>
         <div class="payact"><button class="btn" id="depSave" type="button">שמירה</button></div>
+      </div>
+      <div class="ppanel" data-panel="zikuy" hidden>
+        <p class="sthint" style="margin:0 2px 12px">זיכוי של תשלום שהתקבל למפגש: הסכום יורד מהמפגש, ואפשר להשאיר אותו ביתרה של המשתתף או להחזיר לו כסף</p>
+        <label class="field"><span>מפגש לזיכוי</span><select name="zk_meeting" id="zkMeeting"></select></label>
+        <label class="field"><span>סכום לזיכוי (₪)</span><input name="pay_zk" type="number" inputmode="decimal" min="0" step="any" /></label>
+        <div class="payact" style="flex-direction:column"><button class="btn" id="zkCredit" type="button" style="background:#686A48">זיכוי ליתרה (בלי להחזיר כסף)</button><button class="btn" id="zkRefund" type="button">להחזיר כסף למשתתף</button></div>
       </div>
       <div class="ppanel" data-panel="promoter" hidden>
         <div class="sopts" id="pPromoOpts"></div>
@@ -2307,7 +2313,7 @@
   let pTab = 'main', mLimit = 3;
   const reducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let cvTitle = '';
-  const SUBVIEW = { wallet: 'יתרה ותשלומים', deposit: 'קבלת תשלום', status: 'סטטוס תשלום', pay: 'תשלום למפגש', promoter: 'יחצן', refund: 'ביטול תשלום', credit: 'החזרת קרדיט' };
+  const SUBVIEW = { wallet: 'יתרה ותשלומים', deposit: 'קבלת תשלום', status: 'סטטוס תשלום', pay: 'תשלום למפגש', promoter: 'יחצן', refund: 'ביטול תשלום', credit: 'החזרת קרדיט', zikuy: 'זיכוי' };
   let viewStack = [], payCtx = null;
   function setPTab(tab, instant) {
     if (!sheet || !sheet.id) tab = 'info';
@@ -2327,7 +2333,7 @@
     if (tab === 'wallet') renderWallet();
     syncUrl();
   }
-  pForm.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.name && e.target.name.startsWith('pay_')) { e.preventDefault(); if (pTab === 'pay') $('#paySave').click(); else if (pTab === 'credit') $('#creditRefundBtn').click(); else if (pTab === 'deposit') $('#depSave').click(); } });
+  pForm.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.name && e.target.name.startsWith('pay_')) { e.preventDefault(); if (pTab === 'zikuy') $('#zkCredit').click(); else if (pTab === 'pay') $('#paySave').click(); else if (pTab === 'credit') $('#creditRefundBtn').click(); else if (pTab === 'deposit') $('#depSave').click(); } });
   /* יתרה ותשלומים: התשלומים נפרדים מהמפגשים. כל תשלום שמתקבל נכנס ליתרה של המשתתף, ובשיוך למפגש לוקחים ממנה */
   /* כסף שהוקצה למפגש מסוים: תשלומים למפגש פחות ביטולים והחזרים של אותו מפגש (בלי קשר לסטטוס) */
   const allocatedOf = (pid, mid) => state.payments.filter((x) => x.participant_id === pid && x.meeting_id === mid).reduce((s, x) => s + (x.kind === 'payment' ? Number(x.amount) : (x.kind === 'credit' || (x.kind === 'refund' && !x.from_credit)) ? -Number(x.amount) : 0), 0);
@@ -2339,6 +2345,7 @@
     const bal = creditOf(pid), owed = owedOf(pid);
     $('#walSum').innerHTML = '<div class="big ' + (bal > 0 ? 'pos' : 'zero') + '"><bdi dir="ltr">₪' + nfm(bal) + '</bdi></div><div class="sub">יתרה זמינה' + (owed > 0 ? ' · חוב פתוח על מפגשים: <bdi dir="ltr">₪' + nfm(owed) + '</bdi>' : '') + '</div>';
     $('#walRefund').hidden = !(bal > 0);
+    $('#walZikuy').hidden = !state.meetings.some((m) => allocatedOf(pid, m.id) > 0);
     const mlabel = (x) => { const m = state.meetings.find((q) => q.id === x.meeting_id); return m ? ' ' + dmShort(m) : ''; };
     const rows = state.payments.filter((x) => x.participant_id === pid).slice().sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).map((x) => {
       const a = Number(x.amount), mt = methodName(x); let lab, cls, sign;
@@ -2370,6 +2377,27 @@
     const cm = pr && isFirst ? calcCommission(pr, amt) : null, method = f.pay_depm.value, mnote = method === 'other' ? f.pay_depn.value.trim().slice(0, 60) : '';
     try { await addPayRecord(pid, null, 'deposit', amt, pr && isFirst ? pr.id : null, Number.isFinite(cm) ? cm : null, false, method, mnote || null); toast('התקבל תשלום ₪' + nfm(amt)); setPTab(viewStack.pop() || 'wallet'); renderContact(); }
     catch (err) { fail(err); }
+  });
+  /* זיכוי: מחזיר חלק מתשלום שהוקצה למפגש. ליתרה (kind credit) או כסף למשתתף (kind refund) */
+  $('#walZikuy').addEventListener('click', () => {
+    const pid = sheet && sheet.id; if (!pid) return;
+    const ms = state.meetings.filter((m) => allocatedOf(pid, m.id) > 0).sort((a, b) => b.meeting_date.localeCompare(a.meeting_date));
+    if (!ms.length) return;
+    const sel = $('#zkMeeting'); sel.innerHTML = ms.map((m) => '<option value="' + m.id + '">' + esc(meetingLabel(m, true)) + ' · שולם ₪' + nfm(allocatedOf(pid, m.id)) + '</option>').join('');
+    const fill = () => { pForm.pay_zk.value = allocatedOf(pid, sel.value); };
+    sel.onchange = fill; fill();
+    const run = async (kind) => {
+      const mid = sel.value, alloc = allocatedOf(pid, mid), amt = Math.min(parseFloat(pForm.pay_zk.value) || 0, alloc);
+      if (!(amt > 0)) { pForm.pay_zk.focus(); return; }
+      const l = linkOf(pid, mid), full = amt >= alloc;   // עמלת יחצן מתבטלת רק בזיכוי מלא
+      try {
+        await addPayRecord(pid, mid, kind, amt, full && l ? l.promoter_id : null, full && l ? l.commission : null);
+        toast(kind === 'credit' ? 'זוכו ₪' + nfm(amt) + ' ליתרה' : 'הוחזרו ₪' + nfm(amt) + ' למשתתף');
+        setPTab(viewStack.pop() || 'wallet'); renderContact();
+      } catch (err) { fail(err); }
+    };
+    $('#zkCredit').onclick = () => run('credit'); $('#zkRefund').onclick = () => run('refund');
+    goView('zikuy');
   });
   /* החזרת כסף מהיתרה (רשומת החזר מהיתרה) */
   $('#walRefund').addEventListener('click', () => {
