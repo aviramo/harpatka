@@ -638,6 +638,7 @@
     .walrow.rcpt { background: var(--green-bg); } .walrow.rcpt .wamt.wamt { color: var(--green); }
     .walrow.rfnd { background: var(--red-bg); } .walrow.rfnd .wamt.wamt { color: var(--red); }
     #walAdd, #depSave { background: var(--green-bg); color: var(--green); }
+    #cDlg #cYes.danger { background: var(--red-bg); color: var(--red); }
     #walAdd, #walRefund, #walZikuy { height: 46px; font-size: 16px; margin-top: 0; }   /* שלושת הכפתורים באותו גובה וגודל כתב (לכפתור הראשי היה 52px/18px, ל-ghost 44px/16px) */
     #zkCredit { background: var(--yellow-bg); color: var(--yellow); }   /* זיכוי ליתרה (בלי להחזיר כסף): צהוב */
     #walRefund, #walZikuy, #zkCredit, #zkRefund, #creditRefundBtn, #refundYes, #creditYes { background: var(--red-bg); color: var(--red); margin-top: 0; }
@@ -2179,7 +2180,7 @@
     const p = state.participants.find((x) => x.id === pid), m = state.meetings.find((x) => x.id === mid);
     $('#cTitle').textContent = title;
     $('#cText').innerHTML = nameB(p ? p.name : '') + ' · ' + esc(m ? meetingLabel(m, true) : '') + (extraHtml ? '<br><br>' + extraHtml : '');
-    $('#cYes').textContent = yesLabel || 'אישור';
+    $('#cYes').textContent = yesLabel || 'אישור'; $('#cYes').classList.add('danger');   // הסרה / החזר: אדום בהיר
     const dlg = $('#cDlg');
     $('#cAlt').hidden = !alt; if (alt) { $('#cAlt').textContent = alt.label; $('#cAlt').onclick = () => { dlg.close(); alt.fn(); }; }
     $('#cYes').onclick = () => { dlg.close(); fn(); };
@@ -2242,7 +2243,7 @@
     return 'המערכת תבצע <b>החזרה של תשלום בסך ₪' + nfm(amt) + '</b>. תירשם רשומת החזר ביומן התשלומים' + (pr && l.commission ? ', והעמלה לדרך הגעה ' + esc(pr.name) + ' (₪' + nfm(l.commission) + ') תבוטל' : '') + '.';
   }
   function confirmRefund(pid, mid, fn) { confirmAct('החזרת תשלום', pid, mid, fn, refundNote(pid, mid), 'כן, להחזיר תשלום'); }
-  $('#cDlg').addEventListener('close', () => { $('#cYes').textContent = 'אישור'; $('#cAlt').hidden = true; });
+  $('#cDlg').addEventListener('close', () => { $('#cYes').textContent = 'אישור'; $('#cYes').classList.remove('danger'); $('#cAlt').hidden = true; });
   const confirmLink = (pid, mid, on, after) => (!on && allocatedOf(pid, mid) > 0) ? confirmAct('הסרה מהמפגש: מה עם התשלום?', pid, mid, () => { setLinked(pid, mid, false, 'refund'); if (after) after(); }, refundNote(pid, mid) + '<br><br>אפשר גם להשאיר את הסכום כקרדיט למשתתף, בלי להחזיר כסף.', 'הסר והחזר תשלום', { label: 'הסר ושמור קרדיט (בלי החזר)', fn: () => { setLinked(pid, mid, false, 'credit'); if (after) after(); } }) : confirmAct(on ? 'להוסיף למפגש?' : 'להסיר מהמפגש?', pid, mid, () => { setLinked(pid, mid, on); if (after) after(); });
 
   /* סימון הגעה למפגש (זמן אמת: מעדכן מיד, נשמר ומתעדכן אצל כולם) */
