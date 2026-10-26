@@ -507,7 +507,7 @@
     /* תפריט סטטוס מהיר מהרשימה */
     .row .ptag[data-qs] { cursor: pointer; }
     .row .sidewrap { grid-column: 5; grid-row: 1; display: inline-flex; align-items: center; gap: 6px; justify-content: flex-end; }
-    .row .payic { display: inline-grid; place-items: center; flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%; font-size: 14px; font-weight: 800; color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--line); opacity: .75; }
+    .row .payic { cursor: pointer; display: inline-grid; place-items: center; flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%; font-size: 14px; font-weight: 800; color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--line); opacity: .75; }
     .row .payic.part { background: #FBEBC8; color: #8A5A00; box-shadow: none; opacity: 1; }
     .row .payic.ok { background: var(--green-bg); color: var(--green); box-shadow: none; opacity: 1; }
     .row .ptag.cnt { background: var(--cream); color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--line); }
@@ -926,13 +926,13 @@
         <div id="walHist"></div>
       </div>
       <div class="ppanel" data-panel="deposit" hidden>
-        <p class="sthint" style="margin:0 2px 12px">תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש</p>
+        <p class="sthint" id="depIntro" style="margin:0 2px 12px">תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש</p>
         <div class="payrow">
           <label class="field"><span>סכום (₪)</span><input name="pay_dep" type="number" inputmode="decimal" min="0" step="any" /></label>
           <label class="field payfield"><span>דרך העברה</span><select name="pay_depm"><option value="paybox">פייבוקס</option><option value="bit">ביט</option><option value="cash">מזומן</option><option value="bank">בנק</option><option value="other">אחר</option></select></label>
         </div>
         <div class="pquick" id="depQuick"></div>
-        <label class="field"><span>חבילת מפגשים (לא חובה)</span><input name="pay_pkg" type="number" inputmode="numeric" min="2" max="50" placeholder="כמה מפגשים נקנו מראש" autocomplete="off" /></label>
+        <label class="field"><span id="depPkgLbl">חבילת מפגשים (לא חובה)</span><input name="pay_pkg" type="number" inputmode="numeric" min="2" max="50" placeholder="כמה מפגשים נקנו מראש" autocomplete="off" /></label>
         <div class="payhint" id="depPkgHint"></div>
         <label class="field" id="depOtherField" hidden><span>פירוט קצר</span><input name="pay_depn" maxlength="60" autocomplete="off" placeholder="למשל: פייפאל, צ׳ק" /></label>
         <div class="payact"><button class="btn" id="depSave" type="button">שמירה</button></div>
@@ -1937,17 +1937,18 @@
   const statusBody = (st) => Object.assign({ paid: false, exempt: false, will_pay: false, maybe: false, pay_requested_at: null, status_key: BUILTIN.includes(st) ? null : st },
     st === 'paid' ? { paid: true } : st === 'requested' ? { pay_requested_at: new Date().toISOString() } : st === 'willpay' ? { will_pay: true } : st === 'maybe' ? { maybe: true } : st === 'exempt' ? { exempt: true } : {});
   /* שיוך למפגש לוקח אוטומטית מהארנק כשהיתרה מכסה את המחיר (מחיר חבילה אם נשארו מפגשים בחבילה) */
-  async function autoAllocate(pid, mid) {
+  async function autoAllocate(pid, mid, partial) {
     const l = linkOf(pid, mid), m = state.meetings.find((x) => x.id === mid); if (!l || !m || l.exempt) return;
     if (allocatedOf(pid, mid) > 0) return;
     const usePkg = pkgLeft(pid) > 0 && pkgUnit(pid) > 0, price = usePkg ? pkgUnit(pid) : defaultPrice(m);
-    if (!(price > 0) || creditOf(pid) < price) return;
+    if (!(price > 0) || creditOf(pid) <= 0 || (!partial && creditOf(pid) < price)) return;
+    const amtA = partial ? Math.min(creditOf(pid), price) : price;
     try {
-      await addPayRecord(pid, mid, 'payment', price, null, null, true, null, null, usePkg ? { pkg: true } : null);
-      const body = { paid_amount: price, paid_at: new Date().toISOString() }; Object.assign(l, body);
+      await addPayRecord(pid, mid, 'payment', amtA, null, null, true, null, null, usePkg ? { pkg: true } : null);
+      const body = { paid_amount: amtA, paid_at: new Date().toISOString() }; Object.assign(l, body);
       await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body });
       render(); if (sheet && sheet.id) { refreshSheetMeetings(); renderContact(); }
-      toast('שולם מהיתרה ₪' + nfm(price) + (usePkg ? ' (חבילה)' : ''));
+      toast('שולם מהיתרה ₪' + nfm(amtA) + (usePkg ? ' (חבילה)' : ''));
     } catch (err) { fail(err); }
   }
   async function setLinkedWithStatus(pid, mid, st) {
@@ -2570,15 +2571,22 @@
   }
   const dmShort = (m) => { const [, mo, d] = m.meeting_date.split('-').map(Number); return d + '.' + mo; };
   $('#pPayChip').addEventListener('click', () => { if (!sheet || !sheet.id) return; viewStack = []; goView('wallet'); });
-  $('#walAdd').addEventListener('click', () => {
-    const f = pForm; f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; f.pay_dep.value = ''; f.pay_depm.value = 'paybox'; f.pay_depn.value = ''; $('#depOtherField').hidden = true;
+  /* קבלת תשלום: מהארנק (כללי) או מתוך מפגש (סמל ה-₪ ברשימה): אז הסכום המוצע הוא מחיר המפגש, ואפשר לשלם על כמה מפגשים (חבילה: הסכום מתחלק, והמפגש הזה ועוד קרובים שמשויכים אליהם נפרעים מיד) */
+  function openDeposit(mid) {
+    const f = pForm, pid = sheet && sheet.id, m = mid ? state.meetings.find((x) => x.id === mid) : null;
+    sheet.depMid = m ? m.id : null;
+    f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; f.pay_depm.value = 'paybox'; f.pay_depn.value = ''; $('#depOtherField').hidden = true;
+    f.pay_dep.value = m ? expectedPrice(pid, m) : '';
+    $('#depIntro').textContent = m ? 'תשלום על מפגש ' + dmShort(m) + '. אפשר לשלם על כמה מפגשים בבת אחת.' : 'תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש';
+    $('#depPkgLbl').textContent = m ? 'על כמה מפגשים משלמים (ריק = מפגש אחד)' : 'חבילת מפגשים (לא חובה)';
     $('#depQuick').innerHTML = quickPrices().map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
-    $('#depQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) f.pay_dep.value = b.dataset.q; };
+    $('#depQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) { f.pay_dep.value = b.dataset.q; paintPkg(); } };
     f.pay_depm.onchange = () => { $('#depOtherField').hidden = f.pay_depm.value !== 'other'; if (f.pay_depm.value === 'other') f.pay_depn.focus(); };
-    const paintPkg = () => { const n = parseInt(f.pay_pkg.value, 10), a = parseFloat(f.pay_dep.value); $('#depPkgHint').innerHTML = n >= 2 && a > 0 ? 'מחיר למפגש בחבילה: <b>₪' + nfm(Math.round(a / n)) + '</b>. כל שיוך למפגש ייקח את הסכום הזה מהיתרה, עד ' + n + ' מפגשים' : ''; };
+    const paintPkg = () => { const n = parseInt(f.pay_pkg.value, 10), a = parseFloat(f.pay_dep.value); $('#depPkgHint').innerHTML = n >= 2 && a > 0 ? 'מחיר למפגש בחבילה: <b>₪' + nfm(Math.round(a / n)) + '</b>. ' + (m ? 'המפגש הזה ועוד עד ' + (n - 1) + ' מפגשים קרובים משויכים ייפרעו מיד, והשאר ייפרעו בשיוך' : 'כל שיוך למפגש ייקח את הסכום הזה מהיתרה, עד ' + n + ' מפגשים') : ''; };
     f.pay_pkg.oninput = paintPkg; f.pay_dep.oninput = paintPkg;
     goView('deposit'); f.pay_dep.focus();
-  });
+  }
+  $('#walAdd').addEventListener('click', () => openDeposit(null));
   $('#depSave').addEventListener('click', async () => {
     const f = pForm, pid = sheet && sheet.id, amt = parseFloat(f.pay_dep.value); if (!pid) return;
     if (!(amt > 0)) { f.pay_dep.focus(); return; }
@@ -2587,8 +2595,19 @@
     const isFirst = !state.payments.some((x) => x.participant_id === pid && (x.kind === 'deposit' || (x.kind === 'payment' && !x.from_credit && x.meeting_id)));
     const cm = pr && isFirst ? calcCommission(pr, amt) : null, method = f.pay_depm.value, mnote = method === 'other' ? f.pay_depn.value.trim().slice(0, 60) : '';
     const pk = parseInt(f.pay_pkg.value, 10), pkgMeta = pk >= 2 ? { pkg_n: pk } : null;
-    try { await addPayRecord(pid, null, 'deposit', amt, pr && isFirst ? pr.id : null, Number.isFinite(cm) ? cm : null, false, method, mnote || null, pkgMeta); toast('התקבל תשלום ₪' + nfm(amt)); setPTab(viewStack.pop() || 'wallet'); renderContact(); }
-    catch (err) { fail(err); }
+    try {
+      await addPayRecord(pid, null, 'deposit', amt, pr && isFirst ? pr.id : null, Number.isFinite(cm) ? cm : null, false, method, mnote || null, pkgMeta); toast('התקבל תשלום ₪' + nfm(amt));
+      const mid = sheet.depMid;
+      if (mid) {   // תשלום מתוך מפגש: המפגש הזה נפרע (גם חלקית), וחבילה פורעת גם מפגשים קרובים משויכים
+        await autoAllocate(pid, mid, true);
+        if (pk >= 2) {
+          const more = linksOf(pid).map((l) => state.meetings.find((x) => x.id === l.meeting_id)).filter((x) => x && x.id !== mid && !isPast(x) && !(allocatedOf(pid, x.id) > 0)).sort((a, b) => (a.meeting_date + a.meeting_time).localeCompare(b.meeting_date + b.meeting_time)).slice(0, pk - 1);
+          for (const x of more) await autoAllocate(pid, x.id);
+        }
+        sheet.depMid = null;
+      }
+      setPTab(viewStack.pop() || 'wallet'); renderContact(); refreshSheetMeetings(); render();
+    } catch (err) { fail(err); }
   });
   /* זיכוי: מחזיר חלק מתשלום שהוקצה למפגש. ליתרה (kind credit) או כסף למשתתף (kind refund) */
   $('#walZikuy').addEventListener('click', () => {
@@ -3064,6 +3083,8 @@
       if (digits(q).length >= 6) pForm.phone.value = q; else { const w = q.replace(/\s+/g, ' '), i = w.indexOf(' '); pForm.first_name.value = i < 0 ? w : w.slice(0, i); pForm.last_name.value = i < 0 ? '' : w.slice(i + 1); }
       return;
     }
+    const pi = e.target.closest('.payic');
+    if (pi) { const r0 = pi.closest('li.row'), id0 = r0 && r0.querySelector('[data-edit]').dataset.edit; if (id0 && state.filter) { e.stopPropagation(); openParticipant(id0, undefined, r0); openDeposit(state.filter); } return; }
     const row = e.target.closest('li.row'), ed = row && row.querySelector('[data-edit]');   // לחיצה בכל מקום בכרטיס פותחת את פרטי המשתתף
     if (ed) openParticipant(ed.dataset.edit, undefined, row);
   });
