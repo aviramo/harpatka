@@ -639,6 +639,7 @@
     .walrow .wamt.up { color: var(--green); } .walrow .wamt.down { color: var(--red); } .walrow .wamt.flat { color: var(--muted); }
     .mmoney { flex: 0 0 auto; height: 36px; padding: 0 12px; border-radius: 999px; border: 1.5px solid var(--line); background: #fff; font-weight: 800; font-size: 14px; color: var(--muted); white-space: nowrap; }
     .mmoney.has { color: var(--green); border-color: rgba(30,122,69,.35); }
+    .mmoney.free { color: var(--sky); background: var(--sky-bg); border-color: transparent; }
     .mmoney[hidden] { display: none; }
     #bdDlg .sheet-head { position: relative; justify-content: flex-start; gap: 8px; min-height: 40px; }
     #bdDlg .sheet-head h2 { flex: 1 1 auto; }
@@ -1054,6 +1055,7 @@
       <div class="ppanel" data-panel="deposit" hidden>
         <p class="sthint" id="depIntro" style="margin:0 2px 12px">תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש</p>
         <div class="metchips" id="depMethods" role="radiogroup" aria-label="דרך העברה"></div>
+        <div id="depFree" hidden><p class="sthint" style="margin:12px 2px">המפגש הזה חינם, לא נדרש תשלום</p><button class="btn paygo" id="depFreePay" type="button">אישור</button></div>
         <div id="depFields">
         <div class="payrow">
           <label class="field"><span>סכום (₪)</span><input name="pay_dep" type="number" inputmode="decimal" min="0" step="any" /></label>
@@ -2785,7 +2787,7 @@
     sheet.depMid = m ? m.id : null;
     f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; f.pay_depm.value = 'paybox'; f.pay_depn.value = ''; $('#depOtherField').hidden = true;
     { const al = m ? Math.max(0, allocatedOf(pid, m.id)) : 0, pr0 = m ? expectedPrice(pid, m) : 0; f.pay_dep.value = !m ? '' : al <= 0 ? pr0 : al < pr0 ? pr0 - al : ''; }   // מפגש ששולם חלקית: המוצע הוא היתרה
-    { const pp = state.participants.find((x) => x.id === pid), lk = m && linkOf(pid, m.id), np = !!(m && pp && noPayOf(pp, lk)); $('#depFields').hidden = np; }
+    { const pp = state.participants.find((x) => x.id === pid), lk = m && linkOf(pid, m.id), np = !!(m && pp && noPayOf(pp, lk)); $('#depFields').hidden = np; $('#depFree').hidden = !np; }
     $('#depIntro').textContent = m ? 'מפגש ' + dmShort(m) : 'תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש';
     $('#depPkgLbl').textContent = m ? 'על כמה מפגשים' : 'חבילה'; f.pay_pkg.options[0].textContent = m ? '1' : '—';
     $('#depQuick').innerHTML = quickPrices().map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
@@ -2809,10 +2811,11 @@
   /* "לא משלם" לפי מפגש: עקיפה בשיוך למפגש (true/false), מעל ברירת המחדל של המשתתף */
   async function setNoPay(v, repaint) {
     const pid = sheet && sheet.id, mid = sheet && sheet.depMid, l = pid && mid && linkOf(pid, mid), pp = pid && state.participants.find((x) => x.id === pid); if (!l || !pp) return;
-    const prev = l.no_pay; l.no_pay = v; $('#depFields').hidden = v; if (repaint) repaint(); render(); refreshSheetMeetings();
+    const prev = l.no_pay; l.no_pay = v; $('#depFields').hidden = v; $('#depFree').hidden = !v; if (repaint) repaint(); render(); refreshSheetMeetings();
     try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body: { no_pay: v } }); toast(v ? 'לא משלם על המפגש הזה' : 'משלם על המפגש הזה'); }
-    catch (err) { l.no_pay = prev; $('#depFields').hidden = !v; if (repaint) repaint(); render(); refreshSheetMeetings(); fail(err); }
+    catch (err) { l.no_pay = prev; $('#depFields').hidden = !v; $('#depFree').hidden = v; if (repaint) repaint(); render(); refreshSheetMeetings(); fail(err); }
   }
+  $('#depFreePay').addEventListener('click', () => { const b = $('#pBack'); if (b) b.click(); toast('המפגש סומן חינם'); });   // אישור: חוזרים למסך הקודם (הסימון כבר נשמר בבחירת "חינם")
   $('#depSave').addEventListener('click', async () => {
     const f = pForm, pid = sheet && sheet.id, amt = parseFloat(f.pay_dep.value); if (!pid) return;
     if (!(amt > 0)) { f.pay_dep.focus(); return; }
@@ -3079,10 +3082,11 @@
       let on, st;
       if (sheet.id) { const l = linkOf(sheet.id, m.id); on = !!l; st = l ? linkStatus(l) : 'unpaid'; }
       else { on = sheet.links.has(m.id); st = sheet.links.get(m.id) ? 'paid' : 'unpaid'; }
+      const freeL = !!(sheet.id && on && noPayOf(state.participants.find((x) => x.id === sheet.id), linkOf(sheet.id, m.id)));   // לא משלם על המפגש: מוצג "חינם" ולא "תשלום"
       return '<div class="mrow' + (on ? ' on' : '') + '">' +
         '<span class="mlabel">' + dmShort(m) + '</span>' +
         '<button type="button" class="pay ' + (on ? st : 'none') + '" data-mp="' + m.id + '" title="' + (on ? 'שינוי סטטוס' : 'לא משויך למפגש') + '">' + (on ? esc(STATUS_LABEL[st]) : 'לא משויך') + '</button>' +
-        '<div class="mline">' + (sheet.id ? '<button type="button" class="mmoney' + (allocatedOf(sheet.id, m.id) > 0 ? ' has' : '') + '" data-mm="' + m.id + '"' + (on ? '' : ' hidden') + ' title="תשלום למפגש">' + (allocatedOf(sheet.id, m.id) > 0 ? '₪' + nfm(allocatedOf(sheet.id, m.id)) : 'תשלום') + '</button>' : '') +
+        '<div class="mline">' + (sheet.id ? '<button type="button" class="mmoney' + (allocatedOf(sheet.id, m.id) > 0 ? ' has' : freeL ? ' free' : '') + '" data-mm="' + m.id + '"' + (on ? '' : ' hidden') + ' title="תשלום למפגש">' + (allocatedOf(sheet.id, m.id) > 0 ? '₪' + nfm(allocatedOf(sheet.id, m.id)) : freeL ? 'חינם' : 'תשלום') + '</button>' : '') +
         (sheet.id && !on && attendOpen(m) ? '<button type="button" class="here sm" data-hw="' + m.id + '">הגיע בלי הרשמה</button>' : '') +
         (sheet.id && on && attendOpen(m) ? '<button type="button" class="here sm" data-ht="' + m.id + '" aria-pressed="' + !!(linkOf(sheet.id, m.id) || {}).attended + '">' + ((linkOf(sheet.id, m.id) || {}).attended ? '✓ הגיע' : 'לא הגיע') + '</button>' : '') + '</div>' +
       '</div>';
