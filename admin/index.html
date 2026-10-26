@@ -1948,7 +1948,7 @@
   const sentOk = (p) => { if (!balOk(p)) return false; const s = effSent(); if (!s) return true; const l = linkOf(p.id, state.filter); if (!l || !(l.paid || l.exempt || l.will_pay)) return false; return (l.details_sent_at ? '1' : '0') === s; };
   const paidOk = (p) => { const f = effPaidF(); return (!f || payStateOf(p) === f) && sentOk(p); };
   const hereOk = (p) => { const h = effHere(); return (!h || (((linkOf(p.id, state.filter) || {}).attended) ? '1' : '0') === h) && sentOk(p); };
-  const normFilter = () => { if (state.pay) { const ks = payKeys(state.pay).filter((k) => state.filter ? (!isPKey(k) || state.showTags) : (isPKey(k) && state.showTags)); const tg = ks.filter((k) => isPKey(k)), keep = ks.filter((k) => !isPKey(k)).concat(tg.slice(-1)); state.pay = keep.length ? keep.join(',') : null; } };   // תגית אחת בלבד (גם מקישור ישן); סטטוסים רק בתוך מפגש, תגיות בתצוגת הכל או כשהתגיות מוצגות
+  const normFilter = () => { if (state.pay) { const ks = payKeys(state.pay).filter((k) => state.filter ? (!isPKey(k) || state.showTags) : (isPKey(k) && state.showTags)); const tg = ks.filter((k) => isPKey(k)), keep = ks.filter((k) => !isPKey(k)).slice(-1).concat(tg.slice(-1)); state.pay = keep.length ? keep.join(',') : null; } };   // תגית אחת בלבד (גם מקישור ישן); סטטוסים רק בתוך מפגש, תגיות בתצוגת הכל או כשהתגיות מוצגות
   const stMatch = (p, key) => { if (key === PNONE) return !ptagsOf(p).length; if (isPKey(key)) return ptagsOf(p).includes(key); if (state.filter) { const l = linkOf(p.id, state.filter); return !!l && dispStatus(l) === key; } return linksOf(p.id).some((l) => dispStatus(l) === key); };
   function renderFacets() {
     normFilter();
@@ -3582,7 +3582,7 @@
     const eb = e.target.closest('[data-qedit]'); if (eb) { openStatusSettings(eb.dataset.qedit); return; }
     const hb = e.target.closest('[data-sth]'); if (hb) { state.here = state.here === hb.dataset.sth ? null : hb.dataset.sth; render(); syncUrl(); return; }
     const gb = e.target.closest('[data-stg]'); if (gb) { state.gender = gb.dataset.stg === 'all' || state.gender === gb.dataset.stg ? null : gb.dataset.stg; render(); syncUrl(); return; }   // גברים או נשים (אחד מהם), בחיתוך עם הסטטוסים
-    const b = e.target.closest('[data-stc]'); if (!b) return; const k = b.dataset.stc, cur = payKeys(state.pay), nx = cur.includes(k) ? cur.filter((x) => x !== k) : (isPKey(k) ? cur.filter((x) => !isPKey(x)) : cur).concat(k);   // תגית אחת בלבד בכל פעם (בחירה בתגית אחרת מחליפה); סטטוסים: כמה
+    const b = e.target.closest('[data-stc]'); if (!b) return; const k = b.dataset.stc, cur = payKeys(state.pay), nx = cur.includes(k) ? cur.filter((x) => x !== k) : (isPKey(k) ? cur.filter((x) => !isPKey(x)) : cur.filter((x) => isPKey(x))).concat(k);   // תגית אחת בלבד בכל פעם (בחירה בתגית אחרת מחליפה); סטטוסים: כמה
     state.pay = nx.length ? nx.join(',') : null; render(); syncUrl();
   });
   $('#list').addEventListener('click', (e) => { if (e.target.closest('#clearFx')) { state.gender = null; state.pay = null; state.here = null; state.paidF = null; state.sent = null; state.bal = null; render(); } });
