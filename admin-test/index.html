@@ -605,6 +605,15 @@
     #prDlg .sheet-head h2 { flex: 1 1 auto; min-width: 0; }
     .pviewsub { margin: 0 0 10px; color: var(--muted); font-size: 15px; }
     .pviewsub[hidden] { display: none; }
+    .metchips { display: flex; gap: 6px; flex-wrap: wrap; margin: 2px 0 8px; }
+    .metchips button { height: 32px; border-radius: 999px; padding: 0 12px; background: #fff; box-shadow: inset 0 0 0 1.5px var(--line); font-weight: 700; font-size: 14px; color: var(--muted); }
+    .metchips button[aria-pressed="true"] { background: var(--ink); color: var(--paper); box-shadow: none; }
+    .pnrow.compact { padding: 6px 12px; margin: 2px 0 6px; min-height: 0; }
+    .pnrow.compact .setl b { font-size: 15px; }
+    #depFields .field { margin-bottom: 8px; }
+    #depFields .field input, #depFields .field select { height: 44px; }
+    #depIntro { font-weight: 800; color: var(--ink); font-size: 15px; margin: 4px 2px 8px !important; }
+    #depFields .payact .btn { height: 46px; font-size: 17px; }
     .payrow { display: flex; gap: 8px; align-items: flex-end; }
     .payrow .field { flex: 1 1 auto; min-width: 0; }
     .payact { display: flex; gap: 8px; margin-top: 2px; }
@@ -964,7 +973,7 @@
         <div id="walHist"></div>
       </div>
       <div class="ppanel" data-panel="deposit" hidden>
-        <div class="pnrow" id="depNoPayRow" hidden><div class="setl"><b>לא משלם על המפגש הזה</b><small>פטור לפי הפעם. לא נדרש ממנו תשלום למפגש הזה, ובשאר המפגשים לפי ברירת המחדל</small></div><button type="button" class="swt" id="depNoPay" role="switch" aria-checked="false" aria-label="לא משלם על המפגש הזה"><i></i></button></div>
+        <div class="pnrow compact" id="depNoPayRow" hidden><div class="setl" title="פטור לפי הפעם. לא נדרש ממנו תשלום למפגש הזה, ובשאר המפגשים לפי ברירת המחדל"><b>לא משלם על המפגש הזה</b></div><button type="button" class="swt" id="depNoPay" role="switch" aria-checked="false" aria-label="לא משלם על המפגש הזה"><i></i></button></div>
         <div id="depFields">
         <p class="sthint" id="depIntro" style="margin:0 2px 12px">תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש</p>
         <div class="payrow">
@@ -972,7 +981,8 @@
           <label class="field"><span id="depPkgLbl">על כמה מפגשים</span><select name="pay_pkg" id="depPkgSel"><option value="">מפגש אחד</option><option value="2">2 מפגשים</option><option value="3">3 מפגשים</option><option value="4">4 מפגשים</option><option value="5">5 מפגשים</option><option value="6">6 מפגשים</option><option value="7">7 מפגשים</option><option value="8">8 מפגשים</option><option value="9">9 מפגשים</option><option value="10">10 מפגשים</option><option value="11">11 מפגשים</option><option value="12">12 מפגשים</option></select></label>
         </div>
         <div class="pquick" id="depQuick"></div>
-        <label class="field payfield"><span>דרך העברה</span><select name="pay_depm"><option value="paybox">פייבוקס</option><option value="bit">ביט</option><option value="cash">מזומן</option><option value="bank">בנק</option><option value="other">אחר</option></select></label>
+        <div class="metchips" id="depMethods" role="radiogroup" aria-label="דרך העברה"></div>
+        <label class="field payfield" id="depMethodSel" hidden><span>דרך העברה</span><select name="pay_depm"><option value="paybox">פייבוקס</option><option value="bit">ביט</option><option value="cash">מזומן</option><option value="bank">בנק</option><option value="other">אחר</option></select></label>
         <div class="payhint" id="depPkgHint"></div>
         <label class="field" id="depOtherField" hidden><span>פירוט קצר</span><input name="pay_depn" maxlength="60" autocomplete="off" placeholder="למשל: פייפאל, צ׳ק" /></label>
         <div class="payact"><button class="btn" id="depSave" type="button">שמירה</button></div>
@@ -2658,11 +2668,15 @@
     f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; f.pay_depm.value = 'paybox'; f.pay_depn.value = ''; $('#depOtherField').hidden = true;
     f.pay_dep.value = m ? expectedPrice(pid, m) : '';
     { const pp = state.participants.find((x) => x.id === pid), lk = m && linkOf(pid, m.id), np = !!(m && pp && noPayOf(pp, lk)); $('#depNoPayRow').hidden = !m; $('#depNoPay').setAttribute('aria-checked', String(np)); $('#depFields').hidden = np; }
-    $('#depIntro').textContent = m ? 'תשלום על מפגש ' + dmShort(m) + '. אפשר לשלם על כמה מפגשים בבת אחת.' : 'תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש';
+    $('#depIntro').textContent = m ? 'מפגש ' + dmShort(m) : 'תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש';
     $('#depPkgLbl').textContent = m ? 'על כמה מפגשים' : 'חבילה'; f.pay_pkg.options[0].textContent = m ? 'מפגש אחד' : 'בלי חבילה';
     $('#depQuick').innerHTML = quickPrices().map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
     $('#depQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) { f.pay_dep.value = b.dataset.q; paintPkg(); } };
-    f.pay_depm.onchange = () => { $('#depOtherField').hidden = f.pay_depm.value !== 'other'; if (f.pay_depm.value === 'other') f.pay_depn.focus(); };
+    const METH = [['paybox', 'פייבוקס'], ['bit', 'ביט'], ['cash', 'מזומן'], ['bank', 'בנק'], ['other', 'אחר']];
+    const paintMeth = () => { $('#depMethods').innerHTML = METH.map((x) => '<button type="button" role="radio" data-m="' + x[0] + '" aria-pressed="' + (f.pay_depm.value === x[0]) + '">' + x[1] + '</button>').join(''); };
+    f.pay_depm.onchange = () => { $('#depOtherField').hidden = f.pay_depm.value !== 'other'; paintMeth(); if (f.pay_depm.value === 'other') f.pay_depn.focus(); };
+    $('#depMethods').onclick = (e) => { const b = e.target.closest('[data-m]'); if (b) { f.pay_depm.value = b.dataset.m; f.pay_depm.onchange(); } };
+    paintMeth();
     const paintPkg = () => { const n = parseInt(f.pay_pkg.value, 10), a = parseFloat(f.pay_dep.value); $('#depPkgHint').innerHTML = n >= 2 && a > 0 ? 'מחיר למפגש בחבילה: <b>₪' + nfm(Math.round(a / n)) + '</b>. ' + (m ? 'המפגש הזה ועוד עד ' + (n - 1) + ' מפגשים קרובים משויכים ייפרעו מיד, והשאר ייפרעו בשיוך' : 'כל שיוך למפגש ייקח את הסכום הזה מהיתרה, עד ' + n + ' מפגשים') : ''; };
     f.pay_pkg.oninput = paintPkg; f.pay_dep.oninput = paintPkg;
     goView('deposit'); f.pay_dep.focus();
