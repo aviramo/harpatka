@@ -3506,7 +3506,7 @@
     const eb = e.target.closest('[data-qedit]'); if (eb) { openStatusSettings(eb.dataset.qedit); return; }
     const hb = e.target.closest('[data-sth]'); if (hb) { state.here = state.here === hb.dataset.sth ? null : hb.dataset.sth; render(); syncUrl(); return; }
     const gb = e.target.closest('[data-stg]'); if (gb) { state.gender = gb.dataset.stg === 'all' || state.gender === gb.dataset.stg ? null : gb.dataset.stg; render(); syncUrl(); return; }   // גברים או נשים (אחד מהם), בחיתוך עם הסטטוסים
-    const b = e.target.closest('[data-stc]'); if (!b) return; const k = b.dataset.stc, cur = payKeys(state.pay), nx = cur.includes(k) ? cur.filter((x) => x !== k) : cur.concat(k);
+    const b = e.target.closest('[data-stc]'); if (!b) return; const k = b.dataset.stc, cur = payKeys(state.pay), nx = cur.includes(k) ? cur.filter((x) => x !== k) : (isPKey(k) ? cur.filter((x) => !isPKey(x)) : cur).concat(k);   // תגית אחת בלבד בכל פעם (בחירה בתגית אחרת מחליפה); סטטוסים: כמה
     state.pay = nx.length ? nx.join(',') : null; render(); syncUrl();
   });
   $('#list').addEventListener('click', (e) => { if (e.target.closest('#clearFx')) { state.gender = null; state.pay = null; state.here = null; state.paidF = null; state.sent = null; state.bal = null; render(); } });
