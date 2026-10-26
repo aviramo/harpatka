@@ -85,10 +85,13 @@
     .srcrow .ratewrap { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px; }
     .srcrow .ratetype { height: 34px; border-radius: 10px; border: 1.5px solid var(--line); background: #fff; font-weight: 800; padding: 0 6px; }
     .srcrow .ratein { width: 56px; }
-    .tierrow { display: flex; align-items: center; gap: 8px; background: var(--cream); border-radius: 16px; padding: 8px 12px; margin-bottom: 7px; }
+    .tierrow { display: grid; grid-template-columns: 30px 64px minmax(0, 1fr) 108px 30px; align-items: center; column-gap: 8px; background: var(--cream); border-radius: 16px; padding: 10px 12px; margin-bottom: 8px; }
     .tierrow .tierlbl { font-weight: 700; color: var(--muted); font-size: 15px; white-space: nowrap; }
-    .tierrow .tierprice { margin-inline-start: auto; display: inline-flex; align-items: center; gap: 4px; font-weight: 800; }
-    .tierrow .tierin { width: 64px; height: 38px; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; text-align: center; font-size: 16px; font-weight: 700; padding: 0 4px; }
+    .tierrow .tierprice { display: flex; align-items: center; justify-content: flex-end; gap: 6px; font-weight: 800; direction: ltr; }
+    .tierrow .tierprice b { font-size: 16px; color: var(--ink); }
+    .tierrow .tierin { width: 100%; height: 40px; box-sizing: border-box; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; text-align: center; font-size: 16px; font-weight: 700; padding: 0 4px; }
+    .tierrow .tierprice .tierin { width: 76px; }
+    .tierrow .stdel, .tierrow .stspacer { justify-self: center; }
     .attmenu { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 10px; width: min(330px, calc(100vw - 16px)); box-sizing: border-box; }
     .attmenu .stc { display: inline-flex; align-items: center; height: 30px; border-radius: 999px; padding: 0 12px; font-size: 15px; font-weight: 700; border: 2px solid transparent; background: #fff; color: var(--ink); }
     .attmenu .stc[aria-pressed="true"] { border-color: var(--ink); background: var(--cream); }
@@ -1060,7 +1063,7 @@
         <button type="button" class="btn ghost" id="srcPrAdd">+ יחצן חדש</button>
       </div>
       <div id="setPay" hidden>
-        <p class="sthint" style="margin:0 2px 12px">מחיר המפגש לפי כמה ימים נשארו עד המפגש. אפשר להוסיף כמה מדרגות שרוצים</p>
+        <p class="sthint" style="margin:0 2px 12px">המחיר חל עד מספר הימים שנקבע לפני המפגש, ואחר כך עובר למדרגה הבאה. אפשר להוסיף כמה מדרגות שרוצים</p>
         <div id="tierList"></div>
         <button type="button" class="btn ghost" id="tierAdd">+ מדרגה חדשה</button>
         <p class="sthint" id="tierPrev" style="margin:10px 2px 0"></p>
@@ -3288,8 +3291,8 @@
     $('#tierList').innerHTML = s.map((x, i) => {
       const last = i === s.length - 1;
       return '<div class="tierrow" data-i="' + (x.id || ('n' + i)) + '">' +
-        (last ? '<span class="tierlbl">פחות מזה, עד המפגש</span>'
-          : '<span class="tierlbl">מ-</span><input class="tierin" data-f="days" type="number" inputmode="numeric" min="1" max="365" value="' + x.days + '" aria-label="ימים לפני המפגש" /><span class="tierlbl">ימים לפני המפגש</span>') +
+        (last ? '<span class="tierlbl" style="grid-column: 1 / 4">אחר כך, עד המפגש</span>'
+          : '<span class="tierlbl">עד</span><input class="tierin" data-f="days" type="number" inputmode="numeric" min="1" max="365" value="' + x.days + '" aria-label="ימים לפני המפגש" /><span class="tierlbl">ימים לפני</span>') +
         '<span class="tierprice"><input class="tierin" data-f="price" type="number" inputmode="numeric" min="0" max="9999" value="' + x.price + '" aria-label="מחיר" /><b>₪</b></span>' +
         (!last ? '<button type="button" class="stdel" data-tdel="' + x.id + '" aria-label="מחיקת מדרגה" title="מחיקת מדרגה">×</button>' : '<span class="stspacer" style="flex:0 0 30px"></span>') + '</div>';
     }).join('');
