@@ -94,8 +94,11 @@
     .hgrp { display: flex; align-items: center; gap: 8px; align-self: center; }
     .title-row { position: relative; height: 44px; align-items: center; }
     .title-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; }   /* חיפוש בימין, כותרת המפגש במרכז, תפריט בשמאל */
-    .title-row > .hsearch { justify-self: start; }
-    .title-row > .hsearch:focus-within, .title-row:has(.hsearch input:not(:placeholder-shown)) > .hsearch { grid-column: 1 / -1; justify-self: stretch; }
+    .title-row > .hsgrp { justify-self: start; display: flex; align-items: center; gap: 8px; }
+    #listTags .hfilt { width: 38px; height: 38px; }   /* טוגל התגיות ליד החיפוש, באותו גודל */
+    #listTags .hfilt svg { width: 18px; height: 18px; }
+    .title-row:has(.hsearch:focus-within) #listTags, .title-row:has(.hsearch input:not(:placeholder-shown)) #listTags { display: none; }
+    .title-row > .hsgrp:has(.hsearch:focus-within), .title-row:has(.hsearch input:not(:placeholder-shown)) > .hsgrp { grid-column: 1 / -1; justify-self: stretch; }
     .title-row > .hgrp { justify-self: end; }
     .title-row > .msel { justify-self: center; }
     .title-row .mmenu { left: 50%; right: auto; transform: translateX(-50%); }   /* גובה קבוע: פתיחת החיפוש לא מזיזה את הרשימה */
@@ -1034,11 +1037,11 @@
   <div class="wrap">
     <header class="top">
       <div class="title-row">
-        <label class="search hsearch">
+        <div class="hsgrp"><label class="search hsearch">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/><path d="M10.5 8v5M8 10.5h5" stroke-width="1.8"/></svg>
         <input id="q" type="search" placeholder="חיפוש או הוספת משתתף" autocomplete="off" aria-label="חיפוש" />
         <button type="button" class="sclear" id="qClear" aria-label="ניקוי החיפוש" tabindex="-1">×</button>
-      </label>
+      </label><div id="listTags"></div></div>
         <div class="msel">
           <h1><button type="button" id="mSel" aria-haspopup="menu" aria-expanded="false"><span id="mSelTxt">הכל</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></h1>
           <div class="hcount" id="hereCount" hidden></div>
@@ -1069,7 +1072,7 @@
     </header>
 
     <div id="status"></div>
-    <div class="listbar"><div class="lbstart"><div class="genderchips" id="genderChips"></div><div class="listcount" id="listCount" aria-live="polite"></div></div><div class="listpay" id="listPay"></div><div class="lbend" id="listHere"></div><div class="lbend" id="listSent"></div><div class="lbend" id="listBal"></div><div class="lbend" id="listTags"></div>
+    <div class="listbar"><div class="lbstart"><div class="genderchips" id="genderChips"></div><div class="listcount" id="listCount" aria-live="polite"></div></div><div class="listpay" id="listPay"></div><div class="lbend" id="listHere"></div><div class="lbend" id="listSent"></div><div class="lbend" id="listBal"></div>
     </div>
     <ul class="list" id="list"></ul>
     <div class="addbox" id="addBox"></div>
@@ -1377,12 +1380,12 @@
       else top.d.close();
     } finally { NAV.fromPop = false; }
   });
-  const state = { prefs: {}, statuses: [], pstatuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, here: null, paidF: null, gender: null, sort: 'new', sent: null, bal: null, showTags: false };
+  const state = { prefs: {}, statuses: [], pstatuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, here: null, paidF: null, gender: null, sort: 'new', sent: null, bal: null, showTags: false, hideTagsAll: false };
   /* קישור עמוק מהמייל: ?m=<מפגש>&p=<משתתף>; נשמר בזמן הכניסה עם גוגל (שמחזירה בלי הפרמטרים) */
   let deep = null;
   try {
     const sp = new URLSearchParams(location.search);
-    if (['m', 'p', 'pay', 'at', 'pd', 'sv', 'bl', 'tg', 'q', 'em', 'g', 's', 'st', 'pt', 'bd'].some((k) => sp.get(k))) { deep = { m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), at: sp.get('at'), pd: sp.get('pd'), sv: sp.get('sv'), bl: sp.get('bl'), tg: sp.get('tg'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g'), s: sp.get('s'), st: sp.get('st'), pt: sp.get('pt'), bd: sp.get('bd') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
+    if (['m', 'p', 'pay', 'at', 'pd', 'sv', 'bl', 'tg', 'tga', 'q', 'em', 'g', 's', 'st', 'pt', 'bd'].some((k) => sp.get(k))) { deep = { m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), at: sp.get('at'), pd: sp.get('pd'), sv: sp.get('sv'), bl: sp.get('bl'), tg: sp.get('tg'), tga: sp.get('tga'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g'), s: sp.get('s'), st: sp.get('st'), pt: sp.get('pt'), bd: sp.get('bd') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
     else { deep = JSON.parse(sessionStorage.getItem('harpatka_deep') || 'null'); }
   } catch (e) {}
   const $ = (s) => document.querySelector(s);
@@ -1399,6 +1402,7 @@
     if (state.sent) sp.set('sv', state.sent);
     if (state.bal) sp.set('bl', state.bal);
     if (state.showTags) sp.set('tg', '1');
+    if (state.hideTagsAll) sp.set('tga', '0');
     if (state.gender) sp.set('g', state.gender);
     if (state.sort !== 'new') sp.set('s', state.sort);
     if (state.q.trim()) sp.set('q', state.q.trim());
@@ -1777,6 +1781,7 @@
         if (d.sv === '1' || d.sv === '0') state.sent = d.sv;
         if (d.bl === '1' || d.bl === '0' || d.bl === 'n') state.bal = d.bl;
         if (d.tg === '1') state.showTags = true;
+        if (d.tga === '0') state.hideTagsAll = true;
         if (d.g === 'male' || d.g === 'female' || d.g === 'none') state.gender = d.g;
         if (d.s && SORTS.some((x) => x[0] === d.s)) state.sort = d.s;
         if (d.q) { state.q = d.q; $('#q').value = d.q; }
@@ -1895,7 +1900,7 @@
   const sentOk = (p) => { if (!balOk(p)) return false; const s = effSent(); if (!s) return true; const l = linkOf(p.id, state.filter); if (!l || !(l.paid || l.exempt || l.will_pay)) return false; return (l.details_sent_at ? '1' : '0') === s; };
   const paidOk = (p) => { const f = effPaidF(); return (!f || payStateOf(p) === f) && sentOk(p); };
   const hereOk = (p) => { const h = effHere(); return (!h || (((linkOf(p.id, state.filter) || {}).attended) ? '1' : '0') === h) && sentOk(p); };
-  const normFilter = () => { if (state.pay) { const ks = payKeys(state.pay).filter((k) => state.filter ? (!isPKey(k) || state.showTags) : isPKey(k)); const tg = ks.filter((k) => isPKey(k)), keep = ks.filter((k) => !isPKey(k)).concat(tg.slice(-1)); state.pay = keep.length ? keep.join(',') : null; } };   // תגית אחת בלבד (גם מקישור ישן); סטטוסים רק בתוך מפגש, תגיות בתצוגת הכל או כשהתגיות מוצגות
+  const normFilter = () => { if (state.pay) { const ks = payKeys(state.pay).filter((k) => state.filter ? (!isPKey(k) || state.showTags) : (isPKey(k) && !state.hideTagsAll)); const tg = ks.filter((k) => isPKey(k)), keep = ks.filter((k) => !isPKey(k)).concat(tg.slice(-1)); state.pay = keep.length ? keep.join(',') : null; } };   // תגית אחת בלבד (גם מקישור ישן); סטטוסים רק בתוך מפגש, תגיות בתצוגת הכל או כשהתגיות מוצגות
   const stMatch = (p, key) => { if (key === PNONE) return !ptagsOf(p).length; if (isPKey(key)) return ptagsOf(p).includes(key); if (state.filter) { const l = linkOf(p.id, state.filter); return !!l && linkStatus(l) === key; } return linksOf(p.id).some((l) => linkStatus(l) === key); };
   function renderFacets() {
     normFilter();
@@ -1957,11 +1962,11 @@
     const sentN = (v) => base.filter((p) => { if (!genOk(p) || !paidOk(p) || !hereOkNoSent(p) || !matchPay(p, epk)) return false; const l = linkOf(p.id, state.filter); return !!l && !!(l.paid || l.exempt || l.will_pay) && (l.details_sent_at ? '1' : '0') === v; }).length;
     $('#listHere').innerHTML = attOn ? fbtn('here', eh, hereN('1'), hereN('0')) : '';
     $('#listPay').innerHTML = state.filter ? fbtn('pay', state.paidF === '1' || state.paidF === '0' || state.paidF === 'n' ? state.paidF : null, paidN('1'), paidN('0')) : '';
-    $('#listTags').innerHTML = (state.filter && state.pstatuses.length) ? '<button type="button" class="hfilt ' + (state.showTags ? 'on' : 'all') + '" data-tg="1" aria-pressed="' + state.showTags + '" aria-label="תגיות משתתף" title="' + (state.showTags ? 'הסתרת התגיות' : 'הצגת תגיות משתתף לסינון') + '">' + TAG_ICON + '</button>' : '';
+    { const tagsOn = state.filter ? state.showTags : !state.hideTagsAll; $('#listTags').innerHTML = state.pstatuses.length ? '<button type="button" class="hfilt ' + (tagsOn ? 'on' : 'all') + '" data-tg="1" aria-pressed="' + tagsOn + '" aria-label="תגיות משתתף" title="' + (tagsOn ? 'הסתרת התגיות' : 'הצגת תגיות משתתף לסינון') + '">' + TAG_ICON + '</button>' : ''; }
     $('#listBal').innerHTML = !state.filter ? fbtn('bal', effBal(), '', '') : '';
     $('#listSent').innerHTML = evOn ? fbtn('sent', effSent(), sentN('1'), sentN('0')) : '';
     requestAnimationFrame(alignFilters);   // שולם / לא שולם בשורת החיפוש מעל הרשימה
-    const stItems = (state.filter ? statusList().slice().reverse().concat(state.showTags ? [{ key: PNONE, label: 'ללא תגית' }].concat(pstatusList().slice().reverse()) : []) : [{ key: PNONE, label: 'ללא תגית' }].concat(pstatusList().slice().reverse())).filter((s) => epk.includes(s.key) || state.participants.some((p) => (!state.filter || linkOf(p.id, state.filter)) && stMatch(p, s.key)));
+    const stItems = (state.filter ? statusList().slice().reverse().concat(state.showTags ? [{ key: PNONE, label: 'ללא תגית' }].concat(pstatusList().slice().reverse()) : []) : (state.hideTagsAll ? [] : [{ key: PNONE, label: 'ללא תגית' }].concat(pstatusList().slice().reverse()))).filter((s) => epk.includes(s.key) || state.participants.some((p) => (!state.filter || linkOf(p.id, state.filter)) && stMatch(p, s.key)));
     const onlyNone = !state.filter && stItems.every((s) => s.key === PNONE) && !epk.includes(PNONE);   // אין תגיות בשימוש: בלי השורה בכלל
     $('#stStrip').innerHTML = true ? (onlyNone ? [] : stItems).map((s) => { const n = nP(s.key); return '<button type="button" class="stc ' + (isPKey(s.key) ? 'tagc' : s.key) + (n || epk.includes(s.key) ? '' : ' zero') + '" data-stc="' + s.key + '" aria-pressed="' + epk.includes(s.key) + '">' + esc(s.label) + ' <small>' + n + '</small></button>'; }).join('') + '' : '';   // "חינם" (לא משלם) נמצא בתפריט סינון התשלום, לא כצ'יפ נפרד
     $('#listCount').innerHTML = '';   // "מוצגים N" הוחלף בצ'יפ "הכל" עם הכמות
@@ -3475,18 +3480,18 @@
     const k = $('#fMenu').dataset.kind; if (k === 'here') state.here = v; else if (k === 'sent') state.sent = v; else if (k === 'bal') state.bal = v; else state.paidF = v;
     closeF(); render(); syncUrl();
   });
-  $('.listbar').addEventListener('click', (e) => {
+  $('#listTags').addEventListener('click', (e) => {
     const tg = e.target.closest('[data-tg]');
-    if (tg) { state.showTags = !state.showTags; if (!state.showTags && state.pay) { const ks = payKeys(state.pay).filter((k) => !isPKey(k)); state.pay = ks.length ? ks.join(',') : null; } render(); syncUrl(); return; }   // הצגה / הסתרה של תגיות המשתתף בפס; הסתרה מנקה את בחירות התגיות
-    const b = e.target.closest('[data-fk]'); if (b) openF(b.dataset.fk, b);
+    if (tg) { if (state.filter) state.showTags = !state.showTags; else state.hideTagsAll = !state.hideTagsAll; if (!(state.filter ? state.showTags : !state.hideTagsAll) && state.pay) { const ks = payKeys(state.pay).filter((k) => !isPKey(k)); state.pay = ks.length ? ks.join(',') : null; } render(); syncUrl(); }   // הצגה / הסתרה של תגיות המשתתף בפס; הסתרה מנקה את בחירות התגיות
   });
+  $('.listbar').addEventListener('click', (e) => { const b = e.target.closest('[data-fk]'); if (b) openF(b.dataset.fk, b); });
   /* אייקוני הסינון בשורת "מוצגים" מיושרים לעמודות האייקונים ברשימה (₪ והגעה) */
   function alignFilters() {
     const bar = document.querySelector('.listbar'); if (!bar) return; const br = bar.getBoundingClientRect();
     [['#listPay', '#list .payic'], ['#listHere', '#list .here'], ['#listSent', '#list .evc'], ['#listBal', '#list .balic']].forEach(([box, ref]) => {
       const b = document.querySelector(box), r = document.querySelector(ref); if (!b) return;
       if (r) { const rr = r.getBoundingClientRect(), bb = (b.firstElementChild || b).getBoundingClientRect(); b.style.left = Math.round(rr.left + rr.width / 2 - br.left - (bb.left - b.getBoundingClientRect().left) - bb.width / 2) + 'px'; }
-    });    { const lp = document.querySelector('#listPay'), tgb = document.querySelector('#listTags'); if (tgb && lp && lp.style.left) tgb.style.left = (parseFloat(lp.style.left) + 36) + 'px'; }   // כפתור התגיות מימין לסינון התשלום
+    });
   }
   window.addEventListener('resize', alignFilters);
   /* חזרה בדפדפן במצב חיפוש פתוח (בפוקוס או עם טקסט) סוגרת את החיפוש ומנקה אותו */
