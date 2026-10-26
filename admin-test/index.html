@@ -1363,8 +1363,8 @@
         api(T.pf + '?select=*').catch(() => null),
       ]);
       if (pfs) state.prefs = Object.fromEntries(pfs.map((x) => [String(x.email).toLowerCase(), x]));
-      if (sts && sts.length) { const ps = sts.filter((x) => x.scope === 'participant'); if (ps.length) state.pstatuses = DEFAULT_PSTATUSES.map((d) => Object.assign({}, d, ps.find((x) => x.key === d.key) || {})); }
-      if (sts && sts.length) { const extra = sts.filter((x) => x.scope !== 'participant' && !BUILTIN.includes(x.key)).map((x) => Object.assign({}, x)); state.statuses = DEFAULT_STATUSES.map((d) => Object.assign({}, d, sts.find((x) => x.key === d.key && x.scope !== 'participant') || {}, d.key === SYSTEM_STATUS ? { sort: d.sort } : {})).concat(extra); applyStatuses(); }
+      if (sts && sts.length) { const ps = sts.filter((x) => x.scope === 'participant'); state.pstatuses = ps.map((x) => Object.assign({}, x)).sort((a, b) => a.sort - b.sort); }
+      if (sts && sts.length) { const extra = sts.filter((x) => x.scope !== 'participant' && !BUILTIN.includes(x.key)).map((x) => Object.assign({}, x)); state.statuses = DEFAULT_STATUSES.filter((d) => d.key === SYSTEM_STATUS || sts.some((x) => x.key === d.key && x.scope !== 'participant')).map((d) => Object.assign({}, d, sts.find((x) => x.key === d.key && x.scope !== 'participant') || {}, d.key === SYSTEM_STATUS ? { sort: d.sort } : {})).concat(extra); applyStatuses(); }
       boardBadge();
       /* משתתף לא פעיל (הוסר) מוסתר מכל המסכים; הנתונים נשמרים ויחזרו אם יירשם שוב עם אותו טלפון. תשלומים נשארים (כספים) */
       state.inactiveNames = new Map(p.filter((x) => x.active === false).map((x) => [x.id, x.name]));
@@ -2906,7 +2906,7 @@
       : '<div class="strow" data-k="' + s.key + '">' +
       '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם הסטטוס" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1] + '" />' +
       '<div class="stcols">' + Object.keys(PALETTE).map((c) => '<button type="button" class="sw" data-c="' + c + '" aria-label="' + PALETTE[c][2] + '" aria-pressed="' + (s.color === c) + '" style="background:' + PALETTE[c][0] + '"></button>').join('') + '</div>' +
-      '<button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg></button>' + ((stScope === 'meeting' && !BUILTIN.includes(s.key)) ? '<button type="button" class="stdel" data-del="' + s.key + '" aria-label="מחיקת הסטטוס" title="מחיקת הסטטוס">×</button>' : '') + '</div>').join('');
+      '<button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg></button>' + (s.key !== SYSTEM_STATUS ? '<button type="button" class="stdel" data-del="' + s.key + '" aria-label="מחיקת הסטטוס" title="מחיקת הסטטוס">×</button>' : '') + '</div>').join('');
   }
   async function saveStatus(key, patch) {
     const s = allSt().find((x) => x.key === key); if (!s) return;
@@ -2936,13 +2936,15 @@
   $('#stList').addEventListener('click', async (e) => {
     const del = e.target.closest('[data-del]');
     if (del) {
-      const k = del.dataset.del, isM = stScope === 'meeting', s = (isM ? state.statuses : state.pstatuses).find((x) => x.key === k); if (!s || BUILTIN.includes(k) || k === PSYSTEM) return;
-      const used = isM ? state.att.filter((l) => l.status_key === k) : state.participants.filter((p) => p.status_key === k);
+      const k = del.dataset.del, isM = stScope === 'meeting', s = (isM ? state.statuses : state.pstatuses).find((x) => x.key === k); if (!s || k === SYSTEM_STATUS) return;
+      const FLAG = { paid: ['paid', false], willpay: ['will_pay', false], maybe: ['maybe', false], exempt: ['exempt', false], requested: ['pay_requested_at', null] };
+      const bi = isM && BUILTIN.includes(k), fl = bi ? FLAG[k] : null;
+      const used = isM ? state.att.filter((l) => bi ? linkStatus(l) === k : l.status_key === k) : state.participants.filter((p) => p.status_key === k);
       if (used.length && !confirm('יש ' + used.length + (isM ? ' שיוכים' : ' משתתפים') + ' בסטטוס "' + s.label + '". הם יחזרו לסטטוס "' + (isM ? STATUS_LABEL.unpaid : 'ללא סטטוס') + '". למחוק?')) return;
-      used.forEach((x) => { x.status_key = null; });
+      used.forEach((x) => { x.status_key = null; if (fl) x[fl[0]] = fl[1]; });
       if (isM) state.statuses = state.statuses.filter((x) => x.key !== k); else state.pstatuses = state.pstatuses.filter((x) => x.key !== k);
       applyStatuses(); renderStSettings(); render(); if (sheet && sheet.id) { refreshSheetMeetings(); renderContact(); }
-      try { if (used.length) await api((isM ? T.a : T.p) + '?status_key=eq.' + k, { method: 'PATCH', body: { status_key: null } }); await api(T.st + '?key=eq.' + k, { method: 'DELETE' }); }
+      try { if (used.length && !bi) await api((isM ? T.a : T.p) + '?status_key=eq.' + k, { method: 'PATCH', body: { status_key: null } }); if (fl && used.length) await api(T.a + '?' + fl[0] + '=' + (fl[1] === null ? 'not.is.null' : 'eq.true'), { method: 'PATCH', body: { [fl[0]]: fl[1] } }); await api(T.st + '?key=eq.' + k, { method: 'DELETE' }); }
       catch (err) { fail(err); load(true); }
       return;
     }
