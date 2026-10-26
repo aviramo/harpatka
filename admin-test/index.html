@@ -461,6 +461,10 @@
     .strow .stlock { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; font-weight: 700; padding-inline: 4px; }
     .strow .stname:focus { outline: 2px solid var(--ink); outline-offset: 1px; }
     .strow .stcols { flex: 0 0 auto; display: flex; gap: 5px; align-items: center; }
+    .strow .swcur { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%; border: 2.5px solid #fff; box-shadow: 0 0 0 1.5px rgba(63,56,47,.28); padding: 0; }
+    .colmenu { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 10px; padding: 12px; width: auto; min-width: 0; }
+    .colmenu .sw { width: 34px; height: 34px; border-radius: 50%; border: 3px solid transparent; box-shadow: inset 0 0 0 1.5px rgba(63,56,47,.2); padding: 0; }
+    .colmenu .sw[aria-pressed="true"] { border-color: var(--ink); }
     .strow .sw { width: 23px; height: 23px; border-radius: 50%; border: 2.5px solid transparent; box-shadow: inset 0 0 0 1.5px rgba(63,56,47,.2); padding: 0; }
     .strow .sw[aria-pressed="true"] { border-color: var(--ink); }
     .strow .sthandle { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; background: #fff; border: 1.5px solid var(--line); color: var(--muted); display: grid; place-items: center; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
@@ -2994,12 +2998,12 @@
     $('#stList').innerHTML = list.map((s) => s.key === sys
       ? '<div class="strow locked" data-k="' + s.key + '">' +
       '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם סטטוס המערכת" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1] + '" />' +
-      '<div class="stcols">' + Object.keys(PALETTE).map((c) => '<button type="button" class="sw" data-c="' + c + '" aria-label="' + PALETTE[c][2] + '" aria-pressed="' + (s.color === c) + '" style="background:' + PALETTE[c][0] + '"></button>').join('') + '</div>' +
+      '<button type="button" class="swcur" data-c="' + s.color + '" aria-haspopup="menu" aria-label="צבע: ' + (PALETTE[s.color] || PALETTE.sky)[2] + ' (לחיצה לשינוי)" title="שינוי צבע" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + '"></button>' +
       '<span class="stlockic" title="המיקום קבוע: תמיד אחרון"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>' +
       '<small class="stcap">' + 'סטטוס מערכת: ברירת המחדל בשיוך משתתף למפגש' + '</small></div>'
       : '<div class="strow" data-k="' + s.key + '">' +
       '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם הסטטוס" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1] + '" />' +
-      '<div class="stcols">' + Object.keys(PALETTE).map((c) => '<button type="button" class="sw" data-c="' + c + '" aria-label="' + PALETTE[c][2] + '" aria-pressed="' + (s.color === c) + '" style="background:' + PALETTE[c][0] + '"></button>').join('') + '</div>' +
+      '<button type="button" class="swcur" data-c="' + s.color + '" aria-haspopup="menu" aria-label="צבע: ' + (PALETTE[s.color] || PALETTE.sky)[2] + ' (לחיצה לשינוי)" title="שינוי צבע" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + '"></button>' +
       '<button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg></button>' + (s.key !== SYSTEM_STATUS ? '<button type="button" class="stdel" data-del="' + s.key + '" aria-label="מחיקת הסטטוס" title="מחיקת הסטטוס">×</button>' : '') + '</div>').join('');
   }
   async function saveStatus(key, patch) {
@@ -3056,8 +3060,23 @@
       return;
     }
     const row = e.target.closest('.strow'); if (!row) return;
-    const sw = e.target.closest('.sw'); if (sw) saveStatus(row.dataset.k, { color: sw.dataset.c });
+    const cur = e.target.closest('.swcur'); if (cur) { openColorMenu(row.dataset.k, cur); return; }
   });
+  /* בחירת צבע: מציגים רק את הצבע הנוכחי, ובלחיצה נפתח תפריט קטן עם הפלטה */
+  function openColorMenu(key, anchor) {
+    let m = document.getElementById('colMenu');
+    if (!m) { m = document.createElement('div'); m.id = 'colMenu'; m.className = 'qmenu colmenu'; m.setAttribute('role', 'menu'); m.hidden = true; $('#setDlg').appendChild(m); }
+    if (!m.hidden && m.dataset.k === key) { m.hidden = true; return; }
+    const s = allSt().find((x) => x.key === key); if (!s) return;
+    m.dataset.k = key; m.style.width = 'auto';
+    m.innerHTML = Object.keys(PALETTE).map((c) => '<button type="button" class="sw" role="menuitem" data-c="' + c + '" aria-label="' + PALETTE[c][2] + '" aria-pressed="' + (s.color === c) + '" style="background:' + PALETTE[c][0] + '"></button>').join('');
+    m.hidden = false;
+    const r = anchor.getBoundingClientRect(), mw = m.offsetWidth, mh = m.offsetHeight;
+    m.style.left = Math.min(Math.max(8, r.left + r.width / 2 - mw / 2), window.innerWidth - mw - 8) + 'px';
+    m.style.top = (r.bottom + 6 + mh > window.innerHeight - 8 ? Math.max(8, r.top - mh - 6) : r.bottom + 6) + 'px';
+    m.onclick = (e) => { const sw = e.target.closest('.sw'); if (!sw) return; m.hidden = true; saveStatus(key, { color: sw.dataset.c }); };
+  }
+  document.addEventListener('click', (e) => { const m = document.getElementById('colMenu'); if (m && !m.hidden && !e.target.closest('#colMenu, .swcur')) { e.preventDefault(); e.stopPropagation(); m.hidden = true; } }, true);
   /* סדר הסטטוסים: גוררים בידית (עכבר או מגע) ומחליפים מקום; נשמר ברגע הפיסול. במקלדת: חצים על הידית */
   async function commitOrder(keys) {
     const before = allSt().map((s) => ({ key: s.key, sort: s.sort }));
