@@ -89,6 +89,7 @@
     .srccard .srcfld { display: grid; gap: 4px; min-width: 0; }
     .srccard .srcfld small { font-size: 12.5px; font-weight: 800; color: var(--muted); padding: 0 4px; }
     .srccard .srcin { display: flex; align-items: center; gap: 6px; background: #fff; border: 1.5px solid var(--line); border-radius: 12px; height: 42px; padding: 0 10px; font-weight: 800; color: var(--muted); }
+    .srccard .cpbtn { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--cream); color: var(--muted); }
     .srccard .srcin i { font-style: normal; font-size: 15px; white-space: nowrap; direction: ltr; unicode-bidi: isolate; }
     .srccard .srcin { white-space: nowrap; }
     .srccard .srcin .codein, .srccard .srcin .ratein { flex: 1 1 auto; min-width: 0; width: 100%; height: 38px; border: 0; background: transparent; padding: 0; font-size: 17px; font-weight: 800; color: var(--ink); text-align: right; }
@@ -3327,7 +3328,7 @@
         (used ? '<span class="stspacer" style="flex:0 0 30px" title="יש משתתפים או תשלומים משויכים"></span>' : '<button type="button" class="stdel" data-sdel="pr:' + x.id + '" aria-label="מחיקה" title="מחיקה">×</button>') + '</div>' +
         '<div class="srcseg" role="radiogroup" aria-label="סוג העלות"><button type="button" role="radio" data-seg="lead" aria-pressed="' + !fp + '">עלות לליד</button><button type="button" role="radio" data-seg="pay" aria-pressed="' + fp + '">עלות מהתשלום</button></div>' +
         '<div class="srcgrid">' +
-          '<label class="srcfld"><small>קוד בקישור</small><span class="srcin" dir="ltr"><i>?s=</i><input class="codein" data-f="code" value="' + esc(x.code || '') + '" maxlength="6" placeholder="—" aria-label="קוד בקישור" autocapitalize="off" autocomplete="off" /></span></label>' +
+          '<label class="srcfld"><small>קוד בקישור</small><span class="srcin" dir="ltr"><i>?s=</i><input class="codein" data-f="code" value="' + esc(x.code || '') + '" maxlength="6" placeholder="—" aria-label="קוד בקישור" autocapitalize="off" autocomplete="off" /><button type="button" class="cpbtn" data-copylink="' + esc(x.code || '') + '" aria-label="העתקת הקישור" title="העתקת הקישור"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="3"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button></span></label>' +
           '<label class="srcfld"><small>' + (fp ? 'סכום או אחוז מהתשלום' : 'כמה עולה ליד') + '</small><span class="srcin">' +
             (fp ? '<select class="ratetype" data-f="rate_type" aria-label="סוג"><option value="fixed"' + (x.rate_type !== 'percent' ? ' selected' : '') + '>₪</option><option value="percent"' + (x.rate_type === 'percent' ? ' selected' : '') + '>%</option></select>' : '<i>₪</i>') +
             '<input class="codein ratein" data-f="rate" type="number" inputmode="decimal" min="0" value="' + Number(x.rate || 0) + '" aria-label="עלות" /></span></label>' +
@@ -3353,6 +3354,7 @@
   });
   $('#setSrc').addEventListener('click', async (e) => {
     const cur = e.target.closest('.swcur'); if (cur) { const w = cur.dataset.who, tg = srcTarget(w); if (tg.row) openColorMenu(w, cur, tg.row.color || (tg.kind === 'ad' ? 'sky' : 'red'), (c) => saveSrc(w, { color: c })); return; }
+    const cp0 = e.target.closest('[data-copylink]'); if (cp0) { e.preventDefault(); const c0 = cp0.dataset.copylink; if (!c0) { toast('אין קוד לדרך ההגעה הזו'); return; } const url0 = 'https://harpatka.co.il/?s=' + c0; (navigator.clipboard ? navigator.clipboard.writeText(url0) : Promise.reject()).then(() => toast('הקישור הועתק'), () => { prompt('העתיקו את הקישור', url0); }); return; }
     const sg0 = e.target.closest('[data-seg]'); if (sg0) { const w0 = sg0.closest('[data-w]').dataset.w, on = sg0.dataset.seg === 'pay'; const tg0 = srcTarget(w0); if (tg0.row && !!tg0.row.cost_from_payment !== on) saveSrc(w0, on ? { cost_from_payment: true, cost_on_lead: false } : { cost_from_payment: false, cost_on_lead: true, rate_type: 'fixed' }); return; }
     const st0 = e.target.closest('[data-settle]'); if (st0) { showPromoterDetail(st0.dataset.settle); $('#prDlg').showModal(); return; }   // ההתחשבנות דרך דרכי ההגעה
     const d = e.target.closest('[data-sdel]'); if (d) {
