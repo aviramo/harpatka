@@ -378,9 +378,8 @@
     .ccopy svg { width: 18px; height: 18px; }
     .mnone { color: var(--muted); font-size: 14.5px; margin: 0 4px 10px; }
     .sopts { display: grid; gap: 8px; margin-bottom: 8px; }
-    #sOpts { grid-template-columns: repeat(6, 1fr); }   /* בחירת סטטוס: שילם, ישלם וחינם בשורה אחת; ספונטני ובטיפול בשורה; חדש ברוחב מלא */
-    #sOpts .sopt { grid-column: span 2; padding: 0 4px; }
-    #sOpts .sopt.maybe, #sOpts .sopt.requested, #sOpts .sopt.unpaid { grid-column: 1 / -1; }
+    #sOpts { grid-template-columns: 1fr 1fr; }   /* בחירת סטטוס: שניים בשורה, לפי הסדר שהוגדר בהגדרות */
+    #sOpts .sopt { padding: 0 4px; }
     .sopt { height: 50px; border-radius: 16px; font-size: 17px; font-weight: 700; border: 2px solid transparent; }
     .sopt.paid { background: var(--green-bg); color: var(--green); }
     .sopt.requested { background: #FBEBC8; color: #8A5A00; }
@@ -425,6 +424,19 @@
     .bdbadge { position: absolute; top: -3px; left: -3px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #C96F52; color: #fff; font-size: 11px; font-weight: 800; display: grid; place-items: center; box-sizing: border-box; }
     .bdbadge[hidden] { display: none; }
     /* הגדרות */
+    #setDlg .setlink { width: 100%; text-align: right; background: none; }
+    #setDlg .setlink svg { flex: 0 0 auto; color: var(--muted); }
+    #setDlg .sheet-head { position: relative; justify-content: flex-start; gap: 8px; min-height: 40px; }
+    #setDlg .sheet-head h2 { flex: 1 1 auto; }
+    .strow { background: var(--cream); border-radius: 18px; padding: 10px 12px; margin-bottom: 8px; display: grid; grid-template-columns: 1fr auto; gap: 8px 10px; align-items: center; }
+    .strow .stname { height: 42px; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; padding: 0 12px; font-size: 16.5px; font-weight: 700; min-width: 0; }
+    .strow .stmv { display: flex; gap: 6px; }
+    .strow .stmv button { width: 38px; height: 38px; border-radius: 50%; background: #fff; border: 1.5px solid var(--line); font-size: 18px; line-height: 1; }
+    .strow .stmv button:disabled { opacity: .35; }
+    .strow .stcols { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; }
+    .strow .sw { width: 30px; height: 30px; border-radius: 50%; border: 3px solid transparent; box-shadow: inset 0 0 0 1.5px rgba(63,56,47,.18); }
+    .strow .sw[aria-pressed="true"] { border-color: var(--ink); }
+    .strow .stprev { margin-inline-start: auto; height: 32px; padding: 0 12px; border-radius: 999px; font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; }
     #setDlg .setgrp { background: var(--cream); border-radius: 18px; padding: 4px 14px; margin-bottom: 14px; }
     #setDlg .settitle { font-size: 13px; font-weight: 800; color: var(--muted); padding: 10px 0 2px; }
     #setDlg .setrow { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
@@ -437,6 +449,27 @@
     .swt i { position: absolute; top: 3px; right: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .18s; }
     .swt[aria-checked="true"] { background: var(--green); }
     .swt[aria-checked="true"] i { transform: translateX(-20px); }
+    /* תפריט סטטוס מהיר מהרשימה */
+    .row .ptag[data-qs] { cursor: pointer; }
+    .qmenu { position: fixed; z-index: 300; background: var(--paper); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 14px 36px rgba(63,56,47,.24); padding: 6px; display: grid; gap: 5px; min-width: 150px; }
+    .qmenu[hidden] { display: none; }
+    .qmenu .qi { height: 42px; border-radius: 13px; font-weight: 700; font-size: 16px; padding: 0 16px; text-align: center; border: 2px solid transparent; }
+    .qmenu .qi[aria-pressed="true"] { border-color: currentColor; }
+    /* יתרה ותשלומים */
+    .paychip { cursor: pointer; }
+    .paychip.zero { background: var(--cream); color: var(--muted); }
+    .payhint { margin: 2px 4px 12px; font-size: 14.5px; color: var(--muted); line-height: 1.5; }
+    .payhint b { color: var(--ink); }
+    .walsum { background: var(--cream); border-radius: 20px; padding: 16px; text-align: center; }
+    .walsum .big { font-family: "Rubik", sans-serif; font-weight: 800; font-size: 36px; line-height: 1.1; }
+    .walsum .big.pos { color: var(--green); } .walsum .big.neg { color: var(--red); } .walsum .big.zero { color: var(--muted); }
+    .walsum .sub { margin-top: 4px; color: var(--muted); font-size: 14.5px; }
+    .walrow { display: flex; align-items: center; gap: 10px; background: var(--cream); border-radius: 16px; padding: 10px 14px; margin-bottom: 8px; }
+    .walrow .wl { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .walrow .wl b { font-size: 16px; }
+    .walrow .wl small { font-size: 13px; color: #6B6055; }
+    .walrow .wamt { font-family: "Rubik", sans-serif; font-weight: 800; font-size: 17px; white-space: nowrap; }
+    .walrow .wamt.up { color: var(--green); } .walrow .wamt.down { color: var(--red); } .walrow .wamt.flat { color: var(--muted); }
     #bdDlg .sheet-head { position: relative; justify-content: flex-start; gap: 8px; min-height: 40px; }
     #bdDlg .sheet-head h2 { flex: 1 1 auto; }
     #bdDlg h3 { font-size: 15px; margin: 14px 0 6px; color: var(--muted); }
@@ -756,13 +789,30 @@
       </div>
       <div class="ppanel" data-panel="pay" hidden>
         <div class="payrow">
-          <label class="field"><span>סכום ששולם (₪)</span><input name="pay_amount" type="number" inputmode="decimal" min="0" step="any" /></label>
+          <label class="field"><span>סכום למפגש (₪)</span><input name="pay_amount" type="number" inputmode="decimal" min="0" step="any" /></label>
           <label class="field payfield"><span>דרך העברה</span><select name="pay_method"><option value="paybox">פייבוקס</option><option value="bit">ביט</option><option value="cash">מזומן</option><option value="bank">בנק</option><option value="other">אחר</option></select></label>
         </div>
         <div class="pquick" id="payQuick"></div>
         <label class="field" id="payOtherField" hidden><span>פירוט קצר</span><input name="pay_method_note" maxlength="60" autocomplete="off" placeholder="למשל: פייפאל, צ׳ק" /></label>
-        <button type="button" class="promolink" id="creditToggle" hidden aria-pressed="false"></button>
+        <label class="field" id="payBalField" hidden><span id="payBalLabel">מהיתרה</span><input name="pay_bal" type="number" inputmode="decimal" min="0" step="any" /></label>
+        <div class="payhint" id="payHint"></div>
         <div class="payact"><button class="btn" id="paySave" type="button">שמירה</button></div>
+      </div>
+      <div class="ppanel" data-panel="wallet" hidden>
+        <div class="walsum" id="walSum"></div>
+        <div class="payact" style="margin:12px 0 4px"><button class="btn" id="walAdd" type="button">קבלת תשלום</button><button class="btn ghost" id="walRefund" type="button" hidden>החזרת כסף</button></div>
+        <div class="clabel">היסטוריית תשלומים</div>
+        <div id="walHist"></div>
+      </div>
+      <div class="ppanel" data-panel="deposit" hidden>
+        <p class="sthint" style="margin:0 2px 12px">תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש</p>
+        <div class="payrow">
+          <label class="field"><span>סכום (₪)</span><input name="pay_dep" type="number" inputmode="decimal" min="0" step="any" /></label>
+          <label class="field payfield"><span>דרך העברה</span><select name="pay_depm"><option value="paybox">פייבוקס</option><option value="bit">ביט</option><option value="cash">מזומן</option><option value="bank">בנק</option><option value="other">אחר</option></select></label>
+        </div>
+        <div class="pquick" id="depQuick"></div>
+        <label class="field" id="depOtherField" hidden><span>פירוט קצר</span><input name="pay_depn" maxlength="60" autocomplete="off" placeholder="למשל: פייפאל, צ׳ק" /></label>
+        <div class="payact"><button class="btn" id="depSave" type="button">שמירה</button></div>
       </div>
       <div class="ppanel" data-panel="promoter" hidden>
         <div class="sopts" id="pPromoOpts"></div>
@@ -846,17 +896,24 @@
 
   <dialog id="setDlg" aria-labelledby="setTitle" style="max-width:480px">
     <div class="sheet">
-      <div class="sheet-head"><h2 id="setTitle">הגדרות</h2></div>
-      <div class="setgrp">
-        <div class="settitle">חשבון</div>
-        <div class="setrow"><div class="setl"><b id="setWho">—</b><small id="setMail"></small></div></div>
-        <div class="setrow"><div class="setl"><b>שם השולח בהודעות</b><small>ההודעות בוואטסאפ נחתמות בשם הזה</small></div><span class="setv" id="setSender">—</span></div>
+      <div class="sheet-head"><button type="button" class="hbtn hback" id="setBack" aria-label="חזרה" title="חזרה" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></button><h2 id="setTitle">הגדרות</h2></div>
+      <div id="setMain">
+        <div class="setgrp">
+          <div class="settitle">חשבון</div>
+          <div class="setrow"><div class="setl"><b id="setWho">—</b><small id="setMail"></small></div></div>
+          <div class="setrow"><div class="setl"><b>שם השולח בהודעות</b><small>ההודעות בוואטסאפ נחתמות בשם הזה</small></div><span class="setv" id="setSender">—</span></div>
+        </div>
+        <div class="setgrp">
+          <div class="settitle">מפגשים</div>
+          <div class="setrow"><div class="setl"><b>סימון הגעה פתוח תמיד</b><small>פותח את סימון ההגעה בכל מפגש, בלי לחכות לחצי שעה לפני. חל עד סגירת הלשונית</small></div><button type="button" class="swt" id="setAtt" role="switch" aria-checked="false" aria-label="סימון הגעה פתוח תמיד"><i></i></button></div>
+          <button type="button" class="setrow setlink" id="setStBtn"><div class="setl"><b>ניהול סטטוסים</b><small>שם, צבע וסדר לכל סטטוס</small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
+        </div>
+        <button type="button" class="btn ghost" id="setOut" style="color:var(--red)">יציאה מהחשבון</button>
       </div>
-      <div class="setgrp">
-        <div class="settitle">מפגשים</div>
-        <div class="setrow"><div class="setl"><b>סימון הגעה פתוח תמיד</b><small>פותח את סימון ההגעה בכל מפגש, בלי לחכות לחצי שעה לפני. חל עד סגירת הלשונית</small></div><button type="button" class="swt" id="setAtt" role="switch" aria-checked="false" aria-label="סימון הגעה פתוח תמיד"><i></i></button></div>
+      <div id="setSt" hidden>
+        <p class="sthint" style="margin:0 2px 12px">שם הסטטוס, הצבע והסדר שבו הוא מופיע בבחירה. ההתנהגות בסינון ובסטטיסטיקות נשארת לפי סוג הסטטוס</p>
+        <div id="stList"></div>
       </div>
-      <button type="button" class="btn ghost" id="setOut" style="color:var(--red)">יציאה מהחשבון</button>
     </div>
   </dialog>
 
@@ -907,6 +964,7 @@
     </form>
   </dialog>
 
+  <div class="qmenu" id="qMenu" role="menu" hidden></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
@@ -916,9 +974,9 @@
     url: 'https://ezakarwqstnldqixgreb.supabase.co',
     key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6YWthcndxc3RubGRxaXhncmViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTA3MzIsImV4cCI6MjEwNjc4NjczMn0.Bg0eFBC4zKjyJc5kBw3wLgSP-PkxLFVv3o7-4YUdq4c',
   };
-  const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance', n: 'harpatka_notes', pr: 'harpatka_promoters', pp: 'harpatka_promoter_payments', pay: 'harpatka_payments' };
+  const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance', n: 'harpatka_notes', pr: 'harpatka_promoters', pp: 'harpatka_promoter_payments', pay: 'harpatka_payments', st: 'harpatka_statuses' };
 
-  const state = { participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, gender: null, sort: 'new' };
+  const state = { statuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, gender: null, sort: 'new' };
   /* קישור עמוק מהמייל: ?m=<מפגש>&p=<משתתף>; נשמר בזמן הכניסה עם גוגל (שמחזירה בלי הפרמטרים) */
   let deep = null;
   try {
@@ -982,7 +1040,7 @@
     ws.onopen = () => {
       rtRetry = 1000;
       rtSend({ topic: RT_TOPIC, event: 'phx_join', ref: '1', payload: { config: { broadcast: { ack: false, self: false }, presence: { key: '' }, private: false,
-        postgres_changes: [T.p, T.m, T.a, T.n, T.pr, T.pp, T.pay].map((table) => ({ event: '*', schema: 'test', table })) }, access_token: session.access_token } });
+        postgres_changes: [T.p, T.m, T.a, T.n, T.pr, T.pp, T.pay, T.st].map((table) => ({ event: '*', schema: 'test', table })) }, access_token: session.access_token } });
       rtHb = setInterval(() => rtSend({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(Date.now()) }), 25000);
     };
     ws.onmessage = (e) => {
@@ -1146,7 +1204,7 @@
   const PRICE_EARLY = 80, PRICE_LATE = 100;
   const defaultPrice = (m, iso) => { const d = new Date(m.meeting_date + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() - 3); return (iso || todayISO()) < d.toISOString().slice(0, 10) ? PRICE_EARLY : PRICE_LATE; };
   /* קרדיט משתתף: סכומים שנשארו אצלנו בביטול בלי החזר כסף, פחות מה ששימש לתשלום חדש */
-  const creditOf = (pid) => state.payments.filter((x) => x.participant_id === pid).reduce((s, x) => s + (x.kind === 'credit' ? Number(x.amount) : ((x.kind === 'payment' || x.kind === 'refund') && x.from_credit ? -Number(x.amount) : 0)), 0);
+  const creditOf = (pid) => state.payments.filter((x) => x.participant_id === pid).reduce((s, x) => s + ((x.kind === 'credit' || x.kind === 'deposit') ? Number(x.amount) : ((x.kind === 'payment' || x.kind === 'refund') && x.from_credit ? -Number(x.amount) : 0)), 0);
   const promoterOf = (id) => state.promoters.find((x) => x.id === id);
   const rateLabel = (pr) => pr ? (pr.rate_type === 'percent' ? Number(pr.rate) + '%' : '₪' + Number(pr.rate)) : '';
   const calcCommission = (pr, amount) => { if (!pr) return ''; const v = pr.rate_type === 'percent' ? Math.round((Number(amount) || 0) * Number(pr.rate)) / 100 : Number(pr.rate); return Number.isFinite(v) ? v : ''; };
@@ -1248,7 +1306,7 @@
   async function load(silent) {
     if (!silent) $('#status').innerHTML = '<div class="empty">טוען…</div>';
     try {
-      const [p, m, a, nn, prs, pps, pays] = await Promise.all([
+      const [p, m, a, nn, prs, pps, pays, sts] = await Promise.all([
         api(T.p + '?select=*'),
         api(T.m + '?select=*'),
         api(T.a + '?select=participant_id,meeting_id,paid,pay_requested_at,created_at,exempt,attended,paid_amount,promoter_id,commission,paid_at,details_sent_at,will_pay,maybe'),
@@ -1256,7 +1314,9 @@
         api(T.pr + '?select=*&order=name.asc'),
         api(T.pp + '?select=*&order=paid_at.desc'),
         api(T.pay + '?select=*&order=created_at.desc'),
+        api(T.st + '?select=*').catch(() => null),
       ]);
+      if (sts && sts.length) { state.statuses = DEFAULT_STATUSES.map((d) => Object.assign({}, d, sts.find((x) => x.key === d.key) || {})); applyStatuses(); }
       boardBadge();
       /* משתתף לא פעיל (הוסר) מוסתר מכל המסכים; הנתונים נשמרים ויחזרו אם יירשם שוב עם אותו טלפון. תשלומים נשארים (כספים) */
       state.inactiveNames = new Map(p.filter((x) => x.active === false).map((x) => [x.id, x.name]));
@@ -1327,6 +1387,23 @@
   const NEW_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><path d="M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"/></svg>';   // חדש: ניצוץ
   const linkStatus = (l) => l.exempt ? 'exempt' : l.paid ? 'paid' : l.will_pay ? 'willpay' : l.maybe ? 'maybe' : (l.pay_requested_at ? 'requested' : 'unpaid');   // לא משלם (בחינם ביודעין) / שילם / נשלחה בקשת תשלום / טרם שילם
   const STATUS_LABEL = { paid: 'שילם', willpay: 'ישלם', maybe: 'ספונטני', requested: 'בטיפול', unpaid: 'חדש', exempt: 'חינם' };
+  /* ניהול סטטוסים (סביבת בדיקות): שם, צבע (מפתח בפלטה) וסדר לכל סטטוס; ההתנהגות בסינון ובסטטיסטיקות קבועה לפי המפתח */
+  const PALETTE = { green: ['var(--green-bg)', 'var(--green)', 'ירוק'], red: ['var(--red-bg)', 'var(--red)', 'אדום'], amber: ['#FBEBC8', '#8A5A00', 'צהוב'], sky: ['var(--sky-bg)', 'var(--sky)', 'כחול'], orange: ['#F8E4DA', '#B8553A', 'כתום'] };
+  const DEFAULT_STATUSES = [['paid', 'שילם', 'green'], ['willpay', 'ישלם', 'red'], ['exempt', 'חינם', 'sky'], ['maybe', 'ספונטני', 'sky'], ['requested', 'בטיפול', 'amber'], ['unpaid', 'חדש', 'red']].map((x, i) => ({ key: x[0], label: x[1], color: x[2], sort: i + 1 }));
+  state.statuses = DEFAULT_STATUSES.map((s) => Object.assign({}, s));
+  const statusList = () => state.statuses.slice().sort((a, b) => a.sort - b.sort);
+  function applyStatuses() {
+    let css = '';
+    state.statuses.forEach((s) => {
+      STATUS_LABEL[s.key] = s.label;
+      const c = PALETTE[s.color] || PALETTE.sky;
+      css += '.row .ptag.' + s.key + ', .pay.' + s.key + ', .sopt.' + s.key + ', .pst.' + s.key + ', .qmenu .qi.' + s.key + ', .stprev.' + s.key + ' { background: ' + c[0] + '; color: ' + c[1] + '; }\n';
+    });
+    let el = document.getElementById('stDyn');
+    if (!el) { el = document.createElement('style'); el.id = 'stDyn'; document.head.appendChild(el); }
+    el.textContent = css;
+  }
+  applyStatuses();
   /* סינון "שילמו" כולל גם את מי שמסומן "לא משלם" (הסדירו הכול); שאר הסטטוסים נבדקים כמו שהם */
   const payMatch = (ps, f) => f === 'paid' ? (ps === 'paid' || ps === 'exempt' || ps === 'willpay') : f === 'requested' ? (ps === 'requested' || ps === 'maybe' || ps === 'unpaid') : ps === f;   // סינון "?" = כל מי שטרם שילם: חדש, בטיפול וספונטני
   function paidState(p) {
@@ -1458,15 +1535,15 @@
       if (state.filter) {
         const l = linkOf(p.id, state.filter);
         const st = linkStatus(l);
-        side = '<span class="ptag ' + st + '">' + STATUS_LABEL[st] + '</span>';   // תצוגה בלבד: לחיצה על הכרטיס פותחת את פרטי המשתתף, ושם משנים סטטוס
+        side = '<span class="ptag ' + st + '" data-qs="' + p.id + '" role="button" tabindex="0" title="שינוי סטטוס">' + STATUS_LABEL[st] + '</span>';   // תצוגה בלבד: לחיצה על הכרטיס פותחת את פרטי המשתתף, ושם משנים סטטוס
       }
       let tags = '';
       if (!state.filter) {
         const ls = linksOf(p.id);
         if (ls.length) {
           const payable = ls.filter((l) => !l.exempt && !l.will_pay && !l.maybe), np = payable.filter((l) => l.paid).length, ps = paidState(p);
-          tags = '<span class="ptag ' + ps + '" title="תשלום לפי מפגשים">' +
-            (ls.length === 1 || ps === 'exempt' || ps === 'willpay' || ps === 'maybe' ? STATUS_LABEL[ps] : (ps === 'requested' ? 'בטיפול' : '<bdi>' + np + '/' + payable.length + '</bdi> שילמו')) + '</span>';
+          tags = '<span class="ptag ' + ps + '" data-qs="' + p.id + '" role="button" tabindex="0" title="שינוי סטטוס">' +
+            (ls.length === 1 || ps === 'exempt' || ps === 'willpay' || ps === 'maybe' ? STATUS_LABEL[ps] : (ps === 'requested' ? STATUS_LABEL.requested : '<bdi>' + np + '/' + payable.length + '</bdi> שילמו')) + '</span>';
         }   // בלי מפגש: אין תגית
       }
       const hl = state.filter ? linkOf(p.id, state.filter) : null;
@@ -1553,7 +1630,7 @@
     const refunds = state.payments.filter((x) => x.kind === 'refund').reduce((s, x) => s + Number(x.amount), 0);
     const maxRev = Math.max(1, ...pm.map((r) => r.rev));
     const money = part('הכנסה לפי מפגש', tbl(['מפגש', 'הכנסה', 'שילמו', 'מגמה'], pm.map((r, k) => [dlab(r.m), ilsB(r.rev), r.paid + '/' + (r.regs - r.ex), k ? trend(r.rev, pm[k - 1].rev) : '—']))) +
-      part('מצב תשלומים', '<div class="stkpis">' + kpi(paid.length, 'שילמו', Ps(paid.length, nPay), 'good') + kpi(req.length, 'בטיפול', ilsB(owed), 'warn') + kpi(unp.length, 'חדשים', '', unp.length ? 'bad' : '') + kpi(exm.length, 'חינם', '') + kpi(wpl.length, 'ישלם', '') + kpi(mby.length, 'ספונטני', '') + '</div>') +
+      part('מצב תשלומים', '<div class="stkpis">' + kpi(paid.length, 'שילמו', Ps(paid.length, nPay), 'good') + kpi(req.length, STATUS_LABEL.requested, ilsB(owed), 'warn') + kpi(unp.length, STATUS_LABEL.unpaid, '', unp.length ? 'bad' : '') + kpi(exm.length, STATUS_LABEL.exempt, '') + kpi(wpl.length, STATUS_LABEL.willpay, '') + kpi(mby.length, STATUS_LABEL.maybe, '') + '</div>') +
       part('גבייה', tbl(['מדד', 'ערך'], [['המרה לתשלום', Ps(paid.length, nPay)], ['ממוצע לתשלום', paid.length ? ilsB(rev / paid.length) : '—'], ['נטו אחרי עמלות', ilsB(rev - comm)], ['עמלות ליחצנים', ilsB(comm)], ['קרדיט פתוח', ilsB(credit)], ['הוחזר', ilsB(refunds)]])) +
       (() => { const byM = {}; paid.forEach((l) => { const k = ilDay(l.paid_at || l.created_at || new Date().toISOString()).slice(0, 7); byM[k] = (byM[k] || 0) + price(l); }); const ks = Object.keys(byM).sort(), mx = Math.max(1, ...ks.map((k) => byM[k])); return ks.length > 1 ? part('הכנסה לפי חודש', ks.map((k) => barRow(k.slice(5) + '/' + k.slice(2, 4), byM[k], mx, '#2F7D4F', ilsB(byM[k]))).join('')) : ''; })();
 
@@ -1620,7 +1697,7 @@
     const l = linkOf(pid, mid); if (!l) return;
     const cur = linkStatus(l);
     payCtx = { pid, mid }; viewStack = ['main'];
-    $('#sOpts').innerHTML = ['paid', 'willpay', 'exempt', 'maybe', 'requested', 'unpaid'].map((s) => '<button type="button" class="sopt ' + s + '" data-st="' + s + '" aria-pressed="' + (s === cur) + '">' + STATUS_LABEL[s] + '</button>').join('');
+    $('#sOpts').innerHTML = statusList().map((x) => x.key).map((s) => '<button type="button" class="sopt ' + s + '" data-st="' + s + '" aria-pressed="' + (s === cur) + '">' + STATUS_LABEL[s] + '</button>').join('');
     $('#sOpts').querySelectorAll('[data-st]').forEach((b) => b.onclick = () => {
       if (b.dataset.st === 'paid') openPayView(pid, mid);
       else if (b.dataset.st === cur) toMain();
@@ -1773,29 +1850,67 @@
     f.pay_amount.value = opts && opts.amount != null ? opts.amount : amount;
     /* היחצן שייך למשתתף (לשונית הפרטים): העמלה מחושבת אוטומטית לפי התעריף על המפגש הראשון ששולם, בלי שדות כאן */
     const prId = (p && p.promoter_id) || l.promoter_id || '', pr = promoterOf(prId);
-    const isFirst = !state.payments.some((x) => x.participant_id === pid && x.kind === 'payment' && x.meeting_id && x.meeting_id !== mid), commPr = isFirst ? pr : null;
+    const isFirst = !state.payments.some((x) => x.participant_id === pid && (x.kind === 'deposit' || (x.kind === 'payment' && !x.from_credit && x.meeting_id && x.meeting_id !== mid))), commPr = isFirst ? pr : null;
     $('#payQuick').innerHTML = [PRICE_EARLY, PRICE_LATE].map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
-    $('#payQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) f.pay_amount.value = b.dataset.q; };
     f.pay_method.value = l.pay_method || 'paybox'; f.pay_method_note.value = l.pay_method_note || '';
     const paintOther = () => { $('#payOtherField').hidden = f.pay_method.value !== 'other'; };
     f.pay_method.onchange = () => { paintOther(); if (f.pay_method.value === 'other') f.pay_method_note.focus(); }; paintOther();
-    /* קרדיט קיים: כפתור "שימוש בקרדיט" משלם (גם) מהקרדיט שנשאר מביטול קודם */
-    const credit = creditOf(pid); let useCredit = false;
-    const ct = $('#creditToggle'); ct.hidden = !(credit > 0);
-    const paintCredit = () => { ct.textContent = useCredit ? '✓ משלם מהקרדיט (₪' + nfm(credit) + ' זמין)' : 'שימוש בקרדיט: ₪' + nfm(credit) + ' זמין'; ct.classList.toggle('on', useCredit); };
-    paintCredit();
-    ct.onclick = () => { useCredit = !useCredit; if (useCredit) f.pay_amount.value = Math.min(credit, parseFloat(f.pay_amount.value) || credit); paintCredit(); };
+    /* יתרה: אפשר לקחת מהיתרה של המשתתף חלק מהסכום (או את כולו); מה שנשאר משולם עכשיו בדרך שנבחרה */
+    const bal = Math.max(0, creditOf(pid));
+    $('#payBalField').hidden = !(bal > 0);
+    const num = (el) => Math.max(0, parseFloat(el.value) || 0);
+    const takeFrom = () => Math.min(bal, num(f.pay_bal), num(f.pay_amount));
+    const paintHint = () => {
+      const a = num(f.pay_amount), fb = bal > 0 ? takeFrom() : 0, r = a - fb;
+      $('#payHint').innerHTML = (bal > 0 ? 'יתרה זמינה <b>₪' + nfm(bal) + '</b>. ' : '') + (r > 0 ? 'ישולם עכשיו <b>₪' + nfm(r) + '</b>' : (a > 0 ? 'הכול מהיתרה' : ''));
+      f.pay_method.closest('.payfield').style.opacity = r > 0 ? '' : '.4';
+    };
+    if (bal > 0) { $('#payBalLabel').textContent = 'מהיתרה (עד ₪' + nfm(bal) + ')'; f.pay_bal.value = Math.min(bal, parseFloat(f.pay_amount.value) || 0); }
+    f.pay_amount.oninput = () => { if (bal > 0) f.pay_bal.value = Math.min(bal, num(f.pay_amount)); paintHint(); };
+    f.pay_bal.oninput = paintHint;
+    $('#payQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) { f.pay_amount.value = b.dataset.q; f.pay_amount.oninput(); } };
+    paintHint();
     const save = () => {
       const amt = parseFloat(f.pay_amount.value); if (!(amt >= 0)) { f.pay_amount.focus(); return; }
-      const fromCredit = useCredit && credit > 0, amtFinal = fromCredit ? Math.min(amt, credit) : amt;
-      const cm = commPr ? ((l.commission != null && Number(l.paid_amount) === amtFinal) ? Number(l.commission) : calcCommission(commPr, amtFinal)) : null;
+      const fb = bal > 0 ? takeFrom() : 0, cash = amt - fb;
+      const cm = commPr && cash > 0 ? ((l.commission != null && Number(l.paid_amount) === amt) ? Number(l.commission) : calcCommission(commPr, cash)) : null;
       const method = f.pay_method.value, mnote = method === 'other' ? f.pay_method_note.value.trim().slice(0, 60) : '';
-      setPayStatus(pid, mid, 'paid', { paid_amount: amtFinal, promoter_id: pr ? pr.id : null, commission: Number.isFinite(cm) ? cm : null, paid_at: l.paid_at || new Date().toISOString(), pay_method: method, pay_method_note: mnote || null }, { fromCredit });
+      setPayStatus(pid, mid, 'paid', { paid_amount: amt, promoter_id: pr ? pr.id : null, commission: Number.isFinite(cm) ? cm : null, paid_at: l.paid_at || new Date().toISOString(), pay_method: cash > 0 ? method : null, pay_method_note: cash > 0 ? (mnote || null) : null }, { fromBalance: fb });
       toMain();
     };
     $('#paySave').onclick = save;
     if (opts && opts.keep) setPTab('pay'); else goView('pay');
   }
+  /* תפריט סטטוס מהיר: לחיצה על תגית הסטטוס ברשימה בוחרת סטטוס בלי להיכנס לכרטיס המשתתף */
+  const quickLink = (pid) => {
+    if (state.filter) return linkOf(pid, state.filter);
+    const ls = linksOf(pid), key = (l) => { const m = state.meetings.find((x) => x.id === l.meeting_id); return m ? m.meeting_date + m.meeting_time : ''; };
+    const up = ls.filter((l) => { const m = state.meetings.find((x) => x.id === l.meeting_id); return m && !isPast(m); }).sort((a, b) => key(a).localeCompare(key(b)))[0];
+    return up || ls.slice().sort((a, b) => key(b).localeCompare(key(a)))[0] || null;
+  };
+  const closeQ = () => { $('#qMenu').hidden = true; };
+  function openQuickMenu(pid, anchor) {
+    const l = quickLink(pid), menu = $('#qMenu');
+    if (!l) return;
+    const cur = linkStatus(l), mid = l.meeting_id, m = state.meetings.find((x) => x.id === mid);
+    menu.innerHTML = '<button type="button" class="qi" style="background:transparent;color:var(--muted);font-size:13px;height:26px;cursor:default" tabindex="-1">' + (m ? esc(meetingLabel(m)) : '') + '</button>' +
+      statusList().map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-qk="' + s.key + '" aria-pressed="' + (s.key === cur) + '">' + esc(s.label) + '</button>').join('');
+    menu.hidden = false;
+    const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
+    let left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8), top = r.bottom + 6;
+    if (top + mh > window.innerHeight - 8) top = Math.max(8, r.top - mh - 6);
+    menu.style.left = left + 'px'; menu.style.top = top + 'px';
+    menu.onclick = (e) => {
+      const b = e.target.closest('[data-qk]'); if (!b) return;
+      const k = b.dataset.qk; closeQ(); if (k === cur) return;
+      if (k === 'paid') { openParticipant(pid, 'main'); openPayView(pid, mid); }
+      else if (cur === 'paid') { openParticipant(pid, 'main'); openRefundView(pid, mid, k); }
+      else { setPayStatus(pid, mid, k); toast('הסטטוס עודכן: ' + STATUS_LABEL[k]); }
+    };
+  }
+  document.addEventListener('click', (e) => { if (!$('#qMenu').hidden && !e.target.closest('#qMenu, [data-qs]')) closeQ(); }, true);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeQ(); });
+  window.addEventListener('scroll', closeQ, true);
   async function setPayStatus(pid, mid, st, extra, opts) {
     const l = linkOf(pid, mid);
     if (!l) return;
@@ -1811,7 +1926,7 @@
   }
   /* יומן תשלומים: כל סימון תשלום או החזר יוצר רשומה חדשה (תיקון תשלום = החזר של הישן + תשלום חדש) */
   async function addPayRecord(pid, mid, kind, amount, promoterId, commission, fromCredit, method, methodNote) {
-    const body = { participant_id: pid, meeting_id: mid || null, kind, from_credit: !!fromCredit, amount: Number(amount) || 0, promoter_id: promoterId || null, commission: commission != null && commission !== '' ? Number(commission) : null, author_name: authorName(), method: kind === 'payment' ? (method || null) : null, method_note: kind === 'payment' ? (methodNote || null) : null };
+    const body = { participant_id: pid, meeting_id: mid || null, kind, from_credit: !!fromCredit, amount: Number(amount) || 0, promoter_id: promoterId || null, commission: commission != null && commission !== '' ? Number(commission) : null, author_name: authorName(), method: (kind === 'payment' || kind === 'deposit') ? (method || null) : null, method_note: (kind === 'payment' || kind === 'deposit') ? (methodNote || null) : null };
     const [row] = await api(T.pay, { method: 'POST', body, prefer: 'return=representation' });
     if (row && !state.payments.some((x) => x.id === row.id)) state.payments.push(row);
     if (sheet && sheet.id) refreshSheetMeetings();
@@ -1821,7 +1936,11 @@
     const wasPaid = !!prev.paid && !prev.exempt, oldAmt = prev.paid_amount != null ? Number(prev.paid_amount) : PRICE_EARLY;
     const changed = st === 'paid' && wasPaid && extra && (Number(prev.paid_amount != null ? prev.paid_amount : PRICE_EARLY) !== Number(extra.paid_amount) || (prev.promoter_id || null) !== (extra.promoter_id || null) || Number(prev.commission || 0) !== Number(extra.commission || 0));
     if (wasPaid && (st !== 'paid' || changed)) await addPayRecord(pid, mid, (opts.mode === 'credit' && st !== 'paid') ? 'credit' : 'refund', oldAmt, prev.promoter_id, prev.commission);
-    if (st === 'paid' && (!wasPaid || changed)) await addPayRecord(pid, mid, 'payment', extra.paid_amount, extra.promoter_id, extra.commission, opts.fromCredit, extra.pay_method, extra.pay_method_note);
+    if (st === 'paid' && (!wasPaid || changed)) {
+      const fb = Number(opts.fromBalance || 0), cash = Number(extra.paid_amount) - fb;
+      if (fb > 0) await addPayRecord(pid, mid, 'payment', fb, null, null, true);
+      if (cash > 0 || fb === 0) await addPayRecord(pid, mid, 'payment', fb === 0 ? extra.paid_amount : cash, extra.promoter_id, extra.commission, false, extra.pay_method, extra.pay_method_note);
+    }
   }
 
   async function setLinked(pid, mid, on, mode) {
@@ -2083,7 +2202,7 @@
   let pTab = 'main', mLimit = 3;
   const reducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let cvTitle = '';
-  const SUBVIEW = { status: 'סטטוס תשלום', pay: 'פרטי תשלום', promoter: 'יחצן', refund: 'ביטול תשלום', credit: 'החזרת קרדיט' };
+  const SUBVIEW = { wallet: 'יתרה ותשלומים', deposit: 'קבלת תשלום', status: 'סטטוס תשלום', pay: 'פרטי תשלום', promoter: 'יחצן', refund: 'ביטול תשלום', credit: 'החזרת קרדיט' };
   let viewStack = [], payCtx = null;
   function setPTab(tab, instant) {
     if (!sheet || !sheet.id) tab = 'info';
@@ -2100,19 +2219,61 @@
       if (sub) { $('#pTitle').textContent = sub; const pm = payCtx && state.meetings.find((x) => x.id === payCtx.mid); $('#pViewSub').innerHTML = nameB(pp0 ? pp0.name : '') + (pm ? ' · ' + esc(meetingLabel(pm, true)) : ''); }
       else if (ex) setTitle(pp0); }
     if (tab === 'main') { renderContact(); renderNotes(); }
+    if (tab === 'wallet') renderWallet();
     syncUrl();
   }
-  pForm.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.name && e.target.name.startsWith('pay_')) { e.preventDefault(); if (pTab === 'pay') $('#paySave').click(); else if (pTab === 'credit') $('#creditRefundBtn').click(); } });
-  /* החזרת קרדיט: מחזירים למשתתף את הכסף שנשאר אצלנו (נרשם כהחזר מהקרדיט) */
-  $('#pPayChip').addEventListener('click', () => {
-    if (!sheet || !sheet.id) return; const cr = creditOf(sheet.id); if (!(cr > 0)) return;
-    $('#creditText').innerHTML = 'למשתתף יש <b>קרדיט של ₪' + nfm(cr) + '</b> (כסף ששילם ונשאר אצלכם אחרי ביטול). אפשר להחזיר לו את הכסף, כולו או חלקו. תירשם רשומת החזר, והקרדיט יקטן.';
-    pForm.pay_refund.value = cr; payCtx = null; viewStack = ['main'];
+  pForm.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.name && e.target.name.startsWith('pay_')) { e.preventDefault(); if (pTab === 'pay') $('#paySave').click(); else if (pTab === 'credit') $('#creditRefundBtn').click(); else if (pTab === 'deposit') $('#depSave').click(); } });
+  /* יתרה ותשלומים: התשלומים נפרדים מהמפגשים. כל תשלום שמתקבל נכנס ליתרה של המשתתף, ובשיוך למפגש לוקחים ממנה */
+  const owedOf = (pid) => linksOf(pid).filter((l) => linkStatus(l) === 'requested' || linkStatus(l) === 'willpay').reduce((s, l) => { const m = state.meetings.find((q) => q.id === l.meeting_id); return s + (m ? defaultPrice(m) : PRICE_EARLY); }, 0);
+  const METHODS = { paybox: 'פייבוקס', bit: 'ביט', cash: 'מזומן', bank: 'בנק' };
+  const methodName = (x) => x.method === 'other' ? (x.method_note || 'אחר') : (METHODS[x.method] || '');
+  function renderWallet() {
+    const pid = sheet && sheet.id; if (!pid) return;
+    const bal = creditOf(pid), owed = owedOf(pid);
+    $('#walSum').innerHTML = '<div class="big ' + (bal > 0 ? 'pos' : 'zero') + '"><bdi dir="ltr">₪' + nfm(bal) + '</bdi></div><div class="sub">יתרה זמינה' + (owed > 0 ? ' · חוב פתוח על מפגשים: <bdi dir="ltr">₪' + nfm(owed) + '</bdi>' : '') + '</div>';
+    $('#walRefund').hidden = !(bal > 0);
+    const mlabel = (x) => { const m = state.meetings.find((q) => q.id === x.meeting_id); return m ? ' ' + dmShort(m) : ''; };
+    const rows = state.payments.filter((x) => x.participant_id === pid).slice().sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).map((x) => {
+      const a = Number(x.amount), mt = methodName(x); let lab, cls, sign;
+      if (x.kind === 'deposit') { lab = 'קבלת תשלום' + (mt ? ' · ' + mt : ''); cls = 'up'; sign = '+'; }
+      else if (x.kind === 'credit') { lab = 'ביטול מפגש' + mlabel(x) + ', נשאר ביתרה'; cls = 'up'; sign = '+'; }
+      else if (x.kind === 'payment' && x.from_credit) { lab = 'שימוש ביתרה למפגש' + mlabel(x); cls = 'down'; sign = '−'; }
+      else if (x.kind === 'payment') { lab = 'תשלום למפגש' + mlabel(x) + (mt ? ' · ' + mt : ''); cls = 'flat'; sign = ''; }
+      else if (x.kind === 'refund' && x.from_credit) { lab = 'החזרת כסף מהיתרה'; cls = 'down'; sign = '−'; }
+      else { lab = 'החזר כספי למפגש' + mlabel(x); cls = 'flat'; sign = ''; }
+      return '<div class="walrow"><div class="wl"><b>' + esc(lab) + '</b><small>' + fmtD(x.created_at) + (x.author_name ? ' · ' + esc(x.author_name) : '') + '</small></div><span class="wamt ' + cls + '"><bdi dir="ltr">' + sign + '₪' + nfm(a) + '</bdi></span></div>';
+    });
+    $('#walHist').innerHTML = rows.length ? rows.join('') : '<p class="mnone">עוד אין תשלומים</p>';
+  }
+  const dmShort = (m) => { const [, mo, d] = m.meeting_date.split('-').map(Number); return d + '.' + mo; };
+  $('#pPayChip').addEventListener('click', () => { if (!sheet || !sheet.id) return; viewStack = []; goView('wallet'); });
+  $('#walAdd').addEventListener('click', () => {
+    const f = pForm; f.pay_dep.value = ''; f.pay_depm.value = 'paybox'; f.pay_depn.value = ''; $('#depOtherField').hidden = true;
+    $('#depQuick').innerHTML = [PRICE_EARLY, PRICE_LATE].map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
+    $('#depQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) f.pay_dep.value = b.dataset.q; };
+    f.pay_depm.onchange = () => { $('#depOtherField').hidden = f.pay_depm.value !== 'other'; if (f.pay_depm.value === 'other') f.pay_depn.focus(); };
+    goView('deposit'); f.pay_dep.focus();
+  });
+  $('#depSave').addEventListener('click', async () => {
+    const f = pForm, pid = sheet && sheet.id, amt = parseFloat(f.pay_dep.value); if (!pid) return;
+    if (!(amt > 0)) { f.pay_dep.focus(); return; }
+    const p = state.participants.find((x) => x.id === pid), pr = p && promoterOf(p.promoter_id);
+    /* עמלה ליחצן: על התשלום הראשון של המשתתף (הפקדה או תשלום ישיר) */
+    const isFirst = !state.payments.some((x) => x.participant_id === pid && (x.kind === 'deposit' || (x.kind === 'payment' && !x.from_credit && x.meeting_id)));
+    const cm = pr && isFirst ? calcCommission(pr, amt) : null, method = f.pay_depm.value, mnote = method === 'other' ? f.pay_depn.value.trim().slice(0, 60) : '';
+    try { await addPayRecord(pid, null, 'deposit', amt, pr && isFirst ? pr.id : null, Number.isFinite(cm) ? cm : null, false, method, mnote || null); toast('התקבל תשלום ₪' + nfm(amt)); setPTab(viewStack.pop() || 'wallet'); renderContact(); }
+    catch (err) { fail(err); }
+  });
+  /* החזרת כסף מהיתרה (רשומת החזר מהיתרה) */
+  $('#walRefund').addEventListener('click', () => {
+    const cr = creditOf(sheet.id); if (!(cr > 0)) return;
+    $('#creditText').innerHTML = 'ליתרה של המשתתף <b>₪' + nfm(cr) + '</b>. אפשר להחזיר לו את הכסף, כולו או חלקו. תירשם רשומת החזר, והיתרה תקטן.';
+    pForm.pay_refund.value = cr; payCtx = null;
     $('#creditRefundBtn').onclick = async () => {
       const amt = Math.min(parseFloat(pForm.pay_refund.value) || 0, cr); if (!(amt > 0)) { pForm.pay_refund.focus(); return; }
-      try { await addPayRecord(sheet.id, null, 'refund', amt, null, null, true); toast('הוחזרו ₪' + nfm(amt) + ' למשתתף'); toMain(); } catch (err) { fail(err); }
+      try { await addPayRecord(sheet.id, null, 'refund', amt, null, null, true); toast('הוחזרו ₪' + nfm(amt) + ' למשתתף'); setPTab(viewStack.pop() || 'wallet'); } catch (err) { fail(err); }
     };
-    setPTab('credit');
+    goView('credit');
   });
   /* יחצן הוא ברמת המשתתף: אייקון בכותרת (מואר כשיש יחצן) פותח בחירת יחצן */
   let promoFromPay = null;
@@ -2147,7 +2308,7 @@
   /* לחיצה על הכותרת (השם והתגית, כל האזור) במסך הראשי פותחת את פרטי המשתתף */
   const openInfo = () => { if (pTab === 'main' && sheet && sheet.id) { viewStack = []; setPTab('info'); } };
   /* מאזינים על כל הכותרת ובודקים אם הלחיצה באזור השם והתגית (הכותרת נבנית מחדש בעדכונים, ולכן היעד של הלחיצה יכול להיות ההורה) */
-  $('#pDlg .sheet-head').addEventListener('click', (e) => { if (e.target.closest('#pBack, #pMsgs, .saved')) return; const r = $('#pTitle').getBoundingClientRect(); if (e.target.closest('#pTitle') || (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom)) openInfo(); });
+  $('#pDlg .sheet-head').addEventListener('click', (e) => { if (e.target.closest('#pBack, #pMsgs, .saved')) return; { const cr = $('#pPayChip').getBoundingClientRect(); if (!$('#pPayChip').hidden && $('#pPayChip').offsetParent && e.clientX >= cr.left && e.clientX <= cr.right && e.clientY >= cr.top && e.clientY <= cr.bottom) { if (!e.target.closest('#pPayChip')) $('#pPayChip').click(); return; } } const r = $('#pTitle').getBoundingClientRect(); if (e.target.closest('#pTitle') || (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom)) openInfo(); });
   $('#pTitle').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && $('#pTitle').classList.contains('tap')) { e.preventDefault(); openInfo(); } });
   $('#pBack').addEventListener('click', () => { if (pTab === 'promoter') promoFromPay = null; setPTab(viewStack.pop() || 'main'); });
   const goView = (v) => { viewStack.push(pTab); setPTab(v); };
@@ -2312,12 +2473,11 @@
     const desc = state.meetings.slice().sort((a, b) => (b.meeting_date + b.meeting_time).localeCompare(a.meeting_date + a.meeting_time)), shown = desc.slice(0, mLimit);
     $('#pMore').hidden = desc.length <= mLimit;
     { /* מספר אחד: יתרה = חוב פחות קרדיט. חוב רק על מפגשים שביקשנו עליהם תשלום ("בטיפול") או שהמשתתף אמר שישלם ("ישלם"); רשום בלבד (חדש) הוא עוד לא חוב */
-      const owed = sheet.id ? linksOf(sheet.id).filter((l) => linkStatus(l) === 'requested' || linkStatus(l) === 'willpay').reduce((s, l) => { const m = state.meetings.find((q) => q.id === l.meeting_id); return s + (m ? defaultPrice(m) : PRICE_EARLY); }, 0) : 0;
+      const owed = sheet.id ? owedOf(sheet.id) : 0;
       const net = owed - (sheet.id ? creditOf(sheet.id) : 0), chip = $('#pPayChip');
-      chip.hidden = !sheet.id || net === 0;
-      chip.dataset.credit = sheet.id && creditOf(sheet.id) > 0 ? '1' : '';
-      chip.className = 'paychip' + (net > 0 ? '' : ' ok');
-      chip.innerHTML = '<bdi dir="ltr">₪' + nfm(Math.abs(net)) + '</bdi>'; chip.title = net > 0 ? 'יתרה לתשלום' : 'קרדיט (לחיצה להחזרה)'; }
+      chip.hidden = !sheet.id;
+      chip.className = 'paychip' + (net > 0 ? '' : net < 0 ? ' ok' : ' zero');
+      { const chipHtml = '<bdi dir="ltr">₪' + nfm(Math.abs(net)) + '</bdi>'; if (chip.innerHTML !== chipHtml) chip.innerHTML = chipHtml; } chip.title = (net > 0 ? 'חוב פתוח' : net < 0 ? 'יתרה לטובת המשתתף' : 'מאוזן') + ' (לחיצה לתשלומים ויתרה)'; }
     box.innerHTML = shown.map((m) => {
       let on, st;
       if (sheet.id) { const l = linkOf(sheet.id, m.id); on = !!l; st = l ? linkStatus(l) : 'unpaid'; }
@@ -2520,9 +2680,12 @@
   });
 
   $('#list').addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-qs]')) { e.preventDefault(); e.stopPropagation(); openQuickMenu(e.target.dataset.qs, e.target); return; }
     if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-edit]')) { e.preventDefault(); openParticipant(e.target.dataset.edit, undefined, e.target.closest('li.row')); }
   });
   $('#list').addEventListener('click', (e) => {
+    const qs = e.target.closest('[data-qs]');
+    if (qs) { e.stopPropagation(); if (!$('#qMenu').hidden) { closeQ(); return; } openQuickMenu(qs.dataset.qs, qs); return; }
     const eu = e.target.closest('[data-evun]');
     if (eu) { e.stopPropagation(); const l = evLink({ id: eu.dataset.evun }); if (l) setDetailsSent(eu.dataset.evun, l.meeting_id, false); return; }   // חזרה ללא נשלח
     const er = e.target.closest('[data-evrow]');
@@ -2569,6 +2732,51 @@
     toast(forceAttend ? 'סימון ההגעה פתוח בכל מפגש' : 'סימון ההגעה חזר להיות חצי שעה לפני');
   });
   $('#setOut').addEventListener('click', () => signOut());
+  /* ניהול סטטוסים בתוך פופאפ ההגדרות (מסך עם חץ חזרה) */
+  let setView = 'main';
+  function showSetView(v) {
+    setView = v;
+    $('#setMain').hidden = v !== 'main'; $('#setSt').hidden = v !== 'st'; $('#setBack').hidden = v === 'main';
+    $('#setTitle').textContent = v === 'st' ? 'ניהול סטטוסים' : 'הגדרות';
+    if (v === 'st') renderStSettings();
+  }
+  function renderStSettings() {
+    const list = statusList();
+    $('#stList').innerHTML = list.map((s, i) => '<div class="strow" data-k="' + s.key + '">' +
+      '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם הסטטוס" />' +
+      '<div class="stmv"><button type="button" data-mv="up" aria-label="למעלה"' + (i === 0 ? ' disabled' : '') + '>↑</button><button type="button" data-mv="down" aria-label="למטה"' + (i === list.length - 1 ? ' disabled' : '') + '>↓</button></div>' +
+      '<div class="stcols">' + Object.keys(PALETTE).map((c) => '<button type="button" class="sw" data-c="' + c + '" aria-label="' + PALETTE[c][2] + '" aria-pressed="' + (s.color === c) + '" style="background:' + PALETTE[c][0] + '"></button>').join('') +
+      '<span class="stprev ' + s.key + '">' + esc(s.label) + '</span></div></div>').join('');
+  }
+  async function saveStatus(key, patch) {
+    const s = state.statuses.find((x) => x.key === key); if (!s) return;
+    const prev = Object.assign({}, s); Object.assign(s, patch);
+    applyStatuses(); renderStSettings(); render(); if (sheet && sheet.id) { refreshSheetMeetings(); renderContact(); }
+    try { await api(T.st + '?key=eq.' + key, { method: 'PATCH', body: patch }); }
+    catch (err) { Object.assign(s, prev); applyStatuses(); renderStSettings(); render(); fail(err); }
+  }
+  $('#setStBtn').addEventListener('click', () => showSetView('st'));
+  $('#setBack').addEventListener('click', () => showSetView('main'));
+  $('#setDlg').addEventListener('close', () => showSetView('main'));
+  $('#stList').addEventListener('change', (e) => {
+    const inp = e.target.closest('.stname'); if (!inp) return;
+    const k = inp.closest('.strow').dataset.k, v = inp.value.trim().slice(0, 14);
+    if (!v) { renderStSettings(); return; }
+    saveStatus(k, { label: v });
+  });
+  $('#stList').addEventListener('click', (e) => {
+    const row = e.target.closest('.strow'); if (!row) return;
+    const k = row.dataset.k;
+    const sw = e.target.closest('.sw'); if (sw) { saveStatus(k, { color: sw.dataset.c }); return; }
+    const mv = e.target.closest('[data-mv]'); if (!mv) return;
+    const list = statusList(), i = list.findIndex((x) => x.key === k), j = mv.dataset.mv === 'up' ? i - 1 : i + 1;
+    if (j < 0 || j >= list.length) return;
+    const a = list[i], b = list[j], sa = a.sort, sb = b.sort;
+    a.sort = sb; b.sort = sa;
+    applyStatuses(); renderStSettings();
+    Promise.all([api(T.st + '?key=eq.' + a.key, { method: 'PATCH', body: { sort: sb } }), api(T.st + '?key=eq.' + b.key, { method: 'PATCH', body: { sort: sa } })]).catch((err) => { a.sort = sa; b.sort = sb; renderStSettings(); fail(err); });
+  });
+
 
   startAuth();
   </script>
