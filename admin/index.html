@@ -1749,6 +1749,15 @@
     if (open.some((m) => e.target.closest(m.keep))) return;
     e.preventDefault(); e.stopImmediatePropagation(); open.forEach((m) => m.close());
   }, true);
+  /* חסימה מלאה של הרקע כשתפריט פתוח (כמו שכבת-על): לא רק הלחיצה, אלא גם נגיעה, גרירה, גלילה ולחיצה ארוכה מחוץ לתפריט לא מגיעות לשום דבר מאחוריו (שורות, צ'יפים, החלקה לסגירת פופאפ). הלחיצה עצמה (click) סוגרת את התפריט בטיפול למעלה. */
+  ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'touchmove', 'dblclick', 'contextmenu', 'wheel'].forEach((type) => {
+    document.addEventListener(type, (e) => {
+      const open = FLOAT_MENUS.filter((m) => { const x = m.el(); return x && !x.hidden; });
+      if (!open.length || open.some((m) => e.target.closest && e.target.closest(m.keep))) return;
+      e.stopImmediatePropagation();
+      if ((type === 'touchmove' || type === 'wheel' || type === 'contextmenu' || type === 'dblclick') && e.cancelable) e.preventDefault();   // בלי preventDefault על touchstart/pointerdown: הם מייצרים את ה-click שסוגר
+    }, { capture: true, passive: false });
+  });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') FLOAT_MENUS.forEach((m) => { const x = m.el(); if (x && !x.hidden) m.close(); }); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeHMenu(); });
   $('#bdBtn').addEventListener('click', boardOpen);
