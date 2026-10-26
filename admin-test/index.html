@@ -495,6 +495,9 @@
     /* תפריט סטטוס מהיר מהרשימה */
     .row .ptag[data-qs] { cursor: pointer; }
     .row .ptag.cnt { background: var(--cream); color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--line); }
+    .row .ptag.cnt.g { background: var(--green-bg); color: var(--green); box-shadow: none; }
+    .row .ptag.cnt.y { background: #FBEBC8; color: #8A5A00; box-shadow: none; }
+    .row .ptag.cnt.r { background: var(--red-bg); color: var(--red); box-shadow: none; }
     .row .ptag.empty { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--line); }
     .qmenu { position: fixed; z-index: 300; background: var(--paper); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 14px 36px rgba(63,56,47,.24); padding: 6px; display: grid; gap: 5px; min-width: 150px; }
     .qmenu[hidden] { display: none; }
@@ -1657,6 +1660,16 @@
       return;
     }
 
+    /* התמדה = כמה הגיע מתוך המפגשים שהיו לו הזדמנות להגיע אליהם: כל המפגשים שהתחילו מאז המפגש הראשון שלו (גם מפגש שלא נרשם אליו ולא הגיע נחשב החמצה).
+       הציון מוחלק לכיוון הממוצע (k=3) כדי שמשתתף עם מפגש אחד לא יצא מושלם או גרוע מדי. צבע: ירוק מעל הממוצע, צהוב סביבו, אדום מתחתיו, ניטרלי בלי אף הזדמנות */
+    const startedMs = state.meetings.filter((m) => attendOpen(m)).sort((a, b) => (a.meeting_date + a.meeting_time).localeCompare(b.meeting_date + b.meeting_time));
+    const persist = (p) => {
+      const mine = linksOf(p.id).map((l) => state.meetings.find((x) => x.id === l.meeting_id)).filter((m) => m && attendOpen(m)).map((m) => m.meeting_date + m.meeting_time).sort();
+      if (!mine.length) return { came: 0, total: 0 };
+      const opp = startedMs.filter((m) => (m.meeting_date + m.meeting_time) >= mine[0]);
+      return { came: opp.filter((m) => (linkOf(p.id, m.id) || {}).attended).length, total: opp.length };
+    };
+    const pAll = state.participants.map(persist).filter((x) => x.total > 0), pAvg = pAll.length ? pAll.reduce((s, x) => s + x.came, 0) / pAll.reduce((s, x) => s + x.total, 0) : 0, BAND = 0.1, K = 3;
     const anyEv = rows.some((p) => evCircle(p));   // אם לפחות שורה אחת עם עיגול שליחה, שומרים את העמודה בכל השורות כדי שהתגיות יהיו באותו קו
     const rowHtml = (p) => {
       const age = shownAge(p);
@@ -1670,8 +1683,8 @@
       }
       let tags = '';
       if (!state.filter) {
-        const ls = linksOf(p.id), came = ls.filter((l) => l.attended).length;
-        tags = '<span class="ptag cnt" title="הגיע ל-' + came + ' מתוך ' + ls.length + ' מפגשים">הגיע <bdi dir="ltr">' + came + '/' + ls.length + '</bdi></span>';
+        const pr = persist(p), rate = pr.total ? pr.came / pr.total : 0, score = pr.total ? (pr.came + K * pAvg) / (pr.total + K) : 0, cls = !pr.total ? 'n' : score > pAvg + BAND ? 'g' : score < pAvg - BAND ? 'r' : 'y';
+        tags = '<span class="ptag cnt ' + cls + '" title="התמדה: הגיע ל-' + pr.came + ' מתוך ' + pr.total + ' מפגשים מאז המפגש הראשון שלו (' + Math.round(rate * 100) + '%). ממוצע: ' + Math.round(pAvg * 100) + '%">הגיע <bdi dir="ltr">' + pr.came + '/' + pr.total + '</bdi></span>';
       }
       const hl = state.filter ? linkOf(p.id, state.filter) : null;
       const tgm = attTarget(), tgl = tgm ? linkOf(p.id, tgm.id) : null, showHere = !!(tgm && attendOpen(tgm)), evc = evCircle(p);
