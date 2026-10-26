@@ -912,7 +912,7 @@
             <label class="field"><span>שם פרטי</span><input name="first_name" required maxlength="40" autocomplete="off" /></label>
             <label class="field"><span>שם משפחה</span><input name="last_name" maxlength="40" autocomplete="off" /></label>
           </div>
-          <label class="field gfield"><span>מגדר</span><select name="gender"><option value="">לא צוין</option><option value="male">גבר</option><option value="female">אישה</option></select></label>
+          <label class="field gfield"><span>מגדר</span><select name="gender"><option value="">לא צוין</option><option value="male">זכר</option><option value="female">נקבה</option></select></label>
         </div>
         <div class="three">
           <label class="field"><span>טלפון</span><input name="phone" type="tel" inputmode="tel" maxlength="20" autocomplete="off" /></label>
@@ -1467,9 +1467,6 @@
   const WA_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.5c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.6.9 1-3.5-.2-.4C3.2 15.6 2.7 13.8 2.7 12c0-5.1 4.2-9.3 9.3-9.3 2.5 0 4.8 1 6.6 2.7 1.8 1.8 2.7 4.1 2.7 6.6 0 5.2-4.2 9.5-9.3 9.5zM20 4C17.9 1.8 15 .7 12 .7 5.8.7.7 5.8.7 12c0 2 .5 3.9 1.5 5.6L.6 23.4l6-1.6c1.6.9 3.5 1.4 5.4 1.4 6.2 0 11.3-5.1 11.3-11.3 0-3-1.2-5.8-3.3-7.9z"/></svg>';
 
   /* סטטוס תשלום של משתתף: במפגש מסוים לפי המפגש; בתצוגת הכל: שילם = כל המפגשים שלו שולמו, טרם שילם = יש לפחות מפגש אחד שלא שולם, null = בלי מפגשים */
-  /* סימוני שירותים ציבוריים: איש ואישה בשמלה */
-  const MAN_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="3.4" r="2.4"/><rect x="8" y="7" width="8" height="8.6" rx="1.3"/><rect x="4.9" y="7.4" width="2.2" height="7.6" rx="1.1"/><rect x="16.9" y="7.4" width="2.2" height="7.6" rx="1.1"/><rect x="8.3" y="16" width="3.2" height="7" rx="1.2"/><rect x="12.5" y="16" width="3.2" height="7" rx="1.2"/></svg>';
-  const WOMAN_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="3.4" r="2.4"/><path d="M9.7 7h4.6c.7 0 1.2.4 1.4 1l3.1 9H5.2l3.1-9c.2-.6.7-1 1.4-1z"/><rect x="9.4" y="17.2" width="2.2" height="5.8" rx="1"/><rect x="12.4" y="17.2" width="2.2" height="5.8" rx="1"/></svg>';
   const FREE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><circle cx="12" cy="12" r="8.5"/><path d="M6 18L18 6"/></svg>';
   const REQ_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><path d="M6 3h12M6 21h12"/><path d="M7 3v3.5c0 1.6 1.1 2.8 2.7 3.6L12 12l2.3-1.9C15.9 9.3 17 8.1 17 6.5V3"/><path d="M7 21v-3.5c0-1.6 1.1-2.8 2.7-3.6L12 12l2.3 1.9c1.6.8 2.7 2 2.7 3.6V21"/></svg>';   // בבדיקה: שעון חול
   const NEW_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><path d="M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"/></svg>';   // חדש: ניצוץ
@@ -1539,8 +1536,8 @@
     const none = nG('none');
     const genOkCount = () => base.filter(genOk).length;
     let h = '<div class="fgroup" style="--n:' + ((none || eg === 'none') ? 3 : 2) + '">' +
-      btn('g', 'male', '<span class="lw gen-lw">גברים</span><span class="gi gm">' + MAN_ICON + '</span>', nG('male'), '', eg === 'male', 'גברים') +
-      btn('g', 'female', '<span class="lw gen-lw">נשים</span><span class="gi gf">' + WOMAN_ICON + '</span>', nG('female'), '', eg === 'female', 'נשים') +
+      btn('g', 'male', '<span class="lw gen-lw">זכר</span>', nG('male'), '', eg === 'male', 'זכר') +
+      btn('g', 'female', '<span class="lw gen-lw">נקבה</span>', nG('female'), '', eg === 'female', 'נקבה') +
       (none || eg === 'none' ? btn('g', 'none', 'ללא', none, '', eg === 'none', 'ללא מגדר') : '') + '</div>';
     const selOf = (k) => k === PNONE ? { key: 'empty', label: 'בלי תגיות' } : state.statuses.concat(state.pstatuses).find((x) => x.key === k);
     const sel = epk.length ? selOf(epk[0]) : eh ? { key: 'empty', label: eh === '1' ? 'הגיע' : 'לא הגיע' } : null, nAll = genOkCount();
@@ -1553,7 +1550,7 @@
     const hereN = (v) => base.filter((p) => genOk(p) && (!epk.length || epk.some((k) => stMatch(p, k))) && ((((linkOf(p.id, state.filter) || {}).attended) ? '1' : '0') === v)).length;
     const hchip = (v, label, cls) => { const n = hereN(v); return '<button type="button" class="stc ' + cls + (n ? '' : ' zero') + '" data-sth="' + v + '" aria-pressed="' + (eh === v) + '">' + label + ' <small>' + n + '</small></button>'; };
     const editLink = '<button type="button" class="qeditlink" data-qedit="' + (state.filter ? 'meeting' : 'participant') + '" style="margin:0"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg> עריכה</button>';
-    $('#stStrip').innerHTML = (base.length || epk.length) ? gchip('female', 'נשים', 'gf') + gchip('male', 'גברים', 'gm') + (state.filter ? statusList() : pstatusList().concat([{ key: PNONE, label: 'בלי תגיות' }])).map((s) => { const n = nP(s.key); return '<button type="button" class="stc ' + (s.key === PNONE ? '' : s.key) + (n ? '' : ' zero') + '" data-stc="' + s.key + '" aria-pressed="' + epk.includes(s.key) + '">' + esc(s.label) + ' <small>' + n + '</small></button>'; }).join('') + (state.filter ? hchip('1', 'הגיע', 'gh') + hchip('0', 'לא הגיע', 'gn') : '') + editLink : '';
+    $('#stStrip').innerHTML = (base.length || epk.length) ? gchip('male', 'זכר', 'gm') + gchip('female', 'נקבה', 'gf') + (state.filter ? statusList() : pstatusList().concat([{ key: PNONE, label: 'בלי תגיות' }])).map((s) => { const n = nP(s.key); return '<button type="button" class="stc ' + (s.key === PNONE ? '' : s.key) + (n ? '' : ' zero') + '" data-stc="' + s.key + '" aria-pressed="' + epk.includes(s.key) + '">' + esc(s.label) + ' <small>' + n + '</small></button>'; }).join('') + (state.filter ? hchip('1', 'הגיע', 'gh') + hchip('0', 'לא הגיע', 'gn') : '') + editLink : '';
   }
 
   /* מיון הרשימה */
@@ -1591,7 +1588,7 @@
     const g = effGender(), pay = effPay(), scope = state.filter ? ' במפגש הזה' : '';
     const clear = '<button type="button" class="link-btn" id="clearFx" style="margin-top:14px">ניקוי סינונים</button>';
     if (g || pay) {
-      const who = g === 'male' ? 'גברים' : g === 'female' ? 'נשים' : g === 'none' ? 'משתתפים ללא מגדר' : 'משתתפים';
+      const who = g === 'male' ? 'זכרים' : g === 'female' ? 'נקבות' : g === 'none' ? 'משתתפים ללא מגדר' : 'משתתפים';
       const pks = payKeys(pay), stl = pks.length === 1 && pks[0] === PNONE ? 'בלי תגיות' : pks.map((k) => k === PNONE ? 'בלי תגיות' : STATUS_LABEL[k]).filter(Boolean).join(', ');
       return '<b>אין ' + who + (stl ? (pay === PNONE ? ' ' : ' בסטטוס "') + esc(stl) + (pay === PNONE ? '' : '"') : '') + scope + (state.q ? ' שמתאימים לחיפוש' : '') + '</b>אפשר לנקות את הסינון ולנסות שוב<br>' + clear;
     }
@@ -1764,8 +1761,8 @@
     const bucket = (lo, hi) => ages.filter((a) => a >= lo && a <= hi).length;
     const convBy = (pred) => { const ls = links.filter((l) => pred(l.p) && l.st !== 'exempt' && l.st !== 'willpay' && l.st !== 'maybe'); return { n: ls.length, paid: ls.filter((l) => l.paid).length }; };
     const cM = convBy((q) => q.gender === 'male'), cF = convBy((q) => q.gender === 'female');
-    const demo = part('מגדר', barRow('נשים', female.length, people.length, '#C2547A') + barRow('גברים', male.length, people.length, '#3F6FB5') + (noG ? barRow('לא צוין', noG, people.length, '#B9B2A5') : '') +
-        tbl(['המרה לתשלום', 'ערך'], [['נשים', Ps(cF.paid, cF.n)], ['גברים', Ps(cM.paid, cM.n)]])) +
+    const demo = part('מגדר', barRow('נקבה', female.length, people.length, '#C2547A') + barRow('זכר', male.length, people.length, '#3F6FB5') + (noG ? barRow('לא צוין', noG, people.length, '#B9B2A5') : '') +
+        tbl(['המרה לתשלום', 'ערך'], [['נקבה', Ps(cF.paid, cF.n)], ['זכר', Ps(cM.paid, cM.n)]])) +
       part('גילאים', barRow('עד 39', bucket(0, 39), ages.length, '#9A9A75') + barRow('40 עד 44', bucket(40, 44), ages.length, '#686A48') + barRow('45 עד 50', bucket(45, 50), ages.length, '#686A48') + barRow('51 ומעלה', bucket(51, 120), ages.length, '#B7791F') + '<p class="stline">בטווח היעד 40–50: <b>' + Ps(target.length, ages.length) + '</b> · גיל ממוצע <b>' + avgAge.toFixed(1) + '</b></p>') +
       part('חדשים וחוזרים', tbl(['מפגש', 'חדשים', 'חוזרים', 'מגמה'], pm.map((r, k) => [dlab(r.m), r.news, r.ret, k ? trend(r.news + r.ret, pm[k - 1].news + pm[k - 1].ret) : '—'])));
 
@@ -1774,7 +1771,7 @@
     const main = bottom +
       topic('money', 'כספים', last && prev ? trend(last.rev, prev.rev) : '', num(ilsB(rev), 'הכנסה') + num(req.length, 'בטיפול') + num(ilsB(credit), 'קרדיט')) +
       topic('promo', 'יחצנים ופרסום', '', num(ilsB(proInc), 'דרך יחצנים') + num(adL.length, 'ממודעה') + num(ilsB(proOwed), 'לתשלום ליחצנים')) +
-      topic('demo', 'דמוגרפיה', last && prev ? trend(last.news, prev.news) : '', num(Ps(female.length, people.length), 'נשים') + num(avgAge ? avgAge.toFixed(0) : '—', 'גיל ממוצע') + num(Ps(target.length, ages.length), '40 עד 50'));
+      topic('demo', 'דמוגרפיה', last && prev ? trend(last.news, prev.news) : '', num(Ps(female.length, people.length), 'נקבה') + num(avgAge ? avgAge.toFixed(0) : '—', 'גיל ממוצע') + num(Ps(target.length, ages.length), '40 עד 50'));
 
     $('#stBody').innerHTML = '<div class="ppanel" data-sp="main">' + main + '</div><div class="ppanel" data-sp="money" hidden>' + money + '</div><div class="ppanel" data-sp="promo" hidden>' + promo + '</div><div class="ppanel" data-sp="demo" hidden>' + demo + '</div>';
     stView('main', true);
