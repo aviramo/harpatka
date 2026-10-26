@@ -58,3 +58,13 @@ update test.harpatka_statuses set color = 'neutral' where key = 'willpay' and co
 
 -- 6. "חדש" הוא סטטוס מערכת: תמיד אחרון (ונעול בממשק)
 update test.harpatka_statuses set sort = 99, label = 'חדש', color = 'red' where key = 'unpaid';
+
+-- 7. הפרדה: סטטוסי מפגש (לכל שיוך) וסטטוסי משתתף (כללי). scope = meeting | participant
+alter table test.harpatka_statuses add column if not exists scope text not null default 'meeting';
+alter table test.harpatka_participants add column if not exists status_key text;
+insert into test.harpatka_statuses (key, label, color, sort, scope) values
+  ('p_active', 'פעיל', 'green', 1, 'participant'),
+  ('p_inactive', 'לא פעיל', 'neutral', 2, 'participant'),
+  ('p_new', 'חדש', 'red', 99, 'participant')
+on conflict (key) do nothing;
+notify pgrst, 'reload schema';
