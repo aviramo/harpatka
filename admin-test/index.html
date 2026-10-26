@@ -89,6 +89,7 @@
     .srcrow2 .codein { width: 58px; height: 34px; border-radius: 10px; border: 1.5px solid var(--line); background: #fff; text-align: center; font-size: 15px; font-weight: 700; padding: 0 4px; }
     .srcrow2 .ratetype { height: 34px; border-radius: 10px; border: 1.5px solid var(--line); background: #fff; font-weight: 800; padding: 0 6px; }
     .srcrow2 .ratein { width: 62px; }
+    .srcrow2 .prsettle { flex: 0 0 auto; height: 34px; padding: 0 12px; border-radius: 999px; background: #fff; box-shadow: inset 0 0 0 1.5px var(--line); font-weight: 800; font-size: 14px; color: var(--ink); }
     .srcrow2 .ratewrap.off { opacity: .45; }
     .srcrow2 .ratewrap b { font-size: 15px; }
     .srcrow .codewrap { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 2px; font-weight: 800; color: var(--muted); font-size: 14px; }
@@ -1059,14 +1060,13 @@
           <div class="settitle">מפגשים</div>
           <button type="button" class="setrow setlink" id="setAttBtn" aria-haspopup="menu"><div class="setl"><b>מתי נפתח סימון ההגעה</b><small id="setAttHint"></small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M6 9l6 6 6-6"/></svg></button>
           <button type="button" class="setrow setlink" id="setSrcBtn"><div class="setl"><b>דרכי הגעה</b><small id="setSrcHint"></small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
-          <button type="button" class="setrow setlink" id="setPrBtn"><div class="setl"><b>התחשבנות דרכי הגעה</b><small id="setPrHint"></small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
           <button type="button" class="setrow setlink" id="setPayBtn"><div class="setl"><b>תשלומים</b><small id="setPayHint"></small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
           <button type="button" class="setrow setlink" id="setStBtn"><div class="setl"><b>סטטוסים על מפגשים</b><small>שם, צבע וסדר לכל סטטוס</small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
           <button type="button" class="setrow setlink" id="setTagBtn"><div class="setl"><b>תוויות על משתתפים</b><small>שם, צבע וסדר לכל תווית</small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
         </div>
       </div>
       <div id="setSrc" hidden>
-        <p class="sthint" style="margin:0 2px 10px">כל דרך הגעה (פייסבוק, קרן, חבר מביא חבר) עם שם, צבע, קוד משלה בקישור <bdi dir="ltr">harpatka.co.il/?s=<b>קוד</b></bdi> ועלות לליד. ההתחשבנות בשורה "התחשבנות דרכי הגעה" בהגדרות</p>
+        <p class="sthint" style="margin:0 2px 10px">כל דרך הגעה (פייסבוק, קרן, חבר מביא חבר) עם שם, צבע, קוד משלה בקישור <bdi dir="ltr">harpatka.co.il/?s=<b>קוד</b></bdi> ועלות לליד. ההתחשבנות בכפתור בכל כרטיס</p>
         <div id="srcPrList"></div>
         <button type="button" class="btn ghost" id="srcPrAdd">+ דרך הגעה חדשה</button>
       </div>
@@ -2092,7 +2092,6 @@
   /* הוספת דרך הגעה מתוך שדה בחירה (משתתף / תשלום): פותח את טופס דרך ההגעה, ואחרי שמירה בוחר אותו בשדה */
   function openNewPromoter(cb) { prAfterSave = cb || null; showPromoterForm(null); $('#prDlg').showModal(); }
   $('#prDlg').addEventListener('close', () => { prAfterSave = null; });
-  $('#setPrBtn').addEventListener('click', () => { showPromoterList(); $('#prDlg').showModal(); });   // ההתחשבנות בתוך ההגדרות (פותח מעל ההגדרות)
   $('#prList').addEventListener('click', (e) => { if (e.target.closest('#prNew')) return showPromoterForm(null); const r = e.target.closest('[data-pr]'); if (r) showPromoterDetail(r.dataset.pr); });
   $('#prList').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-pr]')) { e.preventDefault(); showPromoterDetail(e.target.dataset.pr); } });
   $('#prEdit').addEventListener('click', () => showPromoterForm(prCur));
@@ -3185,7 +3184,7 @@
     const em = emailOf();
     $('#setMail').textContent = em;
     { const si = $('#setSender'); if (document.activeElement !== si) si.value = senderName(); const ii = $('#setIntro'); if (document.activeElement !== ii) ii.value = introTemplate(); }
-    renderAttOpts(); { const owed = state.promoters.reduce((s, x) => s + Math.max(0, ledgerOf(x.id).balance), 0); $('#setPrHint').textContent = owed > 0 ? 'יתרה לתשלום ₪' + nfm(owed) : 'הכול מסולק'; } $('#setPayHint').textContent = tierSummary(); $('#setSrcHint').textContent = state.promoters.length + ' דרכי הגעה';
+    renderAttOpts(); $('#setPayHint').textContent = tierSummary(); $('#setSrcHint').textContent = state.promoters.length + ' דרכי הגעה';
   }
   async function saveIntro(v) {
     const em = emailOf(), prev = state.prefs[em], val = v.trim().slice(0, 300) || null;
@@ -3293,6 +3292,7 @@
         (used ? '<span class="stspacer" style="flex:0 0 30px" title="יש משתתפים או תשלומים משויכים"></span>' : '<button type="button" class="stdel" data-sdel="pr:' + x.id + '" aria-label="מחיקה" title="מחיקה">×</button>') +
         '<div class="srcline2"><span class="codewrap" dir="ltr"><span>?s=</span><input class="codein" data-f="code" value="' + esc(x.code || '') + '" maxlength="6" placeholder="קוד" aria-label="קוד בקישור" autocapitalize="off" autocomplete="off" /></span>' +
         '<span class="ratewrap"><span class="rlbl">' + (x.cost_from_payment ? 'עלות מהתשלום' : 'עלות לליד') + '</span>' + (x.cost_from_payment ? '<select class="ratetype" data-f="rate_type" aria-label="סוג עלות"><option value="fixed"' + (x.rate_type !== 'percent' ? ' selected' : '') + '>₪</option><option value="percent"' + (x.rate_type === 'percent' ? ' selected' : '') + '>%</option></select>' : '') + '<input class="codein ratein" data-f="rate" type="number" inputmode="decimal" min="0" value="' + Number(x.rate || 0) + '" aria-label="עלות" />' + (x.cost_from_payment ? '' : '<b>₪</b>') + '</span>' +
+        '<button type="button" class="prsettle" data-settle="' + x.id + '">' + (() => { const b = ledgerOf(x.id).balance; return 'התחשבנות · ' + (b > 0 ? 'יתרה ₪' + nfm(b) : 'מסולק'); })() + '</button>' +
         '<label class="leadchk" title="לא מסומן: סכום קבוע לכל ליד (למשל מה שפייסבוק גובה). מסומן: העלות נגזרת מתשלום שנכנס למפגש, בשקלים (פעם אחת למשתתף) או באחוזים מכל תשלום"><input type="checkbox" data-f="cost_from_payment"' + (x.cost_from_payment ? ' checked' : '') + ' /> העלות מהתשלום</label></div></div>'; }).join('') || '<p class="mnone">אין דרכי הגעה</p>';
     $('#setSrcHint').textContent = state.promoters.length + ' דרכי הגעה';
   }
@@ -3314,6 +3314,7 @@
   });
   $('#setSrc').addEventListener('click', async (e) => {
     const cur = e.target.closest('.swcur'); if (cur) { const w = cur.dataset.who, tg = srcTarget(w); if (tg.row) openColorMenu(w, cur, tg.row.color || (tg.kind === 'ad' ? 'sky' : 'red'), (c) => saveSrc(w, { color: c })); return; }
+    const st0 = e.target.closest('[data-settle]'); if (st0) { showPromoterDetail(st0.dataset.settle); $('#prDlg').showModal(); return; }   // ההתחשבנות דרך דרכי ההגעה
     const d = e.target.closest('[data-sdel]'); if (d) {
       const w = d.dataset.sdel, tg = srcTarget(w); if (!tg.row) return;
       const prevP = state.promoters; state.promoters = state.promoters.filter((x) => x !== tg.row); renderSources(); render();
