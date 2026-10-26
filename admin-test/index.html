@@ -595,7 +595,6 @@
     .row .payic { cursor: pointer; display: inline-grid; place-items: center; flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%; font-size: 14px; font-weight: 800; color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--line); opacity: .75; }
     .row .payic.free { position: relative; background: var(--cream); color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--line); opacity: .9; cursor: default; }
     .row .payic.free::after { content: ''; position: absolute; left: 3px; right: 3px; top: 50%; height: 2px; background: currentColor; transform: rotate(-35deg); border-radius: 2px; }
-    .row .payic.part { background: var(--yellow-bg); color: var(--yellow); box-shadow: none; opacity: 1; }
     .row .payic.ok { background: var(--green-bg); color: var(--green); box-shadow: none; opacity: 1; }
     .row .ptag.cnt { background: var(--cream); color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--line); }
     .row .ptag.cnt.g { background: var(--green-bg); color: var(--green); box-shadow: none; }
@@ -954,7 +953,6 @@
     .row .evc.off { background: #fff; border-color: var(--sand); color: var(--muted); }   /* אין טלפון: אפור, לא אדום */
     .hfilt svg, .row .evc svg { width: 14px; height: 14px; }
     .row .main .here[aria-pressed="true"], .row .evc.sent, .row .payic.ok, .hfilt.yes { background: var(--green-bg); border: 1.5px solid var(--green-bg); color: var(--green); }   /* "כן": הירוק הבהיר של הפלטה (כמו צ'יפ "שילם") */
-    .row .payic.part { background: var(--yellow-bg); border: 1.5px solid var(--yellow-bg); color: var(--yellow); }
     .row .payic.free { background: #fff; border: 1.5px solid var(--line); color: var(--muted); position: relative; }
     .hfilt.all { background: #fff; border: 1.5px solid var(--line); color: var(--muted); }
     .hfilt.no { background: var(--red-bg); border: 1.5px dashed var(--red); color: var(--red); }   /* בפילטר ובתפריט: "לא" באדום, כדי שיובחן מ"הכל" (לבן) ומ"כן" (ירוק) */
@@ -1980,7 +1978,7 @@
       let tags = '', payIc = '';
       if (state.filter && linkOf(p.id, state.filter)) { const al = allocatedOf(p.id, state.filter), mt = state.meetings.find((x) => x.id === state.filter), lk = linkOf(p.id, state.filter), need = mt ? (pkgNetFor(p.id, state.filter) > 0 ? al : expectedPrice(p.id, mt, ilDay(lk.created_at || new Date().toISOString()))) : 0;
         if (noPayOf(p, lk)) payIc = '<span class="payic free" title="לא משלם על המפגש הזה">₪</span>';
-        else payIc = al <= 0 ? '<span class="payic" title="לא שולם">₪</span>' : al >= need ? '<span class="payic ok" title="שולם ₪' + nfm(al) + '">₪</span>' : '<span class="payic part" title="שולם חלקית ₪' + nfm(al) + ' מתוך ₪' + nfm(need) + '">₪</span>'; }   // סמל תשלום (לפי רשומות התשלום, לא לפי סטטוס) מימין לסטטוס
+        else payIc = al <= 0 ? '<span class="payic" title="לא שולם">₪</span>' : '<span class="payic ok" title="שולם ₪' + nfm(al) + '">₪</span>'; }   // אין "שולם חלקית": יש כסף שהוקצה למפגש = שולם   // סמל תשלום (לפי רשומות התשלום, לא לפי סטטוס) מימין לסטטוס
       if (!state.filter) {
         const pr = persist(p), rate = pr.total ? pr.came / pr.total : 0, score = pr.total ? (pr.came + K * pAvg) / (pr.total + K) : 0, cls = !pr.total ? 'n' : score > pAvg + BAND ? 'g' : score < pAvg - BAND ? 'r' : 'y';
         tags = '<span class="ptag cnt ' + cls + '" title="התמדה: הגיע ל-' + pr.came + ' מתוך ' + pr.total + ' מפגשים מאז המפגש הראשון שלו (' + Math.round(rate * 100) + '%). ממוצע: ' + Math.round(pAvg * 100) + '%">הגיע <bdi dir="ltr">' + pr.came + '/' + pr.total + '</bdi></span>';
