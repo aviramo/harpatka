@@ -178,3 +178,12 @@ notify pgrst, 'reload schema';
 -- 18. "לא משלם" לכל מפגש: ברירת המחדל במשתתף (no_pay), ועקיפה לכל שיוך למפגש (null = לפי ברירת המחדל של המשתתף)
 alter table test.harpatka_attendance add column if not exists no_pay boolean;
 notify pgrst, 'reload schema';
+
+-- 19. איחוד דרכי הגעה: יחצנים וערוצי פרסום הם אותה ישות (harpatka_promoters): שם, צבע, קוד בקישור (?s=), עלות לליד (₪ או %), וסימון אם העלות נגזרת מעצם הליד או מתשלום שנכנס למפגש
+alter table test.harpatka_promoters add column if not exists code text;
+create unique index if not exists test_promoters_code on test.harpatka_promoters (code) where code is not null;
+alter table test.harpatka_promoters add column if not exists cost_on_lead boolean not null default false;
+insert into test.harpatka_promoters (name, rate_type, rate, color, code, cost_on_lead)
+  select s.name, 'fixed', 0, s.color, s.code, true from test.harpatka_sources s where not exists (select 1 from test.harpatka_promoters p where p.code = s.code);
+update test.harpatka_participants p set promoter_id = pr.id from test.harpatka_promoters pr where pr.code = p.source_code and p.promoter_id is null;
+notify pgrst, 'reload schema';
