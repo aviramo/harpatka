@@ -926,12 +926,13 @@
     <header class="top">
       <div class="title-row">
         <div class="msel">
-          <h1><button type="button" id="mSel" aria-haspopup="menu" aria-expanded="false"><span id="mSelTxt">לא נבחר מפגש</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></h1>
+          <h1><button type="button" id="mSel" aria-haspopup="menu" aria-expanded="false"><span id="mSelTxt">הכל</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></h1>
           <div class="hcount" id="hereCount" hidden></div>
           <button type="button" class="hcount attforce" id="attForce" hidden title="כיבוי מצב ההגעה הזמני">מצב הגעה זמני ✕</button>
           <div class="sortmenu mmenu" id="mMenu" role="menu" hidden></div>
         </div>
         <div class="hgrp">
+        <div class="genderchips" id="genderChips"></div>
         <div class="hicons">
           <button type="button" class="hicon" id="menuBtn" aria-label="תפריט" title="תפריט" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.8"/></svg><span class="bdbadge" id="menuBadge" hidden></span></button>
           <div class="hmenu" id="hMenu" role="menu" hidden>
@@ -941,7 +942,6 @@
             <button type="button" role="menuitem" class="hmi out" id="signOut"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><path d="M15 8l4 4-4 4M19 12H9"/></svg><span>יציאה</span></button>
           </div>
         </div>
-        <div class="genderchips" id="genderChips"></div>
         </div>
       </div>
       <div class="ststrip" id="stStrip" role="group" aria-label="סינון לפי סטטוס"></div>
@@ -1689,7 +1689,7 @@
   function renderChips() {
     const cur = state.filter ? state.meetings.find((m) => m.id === state.filter) : null;
     { const hc = $('#hereCount'), tg = attTarget(), ls = tg ? state.att.filter((a) => a.meeting_id === tg.id) : []; hc.hidden = true; if (false) hc.innerHTML = 'הגיעו <bdi dir="ltr">' + ls.filter((a) => a.attended).length + '/' + ls.length + '</bdi>' + (cur ? '' : ' · ' + esc(meetingLabel(tg).split(' · ')[0])); }
-    $('#mSelTxt').textContent = cur ? meetingLabel(cur).split(' · ')[0] : 'לא נבחר מפגש';
+    $('#mSelTxt').textContent = cur ? meetingLabel(cur).split(' · ')[0] : 'הכל';
     const dayTime = (m) => esc(meetingLabel(m).split(' · ')[0]) + ' · ' + esc(meetingLabel(m, true).split(' ').slice(0, 2).join(' ')) + ' · ' + esc(String(m.meeting_time).slice(0, 5));
     const EDIT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"/><path d="M14 7l3 3"/></svg>';
     const paidAll = state.participants.filter((x) => { const ls = linksOf(x.id).filter((l) => !l.exempt); return ls.length && ls.every((l) => l.paid); }).length;
