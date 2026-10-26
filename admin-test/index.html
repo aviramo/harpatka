@@ -762,6 +762,7 @@
     .mlist .mrow .pay, .mlist .mrow .mmoney, .mlist .mrow .here.sm { height: 30px; font-size: 15px; }
     .fx.stsel .stpill { font-size: 15px; padding: 2px 12px; display: inline-flex; align-items: center; gap: 6px; }
     .fx.stsel .stpill b { font-size: 13px; opacity: .8; }
+    .fgroup:has(.fx.stsel.on) { background: transparent; border-color: transparent; }   /* סינון פעיל: רק הצ'יפ, בלי האליפסה הלבנה סביבו */
 </style>
 </head>
 <body class="locked">
@@ -1532,7 +1533,7 @@
       (none || eg === 'none' ? btn('g', 'none', 'ללא', none, '', eg === 'none', 'ללא מגדר') : '') + '</div>';
     const selOf = (k) => k === PNONE ? { key: 'empty', label: 'בלי תגיות' } : state.statuses.concat(state.pstatuses).find((x) => x.key === k);
     const sel = epk.length ? selOf(epk[0]) : eh ? { key: 'empty', label: eh === '1' ? 'הגיע' : 'לא הגיע' } : null, nAll = genOkCount();
-    h += '<div class="fgroup" style="--n:2"><button type="button" class="fx stsel" data-fxs="1" aria-haspopup="menu" aria-label="סינון לפי ' + (state.filter ? 'סטטוס' : 'תגיות') + (sel ? ': ' + epk.map((k) => (selOf(k) || {}).label).filter(Boolean).map(esc).join(', ') : '') + '" title="סינון לפי ' + (state.filter ? 'סטטוס' : 'תגיות') + '">' +
+    h += '<div class="fgroup" style="--n:2"><button type="button" class="fx stsel' + (sel ? ' on' : '') + '" data-fxs="1" aria-haspopup="menu" aria-label="סינון לפי ' + (state.filter ? 'סטטוס' : 'תגיות') + (sel ? ': ' + epk.map((k) => (selOf(k) || {}).label).filter(Boolean).map(esc).join(', ') : '') + '" title="סינון לפי ' + (state.filter ? 'סטטוס' : 'תגיות') + '">' +
       (sel ? '<span class="stpill ' + sel.key + '">' + esc(sel.label) + (epk.length > 1 ? ' +' + (epk.length - 1) : '') + ' <b>' + (epk.length ? nP(ep) : base.filter((p) => genOk(p) && hereOk(p)).length) + '</b></span>' : '<span class="stlab">' + (state.filter ? 'סטטוס' : 'תגיות') + '</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>') + '</button></div>';
     $('#facets').classList.toggle('searching', !!q);
     $('#facets').innerHTML = base.length || eg || epk.length || eh ? h : '';
