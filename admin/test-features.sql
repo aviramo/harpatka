@@ -130,3 +130,7 @@ notify pgrst, 'reload schema';
 -- 12. נוסח הודעת ההצגה בוואטסאפ (לכל מנהל): {שם} ו-{שולח} מוחלפים בעת השליחה
 alter table test.harpatka_admin_prefs add column if not exists wa_intro text;
 notify pgrst, 'reload schema';
+
+-- 13. מתי נפתח סימון ההגעה (לכל מנהל): '15','30','60','120' דקות לפני, 'day' = מתחילת יום המפגש, 'always' = תמיד
+alter table test.harpatka_admin_prefs add column if not exists att_lead text;
+notify pgrst, 'reload schema';
