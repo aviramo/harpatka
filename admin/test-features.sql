@@ -16,7 +16,7 @@ insert into test.harpatka_statuses (key, label, color, sort) values
   ('exempt', 'חינם', 'sky', 3),
   ('maybe', 'ספונטני', 'sky', 4),
   ('requested', 'בטיפול', 'amber', 5),
-  ('unpaid', 'חדש', 'red', 6)
+  ('unpaid', 'חדש', 'red', 99)
 on conflict (key) do nothing;
 alter table test.harpatka_statuses enable row level security;
 drop policy if exists "harpatka admin all" on test.harpatka_statuses;
@@ -55,3 +55,6 @@ notify pgrst, 'reload schema';
 
 -- 5. ישלם בצבע ניטרלי (במקום אדום, כדי שלא יהיו שני אדומים)
 update test.harpatka_statuses set color = 'neutral' where key = 'willpay' and color = 'red';
+
+-- 6. "חדש" הוא סטטוס מערכת: תמיד אחרון (ונעול בממשק)
+update test.harpatka_statuses set sort = 99, label = 'חדש', color = 'red' where key = 'unpaid';
