@@ -1414,7 +1414,7 @@
   let deep = null;
   try {
     const sp = new URLSearchParams(location.search);
-    if (['m', 'p', 'pay', 'at', 'pd', 'sv', 'bl', 'tg', 'tga', 'q', 'em', 'g', 's', 'st', 'pt', 'bd'].some((k) => sp.get(k))) { deep = { m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), at: sp.get('at'), pd: sp.get('pd'), sv: sp.get('sv'), bl: sp.get('bl'), tg: sp.get('tg'), tga: sp.get('tga'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g'), s: sp.get('s'), st: sp.get('st'), pt: sp.get('pt'), bd: sp.get('bd') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
+    if (['m', 'p', 'pay', 'at', 'pd', 'sv', 'bl', 'tg', 'tga', 'q', 'em', 'g', 's', 'st', 'pt', 'bd', 'pm', 'set', 'stv', 'pr'].some((k) => sp.get(k))) { deep = { m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), at: sp.get('at'), pd: sp.get('pd'), sv: sp.get('sv'), bl: sp.get('bl'), tg: sp.get('tg'), tga: sp.get('tga'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g'), s: sp.get('s'), st: sp.get('st'), pt: sp.get('pt'), bd: sp.get('bd'), pm: sp.get('pm'), set: sp.get('set'), stv: sp.get('stv'), pr: sp.get('pr') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
     else { deep = JSON.parse(sessionStorage.getItem('harpatka_deep') || 'null'); }
   } catch (e) {}
   const $ = (s) => document.querySelector(s);
@@ -1434,9 +1434,11 @@
     if (state.gender) sp.set('g', state.gender);
     if (state.sort !== 'new') sp.set('s', state.sort);
     if (state.q.trim()) sp.set('q', state.q.trim());
-    if (openPid) { sp.set('p', openPid); if (pTab === 'info') sp.set('pt', 'info'); }
+    if (openPid) { sp.set('p', openPid); if (pTab && pTab !== 'main' && pTab !== 'contact' && pTab !== 'meets') { sp.set('pt', pTab); if (pTab === 'deposit' && sheet && sheet.depMid) sp.set('pm', sheet.depMid); } }
+    if ($('#setDlg').open) sp.set('set', setView === 'main' ? '1' : (setView === 'st' || setView === 'del') ? (stScope === 'meeting' ? 'st' : 'tag') : setView);
+    if ($('#prDlg').open && prCur) sp.set('pr', prCur);
     if (editingMeeting && mDlg.open) sp.set('em', editingMeeting.id);
-    if ($('#stDlg').open) sp.set('st', '1');
+    if ($('#stDlg').open) { sp.set('st', '1'); if (stCur && stCur !== 'main') sp.set('stv', stCur); }
     const s = sp.toString();
     try { history.replaceState(null, '', location.pathname + (s ? '?' + s : '')); } catch (e) {}
   }
@@ -1816,9 +1818,22 @@
         if (d.q) { state.q = d.q; $('#q').value = d.q; }
         urlReady = true;
         render();
-        if (d.p && state.participants.some((x) => x.id === d.p)) openParticipant(d.p, ['meets', 'contact', 'info'].includes(d.pt) ? d.pt : 'contact');
+        if (d.p && state.participants.some((x) => x.id === d.p)) {
+          openParticipant(d.p, ['meets', 'contact', 'info'].includes(d.pt) ? d.pt : 'contact');
+          if (['wallet', 'zikuy', 'credit', 'refund', 'pay'].includes(d.pt)) { viewStack = []; goView('wallet'); }
+          else if (d.pt === 'deposit') { viewStack = []; openDeposit(d.pm && state.meetings.some((x) => x.id === d.pm) ? d.pm : null); }
+          if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+        }
         else if (d.em && state.meetings.some((x) => x.id === d.em)) openMeeting(d.em);
-        else if (d.st) { renderStats(); $('#stDlg').showModal(); if (document.activeElement && document.activeElement.closest('#stDlg')) document.activeElement.blur(); syncUrl(); }
+        else if (d.set || d.pr) {
+          renderSettings(); $('#setDlg').showModal();
+          const v = d.set;
+          if (d.pr && promoterOf(d.pr)) { showSetView('src'); showPromoterDetail(d.pr); $('#prDlg').showModal(); }
+          else if (v === 'st' || v === 'tag') { stScope = v === 'st' ? 'meeting' : 'participant'; showSetView('st'); }
+          else if (['pay', 'src', 'pm', 'em'].includes(v)) showSetView(v);
+          if (document.activeElement && document.activeElement.closest('#setDlg')) document.activeElement.blur(); syncUrl();
+        }
+        else if (d.st) { renderStats(); $('#stDlg').showModal(); if (d.stv && ST_TITLES[d.stv] && d.stv !== 'main') stView(d.stv, true); if (document.activeElement && document.activeElement.closest('#stDlg')) document.activeElement.blur(); syncUrl(); }
         else if (d.bd) boardOpen();
         return;
       }
@@ -2174,7 +2189,7 @@
   function stView(v, instant) {
     const forward = v !== 'main'; stCur = v;
     document.querySelectorAll('#stBody [data-sp]').forEach((d) => { const on = d.dataset.sp === v; d.hidden = !on; d.classList.remove('enter-l', 'enter-r'); if (on && !instant && !reducedMotion()) { void d.offsetWidth; d.classList.add(forward ? 'enter-l' : 'enter-r'); } });
-    $('#stArrow').hidden = v === 'main'; $('#stTitle').textContent = ST_TITLES[v] || ST_TITLES.main; navSync($('#stDlg'));
+    $('#stArrow').hidden = v === 'main'; $('#stTitle').textContent = ST_TITLES[v] || ST_TITLES.main; navSync($('#stDlg')); syncUrl();
     const dlg = $('#stDlg'); dlg.scrollTop = 0;
   }
   $('#stArrow').addEventListener('click', () => stView('main'));
@@ -2361,7 +2376,7 @@
   function show(view) {
     const forward = RANK[view] > RANK[prView]; prView = view;
     ['#prList', '#prDetail', '#prForm'].forEach((s) => { const d = $(s), on = s === view; d.hidden = !on; d.classList.remove('enter-l', 'enter-r'); if (on && !reducedMotion()) { void d.offsetWidth; d.classList.add(forward ? 'enter-l' : 'enter-r'); } });
-    $('#prArrow').hidden = view === '#prList'; navSync($('#prDlg'));
+    $('#prArrow').hidden = view === '#prList'; navSync($('#prDlg')); syncUrl();
   }
   function showPromoterDetail(id) {
     prCur = id; const x = promoterOf(id); if (!x) return showPromoterList();
@@ -3145,6 +3160,7 @@
       if (this.open) return;
       rawShow.call(this);
       navOpen(this);
+      try { syncUrl(); } catch (e) {}
       root.classList.add('dlg-lock');
       this._closing = false;
       this.getAnimations().forEach((a) => a.cancel());
@@ -3156,6 +3172,7 @@
     proto.close = function (rv, from) {
       if (!this.open || this._closing) return;
       navClose(this);
+      setTimeout(() => { try { syncUrl(); } catch (e) {} }, 420);   // אחרי שהדיאלוג נסגר (אנימציה)
       if (reduced()) { rawClose.call(this, rv); unlock(); return; }
       this._closing = true;
       const d = this, cur = from == null ? 0 : from, y = offset(d);
@@ -3717,7 +3734,7 @@
     if (v === 'em') { const ta = $('#emText'); if (document.activeElement !== ta) ta.value = eventTemplate(); renderEmOpen(); }
     if (v === 'st') renderStSettings();
     if (v === 'pay') renderTiers();
-    navSync($('#setDlg'));
+    navSync($('#setDlg')); syncUrl();
   }
   $('#setSt').addEventListener('click', (e) => { const b = e.target.closest('[data-sc]'); if (!b) return; stScope = b.dataset.sc; renderStSettings(); });
   function renderStSettings() {
