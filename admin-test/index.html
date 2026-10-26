@@ -888,7 +888,7 @@
           <label class="field"><span>מקור</span><select name="promoter_sel" id="pPromoSel"></select></label>
         </div>
         <div class="two" style="grid-template-columns:1fr">
-          <div class="field"><span>סטטוס משתתף</span><div class="pstchips" id="pStatusChips" role="radiogroup" aria-label="סטטוס משתתף"></div><button type="button" class="qeditlink" data-qedit="participant"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg> עריכה</button></div>
+          <div class="field"><span>תגיות</span><div class="pstchips" id="pStatusChips" role="group" aria-label="תגיות"></div><button type="button" class="qeditlink" data-qedit="participant"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg> עריכה</button></div>
         </div>
         <div class="note" id="pRegLine" style="color:var(--muted);font-size:14px;margin:2px 4px 10px"></div>
         <button class="btn ghost" id="pDelete" type="button">מחיקת משתתף</button>
@@ -959,10 +959,10 @@
         <div class="sopts" id="setDelOpts"></div>
       </div>
       <div id="setSt" hidden>
-        <div class="stseg" role="tablist"><button type="button" role="tab" data-sc="meeting" aria-selected="true">סטטוס מפגש</button><button type="button" role="tab" data-sc="participant" aria-selected="false">סטטוס משתתף</button></div>
+        <div class="stseg" role="tablist"><button type="button" role="tab" data-sc="meeting" aria-selected="true">סטטוס מפגש</button><button type="button" role="tab" data-sc="participant" aria-selected="false">תגיות</button></div>
         <p class="sthint" id="stHint" style="margin:0 2px 12px"></p>
         <div id="stList"></div>
-        <button type="button" class="btn ghost" id="stAdd" hidden>+ סטטוס משתתף חדש</button>
+        <button type="button" class="btn ghost" id="stAdd" hidden>+ תגית חדשה</button>
       </div>
     </div>
   </dialog>
@@ -1448,7 +1448,7 @@
   const PDEFAULT = null;
   state.pstatuses = DEFAULT_PSTATUSES.map((s) => Object.assign({}, s));
   const pstatusList = () => state.pstatuses.slice().sort((a, b) => ((a.key === PSYSTEM) - (b.key === PSYSTEM)) || (a.sort - b.sort));
-  const pstatusKey = (p) => (p.status_key && state.pstatuses.some((s) => s.key === p.status_key)) ? p.status_key : null;   // ריק = בלי סטטוס
+  const ptagsOf = (p) => (p.tags || []).filter((k) => state.pstatuses.some((s) => s.key === k));   // תגיות המשתתף (בחירה מרובה, תווית בלבד)
   const PNONE = '__pnone';   // סינון "בלי סטטוס"
   const isPKey = (k) => String(k).startsWith('p_') || k === PNONE;
   const BUILTIN = DEFAULT_STATUSES.map((s) => s.key);   // סטטוסי מפגש מובנים (מותאמים נוספים: מפתח m_...)
@@ -1484,7 +1484,7 @@
   const effGender = () => state.q.trim() ? null : state.gender;
   const effPay = () => state.q.trim() ? null : state.pay;
   const normFilter = () => { if (state.pay && isPKey(state.pay) === !!state.filter) state.pay = null; };   // סינון משתתף רק בתצוגת הכל, סינון מפגש רק בתוך מפגש
-  const stMatch = (p, key) => { if (key === PNONE) return pstatusKey(p) === null; if (isPKey(key)) return pstatusKey(p) === key; if (state.filter) { const l = linkOf(p.id, state.filter); return !!l && linkStatus(l) === key; } return linksOf(p.id).some((l) => linkStatus(l) === key); };
+  const stMatch = (p, key) => { if (key === PNONE) return !ptagsOf(p).length; if (isPKey(key)) return ptagsOf(p).includes(key); if (state.filter) { const l = linkOf(p.id, state.filter); return !!l && linkStatus(l) === key; } return linksOf(p.id).some((l) => linkStatus(l) === key); };
   function renderFacets() {
     normFilter();
     const q = state.q.trim().toLowerCase(), qd = digits(q), eg = effGender(), ep = effPay();
@@ -1504,7 +1504,7 @@
       btn('g', 'male', '<span class="lw gen-lw">גברים</span><span class="gi gm">' + MAN_ICON + '</span>', nG('male'), '', eg === 'male', 'גברים') +
       btn('g', 'female', '<span class="lw gen-lw">נשים</span><span class="gi gf">' + WOMAN_ICON + '</span>', nG('female'), '', eg === 'female', 'נשים') +
       (none || eg === 'none' ? btn('g', 'none', 'ללא', none, '', eg === 'none', 'ללא מגדר') : '') + '</div>';
-    const sel = ep === PNONE ? { key: 'empty', label: 'בלי סטטוס' } : ep ? state.statuses.concat(state.pstatuses).find((x) => x.key === ep) : null, nAll = genOkCount();
+    const sel = ep === PNONE ? { key: 'empty', label: 'בלי תגיות' } : ep ? state.statuses.concat(state.pstatuses).find((x) => x.key === ep) : null, nAll = genOkCount();
     h += '<div class="fgroup" style="--n:2"><button type="button" class="fx stsel" data-fxs="1" aria-haspopup="menu" aria-label="סינון לפי סטטוס' + (sel ? ': ' + esc(sel.label) : '') + '" title="סינון לפי סטטוס">' +
       (sel ? '<span class="stpill ' + sel.key + '">' + esc(sel.label) + '</span><b>' + nP(ep) + '</b>' : '<span class="stlab">סטטוס</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>') + '</button></div>';
     $('#facets').classList.toggle('searching', !!q);
@@ -1547,7 +1547,7 @@
     const clear = '<button type="button" class="link-btn" id="clearFx" style="margin-top:14px">ניקוי סינונים</button>';
     if (g || pay) {
       const who = g === 'male' ? 'גברים' : g === 'female' ? 'נשים' : g === 'none' ? 'משתתפים ללא מגדר' : 'משתתפים';
-      const stl = pay === PNONE ? 'בלי סטטוס' : pay ? STATUS_LABEL[pay] : '';
+      const stl = pay === PNONE ? 'בלי תגיות' : pay ? STATUS_LABEL[pay] : '';
       return '<b>אין ' + who + (stl ? (pay === PNONE ? ' ' : ' בסטטוס "') + esc(stl) + (pay === PNONE ? '' : '"') : '') + scope + (state.q ? ' שמתאימים לחיפוש' : '') + '</b>אפשר לנקות את הסינון ולנסות שוב<br>' + clear;
     }
     if (state.q) return '<b>לא נמצא אף אחד</b>אפשר לנסות שם או מספר אחר';
@@ -1605,9 +1605,9 @@
       }
       let tags = '';
       if (!state.filter) {
-        const pk = pstatusKey(p);
-        tags = pk ? '<span class="ptag ' + pk + '" data-qs="' + p.id + '" role="button" tabindex="0" title="סטטוס משתתף (לחיצה לשינוי)">' + esc(STATUS_LABEL[pk]) + '</span>'
-          : '<span class="ptag empty" data-qs="' + p.id + '" role="button" tabindex="0" title="בלי סטטוס (לחיצה לבחירה)">סטטוס</span>';
+        const pt = ptagsOf(p);
+        tags = pt.length ? '<span class="ptag ' + pt[0] + '" data-qs="' + p.id + '" role="button" tabindex="0" title="תגיות (לחיצה לשינוי)">' + esc(STATUS_LABEL[pt[0]]) + (pt.length > 1 ? ' +' + (pt.length - 1) : '') + '</span>'
+          : '<span class="ptag empty" data-qs="' + p.id + '" role="button" tabindex="0" title="בלי תגיות (לחיצה לבחירה)">תגיות</span>';
       }
       const hl = state.filter ? linkOf(p.id, state.filter) : null;
       const tgm = attTarget(), tgl = tgm ? linkOf(p.id, tgm.id) : null, showHere = !!(tgm && attendOpen(tgm)), evc = evCircle(p);
@@ -1991,11 +1991,12 @@
       apply = (k) => (k === '__none' ? (l && confirmLink(pid, mId, false)) : (l ? setPayStatus(pid, mId, k) : setLinkedWithStatus(pid, mId, k)));
     } else {
       const p = state.participants.find((x) => x.id === pid); if (!p) return;
-      cur = pstatusKey(p) || '__none'; head = 'סטטוס משתתף'; apply = (k) => setParticipantStatus(pid, k === '__none' ? null : k);
+      cur = '__multi'; head = 'תגיות'; apply = () => {};
     }
+    const tagSet = new Set(inMeeting ? [] : ptagsOf(state.participants.find((x) => x.id === pid)));
     menu.innerHTML = '<button type="button" class="qi" style="background:transparent;color:var(--muted);font-size:13px;height:26px;cursor:default" tabindex="-1">' + esc(head) + '</button>' +
-      (inMeeting ? statusList() : pstatusList()).map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-qk="' + s.key + '" aria-pressed="' + (s.key === cur) + '">' + esc(s.label) + '</button>').join('') +
-      '<button type="button" role="menuitem" class="qi" data-qk="__none" aria-pressed="' + (cur === '__none') + '" style="background:var(--cream);color:var(--muted)">' + (inMeeting ? 'לא משויך' : 'בלי סטטוס') + '</button>' + editBtn(inMeeting ? 'meeting' : 'participant');
+      (inMeeting ? statusList() : pstatusList()).map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-qk="' + s.key + '" aria-pressed="' + (inMeeting ? s.key === cur : tagSet.has(s.key)) + '">' + esc(s.label) + '</button>').join('') +
+      (inMeeting ? '<button type="button" role="menuitem" class="qi" data-qk="__none" aria-pressed="' + (cur === '__none') + '" style="background:var(--cream);color:var(--muted)">לא משויך</button>' : '') + editBtn(inMeeting ? 'meeting' : 'participant');
     menu.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
     let left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8), top = r.bottom + 6;
@@ -2004,23 +2005,24 @@
     menu.onclick = (e) => {
       const ed = e.target.closest('[data-qedit]'); if (ed) { openStatusSettings(ed.dataset.qedit); return; }
       const b = e.target.closest('[data-qk]'); if (!b) return;
-      const k = b.dataset.qk; closeQ(); if (k === cur) return;
+      const k = b.dataset.qk;
+      if (!inMeeting) { b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true')); toggleTag(pid, k); return; }   // תגיות: בחירה מרובה, התפריט נשאר פתוח
+      closeQ(); if (k === cur) return;
       apply(k); if (!(inMeeting && k === '__none')) toast(k === '__none' ? 'הסטטוס הוסר' : 'הסטטוס עודכן: ' + STATUS_LABEL[k]);
     };
   }
   /* סטטוס משתתף (כללי): נפרד מסטטוס המפגש */
-  async function setParticipantStatus(pid, key) {
+  async function toggleTag(pid, key) {
     const p = state.participants.find((x) => x.id === pid); if (!p) return;
-    const prev = p.status_key; p.status_key = key || null; render();
-    if (sheet && sheet.id === pid) fillPStatusSel(p);
-    try { await api(T.p + '?id=eq.' + pid, { method: 'PATCH', body: { status_key: p.status_key } }); }
-    catch (err) { p.status_key = prev; render(); fail(err); }
+    const prev = p.tags || [], has = prev.includes(key), next = has ? prev.filter((k) => k !== key) : prev.concat(key);
+    p.tags = next; render(); if (sheet && sheet.id === pid) fillPStatusSel(p);
+    try { await api(T.p + '?id=eq.' + pid, { method: 'PATCH', body: { tags: next } }); }
+    catch (err) { p.tags = prev; render(); if (sheet && sheet.id === pid) fillPStatusSel(p); fail(err); }
   }
   function fillPStatusSel(p) {
     const box = $('#pStatusChips'); if (!box) return;
-    const cur = p ? pstatusKey(p) : null;
-    box.innerHTML = pstatusList().map((s) => '<button type="button" role="radio" class="sopt ' + s.key + '" data-ps="' + s.key + '" aria-pressed="' + (s.key === cur) + '">' + esc(s.label) + '</button>').join('') +
-      '<button type="button" role="radio" class="sopt psnone" data-ps="" aria-pressed="' + (!cur) + '">ללא</button>';
+    const cur = new Set(p ? ptagsOf(p) : []);
+    box.innerHTML = pstatusList().map((s) => '<button type="button" role="checkbox" class="sopt ' + s.key + '" data-ps="' + s.key + '" aria-pressed="' + cur.has(s.key) + '">' + esc(s.label) + '</button>').join('') || '<span class="sthint" style="margin:0">אין תגיות. אפשר להוסיף בעריכה</span>';
   }
   function openStatusFilterMenu(anchor) {
     const menu = $('#qMenu'), eg = effGender();
@@ -2028,7 +2030,7 @@
     const cnt = (key) => people.filter((p) => stMatch(p, key)).length;
     menu.innerHTML = '<button type="button" role="menuitem" class="qi" data-sf="" aria-pressed="' + !state.pay + '" style="background:var(--cream);color:var(--ink)">הכל <small>' + people.length + '</small></button>' +
       (state.filter ? statusList() : pstatusList()).map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-sf="' + s.key + '" aria-pressed="' + (state.pay === s.key) + '">' + esc(s.label) + ' <small>' + cnt(s.key) + '</small></button>').join('') +
-      (state.filter ? '' : '<button type="button" role="menuitem" class="qi" data-sf="' + PNONE + '" aria-pressed="' + (state.pay === PNONE) + '" style="background:var(--cream);color:var(--muted)">בלי סטטוס <small>' + cnt(PNONE) + '</small></button>') + editBtn(state.filter ? 'meeting' : 'participant');
+      (state.filter ? '' : '<button type="button" role="menuitem" class="qi" data-sf="' + PNONE + '" aria-pressed="' + (state.pay === PNONE) + '" style="background:var(--cream);color:var(--muted)">בלי תגיות <small>' + cnt(PNONE) + '</small></button>') + editBtn(state.filter ? 'meeting' : 'participant');
     menu.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
     let left = Math.min(Math.max(8, r.left + r.width / 2 - mw / 2), window.innerWidth - mw - 8), top = r.bottom + 6;
@@ -2681,8 +2683,7 @@
   $('#pDlg').addEventListener('click', (e) => { const ed = e.target.closest('.qeditlink[data-qedit]'); if (ed) openStatusSettings(ed.dataset.qedit); });
   $('#pStatusChips').addEventListener('click', (e) => {
     const b = e.target.closest('[data-ps]'); if (!b || !(sheet && sheet.id)) return;
-    const k = b.dataset.ps || null, p = state.participants.find((x) => x.id === sheet.id);
-    if (p && (pstatusKey(p) || null) !== k) setParticipantStatus(sheet.id, k); else if (p) fillPStatusSel(p);
+    toggleTag(sheet.id, b.dataset.ps);
   });
   pForm.addEventListener('change', async (e) => {
     if (e.target.name === 'promoter_sel') {
@@ -2912,8 +2913,8 @@
   function renderStSettings() {
     const list = curSt(), sys = curSys();
     document.querySelectorAll('#setSt [data-sc]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.sc === stScope)));
-    $('#stHint').textContent = stScope === 'meeting' ? 'סטטוס של משתתף בתוך מפגש מסוים (כשבוחרים מפגש ברשימה). שם, צבע וסדר, ואפשר ליצור סטטוס חדש' : 'סטטוס כללי של המשתתף (ברשימה כשלא בוחרים מפגש). תווית בלבד, בלי לוגיקה מאחוריה, וכברירת מחדל ריק. אפשר לשנות שם, צבע וסדר';
-    $('#stAdd').hidden = stScope !== 'meeting'; $('#stAdd').textContent = '+ סטטוס מפגש חדש';
+    $('#stHint').textContent = stScope === 'meeting' ? 'סטטוס של משתתף בתוך מפגש מסוים (כשבוחרים מפגש ברשימה). שם, צבע וסדר, ואפשר ליצור סטטוס חדש' : 'תגיות של המשתתף (ברשימה כשלא בוחרים מפגש). אפשר לסמן כמה תגיות לכל משתתף. תווית בלבד, בלי לוגיקה מאחוריה. שם, צבע וסדר, ואפשר ליצור תגית חדשה';
+    $('#stAdd').hidden = false; $('#stAdd').textContent = stScope === 'meeting' ? '+ סטטוס מפגש חדש' : '+ תגית חדשה';
     $('#stList').innerHTML = list.map((s) => s.key === sys
       ? '<div class="strow locked" data-k="' + s.key + '">' +
       '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם סטטוס המערכת" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1] + '" />' +
@@ -2944,7 +2945,7 @@
   $('#stAdd').addEventListener('click', async () => {
     const isM = stScope === 'meeting', arr = isM ? state.statuses : state.pstatuses, sys = isM ? SYSTEM_STATUS : PSYSTEM;
     const mx = Math.max(0, ...arr.filter((x) => x.key !== sys).map((x) => x.sort));
-    const row = { key: (isM ? 'm_' : 'p_') + Math.random().toString(36).slice(2, 7), label: 'סטטוס חדש', color: 'neutral', sort: mx + 1, scope: isM ? 'meeting' : 'participant' };
+    const row = { key: (isM ? 'm_' : 'p_') + Math.random().toString(36).slice(2, 7), label: isM ? 'סטטוס חדש' : 'תגית חדשה', color: 'neutral', sort: mx + 1, scope: isM ? 'meeting' : 'participant' };
     arr.push(row); applyStatuses(); renderStSettings();
     try { await api(T.st, { method: 'POST', body: row, prefer: 'return=minimal' }); }
     catch (err) { const k = arr.indexOf(row); if (k >= 0) arr.splice(k, 1); applyStatuses(); renderStSettings(); fail(err); return; }
@@ -2952,14 +2953,14 @@
   });
   async function removeStatus(k, isM, to, used, fl) {
     const arr = isM ? state.statuses : state.pstatuses;
-    const body = isM ? (to ? statusBody(to) : null) : { status_key: to };
-    used.forEach((x) => { if (isM) Object.assign(x, body); else x.status_key = to; });
+    const body = isM ? (to ? statusBody(to) : null) : null, newTags = (x) => { const r = (x.tags || []).filter((q) => q !== k); if (to && !r.includes(to)) r.push(to); return r; };
+    used.forEach((x) => { if (isM) Object.assign(x, body); else x.tags = newTags(x); });
     if (isM) state.statuses = state.statuses.filter((x) => x.key !== k); else state.pstatuses = state.pstatuses.filter((x) => x.key !== k);
     applyStatuses(); showSetView('st'); render(); if (sheet && sheet.id) { refreshSheetMeetings(); renderContact(); }
     try {
       if (isM) { for (const l of used) await api(T.a + '?participant_id=eq.' + l.participant_id + '&meeting_id=eq.' + l.meeting_id, { method: 'PATCH', body: statusBody(to || SYSTEM_STATUS) }); }
-      else if (used.length) await api(T.p + '?status_key=eq.' + k, { method: 'PATCH', body: { status_key: to } });
-      await api(T.st + '?key=eq.' + k, { method: 'DELETE' }); toast('הסטטוס נמחק');
+      else for (const x of used) await api(T.p + '?id=eq.' + x.id, { method: 'PATCH', body: { tags: x.tags } });
+      await api(T.st + '?key=eq.' + k, { method: 'DELETE' }); toast(isM ? 'הסטטוס נמחק' : 'התגית נמחקה');
     } catch (err) { fail(err); load(true); }
   }
   $('#stList').addEventListener('click', async (e) => {
@@ -2968,12 +2969,12 @@
       const k = del.dataset.del, isM = stScope === 'meeting', s = (isM ? state.statuses : state.pstatuses).find((x) => x.key === k); if (!s || k === SYSTEM_STATUS) return;
       const FLAG = { paid: ['paid', false], willpay: ['will_pay', false], maybe: ['maybe', false], exempt: ['exempt', false], requested: ['pay_requested_at', null] };
       const bi = isM && BUILTIN.includes(k), fl = bi ? FLAG[k] : null;
-      const used = isM ? state.att.filter((l) => bi ? linkStatus(l) === k : l.status_key === k) : state.participants.filter((p) => p.status_key === k);
+      const used = isM ? state.att.filter((l) => bi ? linkStatus(l) === k : l.status_key === k) : state.participants.filter((p) => (p.tags || []).includes(k));
       if (!used.length) { await removeStatus(k, isM, null, used, fl); return; }
       /* יש משתמשים בסטטוס: שואלים לאיזה סטטוס להעביר אותם (מסך בתוך ההגדרות) */
       const others = (isM ? statusList() : pstatusList()).filter((x) => x.key !== k);
-      $('#setDelText').innerHTML = 'יש <b>' + used.length + '</b> ' + (isM ? 'משתתפים במפגשים' : 'משתתפים') + ' בסטטוס <b>"' + esc(s.label) + '"</b>. לאיזה סטטוס להעביר אותם לפני המחיקה?';
-      $('#setDelOpts').innerHTML = others.map((x) => '<button type="button" class="sopt ' + x.key + '" data-to="' + x.key + '">' + esc(x.label) + '</button>').join('') + (isM ? '' : '<button type="button" class="sopt psnone" data-to="">ללא סטטוס</button>');
+      $('#setDelText').innerHTML = 'יש <b>' + used.length + '</b> ' + (isM ? 'משתתפים במפגשים בסטטוס' : 'משתתפים עם התגית') + ' <b>"' + esc(s.label) + '"</b>. ' + (isM ? 'לאיזה סטטוס להעביר אותם לפני המחיקה?' : 'להחליף אותה בתגית אחרת, או רק להסיר?');
+      $('#setDelOpts').innerHTML = others.map((x) => '<button type="button" class="sopt ' + x.key + '" data-to="' + x.key + '">' + esc(x.label) + '</button>').join('') + (isM ? '' : '<button type="button" class="sopt psnone" data-to="">רק להסיר</button>');
       $('#setDelOpts').onclick = async (ev) => { const b = ev.target.closest('[data-to]'); if (!b) return; await removeStatus(k, isM, b.dataset.to || null, used, fl); };
       showSetView('del');
       return;

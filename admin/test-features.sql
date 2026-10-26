@@ -121,3 +121,8 @@ notify pgrst, 'reload schema';
 
 -- 10. סטטוס משתתף הוא תווית בלבד: כל המשתתפים מועברים לריק (בלי סטטוס)
 update test.harpatka_participants set status_key = null where status_key is not null;
+
+-- 11. תגיות משתתף (בחירה מרובה): מערך מפתחות של סטטוסי scope=participant; status_key הישן עובר לתגית אחת
+alter table test.harpatka_participants add column if not exists tags text[] not null default '{}';
+update test.harpatka_participants set tags = array[status_key] where status_key is not null and cardinality(tags) = 0;
+notify pgrst, 'reload schema';
