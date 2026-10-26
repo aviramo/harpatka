@@ -2181,7 +2181,7 @@
     state.att.push(row); render(); refreshSheetMeetings();
     try { await api(T.a, { method: 'POST', body: row, prefer: 'resolution=ignore-duplicates' }); }
     catch (err) { state.att = state.att.filter((a) => a !== row); render(); refreshSheetMeetings(); fail(err); return; }
-    autoAllocate(pid, mid);
+    // שינוי סטטוס / שיוך לא נוגע בכסף: אין הקצאה אוטומטית מהיתרה (תשלום רק במסך התשלום)
   }
   function openRefundView(pid, mid, st) {
     $('#refundText').innerHTML = refundNote(pid, mid) + '<br><br>או: <b>לא להחזיר כסף</b>, והסכום יישאר כקרדיט למשתתף לתשלום על מפגש אחר.';
@@ -2494,7 +2494,7 @@
       state.att.push(row); render(); refreshSheetMeetings();
       try { await api(T.a, { method: 'POST', body: row, prefer: 'resolution=ignore-duplicates' }); }
       catch (err) { state.att = state.att.filter((a) => a !== row); render(); refreshSheetMeetings(); fail(err); return; }
-      autoAllocate(pid, mid);
+      // שיוך למפגש לא נוגע בכסף: אין הקצאה אוטומטית מהיתרה
     } else {
       const prev = state.att, oldL = linkOf(pid, mid) ? Object.assign({}, linkOf(pid, mid)) : null, oldAlloc = Math.max(0, allocatedOf(pid, mid));
       state.att = state.att.filter((a) => !(a.participant_id === pid && a.meeting_id === mid));
