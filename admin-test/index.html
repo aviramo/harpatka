@@ -760,6 +760,8 @@
     .ststrip .stc small { font-size: 13px; opacity: .8; }
     .ststrip .stc[aria-pressed="true"] { border-color: currentColor; }
     .ststrip .stc.zero { opacity: .55; }
+    .ststrip .stc.gm { background: #E3EEF9; color: #2F5EA8; }
+    .ststrip .stc.gf { background: #F8E2EA; color: #B0425F; }
     .qmenu { justify-items: start; }
     .qmenu .qi[data-qk], .qmenu .qi[data-sf], .qmenu .qi[data-at] { display: inline-flex; align-items: center; gap: 6px; height: 30px; border-radius: 999px; font-size: 15px; padding: 0 12px; border-width: 2px; }
     .qmenu .qi[data-qk] small, .qmenu .qi[data-sf] small { margin: 0; font-size: 13px; }
@@ -1545,7 +1547,8 @@
     $('#facets').classList.toggle('searching', !!q);
     $('#facets').innerHTML = base.length || eg || epk.length || eh ? h : '';
     /* כל הסטטוסים (בתוך מפגש) או התגיות (בתצוגת הכל) כצ'יפים מעל הסינונים, ממורכזים ועוברים שורה: לחיצה מסננת (בחירה מרובה) */
-    $('#stStrip').innerHTML = (base.length || epk.length) ? (state.filter ? statusList() : pstatusList().concat([{ key: PNONE, label: 'בלי תגיות' }])).map((s) => { const n = nP(s.key); return '<button type="button" class="stc ' + (s.key === PNONE ? '' : s.key) + (n ? '' : ' zero') + '" data-stc="' + s.key + '" aria-pressed="' + epk.includes(s.key) + '">' + esc(s.label) + ' <small>' + n + '</small></button>'; }).join('') : '';
+    const gchip = (g, label, cls) => { const n = nG(g); return '<button type="button" class="stc ' + cls + (n ? '' : ' zero') + '" data-stg="' + g + '" aria-pressed="' + (eg === g) + '">' + label + ' <small>' + n + '</small></button>'; };
+    $('#stStrip').innerHTML = (base.length || epk.length) ? gchip('male', 'גברים', 'gm') + gchip('female', 'נשים', 'gf') + (state.filter ? statusList() : pstatusList().concat([{ key: PNONE, label: 'בלי תגיות' }])).map((s) => { const n = nP(s.key); return '<button type="button" class="stc ' + (s.key === PNONE ? '' : s.key) + (n ? '' : ' zero') + '" data-stc="' + s.key + '" aria-pressed="' + epk.includes(s.key) + '">' + esc(s.label) + ' <small>' + n + '</small></button>'; }).join('') : '';
   }
 
   /* מיון הרשימה */
@@ -2866,6 +2869,7 @@
     render();
   });
   $('#stStrip').addEventListener('click', (e) => {
+    const gb = e.target.closest('[data-stg]'); if (gb) { state.gender = state.gender === gb.dataset.stg ? null : gb.dataset.stg; render(); syncUrl(); return; }   // גברים או נשים (אחד מהם), בחיתוך עם הסטטוסים
     const b = e.target.closest('[data-stc]'); if (!b) return; const k = b.dataset.stc, cur = payKeys(state.pay), nx = cur.includes(k) ? cur.filter((x) => x !== k) : cur.concat(k);
     state.pay = nx.length ? nx.join(',') : null; render(); syncUrl();
   });
