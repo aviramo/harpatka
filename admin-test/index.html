@@ -1044,10 +1044,9 @@
         <div id="walHist"></div>
       </div>
       <div class="ppanel" data-panel="deposit" hidden>
-        <div class="pnrow compact" id="depNoPayRow" hidden><div class="setl" title="פטור לפי הפעם. לא נדרש ממנו תשלום למפגש הזה, ובשאר המפגשים לפי ברירת המחדל"><b>לא משלם על המפגש הזה</b></div><button type="button" class="swt" id="depNoPay" role="switch" aria-checked="false" aria-label="לא משלם על המפגש הזה"><i></i></button></div>
-        <div id="depFields">
         <p class="sthint" id="depIntro" style="margin:0 2px 12px">תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש</p>
         <div class="metchips" id="depMethods" role="radiogroup" aria-label="דרך העברה"></div>
+        <div id="depFields">
         <div class="payrow">
           <label class="field"><span>סכום (₪)</span><input name="pay_dep" type="number" inputmode="decimal" min="0" step="any" /></label>
           <label class="field"><span id="depPkgLbl">על כמה מפגשים</span><select name="pay_pkg" id="depPkgSel"><option value="">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select></label>
@@ -2768,16 +2767,21 @@
     sheet.depMid = m ? m.id : null;
     f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; f.pay_depm.value = 'paybox'; f.pay_depn.value = ''; $('#depOtherField').hidden = true;
     { const al = m ? Math.max(0, allocatedOf(pid, m.id)) : 0, pr0 = m ? expectedPrice(pid, m) : 0; f.pay_dep.value = !m ? '' : al <= 0 ? pr0 : al < pr0 ? pr0 - al : ''; }   // מפגש ששולם חלקית: המוצע הוא היתרה
-    { const pp = state.participants.find((x) => x.id === pid), lk = m && linkOf(pid, m.id), np = !!(m && pp && noPayOf(pp, lk)); $('#depNoPayRow').hidden = !m; $('#depNoPay').setAttribute('aria-checked', String(np)); $('#depFields').hidden = np; }
+    { const pp = state.participants.find((x) => x.id === pid), lk = m && linkOf(pid, m.id), np = !!(m && pp && noPayOf(pp, lk)); $('#depFields').hidden = np; }
     $('#depIntro').textContent = m ? 'מפגש ' + dmShort(m) : 'תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש';
     $('#depPkgLbl').textContent = m ? 'על כמה מפגשים' : 'חבילה'; f.pay_pkg.options[0].textContent = m ? '1' : '—';
     $('#depQuick').innerHTML = quickPrices().map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
     $('#depQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) { f.pay_dep.value = b.dataset.q; paintPkg(); } };
     const METH = state.payMethods.map((x) => [x.key, x.name]);
     f.pay_depm.innerHTML = METH.map((x) => '<option value="' + esc(x[0]) + '">' + esc(x[1]) + '</option>').join('') + '<option value="other">אחר</option>'; f.pay_depm.value = METH.length ? METH[0][0] : 'other';
-    const paintMeth = () => { $('#depMethods').innerHTML = METH.map((x) => '<button type="button" role="radio" data-m="' + x[0] + '" aria-pressed="' + (f.pay_depm.value === x[0]) + '">' + x[1] + '</button>').join(''); };
+    const isFree = () => { const pp = state.participants.find((x) => x.id === pid), lk = m && linkOf(pid, m.id); return !!(m && pp && lk && noPayOf(pp, lk)); };
+    const paintMeth = () => { const free = isFree(); $('#depMethods').innerHTML = (m && linkOf(pid, m.id) ? '<button type="button" role="radio" data-free="1" aria-pressed="' + free + '">חינם</button>' : '') + METH.map((x) => '<button type="button" role="radio" data-m="' + x[0] + '" aria-pressed="' + (!free && f.pay_depm.value === x[0]) + '">' + x[1] + '</button>').join(''); };
     f.pay_depm.onchange = () => { $('#depOtherField').hidden = f.pay_depm.value !== 'other'; paintMeth(); if (f.pay_depm.value === 'other') f.pay_depn.focus(); };
-    $('#depMethods').onclick = (e) => { const b = e.target.closest('[data-m]'); if (b) { f.pay_depm.value = b.dataset.m; f.pay_depm.onchange(); } };
+    $('#depMethods').onclick = async (e) => {
+      const fb = e.target.closest('[data-free]'), b = e.target.closest('[data-m]');
+      if (fb) { if (!isFree()) await setNoPay(true, paintMeth); return; }
+      if (b) { if (isFree()) await setNoPay(false, paintMeth); f.pay_depm.value = b.dataset.m; f.pay_depm.onchange(); }
+    };
     paintMeth();
     const paintPkg = () => { const n = parseInt(f.pay_pkg.value, 10), a = parseFloat(f.pay_dep.value); $('#depPkgHint').innerHTML = n >= 2 && a > 0 ? 'מחיר למפגש בחבילה: <b>₪' + nfm(Math.round(a / n)) + '</b>. ' + (m ? 'המפגש הזה ועוד עד ' + (n - 1) + ' מפגשים קרובים משויכים ייפרעו מיד, והשאר ייפרעו בשיוך' : 'כל שיוך למפגש ייקח את הסכום הזה מהיתרה, עד ' + n + ' מפגשים') : ''; };
     f.pay_pkg.oninput = paintPkg; f.pay_dep.oninput = paintPkg;
@@ -2785,12 +2789,12 @@
   }
   $('#walAdd').addEventListener('click', () => openDeposit(null));
   /* "לא משלם" לפי מפגש: עקיפה בשיוך למפגש (true/false), מעל ברירת המחדל של המשתתף */
-  $('#depNoPay').addEventListener('click', async () => {
+  async function setNoPay(v, repaint) {
     const pid = sheet && sheet.id, mid = sheet && sheet.depMid, l = pid && mid && linkOf(pid, mid), pp = pid && state.participants.find((x) => x.id === pid); if (!l || !pp) return;
-    const prev = l.no_pay, v = !noPayOf(pp, l); l.no_pay = v; $('#depNoPay').setAttribute('aria-checked', String(v)); $('#depFields').hidden = v; render(); refreshSheetMeetings();
+    const prev = l.no_pay; l.no_pay = v; $('#depFields').hidden = v; if (repaint) repaint(); render(); refreshSheetMeetings();
     try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body: { no_pay: v } }); toast(v ? 'לא משלם על המפגש הזה' : 'משלם על המפגש הזה'); }
-    catch (err) { l.no_pay = prev; $('#depNoPay').setAttribute('aria-checked', String(!v)); $('#depFields').hidden = !v; render(); refreshSheetMeetings(); fail(err); }
-  });
+    catch (err) { l.no_pay = prev; $('#depFields').hidden = !v; if (repaint) repaint(); render(); refreshSheetMeetings(); fail(err); }
+  }
   $('#depSave').addEventListener('click', async () => {
     const f = pForm, pid = sheet && sheet.id, amt = parseFloat(f.pay_dep.value); if (!pid) return;
     if (!(amt > 0)) { f.pay_dep.focus(); return; }
