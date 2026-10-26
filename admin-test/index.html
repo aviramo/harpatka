@@ -482,6 +482,8 @@
     .qmenu[hidden] { display: none; }
     .qmenu .qi { height: 42px; border-radius: 13px; font-weight: 700; font-size: 16px; padding: 0 16px; text-align: center; border: 2px solid transparent; }
     .qmenu .qi[aria-pressed="true"] { border-color: currentColor; }
+    .qmenu .qedit, .qeditlink { display: flex; align-items: center; justify-content: center; gap: 6px; height: 30px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 700; border-radius: 10px; }
+    .qeditlink { margin: 8px auto 0; padding: 0 12px; }
     .qmenu .qi small { opacity: .7; font-weight: 700; margin-inline-start: 4px; }
     .fx.stsel { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
     .fx.stsel .stpill { padding: 3px 12px; border-radius: 999px; font-weight: 700; }
@@ -886,7 +888,7 @@
           <label class="field"><span>מקור</span><select name="promoter_sel" id="pPromoSel"></select></label>
         </div>
         <div class="two" style="grid-template-columns:1fr">
-          <div class="field"><span>סטטוס משתתף</span><div class="pstchips" id="pStatusChips" role="radiogroup" aria-label="סטטוס משתתף"></div></div>
+          <div class="field"><span>סטטוס משתתף</span><div class="pstchips" id="pStatusChips" role="radiogroup" aria-label="סטטוס משתתף"></div><button type="button" class="qeditlink" data-qedit="participant"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg> עריכה</button></div>
         </div>
         <div class="note" id="pRegLine" style="color:var(--muted);font-size:14px;margin:2px 4px 10px"></div>
         <button class="btn ghost" id="pDelete" type="button">מחיקת משתתף</button>
@@ -1971,6 +1973,12 @@
     return up || ls.slice().sort((a, b) => key(b).localeCompare(key(a)))[0] || null;
   };
   const closeQ = () => { $('#qMenu').hidden = true; };
+  /* קישור קטן "עריכה" בכל מקום שבוחרים סטטוס: פותח את ניהול הסטטוסים בהגדרות על הסוג המתאים */
+  const editBtn = (scope) => '<button type="button" class="qedit" data-qedit="' + scope + '"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg> עריכה</button>';
+  function openStatusSettings(scope) {
+    closeQ(); stScope = scope; renderSettings(); $('#setDlg').showModal(); showSetView('st');
+    const ae = document.activeElement; if (ae && ae.closest && ae.closest('#setDlg')) ae.blur();
+  }
   function openQuickMenu(pid, anchor, mid) {
     const menu = $('#qMenu'), inMeeting = !!(mid || state.filter);
     /* בתוך פופאפ התפריט צריך לשבת בתוכו (שכבת העל של הדיאלוג), אחרת הוא מוסתר מאחוריו */
@@ -1987,13 +1995,14 @@
     }
     menu.innerHTML = '<button type="button" class="qi" style="background:transparent;color:var(--muted);font-size:13px;height:26px;cursor:default" tabindex="-1">' + esc(head) + '</button>' +
       (inMeeting ? statusList() : pstatusList()).map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-qk="' + s.key + '" aria-pressed="' + (s.key === cur) + '">' + esc(s.label) + '</button>').join('') +
-      '<button type="button" role="menuitem" class="qi" data-qk="__none" aria-pressed="' + (cur === '__none') + '" style="background:var(--cream);color:var(--muted)">' + (inMeeting ? 'לא משויך' : 'בלי סטטוס') + '</button>';
+      '<button type="button" role="menuitem" class="qi" data-qk="__none" aria-pressed="' + (cur === '__none') + '" style="background:var(--cream);color:var(--muted)">' + (inMeeting ? 'לא משויך' : 'בלי סטטוס') + '</button>' + editBtn(inMeeting ? 'meeting' : 'participant');
     menu.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
     let left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8), top = r.bottom + 6;
     if (top + mh > window.innerHeight - 8) top = Math.max(8, r.top - mh - 6);
     menu.style.left = left + 'px'; menu.style.top = top + 'px';
     menu.onclick = (e) => {
+      const ed = e.target.closest('[data-qedit]'); if (ed) { openStatusSettings(ed.dataset.qedit); return; }
       const b = e.target.closest('[data-qk]'); if (!b) return;
       const k = b.dataset.qk; closeQ(); if (k === cur) return;
       apply(k); if (!(inMeeting && k === '__none')) toast(k === '__none' ? 'הסטטוס הוסר' : 'הסטטוס עודכן: ' + STATUS_LABEL[k]);
@@ -2019,13 +2028,13 @@
     const cnt = (key) => people.filter((p) => stMatch(p, key)).length;
     menu.innerHTML = '<button type="button" role="menuitem" class="qi" data-sf="" aria-pressed="' + !state.pay + '" style="background:var(--cream);color:var(--ink)">הכל <small>' + people.length + '</small></button>' +
       (state.filter ? statusList() : pstatusList()).map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-sf="' + s.key + '" aria-pressed="' + (state.pay === s.key) + '">' + esc(s.label) + ' <small>' + cnt(s.key) + '</small></button>').join('') +
-      (state.filter ? '' : '<button type="button" role="menuitem" class="qi" data-sf="' + PNONE + '" aria-pressed="' + (state.pay === PNONE) + '" style="background:var(--cream);color:var(--muted)">בלי סטטוס <small>' + cnt(PNONE) + '</small></button>');
+      (state.filter ? '' : '<button type="button" role="menuitem" class="qi" data-sf="' + PNONE + '" aria-pressed="' + (state.pay === PNONE) + '" style="background:var(--cream);color:var(--muted)">בלי סטטוס <small>' + cnt(PNONE) + '</small></button>') + editBtn(state.filter ? 'meeting' : 'participant');
     menu.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
     let left = Math.min(Math.max(8, r.left + r.width / 2 - mw / 2), window.innerWidth - mw - 8), top = r.bottom + 6;
     if (top + mh > window.innerHeight - 8) top = Math.max(8, r.top - mh - 6);
     menu.style.left = left + 'px'; menu.style.top = top + 'px';
-    menu.onclick = (e) => { const b = e.target.closest('[data-sf]'); if (!b) return; closeQ(); state.pay = b.dataset.sf || null; render(); syncUrl(); };
+    menu.onclick = (e) => { const ed = e.target.closest('[data-qedit]'); if (ed) { openStatusSettings(ed.dataset.qedit); return; } const b = e.target.closest('[data-sf]'); if (!b) return; closeQ(); state.pay = b.dataset.sf || null; render(); syncUrl(); };
   }
   document.addEventListener('click', (e) => { if (!$('#qMenu').hidden && !e.target.closest('#qMenu, [data-qs], [data-fxs]')) { e.preventDefault(); e.stopPropagation(); closeQ(); } }, true);   // תפריט פתוח: לחיצה בחוץ רק סוגרת אותו, ושום דבר אחר לא נפתח
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeQ(); });
@@ -2669,6 +2678,7 @@
 
   /* עריכה: שמירה אוטומטית של כל שדה ששונה */
   let savedTimer;
+  $('#pDlg').addEventListener('click', (e) => { const ed = e.target.closest('.qeditlink[data-qedit]'); if (ed) openStatusSettings(ed.dataset.qedit); });
   $('#pStatusChips').addEventListener('click', (e) => {
     const b = e.target.closest('[data-ps]'); if (!b || !(sheet && sheet.id)) return;
     const k = b.dataset.ps || null, p = state.participants.find((x) => x.id === sheet.id);
