@@ -953,6 +953,10 @@
         </div>
         <button type="button" class="btn ghost" id="setOut" style="color:var(--red)">יציאה מהחשבון</button>
       </div>
+      <div id="setDel" hidden>
+        <p id="setDelText" style="margin:2px 0 14px;line-height:1.55"></p>
+        <div class="sopts" id="setDelOpts"></div>
+      </div>
       <div id="setSt" hidden>
         <div class="stseg" role="tablist"><button type="button" role="tab" data-sc="meeting" aria-selected="true">סטטוס מפגש</button><button type="button" role="tab" data-sc="participant" aria-selected="false">סטטוס משתתף</button></div>
         <p class="sthint" id="stHint" style="margin:0 2px 12px"></p>
@@ -2887,8 +2891,8 @@
   const allSt = () => state.statuses.concat(state.pstatuses);
   function showSetView(v) {
     setView = v;
-    $('#setMain').hidden = v !== 'main'; $('#setSt').hidden = v !== 'st'; $('#setBack').hidden = v === 'main';
-    $('#setTitle').textContent = v === 'st' ? 'ניהול סטטוסים' : 'הגדרות';
+    $('#setMain').hidden = v !== 'main'; $('#setSt').hidden = v !== 'st'; $('#setDel').hidden = v !== 'del'; $('#setBack').hidden = v === 'main';
+    $('#setTitle').textContent = v === 'st' ? 'ניהול סטטוסים' : v === 'del' ? 'מחיקת סטטוס' : 'הגדרות';
     if (v === 'st') renderStSettings();
   }
   $('#setSt').addEventListener('click', (e) => { const b = e.target.closest('[data-sc]'); if (!b) return; stScope = b.dataset.sc; renderStSettings(); });
@@ -2916,7 +2920,7 @@
     catch (err) { Object.assign(s, prev); applyStatuses(); renderStSettings(); render(); fail(err); }
   }
   $('#setStBtn').addEventListener('click', () => showSetView('st'));
-  $('#setBack').addEventListener('click', () => showSetView('main'));
+  $('#setBack').addEventListener('click', () => showSetView(setView === 'del' ? 'st' : 'main'));
   $('#setDlg').addEventListener('close', () => showSetView('main'));
   $('#stList').addEventListener('change', (e) => {
     const inp = e.target.closest('.stname'); if (!inp) return;
@@ -2933,6 +2937,18 @@
     catch (err) { const k = arr.indexOf(row); if (k >= 0) arr.splice(k, 1); applyStatuses(); renderStSettings(); fail(err); return; }
     const inp = document.querySelector('#stList .strow[data-k="' + row.key + '"] .stname'); if (inp) { inp.focus(); inp.select(); }
   });
+  async function removeStatus(k, isM, to, used, fl) {
+    const arr = isM ? state.statuses : state.pstatuses;
+    const body = isM ? (to ? statusBody(to) : null) : { status_key: to };
+    used.forEach((x) => { if (isM) Object.assign(x, body); else x.status_key = to; });
+    if (isM) state.statuses = state.statuses.filter((x) => x.key !== k); else state.pstatuses = state.pstatuses.filter((x) => x.key !== k);
+    applyStatuses(); showSetView('st'); render(); if (sheet && sheet.id) { refreshSheetMeetings(); renderContact(); }
+    try {
+      if (isM) { for (const l of used) await api(T.a + '?participant_id=eq.' + l.participant_id + '&meeting_id=eq.' + l.meeting_id, { method: 'PATCH', body: statusBody(to || SYSTEM_STATUS) }); }
+      else if (used.length) await api(T.p + '?status_key=eq.' + k, { method: 'PATCH', body: { status_key: to } });
+      await api(T.st + '?key=eq.' + k, { method: 'DELETE' }); toast('הסטטוס נמחק');
+    } catch (err) { fail(err); load(true); }
+  }
   $('#stList').addEventListener('click', async (e) => {
     const del = e.target.closest('[data-del]');
     if (del) {
@@ -2940,12 +2956,13 @@
       const FLAG = { paid: ['paid', false], willpay: ['will_pay', false], maybe: ['maybe', false], exempt: ['exempt', false], requested: ['pay_requested_at', null] };
       const bi = isM && BUILTIN.includes(k), fl = bi ? FLAG[k] : null;
       const used = isM ? state.att.filter((l) => bi ? linkStatus(l) === k : l.status_key === k) : state.participants.filter((p) => p.status_key === k);
-      if (used.length && !confirm('יש ' + used.length + (isM ? ' שיוכים' : ' משתתפים') + ' בסטטוס "' + s.label + '". הם יחזרו לסטטוס "' + (isM ? STATUS_LABEL.unpaid : 'ללא סטטוס') + '". למחוק?')) return;
-      used.forEach((x) => { x.status_key = null; if (fl) x[fl[0]] = fl[1]; });
-      if (isM) state.statuses = state.statuses.filter((x) => x.key !== k); else state.pstatuses = state.pstatuses.filter((x) => x.key !== k);
-      applyStatuses(); renderStSettings(); render(); if (sheet && sheet.id) { refreshSheetMeetings(); renderContact(); }
-      try { if (used.length && !bi) await api((isM ? T.a : T.p) + '?status_key=eq.' + k, { method: 'PATCH', body: { status_key: null } }); if (fl && used.length) await api(T.a + '?' + fl[0] + '=' + (fl[1] === null ? 'not.is.null' : 'eq.true'), { method: 'PATCH', body: { [fl[0]]: fl[1] } }); await api(T.st + '?key=eq.' + k, { method: 'DELETE' }); }
-      catch (err) { fail(err); load(true); }
+      if (!used.length) { await removeStatus(k, isM, null, used, fl); return; }
+      /* יש משתמשים בסטטוס: שואלים לאיזה סטטוס להעביר אותם (מסך בתוך ההגדרות) */
+      const others = (isM ? statusList() : pstatusList()).filter((x) => x.key !== k);
+      $('#setDelText').innerHTML = 'יש <b>' + used.length + '</b> ' + (isM ? 'משתתפים במפגשים' : 'משתתפים') + ' בסטטוס <b>"' + esc(s.label) + '"</b>. לאיזה סטטוס להעביר אותם לפני המחיקה?';
+      $('#setDelOpts').innerHTML = others.map((x) => '<button type="button" class="sopt ' + x.key + '" data-to="' + x.key + '">' + esc(x.label) + '</button>').join('') + (isM ? '' : '<button type="button" class="sopt psnone" data-to="">ללא סטטוס</button>');
+      $('#setDelOpts').onclick = async (ev) => { const b = ev.target.closest('[data-to]'); if (!b) return; await removeStatus(k, isM, b.dataset.to || null, used, fl); };
+      showSetView('del');
       return;
     }
     const row = e.target.closest('.strow'); if (!row) return;
