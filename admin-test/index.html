@@ -1908,7 +1908,7 @@
     const epk = payKeys(ep), eh = effHere(), payOk = (p) => hereOk(p) && paidOk(p) && matchPay(p, epk);
     const genOk = (p) => eg === 'none' ? !p.gender : (!eg || p.gender === eg);
     const nG = (g) => base.filter((p) => payOk(p) && (g === 'none' ? !p.gender : p.gender === g)).length;
-    const nP = (key) => { const keys = isPKey(key) ? epk.filter((k) => !isPKey(k)).concat(key) : epk.filter((k) => isPKey(k)).concat(key); return base.filter((p) => genOk(p) && hereOk(p) && paidOk(p) && matchPay(p, keys)).length; };   // תגית אחת בלבד: ספירת תגית לא תלויה בתגית שנבחרה (נבדקת מול הסטטוסים והסינונים האחרים), וספירת סטטוס מול התגית הנבחרת
+    const nP = (key) => base.filter((p) => stMatch(p, key)).length;   // ספירת סטטוס / תגית קבועה: לא תלויה בסינונים האחרים (רק בחיפוש ובמפגש)
     const btn = (kind, val, label, n, cls, on, aria) => '<button type="button"' + (aria ? ' aria-label="' + aria + ' ' + n + '" title="' + aria + '"' : '') + ' class="fx' + (cls ? ' ' + cls : '') + (n ? '' : ' zero') + '" data-fx="' + kind + ':' + val + '" aria-pressed="' + on + '">' + label + ' <b>' + n + '</b></button>';
     const none = nG('none');
     const genOkCount = () => base.filter(genOk).length;
