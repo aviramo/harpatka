@@ -479,6 +479,9 @@
     .cbtn.cb-wa { background: #E3F4E9; color: var(--green); }
     .cbtn.cb-call { background: var(--sky-bg); color: var(--sky); }
     .cbtn.off { background: var(--line); color: var(--muted); }
+    #pTagsSlot { margin-bottom: 10px; }
+    #pTagsSlot .field { margin: 0; }
+    #pTagsSlot .field > span { display: none; }   /* תגיות המשתתף מעל המפגשים, בלי כותרת */
     .clabel { font-size: 13px; font-weight: 700; color: var(--muted); margin: 0 4px 8px; }
     .crow { display: flex; align-items: center; gap: 8px; padding: 12px 14px; background: var(--cream); border-radius: 16px; margin-bottom: 8px; }
     .crow .ct { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
@@ -1108,6 +1111,7 @@
       </div>
       <p id="pViewSub" class="pviewsub" hidden></p>
       <div class="ppanel" data-panel="main">
+        <div id="pTagsSlot" hidden></div>
         <div class="clabel clrow">מפגשים <span id="pMeetN" class="pmeetn"></span><button type="button" class="addm" id="pAddMeet" hidden>+ שיוך למפגש</button></div>
         <div class="mlist" id="pMeetings"></div>
         <button type="button" class="more" id="pMore" hidden>טען עוד</button>
@@ -1194,7 +1198,7 @@
           <label class="field"><span>מקור</span><select name="promoter_sel" id="pPromoSel"></select></label>
         </div>
         <div class="two" style="grid-template-columns:1fr">
-          <div class="field"><span>תגיות</span><div class="pstchips" id="pStatusChips" role="group" aria-label="תגיות"></div></div>
+          <span id="pTagsHome" hidden></span><div class="field" id="pTagsField"><span>תגיות</span><div class="pstchips" id="pStatusChips" role="group" aria-label="תגיות"></div></div>
         </div>
         <div class="note" id="pRegLine" style="color:var(--muted);font-size:14px;margin:2px 4px 10px"></div>
         <button class="btn ghost" id="pDelete" type="button">מחיקת משתתף</button>
@@ -2558,8 +2562,15 @@
     try { await api(T.p + '?id=eq.' + pid, { method: 'PATCH', body: { tags: next } }); }
     catch (err) { p.tags = prev; render(); if (sheet && sheet.id === pid) fillPStatusSel(p); fail(err); }
   }
+  function placeTagsField() {
+    const f = $('#pTagsField'), slot = $('#pTagsSlot'), home = $('#pTagsHome'); if (!f || !slot || !home) return;
+    const inMain = !!(sheet && sheet.id);
+    if (inMain) { if (f.parentElement !== slot) slot.appendChild(f); slot.hidden = !state.pstatuses.length; }
+    else { if (f.previousElementSibling !== home) home.after(f); slot.hidden = true; }
+  }
   function fillPStatusSel(p) {
     const box = $('#pStatusChips'); if (!box) return;
+    placeTagsField();
     const cur = new Set(p ? ptagsOf(p) : (sheet && sheet.newTags ? [...sheet.newTags] : []));   // משתתף חדש: התוויות נבחרות מראש ונשמרות ביצירה
     box.innerHTML = pstatusList().slice().reverse().map((s) => '<button type="button" role="checkbox" class="sopt ' + s.key + '" data-ps="' + s.key + '" aria-pressed="' + cur.has(s.key) + '">' + esc(s.label) + '</button>').join('') || '<span class="sthint" style="margin:0">אין תגיות. אפשר להוסיף בעריכה</span>';
   }
