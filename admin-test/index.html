@@ -842,6 +842,7 @@
     .row .main.hasw { padding-inline-start: 50px; }
     .rowwa { position: absolute; inset-inline-start: 12px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border-radius: 50%; background: var(--green-bg); color: var(--green); display: grid; place-items: center; z-index: 1; }
     .rowwa svg { width: 16px; height: 16px; }
+    .rowwa.nophone { background: var(--red-bg); color: var(--red); cursor: default; }   /* אין טלפון: אדום ולא עושה כלום */
     .clrow { display: flex; align-items: center; }
     #qMenu .qi[data-am] { display: inline-flex; align-items: center; justify-content: center; height: 32px; padding: 0 14px; border-radius: 999px; background: var(--cream); color: var(--ink); font-weight: 700; font-size: 15px; width: auto; }
     .clrow .addm { margin-inline-start: auto; height: 28px; padding: 0 12px; border-radius: 999px; background: #fff; border: 1px solid var(--line); color: var(--terra); font-weight: 700; font-size: 14px; }
@@ -2081,7 +2082,7 @@
       const hl = state.filter ? linkOf(p.id, state.filter) : null;
       const tgm = attTarget(), tgl = tgm ? linkOf(p.id, tgm.id) : null, showHere = !!(tgm && attendOpen(tgm)), evc = evCircle(p);
       return '<li class="row' + (hl && hl.attended && attendOpen(state.meetings.find((x) => x.id === state.filter)) ? ' arrived' : '') + '">' +
-        (wa ? '<a class="rowwa" href="' + wa + '" target="_blank" rel="noopener" aria-label="וואטסאפ ל' + esc(p.name) + '" title="וואטסאפ">' + WA_ICON + '</a>' : '') +
+        (wa ? '<a class="rowwa" href="' + wa + '" target="_blank" rel="noopener" aria-label="וואטסאפ ל' + esc(p.name) + '" title="וואטסאפ">' + WA_ICON + '</a>' : '<span class="rowwa nophone" role="img" aria-label="אין טלפון" title="אין טלפון">' + WA_ICON + '</span>') +
         '<div class="main' + (wa ? ' hasw' : '') + (showHere ? ' att' : '') + (anyEv ? ' ev' : '') + (!state.filter ? ' bl' : '') + '" role="button" tabindex="0" data-edit="' + p.id + '">' +
           '<div class="nm"><bdi class="name">' + esc(p.name) + '</bdi>' + '</div>' +
           (true ? '<div class="meta">' + (true ? '<span class="age' + (originOf(p) ? ' ' + originOf(p).kind : '') + '"' + originAttr(p) + ' title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? '<b class="gl">' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : (p.gender ? '' : '—')) + '</bdi></span>' : '') + '<span class="sidewrap">' + side + tags + payIc + '</span>' + '</div>' : '') +
