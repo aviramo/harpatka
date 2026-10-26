@@ -2612,6 +2612,7 @@
     const today = new Date(nowIL()).toISOString().slice(0, 10), key = (m) => m.meeting_date + m.meeting_time;
     const ms = state.meetings.filter((m) => m.meeting_date === today).sort((x, y) => key(x).localeCompare(key(y)));
     if (ms[0]) return ms[0];
+    if (evOpenPref() === 'always') return state.meetings.filter((m) => m.meeting_date >= today).sort((x, y) => key(x).localeCompare(key(y)))[0] || null;   // "תמיד": המפגש הקרוב, גם לא ביום המפגש
     return FORCE_EVENT_BTN ? (state.meetings.filter((m) => m.meeting_date >= today).sort((x, y) => key(x).localeCompare(key(y)))[0] || state.meetings.slice().sort((x, y) => key(y).localeCompare(key(x)))[0] || null) : null;
   };
   /* השיוך של המשתתף למפגש היום, אם מגיע לו להודעה (שילם או חינם) */
@@ -2619,9 +2620,9 @@
   /* כל מי שמגיע לו (שילם/חינם) כבר קיבל את הפרטים */
   const evAllSent = (m) => { const ls = state.att.filter((l) => l.meeting_id === m.id && (l.paid || l.exempt || l.will_pay) && state.participants.some((p) => p.id === l.participant_id)); return !ls.some((l) => !l.details_sent_at); };
   /* עיגול ברשימה: כחול, שליחת פרטי הערב (עד חצי שעה לפני המפגש; אז הוא הופך לעיגול הגעה הירוק); נעלם כשכולם קיבלו */
-  const EV_OPEN_OPTS = [['day', 'מתחילת יום המפגש'], ['08', 'מ-08:00'], ['09', 'מ-09:00'], ['12', 'מ-12:00'], ['180', '3 שעות לפני'], ['120', 'שעתיים לפני'], ['60', 'שעה לפני']];
+  const EV_OPEN_OPTS = [['day', 'מתחילת יום המפגש'], ['08', 'מ-08:00'], ['09', 'מ-09:00'], ['12', 'מ-12:00'], ['180', '3 שעות לפני'], ['120', 'שעתיים לפני'], ['60', 'שעה לפני'], ['always', 'תמיד']];
   const evOpenPref = () => { const v = (state.prefs[emailOf()] || {}).event_open; return EV_OPEN_OPTS.some((o) => o[0] === v) ? v : '09'; };
-  const evOpenAt = (m) => { const [y, mo, d] = m.meeting_date.split('-').map(Number), [h, mi] = String(m.meeting_time).split(':').map(Number), v = evOpenPref(); return v === 'day' ? Date.UTC(y, mo - 1, d, 0, 0) : v.length === 2 && Number(v) <= 23 && v[0] === '0' || v === '12' ? Date.UTC(y, mo - 1, d, Number(v), 0) : Date.UTC(y, mo - 1, d, h, mi) - Number(v) * 60000; };
+  const evOpenAt = (m) => { const [y, mo, d] = m.meeting_date.split('-').map(Number), [h, mi] = String(m.meeting_time).split(':').map(Number), v = evOpenPref(); if (v === 'always') return -Infinity; return v === 'day' ? Date.UTC(y, mo - 1, d, 0, 0) : v.length === 2 && Number(v) <= 23 && v[0] === '0' || v === '12' ? Date.UTC(y, mo - 1, d, Number(v), 0) : Date.UTC(y, mo - 1, d, h, mi) - Number(v) * 60000; };
   const evCircle = (p) => {
     const m = eventMeeting(); if (!m || attendOpen(m)) return '';
     if (nowIL() < evOpenAt(m)) return '';   // מופיע מהרגע שהוגדר בהגדרות ← הודעה לפני המפגש (ברירת מחדל 9:00 בבוקר של יום המפגש)
