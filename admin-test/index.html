@@ -1688,7 +1688,7 @@
       /* משתתף לא פעיל (הוסר) מוסתר מכל המסכים; הנתונים נשמרים ויחזרו אם יירשם שוב עם אותו טלפון. תשלומים נשארים (כספים) */
       state.inactiveNames = new Map(p.filter((x) => x.active === false).map((x) => [x.id, x.name]));
       const act = p.filter((x) => x.active !== false), actIds = new Set(act.map((x) => x.id));
-      state.participants = act; state.meetings = m; state.att = a.filter((x) => actIds.has(x.participant_id)); state.notes = nn.filter((x) => actIds.has(x.participant_id)); state.promoters = prs; state.promoPays = pps; state.payments = pays; rebuildNotes();
+      state.participants = act; state.meetings = m; state.att = a.filter((x) => actIds.has(x.participant_id)); applyAttPending(); state.notes = nn.filter((x) => actIds.has(x.participant_id)); state.promoters = prs; state.promoPays = pps; state.payments = pays; rebuildNotes();
       sortMeetings();
       if (!silent) $('#status').innerHTML = '';
       if (deep) {
@@ -2276,9 +2276,15 @@
     const l = linkOf(pid, mid); if (!l) return;
     const prev = { attended: l.attended, attended_at: l.attended_at };
     const body = { attended: !!val, attended_at: val ? new Date().toISOString() : null };
+    const key = pid + '|' + mid, ov = { body, exp: Infinity }; attPending.set(key, ov);   // עד שהכתיבה נקלטת, טעינה מחדש (זמן אמת) לא דורסת את הסימון
     Object.assign(l, body); render(); if (sheet && sheet.id) refreshSheetMeetings();
-    try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body }); }
-    catch (err) { Object.assign(l, prev); render(); if (sheet && sheet.id) refreshSheetMeetings(); fail(err); }
+    try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body }); if (attPending.get(key) === ov) ov.exp = Date.now() + 3000; }
+    catch (err) { if (attPending.get(key) === ov) attPending.delete(key); const l2 = linkOf(pid, mid); if (l2) Object.assign(l2, prev); render(); if (sheet && sheet.id) refreshSheetMeetings(); fail(err); }
+  }
+  const attPending = new Map();
+  function applyAttPending() {
+    const now = Date.now();
+    attPending.forEach((ov, key) => { if (ov.exp <= now) { attPending.delete(key); return; } const [pid, mid] = key.split('|'), l = linkOf(pid, mid); if (l) Object.assign(l, ov.body); });
   }
   /* הגיע בלי להיות רשום למפגש (הפתעה): נוצר שיוך עם הגעה מסומנת, סטטוס "משויך" */
   async function walkIn(pid, mid, after) {
