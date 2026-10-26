@@ -78,7 +78,13 @@
     .search input:not(:placeholder-shown) ~ .sclear, .search:focus-within .sclear { display: grid; }
     .search input:focus { border-color: var(--terra); outline: none; }
     .hgrp { display: flex; align-items: center; gap: 8px; align-self: center; }
-    .title-row { position: relative; height: 44px; align-items: center; }   /* גובה קבוע: פתיחת החיפוש לא מזיזה את הרשימה */
+    .title-row { position: relative; height: 44px; align-items: center; }
+    .title-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; }   /* חיפוש בימין, כותרת המפגש במרכז, תפריט בשמאל */
+    .title-row > .hsearch { justify-self: start; }
+    .title-row > .hsearch:focus-within, .title-row:has(.hsearch input:not(:placeholder-shown)) > .hsearch { grid-column: 1 / -1; justify-self: stretch; }
+    .title-row > .hgrp { justify-self: end; }
+    .title-row > .msel { justify-self: center; }
+    .title-row .mmenu { left: 50%; right: auto; transform: translateX(-50%); }   /* גובה קבוע: פתיחת החיפוש לא מזיזה את הרשימה */
     .tools[hidden] { display: none; }
     .srccard { background: var(--cream); border-radius: 18px; padding: 12px; margin-bottom: 12px; display: grid; gap: 10px; }
     .srccard .srctop { display: flex; align-items: center; gap: 8px; }
@@ -946,6 +952,11 @@
   <div class="wrap">
     <header class="top">
       <div class="title-row">
+        <label class="search hsearch">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/><path d="M10.5 8v5M8 10.5h5" stroke-width="1.8"/></svg>
+        <input id="q" type="search" placeholder="חיפוש או הוספת משתתף" autocomplete="off" aria-label="חיפוש" />
+        <button type="button" class="sclear" id="qClear" aria-label="ניקוי החיפוש" tabindex="-1">×</button>
+      </label>
         <div class="msel">
           <h1><button type="button" id="mSel" aria-haspopup="menu" aria-expanded="false"><span id="mSelTxt">הכל</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></h1>
           <div class="hcount" id="hereCount" hidden></div>
@@ -953,11 +964,7 @@
           <div class="sortmenu mmenu" id="mMenu" role="menu" hidden></div>
         </div>
         <div class="hgrp">
-        <label class="search hsearch">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/><path d="M10.5 8v5M8 10.5h5" stroke-width="1.8"/></svg>
-        <input id="q" type="search" placeholder="חיפוש או הוספת משתתף" autocomplete="off" aria-label="חיפוש" />
-        <button type="button" class="sclear" id="qClear" aria-label="ניקוי החיפוש" tabindex="-1">×</button>
-      </label>
+        
         <div class="hicons">
           <button type="button" class="hicon" id="menuBtn" aria-label="תפריט" title="תפריט" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.8"/></svg><span class="bdbadge" id="menuBadge" hidden></span></button>
           <div class="hmenu" id="hMenu" role="menu" hidden>
