@@ -1741,6 +1741,7 @@
       state.participants = act; state.meetings = m; state.att = a.filter((x) => actIds.has(x.participant_id)); applyAttPending(); state.notes = nn.filter((x) => actIds.has(x.participant_id)); state.promoters = prs; state.promoPays = pps; state.payments = pays; rebuildNotes();
       sortMeetings();
       if (!silent) $('#status').innerHTML = '';
+      setTimeout(prefetchNoteImages, 1500);   // טעינה מוקדמת של צילומי ההערות למטמון
       if (deep) {
         const d = deep; deep = null;
         try { sessionStorage.removeItem('harpatka_deep'); } catch (e) {}
@@ -2584,6 +2585,28 @@
   /* ---------- הערות (CRM): כמה הערות לכל משתתף, עם מי כתב ומתי; בכרטיס מוצגת האחרונה ---------- */
   const IMG_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="11" r="1.6"/><path d="M21 16l-5-5-8 8"/></svg>';
   const noteLatest = new Map(), noteText = new Map(), imgCache = new Map();
+  /* צילומי מסך בהערות נשמרים במטמון קבוע בדפדפן (IndexedDB): הערה לא משתנה, ולכן הטעינה הבאה מיידית ובלי רשת */
+  const imgDB = (() => {
+    let p;
+    const open = () => p || (p = new Promise((res) => { try { const r = indexedDB.open('harpatka-admin-img', 1); r.onupgradeneeded = () => r.result.createObjectStore('img'); r.onsuccess = () => res(r.result); r.onerror = () => res(null); } catch (e) { res(null); } }));
+    return {
+      get: async (id) => { const d = await open(); if (!d) return null; return new Promise((res) => { try { const q = d.transaction('img').objectStore('img').get(id); q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); } catch (e) { res(null); } }); },
+      set: async (id, v) => { const d = await open(); if (!d || !v) return; try { d.transaction('img', 'readwrite').objectStore('img').put(v, id); } catch (e) {} },
+      has: async (id) => { const d = await open(); if (!d) return false; return new Promise((res) => { try { const q = d.transaction('img').objectStore('img').count(id); q.onsuccess = () => res(q.result > 0); q.onerror = () => res(false); } catch (e) { res(false); } }); },
+    };
+  })();
+  async function noteImage(id) {
+    if (imgCache.has(id)) return imgCache.get(id);
+    let v = await imgDB.get(id);
+    if (!v) { const [r] = await api(T.n + '?id=eq.' + id + '&select=image'); v = r && r.image; if (v) imgDB.set(id, v); }
+    imgCache.set(id, v || null); return v;
+  }
+  /* מטען מראש ברקע את כל צילומי ההערות שעוד אינם במטמון (אחד בכל פעם), כדי שפתיחת כרטיס תהיה מיידית */
+  let prefetching = false;
+  async function prefetchNoteImages() {
+    if (prefetching) return; prefetching = true;
+    try { for (const n of state.notes.filter((x) => x.has_image)) { if (document.hidden) break; if (imgCache.has(n.id) || await imgDB.has(n.id)) continue; try { await noteImage(n.id); } catch (e) { break; } await new Promise((r) => setTimeout(r, 200)); } } finally { prefetching = false; }
+  }
   function rebuildNotes() {
     noteLatest.clear(); noteText.clear();
     state.notes.filter((n) => !n.system).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).forEach((n) => {   // מהחדשה לישנה; הערות מערכת לא מוצגות ברשימה ובחיפוש
@@ -2746,8 +2769,7 @@
   async function loadNoteImg(a) {
     const id = a.dataset.img;
     try {
-      if (!imgCache.has(id)) { const [r] = await api(T.n + '?id=eq.' + id + '&select=image'); imgCache.set(id, r && r.image); }
-      const src = imgCache.get(id); if (!src || !a.isConnected) return;
+      const src = await noteImage(id); if (!src || !a.isConnected) return;
       a.innerHTML = '<img alt="צילום מסך" loading="lazy" />'; a.firstChild.src = src;
     } catch (e) { if (a.isConnected) a.innerHTML = '<div class="nload">לא ניתן לטעון את התמונה</div>'; }
   }
@@ -2784,7 +2806,7 @@
     $('#iDate').textContent = fmtDT(n.created_at);
     $('#iPrev').hidden = galI === 0; $('#iNext').hidden = galI === gal.length - 1;
     $('#iPrev').style.visibility = $('#iNext').style.visibility = gal.length > 1 ? '' : 'hidden';
-    if (!imgCache.has(n.id)) { try { const [r] = await api(T.n + '?id=eq.' + n.id + '&select=image'); imgCache.set(n.id, r && r.image); } catch (e) {} }
+    try { await noteImage(n.id); } catch (e) {}
     if (gal[galI] === n) $('#iImg').src = imgCache.get(n.id) || '';
   }
   $('#nList').addEventListener('click', (e) => {
@@ -2811,7 +2833,7 @@
     const btn = $('#nAdd'); btn.disabled = true;
     try {
       const [row] = await api(T.n, { method: 'POST', body: Object.assign({ participant_id: sheet.id, body, author_email: emailOf(), author_name: authorName() }, pendingImg ? { image: pendingImg } : {}), prefer: 'return=representation' });
-      if (row) { if (row.image) { imgCache.set(row.id, row.image); delete row.image; row.has_image = true; } if (!state.notes.some((x) => x.id === row.id)) state.notes.push(row); }
+      if (row) { if (row.image) { imgCache.set(row.id, row.image); imgDB.set(row.id, row.image); delete row.image; row.has_image = true; } if (!state.notes.some((x) => x.id === row.id)) state.notes.push(row); }
       rebuildNotes(); ta.value = ''; setPending(null); renderNotes(); render(); toast('ההערה נשמרה');
     } catch (err) { fail(err); }
     btn.disabled = false;
