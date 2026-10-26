@@ -12,7 +12,7 @@ create table if not exists test.harpatka_statuses (
 );
 insert into test.harpatka_statuses (key, label, color, sort) values
   ('paid', 'שילם', 'green', 1),
-  ('willpay', 'ישלם', 'red', 2),
+  ('willpay', 'ישלם', 'neutral', 2),
   ('exempt', 'חינם', 'sky', 3),
   ('maybe', 'ספונטני', 'sky', 4),
   ('requested', 'בטיפול', 'amber', 5),
@@ -41,3 +41,17 @@ exception when others then return null;
 end $$;
 drop trigger if exists harpatka_pay_notes on test.harpatka_payments;
 create trigger harpatka_pay_notes after insert on test.harpatka_payments for each row execute function test.harpatka_pay_notes();
+
+-- 4. העדפות מנהל: שם השולח בהודעות (לכל מנהל לפי אימייל)
+create table if not exists test.harpatka_admin_prefs (
+  email text primary key,
+  sender_name text
+);
+alter table test.harpatka_admin_prefs enable row level security;
+drop policy if exists "harpatka admin all" on test.harpatka_admin_prefs;
+create policy "harpatka admin all" on test.harpatka_admin_prefs for all to authenticated using (public.harpatka_is_admin()) with check (public.harpatka_is_admin());
+grant all on test.harpatka_admin_prefs to authenticated, service_role;
+notify pgrst, 'reload schema';
+
+-- 5. ישלם בצבע ניטרלי (במקום אדום, כדי שלא יהיו שני אדומים)
+update test.harpatka_statuses set color = 'neutral' where key = 'willpay' and color = 'red';

@@ -428,15 +428,15 @@
     #setDlg .setlink svg { flex: 0 0 auto; color: var(--muted); }
     #setDlg .sheet-head { position: relative; justify-content: flex-start; gap: 8px; min-height: 40px; }
     #setDlg .sheet-head h2 { flex: 1 1 auto; }
-    .strow { background: var(--cream); border-radius: 18px; padding: 10px 12px; margin-bottom: 8px; display: grid; grid-template-columns: 1fr auto; gap: 8px 10px; align-items: center; }
-    .strow .stname { height: 42px; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; padding: 0 12px; font-size: 16.5px; font-weight: 700; min-width: 0; }
-    .strow .stmv { display: flex; gap: 6px; }
-    .strow .stmv button { width: 38px; height: 38px; border-radius: 50%; background: #fff; border: 1.5px solid var(--line); font-size: 18px; line-height: 1; }
-    .strow .stmv button:disabled { opacity: .35; }
-    .strow .stcols { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; }
-    .strow .sw { width: 30px; height: 30px; border-radius: 50%; border: 3px solid transparent; box-shadow: inset 0 0 0 1.5px rgba(63,56,47,.18); }
+    .strow { background: var(--cream); border-radius: 16px; padding: 7px 10px; margin-bottom: 7px; display: flex; align-items: center; gap: 8px; }
+    .strow .stname { flex: 1 1 0; min-width: 0; height: 38px; border-radius: 999px; border: 0; padding: 0 14px; font-size: 16px; font-weight: 700; text-align: right; }
+    .strow .stname:focus { outline: 2px solid var(--ink); outline-offset: 1px; }
+    .strow .stcols { flex: 0 0 auto; display: flex; gap: 5px; align-items: center; }
+    .strow .sw { width: 23px; height: 23px; border-radius: 50%; border: 2.5px solid transparent; box-shadow: inset 0 0 0 1.5px rgba(63,56,47,.2); padding: 0; }
     .strow .sw[aria-pressed="true"] { border-color: var(--ink); }
-    .strow .stprev { margin-inline-start: auto; height: 32px; padding: 0 12px; border-radius: 999px; font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; }
+    .strow .sthandle { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; background: #fff; border: 1.5px solid var(--line); color: var(--muted); display: grid; place-items: center; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+    .strow.dragging { position: relative; z-index: 5; background: #fff; box-shadow: 0 10px 28px rgba(63,56,47,.28); transition: none; }
+    .strow.dragging .sthandle { cursor: grabbing; }
     #setDlg .setgrp { background: var(--cream); border-radius: 18px; padding: 4px 14px; margin-bottom: 14px; }
     #setDlg .settitle { font-size: 13px; font-weight: 800; color: var(--muted); padding: 10px 0 2px; }
     #setDlg .setrow { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
@@ -444,6 +444,7 @@
     #setDlg .setl { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
     #setDlg .setl b { font-size: 16.5px; }
     #setDlg .setl small { font-size: 13.5px; color: var(--muted); line-height: 1.4; }
+    #setDlg .setinp { flex: 0 0 120px; width: 120px; height: 42px; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; padding: 0 12px; font-size: 16.5px; font-weight: 700; text-align: right; }
     #setDlg .setv { font-weight: 800; font-size: 16px; color: var(--ink); }
     .swt { flex: 0 0 auto; position: relative; width: 50px; height: 30px; border-radius: 999px; background: #D8CCBA; transition: background .18s; }
     .swt i { position: absolute; top: 3px; right: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .18s; }
@@ -901,7 +902,7 @@
         <div class="setgrp">
           <div class="settitle">חשבון</div>
           <div class="setrow"><div class="setl"><b id="setWho">—</b><small id="setMail"></small></div></div>
-          <div class="setrow"><div class="setl"><b>שם השולח בהודעות</b><small>ההודעות בוואטסאפ נחתמות בשם הזה</small></div><span class="setv" id="setSender">—</span></div>
+          <div class="setrow"><div class="setl"><b>שם השולח בהודעות</b><small>ההודעות בוואטסאפ נפתחות ב"כאן ..." בשם הזה. אפשר לשנות</small></div><input class="setinp" id="setSender" maxlength="20" autocomplete="off" aria-label="שם השולח בהודעות" /></div>
         </div>
         <div class="setgrp">
           <div class="settitle">מפגשים</div>
@@ -974,9 +975,9 @@
     url: 'https://ezakarwqstnldqixgreb.supabase.co',
     key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6YWthcndxc3RubGRxaXhncmViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTA3MzIsImV4cCI6MjEwNjc4NjczMn0.Bg0eFBC4zKjyJc5kBw3wLgSP-PkxLFVv3o7-4YUdq4c',
   };
-  const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance', n: 'harpatka_notes', pr: 'harpatka_promoters', pp: 'harpatka_promoter_payments', pay: 'harpatka_payments', st: 'harpatka_statuses' };
+  const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance', n: 'harpatka_notes', pr: 'harpatka_promoters', pp: 'harpatka_promoter_payments', pay: 'harpatka_payments', st: 'harpatka_statuses', pf: 'harpatka_admin_prefs' };
 
-  const state = { statuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, gender: null, sort: 'new' };
+  const state = { prefs: {}, statuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, gender: null, sort: 'new' };
   /* קישור עמוק מהמייל: ?m=<מפגש>&p=<משתתף>; נשמר בזמן הכניסה עם גוגל (שמחזירה בלי הפרמטרים) */
   let deep = null;
   try {
@@ -1306,7 +1307,7 @@
   async function load(silent) {
     if (!silent) $('#status').innerHTML = '<div class="empty">טוען…</div>';
     try {
-      const [p, m, a, nn, prs, pps, pays, sts] = await Promise.all([
+      const [p, m, a, nn, prs, pps, pays, sts, pfs] = await Promise.all([
         api(T.p + '?select=*'),
         api(T.m + '?select=*'),
         api(T.a + '?select=participant_id,meeting_id,paid,pay_requested_at,created_at,exempt,attended,paid_amount,promoter_id,commission,paid_at,details_sent_at,will_pay,maybe'),
@@ -1315,7 +1316,9 @@
         api(T.pp + '?select=*&order=paid_at.desc'),
         api(T.pay + '?select=*&order=created_at.desc'),
         api(T.st + '?select=*').catch(() => null),
+        api(T.pf + '?select=*').catch(() => null),
       ]);
+      if (pfs) state.prefs = Object.fromEntries(pfs.map((x) => [String(x.email).toLowerCase(), x]));
       if (sts && sts.length) { state.statuses = DEFAULT_STATUSES.map((d) => Object.assign({}, d, sts.find((x) => x.key === d.key) || {})); applyStatuses(); }
       boardBadge();
       /* משתתף לא פעיל (הוסר) מוסתר מכל המסכים; הנתונים נשמרים ויחזרו אם יירשם שוב עם אותו טלפון. תשלומים נשארים (כספים) */
@@ -1388,8 +1391,8 @@
   const linkStatus = (l) => l.exempt ? 'exempt' : l.paid ? 'paid' : l.will_pay ? 'willpay' : l.maybe ? 'maybe' : (l.pay_requested_at ? 'requested' : 'unpaid');   // לא משלם (בחינם ביודעין) / שילם / נשלחה בקשת תשלום / טרם שילם
   const STATUS_LABEL = { paid: 'שילם', willpay: 'ישלם', maybe: 'ספונטני', requested: 'בטיפול', unpaid: 'חדש', exempt: 'חינם' };
   /* ניהול סטטוסים (סביבת בדיקות): שם, צבע (מפתח בפלטה) וסדר לכל סטטוס; ההתנהגות בסינון ובסטטיסטיקות קבועה לפי המפתח */
-  const PALETTE = { green: ['var(--green-bg)', 'var(--green)', 'ירוק'], red: ['var(--red-bg)', 'var(--red)', 'אדום'], amber: ['#FBEBC8', '#8A5A00', 'צהוב'], sky: ['var(--sky-bg)', 'var(--sky)', 'כחול'], orange: ['#F8E4DA', '#B8553A', 'כתום'] };
-  const DEFAULT_STATUSES = [['paid', 'שילם', 'green'], ['willpay', 'ישלם', 'red'], ['exempt', 'חינם', 'sky'], ['maybe', 'ספונטני', 'sky'], ['requested', 'בטיפול', 'amber'], ['unpaid', 'חדש', 'red']].map((x, i) => ({ key: x[0], label: x[1], color: x[2], sort: i + 1 }));
+  const PALETTE = { green: ['var(--green-bg)', 'var(--green)', 'ירוק'], red: ['var(--red-bg)', 'var(--red)', 'אדום'], amber: ['#FBEBC8', '#8A5A00', 'צהוב'], sky: ['var(--sky-bg)', 'var(--sky)', 'כחול'], orange: ['#F8E4DA', '#B8553A', 'כתום'], neutral: ['#EFE4D3', '#6B6055', 'ניטרלי'] };
+  const DEFAULT_STATUSES = [['paid', 'שילם', 'green'], ['willpay', 'ישלם', 'neutral'], ['exempt', 'חינם', 'sky'], ['maybe', 'ספונטני', 'sky'], ['requested', 'בטיפול', 'amber'], ['unpaid', 'חדש', 'red']].map((x, i) => ({ key: x[0], label: x[1], color: x[2], sort: i + 1 }));
   state.statuses = DEFAULT_STATUSES.map((s) => Object.assign({}, s));
   const statusList = () => state.statuses.slice().sort((a, b) => a.sort - b.sort);
   function applyStatuses() {
@@ -1987,6 +1990,7 @@
   const PAYBOX = 'https://links.payboxapp.com/zwi4JG24Y6b';
   const HE_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
   const dm = (m) => { const [, mo, d] = m.meeting_date.split('-').map(Number); return d + '.' + mo; };
+  const senderName = () => ((state.prefs[emailOf()] || {}).sender_name || '').trim() || SENDERS[emailOf()] || authorName();
   const authorName = () => SENDERS[emailOf()] || emailOf().split('@')[0] || 'לא ידוע';
 
   /* לשונית "התקשרות": וואטסאפ וחיוג (רק פותחים שיחה/מחייגים), ומתחתיהם ההערות */
@@ -2038,7 +2042,7 @@
   window.addEventListener('focus', () => { if (markAwait || evAwait) setTimeout(askAwaited, 250); });
   /* הודעת הפתיחה בוואטסאפ (תבנית שהמשתמש קבע): למשתתף שבסטטוס חדש. המחיר: 80 ₪ עד שלושה ימים לפני המפגש (לא כולל), ומאז 100 ₪ */
   const chaseMessage = (p) => {
-    const who = SENDERS[emailOf()] || authorName(), first = String(p.name || '').trim().split(/\s+/)[0] || '';
+    const who = senderName(), first = String(p.name || '').trim().split(/\s+/)[0] || '';
     const ms = pendingLinks(p).map((l) => state.meetings.find((x) => x.id === l.meeting_id)).filter(Boolean).sort((x, y) => (x.meeting_date + x.meeting_time).localeCompare(y.meeting_date + y.meeting_time)), m = ms[0];
     let lines = ['היי ' + first + ', כאן ' + who + ' מיוצאים להרפתקה 🙂'];
     if (m) {
@@ -2721,9 +2725,16 @@
   /* הגדרות: חשבון, שם השולח ומצב הגעה פתוח (לבדיקות, זמני ללשונית) */
   function renderSettings() {
     const em = emailOf();
-    $('#setWho').textContent = authorName(); $('#setMail').textContent = em; $('#setSender').textContent = SENDERS[em] || authorName();
+    $('#setWho').textContent = authorName(); $('#setMail').textContent = em; { const si = $('#setSender'); if (document.activeElement !== si) si.value = senderName(); }
     $('#setAtt').setAttribute('aria-checked', String(!!forceAttend));
   }
+  $('#setSender').addEventListener('change', async () => {
+    const em = emailOf(), v = $('#setSender').value.trim().slice(0, 20), prev = state.prefs[em];
+    state.prefs[em] = { email: em, sender_name: v || null };
+    try { await api(T.pf, { method: 'POST', body: { email: em, sender_name: v || null }, prefer: 'resolution=merge-duplicates,return=minimal' }); toast(v ? 'שם השולח עודכן: ' + v : 'שם השולח חזר לברירת המחדל'); }
+    catch (err) { if (prev) state.prefs[em] = prev; else delete state.prefs[em]; fail(err); }
+    renderSettings();
+  });
   $('#setBtn').addEventListener('click', () => { renderSettings(); $('#setDlg').showModal(); });
   $('#setAtt').addEventListener('click', () => {
     forceAttend = !forceAttend;
@@ -2742,11 +2753,10 @@
   }
   function renderStSettings() {
     const list = statusList();
-    $('#stList').innerHTML = list.map((s, i) => '<div class="strow" data-k="' + s.key + '">' +
-      '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם הסטטוס" />' +
-      '<div class="stmv"><button type="button" data-mv="up" aria-label="למעלה"' + (i === 0 ? ' disabled' : '') + '>↑</button><button type="button" data-mv="down" aria-label="למטה"' + (i === list.length - 1 ? ' disabled' : '') + '>↓</button></div>' +
-      '<div class="stcols">' + Object.keys(PALETTE).map((c) => '<button type="button" class="sw" data-c="' + c + '" aria-label="' + PALETTE[c][2] + '" aria-pressed="' + (s.color === c) + '" style="background:' + PALETTE[c][0] + '"></button>').join('') +
-      '<span class="stprev ' + s.key + '">' + esc(s.label) + '</span></div></div>').join('');
+    $('#stList').innerHTML = list.map((s) => '<div class="strow" data-k="' + s.key + '">' +
+      '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם הסטטוס" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1] + '" />' +
+      '<div class="stcols">' + Object.keys(PALETTE).map((c) => '<button type="button" class="sw" data-c="' + c + '" aria-label="' + PALETTE[c][2] + '" aria-pressed="' + (s.color === c) + '" style="background:' + PALETTE[c][0] + '"></button>').join('') + '</div>' +
+      '<button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg></button></div>').join('');
   }
   async function saveStatus(key, patch) {
     const s = state.statuses.find((x) => x.key === key); if (!s) return;
@@ -2766,15 +2776,55 @@
   });
   $('#stList').addEventListener('click', (e) => {
     const row = e.target.closest('.strow'); if (!row) return;
-    const k = row.dataset.k;
-    const sw = e.target.closest('.sw'); if (sw) { saveStatus(k, { color: sw.dataset.c }); return; }
-    const mv = e.target.closest('[data-mv]'); if (!mv) return;
-    const list = statusList(), i = list.findIndex((x) => x.key === k), j = mv.dataset.mv === 'up' ? i - 1 : i + 1;
-    if (j < 0 || j >= list.length) return;
-    const a = list[i], b = list[j], sa = a.sort, sb = b.sort;
-    a.sort = sb; b.sort = sa;
-    applyStatuses(); renderStSettings();
-    Promise.all([api(T.st + '?key=eq.' + a.key, { method: 'PATCH', body: { sort: sb } }), api(T.st + '?key=eq.' + b.key, { method: 'PATCH', body: { sort: sa } })]).catch((err) => { a.sort = sa; b.sort = sb; renderStSettings(); fail(err); });
+    const sw = e.target.closest('.sw'); if (sw) saveStatus(row.dataset.k, { color: sw.dataset.c });
+  });
+  /* סדר הסטטוסים: גוררים בידית (עכבר או מגע) ומחליפים מקום; נשמר ברגע הפיסול. במקלדת: חצים על הידית */
+  async function commitOrder(keys) {
+    const before = state.statuses.map((s) => ({ key: s.key, sort: s.sort }));
+    const changed = [];
+    keys.forEach((k, i) => { const s = state.statuses.find((x) => x.key === k); if (s && s.sort !== i + 1) { s.sort = i + 1; changed.push(s); } });
+    applyStatuses(); renderStSettings(); render(); if (sheet && sheet.id) { refreshSheetMeetings(); renderContact(); }
+    if (!changed.length) return;
+    try { await Promise.all(changed.map((s) => api(T.st + '?key=eq.' + s.key, { method: 'PATCH', body: { sort: s.sort } }))); }
+    catch (err) { before.forEach((b0) => { const s = state.statuses.find((x) => x.key === b0.key); if (s) s.sort = b0.sort; }); applyStatuses(); renderStSettings(); render(); fail(err); }
+  }
+  let stDrag = null;
+  $('#stList').addEventListener('pointerdown', (e) => {
+    const h = e.target.closest('.sthandle'); if (!h) return;
+    const row = h.closest('.strow'); e.preventDefault();
+    h.setPointerCapture(e.pointerId);
+    stDrag = { row, h, id: e.pointerId, grab: e.clientY - row.getBoundingClientRect().top };
+    row.classList.add('dragging');
+  });
+  const stFollow = (e) => {
+    const d = stDrag; if (!d || e.pointerId !== d.id) return;
+    const list = $('#stList'), row = d.row;
+    const place = () => { row.style.transform = 'none'; const nat = row.getBoundingClientRect().top; row.style.transform = 'translateY(' + (e.clientY - d.grab - nat) + 'px)'; };
+    place();
+    for (let guard = 0; guard < 8; guard++) {
+      const r = row.getBoundingClientRect(), prev = row.previousElementSibling, next = row.nextElementSibling;
+      if (prev && r.top + r.height / 2 < prev.getBoundingClientRect().top + prev.getBoundingClientRect().height / 2) { list.insertBefore(row, prev); place(); }
+      else if (next && r.top + r.height / 2 > next.getBoundingClientRect().top + next.getBoundingClientRect().height / 2) { list.insertBefore(next, row); place(); }
+      else break;
+    }
+  };
+  $('#stList').addEventListener('pointermove', stFollow);
+  const stDrop = (e) => {
+    const d = stDrag; if (!d || e.pointerId !== d.id) return;
+    stDrag = null; d.row.classList.remove('dragging'); d.row.style.transform = '';
+    commitOrder([...document.querySelectorAll('#stList .strow')].map((r) => r.dataset.k));
+  };
+  $('#stList').addEventListener('pointerup', stDrop);
+  $('#stList').addEventListener('pointercancel', stDrop);
+  /* גרירה בתוך הפופאפ לא מזיזה או סוגרת אותו */
+  ['touchstart', 'touchmove'].forEach((ev) => $('#stList').addEventListener(ev, (e) => { if (e.target.closest('.sthandle')) { e.stopPropagation(); if (ev === 'touchmove' && e.cancelable) e.preventDefault(); } }, { passive: false }));
+  $('#stList').addEventListener('keydown', (e) => {
+    const h = e.target.closest('.sthandle'); if (!h || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+    e.preventDefault();
+    const keys = statusList().map((s) => s.key), k = h.closest('.strow').dataset.k, i = keys.indexOf(k), j = e.key === 'ArrowUp' ? i - 1 : i + 1;
+    if (j < 0 || j >= keys.length) return;
+    keys.splice(i, 1); keys.splice(j, 0, k);
+    commitOrder(keys).then(() => { const nh = document.querySelector('#stList .strow[data-k="' + k + '"] .sthandle'); if (nh) nh.focus(); });
   });
 
 
