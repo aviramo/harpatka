@@ -688,6 +688,8 @@
     .mlist { display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 2px 2px 8px; margin: 0 -2px 10px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scrollbar-width: none; }
     .mlist::-webkit-scrollbar { display: none; }
     .mlist .mrow { flex: 0 0 auto; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 6px; min-height: 0; padding: 8px; scroll-snap-align: start; }
+    .pmeetn { display: inline-block; min-width: 22px; padding: 0 8px; margin-inline-start: 4px; border-radius: 999px; background: var(--cream); color: var(--ink); font-weight: 800; text-align: center; }
+    .pmeetn[hidden] { display: none; }
     .mlist .mrow .mlabel { flex: none; text-align: center; font-size: 17px; font-weight: 800; padding: 0; }
     .mlist .mrow .pay { display: flex; align-items: center; justify-content: center; width: 100%; height: 34px; font-size: 14px; }
     .mlist .mrow .mline { display: flex; gap: 6px; }
@@ -860,7 +862,7 @@
       </div>
       <p id="pViewSub" class="pviewsub" hidden></p>
       <div class="ppanel" data-panel="main">
-        <div class="clabel">מפגשים</div>
+        <div class="clabel">מפגשים <span id="pMeetN" class="pmeetn"></span></div>
         <div class="mlist" id="pMeetings"></div>
         <button type="button" class="more" id="pMore" hidden>טען עוד</button>
         <div class="clabel">הערות</div>
@@ -2689,8 +2691,9 @@
     renderContact();
     const box = $('#pMeetings');
     /* שלושת המפגשים האחרונים (כל המפגשים, לא רק שלו) וכפתור לטעינת עוד */
-    const desc = state.meetings.slice().sort((a, b) => (b.meeting_date + b.meeting_time).localeCompare(a.meeting_date + a.meeting_time)), shown = desc;
+    const desc = state.meetings.slice().sort((a, b) => (b.meeting_date + b.meeting_time).localeCompare(a.meeting_date + a.meeting_time)), shown = sheet.id ? desc.filter((m) => linkOf(sheet.id, m.id)) : desc;   // רק מפגשים שהמשתתף משויך אליהם (משתתף חדש: כולם, כדי לשייך)
     $('#pMore').hidden = true;
+    { const n = $('#pMeetN'); if (n) { n.textContent = sheet.id ? shown.length : ''; n.hidden = !sheet.id; } }
     { /* מספר אחד: יתרה = חוב פחות קרדיט. חוב רק על מפגשים שביקשנו עליהם תשלום ("בטיפול") או שהמשתתף אמר שישלם ("ישלם"); רשום בלבד (חדש) הוא עוד לא חוב */
       const owed = sheet.id ? owedOf(sheet.id) : 0;
       const net = owed - (sheet.id ? creditOf(sheet.id) : 0), chip = $('#pPayChip');
@@ -2709,6 +2712,7 @@
         (sheet.id && on && attendOpen(m) ? '<button type="button" class="here sm" data-ht="' + m.id + '" aria-pressed="' + !!(linkOf(sheet.id, m.id) || {}).attended + '">' + ((linkOf(sheet.id, m.id) || {}).attended ? '✓ הגיע' : 'לא הגיע') + '</button>' : '') + '</div>' +
       '</div>';
     }).join('');
+    if (sheet.id && !shown.length) box.innerHTML = '<p class="mnone">עוד לא משויך לאף מפגש</p>';
   }
 
   $('#pMore').addEventListener('click', () => { mLimit += 3; refreshSheetMeetings(); });
