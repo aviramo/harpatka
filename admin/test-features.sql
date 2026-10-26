@@ -16,7 +16,7 @@ insert into test.harpatka_statuses (key, label, color, sort) values
   ('exempt', 'חינם', 'sky', 3),
   ('maybe', 'ספונטני', 'sky', 4),
   ('requested', 'בטיפול', 'amber', 5),
-  ('unpaid', 'חדש', 'red', 99)
+  ('unpaid', 'משויך', 'red', 99)
 on conflict (key) do nothing;
 alter table test.harpatka_statuses enable row level security;
 drop policy if exists "harpatka admin all" on test.harpatka_statuses;
@@ -57,7 +57,7 @@ notify pgrst, 'reload schema';
 update test.harpatka_statuses set color = 'neutral' where key = 'willpay' and color = 'red';
 
 -- 6. "חדש" הוא סטטוס מערכת: תמיד אחרון (ונעול בממשק)
-update test.harpatka_statuses set sort = 99, label = 'חדש', color = 'red' where key = 'unpaid';
+update test.harpatka_statuses set sort = 99 where key = 'unpaid';
 
 -- 7. הפרדה: סטטוסי מפגש (לכל שיוך) וסטטוסי משתתף (כללי). scope = meeting | participant
 alter table test.harpatka_statuses add column if not exists scope text not null default 'meeting';
@@ -80,38 +80,38 @@ CREATE OR REPLACE FUNCTION test.harpatka_att_notes()
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'test'
-AS $function$
-declare os text; ns text;
-begin
-  if current_setting('harpatka.skip_note', true) = '1' then return coalesce(new, old); end if;
-  if tg_op = 'INSERT' then
-    if coalesce(new.attended, false) then
-      perform test.harpatka_sys_note(new.participant_id, 'הגיע/ה למפגש ' || test.harpatka_meeting_label(new.meeting_id) || ' (ללא הרשמה מראש)', 'walk_in', new.meeting_id);
-    else
-      perform test.harpatka_sys_note(new.participant_id, 'שויך/ה למפגש ' || test.harpatka_meeting_label(new.meeting_id), 'meeting_linked', new.meeting_id);
-    end if;
-  elsif tg_op = 'UPDATE' then
-    os := test.harpatka_pay_status(old.paid, old.exempt, old.pay_requested_at, old.will_pay, old.maybe); ns := test.harpatka_pay_status(new.paid, new.exempt, new.pay_requested_at, new.will_pay, new.maybe);
+AS $function$
+declare os text; ns text;
+begin
+  if current_setting('harpatka.skip_note', true) = '1' then return coalesce(new, old); end if;
+  if tg_op = 'INSERT' then
+    if coalesce(new.attended, false) then
+      perform test.harpatka_sys_note(new.participant_id, 'הגיע/ה למפגש ' || test.harpatka_meeting_label(new.meeting_id) || ' (ללא הרשמה מראש)', 'walk_in', new.meeting_id);
+    else
+      perform test.harpatka_sys_note(new.participant_id, 'שויך/ה למפגש ' || test.harpatka_meeting_label(new.meeting_id), 'meeting_linked', new.meeting_id);
+    end if;
+  elsif tg_op = 'UPDATE' then
+    os := test.harpatka_pay_status(old.paid, old.exempt, old.pay_requested_at, old.will_pay, old.maybe); ns := test.harpatka_pay_status(new.paid, new.exempt, new.pay_requested_at, new.will_pay, new.maybe);
     if old.status_key is not null then os := coalesce((select label from test.harpatka_statuses where key = old.status_key), os); end if;
     if new.status_key is not null then ns := coalesce((select label from test.harpatka_statuses where key = new.status_key), ns); end if;
-    if os <> ns then
-      perform test.harpatka_sys_note(new.participant_id, 'סטטוס למפגש ' || test.harpatka_meeting_short(new.meeting_id) || ': ' || ns
-        || case when ns = 'שילם' and new.paid_amount is not null then ' ₪' || trim(to_char(new.paid_amount, 'FM999990.##')) else '' end
-        || case when ns = 'שילם' and new.pay_method is not null then ' ב' || test.harpatka_method_label(new.pay_method, new.pay_method_note) else '' end || ' (היה: ' || os || ')',
-        'status_changed', new.meeting_id, coalesce(old.status_key, test.harpatka_pay_code(old.paid, old.exempt, old.pay_requested_at, old.will_pay, old.maybe)), coalesce(new.status_key, test.harpatka_pay_code(new.paid, new.exempt, new.pay_requested_at, new.will_pay, new.maybe)), case when ns = 'שילם' then new.paid_amount end, null, case when ns = 'שילם' then new.pay_method end);
-    end if;
-    if coalesce(old.attended, false) <> coalesce(new.attended, false) then
-      perform test.harpatka_sys_note(new.participant_id, case when new.attended then 'הגיע/ה למפגש ' else 'סימון ההגעה בוטל למפגש ' end || test.harpatka_meeting_short(new.meeting_id), case when new.attended then 'attended' else 'attendance_cancelled' end, new.meeting_id);
-    end if;
+    if os <> ns then
+      perform test.harpatka_sys_note(new.participant_id, 'סטטוס למפגש ' || test.harpatka_meeting_short(new.meeting_id) || ': ' || ns
+        || case when ns = 'שילם' and new.paid_amount is not null then ' ₪' || trim(to_char(new.paid_amount, 'FM999990.##')) else '' end
+        || case when ns = 'שילם' and new.pay_method is not null then ' ב' || test.harpatka_method_label(new.pay_method, new.pay_method_note) else '' end || ' (היה: ' || os || ')',
+        'status_changed', new.meeting_id, coalesce(old.status_key, test.harpatka_pay_code(old.paid, old.exempt, old.pay_requested_at, old.will_pay, old.maybe)), coalesce(new.status_key, test.harpatka_pay_code(new.paid, new.exempt, new.pay_requested_at, new.will_pay, new.maybe)), case when ns = 'שילם' then new.paid_amount end, null, case when ns = 'שילם' then new.pay_method end);
+    end if;
+    if coalesce(old.attended, false) <> coalesce(new.attended, false) then
+      perform test.harpatka_sys_note(new.participant_id, case when new.attended then 'הגיע/ה למפגש ' else 'סימון ההגעה בוטל למפגש ' end || test.harpatka_meeting_short(new.meeting_id), case when new.attended then 'attended' else 'attendance_cancelled' end, new.meeting_id);
+    end if;
     if (old.details_sent_at is null) <> (new.details_sent_at is null) then
       perform test.harpatka_sys_note(new.participant_id, case when new.details_sent_at is not null then 'נשלחו פרטי הערב (וואטסאפ) למפגש ' else 'סימון שליחת פרטי הערב בוטל למפגש ' end || test.harpatka_meeting_short(new.meeting_id),
         case when new.details_sent_at is not null then 'details_sent' else 'details_unsent' end, new.meeting_id);
     end if;
-  elsif tg_op = 'DELETE' then
-    perform test.harpatka_sys_note(old.participant_id, 'הוסר/ה מהמפגש ' || test.harpatka_meeting_short(old.meeting_id), 'meeting_removed', old.meeting_id);
-  end if;
-  return coalesce(new, old);
-exception when others then return coalesce(new, old);
+  elsif tg_op = 'DELETE' then
+    perform test.harpatka_sys_note(old.participant_id, 'הוסר/ה מהמפגש ' || test.harpatka_meeting_short(old.meeting_id), 'meeting_removed', old.meeting_id);
+  end if;
+  return coalesce(new, old);
+exception when others then return coalesce(new, old);
 end $function$
 ;
 drop trigger if exists harpatka_att_notes on test.harpatka_attendance;

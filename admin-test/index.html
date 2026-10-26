@@ -670,6 +670,8 @@
     }
     .mtoggle[aria-pressed="true"] .box { background: var(--terra); border-color: var(--terra); }
     .mrow .pay { height: 34px; padding: 0 12px; font-size: 14px; }
+    .mrow .mlabel { flex: 1; font-weight: 600; padding: 0 8px; text-align: right; white-space: nowrap; }
+    .mrow .pay.none { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--line); }
     .mrow .pay::after { content: "▾"; margin-inline-start: 6px; font-size: 11px; opacity: .7; }
     .mrow .pay[hidden] { display: none; }
     .btn {
@@ -722,7 +724,6 @@
     .here:active { transform: scale(.92); }
     .here[aria-pressed="true"] { background: #2F7D4F; border-color: #2F7D4F; color: #fff; }
     .mrow .here.sm { width: auto; height: 32px; border-radius: 999px; padding: 0 9px; font-size: 13px; font-weight: 700; color: var(--muted); border-width: 1.5px; grid-column: auto; white-space: nowrap; flex: 0 0 auto; }
-    .mrow .mtoggle { white-space: nowrap; }
     .mrow:has(.here.sm) .pay { padding: 0 8px; font-size: 13px; }
     .mrow .here.sm[aria-pressed="true"] { color: #fff; }
     .hcount { display: inline-block; font-size: 13px; font-weight: 700; color: #2F7D4F; background: var(--green-bg); padding: 2px 10px; border-radius: 999px; }
@@ -1427,10 +1428,10 @@
   const REQ_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><path d="M6 3h12M6 21h12"/><path d="M7 3v3.5c0 1.6 1.1 2.8 2.7 3.6L12 12l2.3-1.9C15.9 9.3 17 8.1 17 6.5V3"/><path d="M7 21v-3.5c0-1.6 1.1-2.8 2.7-3.6L12 12l2.3 1.9c1.6.8 2.7 2 2.7 3.6V21"/></svg>';   // בבדיקה: שעון חול
   const NEW_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:16px;height:16px;vertical-align:-2px"><path d="M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"/></svg>';   // חדש: ניצוץ
   const linkStatus = (l) => (l.status_key && state.statuses.some((s) => s.key === l.status_key)) ? l.status_key : l.exempt ? 'exempt' : l.paid ? 'paid' : l.will_pay ? 'willpay' : l.maybe ? 'maybe' : (l.pay_requested_at ? 'requested' : 'unpaid');   // לא משלם (בחינם ביודעין) / שילם / נשלחה בקשת תשלום / טרם שילם
-  const STATUS_LABEL = { paid: 'שילם', willpay: 'ישלם', maybe: 'ספונטני', requested: 'בטיפול', unpaid: 'חדש', exempt: 'חינם' };
+  const STATUS_LABEL = { paid: 'שילם', willpay: 'ישלם', maybe: 'ספונטני', requested: 'בטיפול', unpaid: 'משויך', exempt: 'חינם' };
   /* ניהול סטטוסים (סביבת בדיקות): שם, צבע (מפתח בפלטה) וסדר לכל סטטוס; ההתנהגות בסינון ובסטטיסטיקות קבועה לפי המפתח */
   const PALETTE = { green: ['var(--green-bg)', 'var(--green)', 'ירוק'], red: ['var(--red-bg)', 'var(--red)', 'אדום'], amber: ['#FBEBC8', '#8A5A00', 'צהוב'], sky: ['var(--sky-bg)', 'var(--sky)', 'כחול'], orange: ['#F8E4DA', '#B8553A', 'כתום'], neutral: ['#EFE4D3', '#6B6055', 'ניטרלי'] };
-  const DEFAULT_STATUSES = [['paid', 'שילם', 'green'], ['willpay', 'ישלם', 'neutral'], ['exempt', 'חינם', 'sky'], ['maybe', 'ספונטני', 'sky'], ['requested', 'בטיפול', 'amber'], ['unpaid', 'חדש', 'red']].map((x, i) => ({ key: x[0], label: x[1], color: x[2], sort: x[0] === 'unpaid' ? 99 : i + 1 }));
+  const DEFAULT_STATUSES = [['paid', 'שילם', 'green'], ['willpay', 'ישלם', 'neutral'], ['exempt', 'חינם', 'sky'], ['maybe', 'ספונטני', 'sky'], ['requested', 'בטיפול', 'amber'], ['unpaid', 'משויך', 'red']].map((x, i) => ({ key: x[0], label: x[1], color: x[2], sort: x[0] === 'unpaid' ? 99 : i + 1 }));
   const DEFAULT_PSTATUSES = [['p_active', 'פעיל', 'green', 1], ['p_inactive', 'לא פעיל', 'neutral', 2]].map((x) => ({ key: x[0], label: x[1], color: x[2], sort: x[3], scope: 'participant' }));
   const PSYSTEM = '__none__';   // אין סטטוס מערכת למשתתף; סטטוס משתתף הוא תווית בלבד, בלי לוגיקה, וברירת המחדל ריקה
   const PDEFAULT = null;
@@ -1745,15 +1746,28 @@
   /* בחירת סטטוס תשלום (שילם / נשלחה בקשת תשלום / טרם שילם), עם פופאפ */
   /* בחירת סטטוס תשלום: מסך בתוך פופאפ המשתתף (אותה מעטפת כמו פרטי המשתתף, חץ חזרה בכותרת) */
   function pickPayStatus(pid, mid) {
-    const l = linkOf(pid, mid); if (!l) return;
-    const cur = linkStatus(l);
+    const l = linkOf(pid, mid), cur = l ? linkStatus(l) : '__none';
     payCtx = { pid, mid }; viewStack = ['main'];
-    $('#sOpts').innerHTML = statusList().map((x) => x.key).map((s) => '<button type="button" class="sopt ' + s + '" data-st="' + s + '" aria-pressed="' + (s === cur) + '">' + STATUS_LABEL[s] + '</button>').join('');
+    $('#sOpts').innerHTML = statusList().map((x) => x.key).map((s) => '<button type="button" class="sopt ' + s + '" data-st="' + s + '" aria-pressed="' + (s === cur) + '">' + esc(STATUS_LABEL[s]) + '</button>').join('') +
+      '<button type="button" class="sopt psnone" data-st="__none" aria-pressed="' + (cur === '__none') + '">ללא סטטוס (לא משויך למפגש)</button>';
     $('#sOpts').querySelectorAll('[data-st]').forEach((b) => b.onclick = () => {
-      if (b.dataset.st !== cur) setPayStatus(pid, mid, b.dataset.st);
-      toMain();
+      const st = b.dataset.st; toMain();
+      if (st === cur) return;
+      if (st === '__none') confirmLink(pid, mid, false);
+      else if (!l) setLinkedWithStatus(pid, mid, st);
+      else setPayStatus(pid, mid, st);
     });
     setPTab('status');
+  }
+  /* שיוך למפגש לפי סטטוס: אין סטטוס = לא משויך; בחירת סטטוס יוצרת את השיוך עם הסטטוס הזה */
+  const statusBody = (st) => Object.assign({ paid: false, exempt: false, will_pay: false, maybe: false, pay_requested_at: null, status_key: BUILTIN.includes(st) ? null : st },
+    st === 'paid' ? { paid: true } : st === 'requested' ? { pay_requested_at: new Date().toISOString() } : st === 'willpay' ? { will_pay: true } : st === 'maybe' ? { maybe: true } : st === 'exempt' ? { exempt: true } : {});
+  async function setLinkedWithStatus(pid, mid, st) {
+    if (linkOf(pid, mid)) { setPayStatus(pid, mid, st); return; }
+    const row = Object.assign({ participant_id: pid, meeting_id: mid }, statusBody(st));
+    state.att.push(row); render(); refreshSheetMeetings();
+    try { await api(T.a, { method: 'POST', body: row, prefer: 'resolution=ignore-duplicates' }); }
+    catch (err) { state.att = state.att.filter((a) => a !== row); render(); refreshSheetMeetings(); fail(err); }
   }
   function openRefundView(pid, mid, st) {
     $('#refundText').innerHTML = refundNote(pid, mid) + '<br><br>או: <b>לא להחזיר כסף</b>, והסכום יישאר כקרדיט למשתתף לתשלום על מפגש אחר.';
@@ -1882,7 +1896,7 @@
     try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body }); }
     catch (err) { Object.assign(l, prev); render(); if (sheet && sheet.id) refreshSheetMeetings(); fail(err); }
   }
-  /* הגיע בלי להיות רשום למפגש (הפתעה): נוצר שיוך עם הגעה מסומנת, סטטוס "חדש" */
+  /* הגיע בלי להיות רשום למפגש (הפתעה): נוצר שיוך עם הגעה מסומנת, סטטוס "משויך" */
   async function walkIn(pid, mid, after) {
     if (linkOf(pid, mid)) { setAttended(pid, mid, true); if (after) after(); return; }
     const row = { participant_id: pid, meeting_id: mid, paid: false, attended: true, attended_at: new Date().toISOString() };
@@ -1953,14 +1967,14 @@
     if (inMeeting) {
       const l = quickLink(pid); if (!l) return;
       const m = state.meetings.find((x) => x.id === l.meeting_id);
-      cur = linkStatus(l); head = 'סטטוס במפגש' + (m ? ' · ' + meetingLabel(m) : ''); apply = (k) => setPayStatus(pid, l.meeting_id, k);
+      cur = linkStatus(l); head = 'סטטוס במפגש' + (m ? ' · ' + meetingLabel(m) : ''); apply = (k) => (k === '__none' ? confirmLink(pid, l.meeting_id, false) : setPayStatus(pid, l.meeting_id, k));
     } else {
       const p = state.participants.find((x) => x.id === pid); if (!p) return;
       cur = pstatusKey(p) || '__none'; head = 'סטטוס משתתף'; apply = (k) => setParticipantStatus(pid, k === '__none' ? null : k);
     }
     menu.innerHTML = '<button type="button" class="qi" style="background:transparent;color:var(--muted);font-size:13px;height:26px;cursor:default" tabindex="-1">' + esc(head) + '</button>' +
       (inMeeting ? statusList() : pstatusList()).map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-qk="' + s.key + '" aria-pressed="' + (s.key === cur) + '">' + esc(s.label) + '</button>').join('') +
-      (inMeeting ? '' : '<button type="button" role="menuitem" class="qi" data-qk="__none" aria-pressed="' + (cur === '__none') + '" style="background:var(--cream);color:var(--muted)">בלי סטטוס</button>');
+      '<button type="button" role="menuitem" class="qi" data-qk="__none" aria-pressed="' + (cur === '__none') + '" style="background:var(--cream);color:var(--muted)">' + (inMeeting ? 'ללא סטטוס (הסרה מהמפגש)' : 'בלי סטטוס') + '</button>';
     menu.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
     let left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8), top = r.bottom + 6;
@@ -1969,7 +1983,7 @@
     menu.onclick = (e) => {
       const b = e.target.closest('[data-qk]'); if (!b) return;
       const k = b.dataset.qk; closeQ(); if (k === cur) return;
-      apply(k); toast(k === '__none' ? 'הסטטוס הוסר' : 'הסטטוס עודכן: ' + STATUS_LABEL[k]);
+      apply(k); if (!(inMeeting && k === '__none')) toast(k === '__none' ? 'הסטטוס הוסר' : 'הסטטוס עודכן: ' + STATUS_LABEL[k]);
     };
   }
   /* סטטוס משתתף (כללי): נפרד מסטטוס המפגש */
@@ -2181,7 +2195,7 @@
     const base = waLink(p.phone);
     copyTexts = [PAYBOX];
     const COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="3"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>';
-    /* משתתף בסטטוס "חדש": הוואטסאפ נפתח עם הודעה מובנית (בלשון זכר/נקבה); אחרי החזרה לדשבורד שואלים אם להעביר ל"בטיפול" */
+    /* משתתף בסטטוס "משויך": הוואטסאפ נפתח עם הודעה מובנית (בלשון זכר/נקבה); אחרי החזרה לדשבורד שואלים אם להעביר ל"בטיפול" */
     const pend = pendingLinks(p);
     const waHref = base && pend.length ? base + '?text=' + encodeURIComponent(chaseMessage(p)) : base;
     let h = '<div class="ctop">' +
@@ -2576,8 +2590,8 @@
       if (sheet.id) { const l = linkOf(sheet.id, m.id); on = !!l; st = l ? linkStatus(l) : 'unpaid'; }
       else { on = sheet.links.has(m.id); st = sheet.links.get(m.id) ? 'paid' : 'unpaid'; }
       return '<div class="mrow' + (on ? ' on' : '') + '">' +
-        '<button type="button" class="mtoggle" data-mt="' + m.id + '" aria-pressed="' + on + '"><span class="box">' + (on ? '✓' : '') + '</span>' + esc(meetingLabel(m, true)) + '</button>' +
-        '<button type="button" class="pay ' + st + '" data-mp="' + m.id + '"' + (on ? '' : ' hidden') + '>' + STATUS_LABEL[st] + '</button>' +
+        '<span class="mlabel">' + esc(meetingLabel(m, true)) + '</span>' +
+        '<button type="button" class="pay ' + (on ? st : 'none') + '" data-mp="' + m.id + '" title="' + (on ? 'שינוי סטטוס' : 'בלי סטטוס: לא משויך למפגש') + '">' + (on ? esc(STATUS_LABEL[st]) : 'ללא') + '</button>' +
         (sheet.id ? '<button type="button" class="mmoney' + (allocatedOf(sheet.id, m.id) > 0 ? ' has' : '') + '" data-mm="' + m.id + '"' + (on ? '' : ' hidden') + ' title="תשלום למפגש">' + (allocatedOf(sheet.id, m.id) > 0 ? '₪' + nfm(allocatedOf(sheet.id, m.id)) : 'תשלום') + '</button>' : '') +
         (sheet.id && !on && attendOpen(m) ? '<button type="button" class="here sm" data-hw="' + m.id + '">הגיע בלי הרשמה</button>' : '') +
         (sheet.id && on && attendOpen(m) ? '<button type="button" class="here sm" data-ht="' + m.id + '" aria-pressed="' + !!(linkOf(sheet.id, m.id) || {}).attended + '">' + ((linkOf(sheet.id, m.id) || {}).attended ? '✓ הגיע' : 'לא הגיע') + '</button>' : '') +
@@ -2591,17 +2605,13 @@
     if (hw) { walkIn(sheet.id, hw.dataset.hw); return; }
     const ht = e.target.closest('[data-ht]');
     if (ht) { setAttended(sheet.id, ht.dataset.ht, ht.getAttribute('aria-pressed') !== 'true'); return; }
-    const t = e.target.closest('[data-mt]'), pay = e.target.closest('[data-mp]'), mm = e.target.closest('[data-mm]');
-    if (t) {
-      const mid = t.dataset.mt, on = t.getAttribute('aria-pressed') !== 'true';
-      if (sheet.id) confirmLink(sheet.id, mid, on);
-      else { on ? sheet.links.set(mid, false) : sheet.links.delete(mid); refreshSheetMeetings(); }
-    } else if (mm) {
+    const pay = e.target.closest('[data-mp]'), mm = e.target.closest('[data-mm]');
+    if (mm) {
       if (sheet.id) openPayView(sheet.id, mm.dataset.mm);
     } else if (pay) {
       const mid = pay.dataset.mp;
       if (sheet.id) pickPayStatus(sheet.id, mid);
-      else { sheet.links.set(mid, !sheet.links.get(mid)); refreshSheetMeetings(); }
+      else { sheet.links.has(mid) ? sheet.links.delete(mid) : sheet.links.set(mid, false); refreshSheetMeetings(); }
     }
   });
 
@@ -2864,7 +2874,7 @@
       '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם סטטוס המערכת" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1] + '" />' +
       '<div class="stcols">' + Object.keys(PALETTE).map((c) => '<button type="button" class="sw" data-c="' + c + '" aria-label="' + PALETTE[c][2] + '" aria-pressed="' + (s.color === c) + '" style="background:' + PALETTE[c][0] + '"></button>').join('') + '</div>' +
       '<span class="stlockic" title="המיקום קבוע: תמיד אחרון"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>' +
-      '<small class="stcap">' + (stScope === 'meeting' ? 'סטטוס מערכת עבור הרשמה חדשה למפגש' : 'סטטוס מערכת עבור משתתף חדש') + '</small></div>'
+      '<small class="stcap">' + 'סטטוס מערכת: ברירת המחדל בשיוך משתתף למפגש' + '</small></div>'
       : '<div class="strow" data-k="' + s.key + '">' +
       '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם הסטטוס" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1] + '" />' +
       '<div class="stcols">' + Object.keys(PALETTE).map((c) => '<button type="button" class="sw" data-c="' + c + '" aria-label="' + PALETTE[c][2] + '" aria-pressed="' + (s.color === c) + '" style="background:' + PALETTE[c][0] + '"></button>').join('') + '</div>' +
@@ -2900,7 +2910,7 @@
     if (del) {
       const k = del.dataset.del, isM = stScope === 'meeting', s = (isM ? state.statuses : state.pstatuses).find((x) => x.key === k); if (!s || BUILTIN.includes(k) || k === PSYSTEM) return;
       const used = isM ? state.att.filter((l) => l.status_key === k) : state.participants.filter((p) => p.status_key === k);
-      if (used.length && !confirm('יש ' + used.length + (isM ? ' שיוכים' : ' משתתפים') + ' בסטטוס "' + s.label + '". הם יחזרו לסטטוס "חדש"' + (isM ? '' : ' (פעיל)') + '. למחוק?')) return;
+      if (used.length && !confirm('יש ' + used.length + (isM ? ' שיוכים' : ' משתתפים') + ' בסטטוס "' + s.label + '". הם יחזרו לסטטוס "' + (isM ? STATUS_LABEL.unpaid : 'ללא סטטוס') + '". למחוק?')) return;
       used.forEach((x) => { x.status_key = null; });
       if (isM) state.statuses = state.statuses.filter((x) => x.key !== k); else state.pstatuses = state.pstatuses.filter((x) => x.key !== k);
       applyStatuses(); renderStSettings(); render(); if (sheet && sheet.id) { refreshSheetMeetings(); renderContact(); }
