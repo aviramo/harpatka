@@ -843,6 +843,7 @@
     #qMenu .qi[data-am] { display: inline-flex; align-items: center; justify-content: center; height: 32px; padding: 0 14px; border-radius: 999px; background: var(--cream); color: var(--ink); font-weight: 700; font-size: 15px; width: auto; }
     .clrow .addm { margin-inline-start: auto; height: 28px; padding: 0 12px; border-radius: 999px; background: #fff; border: 1px solid var(--line); color: var(--terra); font-weight: 700; font-size: 14px; }
     .clrow .addm[hidden] { display: none; }
+    #mDelete.locked { opacity: .45; }   /* מפגש עם משתתפים משויכים: לא נמחק */
     .mlist .mrow.hl { border-color: var(--ink); background: var(--cream); }   /* המפגש שממנו נפתח הכרטיס */
     .mlist .mrow { width: 174px; box-sizing: border-box; }   /* רוחב קבוע: מעבר בין הגיע ל-לא הגיע (או שינוי הסכום) לא משנה את הכרטיס */
     .mlist .mrow .mmoney, .mlist .mrow .here.sm { flex: 1 1 0; min-width: 0; width: auto; height: 34px; padding: 0 4px; font-size: 14px; justify-content: center; text-align: center; white-space: nowrap; }
@@ -3362,6 +3363,7 @@
     $('#mTitle').textContent = m ? 'עריכת מפגש' : 'מפגש חדש';
     $('#mSubmit').textContent = m ? 'שמירה' : 'יצירת מפגש';
     $('#mDelete').hidden = !m;
+    { const linked = !!(m && state.att.some((x) => x.meeting_id === m.id)); $('#mDelete').classList.toggle('locked', linked); $('#mDelete').title = linked ? 'לא ניתן למחוק מפגש שמשויכים אליו משתתפים' : ''; }
     mDlg.showModal();
     syncUrl();
   }
@@ -3387,8 +3389,10 @@
 
   $('#mDelete').addEventListener('click', async () => {
     const m = editingMeeting;
-    const n = state.att.filter((a) => a.meeting_id === m.id).length;
-    if (!confirm('למחוק את המפגש ' + meetingLabel(m) + '?' + (n ? '\n' + n + ' משתתפים ינותקו ממנו (הם עצמם לא יימחקו)' : ''))) return;
+    const blocked = () => toast('לא ניתן למחוק מפגש שמשויכים אליו משתתפים. קודם צריך להסיר את השיוכים');
+    if (state.att.some((a) => a.meeting_id === m.id)) { blocked(); return; }
+    try { const rows = await api(T.a + '?meeting_id=eq.' + m.id + '&select=participant_id&limit=1'); if (rows && rows.length) { blocked(); return; } } catch (err) { fail(err); return; }   // בדיקה גם בבסיס הנתונים (כולל משתתפים לא פעילים)
+    if (!confirm('למחוק את המפגש ' + meetingLabel(m) + '?')) return;
     try {
       await api(T.m + '?id=eq.' + m.id, { method: 'DELETE' });
       state.meetings = state.meetings.filter((x) => x !== m);
