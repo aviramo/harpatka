@@ -40,6 +40,10 @@
     .wrap > #status { flex: 0 0 auto; }
     .wrap > .listbar { flex: 0 0 36px; }
     .wrap > .list:empty { display: none; }   /* רשימה ריקה (בזמן טעינה) לא מציירת קו */
+    #fMenu { display: grid; grid-template-columns: 1fr; width: auto; min-width: 170px; gap: 4px; }
+    #fMenu .fopt { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 10px; border-radius: 12px; background: #fff; border: 1.5px solid transparent; font-size: 16px; font-weight: 700; color: var(--ink); cursor: pointer; text-align: right; }
+    #fMenu .fopt[aria-pressed="true"] { border-color: var(--ink); background: var(--cream); }
+    #fMenu .fopt .hfilt { flex: 0 0 auto; cursor: inherit; }
     .wrap > .addbox { flex: 0 0 auto; margin-bottom: calc(10px + env(safe-area-inset-bottom)); }
     .addbox:empty { display: none; }
     .addbox .newbtn { display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; padding: 10px 14px; background: #fff; border: 1.5px solid var(--line); border-radius: 16px; font-size: 17px; font-weight: 700; color: var(--ink); cursor: pointer; }
@@ -822,7 +826,8 @@
     .mlist .mrow .mlabel { flex: none; text-align: center; font-size: 17px; font-weight: 800; padding: 0; }
     .mlist .mrow .pay { display: flex; align-items: center; justify-content: center; width: 100%; height: 34px; font-size: 14px; }
     .mlist .mrow .mline { display: flex; gap: 6px; }
-    .mlist .mrow .mmoney, .mlist .mrow .here.sm { flex: 1 1 auto; width: auto; height: 34px; padding: 0 12px; font-size: 14px; justify-content: center; text-align: center; white-space: nowrap; }
+    .mlist .mrow { width: 174px; box-sizing: border-box; }   /* רוחב קבוע: מעבר בין הגיע ל-לא הגיע (או שינוי הסכום) לא משנה את הכרטיס */
+    .mlist .mrow .mmoney, .mlist .mrow .here.sm { flex: 1 1 0; min-width: 0; width: auto; height: 34px; padding: 0 4px; font-size: 14px; justify-content: center; text-align: center; white-space: nowrap; }
     .mtoggle .box {
       width: 22px; height: 22px; border-radius: 7px; border: 2px solid var(--sand); display: grid; place-items: center;
       color: #fff; font-size: 14px; flex: 0 0 auto;
@@ -831,7 +836,7 @@
     .mrow .pay { height: 34px; padding: 0 12px; font-size: 14px; }
     .mrow .mlabel { flex: 1; font-weight: 600; padding: 0 8px; text-align: right; white-space: nowrap; }
     .mrow .pay.none { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--line); }
-    .mrow .pay::after { content: "▾"; margin-inline-start: 6px; font-size: 11px; opacity: .7; }
+    .mrow .pay::after { content: none; }   /* בלי חץ בצ'יפ הסטטוס */
     .mrow .pay[hidden] { display: none; }
     .btn {
       width: 100%; height: 52px; border-radius: 16px; background: var(--terra); color: #fff; font-weight: 700; font-size: 18px;
@@ -1261,6 +1266,7 @@
   </dialog>
 
   <div class="qmenu" id="qMenu" role="menu" hidden></div>
+  <div class="qmenu" id="fMenu" role="menu" hidden></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
@@ -1628,6 +1634,7 @@
   /* כלל כללי לכל התפריטים הצפים: כשתפריט פתוח, לחיצה בכל מקום מחוצה לו (גם על כפתור או צ'יפ אחר) רק סוגרת אותו ושום דבר אחר לא נפתח או משתנה. מותר רק לתוך התפריט ולכפתור שפותח אותו (שסוגר אותו) */
   const FLOAT_MENUS = [
     { el: () => $('#qMenu'), keep: '#qMenu', close: () => closeQ() },
+    { el: () => $('#fMenu'), keep: '#fMenu, #listHere, #listPay', close: () => { $('#fMenu').hidden = true; $('#fMenu').dataset.kind = ''; } },
     { el: () => document.getElementById('colMenu'), keep: '#colMenu', close: () => { const m = document.getElementById('colMenu'); if (m) m.hidden = true; } },
     { el: () => document.getElementById('attMenu'), keep: '#attMenu, #setAttBtn', close: () => { const m = document.getElementById('attMenu'); if (m) m.hidden = true; } },
     { el: () => $('#hMenu'), keep: '.hicons', close: () => closeHMenu() },
@@ -2782,6 +2789,11 @@
   const dmShort = (m) => { const [, mo, d] = m.meeting_date.split('-').map(Number); return d + '.' + mo; };
   $('#pPayChip').addEventListener('click', () => { if (!sheet || !sheet.id) return; viewStack = []; goView('wallet'); });
   /* קבלת תשלום: מהארנק (כללי) או מתוך מפגש (סמל ה-₪ ברשימה): אז הסכום המוצע הוא מחיר המפגש, ואפשר לשלם על כמה מפגשים (חבילה: הסכום מתחלק, והמפגש הזה ועוד קרובים שמשויכים אליהם נפרעים מיד) */
+  /* כפתור ₪ של מפגש: ששולם או חינם פותח "יתרה ותשלומים" (אין מה לשלם), אחרת קבלת תשלום */
+  function openPayFor(pid, mid) {
+    const pp = state.participants.find((x) => x.id === pid), lk = linkOf(pid, mid), m = state.meetings.find((x) => x.id === mid);
+    if (pp && lk && (allocatedOf(pid, mid) > 0 || noPayOf(pp, lk))) { viewStack = []; goView('wallet'); } else openDeposit(mid);
+  }
   function openDeposit(mid) {
     const f = pForm, pid = sheet && sheet.id, m = mid ? state.meetings.find((x) => x.id === mid) : null;
     sheet.depMid = m ? m.id : null;
@@ -3102,7 +3114,7 @@
     if (ht) { setAttended(sheet.id, ht.dataset.ht, ht.getAttribute('aria-pressed') !== 'true'); return; }
     const pay = e.target.closest('[data-mp]'), mm = e.target.closest('[data-mm]');
     if (mm) {
-      if (sheet.id) openDeposit(mm.dataset.mm);   // מסך קבלת תשלום אחיד לכל מקום
+      if (sheet.id) openPayFor(sheet.id, mm.dataset.mm);   // שולם / חינם: יתרה ותשלומים, אחרת קבלת תשלום
     } else if (pay) {
       const mid = pay.dataset.mp;
       if (sheet.id) { if (!$('#qMenu').hidden) closeQ(); else openQuickMenu(sheet.id, pay, mid); }
@@ -3278,8 +3290,24 @@
     render();
   });
   $('#genderChips').addEventListener('click', (e) => { const gb = e.target.closest('[data-stg]'); if (gb) { state.gender = gb.dataset.stg === 'all' || state.gender === gb.dataset.stg ? null : gb.dataset.stg; render(); syncUrl(); } });
-  $('#listHere').addEventListener('click', (e) => { if (!e.target.closest('[data-hcyc]')) return; state.here = state.here === '1' ? '0' : state.here === '0' ? null : '1'; render(); syncUrl(); });
-  $('#listPay').addEventListener('click', (e) => { if (!e.target.closest('[data-pcyc]')) return; state.paidF = state.paidF === '1' ? '0' : state.paidF === '0' ? null : '1'; render(); syncUrl(); });
+  /* סינון הגעה / תשלום: לחיצה פותחת תפריט עם המצבים ואייקוניהם; הבחירה מבצעת את הסינון */
+  const closeF = () => { $('#fMenu').hidden = true; $('#fMenu').dataset.kind = ''; };
+  function openF(kind, anchor) {
+    const m = $('#fMenu'); if (!m.hidden && m.dataset.kind === kind) { closeF(); return; }
+    const att = kind === 'here', cur = att ? state.here : state.paidF, ic = att ? (c, s) => '<span class="hfilt ' + c + '">' + s + '</span>' : (c, s) => '<span class="hfilt pay ' + c + '">' + s + '</span>';
+    const opts = att ? [[null, 'all', '', 'הכל'], ['1', 'yes', '✓', 'הגיעו'], ['0', 'no', '', 'לא הגיעו']] : [[null, 'all', '', 'הכל'], ['1', 'yes', '₪', 'שולם'], ['0', 'no', '₪', 'לא שולם']];
+    m.innerHTML = opts.map((o) => '<button type="button" role="menuitem" class="fopt" data-fv="' + (o[0] === null ? '' : o[0]) + '" aria-pressed="' + ((cur || null) === o[0]) + '">' + ic(o[1], o[2]) + '<span>' + o[3] + '</span></button>').join('');
+    m.dataset.kind = kind; m.hidden = false;
+    const r = anchor.getBoundingClientRect(), mw = m.offsetWidth;
+    m.style.left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8) + 'px'; m.style.top = (r.bottom + 6) + 'px';
+  }
+  $('#fMenu').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-fv]'); if (!b) return; const v = b.dataset.fv || null;
+    if ($('#fMenu').dataset.kind === 'here') state.here = v; else state.paidF = v;
+    closeF(); render(); syncUrl();
+  });
+  $('#listHere').addEventListener('click', (e) => { const b = e.target.closest('[data-hcyc]'); if (b) openF('here', b); });
+  $('#listPay').addEventListener('click', (e) => { const b = e.target.closest('[data-pcyc]'); if (b) openF('pay', b); });
   /* אייקוני הסינון בשורת "מוצגים" מיושרים לעמודות האייקונים ברשימה (₪ והגעה) */
   function alignFilters() {
     const bar = document.querySelector('.listbar'); if (!bar) return; const br = bar.getBoundingClientRect();
@@ -3344,7 +3372,7 @@
       return;
     }
     const pi = e.target.closest('.payic');
-    if (pi) { const r0 = pi.closest('li.row'), id0 = r0 && r0.querySelector('[data-edit]').dataset.edit; if (id0 && state.filter) { e.stopPropagation(); openParticipant(id0, undefined, r0); openDeposit(state.filter); } return; }
+    if (pi) { const r0 = pi.closest('li.row'), id0 = r0 && r0.querySelector('[data-edit]').dataset.edit; if (id0 && state.filter) { e.stopPropagation(); openParticipant(id0, undefined, r0); openPayFor(id0, state.filter); } return; }
     const row = e.target.closest('li.row'), ed = row && row.querySelector('[data-edit]');   // לחיצה בכל מקום בכרטיס פותחת את פרטי המשתתף
     if (ed) openParticipant(ed.dataset.edit, undefined, row);
   };
