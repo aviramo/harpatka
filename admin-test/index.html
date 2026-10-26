@@ -484,6 +484,7 @@
     .qmenu .qi[aria-pressed="true"] { border-color: currentColor; }
     .qmenu .qedit, .qeditlink { display: flex; align-items: center; justify-content: center; gap: 6px; height: 30px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 700; border-radius: 10px; }
     .qeditlink { margin: 8px auto 0; padding: 0 12px; }
+    .qmenu .qhd { font-size: 12px; font-weight: 800; color: var(--muted); text-align: center; padding: 4px 0 0; }
     .qmenu .qi small { opacity: .7; font-weight: 700; margin-inline-start: 4px; }
     .fx.stsel { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
     .fx.stsel .stpill { padding: 3px 12px; border-radius: 999px; font-weight: 700; }
@@ -1035,12 +1036,12 @@
   };
   const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance', n: 'harpatka_notes', pr: 'harpatka_promoters', pp: 'harpatka_promoter_payments', pay: 'harpatka_payments', st: 'harpatka_statuses', pf: 'harpatka_admin_prefs' };
 
-  const state = { prefs: {}, statuses: [], pstatuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, gender: null, sort: 'new' };
+  const state = { prefs: {}, statuses: [], pstatuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, here: null, gender: null, sort: 'new' };
   /* קישור עמוק מהמייל: ?m=<מפגש>&p=<משתתף>; נשמר בזמן הכניסה עם גוגל (שמחזירה בלי הפרמטרים) */
   let deep = null;
   try {
     const sp = new URLSearchParams(location.search);
-    if (['m', 'p', 'pay', 'q', 'em', 'g', 's', 'st', 'pt', 'bd'].some((k) => sp.get(k))) { deep = { m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g'), s: sp.get('s'), st: sp.get('st'), pt: sp.get('pt'), bd: sp.get('bd') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
+    if (['m', 'p', 'pay', 'at', 'q', 'em', 'g', 's', 'st', 'pt', 'bd'].some((k) => sp.get(k))) { deep = { m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), at: sp.get('at'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g'), s: sp.get('s'), st: sp.get('st'), pt: sp.get('pt'), bd: sp.get('bd') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
     else { deep = JSON.parse(sessionStorage.getItem('harpatka_deep') || 'null'); }
   } catch (e) {}
   const $ = (s) => document.querySelector(s);
@@ -1052,6 +1053,7 @@
     const sp = new URLSearchParams();
     if (state.filter) sp.set('m', state.filter);
     if (state.pay) sp.set('pay', state.pay);
+    if (state.here) sp.set('at', state.here);
     if (state.gender) sp.set('g', state.gender);
     if (state.sort !== 'new') sp.set('s', state.sort);
     if (state.q.trim()) sp.set('q', state.q.trim());
@@ -1391,6 +1393,7 @@
         try { sessionStorage.removeItem('harpatka_deep'); } catch (e) {}
         if (d.m && state.meetings.some((x) => x.id === d.m)) state.filter = d.m;
         { const ks = payKeys(d.pay).filter((k) => k === PNONE || state.statuses.concat(state.pstatuses).some((x) => x.key === k)); if (ks.length) state.pay = ks.join(','); }   // סינון לפי סטטוס אחד שנבחר מהרשימה
+        if (d.at === '1' || d.at === '0') state.here = d.at;
         if (d.g === 'male' || d.g === 'female' || d.g === 'none') state.gender = d.g;
         if (d.s && SORTS.some((x) => x[0] === d.s)) state.sort = d.s;
         if (d.q) { state.q = d.q; $('#q').value = d.q; }
@@ -1493,6 +1496,8 @@
   const effGender = () => state.q.trim() ? null : state.gender;
   const payKeys = (s) => s ? String(s).split(',').filter(Boolean) : [];   // סינון סטטוסים מרובה: state.pay הוא מפתחות מופרדים בפסיק
   const effPay = () => state.q.trim() ? null : state.pay;
+  const effHere = () => (state.q.trim() || !state.filter) ? null : state.here;   // הגיע / לא הגיע, רק בתוך מפגש
+  const hereOk = (p) => { const h = effHere(); return !h || (((linkOf(p.id, state.filter) || {}).attended) ? '1' : '0') === h; };
   const normFilter = () => { if (state.pay) { const ks = payKeys(state.pay).filter((k) => isPKey(k) !== !!state.filter); state.pay = ks.length ? ks.join(',') : null; } };   // סינון משתתף רק בתצוגת הכל, סינון מפגש רק בתוך מפגש
   const stMatch = (p, key) => { if (key === PNONE) return !ptagsOf(p).length; if (isPKey(key)) return ptagsOf(p).includes(key); if (state.filter) { const l = linkOf(p.id, state.filter); return !!l && linkStatus(l) === key; } return linksOf(p.id).some((l) => linkStatus(l) === key); };
   function renderFacets() {
@@ -1503,10 +1508,10 @@
       if (!q) return true;
       return p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd)) || hasNote(p, q);
     });
-    const epk = payKeys(ep), payOk = (p) => !epk.length || epk.some((k) => stMatch(p, k));
+    const epk = payKeys(ep), eh = effHere(), payOk = (p) => hereOk(p) && (!epk.length || epk.some((k) => stMatch(p, k)));
     const genOk = (p) => eg === 'none' ? !p.gender : (!eg || p.gender === eg);
     const nG = (g) => base.filter((p) => payOk(p) && (g === 'none' ? !p.gender : p.gender === g)).length;
-    const nP = (key) => base.filter((p) => genOk(p) && payKeys(key).some((k) => stMatch(p, k))).length;
+    const nP = (key) => base.filter((p) => genOk(p) && hereOk(p) && payKeys(key).some((k) => stMatch(p, k))).length;
     const btn = (kind, val, label, n, cls, on, aria) => '<button type="button"' + (aria ? ' aria-label="' + aria + ' ' + n + '" title="' + aria + '"' : '') + ' class="fx' + (cls ? ' ' + cls : '') + (n ? '' : ' zero') + '" data-fx="' + kind + ':' + val + '" aria-pressed="' + on + '">' + label + ' <b>' + n + '</b></button>';
     const none = nG('none');
     const genOkCount = () => base.filter(genOk).length;
@@ -1515,11 +1520,11 @@
       btn('g', 'female', '<span class="lw gen-lw">נשים</span><span class="gi gf">' + WOMAN_ICON + '</span>', nG('female'), '', eg === 'female', 'נשים') +
       (none || eg === 'none' ? btn('g', 'none', 'ללא', none, '', eg === 'none', 'ללא מגדר') : '') + '</div>';
     const selOf = (k) => k === PNONE ? { key: 'empty', label: 'בלי תגיות' } : state.statuses.concat(state.pstatuses).find((x) => x.key === k);
-    const sel = epk.length ? selOf(epk[0]) : null, nAll = genOkCount();
+    const sel = epk.length ? selOf(epk[0]) : eh ? { key: 'empty', label: eh === '1' ? 'הגיע' : 'לא הגיע' } : null, nAll = genOkCount();
     h += '<div class="fgroup" style="--n:2"><button type="button" class="fx stsel" data-fxs="1" aria-haspopup="menu" aria-label="סינון לפי ' + (state.filter ? 'סטטוס' : 'תגיות') + (sel ? ': ' + epk.map((k) => (selOf(k) || {}).label).filter(Boolean).map(esc).join(', ') : '') + '" title="סינון לפי ' + (state.filter ? 'סטטוס' : 'תגיות') + '">' +
-      (sel ? '<span class="stpill ' + sel.key + '">' + esc(sel.label) + (epk.length > 1 ? ' +' + (epk.length - 1) : '') + '</span><b>' + nP(ep) + '</b>' : '<span class="stlab">' + (state.filter ? 'סטטוס' : 'תגיות') + '</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>') + '</button></div>';
+      (sel ? '<span class="stpill ' + sel.key + '">' + esc(sel.label) + (epk.length > 1 ? ' +' + (epk.length - 1) : '') + '</span><b>' + (epk.length ? nP(ep) : base.filter((p) => genOk(p) && hereOk(p)).length) + '</b>' : '<span class="stlab">' + (state.filter ? 'סטטוס' : 'תגיות') + '</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>') + '</button></div>';
     $('#facets').classList.toggle('searching', !!q);
-    $('#facets').innerHTML = base.length || eg || epk.length ? h : '';
+    $('#facets').innerHTML = base.length || eg || epk.length || eh ? h : '';
   }
 
   /* מיון הרשימה */
@@ -1574,6 +1579,7 @@
     let rows = state.participants.filter((p) => {
       if (state.filter && !linkOf(p.id, state.filter)) return false;
       if (effPay() && !payKeys(effPay()).some((k) => stMatch(p, k))) return false;
+      if (!hereOk(p)) return false;
       if (effGender() === 'none' ? p.gender : (effGender() && p.gender !== effGender())) return false;
       if (!q) return true;
       return p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd)) || hasNote(p, q);
@@ -2035,13 +2041,14 @@
     const cnt = (key) => people.filter((p) => stMatch(p, key)).length;
     menu.innerHTML = '<button type="button" role="menuitem" class="qi" data-sf="" aria-pressed="' + !state.pay + '" style="background:var(--cream);color:var(--ink)">הכל <small>' + people.length + '</small></button>' +
       (state.filter ? statusList() : pstatusList()).map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-sf="' + s.key + '" aria-pressed="' + payKeys(state.pay).includes(s.key) + '">' + esc(s.label) + ' <small>' + cnt(s.key) + '</small></button>').join('') +
-      (state.filter ? '' : '<button type="button" role="menuitem" class="qi" data-sf="' + PNONE + '" aria-pressed="' + payKeys(state.pay).includes(PNONE) + '" style="background:var(--cream);color:var(--muted)">בלי תגיות <small>' + cnt(PNONE) + '</small></button>') + editBtn(state.filter ? 'meeting' : 'participant');
+      (state.filter ? '<div class="qhd">הגעה</div><button type="button" role="menuitem" class="qi" data-at="1" aria-pressed="' + (state.here === '1') + '" style="background:#E3F1E8;color:#1E7A45">הגיע</button><button type="button" role="menuitem" class="qi" data-at="0" aria-pressed="' + (state.here === '0') + '" style="background:var(--cream);color:var(--muted)">לא הגיע</button>' : '<button type="button" role="menuitem" class="qi" data-sf="' + PNONE + '" aria-pressed="' + payKeys(state.pay).includes(PNONE) + '" style="background:var(--cream);color:var(--muted)">בלי תגיות <small>' + cnt(PNONE) + '</small></button>') + editBtn(state.filter ? 'meeting' : 'participant');
     menu.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
     let left = Math.min(Math.max(8, r.left + r.width / 2 - mw / 2), window.innerWidth - mw - 8), top = r.bottom + 6;
     if (top + mh > window.innerHeight - 8) top = Math.max(8, r.top - mh - 6);
     menu.style.left = left + 'px'; menu.style.top = top + 'px';
-    menu.onclick = (e) => { const ed = e.target.closest('[data-qedit]'); if (ed) { openStatusSettings(ed.dataset.qedit); return; } const b = e.target.closest('[data-sf]'); if (!b) return; const k = b.dataset.sf; if (!k) { state.pay = null; closeQ(); } else { const cur = payKeys(state.pay), nx = cur.includes(k) ? cur.filter((x) => x !== k) : cur.concat(k); state.pay = nx.length ? nx.join(',') : null; }   /* בחירה מרובה: התפריט נשאר פתוח */
+    menu.onclick = (e) => { const ed = e.target.closest('[data-qedit]'); if (ed) { openStatusSettings(ed.dataset.qedit); return; } const hb = e.target.closest('[data-at]'); if (hb) { state.here = state.here === hb.dataset.at ? null : hb.dataset.at; menu.querySelectorAll('[data-at]').forEach((x) => x.setAttribute('aria-pressed', String(state.here === x.dataset.at))); render(); syncUrl(); return; }
+      const b = e.target.closest('[data-sf]'); if (!b) return; const k = b.dataset.sf; if (!k) { state.pay = null; state.here = null; closeQ(); } else { const cur = payKeys(state.pay), nx = cur.includes(k) ? cur.filter((x) => x !== k) : cur.concat(k); state.pay = nx.length ? nx.join(',') : null; }   /* בחירה מרובה: התפריט נשאר פתוח */
       menu.querySelectorAll('[data-sf]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.sf ? payKeys(state.pay).includes(x.dataset.sf) : !state.pay))); render(); syncUrl(); };
   }
   document.addEventListener('click', (e) => { if (!$('#qMenu').hidden && !e.target.closest('#qMenu, [data-qs], [data-fxs]')) { e.preventDefault(); e.stopPropagation(); closeQ(); } }, true);   // תפריט פתוח: לחיצה בחוץ רק סוגרת אותו, ושום דבר אחר לא נפתח
@@ -2837,7 +2844,7 @@
     state.filter = c.dataset.filter || null;
     render();
   });
-  $('#list').addEventListener('click', (e) => { if (e.target.closest('#clearFx')) { state.gender = null; state.pay = null; render(); } });
+  $('#list').addEventListener('click', (e) => { if (e.target.closest('#clearFx')) { state.gender = null; state.pay = null; state.here = null; render(); } });
   $('#facets').addEventListener('click', (e) => {
     const fs = e.target.closest('[data-fxs]');
     if (fs) { if (!$('#qMenu').hidden) closeQ(); else openStatusFilterMenu(fs); return; }
