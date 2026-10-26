@@ -2190,7 +2190,7 @@
     const l = linkOf(pid, mid), cur = l ? linkStatus(l) : '__none';
     payCtx = { pid, mid }; viewStack = ['main'];
     $('#sOpts').innerHTML = statusList().slice().reverse().map((x) => x.key).map((s) => '<button type="button" class="sopt ' + s + '" data-st="' + s + '" aria-pressed="' + (s === cur) + '">' + esc(STATUS_LABEL[s]) + '</button>').join('') +
-      '<button type="button" class="sopt psnone" data-st="__none" aria-pressed="' + (cur === '__none') + '">לא משויך</button>';
+      (l && l.attended ? '' : '<button type="button" class="sopt psnone" data-st="__none" aria-pressed="' + (cur === '__none') + '">לא משויך</button>');
     $('#sOpts').querySelectorAll('[data-st]').forEach((b) => b.onclick = () => {
       const st = b.dataset.st; toMain();
       if (st === cur) return;
@@ -2241,7 +2241,9 @@
   }
   function confirmRefund(pid, mid, fn) { confirmAct('החזרת תשלום', pid, mid, fn, refundNote(pid, mid), 'כן, להחזיר תשלום'); }
   $('#cDlg').addEventListener('close', () => { $('#cYes').textContent = 'אישור'; $('#cYes').classList.remove('danger'); $('#cAlt').hidden = true; });
-  const confirmLink = (pid, mid, on, after) => (!on && allocatedOf(pid, mid) > 0) ? confirmAct('הסרה מהמפגש: מה עם התשלום?', pid, mid, () => { setLinked(pid, mid, false, 'refund'); if (after) after(); }, refundNote(pid, mid) + '<br><br>אפשר גם להשאיר את הסכום כקרדיט למשתתף, בלי להחזיר כסף.', 'הסר והחזר תשלום', { label: 'הסר ושמור קרדיט (בלי החזר)', fn: () => { setLinked(pid, mid, false, 'credit'); if (after) after(); } }) : confirmAct(on ? 'להוסיף למפגש?' : 'להסיר מהמפגש?', pid, mid, () => { setLinked(pid, mid, on); if (after) after(); });
+  /* משתתף שהגיע למפגש (סומנה הגעה) אי אפשר להסיר מהמפגש */
+  const keepAttended = (pid, mid) => { const l = linkOf(pid, mid); if (l && l.attended) { toast('לא ניתן להסיר שיוך של משתתף שהגיע למפגש'); return true; } return false; };
+  const confirmLink = (pid, mid, on, after) => (!on && keepAttended(pid, mid)) ? null : (!on && allocatedOf(pid, mid) > 0) ? confirmAct('הסרה מהמפגש: מה עם התשלום?', pid, mid, () => { setLinked(pid, mid, false, 'refund'); if (after) after(); }, refundNote(pid, mid) + '<br><br>אפשר גם להשאיר את הסכום כקרדיט למשתתף, בלי להחזיר כסף.', 'הסר והחזר תשלום', { label: 'הסר ושמור קרדיט (בלי החזר)', fn: () => { setLinked(pid, mid, false, 'credit'); if (after) after(); } }) : confirmAct(on ? 'להוסיף למפגש?' : 'להסיר מהמפגש?', pid, mid, () => { setLinked(pid, mid, on); if (after) after(); });
 
   /* סימון הגעה למפגש (זמן אמת: מעדכן מיד, נשמר ומתעדכן אצל כולם) */
   /* דרכי הגעה: רשימה עם יתרה, דף התחשבנות לכל דרך הגעה (עמלות שנצברו מול תשלומים לדרך הגעה), הוספה, עריכה ומחיקה */
@@ -2446,9 +2448,10 @@
       const p = state.participants.find((x) => x.id === pid); if (!p) return;
       cur = '__multi'; head = 'תגיות'; apply = () => {};
     }
+    const noneOk = !(inMeeting && (() => { const ll = mid ? linkOf(pid, mid) : quickLink(pid); return !!(ll && ll.attended); })());   // מי שהגיע: אין "לא משויך"
     const tagSet = new Set(inMeeting ? [] : ptagsOf(state.participants.find((x) => x.id === pid)));
     menu.innerHTML = 
-      (inMeeting ? '<button type="button" role="menuitem" class="qi" data-qk="__none" aria-pressed="' + (cur === '__none') + '" style="background:var(--cream);color:var(--muted)">לא משויך</button>' : '') +
+      (inMeeting && noneOk ? '<button type="button" role="menuitem" class="qi" data-qk="__none" aria-pressed="' + (cur === '__none') + '" style="background:var(--cream);color:var(--muted)">לא משויך</button>' : '') +
       (inMeeting ? statusList() : pstatusList()).slice().reverse().map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-qk="' + s.key + '" aria-pressed="' + (inMeeting ? s.key === cur : tagSet.has(s.key)) + '">' + esc(s.label) + '</button>').join('') +
       '' + editBtn(inMeeting ? 'meeting' : 'participant');
     menu.hidden = false;
@@ -2533,6 +2536,7 @@
   }
 
   async function setLinked(pid, mid, on, mode) {
+    if (!on && keepAttended(pid, mid)) return;
     if (on) {
       const row = { participant_id: pid, meeting_id: mid, paid: false };
       state.att.push(row); render(); refreshSheetMeetings();
