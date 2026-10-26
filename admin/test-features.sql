@@ -152,3 +152,21 @@ notify pgrst, 'reload schema';
 alter table test.harpatka_payments add column if not exists pkg_n int;
 alter table test.harpatka_payments add column if not exists pkg boolean not null default false;
 notify pgrst, 'reload schema';
+
+-- 16. דרכי הגעה: ערוצי פרסום ממומן דינמיים (קוד משלהם בקישור ?s=<code>, שם וצבע), וצבע ליחצנים
+create table if not exists test.harpatka_sources (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique check (code ~ '^[a-z0-9]{1,6}$'),
+  name text not null,
+  color text not null default 'sky',
+  sort int not null default 1
+);
+alter table test.harpatka_sources enable row level security;
+drop policy if exists "harpatka admin all" on test.harpatka_sources;
+create policy "harpatka admin all" on test.harpatka_sources for all to authenticated using (public.harpatka_is_admin()) with check (public.harpatka_is_admin());
+grant select, insert, update, delete on test.harpatka_sources to authenticated;
+insert into test.harpatka_sources (code, name, color, sort) values ('p', 'פייסבוק', 'sky', 1) on conflict (code) do nothing;
+alter table test.harpatka_promoters add column if not exists color text not null default 'red';
+alter table test.harpatka_participants add column if not exists source_code text;
+update test.harpatka_participants set source_code = 'p' where source = 'site-ad' and source_code is null;
+notify pgrst, 'reload schema';
