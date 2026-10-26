@@ -827,6 +827,7 @@
     .mlist .mrow .mlabel { flex: none; text-align: center; font-size: 17px; font-weight: 800; padding: 0; }
     .mlist .mrow .pay { display: flex; align-items: center; justify-content: center; width: 100%; height: 34px; font-size: 14px; }
     .mlist .mrow .mline { display: flex; gap: 6px; }
+    .mlist .mrow.hl { border-color: var(--ink); background: var(--cream); }   /* המפגש שממנו נפתח הכרטיס */
     .mlist .mrow { width: 174px; box-sizing: border-box; }   /* רוחב קבוע: מעבר בין הגיע ל-לא הגיע (או שינוי הסכום) לא משנה את הכרטיס */
     .mlist .mrow .mmoney, .mlist .mrow .here.sm { flex: 1 1 0; min-width: 0; width: auto; height: 34px; padding: 0 4px; font-size: 14px; justify-content: center; text-align: center; white-space: nowrap; }
     .mtoggle .box {
@@ -3112,7 +3113,7 @@
   }
   function openParticipant(id, tab, fromEl) {
     const p = id ? state.participants.find((x) => x.id === id) : null;
-    sheet = p ? { id: p.id } : { id: null, links: new Map(state.filter ? [[state.filter, false]] : []) };
+    sheet = p ? { id: p.id, hl: state.filter || null, hlDone: false } : { id: null, links: new Map(state.filter ? [[state.filter, false]] : []) };
     pForm.reset();
     { const nm = p ? splitName(p) : ['', '']; pForm.first_name.value = nm[0]; pForm.last_name.value = nm[1]; }
     pForm.phone.value = p ? localPhone(p.phone) : '';
@@ -3155,7 +3156,7 @@
       if (sheet.id) { const l = linkOf(sheet.id, m.id); on = !!l; st = l ? linkStatus(l) : 'unpaid'; }
       else { on = sheet.links.has(m.id); st = sheet.links.get(m.id) ? 'paid' : 'unpaid'; }
       const freeL = !!(sheet.id && on && noPayOf(state.participants.find((x) => x.id === sheet.id), linkOf(sheet.id, m.id)));   // לא משלם על המפגש: מוצג "חינם" ולא "תשלום"
-      return '<div class="mrow' + (on ? ' on' : '') + '">' +
+      return '<div class="mrow' + (on ? ' on' : '') + (sheet.hl === m.id ? ' hl' : '') + '" data-mrow="' + m.id + '">' +
         '<span class="mlabel">' + dmShort(m) + '</span>' +
         '<button type="button" class="pay ' + (on ? st : 'none') + '" data-mp="' + m.id + '" title="' + (on ? 'שינוי סטטוס' : 'לא משויך למפגש') + '">' + (on ? esc(STATUS_LABEL[st]) : 'לא משויך') + '</button>' +
         '<div class="mline">' + (sheet.id ? '<button type="button" class="mmoney' + (allocatedOf(sheet.id, m.id) > 0 ? ' has' : freeL ? ' free' : '') + '" data-mm="' + m.id + '"' + (on ? '' : ' hidden') + ' title="תשלום למפגש">' + (allocatedOf(sheet.id, m.id) > 0 ? '₪' + nfm(allocatedOf(sheet.id, m.id)) : freeL ? 'חינם' : 'תשלום') + '</button>' : '') +
@@ -3163,10 +3164,18 @@
         (sheet.id && on && attendOpen(m) ? '<button type="button" class="here sm" data-ht="' + m.id + '" aria-pressed="' + !!(linkOf(sheet.id, m.id) || {}).attended + '">' + ((linkOf(sheet.id, m.id) || {}).attended ? '✓ הגיע' : 'לא הגיע') + '</button>' : '') + '</div>' +
       '</div>';
     }).join('');
+    focusMeetingCard();
     if (sheet.id && !shown.length) box.innerHTML = '<p class="mnone">עוד לא משויך לאף מפגש</p>';
   }
 
   $('#pMore').addEventListener('click', () => { mLimit += 3; refreshSheetMeetings(); });
+  /* הגענו מרשימת מפגש: המפגש מסומן בכרטיס, והרצועה גוללת כך שהוא ראשון מימין */
+  function focusMeetingCard(tries) {
+    if (!sheet || !sheet.hl || sheet.hlDone) return; const box = $('#pMeetings'), el = box && box.querySelector('[data-mrow="' + sheet.hl + '"]'); if (!el) return;
+    const b = box.getBoundingClientRect(), r = el.getBoundingClientRect();
+    if (b.width > 0) { sheet.hlDone = true; box.scrollBy({ left: r.right - b.right, behavior: 'auto' }); }
+    else if ((tries || 0) < 10) setTimeout(() => focusMeetingCard((tries || 0) + 1), 60);
+  }
   $('#pMeetings').addEventListener('click', (e) => {
     const hw = e.target.closest('[data-hw]');
     if (hw) { walkIn(sheet.id, hw.dataset.hw); return; }
