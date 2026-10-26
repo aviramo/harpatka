@@ -526,6 +526,21 @@
     .sortbtn.on { color: var(--terra); border-color: var(--coral); }
     .sortmenu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; min-width: 190px; background: var(--paper); border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(63,56,47,.18); padding: 6px; }
     .sortmenu[hidden] { display: none; }
+    .cntmenu { position: fixed; z-index: 60; width: min(340px, calc(100vw - 24px)); max-height: 70vh; overflow-y: auto; padding: 12px 14px; text-align: right; }
+    .cntmenu h4 { margin: 0 0 4px; font-size: 17px; font-weight: 800; }
+    .cntmenu .cwhy { margin: 8px 0; padding: 8px 10px; border-radius: 12px; font-size: 14.5px; line-height: 1.45; font-weight: 600; }
+    .cntmenu .cwhy.g { background: var(--green-bg); color: var(--green); }
+    .cntmenu .cwhy.r { background: var(--red-bg); color: var(--red); }
+    .cntmenu .cwhy.y { background: var(--yellow-bg); color: var(--yellow); }
+    .cntmenu .cwhy.n { background: var(--cream); color: var(--muted); }
+    .cntmenu .cnote { font-size: 13.5px; color: var(--muted); line-height: 1.45; margin: 6px 0; }
+    .cntmenu .crow { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 15px; }
+    .cntmenu .crow small { color: var(--muted); font-size: 13px; }
+    .cntmenu .cst { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 999px; font-size: 13.5px; font-weight: 700; }
+    .cntmenu .cst.y { background: var(--green-bg); color: var(--green); }
+    .cntmenu .cst.n { background: var(--red-bg); color: var(--red); }
+    .cntmenu .cst.f { background: var(--cream); color: var(--muted); }
+    .row .ptag.cnt { cursor: pointer; }
     .sortmenu button { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 12px; text-align: right; font-size: 16px; font-weight: 600; }
     .sortmenu button[aria-checked="true"] { background: rgba(201,111,82,.12); color: var(--terra); }
     .sortmenu button[aria-checked="true"]::after { content: "✓"; font-weight: 800; }
@@ -1063,6 +1078,7 @@
         <div class="facets" id="facets" role="group" aria-label="סינון לפי מגדר ותשלום"></div>
         <div class="sortwrap">
           <button type="button" class="sortbtn" id="sortBtn" aria-haspopup="menu" aria-expanded="false" aria-label="מיון" title="מיון"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v15M7 19l-3-3M7 19l3-3M17 20V5M17 5l-3 3M17 5l3 3"/></svg></button>
+          <div class="sortmenu cntmenu" id="cntMenu" role="dialog" aria-label="התמדה בהגעה" hidden></div>
           <div class="sortmenu" id="sortMenu" role="menu" hidden></div>
         </div>
       </div>
@@ -1702,7 +1718,9 @@
   $('#hMenu').addEventListener('click', closeHMenu);
   /* תפריט פתוח: לחיצה בחוץ רק סוגרת אותו (לא מפעילה את מה שמתחתיו); הלחיצה הבאה פועלת כרגיל */
   /* כלל כללי לכל התפריטים הצפים: כשתפריט פתוח, לחיצה בכל מקום מחוצה לו (גם על כפתור או צ'יפ אחר) רק סוגרת אותו ושום דבר אחר לא נפתח או משתנה. מותר רק לתוך התפריט ולכפתור שפותח אותו (שסוגר אותו) */
+  let cntCtx = null;
   const FLOAT_MENUS = [
+    { el: () => $('#cntMenu'), keep: '#cntMenu, .ptag.cnt', close: () => { const m = $('#cntMenu'); if (m) { m.hidden = true; m.dataset.pid = ''; } } },
     { el: () => $('#qMenu'), keep: '#qMenu', close: () => closeQ() },
     { el: () => $('#fMenu'), keep: '#fMenu', close: () => { $('#fMenu').hidden = true; $('#fMenu').dataset.kind = ''; } },
     { el: () => document.getElementById('colMenu'), keep: '#colMenu', close: () => { const m = document.getElementById('colMenu'); if (m) m.hidden = true; } },
@@ -2057,6 +2075,7 @@
       return { came: opp.filter((m) => (linkOf(p.id, m.id) || {}).attended).length, total: opp.length };
     };
     const pAll = state.participants.map(persist).filter((x) => x.total > 0), pAvg = pAll.length ? pAll.reduce((s, x) => s + x.came, 0) / pAll.reduce((s, x) => s + x.total, 0) : 0, BAND = 0.1, K = 0;
+    cntCtx = { persist, started, startedMs, pAvg, BAND };
     const anyEv = rows.some((p) => evCircle(p));   // אם לפחות שורה אחת עם עיגול שליחה, שומרים את העמודה בכל השורות כדי שהתגיות יהיו באותו קו
     const rowHtml = (p) => {
       const age = shownAge(p);
@@ -3529,7 +3548,37 @@
     if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-qs]')) { e.preventDefault(); e.stopPropagation(); openQuickMenu(e.target.dataset.qs, e.target, state.filter || undefined); return; }
     if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-edit]')) { e.preventDefault(); openParticipant(e.target.dataset.edit, undefined, e.target.closest('li.row')); }
   });
+  function openCnt(chip) {
+    const m = $('#cntMenu'), row = chip.closest('li.row'), pid = row && row.querySelector('[data-edit]') && row.querySelector('[data-edit]').dataset.edit;
+    if (!pid || !cntCtx) return;
+    if (m.parentElement !== document.body) document.body.appendChild(m);   // מחוץ לשורת הכלים המוסתרת
+    if (!m.hidden && m.dataset.pid === pid) { m.hidden = true; m.dataset.pid = ''; return; }
+    const p = state.participants.find((x) => x.id === pid); if (!p) return;
+    const { persist, started, startedMs, pAvg, BAND } = cntCtx, pr = persist(p), rate = pr.total ? pr.came / pr.total : 0;
+    const cls = !pr.total ? 'n' : rate > pAvg + BAND ? 'g' : rate < pAvg - BAND ? 'r' : 'y';
+    const pc = (x) => Math.round(x * 100) + '%', band = Math.round(BAND * 100);
+    const why = { g: 'ירוק: ההתמדה (' + pc(rate) + ') גבוהה מממוצע כולם (' + pc(pAvg) + ') ביותר מ-' + band + ' נקודות אחוז.', r: 'אדום: ההתמדה (' + pc(rate) + ') נמוכה מממוצע כולם (' + pc(pAvg) + ') ביותר מ-' + band + ' נקודות אחוז.', y: 'צהוב: ההתמדה (' + pc(rate) + ') קרובה לממוצע כולם (' + pc(pAvg) + '), בטווח של ' + band + ' נקודות אחוז.', n: 'אפור: עוד לא התקיים אף מפגש מאז השיוך הראשון, ולכן אין התמדה למדוד.' }[cls];
+    const key = (x) => x.meeting_date + x.meeting_time, mine = linksOf(pid).map((l) => state.meetings.find((x) => x.id === l.meeting_id)).filter((x) => x && started(x)).map(key).sort(), first = mine[0];
+    const rows = state.meetings.slice().sort((a, b) => key(b).localeCompare(key(a))).map((mt) => {
+      const l = linkOf(pid, mt.id), st = started(mt);
+      if (st && (!first || key(mt) < first)) return '';
+      if (!st && !l) return '';
+      const lab = dmShort(mt) + ' <small>' + (l ? 'רשום' : 'לא רשום') + '</small>';
+      const chipH = !st ? '<span class="cst f">עתידי</span>' : (l && l.attended) ? '<span class="cst y">הגיע ✓</span>' : '<span class="cst n">' + (l ? 'לא הגיע ✕' : 'לא הגיע ✕') + '</span>';
+      return '<div class="crow"><span>' + lab + '</span>' + chipH + '</div>';
+    }).join('');
+    m.innerHTML = '<h4>' + esc(p.name) + ': הגיע ' + pr.came + ' מתוך ' + pr.total + (pr.total ? ' (' + pc(rate) + ')' : '') + '</h4>' +
+      '<div class="cwhy ' + cls + '">' + why + '</div>' +
+      '<div class="cnote">נספרים כל המפגשים שהתחילו מאז המפגש הראשון שהמשתתף שויך אליו. מפגש שלא נרשם אליו ולא הגיע נחשב החמצה, ומפגש שעוד לא התקיים לא משפיע על הצבע.</div>' + rows;
+    m.dataset.pid = pid; m.hidden = false;
+    const r = chip.getBoundingClientRect(), w = m.offsetWidth, h = m.offsetHeight;
+    m.style.left = Math.min(Math.max(12, r.left + r.width / 2 - w / 2), window.innerWidth - w - 12) + 'px';
+    m.style.top = (r.bottom + h + 12 > window.innerHeight ? Math.max(12, r.top - h - 6) : r.bottom + 6) + 'px';
+  }
+  window.addEventListener('scroll', () => { const m = $('#cntMenu'); if (m && !m.hidden) { m.hidden = true; m.dataset.pid = ''; } }, true);
   const listClick = (e) => {
+    const cn = e.target.closest('.ptag.cnt');
+    if (cn) { e.stopPropagation(); openCnt(cn); return; }   // צ'יף "הגיע X/Y": תפריט הסבר ופירוט
     if (e.target.closest('.rowwa')) { e.stopPropagation(); return; }   // וואטסאפ מהרשימה: רק פותח את השיחה, לא את כרטיס המשתתף
     const qs = e.target.closest('[data-qs]');
     if (qs) { e.stopPropagation(); if (!$('#qMenu').hidden) { closeQ(); return; } openQuickMenu(qs.dataset.qs, qs, state.filter || undefined); return; }
