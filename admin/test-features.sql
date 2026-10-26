@@ -174,3 +174,7 @@ notify pgrst, 'reload schema';
 -- 17. משתתף שלא אמור לשלם על מפגשים (מארגן, אורח, פטור): לא נדרש ממנו תשלום ולא נספר בחוב
 alter table test.harpatka_participants add column if not exists no_pay boolean not null default false;
 notify pgrst, 'reload schema';
+
+-- 18. "לא משלם" לכל מפגש: ברירת המחדל במשתתף (no_pay), ועקיפה לכל שיוך למפגש (null = לפי ברירת המחדל של המשתתף)
+alter table test.harpatka_attendance add column if not exists no_pay boolean;
+notify pgrst, 'reload schema';
