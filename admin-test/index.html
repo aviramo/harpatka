@@ -1643,7 +1643,7 @@
     const perMeeting = asc.map((m) => {
       const ls = all.filter((l) => l.meeting_id === m.id), S = new Set(ls.map((l) => l.participant_id));
       const ret = [...S].filter((id) => seen.has(id)).length, kept = [...S].filter((id) => prev.has(id)).length;
-      const row = { m, regs: ls.length, ad: ls.filter((l) => l.p.source === 'site-ad').length, ex: ls.filter((l) => l.exempt || l.will_pay || l.maybe).length, paid: ls.filter((l) => l.paid && !l.exempt).length, rev: ls.filter((l) => l.paid && !l.exempt).reduce((s, l) => s + (l.paid_amount != null ? Number(l.paid_amount) : priceAtReg(m, l.created_at)), 0),
+      const row = { m, regs: ls.length, ad: ls.filter((l) => l.p.source === 'site-ad').length, ex: ls.filter((l) => l.exempt || l.will_pay || l.maybe).length, paid: ls.filter((l) => l.paid && !l.exempt).length, rev: ls.reduce((s, l) => s + Math.max(0, allocatedOf(l.participant_id, l.meeting_id)), 0),
         news: S.size - ret, ret, kept, prevN: prev.size };
       S.forEach((id) => seen.add(id)); prev = S;
       return row;
@@ -1681,8 +1681,9 @@
     const part = (title, body) => '<section class="stp"><h4>' + title + '</h4>' + body + '</section>';
 
     const n = links.length, uniq = new Set(links.map((l) => l.participant_id)), people = [...uniq].map((id) => state.participants.find((x) => x.id === id));
+    const pmAll = S.perMeeting;
     const paid = links.filter((l) => l.st === 'paid'), req = links.filter((l) => l.st === 'requested'), unp = links.filter((l) => l.st === 'unpaid'), exm = links.filter((l) => l.st === 'exempt'), wpl = links.filter((l) => l.st === 'willpay'), mby = links.filter((l) => l.st === 'maybe'), nPay = n - exm.length - wpl.length - mby.length;   // "חינם" ו"ישלם" לא נספרים בהמרה
-    const rev = paid.reduce((s, l) => s + price(l), 0), comm = state.payments.reduce((s, x) => s + (x.promoter_id && x.commission != null ? (x.kind === 'payment' ? 1 : -1) * Number(x.commission) : 0), 0), owed = req.reduce((s, l) => s + price(l), 0);
+    const rev = pmAll.reduce((s, r) => s + r.rev, 0), comm = state.payments.reduce((s, x) => s + (x.promoter_id && x.commission != null ? (x.kind === 'payment' ? 1 : -1) * Number(x.commission) : 0), 0);
     const pm = S.perMeeting.filter((r) => r.regs), last = pm[pm.length - 1], prev = pm[pm.length - 2];
     const conv = P(paid.length, nPay);
 
@@ -1691,9 +1692,9 @@
     const refunds = state.payments.filter((x) => x.kind === 'refund').reduce((s, x) => s + Number(x.amount), 0);
     const maxRev = Math.max(1, ...pm.map((r) => r.rev));
     const money = part('הכנסה לפי מפגש', tbl(['מפגש', 'הכנסה', 'שילמו', 'מגמה'], pm.map((r, k) => [dlab(r.m), ilsB(r.rev), r.paid + '/' + (r.regs - r.ex), k ? trend(r.rev, pm[k - 1].rev) : '—']))) +
-      part('מצב תשלומים', '<div class="stkpis">' + kpi(paid.length, 'שילמו', Ps(paid.length, nPay), 'good') + kpi(req.length, STATUS_LABEL.requested, ilsB(owed), 'warn') + kpi(unp.length, STATUS_LABEL.unpaid, '', unp.length ? 'bad' : '') + kpi(exm.length, STATUS_LABEL.exempt, '') + kpi(wpl.length, STATUS_LABEL.willpay, '') + kpi(mby.length, STATUS_LABEL.maybe, '') + '</div>') +
+      part('מצב תשלומים', '<div class="stkpis">' + kpi(paid.length, 'שילמו', Ps(paid.length, nPay), 'good') + kpi(req.length, STATUS_LABEL.requested, '', 'warn') + kpi(unp.length, STATUS_LABEL.unpaid, '', unp.length ? 'bad' : '') + kpi(exm.length, STATUS_LABEL.exempt, '') + kpi(wpl.length, STATUS_LABEL.willpay, '') + kpi(mby.length, STATUS_LABEL.maybe, '') + '</div>') +
       part('גבייה', tbl(['מדד', 'ערך'], [['המרה לתשלום', Ps(paid.length, nPay)], ['ממוצע לתשלום', paid.length ? ilsB(rev / paid.length) : '—'], ['נטו אחרי עמלות', ilsB(rev - comm)], ['עמלות ליחצנים', ilsB(comm)], ['קרדיט פתוח', ilsB(credit)], ['הוחזר', ilsB(refunds)]])) +
-      (() => { const byM = {}; paid.forEach((l) => { const k = ilDay(l.paid_at || l.created_at || new Date().toISOString()).slice(0, 7); byM[k] = (byM[k] || 0) + price(l); }); const ks = Object.keys(byM).sort(), mx = Math.max(1, ...ks.map((k) => byM[k])); return ks.length > 1 ? part('הכנסה לפי חודש', ks.map((k) => barRow(k.slice(5) + '/' + k.slice(2, 4), byM[k], mx, '#2F7D4F', ilsB(byM[k]))).join('')) : ''; })();
+      (() => { const byM = {}; state.payments.forEach((x) => { const a = Number(x.amount) || 0, v = (x.kind === 'deposit' || (x.kind === 'payment' && !x.from_credit)) ? a : x.kind === 'refund' ? -a : 0; if (!v) return; const k = ilDay(x.created_at || new Date().toISOString()).slice(0, 7); byM[k] = (byM[k] || 0) + v; }); const ks = Object.keys(byM).sort(), mx = Math.max(1, ...ks.map((k) => byM[k])); return ks.length > 1 ? part('הכנסה לפי חודש', ks.map((k) => barRow(k.slice(5) + '/' + k.slice(2, 4), byM[k], mx, '#2F7D4F', ilsB(byM[k]))).join('')) : ''; })();
 
     // ----- יחצנים ופרסום -----
     const src = (l) => (l.promoter_id || (l.p && l.p.promoter_id)) ? 'promo' : l.p.source === 'site-ad' ? 'ad' : l.p.source === 'site' ? 'site' : 'other';
@@ -1729,7 +1730,7 @@
     // ----- מסך ראשי: שורה תחתונה לכל נושא -----
     const bottom = '<div class="stbottom"><div><b>' + ilsB(rev - comm) + '</b><small>הכנסה נטו</small></div><div><b>' + paid.length + '/' + nPay + '</b><small>שילמו</small></div><div><b>' + (conv == null ? '—' : conv + '%') + '</b><small>המרה</small></div></div>';
     const main = bottom +
-      topic('money', 'כספים', last && prev ? trend(last.rev, prev.rev) : '', num(ilsB(rev), 'הכנסה') + num(ilsB(owed), 'בטיפול') + num(ilsB(credit), 'קרדיט')) +
+      topic('money', 'כספים', last && prev ? trend(last.rev, prev.rev) : '', num(ilsB(rev), 'הכנסה') + num(req.length, 'בטיפול') + num(ilsB(credit), 'קרדיט')) +
       topic('promo', 'יחצנים ופרסום', '', num(ilsB(proInc), 'דרך יחצנים') + num(adL.length, 'ממודעה') + num(ilsB(proOwed), 'לתשלום ליחצנים')) +
       topic('demo', 'דמוגרפיה', last && prev ? trend(last.news, prev.news) : '', num(Ps(female.length, people.length), 'נשים') + num(avgAge ? avgAge.toFixed(0) : '—', 'גיל ממוצע') + num(Ps(target.length, ages.length), '40 עד 50'));
 
@@ -2340,13 +2341,13 @@
   /* יתרה ותשלומים: התשלומים נפרדים מהמפגשים. כל תשלום שמתקבל נכנס ליתרה של המשתתף, ובשיוך למפגש לוקחים ממנה */
   /* כסף שהוקצה למפגש מסוים: תשלומים למפגש פחות ביטולים והחזרים של אותו מפגש (בלי קשר לסטטוס) */
   const allocatedOf = (pid, mid) => state.payments.filter((x) => x.participant_id === pid && x.meeting_id === mid).reduce((s, x) => s + (x.kind === 'payment' ? Number(x.amount) : (x.kind === 'credit' || (x.kind === 'refund' && !x.from_credit)) ? -Number(x.amount) : 0), 0);
-  const owedOf = (pid) => linksOf(pid).filter((l) => linkStatus(l) === 'requested' || linkStatus(l) === 'willpay').reduce((s, l) => { const m = state.meetings.find((q) => q.id === l.meeting_id); return s + (m ? defaultPrice(m) : PRICE_EARLY); }, 0);
+  const owedOf = () => 0;   // סטטוס לא יוצר חוב: היתרה נקבעת רק מרשומות התשלומים
   const METHODS = { paybox: 'פייבוקס', bit: 'ביט', cash: 'מזומן', bank: 'בנק' };
   const methodName = (x) => x.method === 'other' ? (x.method_note || 'אחר') : (METHODS[x.method] || '');
   function renderWallet() {
     const pid = sheet && sheet.id; if (!pid) return;
     const bal = creditOf(pid), owed = owedOf(pid);
-    $('#walSum').innerHTML = '<div class="big ' + (bal > 0 ? 'pos' : 'zero') + '"><bdi dir="ltr">₪' + nfm(bal) + '</bdi></div><div class="sub">יתרה זמינה' + (owed > 0 ? ' · חוב פתוח על מפגשים: <bdi dir="ltr">₪' + nfm(owed) + '</bdi>' : '') + '</div>';
+    $('#walSum').innerHTML = '<div class="big ' + (bal > 0 ? 'pos' : 'zero') + '"><bdi dir="ltr">₪' + nfm(bal) + '</bdi></div><div class="sub">יתרה זמינה' + '' + '</div>';
     $('#walRefund').hidden = !(bal > 0);
     $('#walZikuy').hidden = !state.meetings.some((m) => allocatedOf(pid, m.id) > 0);
     const mlabel = (x) => { const m = state.meetings.find((q) => q.id === x.meeting_id); return m ? ' ' + dmShort(m) : ''; };
@@ -2615,7 +2616,7 @@
       const net = owed - (sheet.id ? creditOf(sheet.id) : 0), chip = $('#pPayChip');
       chip.hidden = !sheet.id;
       chip.className = 'paychip' + (net > 0 ? '' : net < 0 ? ' ok' : ' zero');
-      { const chipHtml = '<bdi dir="ltr">₪' + nfm(Math.abs(net)) + '</bdi>'; if (chip.innerHTML !== chipHtml) chip.innerHTML = chipHtml; } chip.title = (net > 0 ? 'חוב פתוח' : net < 0 ? 'יתרה לטובת המשתתף' : 'מאוזן') + ' (לחיצה לתשלומים ויתרה)'; }
+      { const chipHtml = '<bdi dir="ltr">₪' + nfm(Math.abs(net)) + '</bdi>'; if (chip.innerHTML !== chipHtml) chip.innerHTML = chipHtml; } chip.title = (net < 0 ? 'יתרה לטובת המשתתף' : 'אין יתרה') + ' (לחיצה לתשלומים ויתרה)'; }
     box.innerHTML = shown.map((m) => {
       let on, st;
       if (sheet.id) { const l = linkOf(sheet.id, m.id); on = !!l; st = l ? linkStatus(l) : 'unpaid'; }
