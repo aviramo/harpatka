@@ -80,9 +80,9 @@
     .hgrp { display: flex; align-items: center; gap: 8px; align-self: center; }
     .title-row { position: relative; height: 48px; align-items: center; }   /* גובה קבוע: פתיחת החיפוש לא מזיזה את הרשימה */
     .tools[hidden] { display: none; }
-    .attopts { display: flex; flex-wrap: wrap; gap: 6px; }
-    .attopts .stc { display: inline-flex; align-items: center; height: 30px; border-radius: 999px; padding: 0 12px; font-size: 15px; font-weight: 700; border: 2px solid transparent; background: #fff; color: var(--ink); }
-    .attopts .stc[aria-pressed="true"] { border-color: var(--ink); background: var(--cream); }
+    .attmenu { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 10px; width: min(330px, calc(100vw - 16px)); box-sizing: border-box; }
+    .attmenu .stc { display: inline-flex; align-items: center; height: 30px; border-radius: 999px; padding: 0 12px; font-size: 15px; font-weight: 700; border: 2px solid transparent; background: #fff; color: var(--ink); }
+    .attmenu .stc[aria-pressed="true"] { border-color: var(--ink); background: var(--cream); }
     #setDlg #setIntroBox[hidden] { display: none; }   /* נוסח הוואטסאפ רק בלשונית סטטוס מפגש */
     /* חיפוש בראש הדף, משמאל לכפתור התפריט: אייקון שנפתח לכל רוחב השורה בלחיצה */
     .hsearch { margin-top: 0; flex: 0 0 44px; width: 44px; height: 44px; }
@@ -1015,7 +1015,7 @@
         </div>
         <div class="setgrp">
           <div class="settitle">מפגשים</div>
-          <div class="setfield" id="setAttBox"><div class="sethead"><span>מתי נפתח סימון ההגעה</span></div><div class="attopts" id="setAttOpts" role="radiogroup" aria-label="מתי נפתח סימון ההגעה"></div><small class="sthint" id="setAttHint" style="margin:0"></small></div>
+          <button type="button" class="setrow setlink" id="setAttBtn" aria-haspopup="menu"><div class="setl"><b>מתי נפתח סימון ההגעה</b><small id="setAttHint"></small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M6 9l6 6 6-6"/></svg></button>
           <button type="button" class="setrow setlink" id="setStBtn"><div class="setl"><b>סטטוסים ותגיות</b><small>שם, צבע וסדר לכל סטטוס ותגית</small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
         </div>
         <button type="button" class="btn ghost" id="setOut" style="color:var(--red)">יציאה מהחשבון</button>
@@ -1394,11 +1394,22 @@
   $('#menuBtn').addEventListener('click', (e) => { e.stopPropagation(); const m = $('#hMenu'); m.hidden = !m.hidden; $('#menuBtn').setAttribute('aria-expanded', String(!m.hidden)); });
   $('#hMenu').addEventListener('click', closeHMenu);
   /* תפריט פתוח: לחיצה בחוץ רק סוגרת אותו (לא מפעילה את מה שמתחתיו); הלחיצה הבאה פועלת כרגיל */
+  /* כלל כללי לכל התפריטים הצפים: כשתפריט פתוח, לחיצה בכל מקום מחוצה לו (גם על כפתור או צ'יפ אחר) רק סוגרת אותו ושום דבר אחר לא נפתח או משתנה. מותר רק לתוך התפריט ולכפתור שפותח אותו (שסוגר אותו) */
+  const FLOAT_MENUS = [
+    { el: () => $('#qMenu'), keep: '#qMenu', close: () => closeQ() },
+    { el: () => document.getElementById('colMenu'), keep: '#colMenu', close: () => { const m = document.getElementById('colMenu'); if (m) m.hidden = true; } },
+    { el: () => document.getElementById('attMenu'), keep: '#attMenu, #setAttBtn', close: () => { const m = document.getElementById('attMenu'); if (m) m.hidden = true; } },
+    { el: () => $('#hMenu'), keep: '.hicons', close: () => closeHMenu() },
+    { el: () => $('#mMenu'), keep: '.msel', close: () => closeMSel() },
+    { el: () => $('#sortMenu'), keep: '.sortwrap', close: () => closeSort() },
+  ];
   document.addEventListener('click', (e) => {
-    if (!$('#hMenu').hidden && !e.target.closest('.hicons')) { e.preventDefault(); e.stopPropagation(); closeHMenu(); }
-    else if (!$('#sortMenu').hidden && !e.target.closest('.sortwrap')) { e.preventDefault(); e.stopPropagation(); closeSort(); }
-    else if (!$('#mMenu').hidden && !e.target.closest('.msel')) { e.preventDefault(); e.stopPropagation(); closeMSel(); }
+    const open = FLOAT_MENUS.filter((m) => { const x = m.el(); return x && !x.hidden; });
+    if (!open.length) return;
+    if (open.some((m) => e.target.closest(m.keep))) return;
+    e.preventDefault(); e.stopImmediatePropagation(); open.forEach((m) => m.close());
   }, true);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') FLOAT_MENUS.forEach((m) => { const x = m.el(); if (x && !x.hidden) m.close(); }); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeHMenu(); });
   $('#bdBtn').addEventListener('click', boardOpen);
   $('#bdBody').addEventListener('click', async (e) => {
@@ -2129,7 +2140,6 @@
       const b = e.target.closest('[data-sf]'); if (!b) return; const k = b.dataset.sf; if (!k) { state.pay = null; state.here = null; closeQ(); } else { const cur = payKeys(state.pay), nx = cur.includes(k) ? cur.filter((x) => x !== k) : cur.concat(k); state.pay = nx.length ? nx.join(',') : null; }   /* בחירה מרובה: התפריט נשאר פתוח */
       menu.querySelectorAll('[data-sf]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.sf ? payKeys(state.pay).includes(x.dataset.sf) : !state.pay))); render(); syncUrl(); };
   }
-  document.addEventListener('click', (e) => { if (!$('#qMenu').hidden && !e.target.closest('#qMenu, [data-qs], [data-fxs]')) { e.preventDefault(); e.stopPropagation(); closeQ(); } }, true);   // תפריט פתוח: לחיצה בחוץ רק סוגרת אותו, ושום דבר אחר לא נפתח
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeQ(); });
   window.addEventListener('scroll', closeQ, true);
   /* שינוי סטטוס הוא רק שינוי תווית: לא נוגע בתשלומים, ביתרה או בהחזרים (התשלומים מנוהלים בנפרד, במסך התשלום של המפגש וביתרה) */
@@ -3005,20 +3015,32 @@
   $('#setBtn').addEventListener('click', () => { renderSettings(); $('#setDlg').showModal(); const ae = document.activeElement; if (ae && ae.closest && ae.closest('#setDlg')) ae.blur(); });   // בלי מקלדת בפתיחה (הפוקוס לא נשאר בשדה השם)
   /* מתי נפתח סימון ההגעה: בחירה לכל מנהל (נשמר ב-harpatka_admin_prefs.att_lead), עם הסבר על המפגש הקרוב */
   function renderAttOpts() {
-    const cur = attLead();
-    $('#setAttOpts').innerHTML = ATT_OPTS.map((o) => '<button type="button" role="radio" class="stc" data-al="' + o[0] + '" aria-pressed="' + (o[0] === cur) + '">' + o[1] + '</button>').join('');
+    const cur = attLead(), lab = (ATT_OPTS.find((o) => o[0] === cur) || [])[1] || '';
     const nx = state.meetings.filter((m) => !isPast(m)).sort((a, b) => (a.meeting_date + a.meeting_time).localeCompare(b.meeting_date + b.meeting_time))[0];
     let when = '';
-    if (nx) {
+    if (nx && cur !== 'always') {
       const [y, mo, da] = nx.meeting_date.split('-').map(Number), [h, mi] = String(nx.meeting_time).split(':').map(Number);
-      const hm = (ms) => { const d = new Date(ms); return String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0'); };
-      when = cur === 'always' ? 'פתוח כל הזמן' : 'נפתח ב-' + (cur === 'day' ? '00:00' : hm(Date.UTC(y, mo - 1, da, h, mi) - Number(cur) * 60000)) + (cur === 'day' || Number(cur) <= h * 60 + mi ? '' : ' (יום קודם)');
-      when = 'למפגש הקרוב (' + dmShort(nx) + ', ' + String(nx.meeting_time).slice(0, 5) + '): ' + when;
+      const d = new Date(cur === 'day' ? Date.UTC(y, mo - 1, da, 0, 0) : Date.UTC(y, mo - 1, da, h, mi) - Number(cur) * 60000);
+      when = ' · נפתח ב-' + String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0');
     }
-    $('#setAttHint').textContent = (when ? when + '. ' : '') + 'מהרגע הזה מופיעים הצ׳יפים "הגיע / לא הגיע" וסימון ההגעה ברשימה ובפרטי המשתתף, ומחושבת ההתמדה.';
+    $('#setAttHint').textContent = lab + when;
   }
-  $('#setAttOpts').addEventListener('click', async (e) => {
-    const b = e.target.closest('[data-al]'); if (!b) return;
+  /* בחירה: תפריט קטן צף מתחת לשורה (נסגר בבחירה או בלחיצה בחוץ) */
+  function openAttMenu() {
+    let m = document.getElementById('attMenu');
+    if (!m) { m = document.createElement('div'); m.id = 'attMenu'; m.className = 'qmenu attmenu'; m.setAttribute('role', 'menu'); m.hidden = true; $('#setDlg').appendChild(m); }
+    if (!m.hidden) { m.hidden = true; return; }
+    const cur = attLead();
+    m.innerHTML = ATT_OPTS.map((o) => '<button type="button" role="menuitemradio" class="stc" data-al="' + o[0] + '" aria-pressed="' + (o[0] === cur) + '">' + o[1] + '</button>').join('');
+    m.hidden = false;
+    const r = $('#setAttBtn').getBoundingClientRect(), mw = m.offsetWidth, mh = m.offsetHeight;
+    m.style.left = Math.min(Math.max(8, r.left + r.width / 2 - mw / 2), window.innerWidth - mw - 8) + 'px';
+    m.style.top = (r.bottom + 4 + mh > window.innerHeight - 8 ? Math.max(8, r.top - mh - 4) : r.bottom + 4) + 'px';
+  }
+  $('#setAttBtn').addEventListener('click', openAttMenu);
+  document.addEventListener('click', async (e) => {
+    const b = e.target.closest('#attMenu [data-al]'); if (!b) return;
+    $('#attMenu').hidden = true;
     const em = emailOf(), v = b.dataset.al, prev = state.prefs[em];
     state.prefs[em] = Object.assign({}, prev, { email: em, att_lead: v }); renderAttOpts(); render(); if (sheet && sheet.id && pDlg.open) refreshSheetMeetings();
     try { await api(T.pf, { method: 'POST', body: { email: em, att_lead: v }, prefer: 'resolution=merge-duplicates,return=minimal' }); toast('סימון ההגעה: ' + (ATT_OPTS.find((o) => o[0] === v) || [])[1]); }
@@ -3127,7 +3149,6 @@
     m.style.top = (r.bottom + 6 + mh > window.innerHeight - 8 ? Math.max(8, r.top - mh - 6) : r.bottom + 6) + 'px';
     m.onclick = (e) => { const sw = e.target.closest('.sw'); if (!sw) return; m.hidden = true; saveStatus(key, { color: sw.dataset.c }); };
   }
-  document.addEventListener('click', (e) => { const m = document.getElementById('colMenu'); if (m && !m.hidden && !e.target.closest('#colMenu')) { e.preventDefault(); e.stopPropagation(); m.hidden = true; } }, true);
   /* סדר הסטטוסים: גוררים בידית (עכבר או מגע) ומחליפים מקום; נשמר ברגע הפיסול. במקלדת: חצים על הידית */
   async function commitOrder(keys) {
     const before = allSt().map((s) => ({ key: s.key, sort: s.sort }));
