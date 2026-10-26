@@ -78,7 +78,7 @@
     .search input:not(:placeholder-shown) ~ .sclear, .search:focus-within .sclear { display: grid; }
     .search input:focus { border-color: var(--terra); outline: none; }
     .hgrp { display: flex; align-items: center; gap: 8px; align-self: center; }
-    .title-row { position: relative; height: 48px; align-items: center; }   /* גובה קבוע: פתיחת החיפוש לא מזיזה את הרשימה */
+    .title-row { position: relative; height: 44px; align-items: center; }   /* גובה קבוע: פתיחת החיפוש לא מזיזה את הרשימה */
     .tools[hidden] { display: none; }
     .srccard { background: var(--cream); border-radius: 18px; padding: 12px; margin-bottom: 12px; display: grid; gap: 10px; }
     .srccard .srctop { display: flex; align-items: center; gap: 8px; }
@@ -125,13 +125,15 @@
     .attmenu .stc[aria-pressed="true"] { border-color: var(--ink); background: var(--cream); }
     #setDlg #setIntroBox[hidden] { display: none; }   /* נוסח הוואטסאפ רק בלשונית סטטוס מפגש */
     /* חיפוש בראש הדף, משמאל לכפתור התפריט: אייקון שנפתח לכל רוחב השורה בלחיצה */
-    .hsearch { margin-top: 0; flex: 0 0 44px; width: 44px; height: 44px; }
-    .hsearch input { display: block; width: 44px; height: 44px; padding: 0; border-radius: 999px; box-sizing: border-box; cursor: pointer; }
-    .search.hsearch svg { right: 12px; top: 50%; margin-top: -10px; transform: none; }
+    /* חיפוש בשורת "מוצגים" מעל הרשימה: אייקון קטן שנפתח לכל רוחב השורה בלחיצה */
+    .listbar { position: relative; display: flex; align-items: center; justify-content: space-between; margin-top: 8px; height: 36px; }
+    .hsearch { margin: 0; flex: 0 0 36px; width: 36px; height: 36px; margin-inline-start: auto; }
+    .hsearch input { display: block; width: 36px; height: 36px; padding: 0; border-radius: 999px; box-sizing: border-box; cursor: pointer; font-size: 16px; }
+    .search.hsearch svg { right: 9px; top: 50%; margin-top: -9px; width: 18px; height: 18px; transform: none; }
     .hsearch:not(:focus-within) input:placeholder-shown::placeholder { color: transparent; }
-    .hsearch:focus-within, .title-row:has(.hsearch input:not(:placeholder-shown)) .hsearch { position: absolute; inset: 2px 0; width: auto; height: auto; z-index: 20; }
-    .hsearch:focus-within input, .hsearch input:not(:placeholder-shown) { width: 100%; height: 100%; padding: 0 44px 0 14px; cursor: text; }
-    .hsearch .sclear { left: 8px; }
+    .hsearch:focus-within, .listbar:has(.hsearch input:not(:placeholder-shown)) .hsearch { position: absolute; inset: 0; width: auto; height: auto; z-index: 20; }
+    .hsearch:focus-within input, .hsearch input:not(:placeholder-shown) { width: 100%; height: 100%; padding: 0 36px 0 12px; cursor: text; }
+    .hsearch .sclear { left: 4px; width: 26px; height: 26px; font-size: 18px; }
     .search svg { position: absolute; right: 12px; top: 12px; width: 20px; height: 20px; color: var(--muted); }
 
     .chips {
@@ -859,7 +861,7 @@
     .ststrip .stc small { font-size: 13px; opacity: .8; display: inline-block; min-width: calc(var(--nd, 2) * 1ch); text-align: center; font-variant-numeric: tabular-nums; }   /* רוחב הספרה קבוע, כדי שהפריסה לא תזוז כשהמספרים משתנים */
     .ststrip .stc[aria-pressed="true"] { border-color: currentColor; }
     .ststrip .stc.zero { opacity: .55; }
-    .listcount { display: flex; justify-content: flex-start; margin-top: 10px; min-height: 30px; }
+    .listcount { display: flex; justify-content: flex-start; min-height: 30px; }
     .listcount:empty { display: none; }
     .stcount { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 6px; font-size: 14px; font-weight: 700; color: var(--muted); }
     .stcount b { color: var(--ink); font-size: 16px; min-width: calc(var(--nd, 2) * 1ch); text-align: center; font-variant-numeric: tabular-nums; }
@@ -902,11 +904,6 @@
           <div class="sortmenu mmenu" id="mMenu" role="menu" hidden></div>
         </div>
         <div class="hgrp">
-        <label class="search hsearch">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/><path d="M10.5 8v5M8 10.5h5" stroke-width="1.8"/></svg>
-          <input id="q" type="search" placeholder="חיפוש או הוספת משתתף" autocomplete="off" aria-label="חיפוש" />
-          <button type="button" class="sclear" id="qClear" aria-label="ניקוי החיפוש" tabindex="-1">×</button>
-        </label>
         <div class="hicons">
           <button type="button" class="hicon" id="menuBtn" aria-label="תפריט" title="תפריט" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.8"/></svg><span class="bdbadge" id="menuBadge" hidden></span></button>
           <div class="hmenu" id="hMenu" role="menu" hidden>
@@ -929,7 +926,13 @@
     </header>
 
     <div id="status"></div>
-    <div class="listcount" id="listCount" aria-live="polite"></div>
+    <div class="listbar"><div class="listcount" id="listCount" aria-live="polite"></div>
+        <label class="search hsearch">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/><path d="M10.5 8v5M8 10.5h5" stroke-width="1.8"/></svg>
+        <input id="q" type="search" placeholder="חיפוש או הוספת משתתף" autocomplete="off" aria-label="חיפוש" />
+        <button type="button" class="sclear" id="qClear" aria-label="ניקוי החיפוש" tabindex="-1">×</button>
+      </label>
+    </div>
     <ul class="list" id="list"></ul>
   </div>
 
