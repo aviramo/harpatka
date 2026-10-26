@@ -935,16 +935,18 @@
       </div>
       <div class="ppanel" data-panel="deposit" hidden>
         <div class="pnrow" id="depNoPayRow" hidden><div class="setl"><b>לא משלם על המפגש הזה</b><small>פטור לפי הפעם. לא נדרש ממנו תשלום למפגש הזה, ובשאר המפגשים לפי ברירת המחדל</small></div><button type="button" class="swt" id="depNoPay" role="switch" aria-checked="false" aria-label="לא משלם על המפגש הזה"><i></i></button></div>
+        <div id="depFields">
         <p class="sthint" id="depIntro" style="margin:0 2px 12px">תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש</p>
         <div class="payrow">
           <label class="field"><span>סכום (₪)</span><input name="pay_dep" type="number" inputmode="decimal" min="0" step="any" /></label>
-          <label class="field payfield"><span>דרך העברה</span><select name="pay_depm"><option value="paybox">פייבוקס</option><option value="bit">ביט</option><option value="cash">מזומן</option><option value="bank">בנק</option><option value="other">אחר</option></select></label>
+          <label class="field"><span id="depPkgLbl">על כמה מפגשים</span><select name="pay_pkg" id="depPkgSel"><option value="">מפגש אחד</option><option value="2">2 מפגשים</option><option value="3">3 מפגשים</option><option value="4">4 מפגשים</option><option value="5">5 מפגשים</option><option value="6">6 מפגשים</option><option value="7">7 מפגשים</option><option value="8">8 מפגשים</option><option value="9">9 מפגשים</option><option value="10">10 מפגשים</option><option value="11">11 מפגשים</option><option value="12">12 מפגשים</option></select></label>
         </div>
         <div class="pquick" id="depQuick"></div>
-        <label class="field"><span id="depPkgLbl">חבילת מפגשים (לא חובה)</span><input name="pay_pkg" type="number" inputmode="numeric" min="2" max="50" placeholder="כמה מפגשים נקנו מראש" autocomplete="off" /></label>
+        <label class="field payfield"><span>דרך העברה</span><select name="pay_depm"><option value="paybox">פייבוקס</option><option value="bit">ביט</option><option value="cash">מזומן</option><option value="bank">בנק</option><option value="other">אחר</option></select></label>
         <div class="payhint" id="depPkgHint"></div>
         <label class="field" id="depOtherField" hidden><span>פירוט קצר</span><input name="pay_depn" maxlength="60" autocomplete="off" placeholder="למשל: פייפאל, צ׳ק" /></label>
         <div class="payact"><button class="btn" id="depSave" type="button">שמירה</button></div>
+        </div>
       </div>
       <div class="ppanel" data-panel="zikuy" hidden>
         <p class="sthint" style="margin:0 2px 12px">זיכוי של תשלום שהתקבל למפגש: הסכום יורד מהמפגש, ואפשר להשאיר אותו ביתרה של המשתתף או להחזיר לו כסף</p>
@@ -1140,6 +1142,42 @@
   };
   const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance', n: 'harpatka_notes', pr: 'harpatka_promoters', pp: 'harpatka_promoter_payments', pay: 'harpatka_payments', st: 'harpatka_statuses', pf: 'harpatka_admin_prefs', tr: 'harpatka_price_tiers', sr: 'harpatka_sources' };
 
+  /* חזרה בדפדפן: כל פתיחת פופאפ וכל כניסה למסך משנה בתוכו מוסיפות רשומת היסטוריה; חזרה בדפדפן חוזרת צעד אחד (מסך משנה ← המסך הראשי ← סגירה), וסגירה או חזרה בכפתורי המסך מנקות את הרשומות */
+  const NAV = { stack: [], ignore: 0, fromPop: false };
+  const NAV_BACK = { pDlg: '#pBack', setDlg: '#setBack', stDlg: '#stArrow', prDlg: '#prArrow' };
+  const navDepthOf = (d) => {
+    try {
+      if (d.id === 'pDlg') return (sheet && sheet.id && pTab !== 'main') ? Math.max(1, viewStack.filter((x) => x !== 'main').length + 1) : 0;
+      if (d.id === 'setDlg') return setView === 'main' ? 0 : setView === 'del' ? 2 : 1;
+      if (d.id === 'stDlg') return stCur === 'main' ? 0 : 1;
+      if (d.id === 'prDlg') return RANK[prView] || 0;
+    } catch (e) {}
+    return 0;
+  };
+  const navOpen = (d) => { NAV.stack.push({ d, sub: 0 }); try { history.pushState({ nav: 1 }, ''); } catch (e) {} };
+  function navSync(d) {
+    const t0 = NAV.stack.find((x) => x.d === d); if (!t0) return;
+    const depth = navDepthOf(d);
+    if (depth === t0.sub) return;
+    if (NAV.fromPop) { t0.sub = depth; return; }
+    if (depth > t0.sub) { for (let i = t0.sub; i < depth; i++) { try { history.pushState({ nav: 1 }, ''); } catch (e) {} } t0.sub = depth; }
+    else { const n = t0.sub - depth; t0.sub = depth; NAV.ignore++; history.go(-n); }
+  }
+  const navClose = (d) => {
+    const i = NAV.stack.map((x) => x.d).lastIndexOf(d); if (i < 0) return;
+    const n = 1 + NAV.stack[i].sub; NAV.stack.splice(i, 1);
+    if (NAV.fromPop) return;
+    NAV.ignore++; history.go(-n);
+  };
+  window.addEventListener('popstate', () => {
+    if (NAV.ignore > 0) { NAV.ignore--; return; }
+    const top = NAV.stack[NAV.stack.length - 1]; if (!top) return;
+    NAV.fromPop = true;
+    try {
+      if (top.sub > 0 && NAV_BACK[top.d.id]) { const b = $(NAV_BACK[top.d.id]); if (b) b.click(); navSync(top.d); }
+      else top.d.close();
+    } finally { NAV.fromPop = false; }
+  });
   const state = { prefs: {}, statuses: [], pstatuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, here: null, paidF: null, gender: null, sort: 'new' };
   /* קישור עמוק מהמייל: ?m=<מפגש>&p=<משתתף>; נשמר בזמן הכניסה עם גוגל (שמחזירה בלי הפרמטרים) */
   let deep = null;
@@ -1840,7 +1878,7 @@
   function stView(v, instant) {
     const forward = v !== 'main'; stCur = v;
     document.querySelectorAll('#stBody [data-sp]').forEach((d) => { const on = d.dataset.sp === v; d.hidden = !on; d.classList.remove('enter-l', 'enter-r'); if (on && !instant && !reducedMotion()) { void d.offsetWidth; d.classList.add(forward ? 'enter-l' : 'enter-r'); } });
-    $('#stArrow').hidden = v === 'main'; $('#stTitle').textContent = ST_TITLES[v] || ST_TITLES.main;
+    $('#stArrow').hidden = v === 'main'; $('#stTitle').textContent = ST_TITLES[v] || ST_TITLES.main; navSync($('#stDlg'));
     const dlg = $('#stDlg'); dlg.scrollTop = 0;
   }
   $('#stArrow').addEventListener('click', () => stView('main'));
@@ -2016,7 +2054,7 @@
   function show(view) {
     const forward = RANK[view] > RANK[prView]; prView = view;
     ['#prList', '#prDetail', '#prForm'].forEach((s) => { const d = $(s), on = s === view; d.hidden = !on; d.classList.remove('enter-l', 'enter-r'); if (on && !reducedMotion()) { void d.offsetWidth; d.classList.add(forward ? 'enter-l' : 'enter-r'); } });
-    $('#prArrow').hidden = view === '#prList';
+    $('#prArrow').hidden = view === '#prList'; navSync($('#prDlg'));
   }
   function showPromoterDetail(id) {
     prCur = id; const x = promoterOf(id); if (!x) return showPromoterList();
@@ -2553,6 +2591,7 @@
       else if (ex) setTitle(pp0); }
     if (tab === 'main') { renderContact(); renderNotes(); }
     if (tab === 'wallet') renderWallet();
+    navSync($('#pDlg'));
     syncUrl();
   }
   pForm.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.name && e.target.name.startsWith('pay_')) { e.preventDefault(); if (pTab === 'zikuy') $('#zkCredit').click(); else if (pTab === 'pay') $('#paySave').click(); else if (pTab === 'credit') $('#creditRefundBtn').click(); else if (pTab === 'deposit') $('#depSave').click(); } });
@@ -2591,9 +2630,9 @@
     sheet.depMid = m ? m.id : null;
     f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; f.pay_depm.value = 'paybox'; f.pay_depn.value = ''; $('#depOtherField').hidden = true;
     f.pay_dep.value = m ? expectedPrice(pid, m) : '';
-    { const pp = state.participants.find((x) => x.id === pid), lk = m && linkOf(pid, m.id); $('#depNoPayRow').hidden = !m; $('#depNoPay').setAttribute('aria-checked', String(!!(m && pp && noPayOf(pp, lk)))); }
+    { const pp = state.participants.find((x) => x.id === pid), lk = m && linkOf(pid, m.id), np = !!(m && pp && noPayOf(pp, lk)); $('#depNoPayRow').hidden = !m; $('#depNoPay').setAttribute('aria-checked', String(np)); $('#depFields').hidden = np; }
     $('#depIntro').textContent = m ? 'תשלום על מפגש ' + dmShort(m) + '. אפשר לשלם על כמה מפגשים בבת אחת.' : 'תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש';
-    $('#depPkgLbl').textContent = m ? 'על כמה מפגשים משלמים (ריק = מפגש אחד)' : 'חבילת מפגשים (לא חובה)';
+    $('#depPkgLbl').textContent = m ? 'על כמה מפגשים' : 'חבילה'; f.pay_pkg.options[0].textContent = m ? 'מפגש אחד' : 'בלי חבילה';
     $('#depQuick').innerHTML = quickPrices().map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
     $('#depQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) { f.pay_dep.value = b.dataset.q; paintPkg(); } };
     f.pay_depm.onchange = () => { $('#depOtherField').hidden = f.pay_depm.value !== 'other'; if (f.pay_depm.value === 'other') f.pay_depn.focus(); };
@@ -2605,9 +2644,9 @@
   /* "לא משלם" לפי מפגש: עקיפה בשיוך למפגש (true/false), מעל ברירת המחדל של המשתתף */
   $('#depNoPay').addEventListener('click', async () => {
     const pid = sheet && sheet.id, mid = sheet && sheet.depMid, l = pid && mid && linkOf(pid, mid), pp = pid && state.participants.find((x) => x.id === pid); if (!l || !pp) return;
-    const prev = l.no_pay, v = !noPayOf(pp, l); l.no_pay = v; $('#depNoPay').setAttribute('aria-checked', String(v)); render(); refreshSheetMeetings();
+    const prev = l.no_pay, v = !noPayOf(pp, l); l.no_pay = v; $('#depNoPay').setAttribute('aria-checked', String(v)); $('#depFields').hidden = v; render(); refreshSheetMeetings();
     try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body: { no_pay: v } }); toast(v ? 'לא משלם על המפגש הזה' : 'משלם על המפגש הזה'); }
-    catch (err) { l.no_pay = prev; $('#depNoPay').setAttribute('aria-checked', String(!v)); render(); refreshSheetMeetings(); fail(err); }
+    catch (err) { l.no_pay = prev; $('#depNoPay').setAttribute('aria-checked', String(!v)); $('#depFields').hidden = !v; render(); refreshSheetMeetings(); fail(err); }
   });
   $('#depSave').addEventListener('click', async () => {
     const f = pForm, pid = sheet && sheet.id, amt = parseFloat(f.pay_dep.value); if (!pid) return;
@@ -2715,6 +2754,7 @@
     proto.showModal = function () {
       if (this.open) return;
       rawShow.call(this);
+      navOpen(this);
       root.classList.add('dlg-lock');
       this._closing = false;
       this.getAnimations().forEach((a) => a.cancel());
@@ -2725,6 +2765,7 @@
     };
     proto.close = function (rv, from) {
       if (!this.open || this._closing) return;
+      navClose(this);
       if (reduced()) { rawClose.call(this, rv); unlock(); return; }
       this._closing = true;
       const d = this, cur = from == null ? 0 : from, y = offset(d);
@@ -3198,6 +3239,7 @@
     if (v === 'src') renderSources();
     if (v === 'st') renderStSettings();
     if (v === 'pay') renderTiers();
+    navSync($('#setDlg'));
   }
   $('#setSt').addEventListener('click', (e) => { const b = e.target.closest('[data-sc]'); if (!b) return; stScope = b.dataset.sc; renderStSettings(); });
   function renderStSettings() {
