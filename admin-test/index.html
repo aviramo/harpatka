@@ -1038,7 +1038,6 @@
           <label class="field"><span>גיל</span><input name="age" type="number" inputmode="numeric" min="18" max="99" /></label>
           <label class="field"><span>מקור</span><select name="promoter_sel" id="pPromoSel"></select></label>
         </div>
-        <div class="pnrow"><div class="setl"><b>לא משלם, ברירת מחדל</b><small>מארגן, אורח או מי שפטור. חל בכל המפגשים, ואפשר לשנות לכל מפגש בנפרד ממסך התשלום שלו</small></div><button type="button" class="swt" id="pNoPay" role="switch" aria-checked="false" aria-label="לא משלם על מפגשים"><i></i></button></div>
         <div class="two" style="grid-template-columns:1fr">
           <div class="field"><span>תגיות</span><div class="pstchips" id="pStatusChips" role="group" aria-label="תגיות"></div></div>
         </div>
@@ -1721,7 +1720,7 @@
   const effPay = () => state.q.trim() ? null : state.pay;
   const effHere = () => (state.q.trim() || !state.filter || !attendOpen(state.meetings.find((x) => x.id === state.filter))) ? null : state.here;   // הגיע / לא הגיע, רק בתוך מפגש
   const effPaidF = () => (state.q.trim() || !state.filter) ? null : state.paidF;   // שולם / לא שולם (לפי רשומות התשלום), רק בתוך מפגש
-  const noPayOf = (p, l) => (l && l.no_pay != null) ? !!l.no_pay : !!p.no_pay;   // עקיפה לכל מפגש, אחרת ברירת המחדל של המשתתף
+  const noPayOf = (p, l) => !!(l && l.no_pay);   // "לא משלם" הוא עניין של מפגש בלבד (מתג במסך התשלום של המפגש)
   const payStateOf = (p) => noPayOf(p, linkOf(p.id, state.filter)) ? 'n' : (allocatedOf(p.id, state.filter) > 0) ? '1' : '0';   // שולם / לא שולם / לא משלם (מסומן במשתתף)
   const paidOk = (p) => { const f = effPaidF(); return !f || payStateOf(p) === f; };
   const hereOk = (p) => { const h = effHere(); return !h || (((linkOf(p.id, state.filter) || {}).attended) ? '1' : '0') === h; };
@@ -2302,7 +2301,7 @@
   }
   function fillPStatusSel(p) {
     const box = $('#pStatusChips'); if (!box) return;
-    const cur = new Set(p ? ptagsOf(p) : []);
+    const cur = new Set(p ? ptagsOf(p) : (sheet && sheet.newTags ? [...sheet.newTags] : []));   // משתתף חדש: התוויות נבחרות מראש ונשמרות ביצירה
     box.innerHTML = pstatusList().map((s) => '<button type="button" role="checkbox" class="sopt ' + s.key + '" data-ps="' + s.key + '" aria-pressed="' + cur.has(s.key) + '">' + esc(s.label) + '</button>').join('') || '<span class="sthint" style="margin:0">אין תגיות. אפשר להוסיף בעריכה</span>';
   }
   function openStatusFilterMenu(anchor) {
@@ -2932,7 +2931,7 @@
     pForm.phone.value = p ? localPhone(p.phone) : '';
     pForm.age.value = p ? (shownAge(p) ?? '') : '';
     pForm.gender.value = p && p.gender ? p.gender : '';
-    fillPromoSel(p); fillPStatusSel(p); $('#pNoPay').setAttribute('aria-checked', String(!!(p && p.no_pay)));
+    fillPromoSel(p); fillPStatusSel(p);
     setTitle(p);
     $('#pRegLine').textContent = p && regDate(p) ? ('תאריך הרשמה: ' + regDateTime(p) + (p.source === 'site' ? ' (דרך האתר)' : adCodeOf(p) ? ' (דרך האתר, ' + ((channelOf(p) || {}).name || 'פרסום') + ')' : '')) : '';
     renderContact();
@@ -3016,14 +3015,9 @@
   let savedTimer;
   $('#pDlg').addEventListener('click', (e) => { const ed = e.target.closest('.qeditlink[data-qedit]'); if (ed) openStatusSettings(ed.dataset.qedit); });
   $('#pStatusChips').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-ps]'); if (!b || !(sheet && sheet.id)) return;
+    const b = e.target.closest('[data-ps]'); if (!b || !sheet) return;
+    if (!sheet.id) { sheet.newTags = sheet.newTags || new Set(); const k = b.dataset.ps; sheet.newTags.has(k) ? sheet.newTags.delete(k) : sheet.newTags.add(k); fillPStatusSel(null); return; }
     toggleTag(sheet.id, b.dataset.ps);
-  });
-  $('#pNoPay').addEventListener('click', async () => {
-    const p = sheet && sheet.id && state.participants.find((x) => x.id === sheet.id); if (!p) return;
-    const prev = !!p.no_pay, v = !prev; p.no_pay = v; $('#pNoPay').setAttribute('aria-checked', String(v)); render(); refreshSheetMeetings();
-    try { await api(T.p + '?id=eq.' + p.id, { method: 'PATCH', body: { no_pay: v } }); toast(v ? 'ברירת המחדל: לא משלם' : 'ברירת המחדל: משלם'); }
-    catch (err) { p.no_pay = prev; $('#pNoPay').setAttribute('aria-checked', String(prev)); render(); refreshSheetMeetings(); fail(err); }
   });
   pForm.addEventListener('change', async (e) => {
     if (e.target.name === 'promoter_sel') {
@@ -3069,7 +3063,7 @@
     const btn = $('#pSubmit'); btn.disabled = true;
     try {
       let p;
-      try { [p] = await api(T.p, { method: 'POST', body: Object.assign({ ...v, age_set_at: todayISO() }, (() => { const ps = sheet.promoSel || ''; return ps ? { promoter_id: ps } : {}; })()), prefer: 'return=representation' }); }
+      try { [p] = await api(T.p, { method: 'POST', body: Object.assign({ ...v, age_set_at: todayISO() }, (() => { const ps = sheet.promoSel || ''; return Object.assign(ps ? { promoter_id: ps } : {}, sheet.newTags && sheet.newTags.size ? { tags: [...sheet.newTags] } : {}); })()), prefer: 'return=representation' }); }
       catch (err) {
         /* הטלפון קיים אצל משתתף לא פעיל: מחזירים אותו להיות פעיל (בלי לעדכן את שאר השדות) */
         const norm = v.phone.replace(/^0/, '+972').replace(/[^+\d]/g, '');
