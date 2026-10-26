@@ -433,6 +433,14 @@
     #stDlg .sheet, #prDlg .sheet, #finDlg .sheet { min-height: 100%; box-sizing: border-box; }
     #finDlg .sheet-head { position: relative; justify-content: flex-start; gap: 8px; min-height: 40px; }
     #finDlg .sheet-head h2 { flex: 1 1 auto; }
+    .finlogbtn { margin-inline-start: auto; }
+    .finlogbtn[hidden] { display: none; }
+    #finLog .logrow { padding: 11px 4px; border-top: 1px solid var(--line); }
+    #finLog .logrow:first-child { border-top: 0; }
+    #finLog .logrow b { display: block; font-size: 15.5px; font-weight: 600; line-height: 1.45; }
+    #finLog .logrow span { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+    #finLog .logrow.del b { color: var(--red); }
+    #finLog .logrow.add b { color: var(--green); }
     .finper { display: flex; gap: 6px; justify-content: center; margin: 4px 0 12px; }
     .finper .stc { height: 30px; padding: 0 14px; border-radius: 999px; font-size: 15px; font-weight: 700; background: #fff; color: var(--ink); border: 1px solid var(--line); }
     .finper .stc[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
@@ -1393,7 +1401,9 @@
       <div class="sheet-head">
         <button type="button" class="hbtn hback" id="finArrow" aria-label="חזרה" title="חזרה" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         <h2 id="finTitle">כספים</h2>
+        <button type="button" class="hbtn finlogbtn" id="finLogBtn" aria-label="יומן שינויים" title="יומן שינויים"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
       </div>
+      <div id="finLog" hidden></div>
       <div id="finMain">
         <div class="finper" id="finPer" role="group" aria-label="תקופה"><button type="button" class="stc" data-fp="month">החודש</button><button type="button" class="stc" data-fp="all">הכל</button></div>
         <div class="finsum" id="finSum"></div>
@@ -1439,7 +1449,7 @@
     url: 'https://ezakarwqstnldqixgreb.supabase.co',
     key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6YWthcndxc3RubGRxaXhncmViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTA3MzIsImV4cCI6MjEwNjc4NjczMn0.Bg0eFBC4zKjyJc5kBw3wLgSP-PkxLFVv3o7-4YUdq4c',
   };
-  const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance', n: 'harpatka_notes', pr: 'harpatka_promoters', pp: 'harpatka_promoter_payments', pay: 'harpatka_payments', st: 'harpatka_statuses', pf: 'harpatka_admin_prefs', tr: 'harpatka_price_tiers', sr: 'harpatka_sources', pm: 'harpatka_pay_methods', fin: 'harpatka_finance', finr: 'harpatka_finance_recurring' };
+  const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance', n: 'harpatka_notes', pr: 'harpatka_promoters', pp: 'harpatka_promoter_payments', pay: 'harpatka_payments', st: 'harpatka_statuses', pf: 'harpatka_admin_prefs', tr: 'harpatka_price_tiers', sr: 'harpatka_sources', pm: 'harpatka_pay_methods', fin: 'harpatka_finance', finr: 'harpatka_finance_recurring', finlog: 'harpatka_finance_log' };
 
   /* חזרה בדפדפן: כל פתיחת פופאפ וכל כניסה למסך משנה בתוכו מוסיפות רשומת היסטוריה; חזרה בדפדפן חוזרת צעד אחד (מסך משנה ← המסך הראשי ← סגירה), וסגירה או חזרה בכפתורי המסך מנקות את הרשומות */
   const NAV = { stack: [], ignore: 0, fromPop: false };
@@ -2376,8 +2386,8 @@
     $('#finList').innerHTML = rows.length ? rows.map((x) => { const m = x.meeting_id && state.meetings.find((q) => q.id === x.meeting_id); return '<button type="button" class="finrow" ' + (x.channel ? 'data-fch="' + x.channel + '"' : x.rec ? 'data-frec="' + x.id + '"' : 'data-fent="' + x.id + '"') + '><span class="ft"><b>' + esc(x.title) + (x.rec ? '<i class="frec">מחזורי</i>' : '') + (x.channel ? '<i class="frec">דרך הגעה</i>' : '') + '</b><span>' + finDmy(x.date) + ' · ' + (x.channel ? 'לחיצה לפתיחת ההתחשבנות' : m ? 'מפגש ' + dmShort(m) : 'כללי') + '</span></span><span class="fa ' + (x.kind === 'income' ? 'in' : 'out') + '">₪' + nfm(x.amount) + '</span></button>'; }).join('') : '<p class="mnone">עוד אין תנועות' + (state.finPeriod === 'month' ? ' החודש' : '') + '</p>';
   }
   function finView(v) {
-    finV = v; $('#finMain').hidden = v !== 'main'; $('#finForm').hidden = v !== 'form'; $('#finArrow').hidden = v === 'main';
-    $('#finTitle').textContent = v === 'main' ? 'כספים' : (finEdit && finEdit.id ? 'עריכה' : (finEdit && finEdit.kind === 'income' ? 'הכנסה חדשה' : 'הוצאה חדשה'));
+    finV = v; $('#finMain').hidden = v !== 'main'; $('#finForm').hidden = v !== 'form'; $('#finLog').hidden = v !== 'log'; $('#finArrow').hidden = v === 'main'; $('#finLogBtn').hidden = v !== 'main';
+    $('#finTitle').textContent = v === 'main' ? 'כספים' : v === 'log' ? 'יומן שינויים' : (finEdit && finEdit.id ? 'עריכה' : (finEdit && finEdit.kind === 'income' ? 'הכנסה חדשה' : 'הוצאה חדשה'));
     $('#finDlg').scrollTop = 0; navSync($('#finDlg')); syncUrl();
   }
   function openFinance() { renderFinance(); finV = 'main'; finView('main'); if (!$('#finDlg').open) $('#finDlg').showModal(); if (document.activeElement && document.activeElement.closest('#finDlg')) document.activeElement.blur(); }
@@ -2404,6 +2414,14 @@
   });
   $('#finKind').addEventListener('click', (e) => { const b = e.target.closest('[data-fk]'); if (!b) return; $('#finForm').dataset.kind = b.dataset.fk; document.querySelectorAll('#finKind [data-fk]').forEach((q) => q.setAttribute('aria-checked', String(q === b))); });
   $('#finArrow').addEventListener('click', () => finView('main'));
+  async function openFinLog() {
+    finView('log'); const box = $('#finLog'); box.innerHTML = '<p class="mnone">טוען…</p>';
+    try {
+      const rows = await api(T.finlog + '?select=*&order=at.desc&limit=300');
+      box.innerHTML = rows.length ? rows.map((x) => '<div class="logrow ' + (x.action === 'delete' ? 'del' : x.action === 'insert' ? 'add' : '') + '"><b>' + esc(x.summary) + '</b><span>' + fmtDT(x.at) + ' · ' + esc(noteAuthor(x.actor, x.actor && x.actor.includes('@') ? x.actor.split('@')[0] : x.actor)) + '</span></div>').join('') : '<p class="mnone">עוד אין שינויים ביומן. מעכשיו כל הוספה, עדכון ומחיקה של הוצאה או הכנסה נרשמים כאן.</p>';
+    } catch (err) { box.innerHTML = '<p class="mnone">לא הצלחנו לטעון את היומן</p>'; fail(err); }
+  }
+  $('#finLogBtn').addEventListener('click', openFinLog);
   $('#finForm').addEventListener('submit', async (e) => {
     e.preventDefault(); const f = e.target, amount = Number(f.amount.value), title = f.title.value.trim(), date = f.date.value || todayISO(), kind = f.dataset.kind || 'expense';
     if (!(amount > 0)) { toast('צריך להזין סכום'); f.amount.focus(); return; }
