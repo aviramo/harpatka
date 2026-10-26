@@ -760,6 +760,8 @@
     .ststrip .stc small { font-size: 13px; opacity: .8; }
     .ststrip .stc[aria-pressed="true"] { border-color: currentColor; }
     .ststrip .stc.zero { opacity: .55; }
+    .ststrip .stc.gh { background: #E3F1E8; color: #1E7A45; }
+    .ststrip .stc.gn { background: var(--cream); color: var(--muted); }
     .ststrip .stc.gm { background: #E3EEF9; color: #2F5EA8; }
     .ststrip .stc.gf { background: #F8E2EA; color: #B0425F; }
     .qmenu { justify-items: start; }
@@ -1545,10 +1547,13 @@
     h += '<div class="fgroup" style="--n:2"><button type="button" class="fx stsel' + (sel ? ' on' : '') + '" data-fxs="1" aria-haspopup="menu" aria-label="סינון לפי ' + (state.filter ? 'סטטוס' : 'תגיות') + (sel ? ': ' + epk.map((k) => (selOf(k) || {}).label).filter(Boolean).map(esc).join(', ') : '') + '" title="סינון לפי ' + (state.filter ? 'סטטוס' : 'תגיות') + '">' +
       (sel ? '<span class="stpill ' + sel.key + '">' + esc(sel.label) + (epk.length > 1 ? ' +' + (epk.length - 1) : '') + ' <b>' + (epk.length ? nP(ep) : base.filter((p) => genOk(p) && hereOk(p)).length) + '</b></span>' : '<span class="stlab">' + (state.filter ? 'סטטוס' : 'תגיות') + '</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>') + '</button></div>';
     $('#facets').classList.toggle('searching', !!q);
-    $('#facets').innerHTML = base.length || eg || epk.length || eh ? h : '';
+    $('#facets').innerHTML = '';   // המגדר והסטטוס עברו לפס הצ'יפים (#stStrip)
     /* כל הסטטוסים (בתוך מפגש) או התגיות (בתצוגת הכל) כצ'יפים מעל הסינונים, ממורכזים ועוברים שורה: לחיצה מסננת (בחירה מרובה) */
     const gchip = (g, label, cls) => { const n = nG(g); return '<button type="button" class="stc ' + cls + (n ? '' : ' zero') + '" data-stg="' + g + '" aria-pressed="' + (eg === g) + '">' + label + ' <small>' + n + '</small></button>'; };
-    $('#stStrip').innerHTML = (base.length || epk.length) ? gchip('male', 'גברים', 'gm') + gchip('female', 'נשים', 'gf') + (state.filter ? statusList() : pstatusList().concat([{ key: PNONE, label: 'בלי תגיות' }])).map((s) => { const n = nP(s.key); return '<button type="button" class="stc ' + (s.key === PNONE ? '' : s.key) + (n ? '' : ' zero') + '" data-stc="' + s.key + '" aria-pressed="' + epk.includes(s.key) + '">' + esc(s.label) + ' <small>' + n + '</small></button>'; }).join('') : '';
+    const hereN = (v) => base.filter((p) => genOk(p) && (!epk.length || epk.some((k) => stMatch(p, k))) && ((((linkOf(p.id, state.filter) || {}).attended) ? '1' : '0') === v)).length;
+    const hchip = (v, label, cls) => { const n = hereN(v); return '<button type="button" class="stc ' + cls + (n ? '' : ' zero') + '" data-sth="' + v + '" aria-pressed="' + (eh === v) + '">' + label + ' <small>' + n + '</small></button>'; };
+    const editLink = '<button type="button" class="qeditlink" data-qedit="' + (state.filter ? 'meeting' : 'participant') + '" style="margin:0"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg> עריכה</button>';
+    $('#stStrip').innerHTML = (base.length || epk.length) ? gchip('female', 'נשים', 'gf') + gchip('male', 'גברים', 'gm') + (state.filter ? statusList() : pstatusList().concat([{ key: PNONE, label: 'בלי תגיות' }])).map((s) => { const n = nP(s.key); return '<button type="button" class="stc ' + (s.key === PNONE ? '' : s.key) + (n ? '' : ' zero') + '" data-stc="' + s.key + '" aria-pressed="' + epk.includes(s.key) + '">' + esc(s.label) + ' <small>' + n + '</small></button>'; }).join('') + (state.filter ? hchip('1', 'הגיע', 'gh') + hchip('0', 'לא הגיע', 'gn') : '') + editLink : '';
   }
 
   /* מיון הרשימה */
@@ -2869,6 +2874,8 @@
     render();
   });
   $('#stStrip').addEventListener('click', (e) => {
+    const eb = e.target.closest('[data-qedit]'); if (eb) { openStatusSettings(eb.dataset.qedit); return; }
+    const hb = e.target.closest('[data-sth]'); if (hb) { state.here = state.here === hb.dataset.sth ? null : hb.dataset.sth; render(); syncUrl(); return; }
     const gb = e.target.closest('[data-stg]'); if (gb) { state.gender = state.gender === gb.dataset.stg ? null : gb.dataset.stg; render(); syncUrl(); return; }   // גברים או נשים (אחד מהם), בחיתוך עם הסטטוסים
     const b = e.target.closest('[data-stc]'); if (!b) return; const k = b.dataset.stc, cur = payKeys(state.pay), nx = cur.includes(k) ? cur.filter((x) => x !== k) : cur.concat(k);
     state.pay = nx.length ? nx.join(',') : null; render(); syncUrl();
