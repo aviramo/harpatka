@@ -362,6 +362,7 @@
     #pDlg .sheet-head .cico { width: 40px; height: 40px; }
     #pDlg .sheet-head .cico svg { width: 21px; height: 21px; }
     #pDlg .sheet-head h2 { display: flex; align-items: center; gap: 8px; }
+    #pDlg .tsubname { font-weight: 700; color: var(--muted); font-size: 17px; }
     #pDlg .tname { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
     .tchip { flex: 0 0 auto; display: inline-block; color: var(--muted); background: #EFE4D3; border-radius: 999px; padding: 1px 10px; font-weight: 600; font-size: 14px; white-space: nowrap; }
     .tchip b { font-weight: 800; color: var(--ink); }
@@ -2636,8 +2637,9 @@
     const ex = !!(sheet && sheet.id);
     $('#pBack').hidden = !(ex && tab !== 'main'); $('#pPayChip').dataset.tab = tab; $('#pTitle').classList.toggle('tap', ex && tab === 'main'); $('#pTitle').tabIndex = (ex && tab === 'main') ? 0 : -1; $('#pTitle').setAttribute('role', (ex && tab === 'main') ? 'button' : 'heading'); $('#pMsgs').hidden = tab !== 'main';
     { const sub = tab === 'confirm' ? cvTitle : SUBVIEW[tab], pp0 = ex ? state.participants.find((x) => x.id === sheet.id) : null;
-      $('#pViewSub').hidden = !sub;
-      if (sub) { $('#pTitle').textContent = sub; const pm = payCtx && state.meetings.find((x) => x.id === payCtx.mid); $('#pViewSub').innerHTML = nameB(pp0 ? pp0.name : '') + (pm ? ' · ' + esc(meetingLabel(pm, true)) : ''); }
+      const pm = sub && payCtx && state.meetings.find((x) => x.id === payCtx.mid);
+      $('#pViewSub').hidden = !(sub && pm);
+      if (sub) { $('#pTitle').innerHTML = esc(sub) + (pp0 ? ' <span class="tsubname">· ' + esc(pp0.name) + '</span>' : ''); $('#pViewSub').innerHTML = pm ? esc(meetingLabel(pm, true)) : ''; }   // שם המשתתף ליד הכותרת
       else if (ex) setTitle(pp0); }
     if (tab === 'main') { renderContact(); renderNotes(); }
     if (tab === 'wallet') renderWallet();
