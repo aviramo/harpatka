@@ -93,12 +93,12 @@
     .hgrp { display: flex; align-items: center; gap: 8px; align-self: center; }
     .title-row { position: relative; height: 44px; align-items: center; }
     .title-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; }   /* חיפוש בימין, כותרת המפגש במרכז, תפריט בשמאל */
-    .title-row > .hsgrp { justify-self: start; display: flex; align-items: center; gap: 8px; }
+    .title-row > .msel { grid-column: 1; }
+    .title-row > .hgrp { grid-column: 3; }
     .ststrip .hfilt { width: 30px; height: 30px; }   /* טוגל התגיות בראש פס הצ'יפים (הצ'יף הראשון מימין) */
     .ststrip .hfilt svg { width: 16px; height: 16px; }
-    .title-row > .hsgrp:has(.hsearch:focus-within), .title-row:has(.hsearch input:not(:placeholder-shown)) > .hsgrp { grid-column: 1 / -1; justify-self: stretch; }
     .title-row > .hgrp { justify-self: end; }
-    .title-row > .msel { justify-self: center; }
+    .title-row > .msel { justify-self: start; }
     .title-row .mmenu { left: 50%; right: auto; transform: translateX(-50%); }   /* גובה קבוע: פתיחת החיפוש לא מזיזה את הרשימה */
     .tools[hidden] { display: none; }
     .srccard { background: var(--cream); border-radius: 18px; padding: 12px; margin-bottom: 12px; display: grid; gap: 10px; }
@@ -163,13 +163,13 @@
     .listbar .listpay, .listbar .lbend { position: absolute; top: 50%; margin: -13px 0 0; z-index: 2; left: 0; }
     .listpay .stc { height: 32px; padding: 0 10px; font-size: 14px; }
     .listbar { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; margin-top: 8px; height: 36px; }   /* מוצגים בימין, שולם/לא שולם במרכז האופקי, חיפוש בשמאל */
-    .hsearch { margin: 0; width: 38px; height: 38px; flex: 0 0 38px; }
+    .hsearch { margin: 0; width: 36px; height: 36px; flex: 0 0 36px; }
     .lbstart { display: flex; align-items: center; gap: 8px; justify-self: start; min-width: 0; }
     .lbend { justify-self: end; margin-inline-end: 6px; }
-    .hsearch input { display: block; width: 38px; height: 38px; padding: 0; border-radius: 999px; box-sizing: border-box; cursor: pointer; font-size: 16px; }
+    .hsearch input { display: block; width: 36px; height: 36px; padding: 0; border-radius: 999px; box-sizing: border-box; cursor: pointer; font-size: 16px; }
     .search.hsearch svg { right: 11px; top: 50%; margin-top: -8px; width: 16px; height: 16px; transform: none; }
     .hsearch:not(:focus-within) input:placeholder-shown::placeholder { color: transparent; }
-    .hsearch:focus-within, .title-row:has(.hsearch input:not(:placeholder-shown)) .hsearch { position: absolute; inset: 0; width: auto; height: auto; z-index: 20; }
+    .hsearch:focus-within, .listbar:has(.hsearch input:not(:placeholder-shown)) .hsearch { position: absolute; inset: 0; width: auto; height: auto; z-index: 20; }
     .hsearch:focus-within input, .hsearch input:not(:placeholder-shown) { width: 100%; height: 100%; padding: 0 40px 0 12px; cursor: text; }
     .hsearch .sclear { left: 6px; width: 26px; height: 26px; font-size: 18px; }
     .search svg { position: absolute; right: 12px; top: 12px; width: 20px; height: 20px; color: var(--muted); }
@@ -1034,11 +1034,7 @@
   <div class="wrap">
     <header class="top">
       <div class="title-row">
-        <div class="hsgrp"><label class="search hsearch">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/><path d="M10.5 8v5M8 10.5h5" stroke-width="1.8"/></svg>
-        <input id="q" type="search" placeholder="חיפוש או הוספת משתתף" autocomplete="off" aria-label="חיפוש" />
-        <button type="button" class="sclear" id="qClear" aria-label="ניקוי החיפוש" tabindex="-1">×</button>
-      </label></div>
+        
         <div class="msel">
           <h1><button type="button" id="mSel" aria-haspopup="menu" aria-expanded="false"><span id="mSelTxt">הכל</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></h1>
           <div class="hcount" id="hereCount" hidden></div>
@@ -1069,7 +1065,11 @@
     </header>
 
     <div id="status"></div>
-    <div class="listbar"><div class="lbstart"><div class="genderchips" id="genderChips"></div><div class="listcount" id="listCount" aria-live="polite"></div></div><div class="listpay" id="listPay"></div><div class="lbend" id="listHere"></div><div class="lbend" id="listSent"></div><div class="lbend" id="listBal"></div>
+    <div class="listbar"><div class="lbstart"><label class="search hsearch">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/><path d="M10.5 8v5M8 10.5h5" stroke-width="1.8"/></svg>
+        <input id="q" type="search" placeholder="חיפוש או הוספת משתתף" autocomplete="off" aria-label="חיפוש" />
+        <button type="button" class="sclear" id="qClear" aria-label="ניקוי החיפוש" tabindex="-1">×</button>
+      </label><div class="genderchips" id="genderChips"></div><div class="listcount" id="listCount" aria-live="polite"></div></div><div class="listpay" id="listPay"></div><div class="lbend" id="listHere"></div><div class="lbend" id="listSent"></div><div class="lbend" id="listBal"></div>
     </div>
     <ul class="list" id="list"></ul>
     <div class="addbox" id="addBox"></div>
