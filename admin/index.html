@@ -2653,6 +2653,10 @@
   const HE_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
   const dm = (m) => { const [, mo, d] = m.meeting_date.split('-').map(Number); return d + '.' + mo; };
   const senderName = () => ((state.prefs[emailOf()] || {}).sender_name || '').trim() || SENDERS[emailOf()] || authorName();
+  /* שם הכותב מוצג לפי השם שהוגדר בהגדרות ("שם השולח בהודעות") של אותו מנהל, ולא לפי שם חשבון הגוגל שנשמר בהערה */
+  const noteAuthor = (email, name) => { const e = String(email || '').toLowerCase(), pr = ((state.prefs[e] || {}).sender_name || '').trim(); return pr || SENDERS[e] || name || 'לא ידוע'; };
+  /* תאריך ושעה בתוך הערה (25.10 · 20:00) מוצגים כיחידה אחת משמאל לימין, כדי שהסדר לא יתהפך בתוך משפט בעברית */
+  const noteTextHtml = (s) => esc(s).replace(/(\d{1,2}\.\d{1,2}(?:\.\d{2,4})?(?:\s*·\s*\d{1,2}:\d{2})?|\d{1,2}:\d{2})/g, '<bdi dir="ltr">$1</bdi>');
   const authorName = () => SENDERS[emailOf()] || emailOf().split('@')[0] || 'לא ידוע';
 
   /* לשונית "התקשרות": וואטסאפ וחיוג (רק פותחים שיחה/מחייגים), ומתחתיהם ההערות */
@@ -2784,9 +2788,9 @@
     const p = sheet && sheet.id ? state.participants.find((x) => x.id === sheet.id) : null;
     if (!p) { list.innerHTML = ''; return; }
     const ns = notesOf(p.id);   // הערות וצילומי מסך יחד, מהחדש לישן
-    list.innerHTML = ns.length ? ns.map((n) => '<div class="nitem' + (n.system ? ' sys' : '') + '"' + (n.event_type ? ' data-ev="' + esc(n.event_type) + '"' : '') + (n.new_status ? ' data-st="' + esc(n.new_status) + '"' : '') + '><div class="nmeta"><span><b>' + esc(n.author_name || 'לא ידוע') + '</b> · ' + esc(fmtDT(n.created_at)) + '</span>' +
+    list.innerHTML = ns.length ? ns.map((n) => '<div class="nitem' + (n.system ? ' sys' : '') + '"' + (n.event_type ? ' data-ev="' + esc(n.event_type) + '"' : '') + (n.new_status ? ' data-st="' + esc(n.new_status) + '"' : '') + '><div class="nmeta"><span><b>' + esc(noteAuthor(n.author_email, n.author_name)) + '</b> · ' + esc(fmtDT(n.created_at)) + '</span>' +
       (n.system ? '' : '<button type="button" class="ndel" data-del="' + n.id + '" aria-label="מחיקת הערה" title="מחיקת הערה">×</button>') + '</div>' +
-      (n.has_image ? '<a class="nimg" data-img="' + n.id + '"><div class="nload">טוען תמונה…</div></a>' : '<div class="ntext">' + esc(n.body) + '</div>') + '</div>').join('')
+      (n.has_image ? '<a class="nimg" data-img="' + n.id + '"><div class="nload">טוען תמונה…</div></a>' : '<div class="ntext">' + noteTextHtml(n.body) + '</div>') + '</div>').join('')
       : '<p class="mnone">עוד אין הערות. אפשר לרשום למעלה מה דיברתם, מה הוחלט ומה צריך לזכור, או לצרף צילום מסך משיחה</p>';
     list.querySelectorAll('[data-img]').forEach(loadNoteImg);
   }
@@ -2857,7 +2861,7 @@
     const ta = $('#nText'), body = pendingImg ? '' : ta.value.trim(); if (!body && !pendingImg) { ta.focus(); return; }
     const btn = $('#nAdd'); btn.disabled = true;
     try {
-      const [row] = await api(T.n, { method: 'POST', body: Object.assign({ participant_id: sheet.id, body, author_email: emailOf(), author_name: authorName() }, pendingImg ? { image: pendingImg } : {}), prefer: 'return=representation' });
+      const [row] = await api(T.n, { method: 'POST', body: Object.assign({ participant_id: sheet.id, body, author_email: emailOf(), author_name: senderName() }, pendingImg ? { image: pendingImg } : {}), prefer: 'return=representation' });
       if (row) { if (row.image) { imgCache.set(row.id, row.image); imgDB.set(row.id, row.image); delete row.image; row.has_image = true; } if (!state.notes.some((x) => x.id === row.id)) state.notes.push(row); }
       rebuildNotes(); ta.value = ''; setPending(null); renderNotes(); render(); toast('ההערה נשמרה');
     } catch (err) { fail(err); }
@@ -2922,7 +2926,7 @@
       else if (x.kind === 'refund' && x.from_credit) { lab = 'החזרת כסף מהיתרה'; cls = 'down'; sign = ''; }
       else { lab = 'החזר כספי למפגש' + mlabel(x); cls = 'flat'; sign = ''; }
       const rc = (x.kind === 'deposit' || (x.kind === 'payment' && !x.from_credit)) ? ' rcpt' : (x.kind === 'credit' || x.kind === 'refund') ? ' rfnd' : '';   // קבלה בירוק, זיכוי/החזר באדום
-      return '<div class="walrow' + rc + '"><div class="wl"><b>' + esc(lab) + '</b><small>' + fmtD(x.created_at) + (x.author_name ? ' · ' + esc(x.author_name) : '') + '</small></div><span class="wamt ' + cls + '"><bdi dir="ltr">' + sign + '₪' + nfm(a) + '</bdi></span></div>';
+      return '<div class="walrow' + rc + '"><div class="wl"><b>' + esc(lab) + '</b><small>' + fmtD(x.created_at) + (x.author_name ? ' · ' + esc(noteAuthor(x.author_email, x.author_name)) : '') + '</small></div><span class="wamt ' + cls + '"><bdi dir="ltr">' + sign + '₪' + nfm(a) + '</bdi></span></div>';
     });
     $('#walHist').innerHTML = rows.length ? rows.join('') : '<p class="mnone">עוד אין תשלומים</p>';
   }
