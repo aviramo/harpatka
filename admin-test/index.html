@@ -165,13 +165,13 @@
     .listbar .listpay, .listbar .lbend { position: absolute; top: 50%; margin: -13px 0 0; z-index: 2; left: 0; }
     .listpay .stc { height: 32px; padding: 0 10px; font-size: 14px; }
     .listbar { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; margin-top: 8px; height: 36px; }   /* מוצגים בימין, שולם/לא שולם במרכז האופקי, חיפוש בשמאל */
-    .hsearch { margin: 0; width: 30px; height: 30px; flex: 0 0 30px; }   /* בגובה הצ'יפים (30px) */
+    .hsearch { margin: 0; margin-inline-start: 11px; width: 30px; height: 30px; flex: 0 0 30px; }   /* מרכז הכפתור מיושר עם עיגולי הוואטסאפ ברשימה */   /* בגובה הצ'יפים (30px) */
     .lbstart { display: flex; align-items: center; gap: 8px; justify-self: start; min-width: 0; }
     .lbend { justify-self: end; margin-inline-end: 6px; }
     .hsearch input { display: block; width: 30px; height: 30px; padding: 0; border-radius: 999px; box-sizing: border-box; cursor: pointer; font-size: 16px; }
     .search.hsearch svg { right: 7px; top: 50%; margin-top: -8px; width: 16px; height: 16px; transform: none; }
     .hsearch:not(:focus-within) input:placeholder-shown::placeholder { color: transparent; }
-    .hsearch:focus-within, .listbar:has(.hsearch input:not(:placeholder-shown)) .hsearch { position: absolute; inset: 3px 0; width: auto; height: auto; z-index: 20; }
+    .hsearch:focus-within, .listbar:has(.hsearch input:not(:placeholder-shown)) .hsearch { position: absolute; inset: 3px 0; margin: 0; width: auto; height: auto; z-index: 20; }
     .hsearch:focus-within input, .hsearch input:not(:placeholder-shown) { width: 100%; height: 100%; padding: 0 40px 0 12px; cursor: text; }
     .hsearch .sclear { left: 10px; width: 20px; height: 20px; font-size: 15px; }   /* קטן, עם ריווח מהקצה */
     .search svg { position: absolute; right: 12px; top: 12px; width: 20px; height: 20px; color: var(--muted); }
@@ -1978,10 +1978,10 @@
     $('#facets').classList.toggle('searching', !!q);
     $('#facets').innerHTML = '';   // המגדר והסטטוס עברו לפס הצ'יפים (#stStrip)
     /* כל הסטטוסים (בתוך מפגש) או התגיות (בתצוגת הכל) כצ'יפים מעל הסינונים, ממורכזים ועוברים שורה: לחיצה מסננת (בחירה מרובה) */
-    const gchip = (g, label, cls) => { const n = nG(g); return '<button type="button" class="stc ' + cls + (n ? '' : ' zero') + '" data-stg="' + g + '" aria-pressed="' + (eg === g) + '">' + label + ' <small>' + n + '</small></button>'; };
+    const gchip = (g, label, cls) => { const n = nG(g); return '<button type="button" class="stc ' + cls + (n ? '' : ' zero') + '" data-stg="' + g + '" aria-pressed="' + (eg === g) + '" title="' + (g === 'male' ? 'זכר' : 'נקבה') + '" aria-label="' + (g === 'male' ? 'זכר' : 'נקבה') + '">' + label + ' <small>' + n + '</small></button>'; };
     const anyF = !!(eg || eh || effPaidF() || effSent() || effBal());   // יש סינון פעיל: "הכל" לא מסומן, ולחיצה עליו מאפסת הכול
     { const sc = state.participants.filter((q) => !state.filter || linkOf(q.id, state.filter)), both = sc.some((q) => q.gender === 'male') && sc.some((q) => q.gender === 'female'), allN = base.filter((p) => payOk(p)).length;
-      $('#genderChips').innerHTML = '<button type="button" class="stc gall' + (allN ? '' : ' zero') + '" data-stg="all" aria-pressed="' + !anyF + '" title="' + (anyF ? 'איפוס סינוני השורה' : 'כל המוצגים ברשימה') + '">הכל <small>' + allN + '</small></button>' + ((eg || both) ? gchip('male', 'זכר', 'gm') + gchip('female', 'נקבה', 'gf') : ''); }   // ליד כפתור התפריט בכותרת
+      $('#genderChips').innerHTML = '<button type="button" class="stc gall' + (allN ? '' : ' zero') + '" data-stg="all" aria-pressed="' + !anyF + '" title="' + (anyF ? 'איפוס סינוני השורה' : 'כל המוצגים ברשימה') + '">הכל <small>' + allN + '</small></button>' + ((eg || both) ? gchip('male', 'ז', 'gm') + gchip('female', 'נ', 'gf') : ''); }   // ליד כפתור התפריט בכותרת
     const attOn = !!(state.filter && attendOpen(state.meetings.find((x) => x.id === state.filter))), evOn = !!(state.filter && evOnFor(state.meetings.find((x) => x.id === state.filter)));
     const hereOkNoSent = (p) => { const h = effHere(); return !h || (((linkOf(p.id, state.filter) || {}).attended) ? '1' : '0') === h; };   // הגעה רק מחצי שעה לפני המפגש (או במצב הגעה פתוח)
     const paidN = (v) => base.filter((p) => genOk(p) && hereOk(p) && matchPay(p, epk) && payStateOf(p) === v).length;
