@@ -150,7 +150,6 @@
     #emOpenOpts .stc[aria-pressed="true"] { border-color: var(--ink); background: var(--cream); }
     .attmenu .stc { display: inline-flex; align-items: center; height: 30px; border-radius: 999px; padding: 0 12px; font-size: 15px; font-weight: 700; border: 1px solid transparent; background: #fff; color: var(--ink); }
     .attmenu .stc[aria-pressed="true"] { border-color: var(--ink); background: var(--cream); }
-    #setDlg #setIntroBox[hidden] { display: none; }   /* נוסח הוואטסאפ רק בלשונית סטטוס מפגש */
     /* חיפוש בראש הדף, משמאל לכפתור התפריט: אייקון שנפתח לכל רוחב השורה בלחיצה */
     /* חיפוש בשורת "מוצגים" מעל הרשימה: אייקון קטן שנפתח לכל רוחב השורה בלחיצה */
     .genderchips .stc.gall, .genderchips .stc.gm, .genderchips .stc.gf { background: #fff; color: var(--ink); border-color: var(--line); }
@@ -1244,7 +1243,6 @@
       <div id="setSt" hidden>
         <p class="sthint" id="stHint" style="margin:0 2px 12px"></p>
         <div id="stList"></div>
-        <label class="setfield" id="setIntroBox" style="flex:1 1 100%;padding:2px 4px 6px;margin:0"><div class="sethead"><span id="setIntroLbl">הודעת וואטסאפ</span></div><textarea class="setinp" id="setIntro" rows="2" maxlength="300" aria-label="נוסח הודעת ההצגה" style="height:auto;padding:10px 14px;line-height:1.5;font-size:16px;font-weight:600"></textarea><div class="emvars" id="introVars" style="margin:6px 0 2px"><button type="button" data-v="{שם}">{שם}</button><button type="button" data-v="{שולח}">{שולח}</button></div><small class="sthint" style="margin:0">{שם} מוחלף בשם הפרטי של המשתתף, {שולח} בשם השולח</small><button type="button" class="qeditlink" id="setIntroReset" style="margin:2px 0 0;align-self:flex-start">שחזור נוסח ברירת מחדל</button></label>
         <button type="button" class="btn ghost" id="stAdd" hidden>+ תגית חדשה</button>
       </div>
     </div>
@@ -2579,9 +2577,6 @@
   const PAYBOX = 'https://links.payboxapp.com/zwi4JG24Y6b';
   const HE_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
   const dm = (m) => { const [, mo, d] = m.meeting_date.split('-').map(Number); return d + '.' + mo; };
-  const DEFAULT_INTRO = 'היי {שם}, זה {שולח} מיוצאים להרפתקה';
-  const introTemplate = () => ((state.prefs[emailOf()] || {}).wa_intro || '').trim() || DEFAULT_INTRO;
-  const introMessage = (first) => introTemplate().split('{שם}').join(first).split('{שולח}').join(senderName());
   const senderName = () => ((state.prefs[emailOf()] || {}).sender_name || '').trim() || SENDERS[emailOf()] || authorName();
   const authorName = () => SENDERS[emailOf()] || emailOf().split('@')[0] || 'לא ידוע';
 
@@ -2696,7 +2691,7 @@
     /* משתתף בסטטוס "משויך": הוואטסאפ נפתח עם הודעה מובנית (בלשון זכר/נקבה); אחרי החזרה לדשבורד שואלים אם להעביר ל"בטיפול" */
     const pend = pendingLinks(p);
     const first = String(p.first_name || p.name || '').trim().split(/\s+/)[0] || '';
-    const waHref = base ? base + '?text=' + encodeURIComponent(introMessage(first)) : base;   // תמיד הודעת הצגה בלבד
+    const waHref = base;   // וואטסאפ נפתח לשיחה בלבד, בלי הודעת פתיחה
     let h = '<div class="ctop">' +
       (base ? '<a class="cico cb-wa" href="' + waHref + '"' + '' + ' target="_blank" rel="noopener" aria-label="וואטסאפ" title="וואטסאפ">' + WA_ICON + '</a>' : '<span class="cico off" aria-label="וואטסאפ">' + WA_ICON + '</span>') + '</div>';
     box.innerHTML = h;
@@ -3477,17 +3472,9 @@
   function renderSettings() {
     const em = emailOf();
     $('#setMail').textContent = em;
-    { const si = $('#setSender'); if (document.activeElement !== si) si.value = senderName(); const ii = $('#setIntro'); if (document.activeElement !== ii) ii.value = introTemplate(); }
+    { const si = $('#setSender'); if (document.activeElement !== si) si.value = senderName(); }
     renderAttOpts(); $('#setPayHint').textContent = tierSummary(); $('#setSrcHint').textContent = state.promoters.length + ' דרכי הגעה'; $('#setPmHint').textContent = state.payMethods.map((x) => x.name).join(' · ');
   }
-  async function saveIntro(v) {
-    const em = emailOf(), prev = state.prefs[em], val = v.trim().slice(0, 300) || null;
-    state.prefs[em] = Object.assign({}, prev, { email: em, wa_intro: val }); renderContact();
-    try { await api(T.pf, { method: 'POST', body: { email: em, wa_intro: val }, prefer: 'resolution=merge-duplicates,return=minimal' }); toast(val ? 'נוסח ההודעה עודכן' : 'חזר נוסח ברירת המחדל'); }
-    catch (err) { if (prev) state.prefs[em] = prev; else delete state.prefs[em]; renderContact(); fail(err); }
-  }
-  $('#setIntro').addEventListener('change', () => saveIntro($('#setIntro').value));
-  $('#setIntroReset').addEventListener('click', () => { $('#setIntro').value = DEFAULT_INTRO; saveIntro(''); });
   $('#setSender').addEventListener('change', async () => {
     const em = emailOf(), v = $('#setSender').value.trim().slice(0, 20), prev = state.prefs[em];
     state.prefs[em] = Object.assign({}, prev, { email: em, sender_name: v || null });
@@ -3547,12 +3534,9 @@
   }
   $('#setSt').addEventListener('click', (e) => { const b = e.target.closest('[data-sc]'); if (!b) return; stScope = b.dataset.sc; renderStSettings(); });
   function renderStSettings() {
-    { const bx = $('#setIntroBox'); if (bx && bx.parentNode !== $('#setSt')) $('#setSt').insertBefore(bx, $('#stAdd')); }   // מחזירים את תיבת ההודעה למקום החניה לפני בניית הרשימה מחדש
     const list = curSt(), sys = curSys();
     document.querySelectorAll('#setSt [data-sc]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.sc === stScope)));
     $('#stHint').textContent = stScope === 'meeting' ? 'סטטוס של משתתף בתוך מפגש מסוים (כשבוחרים מפגש ברשימה). שם, צבע וסדר, ואפשר ליצור סטטוס חדש' : 'תגיות של המשתתף (ברשימה כשלא בוחרים מפגש). אפשר לסמן כמה תגיות לכל משתתף. תווית בלבד, בלי לוגיקה מאחוריה. שם וסדר, ואפשר ליצור תגית חדשה';
-    $('#setIntroLbl').textContent = 'הודעת וואטסאפ למשתתף "' + (STATUS_LABEL.unpaid || 'משויך') + '"';
-    $('#setIntroBox').hidden = stScope !== 'meeting'; { const ii = $('#setIntro'); if (document.activeElement !== ii) ii.value = introTemplate(); }
     $('#stAdd').hidden = false; $('#stAdd').textContent = stScope === 'meeting' ? '+ סטטוס מפגש חדש' : '+ תגית חדשה';
     const noCol = stScope === 'participant';   // תוויות משתתף בלי צבעים
     $('#stList').innerHTML = list.map((s) => s.key === sys
@@ -3565,7 +3549,6 @@
       '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם הסטטוס" style="' + (noCol ? 'background:#fff;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)' : 'background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1]) + '" />' +
       (noCol ? '' : '<button type="button" class="swcur" data-c="' + s.color + '" aria-haspopup="menu" aria-label="צבע: ' + (PALETTE[s.color] || PALETTE.sky)[2] + ' (לחיצה לשינוי)" title="שינוי צבע" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + '"></button>') +
       '<button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg></button>' + (s.key !== SYSTEM_STATUS ? '<button type="button" class="stdel" data-del="' + s.key + '" aria-label="מחיקת הסטטוס" title="מחיקת הסטטוס">×</button>' : '') + '</div>').join('');
-    { const lr = $('#stList .strow.locked'), bx = $('#setIntroBox'); if (lr && bx && stScope === 'meeting') lr.appendChild(bx); }   // ההודעה בתוך מלבן הסטטוס
   }
   async function saveStatus(key, patch) {
     const s = allSt().find((x) => x.key === key); if (!s) return;
@@ -3656,7 +3639,6 @@
   });
   $('#emText').addEventListener('change', () => saveEventMsg($('#emText').value));
   $('#emReset').addEventListener('click', () => { $('#emText').value = DEFAULT_EVENT_MSG; saveEventMsg(''); });
-  $('#introVars').addEventListener('click', (e) => { const b = e.target.closest('[data-v]'); if (!b) return; e.preventDefault(); const ta = $('#setIntro'), s = ta.selectionStart == null ? ta.value.length : ta.selectionStart, en = ta.selectionEnd == null ? s : ta.selectionEnd; ta.setRangeText(b.dataset.v, s, en, 'end'); ta.focus(); ta.dispatchEvent(new Event('change')); });   // לחיצה על שדה מכניסה אותו לנוסח
   $('#emVars').addEventListener('click', (e) => { const b = e.target.closest('[data-v]'); if (!b) return; const ta = $('#emText'), s = ta.selectionStart == null ? ta.value.length : ta.selectionStart, en = ta.selectionEnd == null ? s : ta.selectionEnd; ta.setRangeText(b.dataset.v, s, en, 'end'); ta.focus(); ta.dispatchEvent(new Event('change')); });
   $('#pmList').addEventListener('change', async (e) => {
     const inp = e.target.closest('.pmname'); if (!inp) return; const k = inp.closest('.pmrow').dataset.k, x = state.payMethods.find((m) => m.key === k); if (!x) return;
