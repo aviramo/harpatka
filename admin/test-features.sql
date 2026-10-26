@@ -206,3 +206,11 @@ create policy "harpatka admin all" on test.harpatka_pay_methods for all to authe
 grant select, insert, update, delete on test.harpatka_pay_methods to authenticated;
 insert into test.harpatka_pay_methods (key, name, sort) values ('paybox','פייבוקס',1),('bit','ביט',2),('cash','מזומן',3),('bank','בנק',4) on conflict (key) do nothing;
 notify pgrst, 'reload schema';
+
+-- 22. נוסח הודעת פרטי הערב (נשלחת ביום המפגש): {התכנסות} {התחלה} {סיום} מוחלפים בשעות המפגש
+alter table test.harpatka_admin_prefs add column if not exists event_msg text;
+notify pgrst, 'reload schema';
+
+-- 23. מתי כפתור שליחת ההודעה לפני המפגש נפתח (לכל מנהל): day, 08, 09 (ברירת מחדל), 12, 180/120/60 דקות לפני
+alter table test.harpatka_admin_prefs add column if not exists event_open text;
+notify pgrst, 'reload schema';
