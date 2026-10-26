@@ -46,6 +46,7 @@
     #fMenu .fopt { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 10px; border-radius: 12px; background: #fff; border: 1px solid transparent; font-size: 16px; font-weight: 700; color: var(--ink); cursor: pointer; text-align: right; }
     #fMenu .fopt[aria-pressed="true"] { border-color: var(--ink); background: var(--cream); }
     #fMenu .fopt .hfilt { flex: 0 0 auto; cursor: inherit; }
+    #fMenu .fopt .fcnt { margin-inline-start: auto; font-size: 14px; color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
     .wrap > .addbox { flex: 0 0 auto; margin-bottom: calc(10px + env(safe-area-inset-bottom)); }
     .addbox:empty { display: none; }
     .addbox .newbtn { display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; padding: 10px 14px; background: #fff; border: 1px solid var(--line); border-radius: 16px; font-size: 17px; font-weight: 700; color: var(--ink); cursor: pointer; }
@@ -1888,6 +1889,24 @@
     const hchip = (v, label, cls) => { const n = hereN(v); return '<button type="button" class="stc ' + cls + (n ? '' : ' zero') + '" data-sth="' + v + '" aria-pressed="' + (eh === v) + '">' + label + ' <small>' + n + '</small></button>'; };
     const editLink = '<button type="button" class="qeditlink" data-qedit="' + (state.filter ? 'meeting' : 'participant') + '" style="margin:0"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg> עריכה</button>';
     $('#stStrip').style.setProperty('--nd', String(Math.max(2, String(state.participants.length).length)));
+    {   /* ספירה לכל אפשרות בתפריטי הסינון: כמה משתתפים יוצגו אם בוחרים אותה (שאר הסינונים והחיפוש נשמרים) */
+      const mid = state.filter, lk = (p) => linkOf(p.id, mid), eligible = (p) => { const l = lk(p); return !!l && !!(l.paid || l.exempt || l.will_pay); };
+      const only = {
+        here: (p) => { const h = effHere(); return !h || (((lk(p) || {}).attended) ? '1' : '0') === h; },
+        pay: (p) => { const f = effPaidF(); return !f || payStateOf(p) === f; },
+        sent: (p) => { const s = effSent(); if (!s) return true; return eligible(p) && ((lk(p).details_sent_at ? '1' : '0') === s); },
+        bal: (p) => { const b = effBal(); return !b || balState(p) === b; },
+      };
+      const match = {
+        here: (p, v) => (((lk(p) || {}).attended) ? '1' : '0') === v, pay: (p, v) => payStateOf(p) === v,
+        sent: (p, v) => eligible(p) && ((lk(p).details_sent_at ? '1' : '0') === v), bal: (p, v) => balState(p) === v,
+      };
+      FC = {};
+      ['here', 'pay', 'sent', 'bal'].forEach((k) => {
+        FC[k] = {}; const pool = base.filter((p) => genOk(p) && matchPay(p, epk) && Object.keys(only).filter((o) => o !== k).every((o) => only[o](p)));
+        FC[k][''] = pool.length; ['1', '0', 'n'].forEach((v) => { FC[k][v] = ((k === 'here' || k === 'sent') && v === 'n') ? 0 : pool.filter((p) => match[k](p, v)).length; });
+      });
+    }
     const fbtn = (kind, v, n1, n0) => { const c = v === '1' ? 'yes' : v === '0' ? 'no' : v === 'n' ? 'free' : 'all', lab = FLAB[kind]; return '<button type="button" class="hfilt ' + c + '" data-fk="' + kind + '" aria-label="' + FNAME[kind] + ': ' + (v === '1' ? lab[1] : v === '0' ? lab[2] : v === 'n' ? lab[3] : lab[0]) + '" title="' + (v === '1' ? lab[1] + ' (' + n1 + ')' : v === '0' ? lab[2] + ' (' + n0 + ')' : v === 'n' ? lab[3] : lab[0] + ': ' + lab[1] + ' ' + n1 + ', ' + lab[2] + ' ' + n0) + ' (לחיצה לפתיחת תפריט)">' + fglyph(kind) + '</button>'; };
     const sentN = (v) => base.filter((p) => { if (!genOk(p) || !paidOk(p) || !hereOkNoSent(p) || !matchPay(p, epk)) return false; const l = linkOf(p.id, state.filter); return !!l && !!(l.paid || l.exempt || l.will_pay) && (l.details_sent_at ? '1' : '0') === v; }).length;
     $('#listHere').innerHTML = attOn ? fbtn('here', eh, hereN('1'), hereN('0')) : '';
@@ -3332,13 +3351,14 @@
   });
   $('#genderChips').addEventListener('click', (e) => { const gb = e.target.closest('[data-stg]'); if (gb) { state.gender = gb.dataset.stg === 'all' || state.gender === gb.dataset.stg ? null : gb.dataset.stg; render(); syncUrl(); } });
   /* סינון הגעה / שליחת פרטים / תשלום: לחיצה פותחת תפריט עם המצבים ואייקוניהם; הבחירה מבצעת את הסינון */
+  let FC = {};   // ספירות לתפריטי הסינון, מתעדכן ב-renderFacets
   const fstate = (k) => k === 'here' ? state.here : k === 'sent' ? state.sent : k === 'bal' ? state.bal : state.paidF;
   const closeF = () => { $('#fMenu').hidden = true; $('#fMenu').dataset.kind = ''; };
   function openF(kind, anchor) {
     const m = $('#fMenu'); if (!m.hidden && m.dataset.kind === kind) { closeF(); return; }
     const cur = fstate(kind) || null, lab = FLAB[kind];
     const opts = [[null, 'all', lab[0]], ['1', 'yes', lab[1]], ['0', 'no', lab[2]]].concat(kind === 'pay' ? [['n', 'free', lab[3]]] : kind === 'bal' ? [['n', 'free', lab[3]]] : []);
-    m.innerHTML = opts.map((o) => '<button type="button" role="menuitem" class="fopt" data-fv="' + (o[0] === null ? '' : o[0]) + '" aria-pressed="' + (cur === o[0]) + '"><span class="hfilt ' + o[1] + '">' + fglyph(kind) + '</span><span>' + o[2] + '</span></button>').join('');
+    m.innerHTML = opts.map((o) => '<button type="button" role="menuitem" class="fopt" data-fv="' + (o[0] === null ? '' : o[0]) + '" aria-pressed="' + (cur === o[0]) + '"><span class="hfilt ' + o[1] + '">' + fglyph(kind) + '</span><span>' + o[2] + '</span><b class="fcnt">' + ((FC[kind] || {})[o[0] === null ? '' : o[0]] ?? 0) + '</b></button>').join('');
     m.dataset.kind = kind; m.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = m.offsetWidth;
     m.style.left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8) + 'px'; m.style.top = (r.bottom + 6) + 'px';
