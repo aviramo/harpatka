@@ -113,6 +113,8 @@
     .srcrow .ratewrap { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px; }
     .srcrow .ratetype { height: 34px; border-radius: 10px; border: 1.5px solid var(--line); background: #fff; font-weight: 800; padding: 0 6px; }
     .srcrow .ratein { width: 56px; }
+    .pmrow { display: flex; align-items: center; gap: 8px; background: var(--cream); border-radius: 16px; padding: 8px 12px; margin-bottom: 8px; }
+    .pmrow .pmname { flex: 1 1 auto; min-width: 0; height: 42px; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; padding: 0 14px; font-size: 17px; font-weight: 700; text-align: right; }
     .tierrow { display: grid; grid-template-columns: 30px 64px minmax(0, 1fr) 108px 30px; align-items: center; column-gap: 8px; background: var(--cream); border-radius: 16px; padding: 10px 12px; margin-bottom: 8px; }
     .tierrow .tierlbl { font-weight: 700; color: var(--muted); font-size: 15px; white-space: nowrap; }
     .tierrow .tierprice { display: flex; align-items: center; justify-content: flex-end; gap: 6px; font-weight: 800; direction: ltr; }
@@ -1102,11 +1104,17 @@
         <div class="setgrp">
           <div class="settitle">מפגשים</div>
           <button type="button" class="setrow setlink" id="setAttBtn" aria-haspopup="menu"><div class="setl"><b>מתי נפתח סימון ההגעה</b><small id="setAttHint"></small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M6 9l6 6 6-6"/></svg></button>
+          <button type="button" class="setrow setlink" id="setPmBtn"><div class="setl"><b>דרכי תשלום</b><small id="setPmHint"></small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
           <button type="button" class="setrow setlink" id="setSrcBtn"><div class="setl"><b>דרכי הגעה</b><small id="setSrcHint"></small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
           <button type="button" class="setrow setlink" id="setPayBtn"><div class="setl"><b>תשלומים</b><small id="setPayHint"></small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
           <button type="button" class="setrow setlink" id="setStBtn"><div class="setl"><b>סטטוסים על מפגשים</b><small>שם, צבע וסדר לכל סטטוס</small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
           <button type="button" class="setrow setlink" id="setTagBtn"><div class="setl"><b>תוויות על משתתפים</b><small>שם, צבע וסדר לכל תווית</small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
         </div>
+      </div>
+      <div id="setPm" hidden>
+        <p class="sthint" style="margin:0 2px 10px">הדרכים שמופיעות בקבלת תשלום (פייבוקס, ביט, מזומן...). אפשר להוסיף, לשנות שם ולמחוק</p>
+        <div id="pmList"></div>
+        <button type="button" class="btn ghost" id="pmAdd">+ דרך תשלום חדשה</button>
       </div>
       <div id="setSrc" hidden>
         <p class="sthint" style="margin:0 2px 10px">כל דרך הגעה (פייסבוק, קרן, חבר מביא חבר) עם שם, צבע, קוד משלה בקישור <bdi dir="ltr">harpatka.co.il/?s=<b>קוד</b></bdi> ועלות לליד. ההתחשבנות בכפתור בכל כרטיס</p>
@@ -1189,7 +1197,7 @@
     url: 'https://ezakarwqstnldqixgreb.supabase.co',
     key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6YWthcndxc3RubGRxaXhncmViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTA3MzIsImV4cCI6MjEwNjc4NjczMn0.Bg0eFBC4zKjyJc5kBw3wLgSP-PkxLFVv3o7-4YUdq4c',
   };
-  const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance', n: 'harpatka_notes', pr: 'harpatka_promoters', pp: 'harpatka_promoter_payments', pay: 'harpatka_payments', st: 'harpatka_statuses', pf: 'harpatka_admin_prefs', tr: 'harpatka_price_tiers', sr: 'harpatka_sources' };
+  const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance', n: 'harpatka_notes', pr: 'harpatka_promoters', pp: 'harpatka_promoter_payments', pay: 'harpatka_payments', st: 'harpatka_statuses', pf: 'harpatka_admin_prefs', tr: 'harpatka_price_tiers', sr: 'harpatka_sources', pm: 'harpatka_pay_methods' };
 
   /* חזרה בדפדפן: כל פתיחת פופאפ וכל כניסה למסך משנה בתוכו מוסיפות רשומת היסטוריה; חזרה בדפדפן חוזרת צעד אחד (מסך משנה ← המסך הראשי ← סגירה), וסגירה או חזרה בכפתורי המסך מנקות את הרשומות */
   const NAV = { stack: [], ignore: 0, fromPop: false };
@@ -1587,7 +1595,7 @@
   async function load(silent) {
     if (!silent) $('#status').innerHTML = '<div class="empty">טוען…</div>';
     try {
-      const [p, m, a, nn, prs, pps, pays, sts, pfs, trs] = await Promise.all([
+      const [p, m, a, nn, prs, pps, pays, sts, pfs, trs, pms] = await Promise.all([
         api(T.p + '?select=*'),
         api(T.m + '?select=*'),
         api(T.a + '?select=participant_id,meeting_id,paid,pay_requested_at,status_key,created_at,exempt,attended,paid_amount,promoter_id,commission,paid_at,details_sent_at,will_pay,maybe,no_pay'),
@@ -1598,7 +1606,9 @@
         api(T.st + '?select=*').catch(() => null),
         api(T.pf + '?select=*').catch(() => null),
         api(T.tr + '?select=*').catch(() => null),
+        api(T.pm + '?select=*&order=sort.asc').catch(() => null),
       ]);
+      if (pms && pms.length) state.payMethods = pms.map((x) => Object.assign({}, x));
       if (trs && trs.length) { state.tiers = trs.map((x) => ({ id: x.id, days: x.days, price: x.price })); syncPriceVars(); }
       if (pfs) state.prefs = Object.fromEntries(pfs.map((x) => [String(x.email).toLowerCase(), x]));
       if (sts && sts.length) { const ps = sts.filter((x) => x.scope === 'participant'); state.pstatuses = ps.map((x) => Object.assign({}, x)).sort((a, b) => a.sort - b.sort); }
@@ -2651,8 +2661,9 @@
   /* כסף שהוקצה למפגש מסוים: תשלומים למפגש פחות ביטולים והחזרים של אותו מפגש (בלי קשר לסטטוס) */
   const allocatedOf = (pid, mid) => state.payments.filter((x) => x.participant_id === pid && x.meeting_id === mid).reduce((s, x) => s + (x.kind === 'payment' ? Number(x.amount) : (x.kind === 'credit' || (x.kind === 'refund' && !x.from_credit)) ? -Number(x.amount) : 0), 0);
   const owedOf = () => 0;   // סטטוס לא יוצר חוב: היתרה נקבעת רק מרשומות התשלומים
-  const METHODS = { paybox: 'פייבוקס', bit: 'ביט', cash: 'מזומן', bank: 'בנק' };
-  const methodName = (x) => x.method === 'other' ? (x.method_note || 'אחר') : (METHODS[x.method] || '');
+  state.payMethods = [{ key: 'paybox', name: 'פייבוקס' }, { key: 'bit', name: 'ביט' }, { key: 'cash', name: 'מזומן' }, { key: 'bank', name: 'בנק' }];   // דרכי תשלום: ניתנות להגדרה בהגדרות ← דרכי תשלום
+  const METHODS = { paybox: 'פייבוקס', bit: 'ביט', cash: 'מזומן', bank: 'בנק' };   // ברירת מחדל ושמות לתשלומים ישנים
+  const methodName = (x) => x.method === 'other' ? (x.method_note || 'אחר') : ((state.payMethods.find((m) => m.key === x.method) || {}).name || METHODS[x.method] || '');
   function renderWallet() {
     const pid = sheet && sheet.id; if (!pid) return;
     const bal = creditOf(pid), owed = owedOf(pid);
@@ -2687,7 +2698,8 @@
     $('#depPkgLbl').textContent = m ? 'על כמה מפגשים' : 'חבילה'; f.pay_pkg.options[0].textContent = m ? '1' : '—';
     $('#depQuick').innerHTML = quickPrices().map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
     $('#depQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) { f.pay_dep.value = b.dataset.q; paintPkg(); } };
-    const METH = [['paybox', 'פייבוקס'], ['bit', 'ביט'], ['cash', 'מזומן'], ['bank', 'בנק']];
+    const METH = state.payMethods.map((x) => [x.key, x.name]);
+    f.pay_depm.innerHTML = METH.map((x) => '<option value="' + esc(x[0]) + '">' + esc(x[1]) + '</option>').join('') + '<option value="other">אחר</option>'; f.pay_depm.value = METH.length ? METH[0][0] : 'other';
     const paintMeth = () => { $('#depMethods').innerHTML = METH.map((x) => '<button type="button" role="radio" data-m="' + x[0] + '" aria-pressed="' + (f.pay_depm.value === x[0]) + '">' + x[1] + '</button>').join(''); };
     f.pay_depm.onchange = () => { $('#depOtherField').hidden = f.pay_depm.value !== 'other'; paintMeth(); if (f.pay_depm.value === 'other') f.pay_depn.focus(); };
     $('#depMethods').onclick = (e) => { const b = e.target.closest('[data-m]'); if (b) { f.pay_depm.value = b.dataset.m; f.pay_depm.onchange(); } };
@@ -3228,7 +3240,7 @@
     const em = emailOf();
     $('#setMail').textContent = em;
     { const si = $('#setSender'); if (document.activeElement !== si) si.value = senderName(); const ii = $('#setIntro'); if (document.activeElement !== ii) ii.value = introTemplate(); }
-    renderAttOpts(); $('#setPayHint').textContent = tierSummary(); $('#setSrcHint').textContent = state.promoters.length + ' דרכי הגעה';
+    renderAttOpts(); $('#setPayHint').textContent = tierSummary(); $('#setSrcHint').textContent = state.promoters.length + ' דרכי הגעה'; $('#setPmHint').textContent = state.payMethods.map((x) => x.name).join(' · ');
   }
   async function saveIntro(v) {
     const em = emailOf(), prev = state.prefs[em], val = v.trim().slice(0, 300) || null;
@@ -3286,9 +3298,10 @@
   const allSt = () => state.statuses.concat(state.pstatuses);
   function showSetView(v) {
     setView = v;
-    $('#setMain').hidden = v !== 'main'; $('#setSt').hidden = v !== 'st'; $('#setDel').hidden = v !== 'del'; $('#setPay').hidden = v !== 'pay'; $('#setSrc').hidden = v !== 'src'; $('#setBack').hidden = v === 'main';
-    $('#setTitle').textContent = v === 'st' ? (stScope === 'meeting' ? 'סטטוסים על מפגשים' : 'תוויות על משתתפים') : v === 'del' ? 'מחיקת סטטוס' : v === 'pay' ? 'תשלומים' : v === 'src' ? 'דרכי הגעה' : 'הגדרות';
+    $('#setMain').hidden = v !== 'main'; $('#setSt').hidden = v !== 'st'; $('#setDel').hidden = v !== 'del'; $('#setPay').hidden = v !== 'pay'; $('#setSrc').hidden = v !== 'src'; $('#setPm').hidden = v !== 'pm'; $('#setBack').hidden = v === 'main';
+    $('#setTitle').textContent = v === 'st' ? (stScope === 'meeting' ? 'סטטוסים על מפגשים' : 'תוויות על משתתפים') : v === 'del' ? 'מחיקת סטטוס' : v === 'pay' ? 'תשלומים' : v === 'src' ? 'דרכי הגעה' : v === 'pm' ? 'דרכי תשלום' : 'הגדרות';
     if (v === 'src') renderSources();
+    if (v === 'pm') renderPm();
     if (v === 'st') renderStSettings();
     if (v === 'pay') renderTiers();
     navSync($('#setDlg'));
@@ -3347,6 +3360,30 @@
     $('#setSrcHint').textContent = state.promoters.length + ' דרכי הגעה';
   }
   $('#setSrcBtn').addEventListener('click', () => showSetView('src'));
+  /* דרכי תשלום: רשימה שהמנהל מגדיר (שם לכל דרך); מוצגת כצ'יפים בקבלת תשלום */
+  function renderPm() {
+    $('#pmList').innerHTML = state.payMethods.map((x) => '<div class="pmrow" data-k="' + esc(x.key) + '"><input class="pmname" value="' + esc(x.name) + '" maxlength="20" aria-label="שם דרך התשלום" />' + (state.payMethods.length > 1 ? '<button type="button" class="stdel" data-pdel="' + esc(x.key) + '" aria-label="מחיקה" title="מחיקה">×</button>' : '') + '</div>').join('');
+    $('#setPmHint').textContent = state.payMethods.map((x) => x.name).join(' · ');
+  }
+  $('#setPmBtn').addEventListener('click', () => showSetView('pm'));
+  $('#pmList').addEventListener('change', async (e) => {
+    const inp = e.target.closest('.pmname'); if (!inp) return; const k = inp.closest('.pmrow').dataset.k, x = state.payMethods.find((m) => m.key === k); if (!x) return;
+    const v = inp.value.trim().slice(0, 20); if (!v) { renderPm(); return; }
+    const prev = x.name; x.name = v; renderPm();
+    try { if (x.id) await api(T.pm + '?id=eq.' + x.id, { method: 'PATCH', body: { name: v } }); }
+    catch (err) { x.name = prev; renderPm(); fail(err); }
+  });
+  $('#pmList').addEventListener('click', async (e) => {
+    const d = e.target.closest('[data-pdel]'); if (!d || state.payMethods.length < 2) return; const k = d.dataset.pdel, x = state.payMethods.find((m) => m.key === k); if (!x) return;
+    const prev = state.payMethods.slice(); state.payMethods = state.payMethods.filter((m) => m !== x); renderPm();
+    try { if (x.id) await api(T.pm + '?id=eq.' + x.id, { method: 'DELETE' }); }
+    catch (err) { state.payMethods = prev; renderPm(); fail(err); }
+  });
+  $('#pmAdd').addEventListener('click', async () => {
+    const key = 'x_' + Math.random().toString(36).slice(2, 7), row = { key, name: 'דרך תשלום חדשה', sort: state.payMethods.length + 1 };
+    try { const [r] = await api(T.pm, { method: 'POST', body: row, prefer: 'return=representation' }); state.payMethods.push(r || row); renderPm(); const inp = document.querySelector('#pmList [data-k="' + key + '"] .pmname'); if (inp) { inp.focus(); inp.select(); } }
+    catch (err) { fail(err); }
+  });
   const srcTarget = (w) => ({ tbl: T.pr, row: promoterOf(w.slice(3)), kind: 'pr' });
   async function saveSrc(w, patch) {
     const tg = srcTarget(w); if (!tg.row) return;

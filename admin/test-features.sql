@@ -192,3 +192,17 @@ notify pgrst, 'reload schema';
 alter table test.harpatka_promoters add column if not exists cost_from_payment boolean not null default false;
 update test.harpatka_promoters set cost_on_lead = true, rate_type = 'fixed' where not cost_from_payment;
 notify pgrst, 'reload schema';
+
+-- 21. דרכי תשלום ניתנות להגדרה בהגדרות (שם לכל דרך; המפתח נשמר ברשומות התשלום)
+create table if not exists test.harpatka_pay_methods (
+  id uuid primary key default gen_random_uuid(),
+  key text not null unique,
+  name text not null,
+  sort int not null default 1
+);
+alter table test.harpatka_pay_methods enable row level security;
+drop policy if exists "harpatka admin all" on test.harpatka_pay_methods;
+create policy "harpatka admin all" on test.harpatka_pay_methods for all to authenticated using (public.harpatka_is_admin()) with check (public.harpatka_is_admin());
+grant select, insert, update, delete on test.harpatka_pay_methods to authenticated;
+insert into test.harpatka_pay_methods (key, name, sort) values ('paybox','פייבוקס',1),('bit','ביט',2),('cash','מזומן',3),('bank','בנק',4) on conflict (key) do nothing;
+notify pgrst, 'reload schema';
