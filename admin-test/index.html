@@ -38,7 +38,12 @@
     html { scrollbar-width: none; }
     html::-webkit-scrollbar { display: none; }
     .wrap > #status { flex: 0 0 auto; }
-    .wrap > .listbar { flex: 0 0 36px; }   /* לא מתכווץ כשהרשימה ארוכה: מיקום הרשימה קבוע בציר y */
+    .wrap > .listbar { flex: 0 0 36px; }
+    .wrap > .addbox { flex: 0 0 auto; margin-bottom: calc(10px + env(safe-area-inset-bottom)); }
+    .addbox:empty { display: none; }
+    .addbox .newbtn { display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; padding: 10px 14px; background: #fff; border: 1.5px solid var(--line); border-radius: 16px; font-size: 17px; font-weight: 700; color: var(--ink); cursor: pointer; }
+    .addbox .newbtn .plus { flex: 0 0 auto; width: 32px; height: 32px; border-radius: 50%; background: var(--terra); color: #fff; display: grid; place-items: center; font-size: 22px; line-height: 1; }
+    .addbox .newbtn b { color: var(--terra); }   /* לא מתכווץ כשהרשימה ארוכה: מיקום הרשימה קבוע בציר y */
     .wrap > .list { flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior-y: auto; margin-bottom: calc(10px + env(safe-area-inset-bottom)); }
     .wrap { padding-bottom: 0; }
 
@@ -996,6 +1001,7 @@
     <div class="listbar"><div class="lbstart"><div class="genderchips" id="genderChips"></div><div class="listcount" id="listCount" aria-live="polite"></div></div><div class="listpay" id="listPay"></div><div class="lbend" id="listHere"></div>
     </div>
     <ul class="list" id="list"></ul>
+    <div class="addbox" id="addBox"></div>
   </div>
 
 
@@ -1912,11 +1918,12 @@
         (p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd)) || hasNote(p, q)));
       others.sort((a, b) => a.name.localeCompare(b.name, 'he'));
     }
-    const newBtn = q
-      ? '<li class="newrow"><button type="button" class="newbtn" id="addNew"><span class="plus" aria-hidden="true">+</span><span>הוספת משתתף חדש</span><b>' + esc(state.q.trim()) + '</b></button></li>' : '';
+    const newBtn = '';
+    $('#addBox').innerHTML = q ? '<button type="button" class="newbtn" id="addNew"><span class="plus" aria-hidden="true">+</span><span>הוספת משתתף חדש</span><b>' + esc(state.q.trim()) + '</b></button>' : '';   // מנותק מהרשימה, מתחתיה
+    const hasNew = !!q;
 
     if (!rows.length && !others.length) {
-      $('#list').innerHTML = newBtn || '<li class="empty">' + emptyMsg() + '</li>';
+      $('#list').innerHTML = hasNew ? '' : '<li class="empty">' + emptyMsg() + '</li>';
       return;
     }
 
@@ -3293,7 +3300,7 @@
     if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-qs]')) { e.preventDefault(); e.stopPropagation(); openQuickMenu(e.target.dataset.qs, e.target, state.filter || undefined); return; }
     if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-edit]')) { e.preventDefault(); openParticipant(e.target.dataset.edit, undefined, e.target.closest('li.row')); }
   });
-  $('#list').addEventListener('click', (e) => {
+  const listClick = (e) => {
     const qs = e.target.closest('[data-qs]');
     if (qs) { e.stopPropagation(); if (!$('#qMenu').hidden) { closeQ(); return; } openQuickMenu(qs.dataset.qs, qs, state.filter || undefined); return; }
     const eu = e.target.closest('[data-evun]');
@@ -3315,7 +3322,9 @@
     if (pi) { const r0 = pi.closest('li.row'), id0 = r0 && r0.querySelector('[data-edit]').dataset.edit; if (id0 && state.filter) { e.stopPropagation(); openParticipant(id0, undefined, r0); openDeposit(state.filter); } return; }
     const row = e.target.closest('li.row'), ed = row && row.querySelector('[data-edit]');   // לחיצה בכל מקום בכרטיס פותחת את פרטי המשתתף
     if (ed) openParticipant(ed.dataset.edit, undefined, row);
-  });
+  };
+  $('#list').addEventListener('click', listClick);
+  $('#addBox').addEventListener('click', listClick);
 
   $('#attForce').hidden = !forceAttend;
   $('#attForce').addEventListener('click', () => { forceAttend = false; try { sessionStorage.removeItem('harpatka_att'); } catch (e) {} $('#attForce').hidden = true; render(); if (sheet && sheet.id && pDlg.open) refreshSheetMeetings(); toast('מצב ההגעה הזמני כובה'); });
