@@ -437,6 +437,8 @@
     .finper .stc[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
     .finsum { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
     .finsum > div { background: var(--cream); border-radius: 14px; padding: 10px 12px; }
+    .finsum .fsub { margin: 2px 0 0; font-size: 12px; }
+    .finowed { grid-column: 1 / -1; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; padding: 0 4px; }
     .finsum small { display: block; color: var(--muted); font-size: 12.5px; font-weight: 700; margin-bottom: 2px; }
     .finsum b { font-family: "Rubik", sans-serif; font-size: 19px; font-weight: 800; }
     .finsum .in b { color: var(--green); }
@@ -2355,6 +2357,7 @@
   function finRows() {
     const rows = state.fin.map((x) => ({ kind: x.kind, amount: Number(x.amount), date: x.entry_date, title: x.title, meeting_id: x.meeting_id, id: x.id, rec: null }));
     state.finRec.forEach((r) => recOccurrences(r).forEach((d) => rows.push({ kind: r.kind, amount: Number(r.amount), date: d, title: r.title, meeting_id: null, id: r.id, rec: r })));
+    state.promoPays.forEach((x) => { const pr = promoterOf(x.promoter_id); rows.push({ kind: 'expense', amount: Number(x.amount), date: String(x.paid_at || '').slice(0, 10), title: 'תשלום ל' + (pr ? pr.name : 'דרך הגעה'), meeting_id: null, id: x.id, rec: null, channel: x.promoter_id }); });   // תשלומים לדרכי הגעה נספרים כהוצאה
     const mo = todayISO().slice(0, 7);
     return rows.filter((x) => state.finPeriod === 'all' || x.date.slice(0, 7) === mo).sort((a, b) => b.date.localeCompare(a.date));
   }
@@ -2364,11 +2367,11 @@
   }
   function renderFinance() {
     document.querySelectorAll('#finPer [data-fp]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.fp === state.finPeriod)));
-    const rows = finRows(), inc = rows.filter((x) => x.kind === 'income').reduce((s, x) => s + x.amount, 0), exp = rows.filter((x) => x.kind === 'expense').reduce((s, x) => s + x.amount, 0), part = finPartIncome();
-    $('#finSum').innerHTML = '<div class="in"><small>הכנסות ממשתתפים</small><b>₪' + nfm(part) + '</b></div><div class="in"><small>הכנסות אחרות</small><b>₪' + nfm(inc) + '</b></div><div class="out"><small>הוצאות</small><b>₪' + nfm(exp) + '</b></div><div class="net"><small>נטו</small><b>₪' + nfm(part + inc - exp) + '</b></div>';
+    const rows = finRows(), inc = rows.filter((x) => x.kind === 'income').reduce((s, x) => s + x.amount, 0), exp = rows.filter((x) => x.kind === 'expense').reduce((s, x) => s + x.amount, 0), part = finPartIncome(), expCh = rows.filter((x) => x.channel).reduce((s, x) => s + x.amount, 0), owed = state.promoters.reduce((s, x) => s + Math.max(0, ledgerOf(x.id).balance), 0);
+    $('#finSum').innerHTML = '<div class="in"><small>הכנסות ממשתתפים</small><b>₪' + nfm(part) + '</b></div><div class="in"><small>הכנסות אחרות</small><b>₪' + nfm(inc) + '</b></div><div class="out"><small>הוצאות</small><b>₪' + nfm(exp) + '</b>' + (expCh ? '<small class="fsub">מתוכן דרכי הגעה ₪' + nfm(expCh) + '</small>' : '') + '</div><div class="net"><small>נטו</small><b>₪' + nfm(part + inc - exp) + '</b></div>' + (owed > 0 ? '<p class="finowed">עלויות דרכי הגעה שנצברו ועוד לא שולמו: ₪' + nfm(owed) + ' (לא נכללות בהוצאות עד התשלום)</p>' : '');
     $('#finRecLbl').hidden = !state.finRec.length;
     $('#finRec').innerHTML = state.finRec.map((r) => '<button type="button" class="finrow' + (r.active ? '' : ' off') + '" data-frec="' + r.id + '"><span class="ft"><b>' + esc(r.title) + '</b><span>' + PERIODS[r.period] + ' · מ-' + finDmy(r.start_date) + (r.end_date ? ' עד ' + finDmy(r.end_date) : '') + (r.active ? '' : ' · מושהה') + '</span></span><span class="fa ' + (r.kind === 'income' ? 'in' : 'out') + '">₪' + nfm(Number(r.amount)) + '</span></button>').join('');
-    $('#finList').innerHTML = rows.length ? rows.map((x) => { const m = x.meeting_id && state.meetings.find((q) => q.id === x.meeting_id); return '<button type="button" class="finrow" ' + (x.rec ? 'data-frec="' + x.id + '"' : 'data-fent="' + x.id + '"') + '><span class="ft"><b>' + esc(x.title) + (x.rec ? '<i class="frec">מחזורי</i>' : '') + '</b><span>' + finDmy(x.date) + ' · ' + (m ? 'מפגש ' + dmShort(m) : 'כללי') + '</span></span><span class="fa ' + (x.kind === 'income' ? 'in' : 'out') + '">₪' + nfm(x.amount) + '</span></button>'; }).join('') : '<p class="mnone">עוד אין תנועות' + (state.finPeriod === 'month' ? ' החודש' : '') + '</p>';
+    $('#finList').innerHTML = rows.length ? rows.map((x) => { const m = x.meeting_id && state.meetings.find((q) => q.id === x.meeting_id); return '<button type="button" class="finrow" ' + (x.channel ? 'data-fch="' + x.channel + '"' : x.rec ? 'data-frec="' + x.id + '"' : 'data-fent="' + x.id + '"') + '><span class="ft"><b>' + esc(x.title) + (x.rec ? '<i class="frec">מחזורי</i>' : '') + (x.channel ? '<i class="frec">דרך הגעה</i>' : '') + '</b><span>' + finDmy(x.date) + ' · ' + (x.channel ? 'לחיצה לפתיחת ההתחשבנות' : m ? 'מפגש ' + dmShort(m) : 'כללי') + '</span></span><span class="fa ' + (x.kind === 'income' ? 'in' : 'out') + '">₪' + nfm(x.amount) + '</span></button>'; }).join('') : '<p class="mnone">עוד אין תנועות' + (state.finPeriod === 'month' ? ' החודש' : '') + '</p>';
   }
   function finView(v) {
     finV = v; $('#finMain').hidden = v !== 'main'; $('#finForm').hidden = v !== 'form'; $('#finArrow').hidden = v === 'main';
@@ -2394,6 +2397,7 @@
   $('#finMain').addEventListener('click', (e) => {
     const a = e.target.closest('[data-fadd]'); if (a) { openFinForm({ kind: a.dataset.fadd }); return; }
     const r = e.target.closest('[data-frec]'); if (r) { openFinForm({ type: 'rec', id: r.dataset.frec }); return; }
+    const ch = e.target.closest('[data-fch]'); if (ch) { showPromoterDetail(ch.dataset.fch); $('#prDlg').showModal(); return; }   // תשלום לדרך הגעה: פותח את ההתחשבנות שלה
     const x = e.target.closest('[data-fent]'); if (x) openFinForm({ type: 'entry', id: x.dataset.fent });
   });
   $('#finKind').addEventListener('click', (e) => { const b = e.target.closest('[data-fk]'); if (!b) return; $('#finForm').dataset.kind = b.dataset.fk; document.querySelectorAll('#finKind [data-fk]').forEach((q) => q.setAttribute('aria-checked', String(q === b))); });
