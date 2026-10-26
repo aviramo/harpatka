@@ -138,8 +138,8 @@
     .hfilt.yes { background: #2F7D4F; color: #fff; border: 2.5px dashed #D2C3AC; box-sizing: border-box; background-clip: padding-box; }
     .hfilt.no { background: #fff; border: 2.5px dashed #D2C3AC; box-sizing: border-box; }
     .hfilt.all { background: #2F7D4F; color: transparent; border: 2.5px dashed #D2C3AC; box-sizing: border-box; background-clip: padding-box; }
-    .genderchips .stc.gm, .genderchips .stc.gf { background: #fff; color: var(--ink); border-color: var(--line); }
-    .genderchips .stc.gm[aria-pressed="true"], .genderchips .stc.gf[aria-pressed="true"] { border-color: var(--ink); }
+    .genderchips .stc.gall, .genderchips .stc.gm, .genderchips .stc.gf { background: #fff; color: var(--ink); border-color: var(--line); }
+    .genderchips .stc.gall[aria-pressed="true"], .genderchips .stc.gm[aria-pressed="true"], .genderchips .stc.gf[aria-pressed="true"] { border-color: var(--ink); }
     .genderchips { display: flex; gap: 6px; align-items: center; }
     .genderchips:empty { display: none; }
     .genderchips .stc { height: 32px; padding: 0 10px; font-size: 14px; }
@@ -1817,7 +1817,8 @@
     $('#facets').innerHTML = '';   // המגדר והסטטוס עברו לפס הצ'יפים (#stStrip)
     /* כל הסטטוסים (בתוך מפגש) או התגיות (בתצוגת הכל) כצ'יפים מעל הסינונים, ממורכזים ועוברים שורה: לחיצה מסננת (בחירה מרובה) */
     const gchip = (g, label, cls) => { const n = nG(g); return '<button type="button" class="stc ' + cls + (n ? '' : ' zero') + '" data-stg="' + g + '" aria-pressed="' + (eg === g) + '">' + label + ' <small>' + n + '</small></button>'; };
-    { const sc = state.participants.filter((q) => !state.filter || linkOf(q.id, state.filter)); $('#genderChips').innerHTML = (eg || (sc.some((q) => q.gender === 'male') && sc.some((q) => q.gender === 'female'))) ? gchip('male', 'זכר', 'gm') + gchip('female', 'נקבה', 'gf') : ''; }   // ליד כפתור התפריט בכותרת
+    { const sc = state.participants.filter((q) => !state.filter || linkOf(q.id, state.filter)), both = sc.some((q) => q.gender === 'male') && sc.some((q) => q.gender === 'female'), allN = base.filter((p) => payOk(p)).length;
+      $('#genderChips').innerHTML = '<button type="button" class="stc gall' + (allN ? '' : ' zero') + '" data-stg="all" aria-pressed="' + !eg + '" title="כל המוצגים ברשימה">הכל <small>' + allN + '</small></button>' + ((eg || both) ? gchip('male', 'זכר', 'gm') + gchip('female', 'נקבה', 'gf') : ''); }   // ליד כפתור התפריט בכותרת
     const attOn = !!(state.filter && attendOpen(state.meetings.find((x) => x.id === state.filter)));   // הגעה רק מחצי שעה לפני המפגש (או במצב הגעה פתוח)
     const paidN = (v) => base.filter((p) => genOk(p) && hereOk(p) && matchPay(p, epk) && payStateOf(p) === v).length;
     const pchip = (v, label, cls) => { const n = paidN(v); return '<button type="button" class="stc ' + cls + (n ? '' : ' zero') + '" data-stp="' + v + '" aria-pressed="' + (state.paidF === v && !!state.filter) + '">' + label + ' <small>' + n + '</small></button>'; };
@@ -1830,7 +1831,8 @@
     $('#listPay').innerHTML = state.filter ? '<button type="button" class="hfilt pay ' + pf + '" data-pcyc="1" aria-label="סינון תשלום: ' + (pf === 'yes' ? 'שולם' : pf === 'no' ? 'לא שולם' : 'הכל') + '" title="' + (pf === 'yes' ? 'שולם (' + paidN('1') + ')' : pf === 'no' ? 'לא שולם (' + paidN('0') + ')' : 'הכל: שולם ' + paidN('1') + ', לא שולם ' + paidN('0')) + ' (לחיצה לשינוי)">₪</button>' : '';
     requestAnimationFrame(alignFilters);   // שולם / לא שולם בשורת החיפוש מעל הרשימה
     $('#stStrip').innerHTML = true ? (state.filter ? statusList().slice().reverse() : pstatusList().slice().reverse().concat([{ key: PNONE, label: 'בלי תגיות' }])).filter((s) => epk.includes(s.key) || state.participants.some((p) => (!state.filter || linkOf(p.id, state.filter)) && stMatch(p, s.key))).map((s) => { const n = nP(s.key); return '<button type="button" class="stc ' + (s.key === PNONE || !state.filter ? 'tagc' : s.key) + (n ? '' : ' zero') + '" data-stc="' + s.key + '" aria-pressed="' + epk.includes(s.key) + '">' + esc(s.label) + ' <small>' + n + '</small></button>'; }).join('') + (state.filter && state.participants.some((q) => linkOf(q.id, state.filter) && noPayOf(q, linkOf(q.id, state.filter))) ? pchip('n', 'לא משלם', 'gn') : '') + '' : '';
-    $('#listCount').innerHTML = base.length || epk.length || eg ? '<span class="stcount" title="כמה משתתפים מוצגים ברשימה">מוצגים <b>' + base.filter((p) => genOk(p) && payOk(p)).length + '</b></span>' : '';
+    $('#stStrip').style.visibility = state.q.trim() ? 'hidden' : '';   // בזמן חיפוש הסטטוסים מוסתרים (המקום נשמר, כדי שהרשימה לא תזוז)
+    $('#listCount').innerHTML = '';   // "מוצגים N" הוחלף בצ'יפ "הכל" עם הכמות
   }
 
   /* מיון הרשימה */
@@ -3238,7 +3240,7 @@
     state.filter = c.dataset.filter || null;
     render();
   });
-  $('#genderChips').addEventListener('click', (e) => { const gb = e.target.closest('[data-stg]'); if (gb) { state.gender = state.gender === gb.dataset.stg ? null : gb.dataset.stg; render(); syncUrl(); } });
+  $('#genderChips').addEventListener('click', (e) => { const gb = e.target.closest('[data-stg]'); if (gb) { state.gender = gb.dataset.stg === 'all' || state.gender === gb.dataset.stg ? null : gb.dataset.stg; render(); syncUrl(); } });
   $('#listHere').addEventListener('click', (e) => { if (!e.target.closest('[data-hcyc]')) return; state.here = state.here === '1' ? '0' : state.here === '0' ? null : '1'; render(); syncUrl(); });
   $('#listPay').addEventListener('click', (e) => { if (!e.target.closest('[data-pcyc]')) return; state.paidF = state.paidF === '1' ? '0' : state.paidF === '0' ? null : '1'; render(); syncUrl(); });
   /* אייקוני הסינון בשורת "מוצגים" מיושרים לעמודות האייקונים ברשימה (₪ והגעה) */
@@ -3257,7 +3259,7 @@
     const pb = e.target.closest('[data-stp]'); if (pb) { state.paidF = state.paidF === pb.dataset.stp ? null : pb.dataset.stp; render(); syncUrl(); return; }
     const eb = e.target.closest('[data-qedit]'); if (eb) { openStatusSettings(eb.dataset.qedit); return; }
     const hb = e.target.closest('[data-sth]'); if (hb) { state.here = state.here === hb.dataset.sth ? null : hb.dataset.sth; render(); syncUrl(); return; }
-    const gb = e.target.closest('[data-stg]'); if (gb) { state.gender = state.gender === gb.dataset.stg ? null : gb.dataset.stg; render(); syncUrl(); return; }   // גברים או נשים (אחד מהם), בחיתוך עם הסטטוסים
+    const gb = e.target.closest('[data-stg]'); if (gb) { state.gender = gb.dataset.stg === 'all' || state.gender === gb.dataset.stg ? null : gb.dataset.stg; render(); syncUrl(); return; }   // גברים או נשים (אחד מהם), בחיתוך עם הסטטוסים
     const b = e.target.closest('[data-stc]'); if (!b) return; const k = b.dataset.stc, cur = payKeys(state.pay), nx = cur.includes(k) ? cur.filter((x) => x !== k) : cur.concat(k);
     state.pay = nx.length ? nx.join(',') : null; render(); syncUrl();
   });
