@@ -429,8 +429,42 @@
     .ppanel.enter-r { animation: pviewR .3s cubic-bezier(.22,.8,.2,1); }
     @keyframes pviewL { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: none; } }
     @keyframes pviewR { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
-    #stDlg, #prDlg { height: 100dvh; max-height: 100dvh; }   /* סטטיסטיקות והתחשבנות נפתחות לכל גובה המסך, כמו ההגדרות */
-    #stDlg .sheet, #prDlg .sheet { min-height: 100%; box-sizing: border-box; }
+    #stDlg, #prDlg, #finDlg { height: 100dvh; max-height: 100dvh; }   /* סטטיסטיקות והתחשבנות נפתחות לכל גובה המסך, כמו ההגדרות */
+    #stDlg .sheet, #prDlg .sheet, #finDlg .sheet { min-height: 100%; box-sizing: border-box; }
+    #finDlg .sheet-head { position: relative; justify-content: flex-start; gap: 8px; min-height: 40px; }
+    #finDlg .sheet-head h2 { flex: 1 1 auto; }
+    .finper { display: flex; gap: 6px; justify-content: center; margin: 4px 0 12px; }
+    .finper .stc { height: 30px; padding: 0 14px; border-radius: 999px; font-size: 15px; font-weight: 700; background: #fff; color: var(--ink); border: 1px solid var(--line); }
+    .finper .stc[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+    .finsum { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .finsum > div { background: var(--cream); border-radius: 14px; padding: 10px 12px; }
+    .finsum small { display: block; color: var(--muted); font-size: 12.5px; font-weight: 700; margin-bottom: 2px; }
+    .finsum b { font-family: "Rubik", sans-serif; font-size: 19px; font-weight: 800; }
+    .finsum .in b { color: var(--green); }
+    .finsum .out b { color: var(--red); }
+    .finsum .net { background: var(--ink); color: var(--paper); }
+    .finsum .net b { color: var(--paper); }
+    #finRec { margin-bottom: 14px; }
+    .finsum .net small { color: rgba(255,253,249,.75); }
+    .fincmds { display: flex; gap: 8px; margin-bottom: 12px; }
+    .fincmds .btn { flex: 1 1 0; height: 44px; font-size: 16px; }
+    .fincmds .fexp { background: var(--red-bg); color: var(--red); }
+    .fincmds .finc { background: var(--green-bg); color: var(--green); }
+    .finrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 11px 4px; border-top: 1px solid var(--line); text-align: right; background: transparent; }
+    #finList .finrow:first-child, #finRec .finrow:first-child { border-top: 0; }
+    .finrow .ft { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .finrow .ft b { font-size: 16px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .finrow .ft span { color: var(--muted); font-size: 13px; }
+    .finrow .fa { font-family: "Rubik", sans-serif; font-weight: 800; font-size: 17px; white-space: nowrap; }
+    .finrow .fa.in { color: var(--green); }
+    .finrow .fa.out { color: var(--red); }
+    .finrow.off { opacity: .55; }
+    .finrow .frec { display: inline-block; background: var(--sky-bg); color: var(--sky); border-radius: 999px; padding: 0 8px; font-size: 12px; font-weight: 700; margin-inline-start: 6px; }
+    .finseg { display: flex; gap: 6px; margin-bottom: 12px; }
+    .finseg button { flex: 1 1 0; height: 40px; border-radius: 12px; font-weight: 700; font-size: 16px; background: #fff; color: var(--ink); border: 1px solid var(--line); }
+    .finseg button[aria-checked="true"][data-fk="expense"] { background: var(--red-bg); color: var(--red); border-color: var(--red-bg); }
+    .finseg button[aria-checked="true"][data-fk="income"] { background: var(--green-bg); color: var(--green); border-color: var(--green-bg); }
+    #finForm select { width: 100%; height: 48px; border-radius: 14px; border: 1px solid var(--line); background: #fff; padding: 0 14px; font-size: 17px; }
     #stDlg .sheet-head { position: relative; justify-content: flex-start; gap: 8px; min-height: 40px; }
     #stDlg .sheet-head h2 { flex: 1 1 auto; }
     .hbtn { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--cream); color: var(--ink); }
@@ -1352,6 +1386,36 @@
     </div>
   </dialog>
 
+  <dialog id="finDlg" aria-labelledby="finTitle" style="max-width:520px">
+    <div class="sheet">
+      <div class="sheet-head">
+        <button type="button" class="hbtn hback" id="finArrow" aria-label="חזרה" title="חזרה" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <h2 id="finTitle">כספים</h2>
+      </div>
+      <div id="finMain">
+        <div class="finper" id="finPer" role="group" aria-label="תקופה"><button type="button" class="stc" data-fp="month">החודש</button><button type="button" class="stc" data-fp="all">הכל</button></div>
+        <div class="finsum" id="finSum"></div>
+        <div class="fincmds"><button type="button" class="btn fexp" data-fadd="expense">+ הוצאה</button><button type="button" class="btn finc" data-fadd="income">+ הכנסה</button></div>
+        <div class="clabel" id="finRecLbl" hidden>מחזוריות</div>
+        <div id="finRec"></div>
+        <div class="clabel">תנועות</div>
+        <div id="finList"></div>
+      </div>
+      <form id="finForm" novalidate hidden>
+        <div class="finseg" id="finKind" role="radiogroup" aria-label="סוג"><button type="button" role="radio" data-fk="expense">הוצאה</button><button type="button" role="radio" data-fk="income">הכנסה</button></div>
+        <div class="two">
+          <label class="field"><span>סכום (₪)</span><input name="amount" type="number" inputmode="decimal" min="0" step="any" /></label>
+          <label class="field"><span>תאריך</span><input name="date" type="date" /></label>
+        </div>
+        <label class="field"><span>תיאור</span><input name="title" maxlength="80" autocomplete="off" placeholder="למשל שכירות אולם, פרסום, מכירת תכשיטים" /></label>
+        <label class="field" id="finMeetF"><span>שיוך</span><select name="meeting"></select></label>
+        <label class="field" id="finRepF"><span>חזרתיות</span><select name="period"><option value="">חד פעמי</option><option value="weekly">כל שבוע</option><option value="monthly">כל חודש</option><option value="yearly">כל שנה</option></select></label>
+        <button class="btn" type="submit" id="finSave">שמירה</button>
+        <button class="btn ghost" id="finDel" type="button" hidden>מחיקה</button>
+      </form>
+    </div>
+  </dialog>
+
   <dialog id="cDlg" aria-labelledby="cTitle" style="max-width:420px">
     <form class="sheet" method="dialog" novalidate>
       <h2 id="cTitle" style="margin-bottom:6px"></h2>
@@ -1373,16 +1437,17 @@
     url: 'https://ezakarwqstnldqixgreb.supabase.co',
     key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6YWthcndxc3RubGRxaXhncmViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTA3MzIsImV4cCI6MjEwNjc4NjczMn0.Bg0eFBC4zKjyJc5kBw3wLgSP-PkxLFVv3o7-4YUdq4c',
   };
-  const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance', n: 'harpatka_notes', pr: 'harpatka_promoters', pp: 'harpatka_promoter_payments', pay: 'harpatka_payments', st: 'harpatka_statuses', pf: 'harpatka_admin_prefs', tr: 'harpatka_price_tiers', sr: 'harpatka_sources', pm: 'harpatka_pay_methods' };
+  const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance', n: 'harpatka_notes', pr: 'harpatka_promoters', pp: 'harpatka_promoter_payments', pay: 'harpatka_payments', st: 'harpatka_statuses', pf: 'harpatka_admin_prefs', tr: 'harpatka_price_tiers', sr: 'harpatka_sources', pm: 'harpatka_pay_methods', fin: 'harpatka_finance', finr: 'harpatka_finance_recurring' };
 
   /* חזרה בדפדפן: כל פתיחת פופאפ וכל כניסה למסך משנה בתוכו מוסיפות רשומת היסטוריה; חזרה בדפדפן חוזרת צעד אחד (מסך משנה ← המסך הראשי ← סגירה), וסגירה או חזרה בכפתורי המסך מנקות את הרשומות */
   const NAV = { stack: [], ignore: 0, fromPop: false };
-  const NAV_BACK = { pDlg: '#pBack', setDlg: '#setBack', stDlg: '#stArrow', prDlg: '#prArrow' };
+  const NAV_BACK = { pDlg: '#pBack', setDlg: '#setBack', stDlg: '#stArrow', prDlg: '#prArrow', finDlg: '#finArrow' };
   const navDepthOf = (d) => {
     try {
       if (d.id === 'pDlg') return (sheet && sheet.id && pTab !== 'main') ? Math.max(1, viewStack.filter((x) => x !== 'main').length + 1) : 0;
       if (d.id === 'setDlg') return setView === 'main' ? 0 : setView === 'del' ? 2 : 1;
       if (d.id === 'stDlg') return stCur === 'main' ? 0 : 1;
+      if (d.id === 'finDlg') return finV === 'main' ? 0 : 1;
       if (d.id === 'prDlg') return RANK[prView] || 0;
     } catch (e) {}
     return 0;
@@ -1411,12 +1476,12 @@
       else top.d.close();
     } finally { NAV.fromPop = false; }
   });
-  const state = { prefs: {}, statuses: [], pstatuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, here: null, paidF: null, gender: null, sort: 'new', sent: null, bal: null, showTags: true };
+  const state = { prefs: {}, statuses: [], pstatuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, here: null, paidF: null, gender: null, sort: 'new', sent: null, bal: null, showTags: true, fin: [], finRec: [], finPeriod: 'month' };
   /* קישור עמוק מהמייל: ?m=<מפגש>&p=<משתתף>; נשמר בזמן הכניסה עם גוגל (שמחזירה בלי הפרמטרים) */
   let deep = null;
   try {
     const sp = new URLSearchParams(location.search);
-    if (['m', 'p', 'pay', 'at', 'pd', 'sv', 'bl', 'tg', 'tga', 'q', 'em', 'g', 's', 'st', 'pt', 'bd', 'pm', 'set', 'stv', 'pr'].some((k) => sp.get(k))) { deep = { m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), at: sp.get('at'), pd: sp.get('pd'), sv: sp.get('sv'), bl: sp.get('bl'), tg: sp.get('tg'), tga: sp.get('tga'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g'), s: sp.get('s'), st: sp.get('st'), pt: sp.get('pt'), bd: sp.get('bd'), pm: sp.get('pm'), set: sp.get('set'), stv: sp.get('stv'), pr: sp.get('pr') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
+    if (['m', 'p', 'pay', 'at', 'pd', 'sv', 'bl', 'tg', 'tga', 'q', 'em', 'g', 's', 'st', 'pt', 'bd', 'pm', 'set', 'stv', 'pr', 'fin'].some((k) => sp.get(k))) { deep = { m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), at: sp.get('at'), pd: sp.get('pd'), sv: sp.get('sv'), bl: sp.get('bl'), tg: sp.get('tg'), tga: sp.get('tga'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g'), s: sp.get('s'), st: sp.get('st'), pt: sp.get('pt'), bd: sp.get('bd'), pm: sp.get('pm'), set: sp.get('set'), stv: sp.get('stv'), pr: sp.get('pr'), fin: sp.get('fin') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
     else { deep = JSON.parse(sessionStorage.getItem('harpatka_deep') || 'null'); }
   } catch (e) {}
   const $ = (s) => document.querySelector(s);
@@ -1441,6 +1506,7 @@
     if ($('#prDlg').open && prCur) sp.set('pr', prCur);
     if (editingMeeting && mDlg.open) sp.set('em', editingMeeting.id);
     if ($('#stDlg').open) { sp.set('st', '1'); if (stCur && stCur !== 'main') sp.set('stv', stCur); }
+    if ($('#finDlg').open) sp.set('fin', '1');
     const s = sp.toString();
     try { history.replaceState(null, '', location.pathname + (s ? '?' + s : '')); } catch (e) {}
   }
@@ -1788,7 +1854,7 @@
   async function load(silent) {
     if (!silent) $('#status').innerHTML = '<div class="empty">טוען…</div>';
     try {
-      const [p, m, a, nn, prs, pps, pays, sts, pfs, trs, pms] = await Promise.all([
+      const [p, m, a, nn, prs, pps, pays, sts, pfs, trs, pms, fin0, finr0] = await Promise.all([
         api(T.p + '?select=*'),
         api(T.m + '?select=*'),
         api(T.a + '?select=after_key,participant_id,meeting_id,paid,pay_requested_at,status_key,created_at,exempt,attended,paid_amount,promoter_id,commission,paid_at,details_sent_at,will_pay,maybe,no_pay'),
@@ -1800,7 +1866,10 @@
         api(T.pf + '?select=*').catch(() => null),
         api(T.tr + '?select=*').catch(() => null),
         api(T.pm + '?select=*&order=sort.asc').catch(() => null),
+        api(T.fin + '?select=*&order=entry_date.desc,created_at.desc').catch(() => null),
+        api(T.finr + '?select=*&order=created_at.desc').catch(() => null),
       ]);
+      state.fin = fin0 || []; state.finRec = finr0 || [];
       if (pms && pms.length) state.payMethods = pms.map((x) => Object.assign({}, x));
       if (trs && trs.length) { state.tiers = trs.map((x) => ({ id: x.id, days: x.days, price: x.price })); syncPriceVars(); }
       if (pfs) state.prefs = Object.fromEntries(pfs.map((x) => [String(x.email).toLowerCase(), x]));
@@ -1844,6 +1913,7 @@
           else if (['pay', 'src', 'pm', 'em'].includes(v)) showSetView(v);
           if (document.activeElement && document.activeElement.closest('#setDlg')) document.activeElement.blur(); syncUrl();
         }
+        else if (d.fin) { openFinance(); }
         else if (d.st) { renderStats(); $('#stDlg').showModal(); if (d.stv && ST_TITLES[d.stv] && d.stv !== 'main') stView(d.stv, true); if (document.activeElement && document.activeElement.closest('#stDlg')) document.activeElement.blur(); syncUrl(); }
         else if (d.bd) boardOpen();
         return;
@@ -2275,9 +2345,89 @@
     $('#stBody').innerHTML = '<div class="ppanel" data-sp="main">' + main + '</div><div class="ppanel" data-sp="money" hidden>' + money + '</div><div class="ppanel" data-sp="promo" hidden>' + promo + '</div><div class="ppanel" data-sp="demo" hidden>' + demo + '</div>';
     stView('main', true);
   }
-  $('#moneyBtn').addEventListener('click', () => { renderStats(); $('#stDlg').showModal(); stView('money', true); if (document.activeElement && document.activeElement.closest('#stDlg')) document.activeElement.blur(); syncUrl(); });   // כספים: פותח את הסטטיסטיקות ישר בנושא הכספים
+  $('#moneyBtn').addEventListener('click', () => openFinance());   // כספים: ניהול הוצאות והכנסות
   $('#statsBtn').addEventListener('click', () => { renderStats(); $('#stDlg').showModal(); if (document.activeElement && document.activeElement.closest('#stDlg')) document.activeElement.blur(); syncUrl(); });   // בלי מסגרת פוקוס על הכרטיס הראשון בפתיחה
   $('#stDlg').addEventListener('close', syncUrl);
+  /* ===== כספים: הוצאות והכנסות שאינן תשלומי משתתפים (חד פעמיות או מחזוריות, כלליות או לפי מפגש) ===== */
+  let finV = 'main', finEdit = null;   // finEdit: { type: 'entry' | 'rec', id } בעריכה, או { kind } בהוספה
+  const PERIODS = { weekly: 'כל שבוע', monthly: 'כל חודש', yearly: 'כל שנה' };
+  const isoAdd = (iso, period, n) => { const [y, m, d] = iso.split('-').map(Number); const dt = new Date(Date.UTC(y, m - 1, d)); if (period === 'weekly') dt.setUTCDate(dt.getUTCDate() + 7 * n); else if (period === 'monthly') { const day = dt.getUTCDate(); dt.setUTCDate(1); dt.setUTCMonth(dt.getUTCMonth() + n); const last = new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth() + 1, 0)).getUTCDate(); dt.setUTCDate(Math.min(day, last)); } else { const day = dt.getUTCDate(); dt.setUTCDate(1); dt.setUTCFullYear(dt.getUTCFullYear() + n); const last = new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth() + 1, 0)).getUTCDate(); dt.setUTCDate(Math.min(day, last)); } return dt.toISOString().slice(0, 10); };
+  const recOccurrences = (r) => { if (!r.active) return []; const upto = (r.end_date && r.end_date < todayISO()) ? r.end_date : todayISO(), out = []; for (let n = 0; n < 800; n++) { const d = isoAdd(r.start_date, r.period, n); if (d > upto) break; out.push(d); } return out; };
+  const finDmy = (iso) => { const [y, m, d] = iso.split('-'); return d + '.' + m + '.' + y.slice(2); };
+  function finRows() {
+    const rows = state.fin.map((x) => ({ kind: x.kind, amount: Number(x.amount), date: x.entry_date, title: x.title, meeting_id: x.meeting_id, id: x.id, rec: null }));
+    state.finRec.forEach((r) => recOccurrences(r).forEach((d) => rows.push({ kind: r.kind, amount: Number(r.amount), date: d, title: r.title, meeting_id: null, id: r.id, rec: r })));
+    const mo = todayISO().slice(0, 7);
+    return rows.filter((x) => state.finPeriod === 'all' || x.date.slice(0, 7) === mo).sort((a, b) => b.date.localeCompare(a.date));
+  }
+  function finPartIncome() {   // הכנסה נטו ממשתתפים: הפקדות ותשלומים (בלי הקצאה מהיתרה) פחות החזרים
+    const mo = todayISO().slice(0, 7);
+    return state.payments.filter((x) => state.finPeriod === 'all' || String(x.created_at || x.paid_at || '').slice(0, 7) === mo).reduce((s, x) => s + ((x.kind === 'payment' || x.kind === 'deposit') && !x.from_credit ? Number(x.amount) : x.kind === 'refund' ? -Number(x.amount) : 0), 0);
+  }
+  function renderFinance() {
+    document.querySelectorAll('#finPer [data-fp]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.fp === state.finPeriod)));
+    const rows = finRows(), inc = rows.filter((x) => x.kind === 'income').reduce((s, x) => s + x.amount, 0), exp = rows.filter((x) => x.kind === 'expense').reduce((s, x) => s + x.amount, 0), part = finPartIncome();
+    $('#finSum').innerHTML = '<div class="in"><small>הכנסות ממשתתפים</small><b>₪' + nfm(part) + '</b></div><div class="in"><small>הכנסות אחרות</small><b>₪' + nfm(inc) + '</b></div><div class="out"><small>הוצאות</small><b>₪' + nfm(exp) + '</b></div><div class="net"><small>נטו</small><b>₪' + nfm(part + inc - exp) + '</b></div>';
+    $('#finRecLbl').hidden = !state.finRec.length;
+    $('#finRec').innerHTML = state.finRec.map((r) => '<button type="button" class="finrow' + (r.active ? '' : ' off') + '" data-frec="' + r.id + '"><span class="ft"><b>' + esc(r.title) + '</b><span>' + PERIODS[r.period] + ' · מ-' + finDmy(r.start_date) + (r.end_date ? ' עד ' + finDmy(r.end_date) : '') + (r.active ? '' : ' · מושהה') + '</span></span><span class="fa ' + (r.kind === 'income' ? 'in' : 'out') + '">₪' + nfm(Number(r.amount)) + '</span></button>').join('');
+    $('#finList').innerHTML = rows.length ? rows.map((x) => { const m = x.meeting_id && state.meetings.find((q) => q.id === x.meeting_id); return '<button type="button" class="finrow" ' + (x.rec ? 'data-frec="' + x.id + '"' : 'data-fent="' + x.id + '"') + '><span class="ft"><b>' + esc(x.title) + (x.rec ? '<i class="frec">מחזורי</i>' : '') + '</b><span>' + finDmy(x.date) + ' · ' + (m ? 'מפגש ' + dmShort(m) : 'כללי') + '</span></span><span class="fa ' + (x.kind === 'income' ? 'in' : 'out') + '">₪' + nfm(x.amount) + '</span></button>'; }).join('') : '<p class="mnone">עוד אין תנועות' + (state.finPeriod === 'month' ? ' החודש' : '') + '</p>';
+  }
+  function finView(v) {
+    finV = v; $('#finMain').hidden = v !== 'main'; $('#finForm').hidden = v !== 'form'; $('#finArrow').hidden = v === 'main';
+    $('#finTitle').textContent = v === 'main' ? 'כספים' : (finEdit && finEdit.id ? 'עריכה' : (finEdit && finEdit.kind === 'income' ? 'הכנסה חדשה' : 'הוצאה חדשה'));
+    $('#finDlg').scrollTop = 0; navSync($('#finDlg')); syncUrl();
+  }
+  function openFinance() { renderFinance(); finV = 'main'; finView('main'); if (!$('#finDlg').open) $('#finDlg').showModal(); if (document.activeElement && document.activeElement.closest('#finDlg')) document.activeElement.blur(); }
+  function openFinForm(edit) {
+    finEdit = edit; const f = $('#finForm');
+    const src = edit.type === 'rec' ? state.finRec.find((x) => x.id === edit.id) : edit.type === 'entry' ? state.fin.find((x) => x.id === edit.id) : null;
+    const kind = src ? src.kind : edit.kind;
+    f.dataset.kind = kind; document.querySelectorAll('#finKind [data-fk]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.fk === kind)));
+    f.amount.value = src ? Number(src.amount) : ''; f.date.value = src ? (src.entry_date || src.start_date) : todayISO(); f.title.value = src ? src.title : '';
+    const sel = f.meeting; sel.innerHTML = '<option value="">כללי (לא קשור למפגש)</option>' + state.meetings.slice().sort((a, b) => (b.meeting_date + b.meeting_time).localeCompare(a.meeting_date + a.meeting_time)).map((m) => '<option value="' + m.id + '">מפגש ' + esc(dmShort(m)) + ' · ' + esc(String(m.meeting_time).slice(0, 5)) + '</option>').join('');
+    sel.value = (src && src.meeting_id) || '';
+    f.period.value = edit.type === 'rec' ? src.period : '';
+    $('#finMeetF').hidden = edit.type === 'rec'; $('#finRepF').hidden = !!(edit.type === 'entry');
+    $('#finDel').hidden = !edit.id; $('#finDel').textContent = 'מחיקה'; delete $('#finDel').dataset.arm;
+    f.querySelector('[name=date]').previousElementSibling.textContent = edit.type === 'rec' ? 'מתאריך' : 'תאריך';
+    finView('form');
+  }
+  $('#finPer').addEventListener('click', (e) => { const b = e.target.closest('[data-fp]'); if (!b) return; state.finPeriod = b.dataset.fp; renderFinance(); });
+  $('#finMain').addEventListener('click', (e) => {
+    const a = e.target.closest('[data-fadd]'); if (a) { openFinForm({ kind: a.dataset.fadd }); return; }
+    const r = e.target.closest('[data-frec]'); if (r) { openFinForm({ type: 'rec', id: r.dataset.frec }); return; }
+    const x = e.target.closest('[data-fent]'); if (x) openFinForm({ type: 'entry', id: x.dataset.fent });
+  });
+  $('#finKind').addEventListener('click', (e) => { const b = e.target.closest('[data-fk]'); if (!b) return; $('#finForm').dataset.kind = b.dataset.fk; document.querySelectorAll('#finKind [data-fk]').forEach((q) => q.setAttribute('aria-checked', String(q === b))); });
+  $('#finArrow').addEventListener('click', () => finView('main'));
+  $('#finForm').addEventListener('submit', async (e) => {
+    e.preventDefault(); const f = e.target, amount = Number(f.amount.value), title = f.title.value.trim(), date = f.date.value || todayISO(), kind = f.dataset.kind || 'expense';
+    if (!(amount > 0)) { toast('צריך להזין סכום'); f.amount.focus(); return; }
+    if (!title) { toast('צריך להזין תיאור'); f.title.focus(); return; }
+    const editing = finEdit && finEdit.id, recNow = (finEdit && finEdit.type === 'rec') || (!editing && f.period.value);
+    try {
+      if (recNow) {
+        const body = { kind, amount, title, period: f.period.value || 'monthly', start_date: date };
+        if (editing) { const r = state.finRec.find((x) => x.id === finEdit.id); Object.assign(r, body); await api(T.finr + '?id=eq.' + finEdit.id, { method: 'PATCH', body }); }
+        else { const [row] = await api(T.finr, { method: 'POST', body, prefer: 'return=representation' }); state.finRec.unshift(row); }
+      } else {
+        const body = { kind, amount, title, entry_date: date, meeting_id: f.meeting.value || null };
+        if (editing) { const x = state.fin.find((q) => q.id === finEdit.id); Object.assign(x, body); await api(T.fin + '?id=eq.' + finEdit.id, { method: 'PATCH', body }); }
+        else { const [row] = await api(T.fin, { method: 'POST', body, prefer: 'return=representation' }); state.fin.unshift(row); }
+      }
+      toast('נשמר'); renderFinance(); finView('main');
+    } catch (err) { fail(err); }
+  });
+  $('#finDel').addEventListener('click', async () => {   // לחיצה ראשונה מחליפה את הכיתוב, שנייה מוחקת
+    const b = $('#finDel'); if (!finEdit || !finEdit.id) return;
+    if (!b.dataset.arm) { b.dataset.arm = '1'; b.textContent = 'לחיצה נוספת למחיקה'; return; }
+    try {
+      if (finEdit.type === 'rec') { await api(T.finr + '?id=eq.' + finEdit.id, { method: 'DELETE' }); state.finRec = state.finRec.filter((x) => x.id !== finEdit.id); }
+      else { await api(T.fin + '?id=eq.' + finEdit.id, { method: 'DELETE' }); state.fin = state.fin.filter((x) => x.id !== finEdit.id); }
+      toast('נמחק'); renderFinance(); finView('main');
+    } catch (err) { fail(err); }
+  });
+  $('#finDlg').addEventListener('close', () => { finV = 'main'; syncUrl(); });
 
   /* ---------- אישור לפני שינוי: סטטוס תשלום, הוספה למפגש והסרה ממנו ---------- */
   const nameB = (n) => '<b style="color:var(--ink);font-weight:800">' + esc(n) + '</b>';   // שם מודגש בפופאפים
@@ -3200,7 +3350,7 @@
       const fit = () => {
         const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
         document.querySelectorAll('dialog[open]').forEach((d) => {
-          const full = ['pDlg', 'setDlg', 'stDlg', 'prDlg'].includes(d.id);   // פופאפים בגובה מלא: ממלאים בדיוק את האזור שמעל המקלדת, בלי רווח למעלה
+          const full = ['pDlg', 'setDlg', 'stDlg', 'prDlg', 'finDlg'].includes(d.id);   // פופאפים בגובה מלא: ממלאים בדיוק את האזור שמעל המקלדת, בלי רווח למעלה
           if (kb > 80) { d.style.marginBottom = kb + 'px'; d.style.maxHeight = Math.round(vv.height - (full ? 0 : 12)) + 'px'; if (full) d.style.height = Math.round(vv.height) + 'px'; }
           else { d.style.marginBottom = ''; d.style.maxHeight = ''; d.style.height = ''; }
         });
