@@ -134,3 +134,21 @@ notify pgrst, 'reload schema';
 -- 13. מתי נפתח סימון ההגעה (לכל מנהל): '15','30','60','120' דקות לפני, 'day' = מתחילת יום המפגש, 'always' = תמיד
 alter table test.harpatka_admin_prefs add column if not exists att_lead text;
 notify pgrst, 'reload schema';
+
+-- 14. מדרגות מחיר למפגש לפי ימים שנותרו: מחיר ממדרגה אחת ועד המדרגה הבאה. days = מספר ימים מינימלי לפני המפגש (המדרגה עם days=0 היא "עד המפגש").
+create table if not exists test.harpatka_price_tiers (
+  id uuid primary key default gen_random_uuid(),
+  days int not null unique check (days >= 0),
+  price int not null check (price >= 0)
+);
+alter table test.harpatka_price_tiers enable row level security;
+drop policy if exists "harpatka admin all" on test.harpatka_price_tiers;
+create policy "harpatka admin all" on test.harpatka_price_tiers for all to authenticated using (public.harpatka_is_admin()) with check (public.harpatka_is_admin());
+grant select, insert, update, delete on test.harpatka_price_tiers to authenticated;
+insert into test.harpatka_price_tiers (days, price) values (4, 80), (0, 100) on conflict (days) do nothing;
+notify pgrst, 'reload schema';
+
+-- 15. חבילות מפגשים: pkg_n בהפקדה (כמה מפגשים נקנו מראש; מחיר למפגש = הסכום חלקי pkg_n), pkg בהקצאה למפגש (נלקחה מחבילה)
+alter table test.harpatka_payments add column if not exists pkg_n int;
+alter table test.harpatka_payments add column if not exists pkg boolean not null default false;
+notify pgrst, 'reload schema';

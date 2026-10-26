@@ -80,6 +80,10 @@
     .hgrp { display: flex; align-items: center; gap: 8px; align-self: center; }
     .title-row { position: relative; height: 48px; align-items: center; }   /* גובה קבוע: פתיחת החיפוש לא מזיזה את הרשימה */
     .tools[hidden] { display: none; }
+    .tierrow { display: flex; align-items: center; gap: 8px; background: var(--cream); border-radius: 16px; padding: 8px 12px; margin-bottom: 7px; }
+    .tierrow .tierlbl { font-weight: 700; color: var(--muted); font-size: 15px; white-space: nowrap; }
+    .tierrow .tierprice { margin-inline-start: auto; display: inline-flex; align-items: center; gap: 4px; font-weight: 800; }
+    .tierrow .tierin { width: 64px; height: 38px; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; text-align: center; font-size: 16px; font-weight: 700; padding: 0 4px; }
     .attmenu { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 10px; width: min(330px, calc(100vw - 16px)); box-sizing: border-box; }
     .attmenu .stc { display: inline-flex; align-items: center; height: 30px; border-radius: 999px; padding: 0 12px; font-size: 15px; font-weight: 700; border: 2px solid transparent; background: #fff; color: var(--ink); }
     .attmenu .stc[aria-pressed="true"] { border-color: var(--ink); background: var(--cream); }
@@ -499,6 +503,7 @@
     .row .ptag[data-qs] { cursor: pointer; }
     .row .sidewrap { grid-column: 5; grid-row: 1; display: inline-flex; align-items: center; gap: 6px; justify-content: flex-end; }
     .row .payic { display: inline-grid; place-items: center; flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%; font-size: 14px; font-weight: 800; color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--line); opacity: .75; }
+    .row .payic.part { background: #FBEBC8; color: #8A5A00; box-shadow: none; opacity: 1; }
     .row .payic.ok { background: var(--green-bg); color: var(--green); box-shadow: none; opacity: 1; }
     .row .ptag.cnt { background: var(--cream); color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--line); }
     .row .ptag.cnt.g { background: var(--green-bg); color: var(--green); box-shadow: none; }
@@ -917,6 +922,8 @@
           <label class="field payfield"><span>דרך העברה</span><select name="pay_depm"><option value="paybox">פייבוקס</option><option value="bit">ביט</option><option value="cash">מזומן</option><option value="bank">בנק</option><option value="other">אחר</option></select></label>
         </div>
         <div class="pquick" id="depQuick"></div>
+        <label class="field"><span>חבילת מפגשים (לא חובה)</span><input name="pay_pkg" type="number" inputmode="numeric" min="2" max="50" placeholder="כמה מפגשים נקנו מראש" autocomplete="off" /></label>
+        <div class="payhint" id="depPkgHint"></div>
         <label class="field" id="depOtherField" hidden><span>פירוט קצר</span><input name="pay_depn" maxlength="60" autocomplete="off" placeholder="למשל: פייפאל, צ׳ק" /></label>
         <div class="payact"><button class="btn" id="depSave" type="button">שמירה</button></div>
       </div>
@@ -1019,16 +1026,23 @@
         <div class="setgrp">
           <div class="settitle">מפגשים</div>
           <button type="button" class="setrow setlink" id="setAttBtn" aria-haspopup="menu"><div class="setl"><b>מתי נפתח סימון ההגעה</b><small id="setAttHint"></small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M6 9l6 6 6-6"/></svg></button>
-          <button type="button" class="setrow setlink" id="setStBtn"><div class="setl"><b>סטטוסים ותגיות</b><small>שם, צבע וסדר לכל סטטוס ותגית</small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
+          <button type="button" class="setrow setlink" id="setPayBtn"><div class="setl"><b>תשלומים</b><small id="setPayHint"></small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
+          <button type="button" class="setrow setlink" id="setStBtn"><div class="setl"><b>סטטוסים על מפגשים</b><small>שם, צבע וסדר לכל סטטוס</small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
+          <button type="button" class="setrow setlink" id="setTagBtn"><div class="setl"><b>תוויות על משתתפים</b><small>שם, צבע וסדר לכל תווית</small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
         </div>
         <button type="button" class="btn ghost" id="setOut" style="color:var(--red)">יציאה מהחשבון</button>
+      </div>
+      <div id="setPay" hidden>
+        <p class="sthint" style="margin:0 2px 12px">מחיר המפגש לפי כמה ימים נשארו עד המפגש. אפשר להוסיף כמה מדרגות שרוצים</p>
+        <div id="tierList"></div>
+        <button type="button" class="btn ghost" id="tierAdd">+ מדרגה חדשה</button>
+        <p class="sthint" id="tierPrev" style="margin:10px 2px 0"></p>
       </div>
       <div id="setDel" hidden>
         <p id="setDelText" style="margin:2px 0 14px;line-height:1.55"></p>
         <div class="sopts" id="setDelOpts"></div>
       </div>
       <div id="setSt" hidden>
-        <div class="stseg" role="tablist"><button type="button" role="tab" data-sc="meeting" aria-selected="true">סטטוס מפגש</button><button type="button" role="tab" data-sc="participant" aria-selected="false">תגיות</button></div>
         <p class="sthint" id="stHint" style="margin:0 2px 12px"></p>
         <div id="stList"></div>
         <label class="setfield" id="setIntroBox" style="flex:1 1 100%;padding:2px 4px 6px;margin:0"><div class="sethead"><span id="setIntroLbl">הודעת וואטסאפ</span></div><textarea class="setinp" id="setIntro" rows="2" maxlength="300" aria-label="נוסח הודעת ההצגה" style="height:auto;padding:10px 14px;line-height:1.5;font-size:16px;font-weight:600"></textarea><small class="sthint" style="margin:0">{שם} מוחלף בשם הפרטי של המשתתף, {שולח} בשם השולח</small><button type="button" class="qeditlink" id="setIntroReset" style="margin:2px 0 0;align-self:flex-start">שחזור נוסח ברירת מחדל</button></label>
@@ -1094,7 +1108,7 @@
     url: 'https://ezakarwqstnldqixgreb.supabase.co',
     key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6YWthcndxc3RubGRxaXhncmViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTA3MzIsImV4cCI6MjEwNjc4NjczMn0.Bg0eFBC4zKjyJc5kBw3wLgSP-PkxLFVv3o7-4YUdq4c',
   };
-  const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance', n: 'harpatka_notes', pr: 'harpatka_promoters', pp: 'harpatka_promoter_payments', pay: 'harpatka_payments', st: 'harpatka_statuses', pf: 'harpatka_admin_prefs' };
+  const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance', n: 'harpatka_notes', pr: 'harpatka_promoters', pp: 'harpatka_promoter_payments', pay: 'harpatka_payments', st: 'harpatka_statuses', pf: 'harpatka_admin_prefs', tr: 'harpatka_price_tiers' };
 
   const state = { prefs: {}, statuses: [], pstatuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, here: null, paidF: null, gender: null, sort: 'new' };
   /* קישור עמוק מהמייל: ?m=<מפגש>&p=<משתתף>; נשמר בזמן הכניסה עם גוגל (שמחזירה בלי הפרמטרים) */
@@ -1323,8 +1337,15 @@
   /* המפגש שעליו מסמנים הגעה ברשימה הראשית: המפגש שנבחר בכותרת, אחרת הקרוב ביותר (או של היום) */
   const attTarget = () => state.filter ? state.meetings.find((m) => m.id === state.filter) : state.meetings.filter((m) => !isPast(m)).sort((a, b) => (a.meeting_date + a.meeting_time).localeCompare(b.meeting_date + b.meeting_time))[0];
   /* מחיר ברירת מחדל לפי מועד התשלום: 80 ₪ עד יומיים לפני ההתייקרות, ומשלושה ימים לפני המפגש 100 ₪ */
-  const PRICE_EARLY = 80, PRICE_LATE = 100;
-  const defaultPrice = (m, iso) => { const d = new Date(m.meeting_date + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() - 3); return (iso || todayISO()) < d.toISOString().slice(0, 10) ? PRICE_EARLY : PRICE_LATE; };
+  /* מדרגות מחיר לפי ימים שנותרו עד המפגש (ניתנות לעריכה בהגדרות ← תשלומים): מחיר המדרגה הגבוהה ביותר ש-days שלה קטן או שווה לימים שנותרו; המדרגה האחרונה (days=0) היא "עד המפגש" */
+  state.tiers = [{ id: null, days: 4, price: 80 }, { id: null, days: 0, price: 100 }];
+  let PRICE_EARLY = 80, PRICE_LATE = 100;
+  const quickPrices = () => [...new Set(sortedTiers().map((x) => x.price))];
+  const sortedTiers = () => state.tiers.slice().sort((a, b) => b.days - a.days);
+  const syncPriceVars = () => { const s = sortedTiers(); if (s.length) { PRICE_EARLY = s[0].price; PRICE_LATE = s[s.length - 1].price; } };
+  const priceForDays = (left) => { const s = sortedTiers(); const hit = s.find((x) => left >= x.days); return (hit || s[s.length - 1] || { price: 100 }).price; };
+  const daysTo = (m, iso) => { const a = m.meeting_date.split('-').map(Number), b = (iso || todayISO()).split('-').map(Number); return Math.round((Date.UTC(a[0], a[1] - 1, a[2]) - Date.UTC(b[0], b[1] - 1, b[2])) / 864e5); };
+  const defaultPrice = (m, iso) => priceForDays(daysTo(m, iso));
   /* קרדיט משתתף: סכומים שנשארו אצלנו בביטול בלי החזר כסף, פחות מה ששימש לתשלום חדש */
   const creditOf = (pid) => state.payments.filter((x) => x.participant_id === pid).reduce((s, x) => s + ((x.kind === 'credit' || x.kind === 'deposit') ? Number(x.amount) : ((x.kind === 'payment' || x.kind === 'refund') && x.from_credit ? -Number(x.amount) : 0)), 0);
   const promoterOf = (id) => state.promoters.find((x) => x.id === id);
@@ -1441,7 +1462,7 @@
   async function load(silent) {
     if (!silent) $('#status').innerHTML = '<div class="empty">טוען…</div>';
     try {
-      const [p, m, a, nn, prs, pps, pays, sts, pfs] = await Promise.all([
+      const [p, m, a, nn, prs, pps, pays, sts, pfs, trs] = await Promise.all([
         api(T.p + '?select=*'),
         api(T.m + '?select=*'),
         api(T.a + '?select=participant_id,meeting_id,paid,pay_requested_at,status_key,created_at,exempt,attended,paid_amount,promoter_id,commission,paid_at,details_sent_at,will_pay,maybe'),
@@ -1451,7 +1472,9 @@
         api(T.pay + '?select=*&order=created_at.desc'),
         api(T.st + '?select=*').catch(() => null),
         api(T.pf + '?select=*').catch(() => null),
+        api(T.tr + '?select=*').catch(() => null),
       ]);
+      if (trs && trs.length) { state.tiers = trs.map((x) => ({ id: x.id, days: x.days, price: x.price })); syncPriceVars(); }
       if (pfs) state.prefs = Object.fromEntries(pfs.map((x) => [String(x.email).toLowerCase(), x]));
       if (sts && sts.length) { const ps = sts.filter((x) => x.scope === 'participant'); state.pstatuses = ps.map((x) => Object.assign({}, x)).sort((a, b) => a.sort - b.sort); }
       if (sts && sts.length) { const extra = sts.filter((x) => x.scope !== 'participant' && !BUILTIN.includes(x.key)).map((x) => Object.assign({}, x)); state.statuses = DEFAULT_STATUSES.filter((d) => d.key === SYSTEM_STATUS || sts.some((x) => x.key === d.key && x.scope !== 'participant')).map((d) => Object.assign({}, d, sts.find((x) => x.key === d.key && x.scope !== 'participant') || {}, d.key === SYSTEM_STATUS ? { sort: d.sort } : {})).concat(extra); applyStatuses(); }
@@ -1712,7 +1735,8 @@
         else { const st = linkStatus(l); side = '<span class="ptag ' + st + '" data-qs="' + p.id + '" role="button" tabindex="0" title="סטטוס במפגש (לחיצה לשינוי)">' + STATUS_LABEL[st] + '</span>'; }   // תצוגה בלבד: לחיצה על הכרטיס פותחת את פרטי המשתתף, ושם משנים סטטוס
       }
       let tags = '', payIc = '';
-      if (state.filter && linkOf(p.id, state.filter)) { const al = allocatedOf(p.id, state.filter); payIc = al > 0 ? '<span class="payic ok" title="שולם ₪' + nfm(al) + '">₪</span>' : '<span class="payic" title="לא שולם">₪</span>'; }   // סמל תשלום (לפי רשומות התשלום, לא לפי סטטוס) מימין לסטטוס
+      if (state.filter && linkOf(p.id, state.filter)) { const al = allocatedOf(p.id, state.filter), mt = state.meetings.find((x) => x.id === state.filter), lk = linkOf(p.id, state.filter), need = mt ? (pkgNetFor(p.id, state.filter) > 0 ? al : expectedPrice(p.id, mt, ilDay(lk.created_at || new Date().toISOString()))) : 0;
+        payIc = al <= 0 ? '<span class="payic" title="לא שולם">₪</span>' : al >= need ? '<span class="payic ok" title="שולם ₪' + nfm(al) + '">₪</span>' : '<span class="payic part" title="שולם חלקית ₪' + nfm(al) + ' מתוך ₪' + nfm(need) + '">₪</span>'; }   // סמל תשלום (לפי רשומות התשלום, לא לפי סטטוס) מימין לסטטוס
       if (!state.filter) {
         const pr = persist(p), rate = pr.total ? pr.came / pr.total : 0, score = pr.total ? (pr.came + K * pAvg) / (pr.total + K) : 0, cls = !pr.total ? 'n' : score > pAvg + BAND ? 'g' : score < pAvg - BAND ? 'r' : 'y';
         tags = '<span class="ptag cnt ' + cls + '" title="התמדה: הגיע ל-' + pr.came + ' מתוך ' + pr.total + ' מפגשים מאז המפגש הראשון שלו (' + Math.round(rate * 100) + '%). ממוצע: ' + Math.round(pAvg * 100) + '%">הגיע <bdi dir="ltr">' + pr.came + '/' + pr.total + '</bdi></span>';
@@ -1743,7 +1767,7 @@
   const P = (a, b) => b ? Math.round(a / b * 100) : null;
   const Ps = (a, b) => b ? Math.round(a / b * 100) + '%' : '—';
   const nfm = (n) => Math.round(n).toLocaleString('he-IL');
-  const priceAtReg = (m, created) => (dnum(m.meeting_date) - (created ? dnum(ilDay(created)) : dnum(todayISO()))) <= 3 ? 100 : 80;
+  const priceAtReg = (m, created) => priceForDays(daysTo(m, created ? ilDay(created) : todayISO()));
 
   function computeStats() {
     const asc = state.meetings.slice().sort((a, b) => (a.meeting_date + a.meeting_time).localeCompare(b.meeting_date + b.meeting_time));
@@ -1884,12 +1908,27 @@
   /* שיוך למפגש לפי סטטוס: אין סטטוס = לא משויך; בחירת סטטוס יוצרת את השיוך עם הסטטוס הזה */
   const statusBody = (st) => Object.assign({ paid: false, exempt: false, will_pay: false, maybe: false, pay_requested_at: null, status_key: BUILTIN.includes(st) ? null : st },
     st === 'paid' ? { paid: true } : st === 'requested' ? { pay_requested_at: new Date().toISOString() } : st === 'willpay' ? { will_pay: true } : st === 'maybe' ? { maybe: true } : st === 'exempt' ? { exempt: true } : {});
+  /* שיוך למפגש לוקח אוטומטית מהארנק כשהיתרה מכסה את המחיר (מחיר חבילה אם נשארו מפגשים בחבילה) */
+  async function autoAllocate(pid, mid) {
+    const l = linkOf(pid, mid), m = state.meetings.find((x) => x.id === mid); if (!l || !m || l.exempt) return;
+    if (allocatedOf(pid, mid) > 0) return;
+    const usePkg = pkgLeft(pid) > 0 && pkgUnit(pid) > 0, price = usePkg ? pkgUnit(pid) : defaultPrice(m);
+    if (!(price > 0) || creditOf(pid) < price) return;
+    try {
+      await addPayRecord(pid, mid, 'payment', price, null, null, true, null, null, usePkg ? { pkg: true } : null);
+      const body = { paid_amount: price, paid_at: new Date().toISOString() }; Object.assign(l, body);
+      await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body });
+      render(); if (sheet && sheet.id) { refreshSheetMeetings(); renderContact(); }
+      toast('שולם מהיתרה ₪' + nfm(price) + (usePkg ? ' (חבילה)' : ''));
+    } catch (err) { fail(err); }
+  }
   async function setLinkedWithStatus(pid, mid, st) {
     if (linkOf(pid, mid)) { setPayStatus(pid, mid, st); return; }
     const row = Object.assign({ participant_id: pid, meeting_id: mid }, statusBody(st));
     state.att.push(row); render(); refreshSheetMeetings();
     try { await api(T.a, { method: 'POST', body: row, prefer: 'resolution=ignore-duplicates' }); }
-    catch (err) { state.att = state.att.filter((a) => a !== row); render(); refreshSheetMeetings(); fail(err); }
+    catch (err) { state.att = state.att.filter((a) => a !== row); render(); refreshSheetMeetings(); fail(err); return; }
+    autoAllocate(pid, mid);
   }
   function openRefundView(pid, mid, st) {
     $('#refundText').innerHTML = refundNote(pid, mid) + '<br><br>או: <b>לא להחזיר כסף</b>, והסכום יישאר כקרדיט למשתתף לתשלום על מפגש אחר.';
@@ -2030,12 +2069,12 @@
   function openPayView(pid, mid, opts) {
     const l = linkOf(pid, mid); if (!l) return;
     const p = state.participants.find((x) => x.id === pid), m = state.meetings.find((x) => x.id === mid);
-    const f = pForm, alloc = Math.max(0, allocatedOf(pid, mid)), price = m ? defaultPrice(m) : PRICE_EARLY;
+    const f = pForm, alloc = Math.max(0, allocatedOf(pid, mid)), price = m ? expectedPrice(pid, m) : PRICE_EARLY;
     f.pay_amount.value = opts && opts.amount != null ? opts.amount : (alloc > 0 ? alloc : price);
     /* היחצן שייך למשתתף: העמלה מחושבת על התשלום הראשון שמתקבל (הפקדה או תשלום ישיר), לפי התעריף */
     const prId = (p && p.promoter_id) || l.promoter_id || '', pr = promoterOf(prId);
     const isFirst = !state.payments.some((x) => x.participant_id === pid && (x.kind === 'deposit' || (x.kind === 'payment' && !x.from_credit && x.meeting_id && x.meeting_id !== mid))), commPr = isFirst ? pr : null;
-    $('#payQuick').innerHTML = [PRICE_EARLY, PRICE_LATE].map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
+    $('#payQuick').innerHTML = quickPrices().map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
     f.pay_method.value = l.pay_method || 'paybox'; f.pay_method_note.value = l.pay_method_note || '';
     const paintOther = () => { $('#payOtherField').hidden = f.pay_method.value !== 'other'; };
     f.pay_method.onchange = () => { paintOther(); if (f.pay_method.value === 'other') f.pay_method_note.focus(); }; paintOther();
@@ -2164,8 +2203,14 @@
     catch (err) { Object.assign(l, prev); render(); refreshSheetMeetings(); fail(err); }
   }
   /* יומן תשלומים: כל סימון תשלום או החזר יוצר רשומה חדשה (תיקון תשלום = החזר של הישן + תשלום חדש) */
-  async function addPayRecord(pid, mid, kind, amount, promoterId, commission, fromCredit, method, methodNote) {
+  /* חבילות: הפקדה עם pkg_n מפגשים (מחיר למפגש = סכום / pkg_n); כל הקצאה מחבילה (pkg) לוקחת מחיר חבילה ומורידה מפגש; זיכוי של הקצאה כזו מחזיר מפגש */
+  const pkgLeft = (pid) => state.payments.filter((x) => x.participant_id === pid).reduce((s, x) => s + (x.kind === 'deposit' && x.pkg_n > 0 ? Number(x.pkg_n) : x.pkg && x.kind === 'payment' ? -1 : x.pkg && x.kind === 'credit' ? 1 : 0), 0);
+  const pkgUnit = (pid) => { const d = state.payments.filter((x) => x.participant_id === pid && x.kind === 'deposit' && x.pkg_n > 0).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))[0]; return d ? Math.round(Number(d.amount) / Number(d.pkg_n)) : 0; };
+  const pkgNetFor = (pid, mid) => state.payments.filter((x) => x.participant_id === pid && x.meeting_id === mid && x.pkg).reduce((s, x) => s + (x.kind === 'payment' ? 1 : x.kind === 'credit' ? -1 : 0), 0);
+  const expectedPrice = (pid, m, iso) => (pkgLeft(pid) > 0 && pkgUnit(pid) ? pkgUnit(pid) : defaultPrice(m, iso));
+  async function addPayRecord(pid, mid, kind, amount, promoterId, commission, fromCredit, method, methodNote, pkgMeta) {
     const body = { participant_id: pid, meeting_id: mid || null, kind, from_credit: !!fromCredit, amount: Number(amount) || 0, promoter_id: promoterId || null, commission: commission != null && commission !== '' ? Number(commission) : null, author_name: authorName(), method: (kind === 'payment' || kind === 'deposit') ? (method || null) : null, method_note: (kind === 'payment' || kind === 'deposit') ? (methodNote || null) : null };
+    if (pkgMeta) Object.assign(body, pkgMeta); else if (kind === 'credit' && mid && pkgNetFor(pid, mid) > 0) body.pkg = true;   // זיכוי של הקצאה מחבילה מחזיר מפגש לחבילה
     const [row] = await api(T.pay, { method: 'POST', body, prefer: 'return=representation' });
     if (row && !state.payments.some((x) => x.id === row.id)) state.payments.push(row);
     if (sheet && sheet.id) refreshSheetMeetings();
@@ -2187,7 +2232,8 @@
       const row = { participant_id: pid, meeting_id: mid, paid: false };
       state.att.push(row); render(); refreshSheetMeetings();
       try { await api(T.a, { method: 'POST', body: row, prefer: 'resolution=ignore-duplicates' }); }
-      catch (err) { state.att = state.att.filter((a) => a !== row); render(); refreshSheetMeetings(); fail(err); }
+      catch (err) { state.att = state.att.filter((a) => a !== row); render(); refreshSheetMeetings(); fail(err); return; }
+      autoAllocate(pid, mid);
     } else {
       const prev = state.att, oldL = linkOf(pid, mid) ? Object.assign({}, linkOf(pid, mid)) : null, oldAlloc = Math.max(0, allocatedOf(pid, mid));
       state.att = state.att.filter((a) => !(a.participant_id === pid && a.meeting_id === mid));
@@ -2478,6 +2524,7 @@
     const bal = creditOf(pid), owed = owedOf(pid);
     $('#walSum').innerHTML = '<div class="big ' + (bal > 0 ? 'pos' : 'zero') + '"><bdi dir="ltr">₪' + nfm(bal) + '</bdi></div><div class="sub">יתרה זמינה' + '' + '</div>';
     $('#walRefund').hidden = !(bal > 0);
+    { const pl = pkgLeft(pid); if (pl > 0) $('#walSum').insertAdjacentHTML('beforeend', '<div class="sub">בחבילה נשארו <b>' + pl + '</b> מפגשים · ₪' + nfm(pkgUnit(pid)) + ' למפגש</div>'); }
     $('#walZikuy').hidden = !state.meetings.some((m) => allocatedOf(pid, m.id) > 0);
     const mlabel = (x) => { const m = state.meetings.find((q) => q.id === x.meeting_id); return m ? ' ' + dmShort(m) : ''; };
     const rows = state.payments.filter((x) => x.participant_id === pid).slice().sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).map((x) => {
@@ -2495,10 +2542,12 @@
   const dmShort = (m) => { const [, mo, d] = m.meeting_date.split('-').map(Number); return d + '.' + mo; };
   $('#pPayChip').addEventListener('click', () => { if (!sheet || !sheet.id) return; viewStack = []; goView('wallet'); });
   $('#walAdd').addEventListener('click', () => {
-    const f = pForm; f.pay_dep.value = ''; f.pay_depm.value = 'paybox'; f.pay_depn.value = ''; $('#depOtherField').hidden = true;
-    $('#depQuick').innerHTML = [PRICE_EARLY, PRICE_LATE].map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
+    const f = pForm; f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; f.pay_dep.value = ''; f.pay_depm.value = 'paybox'; f.pay_depn.value = ''; $('#depOtherField').hidden = true;
+    $('#depQuick').innerHTML = quickPrices().map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
     $('#depQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) f.pay_dep.value = b.dataset.q; };
     f.pay_depm.onchange = () => { $('#depOtherField').hidden = f.pay_depm.value !== 'other'; if (f.pay_depm.value === 'other') f.pay_depn.focus(); };
+    const paintPkg = () => { const n = parseInt(f.pay_pkg.value, 10), a = parseFloat(f.pay_dep.value); $('#depPkgHint').innerHTML = n >= 2 && a > 0 ? 'מחיר למפגש בחבילה: <b>₪' + nfm(Math.round(a / n)) + '</b>. כל שיוך למפגש ייקח את הסכום הזה מהיתרה, עד ' + n + ' מפגשים' : ''; };
+    f.pay_pkg.oninput = paintPkg; f.pay_dep.oninput = paintPkg;
     goView('deposit'); f.pay_dep.focus();
   });
   $('#depSave').addEventListener('click', async () => {
@@ -2508,7 +2557,8 @@
     /* עמלה ליחצן: על התשלום הראשון של המשתתף (הפקדה או תשלום ישיר) */
     const isFirst = !state.payments.some((x) => x.participant_id === pid && (x.kind === 'deposit' || (x.kind === 'payment' && !x.from_credit && x.meeting_id)));
     const cm = pr && isFirst ? calcCommission(pr, amt) : null, method = f.pay_depm.value, mnote = method === 'other' ? f.pay_depn.value.trim().slice(0, 60) : '';
-    try { await addPayRecord(pid, null, 'deposit', amt, pr && isFirst ? pr.id : null, Number.isFinite(cm) ? cm : null, false, method, mnote || null); toast('התקבל תשלום ₪' + nfm(amt)); setPTab(viewStack.pop() || 'wallet'); renderContact(); }
+    const pk = parseInt(f.pay_pkg.value, 10), pkgMeta = pk >= 2 ? { pkg_n: pk } : null;
+    try { await addPayRecord(pid, null, 'deposit', amt, pr && isFirst ? pr.id : null, Number.isFinite(cm) ? cm : null, false, method, mnote || null, pkgMeta); toast('התקבל תשלום ₪' + nfm(amt)); setPTab(viewStack.pop() || 'wallet'); renderContact(); }
     catch (err) { fail(err); }
   });
   /* זיכוי: מחזיר חלק מתשלום שהוקצה למפגש. ליתרה (kind credit) או כסף למשתתף (kind refund) */
@@ -3006,7 +3056,7 @@
     const em = emailOf();
     $('#setMail').textContent = em;
     { const si = $('#setSender'); if (document.activeElement !== si) si.value = senderName(); const ii = $('#setIntro'); if (document.activeElement !== ii) ii.value = introTemplate(); }
-    renderAttOpts();
+    renderAttOpts(); $('#setPayHint').textContent = tierSummary();
   }
   async function saveIntro(v) {
     const em = emailOf(), prev = state.prefs[em], val = v.trim().slice(0, 300) || null;
@@ -3034,7 +3084,7 @@
       const d = new Date(cur === 'day' ? Date.UTC(y, mo - 1, da, 0, 0) : Date.UTC(y, mo - 1, da, h, mi) - Number(cur) * 60000);
       when = ' · נפתח ב-' + String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0');
     }
-    $('#setAttHint').textContent = lab + when;
+    $('#setAttHint').textContent = lab + (cur === 'always' || cur === 'day' ? '' : ' (לפי שעת כל מפגש)');   // בלי שעה קבועה: לכל מפגש שעה משלו
   }
   /* בחירה: תפריט קטן צף מתחת לשורה (נסגר בבחירה או בלחיצה בחוץ) */
   function openAttMenu() {
@@ -3065,9 +3115,10 @@
   const allSt = () => state.statuses.concat(state.pstatuses);
   function showSetView(v) {
     setView = v;
-    $('#setMain').hidden = v !== 'main'; $('#setSt').hidden = v !== 'st'; $('#setDel').hidden = v !== 'del'; $('#setBack').hidden = v === 'main';
-    $('#setTitle').textContent = v === 'st' ? 'סטטוסים ותגיות' : v === 'del' ? 'מחיקת סטטוס' : 'הגדרות';
+    $('#setMain').hidden = v !== 'main'; $('#setSt').hidden = v !== 'st'; $('#setDel').hidden = v !== 'del'; $('#setPay').hidden = v !== 'pay'; $('#setBack').hidden = v === 'main';
+    $('#setTitle').textContent = v === 'st' ? (stScope === 'meeting' ? 'סטטוסים על מפגשים' : 'תוויות על משתתפים') : v === 'del' ? 'מחיקת סטטוס' : v === 'pay' ? 'תשלומים' : 'הגדרות';
     if (v === 'st') renderStSettings();
+    if (v === 'pay') renderTiers();
   }
   $('#setSt').addEventListener('click', (e) => { const b = e.target.closest('[data-sc]'); if (!b) return; stScope = b.dataset.sc; renderStSettings(); });
   function renderStSettings() {
@@ -3097,8 +3148,47 @@
     try { await api(T.st + '?key=eq.' + key, { method: 'PATCH', body: patch }); }
     catch (err) { Object.assign(s, prev); applyStatuses(); renderStSettings(); render(); fail(err); }
   }
-  $('#setStBtn').addEventListener('click', () => showSetView('st'));
+  $('#setStBtn').addEventListener('click', () => { stScope = 'meeting'; showSetView('st'); });
+  $('#setTagBtn').addEventListener('click', () => { stScope = 'participant'; showSetView('st'); });
   $('#setBack').addEventListener('click', () => showSetView(setView === 'del' ? 'st' : 'main'));
+  /* הגדרות תשלומים: מדרגות מחיר לפי ימים שנותרו עד המפגש */
+  $('#setPayBtn').addEventListener('click', () => showSetView('pay'));
+  function tierSummary() { const s = sortedTiers(); return s.map((x) => '₪' + x.price).join(' · '); }
+  function renderTiers() {
+    const s = sortedTiers();
+    $('#tierList').innerHTML = s.map((x, i) => {
+      const last = i === s.length - 1;
+      return '<div class="tierrow" data-i="' + (x.id || ('n' + i)) + '">' +
+        (last ? '<span class="tierlbl">פחות מזה, עד המפגש</span>'
+          : '<span class="tierlbl">מ-</span><input class="tierin" data-f="days" type="number" inputmode="numeric" min="1" max="365" value="' + x.days + '" aria-label="ימים לפני המפגש" /><span class="tierlbl">ימים לפני המפגש</span>') +
+        '<span class="tierprice"><input class="tierin" data-f="price" type="number" inputmode="numeric" min="0" max="9999" value="' + x.price + '" aria-label="מחיר" /><b>₪</b></span>' +
+        (!last ? '<button type="button" class="stdel" data-tdel="' + x.id + '" aria-label="מחיקת מדרגה" title="מחיקת מדרגה">×</button>' : '<span class="stspacer" style="flex:0 0 30px"></span>') + '</div>';
+    }).join('');
+    const nx = state.meetings.filter((m) => !isPast(m)).sort((a, b) => (a.meeting_date + a.meeting_time).localeCompare(b.meeting_date + b.meeting_time))[0];
+    $('#tierPrev').textContent = nx ? 'למפגש הקרוב (' + dmShort(nx) + '): היום ₪' + defaultPrice(nx) + (daysTo(nx) > 0 ? ' (נשארו ' + daysTo(nx) + ' ימים)' : '') : '';
+    $('#setPayHint').textContent = tierSummary();
+  }
+  $('#tierList').addEventListener('change', async (e) => {
+    const inp = e.target.closest('.tierin'); if (!inp) return;
+    const row = inp.closest('.tierrow'), id = row.dataset.i, tier = state.tiers.find((x) => x.id === id); if (!tier) return;
+    const f = inp.dataset.f, v = Math.max(0, Math.round(Number(inp.value)));
+    if (f === 'days' && (!(v >= 1) || state.tiers.some((x) => x !== tier && x.days === v))) { toast('מספר הימים כבר קיים במדרגה אחרת'); renderTiers(); return; }
+    const prev = tier[f]; tier[f] = v; syncPriceVars(); renderTiers(); render();
+    try { await api(T.tr + '?id=eq.' + id, { method: 'PATCH', body: { [f]: v } }); }
+    catch (err) { tier[f] = prev; syncPriceVars(); renderTiers(); render(); fail(err); }
+  });
+  $('#tierList').addEventListener('click', async (e) => {
+    const d = e.target.closest('[data-tdel]'); if (!d) return;
+    const id = d.dataset.tdel, prev = state.tiers.slice();
+    state.tiers = state.tiers.filter((x) => x.id !== id); syncPriceVars(); renderTiers(); render();
+    try { await api(T.tr + '?id=eq.' + id, { method: 'DELETE' }); }
+    catch (err) { state.tiers = prev; syncPriceVars(); renderTiers(); render(); fail(err); }
+  });
+  $('#tierAdd').addEventListener('click', async () => {
+    const s = sortedTiers(), days = (s[0] ? s[0].days : 0) + 7, price = Math.max(0, (s[0] ? s[0].price : 100) - 10);
+    try { const [row] = await api(T.tr, { method: 'POST', body: { days, price }, prefer: 'return=representation' }); state.tiers.push({ id: row.id, days: row.days, price: row.price }); syncPriceVars(); renderTiers(); render(); }
+    catch (err) { fail(err); }
+  });
   $('#setDlg').addEventListener('close', () => showSetView('main'));
   $('#stList').addEventListener('change', (e) => {
     const inp = e.target.closest('.stname'); if (!inp) return;
