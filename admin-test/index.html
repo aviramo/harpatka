@@ -456,7 +456,8 @@
     .pstchips .sopt.psnone { background: var(--cream); color: var(--muted); }
     .strow .stdel { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%; color: var(--muted); font-size: 20px; line-height: 1; background: transparent; }
     .strow.locked { flex-wrap: wrap; }
-    .strow .stlockic { flex: 0 0 auto; width: 34px; height: 34px; display: grid; place-items: center; color: var(--muted); }
+    .strow .stspacer { flex: 0 0 34px; }
+    .strow .stlockic { flex: 0 0 auto; width: 30px; height: 30px; display: grid; place-items: center; color: var(--muted); }
     .strow .stcap { flex: 1 1 100%; font-size: 12.5px; font-weight: 700; color: #6B6055; padding: 0 6px 1px; }
     .strow .stlock { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; font-weight: 700; padding-inline: 4px; }
     .strow .stname:focus { outline: 2px solid var(--ink); outline-offset: 1px; }
@@ -1013,7 +1014,7 @@
         <div class="stseg" role="tablist"><button type="button" role="tab" data-sc="meeting" aria-selected="true">סטטוס מפגש</button><button type="button" role="tab" data-sc="participant" aria-selected="false">תגיות</button></div>
         <p class="sthint" id="stHint" style="margin:0 2px 12px"></p>
         <div id="stList"></div>
-        <label class="setfield" id="setIntroBox" style="background:var(--cream);border-radius:16px;padding:12px 14px;margin-top:12px"><div class="sethead"><span id="setIntroLbl">הודעת וואטסאפ</span></div><textarea class="setinp" id="setIntro" rows="2" maxlength="300" aria-label="נוסח הודעת ההצגה" style="height:auto;padding:10px 14px;line-height:1.5;font-size:16px;font-weight:600"></textarea><small class="sthint" style="margin:0">{שם} מוחלף בשם הפרטי של המשתתף, {שולח} בשם השולח</small><button type="button" class="qeditlink" id="setIntroReset" style="margin:2px 0 0;align-self:flex-start">שחזור נוסח ברירת מחדל</button></label>
+        <label class="setfield" id="setIntroBox" style="flex:1 1 100%;padding:2px 4px 6px;margin:0"><div class="sethead"><span id="setIntroLbl">הודעת וואטסאפ</span></div><textarea class="setinp" id="setIntro" rows="2" maxlength="300" aria-label="נוסח הודעת ההצגה" style="height:auto;padding:10px 14px;line-height:1.5;font-size:16px;font-weight:600"></textarea><small class="sthint" style="margin:0">{שם} מוחלף בשם הפרטי של המשתתף, {שולח} בשם השולח</small><button type="button" class="qeditlink" id="setIntroReset" style="margin:2px 0 0;align-self:flex-start">שחזור נוסח ברירת מחדל</button></label>
         <button type="button" class="btn ghost" id="stAdd" hidden>+ תגית חדשה</button>
       </div>
     </div>
@@ -1492,7 +1493,7 @@
   const linkStatus = (l) => (l.status_key && state.statuses.some((s) => s.key === l.status_key)) ? l.status_key : l.exempt ? 'exempt' : l.paid ? 'paid' : l.will_pay ? 'willpay' : l.maybe ? 'maybe' : (l.pay_requested_at ? 'requested' : 'unpaid');   // לא משלם (בחינם ביודעין) / שילם / נשלחה בקשת תשלום / טרם שילם
   const STATUS_LABEL = { paid: 'שילם', willpay: 'ישלם', maybe: 'ספונטני', requested: 'בטיפול', unpaid: 'משויך', exempt: 'חינם' };
   /* ניהול סטטוסים (סביבת בדיקות): שם, צבע (מפתח בפלטה) וסדר לכל סטטוס; ההתנהגות בסינון ובסטטיסטיקות קבועה לפי המפתח */
-  const PALETTE = { green: ['var(--green-bg)', 'var(--green)', 'ירוק'], red: ['var(--red-bg)', 'var(--red)', 'אדום'], amber: ['#FBEBC8', '#8A5A00', 'צהוב'], sky: ['var(--sky-bg)', 'var(--sky)', 'כחול'], orange: ['#F8E4DA', '#B8553A', 'כתום'], neutral: ['#EFE4D3', '#6B6055', 'ניטרלי'] };
+  const PALETTE = { green: ['var(--green-bg)', 'var(--green)', 'ירוק'], red: ['var(--red-bg)', 'var(--red)', 'אדום'], amber: ['#FBEBC8', '#8A5A00', 'צהוב'], sky: ['var(--sky-bg)', 'var(--sky)', 'כחול'], neutral: ['#EFE4D3', '#6B6055', 'ניטרלי'] };
   const DEFAULT_STATUSES = [['paid', 'שילם', 'green'], ['willpay', 'ישלם', 'neutral'], ['exempt', 'חינם', 'sky'], ['maybe', 'ספונטני', 'sky'], ['requested', 'בטיפול', 'amber'], ['unpaid', 'משויך', 'red']].map((x, i) => ({ key: x[0], label: x[1], color: x[2], sort: x[0] === 'unpaid' ? 99 : i + 1 }));
   const DEFAULT_PSTATUSES = [['p_active', 'פעיל', 'green', 1], ['p_inactive', 'לא פעיל', 'neutral', 2]].map((x) => ({ key: x[0], label: x[1], color: x[2], sort: x[3], scope: 'participant' }));
   const PSYSTEM = '__none__';   // אין סטטוס מערכת למשתתף; סטטוס משתתף הוא תווית בלבד, בלי לוגיקה, וברירת המחדל ריקה
@@ -1510,6 +1511,7 @@
     let css = '';
     state.statuses.concat(state.pstatuses).forEach((s) => {
       STATUS_LABEL[s.key] = s.label;
+      if (s.color === 'orange') s.color = 'red';   // כתום הוסר מהפלטה (היה כמעט זהה לאדום)
       const c = PALETTE[s.color] || PALETTE.sky;
       css += '.row .ptag.' + s.key + ', .pay.' + s.key + ', .sopt.' + s.key + ', .pst.' + s.key + ', .qmenu .qi.' + s.key + ', .stprev.' + s.key + ', .stpill.' + s.key + ', .stc.' + s.key + ' { background: ' + c[0] + '; color: ' + c[1] + '; }\n';
     });
@@ -2990,6 +2992,7 @@
   }
   $('#setSt').addEventListener('click', (e) => { const b = e.target.closest('[data-sc]'); if (!b) return; stScope = b.dataset.sc; renderStSettings(); });
   function renderStSettings() {
+    { const bx = $('#setIntroBox'); if (bx && bx.parentNode !== $('#setSt')) $('#setSt').insertBefore(bx, $('#stAdd')); }   // מחזירים את תיבת ההודעה למקום החניה לפני בניית הרשימה מחדש
     const list = curSt(), sys = curSys();
     document.querySelectorAll('#setSt [data-sc]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.sc === stScope)));
     $('#stHint').textContent = stScope === 'meeting' ? 'סטטוס של משתתף בתוך מפגש מסוים (כשבוחרים מפגש ברשימה). שם, צבע וסדר, ואפשר ליצור סטטוס חדש' : 'תגיות של המשתתף (ברשימה כשלא בוחרים מפגש). אפשר לסמן כמה תגיות לכל משתתף. תווית בלבד, בלי לוגיקה מאחוריה. שם, צבע וסדר, ואפשר ליצור תגית חדשה';
@@ -3000,12 +3003,13 @@
       ? '<div class="strow locked" data-k="' + s.key + '">' +
       '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם סטטוס המערכת" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1] + '" />' +
       '<button type="button" class="swcur" data-c="' + s.color + '" aria-haspopup="menu" aria-label="צבע: ' + (PALETTE[s.color] || PALETTE.sky)[2] + ' (לחיצה לשינוי)" title="שינוי צבע" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + '"></button>' +
-      '<span class="stlockic" title="המיקום קבוע: תמיד אחרון"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>' +
+      '<span class="stspacer" aria-hidden="true"></span><span class="stlockic" title="המיקום קבוע: תמיד אחרון"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>' +
       '<small class="stcap">' + 'סטטוס מערכת: ברירת המחדל בשיוך משתתף למפגש' + '</small></div>'
       : '<div class="strow" data-k="' + s.key + '">' +
       '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם הסטטוס" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1] + '" />' +
       '<button type="button" class="swcur" data-c="' + s.color + '" aria-haspopup="menu" aria-label="צבע: ' + (PALETTE[s.color] || PALETTE.sky)[2] + ' (לחיצה לשינוי)" title="שינוי צבע" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + '"></button>' +
       '<button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg></button>' + (s.key !== SYSTEM_STATUS ? '<button type="button" class="stdel" data-del="' + s.key + '" aria-label="מחיקת הסטטוס" title="מחיקת הסטטוס">×</button>' : '') + '</div>').join('');
+    { const lr = $('#stList .strow.locked'), bx = $('#setIntroBox'); if (lr && bx && stScope === 'meeting') lr.appendChild(bx); }   // ההודעה בתוך מלבן הסטטוס
   }
   async function saveStatus(key, patch) {
     const s = allSt().find((x) => x.key === key); if (!s) return;
@@ -3077,7 +3081,7 @@
     m.style.top = (r.bottom + 6 + mh > window.innerHeight - 8 ? Math.max(8, r.top - mh - 6) : r.bottom + 6) + 'px';
     m.onclick = (e) => { const sw = e.target.closest('.sw'); if (!sw) return; m.hidden = true; saveStatus(key, { color: sw.dataset.c }); };
   }
-  document.addEventListener('click', (e) => { const m = document.getElementById('colMenu'); if (m && !m.hidden && !e.target.closest('#colMenu, .swcur')) { e.preventDefault(); e.stopPropagation(); m.hidden = true; } }, true);
+  document.addEventListener('click', (e) => { const m = document.getElementById('colMenu'); if (m && !m.hidden && !e.target.closest('#colMenu')) { e.preventDefault(); e.stopPropagation(); m.hidden = true; } }, true);
   /* סדר הסטטוסים: גוררים בידית (עכבר או מגע) ומחליפים מקום; נשמר ברגע הפיסול. במקלדת: חצים על הידית */
   async function commitOrder(keys) {
     const before = allSt().map((s) => ({ key: s.key, sort: s.sort }));
