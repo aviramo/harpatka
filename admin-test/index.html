@@ -823,7 +823,7 @@
     .mrow.on { border-color: var(--line); background: #fff; }   /* כל כרטיסי המפגשים נראים אותו דבר; ההבדל רק בצ'יפ הסטטוס */
     .mtoggle { flex: 1; display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 6px; border: 0; background: transparent; font-weight: 600; text-align: right; border-radius: 12px; }
     /* מפגשי המשתתף: רצועה אופקית, כרטיס לכל מפגש (תאריך ומתחתיו הצ'יפים). החדש ראשון, ומחליקים ימינה למפגשים קודמים */
-    .mlist { display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 2px 2px 8px; margin: 0 -2px 10px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scrollbar-width: none; }
+    .mlist { display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 2px 3px 8px; margin: 0 0 10px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scrollbar-width: none; }
     .mlist::-webkit-scrollbar { display: none; }
     .mlist .mrow { flex: 0 0 auto; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 6px; min-height: 0; padding: 8px; scroll-snap-align: start; }
     .pmeetn { display: inline-block; min-width: 22px; padding: 0 8px; margin-inline-start: 4px; border-radius: 999px; background: var(--cream); color: var(--ink); font-weight: 800; text-align: center; }
@@ -3177,7 +3177,7 @@
   function focusMeetingCard(tries) {
     if (!sheet || !sheet.hl || sheet.hlDone) return; const box = $('#pMeetings'), el = box && box.querySelector('[data-mrow="' + sheet.hl + '"]'); if (!el) return;
     const b = box.getBoundingClientRect(), r = el.getBoundingClientRect();
-    if (b.width > 0) { sheet.hlDone = true; box.scrollBy({ left: r.right - b.right, behavior: 'auto' }); }
+    if (b.width > 0) { sheet.hlDone = true; box.scrollBy({ left: r.right - (b.right - 3), behavior: 'auto' }); }
     else if ((tries || 0) < 10) setTimeout(() => focusMeetingCard((tries || 0) + 1), 60);
   }
   $('#pMeetings').addEventListener('click', (e) => {
