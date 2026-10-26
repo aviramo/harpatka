@@ -187,3 +187,8 @@ insert into test.harpatka_promoters (name, rate_type, rate, color, code, cost_on
   select s.name, 'fixed', 0, s.color, s.code, true from test.harpatka_sources s where not exists (select 1 from test.harpatka_promoters p where p.code = s.code);
 update test.harpatka_participants p set promoter_id = pr.id from test.harpatka_promoters pr where pr.code = p.source_code and p.promoter_id is null;
 notify pgrst, 'reload schema';
+
+-- 20. עלות דרך הגעה: ברירת מחדל עלות לליד (₪ קבוע לכל ליד); תיבת "העלות מהתשלום" (cost_from_payment) = העלות היא סכום התשלום שנכנס, בלי ערכים להגדרה
+alter table test.harpatka_promoters add column if not exists cost_from_payment boolean not null default false;
+update test.harpatka_promoters set cost_on_lead = true, rate_type = 'fixed' where not cost_from_payment;
+notify pgrst, 'reload schema';
