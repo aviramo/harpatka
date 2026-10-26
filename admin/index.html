@@ -1893,7 +1893,7 @@
   const sentOk = (p) => { if (!balOk(p)) return false; const s = effSent(); if (!s) return true; const l = linkOf(p.id, state.filter); if (!l || !(l.paid || l.exempt || l.will_pay)) return false; return (l.details_sent_at ? '1' : '0') === s; };
   const paidOk = (p) => { const f = effPaidF(); return (!f || payStateOf(p) === f) && sentOk(p); };
   const hereOk = (p) => { const h = effHere(); return (!h || (((linkOf(p.id, state.filter) || {}).attended) ? '1' : '0') === h) && sentOk(p); };
-  const normFilter = () => { if (state.pay) { const ks = payKeys(state.pay).filter((k) => state.filter ? (!isPKey(k) || state.showTags) : isPKey(k)); state.pay = ks.length ? ks.join(',') : null; } };   // סינון משתתף רק בתצוגת הכל, סינון מפגש רק בתוך מפגש
+  const normFilter = () => { if (state.pay) { const ks = payKeys(state.pay).filter((k) => state.filter ? (!isPKey(k) || state.showTags) : isPKey(k)); const tg = ks.filter((k) => isPKey(k)), keep = ks.filter((k) => !isPKey(k)).concat(tg.slice(-1)); state.pay = keep.length ? keep.join(',') : null; } };   // תגית אחת בלבד (גם מקישור ישן); סטטוסים רק בתוך מפגש, תגיות בתצוגת הכל או כשהתגיות מוצגות
   const stMatch = (p, key) => { if (key === PNONE) return !ptagsOf(p).length; if (isPKey(key)) return ptagsOf(p).includes(key); if (state.filter) { const l = linkOf(p.id, state.filter); return !!l && linkStatus(l) === key; } return linksOf(p.id).some((l) => linkStatus(l) === key); };
   function renderFacets() {
     normFilter();
@@ -1961,7 +1961,7 @@
     requestAnimationFrame(alignFilters);   // שולם / לא שולם בשורת החיפוש מעל הרשימה
     const stItems = (state.filter ? statusList().slice().reverse().concat(state.showTags ? [{ key: PNONE, label: 'ללא תגית' }].concat(pstatusList().slice().reverse()) : []) : pstatusList().slice().reverse()).filter((s) => epk.includes(s.key) || state.participants.some((p) => (!state.filter || linkOf(p.id, state.filter)) && stMatch(p, s.key)));
     const onlyNone = !state.filter && stItems.every((s) => s.key === PNONE) && !epk.includes(PNONE);   // אין תגיות בשימוש: בלי השורה בכלל
-    $('#stStrip').innerHTML = true ? (onlyNone ? [] : stItems).map((s) => { const n = nP(s.key); return '<button type="button" class="stc ' + (isPKey(s.key) ? 'tagc' : s.key) + (n ? '' : ' zero') + '" data-stc="' + s.key + '" aria-pressed="' + epk.includes(s.key) + '">' + esc(s.label) + ' <small>' + n + '</small></button>'; }).join('') + '' : '';   // "חינם" (לא משלם) נמצא בתפריט סינון התשלום, לא כצ'יפ נפרד
+    $('#stStrip').innerHTML = true ? (onlyNone ? [] : stItems).map((s) => { const n = nP(s.key); return '<button type="button" class="stc ' + (isPKey(s.key) ? 'tagc' : s.key) + (n || epk.includes(s.key) ? '' : ' zero') + '" data-stc="' + s.key + '" aria-pressed="' + epk.includes(s.key) + '">' + esc(s.label) + ' <small>' + n + '</small></button>'; }).join('') + '' : '';   // "חינם" (לא משלם) נמצא בתפריט סינון התשלום, לא כצ'יפ נפרד
     $('#listCount').innerHTML = '';   // "מוצגים N" הוחלף בצ'יפ "הכל" עם הכמות
   }
 
