@@ -570,7 +570,8 @@
     #tbWrap{ position:relative; z-index:50; }
     #topbar{ --p:0; position:fixed; top:var(--tbtop); left:0; right:0; z-index:50; color:#FFFDF9; cursor:pointer; background:linear-gradient(120deg,#0A2236 0%,#0F3A4D 55%,#1B6170 100%); box-shadow:0 8px 20px -10px rgba(0,0,0,calc(var(--p) * .55)); }
     #topbar .tb-in{ max-width:42rem; margin:0 auto; padding:calc(.7rem - .35rem * var(--p)) 1.25rem calc(.7rem - .35rem * var(--p)); text-align:center; display:flex; flex-direction:column; align-items:center; gap:calc(.3rem * (1 - var(--p))); }   /* ריפוד עליון ותחתון זהים בכל מצב, והרווחים בין השורות נעלמים עם ההצטמצמות */
-    #topbar .tb-pill{ display:none !important; margin:0; display:inline-flex; align-items:center; gap:.4rem; height:1.7rem; border-radius:999px; background:rgba(255,253,249,.2); padding:0 .8rem; font-size:.82rem; font-weight:700; line-height:1; white-space:nowrap; overflow:hidden; max-height:calc(1.7rem * (1 - var(--p))); opacity:max(0, calc(1 - var(--p) * 1.7)); margin-bottom:calc(.1rem * (1 - var(--p))); }
+    #topbar .tb-sub{ display:none !important; }
+    #topbar .tb-pill{ background:#FFFDF9 !important; color:#0F3A4D; margin:0; display:inline-flex; align-items:center; gap:.4rem; height:1.7rem; border-radius:999px; background:rgba(255,253,249,.2); padding:0 .8rem; font-size:.82rem; font-weight:700; line-height:1; white-space:nowrap; overflow:hidden; max-height:calc(1.7rem * (1 - var(--p))); opacity:max(0, calc(1 - var(--p) * 1.7)); margin-bottom:calc(.1rem * (1 - var(--p))); }
     #topbar .tb-main{ margin:0; font-weight:700; font-size:clamp(1.05rem,4.6vw,1.45rem); line-height:calc(1.8rem - .3rem * var(--p)); height:calc(1.8rem - .3rem * var(--p)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
     #topbar .tb-sub{ margin:0; font-size:.92rem; line-height:1.3; height:1.2rem; opacity:.92; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; max-height:calc(1.2rem * (1 - var(--p))); opacity:max(0, calc(.92 - var(--p) * 1.7)); }
     /* טעינה: שלד מהבהב + "בודקים" עם נקודות, באותו גובה בדיוק */
@@ -1411,9 +1412,9 @@
     bar.classList.remove('tb-loading');
     if (nx) {
       const [, mo, dd] = nx.date.split('-');
-      el('tbPillT').textContent = nx.max ? nx.max + ' משתתפים' : ''; el('tbPillT').parentElement.style.visibility = nx.max ? '' : 'hidden';
-      el('tbMain').textContent = 'יום ' + dayName(nx.date) + ' ' + Number(dd) + '.' + Number(mo) + ' · ' + nx.time;
-      el('tbSub').textContent = [nx.max ? nx.max + ' משתתפים' : '', nx.city].filter(Boolean).join(' · ') || ' ';   // שורה שנייה: כמות משתתפים ועיר (בלי שם מפגש)
+      el('tbPillT').parentElement.style.visibility = ''; el('tbPillT').textContent = 'המפגש הקרוב';
+      el('tbMain').textContent = 'יום ' + dayName(nx.date) + ' ' + Number(dd) + '.' + Number(mo) + ' · ' + nx.time + (nx.city ? ' · ' + nx.city : '');
+      el('tbSub').textContent = ' ';
     } else {
       el('tbPillT').parentElement.style.visibility = ''; el('tbPillT').textContent = 'בקרוב';
       el('tbMain').textContent = (d && d.defName) || 'המפגש הבא בדרך אליכם';   // בלי מפגש: שם ברירת המחדל (אם הוגדר)
