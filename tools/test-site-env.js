@@ -19,13 +19,18 @@
     } catch (e) {}
     return origFetch.call(this, input, init);
   };
+  /* התגית בשכבה העליונה של הדפדפן (popover): מעל הכל, גם מעל פופאפים (dialog); כשנפתח dialog היא מורמת מחדש */
+  function raise(el) { try { el.hidePopover(); el.showPopover(); } catch (x) {} }
   function badge() {
     if (document.getElementById('testEnvBadge') || document.getElementById('testBar')) return;
     var d = document.createElement('div');
     d.id = 'testEnvBadge';
+    d.setAttribute('popover', 'manual');
     d.textContent = 'בדיקות';
-    d.setAttribute('style', 'position:fixed;left:8px;bottom:8px;z-index:2147483000;background:#C96F52;color:#fff;font:700 11px/1 Arial,sans-serif;padding:5px 9px;border-radius:999px;pointer-events:none;opacity:.8');
+    d.setAttribute('style', 'inset:auto;margin:0;border:0;position:fixed;left:8px;bottom:8px;background:#C96F52;color:#fff;font:700 11px/1 Arial,sans-serif;padding:5px 9px;border-radius:999px;pointer-events:none;opacity:.8;overflow:visible');
     document.body.appendChild(d);
+    raise(d);
+    new MutationObserver(function (m) { if (m.some(function (r) { return r.target.nodeName === 'DIALOG'; })) raise(d); }).observe(document.documentElement, { subtree: true, attributes: true, attributeFilter: ['open'] });
   }
   if (document.body) badge(); else document.addEventListener('DOMContentLoaded', badge);
 })();
