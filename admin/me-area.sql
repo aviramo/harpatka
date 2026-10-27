@@ -119,3 +119,36 @@ begin
 end $$;
 revoke all on function public.harpatka_me_update(text, text, int, text, text) from public;
 grant execute on function public.harpatka_me_update(text, text, int, text, text) to authenticated;
+
+-- הרשמה לאתר מהאזור האישי, בלי שיוך למפגש: כשהטלפון לא נמצא בין המשתתפים נוצר משתתף חדש ומחובר לחשבון (מאושר מיד, כי המשתתף נוצר על ידו ורואה רק את עצמו)
+create or replace function public.harpatka_me_signup(p_first text, p_last text, p_age int, p_gender text, p_phone text)
+returns text language plpgsql security definer set search_path = public as $$
+declare
+  uid uuid := auth.uid();
+  norm text := public.harpatka_normalize_phone(p_phone);
+  pid uuid; was_active boolean;
+  m public.harpatka_members;
+begin
+  if uid is null then raise exception 'auth'; end if;
+  if length(trim(coalesce(p_first, ''))) < 2 or length(trim(coalesce(p_last, ''))) < 2 then return 'invalid_name'; end if;
+  if p_age is null or p_age < 18 or p_age > 99 then return 'invalid_age'; end if;
+  if norm = '' then return 'invalid_phone'; end if;
+  select id, active into pid, was_active from public.harpatka_participants where phone_norm = norm order by active desc, created_at limit 1;
+  if pid is not null then return 'exists'; end if;   -- טלפון שכבר קיים (גם של לא פעיל) לא נפתח מחדש כאן: הוא מחובר רק באישור מנהל (harpatka_me_claim)
+  begin
+    insert into public.harpatka_participants (first_name, last_name, phone, phone_norm, source, age, age_set_at, gender)
+    values (trim(p_first), trim(p_last), trim(p_phone), norm, 'site', p_age, current_date, case when p_gender in ('male', 'female') then p_gender else null end)
+    returning id into pid;
+  end;
+  select * into m from public.harpatka_members where user_id = uid;
+  if found then
+    if m.status in ('blocked') then return 'blocked'; end if;
+    update public.harpatka_members set participant_id = pid, phone_norm = norm, status = 'approved', wants_me = true where user_id = uid;
+  else
+    insert into public.harpatka_members (user_id, email, google_name, phone_norm, participant_id, status, wants_me)
+    values (uid, lower(coalesce(auth.jwt() ->> 'email', '')), coalesce(auth.jwt() -> 'user_metadata' ->> 'full_name', auth.jwt() -> 'user_metadata' ->> 'name', ''), norm, pid, 'approved', true);
+  end if;
+  return 'ok';
+end $$;
+revoke all on function public.harpatka_me_signup(text, text, int, text, text) from public;
+grant execute on function public.harpatka_me_signup(text, text, int, text, text) to authenticated;

@@ -59,7 +59,7 @@
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const SKEY = 'harpatka_me_session', AKEY = 'harpatka_admin_session_v2', AS_KEY = 'harpatka_me_as';
   const CFG = (typeof CONFIG !== 'undefined') ? CONFIG : {};
-  let session = null, data = null, asId = null, usingAdmin = false;
+  let lastPhone = '', session = null, data = null, asId = null, usingAdmin = false;
 
   const jwtData = (tok) => { try { return JSON.parse(decodeURIComponent(escape(atob(tok.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))))); } catch (e) { return {}; } };
   const sessionOk = (s) => s && s.access_token && (jwtData(s.access_token).exp || 0) * 1000 > Date.now() + 30000;
@@ -104,10 +104,27 @@
       const b = $('#claimBtn'); b.disabled = true;
       try {
         const r = await rpc('harpatka_me_claim', { p_phone: $('#ph').value });
-        if (r === 'not_registered') { toast($('#cm'), 'המספר הזה עוד לא רשום למפגש. כדי להשתמש באזור האישי צריך להירשם תחילה למפגש', true); b.disabled = false; return; }
+        if (r === 'not_registered') { viewSignup($('#ph').value); return; }
         if (r === 'invalid_phone') { toast($('#cm'), 'מספר הטלפון לא תקין', true); b.disabled = false; return; }
-        load(false, true);
+        lastPhone = $('#ph').value; load(false, true);
       } catch (e) { toast($('#cm'), 'משהו השתבש, אפשר לנסות שוב', true); b.disabled = false; }
+    };
+  }
+  function viewSignup(phone) {
+    app.innerHTML = '<div class="card"><h2>הרשמה</h2><p class="muted" style="margin:0">המספר הזה עוד לא רשום אצלנו. אפשר להשלים הרשמה כאן (בלי שיוך למפגש) ואז להירשם למפגש מתוך האזור האישי</p>' +
+      '<div class="two"><div><label for="sfn">שם פרטי</label><input id="sfn" autocomplete="given-name"></div><div><label for="sln">שם משפחה</label><input id="sln" autocomplete="family-name"></div></div>' +
+      '<label for="sph">טלפון</label><input id="sph" type="tel" inputmode="tel" dir="ltr" style="text-align:right" value="' + esc(phone || '') + '">' +
+      '<div class="two"><div><label for="sag">גיל</label><input id="sag" type="number" inputmode="numeric" min="18" max="99"></div><div><label for="sgn">מגדר</label><select id="sgn"><option value="">לא צוין</option><option value="female">נקבה</option><option value="male">זכר</option></select></div></div>' +
+      '<button type="button" class="btn" id="sgBtn">הרשמה</button><div class="msg" id="sgm"></div><button type="button" class="link" id="sgBack">חזרה</button></div>';
+    $('#sgBack').onclick = () => viewClaim('');
+    $('#sgBtn').onclick = async () => {
+      const b = $('#sgBtn'); b.disabled = true;
+      try {
+        const r = await rpc('harpatka_me_signup', { p_first: $('#sfn').value, p_last: $('#sln').value, p_age: $('#sag').value === '' ? null : Number($('#sag').value), p_gender: $('#sgn').value, p_phone: $('#sph').value });
+        const bad = { invalid_name: 'צריך שם פרטי ושם משפחה', invalid_age: 'צריך להזין גיל בין 18 ל-99', invalid_phone: 'מספר הטלפון לא תקין', exists: 'המספר הזה כבר רשום אצלנו. אפשר לחזור ולחבר אותו לחשבון, ואם זה לא עובד נשמח שתפנו אלינו', blocked: 'אי אפשר להשלים הרשמה מהחשבון הזה' }[r];
+        if (bad) { toast($('#sgm'), bad, true); b.disabled = false; return; }
+        load();
+      } catch (e) { toast($('#sgm'), 'משהו השתבש, אפשר לנסות שוב', true); b.disabled = false; }
     };
   }
   function viewPending() { app.innerHTML = '<div class="card"><h2>הבקשה התקבלה</h2><p class="muted" style="margin:0">אנחנו מאשרים את החיבור, ובקרוב האזור האישי יהיה זמין. אפשר לחזור לכאן בעוד קצת זמן</p></div>'; }
@@ -169,7 +186,8 @@
     if (data.status === 'ok') { const keep = keepMsg ? $('#sm') && $('#sm').textContent : ''; viewMain(); if (keep) toast($('#sm'), keep); }
     else if (data.status === 'pending') viewPending();
     else if (data.status === 'blocked') viewBlocked();
-    else viewClaim(afterClaim ? 'המספר הזה לא נמצא בין המשתתפים הרשומים. אפשר לבדוק שהוזן המספר שבו נרשמתם' : '');
+    else if (afterClaim) viewSignup(lastPhone);
+    else viewClaim('');
   }
 
   async function start() {
