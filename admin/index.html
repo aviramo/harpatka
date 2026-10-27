@@ -2200,9 +2200,10 @@
     const persist = (p) => { const mine = linksOf(p.id).map((l) => state.meetings.find((x) => x.id === l.meeting_id)).filter((m) => m && started(m)).map((m) => m.meeting_date + m.meeting_time).sort(); if (!mine.length) return { came: 0, total: 0 }; const opp = startedMs.filter((m) => (m.meeting_date + m.meeting_time) >= mine[0]); return { came: opp.filter((m) => (linkOf(p.id, m.id) || {}).attended).length, total: opp.length }; };
     const per = {}; state.participants.forEach((p) => { per[p.id] = persist(p); });
     /* צבע ההתמדה לפי דירוג: המשתתפים עם נתוני הגעה מדורגים לפי אחוז ההגעה (ואז מספר ההגעות), והם מתחלקים לשלישים שווים: שליש עליון ירוק, אמצעי צהוב, תחתון אדום; אפור = עוד אין מפגש שהתחיל */
-    const ranked = state.participants.filter((p) => per[p.id].total > 0).sort((a, b) => { const x = per[a.id], y = per[b.id]; return (y.came / y.total) - (x.came / x.total) || y.came - x.came || y.total - x.total || a.name.localeCompare(b.name, 'he'); });
-    const nR = ranked.length, third = Math.round(nR / 3), rankOf = {}, clsOf = {};
-    ranked.forEach((p, i) => { rankOf[p.id] = i + 1; clsOf[p.id] = i < third ? 'g' : i >= nR - third ? 'r' : 'y'; });
+    const ranked = state.participants.filter((p) => per[p.id].total > 0).sort((a, b) => { const x = per[a.id], y = per[b.id]; return (y.came / y.total) - (x.came / x.total) || y.came - x.came || x.total - y.total || a.name.localeCompare(b.name, 'he'); });
+    const nR = ranked.length, rankOf = {}, clsOf = {};
+    /* נתונים זהים (אותו X מתוך Y) תמיד באותו צבע ובאותו דירוג: הקבוצה כולה נכנסת לשליש שבו נמצא מרכזה */
+    for (let i = 0; i < nR;) { let j = i; const a0 = per[ranked[i].id]; while (j < nR && per[ranked[j].id].came === a0.came && per[ranked[j].id].total === a0.total) j++; const mid = (i + j - 1) / 2, c = mid < nR / 3 ? 'g' : mid >= nR * 2 / 3 ? 'r' : 'y'; for (let k = i; k < j; k++) { rankOf[ranked[k].id] = i + 1; clsOf[ranked[k].id] = c; } i = j; }
     const by = {}; state.participants.forEach((p) => { const pr = per[p.id], fut = linksOf(p.id).filter((l) => { const m = state.meetings.find((x) => x.id === l.meeting_id); return m && !started(m); }).length; by[p.id] = { came: pr.came, total: pr.total, fut, cls: !pr.total ? 'n' : clsOf[p.id], rank: rankOf[p.id] || 0, n: nR }; });
     return (attCache = { by });
   }
