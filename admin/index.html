@@ -2365,10 +2365,10 @@
       if (!state.filter) {
         const pr = persist(p), rate = pr.total ? pr.came / pr.total : 0, score = pr.total ? (pr.came + K * pAvg) / (pr.total + K) : 0, cls = !pr.total ? 'n' : score > pAvg + BAND ? 'g' : score < pAvg - BAND ? 'r' : 'y';
         const fut = linksOf(p.id).filter((l) => { const m = state.meetings.find((x) => x.id === l.meeting_id); return m && !started(m); }).length;   // מפגשים עתידיים שהמשתתף רשום אליהם נספרים במכנה; הצבע נקבע רק לפי מפגשים שהתחילו
-        tags = '<span class="ptag cnt ' + cls + '" title="הגיע ל-' + pr.came + ' מתוך ' + (pr.total + fut) + ' מפגשים' + (fut ? ' (' + fut + ' עתידיים)' : '') + (pr.total ? '. התמדה בפועל: ' + Math.round(rate * 100) + '%, ממוצע: ' + Math.round(pAvg * 100) + '%' : '') + '">הגיע <bdi dir="ltr">' + pr.came + '/' + (pr.total + fut) + '</bdi></span>';
+        if (state.showAtt !== false) tags = '<span class="ptag cnt ' + cls + '" title="הגיע ל-' + pr.came + ' מתוך ' + (pr.total + fut) + ' מפגשים' + (fut ? ' (' + fut + ' עתידיים)' : '') + (pr.total ? '. התמדה בפועל: ' + Math.round(rate * 100) + '%, ממוצע: ' + Math.round(pAvg * 100) + '%' : '') + '">הגיע <bdi dir="ltr">' + pr.came + '/' + (pr.total + fut) + '</bdi></span>';
       }
       const hl = state.filter ? linkOf(p.id, state.filter) : null;
-      const tgm = attTarget(), tgl = tgm ? linkOf(p.id, tgm.id) : null, showHere = !!(tgm && attVisible(tgm)), attOk = !!(tgl && (dispStatus(tgl) !== SYSTEM_STATUS || tgl.attended)), evc = evCircle(p);   // עיגול ההגעה רק למי שלא בסטטוס ברירת המחדל (או שכבר סומנה לו הגעה, כדי שאפשר יהיה לבטל)
+      const tgm = attTarget(), tgl = tgm ? linkOf(p.id, tgm.id) : null, showHere = !!(tgm && (state.filter ? attVisible(tgm) : attendOpen(tgm))), attOk = !!(tgl && (dispStatus(tgl) !== SYSTEM_STATUS || tgl.attended)), evc = evCircle(p);   // עיגול ההגעה רק למי שלא בסטטוס ברירת המחדל (או שכבר סומנה לו הגעה, כדי שאפשר יהיה לבטל)
       return '<li class="row' + (hl && hl.attended && attendOpen(state.meetings.find((x) => x.id === state.filter)) ? ' arrived' : '') + '">' +
         (wa ? '<a class="rowwa" href="' + wa + '" target="_blank" rel="noopener" aria-label="וואטסאפ ל' + esc(p.name) + '" title="וואטסאפ">' + WA_ICON + '</a>' : '<span class="rowwa nophone" role="img" aria-label="אין טלפון" title="אין טלפון">' + WA_ICON + '</span>') +
         '<div class="main' + ' hasw' + (showHere ? ' att' : '') + (anyEv ? ' ev' : '') + (!state.filter && state.showPay ? ' bl' : '') + '" role="button" tabindex="0" data-edit="' + p.id + '">' +
@@ -4026,8 +4026,8 @@
   function renderViewMenu() {
     const none = !state.pstatuses.length;
     const row = (k, icon, label, hint, on) => '<button type="button" role="menuitemcheckbox" class="vrow" data-vt="' + k + '" aria-checked="' + on + '"><span class="vic">' + icon + '</span><span class="vtx"><b>' + label + '</b><small>' + hint + '</small></span><span class="vsw' + (on ? ' on' : '') + '" aria-hidden="true"></span></button>';
-    const mSel = state.meetings.find((x) => x.id === state.filter) || attTarget() || eventMeeting(), sentOn = !!(mSel && (state.showSent === null ? (evOnFor(mSel) || hasSent(mSel)) : state.showSent)), attOnM = !!(mSel && attVisible(mSel));
-    $('#viewMenu').innerHTML = row('tags', TAG_ICON, 'תגיות', none ? 'עוד לא הוגדרו תגיות (לחיצה פותחת הגדרות)' : 'פס תגיות המשתתפים לסינון', state.showTags && !none) + row('pay', '<b class="vshek">₪</b>', 'תשלום', 'עיגול תשלום ויתרה וסינון שלהם', state.showPay) + row('sent', PIN_ICON, 'שליחת פרטי המפגש', 'עיגול שליחה וסינון, נפתח אוטומטית לפי ההגדרות', sentOn) + row('here', '<b class="vshek">✓</b>', 'הגעה למפגש', 'עיגול סימון הגעה וסינון, נפתח אוטומטית לפי ההגדרות', attOnM);
+    const mSel = state.meetings.find((x) => x.id === state.filter) || attTarget() || eventMeeting(), sentOn = !!(mSel && (state.showSent === null ? (evOnFor(mSel) || hasSent(mSel)) : state.showSent)), attOnM = state.filter ? !!(mSel && attVisible(mSel)) : state.showAtt !== false;
+    $('#viewMenu').innerHTML = row('tags', TAG_ICON, 'תגיות', none ? 'עוד לא הוגדרו תגיות (לחיצה פותחת הגדרות)' : 'פס תגיות המשתתפים לסינון', state.showTags && !none) + row('pay', '<b class="vshek">₪</b>', 'תשלום', 'עיגול תשלום ויתרה וסינון שלהם', state.showPay) + (state.filter ? row('sent', PIN_ICON, 'שליחת פרטי המפגש', 'עיגול שליחה וסינון, נפתח אוטומטית לפי ההגדרות', sentOn) : '') + row('here', '<b class="vshek">✓</b>', 'הגעה למפגש', state.filter ? 'עיגול סימון הגעה וסינון, נפתח אוטומטית לפי ההגדרות' : 'סיכום הגעה בכל שורה (הגיע X מתוך Y)', attOnM);
   }
   const closeView = () => { const m = $('#viewMenu'); m.hidden = true; const b = $('#viewBtn'); if (b) b.setAttribute('aria-expanded', 'false'); };
   $('#listTags').addEventListener('click', (e) => {
@@ -4042,7 +4042,8 @@
     if (b.dataset.vt === 'tags') {
       if (!state.pstatuses.length) { closeView(); openStatusSettings('participant'); return; }   // אין תגיות מוגדרות: פותח את הגדרת התגיות
       state.showTags = !state.showTags; if (!state.showTags && state.pay) { const ks = payKeys(state.pay).filter((k) => !isPKey(k)); state.pay = ks.length ? ks.join(',') : null; }
-    } else if (b.dataset.vt === 'here') { const m0 = state.meetings.find((x) => x.id === state.filter) || attTarget() || eventMeeting(), cur = !!(m0 && attVisible(m0)), auto = !!(m0 && attendOpen(m0)); state.showAtt = !cur === auto ? null : !cur; if (cur) state.here = null; }   // ההפעלה/כיבוי נשמרים ידנית; חזרה למצב האוטומטי כשהם זהים לו
+    } else if (b.dataset.vt === 'here' && !state.filter) { state.showAtt = state.showAtt === false ? null : false; }   // תמונת מצב כללית: מציג/מסתיר את סיכום ההגעה בכל שורה
+    else if (b.dataset.vt === 'here') { const m0 = state.meetings.find((x) => x.id === state.filter) || attTarget() || eventMeeting(), cur = !!(m0 && attVisible(m0)), auto = !!(m0 && attendOpen(m0)); state.showAtt = !cur === auto ? null : !cur; if (cur) state.here = null; }   // ההפעלה/כיבוי נשמרים ידנית; חזרה למצב האוטומטי כשהם זהים לו
     else if (b.dataset.vt === 'pay') { state.showPay = !state.showPay; if (!state.showPay) { state.paidF = null; state.bal = null; } }
     else { const m0 = state.meetings.find((x) => x.id === state.filter) || eventMeeting(), cur = !!(m0 && sentView(m0)), auto = !!(m0 && (evOnFor(m0) || hasSent(m0))); state.showSent = !cur === auto ? null : !cur; if (cur) state.sent = null; }
     renderViewMenu(); render(); syncUrl(); saveViewPrefs();
