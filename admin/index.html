@@ -2051,8 +2051,8 @@
   const effPay = () => state.q.trim() ? null : state.pay;
   const effHere = () => (state.q.trim() || !state.filter || !attendOpen(state.meetings.find((x) => x.id === state.filter))) ? null : state.here;   // הגיע / לא הגיע, רק בתוך מפגש
   const effPaidF = () => (state.q.trim() || !state.filter) ? null : state.paidF;   // שולם / לא שולם (לפי רשומות התשלום), רק בתוך מפגש
-  /* זכאי להודעה לפני המפגש: סטטוס שילם, חינם או ישלם, או שיש כסף ששויך למפגש ברשומות התשלום, או שסומן "חינם" במסך התשלום (הסטטוס הוא תווית בלבד, אז גם תשלום בפועל מזכה) */
-  const evElig = (pid, l) => !!l && !!(l.paid || l.exempt || l.will_pay || l.no_pay || allocatedOf(pid, l.meeting_id) > 0);
+  /* זכאי להודעה לפני המפגש: כל משתתף שהסטטוס שלו במפגש אינו סטטוס ברירת המחדל ("משויך"), לפני או אחרי המפגש */
+  const evElig = (pid, l) => !!l && dispStatus(l) !== SYSTEM_STATUS;
   const noPayOf = (p, l) => !!(l && l.no_pay);   // "לא משלם" הוא עניין של מפגש בלבד (מתג במסך התשלום של המפגש)
   const payStateOf = (p) => noPayOf(p, linkOf(p.id, state.filter)) ? 'n' : (allocatedOf(p.id, state.filter) > 0) ? '1' : '0';   // שולם / לא שולם / לא משלם (מסומן במשתתף)
   /* שליחת פרטי הערב: רק בתוך מפגש, ביום המפגש (לפי ההגדרה) ולפני שנפתחת ההגעה; רק למי שזכאי (שילם / חינם / ישלם) */
