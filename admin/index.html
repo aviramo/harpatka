@@ -1402,6 +1402,7 @@
         <h2 id="mTitle">מפגש חדש</h2>
       </div>
       <label class="field"><span>שם המפגש (אופציונלי)</span><input name="mname" type="text" maxlength="80" placeholder="למשל: מפגש פתיחת עונה" /></label>
+      <label class="field"><span>עיר</span><input name="city" type="text" maxlength="40" autocomplete="off" placeholder="למשל: הרצליה" /></label>
       <div class="two" style="grid-template-columns: 1fr 1fr">
         <label class="field"><span>תאריך</span><input name="date" type="date" required /></label>
         <label class="field"><span>שעה</span><input name="time" type="time" required value="20:00" /></label>
@@ -4056,6 +4057,7 @@
     const prev = m ? null : state.meetings.slice().sort((a, b) => (b.meeting_date + b.meeting_time).localeCompare(a.meeting_date + a.meeting_time))[0] || null;
     const src = m || prev || {};
     mForm.time.value = m ? String(m.meeting_time).slice(0, 5) : prev ? String(prev.meeting_time).slice(0, 5) : '20:00';   // מפגש חדש: כל השדות חוץ מהתאריך מועתקים מהמפגש הקודם
+    mForm.city.value = src.city || '';   // עיר: מועתקת למפגש חדש מהמפגש הקודם
     mForm.mname.value = m ? (m.name || '') : (defMeetingName() || src.name || '');   // מפגש חדש: שם ברירת המחדל מההגדרות, אחרת השם מהמפגש הקודם
     mForm.mname.placeholder = defMeetingName() || 'למשל: מפגש פתיחת עונה';   // בלי שם: בעמוד הבית יוצג שם ברירת המחדל
     mForm.directions.value = src.directions || '';
@@ -4078,7 +4080,7 @@
 
   mForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const body = { meeting_date: mForm.date.value, meeting_time: mForm.time.value || '20:00', name: mForm.mname.value.trim() || null, directions: mForm.directions.value.trim(), max_participants: mForm.max.value === '' ? null : Math.max(1, Math.min(500, parseInt(mForm.max.value, 10) || 1)) };
+    const body = { meeting_date: mForm.date.value, meeting_time: mForm.time.value || '20:00', name: mForm.mname.value.trim() || null, city: mForm.city.value.trim() || null, directions: mForm.directions.value.trim(), max_participants: mForm.max.value === '' ? null : Math.max(1, Math.min(500, parseInt(mForm.max.value, 10) || 1)) };
     if (!body.meeting_date) { mForm.date.focus(); toast('חסר תאריך'); return; }
     const pt = { base: Number(mTiers.base), steps: mTiers.steps.map((x) => ({ days: Number(x.days), price: Number(x.price) })) };
     if (!Number.isFinite(pt.base) || pt.base < 0 || mTiers.base === '' || pt.steps.some((x) => !Number.isFinite(x.price) || x.price < 0) || mTiers.steps.some((x) => x.price === '')) { toast('מחיר חסר או לא תקין'); return; }
