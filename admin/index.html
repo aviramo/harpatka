@@ -725,6 +725,7 @@
     .qmenu .qi[aria-pressed="true"] { border-color: currentColor; }
     .qmenu .qedit, .qeditlink { display: flex; align-items: center; justify-content: center; gap: 6px; height: 30px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 700; border-radius: 10px; }
     .qeditlink { margin: 8px auto 0; padding: 0 12px; }
+    #fMenu .fsep { flex: 1 1 100%; font-size: 12px; font-weight: 800; color: var(--muted); text-align: right; padding: 8px 4px 2px; border-top: 1px solid var(--line); margin-top: 4px; }
     .qmenu .qhd { font-size: 12px; font-weight: 800; color: var(--muted); text-align: center; padding: 4px 0 0; }
     .qmenu .qi small { opacity: .7; font-weight: 700; margin-inline-start: 4px; }
     .fx.stsel { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
@@ -1954,7 +1955,7 @@
         if (d.m && state.meetings.some((x) => x.id === d.m)) state.filter = d.m;
         { const ks = payKeys(d.pay).filter((k) => k === PNONE || state.statuses.concat(state.pstatuses).some((x) => x.key === k)); if (ks.length) state.pay = ks.join(','); }   // סינון לפי סטטוס אחד שנבחר מהרשימה
         if (d.at === '1' || d.at === '0') state.here = d.at;
-        if (d.pd === '1' || d.pd === '0' || d.pd === 'n') state.paidF = d.pd;
+        if (d.pd === '1' || d.pd === '0' || d.pd === 'n' || /^a\d+$/.test(d.pd || '')) state.paidF = d.pd;
         if (d.sv === '1' || d.sv === '0') state.sent = d.sv;
         if (d.bl === '1' || d.bl === '0' || d.bl === 'n') state.bal = d.bl;
         if (d.tg === '0') state.showTags = false;
@@ -2097,7 +2098,8 @@
   const effBal = () => (state.q.trim() || state.filter) ? null : state.bal;
   const balOk = (p) => { const b = effBal(); return !b || balState(p) === b; };
   const sentOk = (p) => { if (!balOk(p)) return false; const s = effSent(); if (!s) return true; const l = linkOf(p.id, state.filter); if (!l || !evElig(p.id, l)) return false; return (l.details_sent_at ? '1' : '0') === s; };
-  const paidOk = (p) => { const f = effPaidF(); return (!f || payStateOf(p) === f) && sentOk(p); };
+  const payF = (p, f) => (f && f[0] === 'a') ? (!noPayOf(p, linkOf(p.id, state.filter)) && Math.round(allocatedOf(p.id, state.filter)) === Number(f.slice(1))) : payStateOf(p) === f;   // 'a80': ששולם בדיוק 80 למפגש הזה
+  const paidOk = (p) => { const f = effPaidF(); return (!f || payF(p, f)) && sentOk(p); };
   const hereOk = (p) => { const h = effHere(); return (!h || (((linkOf(p.id, state.filter) || {}).attended) ? '1' : '0') === h) && sentOk(p); };
   const normFilter = () => { if (state.pay) { const ks = payKeys(state.pay).filter((k) => state.filter ? (!isPKey(k) || state.showTags) : (isPKey(k) && state.showTags)); const tg = ks.filter((k) => isPKey(k)), keep = ks.filter((k) => !isPKey(k)).slice(-1).concat(tg.slice(-1)); state.pay = keep.length ? keep.join(',') : null; } };   // תגית אחת בלבד (גם מקישור ישן); סטטוסים רק בתוך מפגש, תגיות בתצוגת הכל או כשהתגיות מוצגות
   const stMatch = (p, key) => { if (key === PNONE) return !ptagsOf(p).length; if (isPKey(key)) return ptagsOf(p).includes(key); if (state.filter) { const l = linkOf(p.id, state.filter); return !!l && dispStatus(l) === key; } return linksOf(p.id).some((l) => dispStatus(l) === key); };
@@ -2133,7 +2135,7 @@
       $('#genderChips').innerHTML = '<button type="button" class="stc gall' + (allN ? '' : ' zero') + '" data-stg="all" aria-pressed="' + !anyF + '" title="' + (anyF ? 'איפוס סינוני השורה' : 'כל המוצגים ברשימה') + '">הכל <small>' + allN + '</small></button>' + ((eg || both) ? gchip('male', 'ז', 'gm') + gchip('female', 'נ', 'gf') : ''); }   // ליד כפתור התפריט בכותרת
     const attOn = !!(state.filter && attendOpen(state.meetings.find((x) => x.id === state.filter))), evOn = !!(state.filter && evOnFor(state.meetings.find((x) => x.id === state.filter)));
     const hereOkNoSent = (p) => { const h = effHere(); return !h || (((linkOf(p.id, state.filter) || {}).attended) ? '1' : '0') === h; };   // הגעה רק מחצי שעה לפני המפגש (או במצב הגעה פתוח)
-    const paidN = (v) => base.filter((p) => genOk(p) && hereOk(p) && matchPay(p, epk) && payStateOf(p) === v).length;
+    const paidN = (v) => base.filter((p) => genOk(p) && hereOk(p) && matchPay(p, epk) && payF(p, v)).length;
     const pchip = (v, label, cls) => { const n = paidN(v); return '<button type="button" class="stc ' + cls + (n ? '' : ' zero') + '" data-stp="' + v + '" aria-pressed="' + (state.paidF === v && !!state.filter) + '">' + label + ' <small>' + n + '</small></button>'; };
     const hereN = (v) => base.filter((p) => genOk(p) && paidOk(p) && matchPay(p, epk) && ((((linkOf(p.id, state.filter) || {}).attended) ? '1' : '0') === v)).length;
     const hchip = (v, label, cls) => { const n = hereN(v); return '<button type="button" class="stc ' + cls + (n ? '' : ' zero') + '" data-sth="' + v + '" aria-pressed="' + (eh === v) + '">' + label + ' <small>' + n + '</small></button>'; };
@@ -2143,12 +2145,12 @@
       const mid = state.filter, lk = (p) => linkOf(p.id, mid), eligible = (p) => { const l = lk(p); return !!l && evElig(p.id, l); };
       const only = {
         here: (p) => { const h = effHere(); return !h || (((lk(p) || {}).attended) ? '1' : '0') === h; },
-        pay: (p) => { const f = effPaidF(); return !f || payStateOf(p) === f; },
+        pay: (p) => { const f = effPaidF(); return !f || payF(p, f); },
         sent: (p) => { const s = effSent(); if (!s) return true; return eligible(p) && ((lk(p).details_sent_at ? '1' : '0') === s); },
         bal: (p) => { const b = effBal(); return !b || balState(p) === b; },
       };
       const match = {
-        here: (p, v) => (((lk(p) || {}).attended) ? '1' : '0') === v, pay: (p, v) => payStateOf(p) === v,
+        here: (p, v) => (((lk(p) || {}).attended) ? '1' : '0') === v, pay: (p, v) => payF(p, v),
         sent: (p, v) => eligible(p) && ((lk(p).details_sent_at ? '1' : '0') === v), bal: (p, v) => balState(p) === v,
       };
       FC = {};
@@ -2156,11 +2158,12 @@
         FC[k] = {}; const pool = base.filter((p) => genOk(p) && matchPay(p, epk) && Object.keys(only).filter((o) => o !== k).every((o) => only[o](p)));
         FC[k][''] = pool.length; ['1', '0', 'n'].forEach((v) => { FC[k][v] = ((k === 'here' || k === 'sent') && v === 'n') ? 0 : pool.filter((p) => match[k](p, v)).length; });
       });
+      FC.payAmts = {}; if (mid) base.filter((p) => genOk(p) && matchPay(p, epk) && only.here(p) && only.sent(p) && only.bal(p)).forEach((p) => { const l = lk(p); if (!l || noPayOf(p, l)) return; const a = Math.round(allocatedOf(p.id, mid)); if (a > 0) FC.payAmts[a] = (FC.payAmts[a] || 0) + 1; });   // סכומים ששולמו במפגש הזה, עם כמות המשתתפים לכל סכום
     }
-    const fbtn = (kind, v, n1, n0) => { const c = v === '1' ? 'yes' : v === '0' ? 'no' : v === 'n' ? 'free' : 'all', lab = FLAB[kind]; return '<button type="button" class="hfilt ' + c + '" data-fk="' + kind + '" aria-label="' + FNAME[kind] + ': ' + (v === '1' ? lab[1] : v === '0' ? lab[2] : v === 'n' ? lab[3] : lab[0]) + '" title="' + (v === '1' ? lab[1] + ' (' + n1 + ')' : v === '0' ? lab[2] + ' (' + n0 + ')' : v === 'n' ? lab[3] : lab[0] + ': ' + lab[1] + ' ' + n1 + ', ' + lab[2] + ' ' + n0) + ' (לחיצה לפתיחת תפריט)">' + fglyph(kind, c) + '</button>'; };
+    const fbtn = (kind, v, n1, n0) => { const isA = v && String(v)[0] === 'a', c = (v === '1' || isA) ? 'yes' : v === '0' ? 'no' : v === 'n' ? 'free' : 'all', lab = FLAB[kind]; return '<button type="button" class="hfilt ' + c + '" data-fk="' + kind + '" aria-label="' + FNAME[kind] + ': ' + (isA ? '₪' + v.slice(1) : v === '1' ? lab[1] : v === '0' ? lab[2] : v === 'n' ? lab[3] : lab[0]) + '" title="' + (isA ? 'ששולמו ₪' + v.slice(1) : v === '1' ? lab[1] + ' (' + n1 + ')' : v === '0' ? lab[2] + ' (' + n0 + ')' : v === 'n' ? lab[3] : lab[0] + ': ' + lab[1] + ' ' + n1 + ', ' + lab[2] + ' ' + n0) + ' (לחיצה לפתיחת תפריט)">' + fglyph(kind, c) + '</button>'; };
     const sentN = (v) => base.filter((p) => { if (!genOk(p) || !paidOk(p) || !hereOkNoSent(p) || !matchPay(p, epk)) return false; const l = linkOf(p.id, state.filter); return !!l && evElig(p.id, l) && (l.details_sent_at ? '1' : '0') === v; }).length;
     $('#listHere').innerHTML = attOn ? fbtn('here', eh, hereN('1'), hereN('0')) : '';
-    $('#listPay').innerHTML = state.filter ? fbtn('pay', state.paidF === '1' || state.paidF === '0' || state.paidF === 'n' ? state.paidF : null, paidN('1'), paidN('0')) : '';
+    $('#listPay').innerHTML = state.filter ? fbtn('pay', (state.paidF === '1' || state.paidF === '0' || state.paidF === 'n' || /^a\d+$/.test(state.paidF || '')) ? state.paidF : null, paidN('1'), paidN('0')) : '';
     { const tagsOn = state.showTags; const none = !state.pstatuses.length; $('#listTags').innerHTML = '<button type="button" class="hfilt ' + (!none && tagsOn ? 'on' : 'all') + '" data-tg="1" aria-pressed="' + (!none && tagsOn) + '" aria-label="תגיות משתתף" title="' + (none ? 'עוד לא הוגדרו תגיות: לחיצה פותחת את ההגדרות' : tagsOn ? 'הסתרת התגיות' : 'הצגת תגיות משתתף לסינון') + '">' + TAG_ICON + '</button>'; }
     $('#listBal').innerHTML = !state.filter ? fbtn('bal', effBal(), '', '') : '';
     $('#listSent').innerHTML = evOn ? fbtn('sent', effSent(), sentN('1'), sentN('0')) : '';
@@ -3869,6 +3872,10 @@
     const cur = fstate(kind) || null, lab = FLAB[kind];
     const opts = [[null, 'all', lab[0]], ['1', 'yes', lab[1]], ['0', 'no', lab[2]]].concat(kind === 'pay' ? [['n', 'free', lab[3]]] : kind === 'bal' ? [['n', 'free', lab[3]]] : []);
     m.innerHTML = opts.map((o) => '<button type="button" role="menuitem" class="fopt" data-fv="' + (o[0] === null ? '' : o[0]) + '" aria-pressed="' + (cur === o[0]) + '"><span class="hfilt ' + o[1] + '">' + fglyph(kind, o[1]) + '</span><span>' + o[2] + '</span><b class="fcnt">' + ((FC[kind] || {})[o[0] === null ? '' : o[0]] ?? 0) + '</b></button>').join('');
+    if (kind === 'pay') {   // בנוסף: סינון לפי הסכום ששולם למפגש
+      const am = FC.payAmts || {}, ks = Object.keys(am).map(Number).sort((a, b) => b - a);
+      if (ks.length) m.innerHTML += '<div class="fsep">לפי סכום ששולם</div>' + ks.map((a) => '<button type="button" role="menuitem" class="fopt" data-fv="a' + a + '" aria-pressed="' + (cur === 'a' + a) + '"><span class="hfilt yes">₪</span><span>₪' + nfm(a) + '</span><b class="fcnt">' + am[a] + '</b></button>').join('');
+    }
     m.dataset.kind = kind; m.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = m.offsetWidth;
     m.style.left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8) + 'px'; m.style.top = (r.bottom + 6) + 'px';
