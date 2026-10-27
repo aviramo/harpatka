@@ -1200,11 +1200,16 @@
     .row .nm .name { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
     .hfilt.neu { background: var(--line); border: 1px solid var(--line); color: var(--muted); }   /* ניטרלי (בלי קו חוצה): עוד אין מידע, מפגש עתידי, לא משויכים */
     .fopt .hfilt { font-weight: 800; }
-  .mtier { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 15px; font-weight: 700; color: var(--muted); }
-  .mtier input { width: 64px; height: 40px; box-sizing: border-box; border-radius: 12px; border: 1px solid var(--line); background: #fff; text-align: center; font-size: 16px; font-weight: 700; color: var(--ink); }
-  .mtier .mtp { margin-inline-start: auto; display: flex; align-items: center; gap: 6px; direction: ltr; }
-  .mtier .mtp input { width: 76px; }
-  .mtier .mtdel { width: 30px; height: 30px; border: 0; background: transparent; color: var(--muted); font-size: 20px; cursor: pointer; }
+  .mtiers-hint { margin: 0 2px 8px; font-size: 13px; color: var(--muted); line-height: 1.45; }
+  .mtier { display: grid; grid-template-columns: auto minmax(0, 1fr) 30px; align-items: center; column-gap: 12px; background: var(--cream); border: 1px solid var(--line); border-radius: 16px; padding: 10px 12px; margin-bottom: 8px; }
+  .mtier .mtp { display: flex; align-items: center; gap: 4px; direction: ltr; }
+  .mtier .mtp input { width: 84px; height: 52px; box-sizing: border-box; border-radius: 14px; border: 1px solid var(--line); background: #fff; text-align: center; font-size: 22px; font-weight: 800; color: var(--ink); }
+  .mtier .mtp b { font-size: 20px; color: var(--ink); }
+  .mtier .mtl { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); font-weight: 600; white-space: nowrap; }
+  .mtier .mtl input { width: 54px; height: 36px; box-sizing: border-box; border-radius: 10px; border: 1px solid var(--line); background: #fff; text-align: center; font-size: 16px; font-weight: 700; color: var(--ink); }
+  .mtier .mtr { grid-column: 1 / -1; margin-top: 8px; text-align: center; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 5px 8px; font-size: 14px; color: var(--ink); font-weight: 700; }
+  .mtier .mtr:empty { display: none; }
+  .mtier .mtdel { width: 30px; height: 30px; border: 0; background: transparent; color: var(--muted); font-size: 20px; cursor: pointer; justify-self: center; }
 </style>
 </head>
 <body class="locked">
@@ -1390,6 +1395,7 @@
       <label class="field"><span>מקסימום משתתפים</span><input name="max" type="number" inputmode="numeric" min="1" max="500" step="1" placeholder="ללא הגבלה" /></label>
       <label class="field"><span>הוראות הגעה</span><textarea name="directions" id="mDirs" rows="1" maxlength="800" placeholder="כתובת, חנייה, איך מגיעים"></textarea></label>
       <div class="field"><span>מדרגות מחיר</span>
+        <p class="mtiers-hint">המחיר נקבע לפי מועד ההרשמה. כל מדרגה מתחילה מספר ימים לפני המפגש וחלה עד שמתחילה הבאה אחריה (המדרגה האחרונה עד יום המפגש).</p>
         <div id="mTierList"></div>
         <button type="button" class="btn ghost" id="mTierAdd" style="margin-top:6px">+ מדרגה</button>
       </div>
@@ -3960,11 +3966,29 @@
   /* ---------- חלון מפגש ---------- */
   const mDlg = $('#mDlg'), mForm = $('#mForm');
   let editingMeeting = null, mTiers = [];
-  function renderMTiers() {
-    $('#mTierList').innerHTML = mTiers.map((x, i) => '<div class="mtier" data-i="' + i + '"><span>מ</span><input data-f="days" type="number" inputmode="numeric" min="0" max="365" value="' + x.days + '" aria-label="ימים לפני המפגש" /><span>ימים לפני</span><span class="mtp"><input data-f="price" type="number" inputmode="numeric" min="0" max="9999" value="' + x.price + '" aria-label="מחיר" /><b>₪</b></span>' + (mTiers.length > 1 ? '<button type="button" class="mtdel" data-del="' + i + '" aria-label="מחיקת מדרגה" title="מחיקת מדרגה">×</button>' : '<span style="width:30px"></span>') + '</div>').join('');
+  /* עורך מדרגות המחיר של המפגש: כרטיס לכל מדרגה (מחיר גדול, כמה ימים לפני המפגש היא מתחילה, וטווח התאריכים שמתקבל מתאריך המפגש), מסודר מהמוקדם למאוחר */
+  const isoDay = (s) => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d) / 864e5; };
+  const shortDay = (n) => { const dt = new Date(n * 864e5); return dt.getUTCDate() + '.' + (dt.getUTCMonth() + 1); };
+  function mTierRanges() {
+    const md = mForm.date.value ? isoDay(mForm.date.value) : null, rows = mTiers.slice().sort((a, b) => Number(b.days) - Number(a.days));
+    const out = new Map();
+    rows.forEach((x, k) => {
+      if (md === null || x.days === '' || !Number.isFinite(Number(x.days))) { out.set(x, ''); return; }
+      const start = md - Number(x.days), next = rows[k + 1], end = next && next.days !== '' ? md - Number(next.days) - 1 : md;
+      out.set(x, k === rows.length - 1 ? shortDay(start) + ' עד יום המפגש' : (start > end ? '' : shortDay(start) + ' עד ' + shortDay(end)));
+    });
+    return out;
   }
-  $('#mTierList').addEventListener('input', (e) => { const inp = e.target.closest('input'); if (!inp) return; const x = mTiers[Number(inp.closest('.mtier').dataset.i)]; if (x) x[inp.dataset.f] = inp.value === '' ? '' : Math.max(0, Math.round(Number(inp.value))); });
+  function paintMTierRanges() { const r = mTierRanges(); $('#mTierList').querySelectorAll('.mtier').forEach((el) => { const x = mTiers[Number(el.dataset.i)]; const o = el.querySelector('.mtr'); if (x && o) o.textContent = r.get(x) || ''; }); }
+  function renderMTiers() {
+    mTiers.sort((a, b) => Number(b.days) - Number(a.days));
+    const r = mTierRanges();
+    $('#mTierList').innerHTML = mTiers.map((x, i) => '<div class="mtier" data-i="' + i + '"><span class="mtp"><input data-f="price" type="number" inputmode="numeric" min="0" max="9999" value="' + x.price + '" aria-label="מחיר" /><b>₪</b></span><div class="mtl"><span>מתחיל</span><input data-f="days" type="number" inputmode="numeric" min="0" max="365" value="' + x.days + '" aria-label="ימים לפני המפגש" /><span>ימים לפני</span></div>' + (mTiers.length > 1 ? '<button type="button" class="mtdel" data-del="' + i + '" aria-label="מחיקת מדרגה" title="מחיקת מדרגה">×</button>' : '<span></span>') + '<div class="mtr">' + (r.get(x) || '') + '</div></div>').join('');
+  }
+  $('#mTierList').addEventListener('input', (e) => { const inp = e.target.closest('input'); if (!inp) return; const x = mTiers[Number(inp.closest('.mtier').dataset.i)]; if (x) { x[inp.dataset.f] = inp.value === '' ? '' : Math.max(0, Math.round(Number(inp.value))); paintMTierRanges(); } });
+  $('#mTierList').addEventListener('change', (e) => { if (e.target.closest('input') && e.target.dataset.f === 'days') renderMTiers(); });   // סידור מחדש רק בסיום ההקלדה
   $('#mTierList').addEventListener('click', (e) => { const d = e.target.closest('[data-del]'); if (!d) return; mTiers.splice(Number(d.dataset.del), 1); renderMTiers(); });
+  mForm.date.addEventListener('change', paintMTierRanges);
   $('#mTierAdd').addEventListener('click', () => { const mx = mTiers.reduce((a, x) => (Number(x.days) > Number(a.days) ? x : a), mTiers[0] || { days: 0, price: 100 }); mTiers.push({ days: Number(mx.days) + 7, price: Math.max(0, Number(mx.price) - 10) }); renderMTiers(); });
 
   function openMeeting(id) {
