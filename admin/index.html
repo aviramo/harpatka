@@ -1360,7 +1360,7 @@
       <div class="sheet-head"><button type="button" class="hbtn hback" id="setBack" aria-label="חזרה" title="חזרה" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></button><h2 id="setTitle">הגדרות</h2></div>
       <div id="setMain">
         <div class="setgrp">
-          <label class="setfield"><div class="sethead"><span>שם השולח בהודעות</span><span id="setMail" dir="ltr"></span></div><input class="setinp" id="setSender" maxlength="20" autocomplete="off" aria-label="שם השולח בהודעות" /></label>
+          <label class="setfield"><div class="sethead"><span>השם שלי במערכת</span><span id="setMail" dir="ltr"></span></div><input class="setinp" id="setSender" maxlength="20" autocomplete="off" aria-label="שם השולח בהודעות" /></label>
         </div>
         <div class="setgrp">
           <button type="button" class="setrow setlink" id="setSrcBtn"><svg class="seti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h11M11 7l5 5-5 5M20 5v14"/></svg><div class="setl"><b>דרכי הגעה</b><small id="setSrcHint"></small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
@@ -2453,7 +2453,7 @@
   /* ===== כספים: הוצאות והכנסות שאינן תשלומי משתתפים (חד פעמיות או מחזוריות, כלליות או לפי מפגש) ===== */
   let finV = 'main', finEdit = null;   // finEdit: { type: 'entry' | 'rec', id } בעריכה, או { kind } בהוספה
   const PERIODS = { weekly: 'כל שבוע', monthly: 'כל חודש', yearly: 'כל שנה' };
-  const finName = (e) => noteAuthor(e, String(e || '').split('@')[0]);
+  const finName = (e) => noteAuthor(e);
   const finAdmins = () => [...new Set(ADMINS.concat(state.fin.map((x) => x.by_email), state.finRec.map((x) => x.by_email), state.payMethods.map((x) => x.owner_email)).filter(Boolean))];
   const isoAdd = (iso, period, n) => { const [y, m, d] = iso.split('-').map(Number); const dt = new Date(Date.UTC(y, m - 1, d)); if (period === 'weekly') dt.setUTCDate(dt.getUTCDate() + 7 * n); else if (period === 'monthly') { const day = dt.getUTCDate(); dt.setUTCDate(1); dt.setUTCMonth(dt.getUTCMonth() + n); const last = new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth() + 1, 0)).getUTCDate(); dt.setUTCDate(Math.min(day, last)); } else { const day = dt.getUTCDate(); dt.setUTCDate(1); dt.setUTCFullYear(dt.getUTCFullYear() + n); const last = new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth() + 1, 0)).getUTCDate(); dt.setUTCDate(Math.min(day, last)); } return dt.toISOString().slice(0, 10); };
   const finIn = (d) => state.finPeriod === 'all' || String(d).slice(0, 7) === (state.finPeriod === 'month' ? todayISO().slice(0, 7) : state.finPeriod);
@@ -2553,12 +2553,24 @@
   $('#finKind').addEventListener('click', (e) => { const b = e.target.closest('[data-fk]'); if (!b) return; $('#finForm').dataset.kind = b.dataset.fk; document.querySelectorAll('#finKind [data-fk]').forEach((q) => q.setAttribute('aria-checked', String(q === b))); });
   $('#finArrow').addEventListener('click', () => finView('main'));
   /* יומן הכספים: כתובות מייל מוצגות כשמות ("מאופיר להדר"), כי שני מיילים ולוגיים בתוך טקסט עברי מתהפכים בתצוגה */
-  const finLogText = (s) => String(s || '').replace(/([\w.+-]+@[\w.-]+) ← ([\w.+-]+@[\w.-]+)/g, (m, x, y) => 'מ' + noteAuthor(x) + ' ל' + noteAuthor(y)).replace(/[\w.+-]+@[\w.-]+/g, (x) => noteAuthor(x));
+  const FIN_LABS = ['תאריך התחלה', 'תאריך סיום', 'שיוך למפגש', 'סכום', 'תיאור', 'תאריך', 'חזרתיות', 'פעיל', 'סוג', 'דרך', 'מאת', 'אל'];
+  const finLogText = (s) => {
+    const nm = (x) => String(x).replace(/[\w.+-]+@[\w.-]+/g, (e) => noteAuthor(e));
+    const m = String(s || '').match(/^(עודכנ[הת] [^"]*"[^"]*"): (.*)$/);
+    if (!m) return nm(s);   // הוספה, מחיקה והעברה: אותו טקסט, עם שמות במקום מיילים
+    const parts = m[2].split(', ').map((q) => {
+      const lab = FIN_LABS.find((l) => q.startsWith(l + ' ')); const r = lab ? q.slice(lab.length + 1) : q, ar = r.split(' ← ');
+      if (!lab || ar.length !== 2) return nm(q);
+      const mail = /@/.test(r);
+      return (lab === 'דרך' ? 'שולם דרך' : lab) + ': ' + (mail ? 'מ' + nm(ar[0]) + ' ל' + nm(ar[1]) : 'מ-' + nm(ar[0]) + ' ל-' + nm(ar[1]));
+    });
+    return m[1] + ' · ' + parts.join(' · ');
+  };
   async function openFinLog() {
     finView('log'); const box = $('#finLog'); box.innerHTML = '<p class="mnone">טוען…</p>';
     try {
       const rows = await api(T.finlog + '?select=*&order=at.desc&limit=300');
-      box.innerHTML = rows.length ? rows.map((x) => '<div class="logrow ' + (x.action === 'delete' ? 'del' : x.action === 'insert' ? 'add' : '') + '"><b>' + esc(finLogText(x.summary)) + '</b><span>' + fmtDT(x.at) + ' · ' + esc(noteAuthor(x.actor, x.actor && x.actor.includes('@') ? x.actor.split('@')[0] : x.actor)) + '</span></div>').join('') : '<p class="mnone">עוד אין שינויים ביומן. מעכשיו כל הוספה, עדכון ומחיקה של הוצאה או הכנסה נרשמים כאן.</p>';
+      box.innerHTML = rows.length ? rows.map((x) => '<div class="logrow ' + (x.action === 'delete' ? 'del' : x.action === 'insert' ? 'add' : '') + '"><b>' + esc(finLogText(x.summary)) + '</b><span>' + fmtDT(x.at) + ' · ' + esc(noteAuthor(x.actor)) + '</span></div>').join('') : '<p class="mnone">עוד אין שינויים ביומן. מעכשיו כל הוספה, עדכון ומחיקה של הוצאה או הכנסה נרשמים כאן.</p>';
     } catch (err) { box.innerHTML = '<p class="mnone">לא הצלחנו לטעון את היומן</p>'; fail(err); }
   }
   $('#finLogBtn').addEventListener('click', openFinLog);
@@ -3092,10 +3104,11 @@
   const dm = (m) => { const [, mo, d] = m.meeting_date.split('-').map(Number); return d + '.' + mo; };
   const senderName = () => ((state.prefs[emailOf()] || {}).sender_name || '').trim() || SENDERS[emailOf()] || authorName();
   /* שם הכותב מוצג לפי השם שהוגדר בהגדרות ("שם השולח בהודעות") של אותו מנהל, ולא לפי שם חשבון הגוגל שנשמר בהערה */
-  const noteAuthor = (email, name) => { const e = String(email || '').toLowerCase(), pr = ((state.prefs[e] || {}).sender_name || '').trim(); return pr || SENDERS[e] || name || 'לא ידוע'; };
+  /* שם מנהל בכל המערכת: תמיד לפי מה שהוגדר בהגדרות ("השם שלי"), אחרת השם הקבוע; לעולם לא אימייל ולא שם חשבון הגוגל. בלי אימייל בכלל (הערות מערכת, הרשמה מהאתר): השם שנשמר ("מערכת") */
+  const noteAuthor = (email, name) => { const e = String(email || '').toLowerCase(), pr = ((state.prefs[e] || {}).sender_name || '').trim(); if (pr || SENDERS[e]) return pr || SENDERS[e]; return e ? 'מנהל' : (name || 'מערכת'); };
   /* תאריך ושעה בתוך הערה (25.10 · 20:00) מוצגים כיחידה אחת משמאל לימין, כדי שהסדר לא יתהפך בתוך משפט בעברית */
   const noteTextHtml = (s) => esc(s).replace(/(\d{1,2}\.\d{1,2}(?:\.\d{2,4})?(?:\s*·\s*\d{1,2}:\d{2})?|\d{1,2}:\d{2})/g, '<bdi dir="ltr">$1</bdi>');
-  const authorName = () => SENDERS[emailOf()] || emailOf().split('@')[0] || 'לא ידוע';
+  const authorName = () => SENDERS[emailOf()] || 'מנהל';
 
   /* לשונית "התקשרות": וואטסאפ וחיוג (רק פותחים שיחה/מחייגים), ומתחתיהם ההערות */
   let copyTexts = [];
@@ -4059,7 +4072,7 @@
   /* הגדרות: חשבון, שם השולח ומצב הגעה פתוח (לבדיקות, זמני ללשונית) */
   function renderSettings() {
     const em = emailOf();
-    $('#setMail').textContent = em;
+    $('#setMail').textContent = '';   // בלי אימייל בממשק: המנהל מזוהה בשם שהגדיר
     { const si = $('#setSender'); if (document.activeElement !== si) si.value = senderName(); }
     renderAttOpts(); $('#setPayHint').textContent = tierSummary(); $('#setSrcHint').textContent = state.promoters.length + ' דרכי הגעה'; $('#setPmHint').textContent = state.payMethods.map((x) => x.name).join(' · ');
   }
