@@ -1209,6 +1209,7 @@
     .hfilt.neu { background: var(--line); border: 1px solid var(--line); color: var(--muted); }   /* ניטרלי (בלי קו חוצה): עוד אין מידע, מפגש עתידי, לא משויכים */
     .fopt .hfilt { font-weight: 800; }
   .mimg { display: flex; flex-direction: column; gap: 8px; }
+  #setMImgPrev { display: block; width: 100%; aspect-ratio: 4 / 1; object-fit: cover; border-radius: 14px; border: 1px solid var(--line); margin: 0 0 8px; }
   #mImgPrev { display: block; width: 100%; aspect-ratio: 4 / 1; object-fit: cover; margin: -2px 0 12px;   /* אותו יחס וחיתוך כמו בעמוד הבית */ border-radius: 14px; border: 1px solid var(--line); background: #fff; }
   .mimgbtns { display: flex; gap: 8px; }
   .mimgpick, .mimgbtns button { flex: 1 1 0; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: #fff; color: var(--terra); font-weight: 700; font-size: 14px; display: grid; place-items: center; cursor: pointer; }
@@ -1462,6 +1463,11 @@
         <div class="setgrp">
           <label class="setfield"><div class="sethead"><span>השם שלי במערכת</span><span id="setMail" dir="ltr"></span></div><input class="setinp" id="setSender" maxlength="20" autocomplete="off" aria-label="שם השולח בהודעות" /></label>
           <label class="setfield"><div class="sethead"><span>שם ברירת מחדל למפגש</span></div><input class="setinp" id="setMName" maxlength="80" autocomplete="off" aria-label="שם ברירת מחדל למפגש חדש" /></label>
+          <div class="setfield"><div class="sethead"><span>תמונת ברירת מחדל למפגש</span></div>
+            <img id="setMImgPrev" alt="" hidden />
+            <div class="mimgbtns"><label class="mimgpick" for="setMImgFile">בחירת תמונה</label><button type="button" id="setMImgDel" hidden>הסרה</button></div>
+            <input type="file" id="setMImgFile" accept="image/jpeg,image/png,image/webp" hidden />
+          </div>
         </div>
         <div class="setgrp">
           <button type="button" class="setrow setlink" id="setSrcBtn"><svg class="seti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h11M11 7l5 5-5 5M20 5v14"/></svg><div class="setl"><b>דרכי הגעה</b><small id="setSrcHint"></small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
@@ -3248,6 +3254,7 @@
   const PAYBOX = 'https://links.payboxapp.com/zwi4JG24Y6b';
   const HE_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
   const dm = (m) => { const [, mo, d] = m.meeting_date.split('-').map(Number); return d + '.' + mo; };
+  const defMeetingImage = () => String((state.pubSettings || {}).default_meeting_image || '').trim();
   const defMeetingName = () => String((state.pubSettings || {}).default_meeting_name || '').trim();
   const senderName = () => ((state.prefs[emailOf()] || {}).sender_name || '').trim() || SENDERS[emailOf()] || authorName();
   /* שם הכותב מוצג לפי השם שהוגדר בהגדרות ("שם השולח בהודעות") של אותו מנהל, ולא לפי שם חשבון הגוגל שנשמר בהערה */
@@ -3720,7 +3727,9 @@
     const vv = window.visualViewport;
     if (vv) {
       const fit = () => {
-        const kb = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+        /* בלי שדה בפוקוס אין מקלדת: מאפסים גם אם אירוע הסגירה של המקלדת לא הגיע (אחרת הפופאפ נשאר מכווץ) */
+        const ae = document.activeElement, typing = ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) && ae.type !== 'file';
+        const kb = typing ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0;
         document.querySelectorAll('dialog[open]').forEach((d) => {
           const full = ['pDlg', 'setDlg', 'stDlg', 'prDlg', 'finDlg'].includes(d.id);   // פופאפים בגובה מלא: ממלאים בדיוק את האזור שמעל המקלדת, בלי רווח למעלה
           if (kb > 80) { d.style.marginBottom = kb + 'px'; d.style.maxHeight = Math.round(vv.height - (full ? 0 : 12)) + 'px'; if (full) d.style.height = Math.round(vv.height) + 'px'; }
@@ -3728,6 +3737,8 @@
         });
       };
       vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit);
+      window.addEventListener('resize', fit); document.addEventListener('focusout', () => setTimeout(fit, 250)); document.addEventListener('focusin', () => setTimeout(fit, 250));
+      new MutationObserver(() => fit()).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['open'] });   // פתיחת פופאפ: מחשבים מחדש
     }
     document.querySelectorAll('dialog').forEach((d) => {
       const g = document.createElement('div'); g.className = 'grab'; g.innerHTML = '<i></i>'; g.setAttribute('aria-hidden', 'true');
@@ -4000,7 +4011,8 @@
   let mImg = { url: null, blob: null, objUrl: null };
   function paintMImg() {
     const src = mImg.objUrl || mImg.url || '';
-    $('#mImgPrev').hidden = !src; if (src) $('#mImgPrev').src = src; $('#mImgDel').hidden = !src;
+    const shown = src || defMeetingImage();   // בלי תמונה למפגש: מוצגת תמונת ברירת המחדל (עמומה), כי זו שתוצג בעמוד הבית
+    $('#mImgPrev').hidden = !shown; if (shown) $('#mImgPrev').src = shown; $('#mImgPrev').style.opacity = src ? '' : '.55'; $('#mImgDel').hidden = !src;
   }
   /* דחיסה בדפדפן: עד 1400px בצד הארוך, JPEG איכות 0.82 */
   function compressImage(file) {
@@ -4066,7 +4078,7 @@
     mForm.max.value = src.max_participants == null ? (m || prev ? '' : '40') : src.max_participants;
     mTiers = tiersOf(src); renderMTiers();
     if (mImg.objUrl) URL.revokeObjectURL(mImg.objUrl);
-    mImg = { url: src.image_url || null, blob: null, objUrl: null }; paintMImg();   // תמונה: מועתקת למפגש חדש מהקודם   // מפגש חדש: מדרגות המחיר מועתקות מהמפגש הקודם
+    mImg = { url: m ? (m.image_url || null) : (defMeetingImage() || src.image_url || null), blob: null, objUrl: null }; paintMImg();   // מפגש חדש: תמונת ברירת המחדל מההגדרות, אחרת התמונה מהמפגש הקודם   // תמונה: מועתקת למפגש חדש מהקודם   // מפגש חדש: מדרגות המחיר מועתקות מהמפגש הקודם
     $('#mTitle').textContent = m ? 'עריכת מפגש' : 'מפגש חדש';
     $('#mSubmit').textContent = m ? 'שמירה' : 'יצירת מפגש';
     $('#mDelete').hidden = !m;
@@ -4345,9 +4357,23 @@
   function renderSettings() {
     const em = emailOf();
     $('#setMail').textContent = '';   // בלי אימייל בממשק: המנהל מזוהה בשם שהגדיר
-    { const si = $('#setSender'); if (document.activeElement !== si) si.value = senderName(); const mi = $('#setMName'); if (document.activeElement !== mi) mi.value = defMeetingName(); }
+    { const si = $('#setSender'); if (document.activeElement !== si) si.value = senderName(); const mi = $('#setMName'); if (document.activeElement !== mi) mi.value = defMeetingName(); paintSetMImg(); }
     renderAttOpts(); $('#setSrcHint').textContent = state.promoters.length + ' דרכי הגעה'; $('#setPmHint').textContent = state.payMethods.map((x) => x.name).join(' · ');
   }
+  /* תמונת ברירת מחדל למפגש (הגדרה אחת לכל המערכת, כמו שם ברירת המחדל): מוצגת בעמוד הבית למפגש בלי תמונה ומוצעת בעריכת מפגש */
+  function paintSetMImg() { const s = defMeetingImage(); $('#setMImgPrev').hidden = !s; if (s) $('#setMImgPrev').src = s; $('#setMImgDel').hidden = !s; }
+  async function saveDefImage(url) {
+    const prev = state.pubSettings.default_meeting_image;
+    state.pubSettings.default_meeting_image = url || '';
+    try { await api(T.ps, { method: 'POST', body: { key: 'default_meeting_image', value: url || null, updated_at: new Date().toISOString() }, prefer: 'resolution=merge-duplicates,return=minimal' }); toast(url ? 'תמונת ברירת המחדל עודכנה' : 'תמונת ברירת המחדל נמחקה'); }
+    catch (err) { state.pubSettings.default_meeting_image = prev || ''; fail(err); }
+    paintSetMImg();
+  }
+  $('#setMImgFile').addEventListener('change', async (e) => {
+    const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
+    try { const b = await compressImage(f); await saveDefImage(await uploadMeetingImage(b)); } catch (err) { toast(err.message || 'העלאת התמונה נכשלה'); }
+  });
+  $('#setMImgDel').addEventListener('click', () => saveDefImage(null));
   /* שם ברירת מחדל למפגש (הגדרה אחת לכל המערכת, בטבלת harpatka_public_settings): מוצע ביצירת מפגש חדש ומוצג בעמוד הבית למפגש בלי שם */
   $('#setMName').addEventListener('change', async () => {
     const v = $('#setMName').value.trim().slice(0, 80), prev = state.pubSettings.default_meeting_name;
