@@ -451,6 +451,9 @@
     .finsum .cred { background: var(--yellow-bg); }
     .finsum .net.wide { grid-column: 1 / -1; }
     .finsum .net .fsub { color: rgba(255,253,249,.75); }
+    .finsum .net b.cpos, .finsum .net i.cpos { color: var(--green-bg); }   /* על הכרטיס הכהה: גוון בהיר של ירוק ואדום, בלי פלוס ומינוס */
+    .finsum .net b.cneg, .finsum .net i.cneg { color: var(--red-bg); }
+    .finsum .net i { font-style: normal; font-weight: 800; }
     .finsum .cred small { color: var(--yellow); }
     .finsum .cred b { color: var(--yellow); }
     .finowed { grid-column: 1 / -1; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.45; padding: 0 4px; }
@@ -469,6 +472,8 @@
     #finSettle .fsc h4 { margin: 0 0 6px; font-size: 17px; font-weight: 800; }
     #finSettle .fsl { display: flex; justify-content: space-between; gap: 8px; font-size: 14.5px; padding: 2px 0; color: var(--muted); }
     #finSettle .fsl b { color: var(--ink); font-weight: 700; }
+    #finSettle .fsnote b.cpos { color: var(--green); }
+    #finSettle .fsnote b.cneg { color: var(--red); }
     #finSettle .fsl b.cpos { color: var(--green); }
     #finSettle .fsl b.cneg { color: var(--red); }
     #finSettle .fsl.hd { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 6px; color: var(--ink); font-weight: 800; }
@@ -2426,8 +2431,8 @@
   }
   function renderFinance() {
     document.querySelectorAll('#finPer [data-fp]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.fp === state.finPeriod)));
-    const rows = finRows(), inc = rows.filter((x) => x.kind === 'income').reduce((s, x) => s + x.amount, 0), exp = rows.filter((x) => x.kind === 'expense').reduce((s, x) => s + x.amount, 0), part = finPartIncome(), expCh = rows.filter((x) => x.channel).reduce((s, x) => s + x.amount, 0), credHolders = [...new Set(state.payments.map((x) => x.participant_id))].map((id) => ({ id, c: Math.round(creditOf(id) * 100) / 100 })).filter((x) => x.c > 0), cred = credHolders.reduce((s, x) => s + x.c, 0), owed = state.promoters.reduce((s, x) => s + Math.max(0, ledgerOf(x.id).balance), 0);
-    $('#finSum').innerHTML = '<div class="in"><small>הכנסות ממשתתפים</small><b>₪' + nfm(part) + '</b></div><div class="out" data-ff="expense" role="button" tabindex="0" aria-pressed="' + (state.finFilter === 'expense') + '"><small>הוצאות</small><b>₪' + nfm(exp) + '</b>' + (expCh ? '<small class="fsub">מתוכן דרכי הגעה ₪' + nfm(expCh) + '</small>' : '') + '</div><div class="in" data-ff="income" role="button" tabindex="0" aria-pressed="' + (state.finFilter === 'income') + '"><small>הכנסות אחרות</small><b>₪' + nfm(inc) + '</b></div>' + (cred > 0 ? '<div class="cred"><small>קרדיט שמור למשתתפים</small><b>₪' + nfm(cred) + '</b><small class="fsub">' + credHolders.length + ' משתתפים · כסף שנכנס וטרם נוצל</small></div><div class="net wide"><small>נטו</small><b>₪' + nfm(part + inc - exp) + '</b><small class="fsub">נטו אחרי קרדיט שמור: ₪' + nfm(part + inc - exp - cred) + '</small></div>' : '<div class="net"><small>נטו</small><b>₪' + nfm(part + inc - exp) + '</b></div>') + (owed > 0 ? '<p class="finowed">עלויות דרכי הגעה שנצברו ועוד לא שולמו: ₪' + nfm(owed) + ' (לא נכללות בהוצאות עד התשלום)</p>' : '');
+    const sg = (v) => Math.round(v) > 0 ? 'cpos' : Math.round(v) < 0 ? 'cneg' : '', ab = (v) => '₪' + nfm(Math.abs(v)); const rows = finRows(), inc = rows.filter((x) => x.kind === 'income').reduce((s, x) => s + x.amount, 0), exp = rows.filter((x) => x.kind === 'expense').reduce((s, x) => s + x.amount, 0), part = finPartIncome(), expCh = rows.filter((x) => x.channel).reduce((s, x) => s + x.amount, 0), credHolders = [...new Set(state.payments.map((x) => x.participant_id))].map((id) => ({ id, c: Math.round(creditOf(id) * 100) / 100 })).filter((x) => x.c > 0), cred = credHolders.reduce((s, x) => s + x.c, 0), owed = state.promoters.reduce((s, x) => s + Math.max(0, ledgerOf(x.id).balance), 0);
+    $('#finSum').innerHTML = '<div class="in"><small>הכנסות ממשתתפים</small><b>₪' + nfm(part) + '</b></div><div class="out" data-ff="expense" role="button" tabindex="0" aria-pressed="' + (state.finFilter === 'expense') + '"><small>הוצאות</small><b>₪' + nfm(exp) + '</b>' + (expCh ? '<small class="fsub">מתוכן דרכי הגעה ₪' + nfm(expCh) + '</small>' : '') + '</div><div class="in" data-ff="income" role="button" tabindex="0" aria-pressed="' + (state.finFilter === 'income') + '"><small>הכנסות אחרות</small><b>₪' + nfm(inc) + '</b></div>' + (cred > 0 ? '<div class="cred"><small>קרדיט שמור למשתתפים</small><b>₪' + nfm(cred) + '</b><small class="fsub">' + credHolders.length + ' משתתפים · כסף שנכנס וטרם נוצל</small></div><div class="net wide"><small>נטו</small><b class="' + sg(part + inc - exp) + '">' + ab(part + inc - exp) + '</b><small class="fsub">נטו אחרי קרדיט שמור: <i class="' + sg(part + inc - exp - cred) + '">' + ab(part + inc - exp - cred) + '</i></small></div>' : '<div class="net"><small>נטו</small><b class="' + sg(part + inc - exp) + '">' + ab(part + inc - exp) + '</b></div>') + (owed > 0 ? '<p class="finowed">עלויות דרכי הגעה שנצברו ועוד לא שולמו: ₪' + nfm(owed) + ' (לא נכללות בהוצאות עד התשלום)</p>' : '');
     $('#finRecLbl').hidden = !state.finRec.length;
     $('#finRec').innerHTML = state.finRec.map((r) => '<button type="button" class="finrow' + (r.active ? '' : ' off') + '" data-frec="' + r.id + '"><span class="ft"><b>' + esc(r.title) + '</b><span>' + PERIODS[r.period] + ' · מ-' + finDmy(r.start_date) + (r.end_date ? ' עד ' + finDmy(r.end_date) : '') + (r.active ? '' : ' · מושהה') + '</span></span><span class="fa ' + (r.kind === 'income' ? 'in' : 'out') + '">₪' + nfm(Number(r.amount)) + '</span></button>').join('');
     const shown = state.finFilter ? rows.filter((x) => x.kind === state.finFilter) : rows;
@@ -2481,7 +2486,7 @@
       '<div class="fsl hd"><span>בידיו כרגע</span>' + cb(a.held) + '</div></div>'; }).join('') +
       '<div class="fsc"><div class="fsl"><span>סך הכל נטו (כולל כל המנהלים)</span>' + cb(S.total) + '</div><div class="fsl hd"><span>חלק של כל מנהל (חלוקה שווה)</span>' + cb(S.share) + '</div></div>' +
       (S.sug.length ? S.sug.map((s) => '<div class="fsug">' + esc(finName(s.from)) + ' מעביר ל' + esc(finName(s.to)) + ' ' + n(s.amount) + '<button type="button" data-ftr="' + esc(s.from) + '|' + esc(s.to) + '|' + s.amount + '">סימון שההעברה בוצעה</button></div>').join('') : '<div class="fsug ok">הכול מסולק ✓</div>') +
-      ((S.un.part || S.un.fin) ? '<p class="fsnote">לא נכללו בחלוקה: ' + (S.un.part ? n(S.un.part) + ' מתשלומי משתתפים בדרכי תשלום ובהחזרים בלי "הקופה של" (להגדרה: הגדרות ← דרכי תשלום)' : '') + (S.un.part && S.un.fin ? ', ' : '') + (S.un.fin ? n(S.un.fin) + ' מתנועות כספים בלי מנהל' : '') + '.</p>' : '') +
+      ((S.un.part || S.un.fin) ? '<p class="fsnote">לא נכללו בחלוקה: ' + (S.un.part ? cb(S.un.part) + ' מתשלומי משתתפים בדרכי תשלום ובהחזרים בלי "הקופה של" (להגדרה: הגדרות ← דרכי תשלום)' : '') + (S.un.part && S.un.fin ? ', ' : '') + (S.un.fin ? cb(S.un.fin) + ' מתנועות כספים בלי מנהל' : '') + '.</p>' : '') +
       (S.un.chan ? '<p class="fsnote">' + S.un.chan + ' תשלומים לדרכי הגעה בלי מנהל לא נכללו בהתחשבנות.</p>' : '') +
       (state.finTr.length ? '<div class="clabel">העברות שנרשמו</div>' + state.finTr.map((x) => '<div class="finrow"><span class="ft"><b>' + esc(finName(x.from_email)) + ' ← ' + esc(finName(x.to_email)) + '</b><span>' + finDmy(x.transfer_date) + '</span></span><span class="fa">' + n(Number(x.amount)) + '</span><button type="button" class="stdel" data-ftdel="' + x.id + '" aria-label="מחיקה" title="מחיקה (לחיצה כפולה)">×</button></div>').join('') : '');
   }
