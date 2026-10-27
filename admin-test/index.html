@@ -2058,7 +2058,7 @@
   const noPayOf = (p, l) => !!(l && l.no_pay);   // "לא משלם" הוא עניין של מפגש בלבד (מתג במסך התשלום של המפגש)
   const payStateOf = (p) => noPayOf(p, linkOf(p.id, state.filter)) ? 'n' : (allocatedOf(p.id, state.filter) > 0) ? '1' : '0';   // שולם / לא שולם / לא משלם (מסומן במשתתף)
   /* שליחת פרטי הערב: רק בתוך מפגש, ביום המפגש (לפי ההגדרה) ולפני שנפתחת ההגעה; רק למי שזכאי (שילם / חינם / ישלם) */
-  const evOnFor = (m) => !!(m && !attendOpen(m) && nowIL() >= evOpenAt(m));
+  const evOnFor = (m) => !!(m && (evOpenPref() === 'always' || !attendOpen(m)) && nowIL() >= evOpenAt(m));
   const effSent = () => (state.q.trim() || !state.filter || !evOnFor(state.meetings.find((x) => x.id === state.filter))) ? null : state.sent;
   /* מצב יתרה (רק בתצוגת הכל): זכאי (יש יתרה לטובתו), חייב (יתרת חובה), מאוזן */
   const balState = (p) => { const b = Math.round(creditOf(p.id) * 100) / 100; return b > 0 ? '1' : b < 0 ? '0' : 'n'; };
@@ -3082,7 +3082,7 @@
   const evOpenPref = () => { const v = (state.prefs[emailOf()] || {}).event_open; return EV_OPEN_OPTS.some((o) => o[0] === v) ? v : '09'; };
   const evOpenAt = (m) => { const [y, mo, d] = m.meeting_date.split('-').map(Number), [h, mi] = String(m.meeting_time).split(':').map(Number), v = evOpenPref(); if (v === 'always') return -Infinity; return v === 'day' ? Date.UTC(y, mo - 1, d, 0, 0) : v.length === 2 && Number(v) <= 23 && v[0] === '0' || v === '12' ? Date.UTC(y, mo - 1, d, Number(v), 0) : Date.UTC(y, mo - 1, d, h, mi) - Number(v) * 60000; };
   const evCircle = (p) => {
-    const m = eventMeeting(); if (!m || attendOpen(m)) return '';
+    const m = eventMeeting(); if (!m || (attendOpen(m) && evOpenPref() !== 'always')) return '';   // "תמיד" בהודעה לפני המפגש: הכפתור נשאר גם כשסימון ההגעה פתוח
     if (nowIL() < evOpenAt(m)) return '';   // מופיע מהרגע שהוגדר בהגדרות ← הודעה לפני המפגש (ברירת מחדל 9:00 בבוקר של יום המפגש)
     const l = evLink(p); if (!l || (!FORCE_EVENT_BTN && evAllSent(m) && !state.sent)) return '';
     if (l.details_sent_at) return '<button type="button" class="evc sent" data-evun="' + p.id + '" title="פרטי הערב נשלחו (לחיצה מחזירה ללא נשלח)" aria-label="פרטי הערב נשלחו, לחיצה מחזירה ללא נשלח">' + PIN_ICON + '</button>';
