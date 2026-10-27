@@ -2200,7 +2200,7 @@
   const freeAll = (p) => { const ls = linksOf(p.id); return ls.length > 0 && ls.every((l) => noPayOf(p, l)); };
   const balMatch = (p, v) => v === 'f' ? freeAll(p) : balState(p) === v;
   const effBal = () => (state.q.trim() || state.filter || !state.showPay) ? null : state.bal;
-  const balOk = (p) => { const b = effBal(); return !b || balMatch(p, b); };
+  const balOk = (p) => { const b = effBal(); return (!b || balMatch(p, b)) && attSumOk(p); };   // סינון ההתמדה נכלל גם בספירות הצ'יפים (הכל / ז / נ) ובשאר הסינונים
   /* סינון חכם לפי דפוס הגעה (תמונת מצב כללית): התמדה (ירוק/צהוב/אדום לפי הממוצע, כמו צבע הצ'יפ "הגיע X/Y"), הגיעו לכל המפגשים, אף פעם לא הגיעו, רשומים למפגש עתידי */
   /* [מפתח, תווית, צבע (g ירוק / y צהוב / r אדום / n ניטרלי), צורה]: רמות ההתמדה בצורת עמודות בצבע שלהן; "הגיעו לכל" ✓ ירוק; "נרשמו ולא הגיעו" ✕ אדום; מפגש עתידי ויומן; לא משויכים ∅ (ניטרלי) */
   const ATT_OPTS_F = [['g', 'התמדה טובה', 'g', 'bars'], ['y', 'התמדה בינונית', 'y', 'bars'], ['r', 'התמדה נמוכה', 'r', 'bars'], ['n', 'עוד אין מידע', 'n', 'bars'], ['all', 'הגיעו לכל המפגשים', 'g', 'ok'], ['never', 'נרשמו ולא הגיעו אף פעם', 'r', 'no'], ['fut', 'רשומים למפגש עתידי', 'n', 'cal'], ['nolink', 'לא משויכים לאף מפגש', 'n', 'none']];
