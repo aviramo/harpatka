@@ -2552,11 +2552,13 @@
   });
   $('#finKind').addEventListener('click', (e) => { const b = e.target.closest('[data-fk]'); if (!b) return; $('#finForm').dataset.kind = b.dataset.fk; document.querySelectorAll('#finKind [data-fk]').forEach((q) => q.setAttribute('aria-checked', String(q === b))); });
   $('#finArrow').addEventListener('click', () => finView('main'));
+  /* יומן הכספים: כתובות מייל מוצגות כשמות ("מאופיר להדר"), כי שני מיילים ולוגיים בתוך טקסט עברי מתהפכים בתצוגה */
+  const finLogText = (s) => String(s || '').replace(/([\w.+-]+@[\w.-]+) ← ([\w.+-]+@[\w.-]+)/g, (m, x, y) => 'מ' + noteAuthor(x) + ' ל' + noteAuthor(y)).replace(/[\w.+-]+@[\w.-]+/g, (x) => noteAuthor(x));
   async function openFinLog() {
     finView('log'); const box = $('#finLog'); box.innerHTML = '<p class="mnone">טוען…</p>';
     try {
       const rows = await api(T.finlog + '?select=*&order=at.desc&limit=300');
-      box.innerHTML = rows.length ? rows.map((x) => '<div class="logrow ' + (x.action === 'delete' ? 'del' : x.action === 'insert' ? 'add' : '') + '"><b>' + esc(x.summary) + '</b><span>' + fmtDT(x.at) + ' · ' + esc(noteAuthor(x.actor, x.actor && x.actor.includes('@') ? x.actor.split('@')[0] : x.actor)) + '</span></div>').join('') : '<p class="mnone">עוד אין שינויים ביומן. מעכשיו כל הוספה, עדכון ומחיקה של הוצאה או הכנסה נרשמים כאן.</p>';
+      box.innerHTML = rows.length ? rows.map((x) => '<div class="logrow ' + (x.action === 'delete' ? 'del' : x.action === 'insert' ? 'add' : '') + '"><b>' + esc(finLogText(x.summary)) + '</b><span>' + fmtDT(x.at) + ' · ' + esc(noteAuthor(x.actor, x.actor && x.actor.includes('@') ? x.actor.split('@')[0] : x.actor)) + '</span></div>').join('') : '<p class="mnone">עוד אין שינויים ביומן. מעכשיו כל הוספה, עדכון ומחיקה של הוצאה או הכנסה נרשמים כאן.</p>';
     } catch (err) { box.innerHTML = '<p class="mnone">לא הצלחנו לטעון את היומן</p>'; fail(err); }
   }
   $('#finLogBtn').addEventListener('click', openFinLog);
