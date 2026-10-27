@@ -23,8 +23,9 @@ def run(*a, cwd=None):
 def build_test_admin():
     """דף הניהול של הבדיקות, נגזר מ-admin/index.html: סכמת test בבקשות וב-realtime, פס "סביבת בדיקות", כותרת וקיזוז גובה."""
     t = (ROOT / 'admin' / 'index.html').read_text(encoding='utf-8').replace('\r\n', '\n')
-    testbar_css = ("    #testBadge { inset: auto; margin: 0; border: 0; overflow: visible; position: fixed; top: 2px; left: 50%; transform: translateX(-50%); background: rgba(201,111,82,.5); color: #fff; font: 700 9px/1 Arial, sans-serif; padding: 3px 8px; border-radius: 999px; pointer-events: none; }\n")
-    testbar_div = '  <div id="testBadge" popover="manual">בדיקות</div>\n'
+    testbar_css = ("    #testBadge { inset: auto; margin: 0; border: 0; position: fixed; top: 0; left: 0; right: 0; width: auto; height: 18px; padding: 0; overflow: hidden; background: #C96F52; color: #fff; font: 700 11px/18px Arial, sans-serif; text-align: center; pointer-events: none; }\n"
+                   "    dialog[open] { max-height: calc(100dvh - 18px) !important; }\n")
+    testbar_div = '  <div id="testBadge" popover="manual">סביבת בדיקות · נתונים נפרדים מהאמיתיים</div>\n'
 
     def rep(old, new):
         nonlocal t
@@ -33,6 +34,8 @@ def build_test_admin():
         t = t.replace(old, new)
 
     rep('<title>משתתפים · יוצאים להרפתקה</title>', '<title>בדיקות · משתתפים</title>')
+    rep('height: 100vh; height: 100dvh; margin-top: 0;',
+        'height: calc(100vh - 18px); height: calc(100dvh - 18px); margin-top: 18px;')
     rep('  <style>\n', '  <style>\n' + testbar_css)
     body_start = t.index('<body')
     end = t.index('>\n', body_start) + 2

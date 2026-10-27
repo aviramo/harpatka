@@ -22,12 +22,16 @@
   /* התגית בשכבה העליונה של הדפדפן (popover): מעל הכל, גם מעל פופאפים (dialog); כשנפתח dialog היא מורמת מחדש */
   function raise(el) { try { el.hidePopover(); el.showPopover(); } catch (x) {} }
   function badge() {
-    if (document.getElementById('testEnvBadge') || document.getElementById('testBar')) return;
+    if (document.getElementById('testEnvBadge')) return;
+    /* פס בדיקות לרוחב כל המסך (18px, אטום) בראש הדף, וכל המסכים מתחילים מתחתיו: הדף נדחף למטה, ופופאפים מוגבלים בגובה; הפס עצמו בשכבה העליונה כדי שיוצג תמיד */
+    var st = document.createElement('style');
+    st.textContent = 'html{margin-top:18px;transform:translateZ(0)}dialog[open]{max-height:calc(100dvh - 18px)!important}';
+    document.head.appendChild(st);
     var d = document.createElement('div');
     d.id = 'testEnvBadge';
     d.setAttribute('popover', 'manual');
-    d.textContent = 'בדיקות';
-    d.setAttribute('style', 'inset:auto;margin:0;border:0;position:fixed;top:2px;left:50%;transform:translateX(-50%);background:#C96F52;color:#fff;font:700 9px/1 Arial,sans-serif;padding:3px 8px;border-radius:999px;pointer-events:none;opacity:.5;overflow:visible');
+    d.textContent = 'סביבת בדיקות · נתונים נפרדים מהאמיתיים';
+    d.setAttribute('style', 'inset:auto;margin:0;border:0;position:fixed;top:0;left:0;right:0;width:auto;height:18px;padding:0;overflow:hidden;background:#C96F52;color:#fff;font:700 11px/18px Arial,sans-serif;text-align:center;pointer-events:none');
     document.body.appendChild(d);
     raise(d);
     new MutationObserver(function (m) { if (m.some(function (r) { return r.target.nodeName === 'DIALOG'; })) raise(d); }).observe(document.documentElement, { subtree: true, attributes: true, attributeFilter: ['open'] });
