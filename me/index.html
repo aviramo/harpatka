@@ -149,6 +149,7 @@
         h += '<div style="margin-top:10px"><span class="chip ok">נרשמתם ✓</span> ' + (free ? '<span class="chip sky">חינם</span>' : paid ? '<span class="chip ok">שולם ' + ils(nxM.paid) + '</span>' : '<span class="chip no">טרם שולם</span>') + '</div>';
         if (!paid && !free && CFG.payboxLink) h += '<a class="btn" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">תשלום ' + (nx.price ? ils(nx.price) : '') + ' בפייבוקס</a><p class="muted" style="margin:8px 0 0">המקום נשמר אחרי התשלום</p>';
       }
+      if (reg && !(nxM && nxM.attended)) h += '<button type="button" class="btn ghost" id="unregBtn">ביטול רישום</button><div class="msg" id="um"></div>';
       h += '</div>';
     } else h += '<div class="card"><h2>המפגש הבא</h2><p class="muted" style="margin:0">עוד לא נקבע מפגש קרוב. נעדכן בקבוצת העדכונים</p>' + (CFG.updatesGroupLink ? '<a class="btn ghost" href="' + esc(CFG.updatesGroupLink) + '" target="_blank" rel="noopener">הצטרפות לקבוצת העדכונים</a>' : '') + '</div>';
 
@@ -169,6 +170,16 @@
       rb.disabled = true;
       try { const r = await rpc('harpatka_me_register', Object.assign({ p_meeting: nx.id }, imp ? { p_as: asId } : {})); if (r === 'registered' || r === 'exists') load(); else { toast($('#rm'), 'אי אפשר להירשם למפגש הזה', true); rb.disabled = false; } }
       catch (e) { toast($('#rm'), 'משהו השתבש, אפשר לנסות שוב', true); rb.disabled = false; }
+    };
+    const ub = $('#unregBtn');
+    if (ub) ub.onclick = async () => {   // שני שלבים: לחיצה ראשונה מבקשת אישור
+      if (!ub.dataset.sure) { ub.dataset.sure = '1'; ub.textContent = 'לחיצה נוספת לאישור ביטול הרישום'; return; }
+      ub.disabled = true;
+      try {
+        const r = await rpc('harpatka_me_unregister', Object.assign({ p_meeting: nx.id }, imp ? { p_as: asId } : {}));
+        if (r === 'cancelled' || r === 'not_registered') load();
+        else { toast($('#um'), r === 'attended' ? 'סומנה הגעה למפגש, אי אפשר לבטל' : 'אי אפשר לבטל את הרישום למפגש הזה', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול רישום'; }
+      } catch (e) { toast($('#um'), 'משהו השתבש, אפשר לנסות שוב', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול רישום'; }
     };
     $('#saveBtn').onclick = async () => {
       const b = $('#saveBtn'); b.disabled = true;

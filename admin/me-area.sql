@@ -165,3 +165,27 @@ begin
 end $$;
 revoke all on function public.harpatka_me_signup(text, text, int, text, text) from public;
 grant execute on function public.harpatka_me_signup(text, text, int, text, text) to authenticated;
+
+-- ביטול רישום למפגש (שלא עבר): כל עוד לא סומנה הגעה. לא נוגע בתשלומים שנגבו (נשארים ברשומות התשלום והמנהל מטפל בהם בנפרד)
+create or replace function public.harpatka_me_unregister(p_meeting uuid, p_as uuid default null)
+returns text language plpgsql security definer set search_path = public as $$
+declare m public.harpatka_members; pid uuid; mt public.harpatka_meetings; a public.harpatka_attendance; today date := (now() at time zone 'Asia/Jerusalem')::date;
+begin
+  if p_as is not null then
+    if not public.harpatka_is_admin() then raise exception 'forbidden'; end if;
+    pid := p_as;
+  else
+    select * into m from public.harpatka_members where user_id = auth.uid();
+    if not found or m.status <> 'approved' or m.participant_id is null then raise exception 'forbidden'; end if;
+    pid := m.participant_id;
+  end if;
+  select * into mt from public.harpatka_meetings where id = p_meeting;
+  if not found or mt.meeting_date < today then return 'past'; end if;
+  select * into a from public.harpatka_attendance where participant_id = pid and meeting_id = p_meeting;
+  if not found then return 'not_registered'; end if;
+  if coalesce(a.attended, false) then return 'attended'; end if;
+  delete from public.harpatka_attendance where participant_id = pid and meeting_id = p_meeting;
+  return 'cancelled';
+end $$;
+revoke all on function public.harpatka_me_unregister(uuid, uuid) from public;
+grant execute on function public.harpatka_me_unregister(uuid, uuid) to authenticated;
