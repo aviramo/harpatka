@@ -1387,6 +1387,7 @@
             <label class="field"><span>סכום ששולם (₪)</span><input name="amount" type="number" inputmode="decimal" min="0" step="any" /></label>
             <label class="field"><span>תאריך</span><input name="date" type="date" /></label>
           </div>
+          <label class="field"><span>שולם דרך מי</span><select name="by"></select></label>
           <label class="field"><span>הערה (אופציונלי)</span><input name="note" maxlength="120" autocomplete="off" /></label>
           <button class="btn" type="submit">שמירת תשלום</button>
           <button class="btn ghost" id="ppCancel" type="button" style="color:var(--muted)">ביטול</button>
@@ -2393,7 +2394,7 @@
   function finRowsAll() {
     const rows = state.fin.map((x) => ({ kind: x.kind, amount: Number(x.amount), date: x.entry_date, title: x.title, meeting_id: x.meeting_id, id: x.id, rec: null, by: x.by_email }));
     state.finRec.forEach((r) => recOccurrences(r).forEach((d) => rows.push({ kind: r.kind, amount: Number(r.amount), date: d, title: r.title, meeting_id: null, id: r.id, rec: r, by: r.by_email })));
-    state.promoPays.forEach((x) => { const pr = promoterOf(x.promoter_id); rows.push({ kind: 'expense', amount: Number(x.amount), date: String(x.paid_at || '').slice(0, 10), title: 'תשלום ל' + (pr ? pr.name : 'דרך הגעה'), meeting_id: null, id: x.id, rec: null, channel: x.promoter_id }); });   // תשלומים לדרכי הגעה נספרים כהוצאה
+    state.promoPays.forEach((x) => { const pr = promoterOf(x.promoter_id); rows.push({ kind: 'expense', amount: Number(x.amount), date: String(x.paid_at || '').slice(0, 10), title: 'תשלום ל' + (pr ? pr.name : 'דרך הגעה'), meeting_id: null, id: x.id, rec: null, channel: x.promoter_id, by: x.by_email }); });   // תשלומים לדרכי הגעה נספרים כהוצאה
     return rows;
   }
   function finRows() {
@@ -2403,10 +2404,11 @@
   /* התחשבנות בין מנהלים: הכנסות ממשתתפים לפי הקופה של דרך התשלום, הכנסות והוצאות אחרות לפי המנהל שדרכו עברו, ועוד העברות ביניהם; החלוקה שווה */
   function finSettle() {
     const admins = finAdmins(), A = {}; admins.forEach((e) => { A[e] = { part: 0, inc: 0, exp: 0, out: 0, inn: 0 }; });
-    const un = { part: 0, fin: 0, chan: state.promoPays.length };
+    const un = { part: 0, fin: 0, chan: 0 };
     const own = (key) => (state.payMethods.find((m) => m.key === key) || {}).owner_email;
     state.payments.forEach((x) => { const k = ((x.kind === 'payment' || x.kind === 'deposit') && !x.from_credit) ? 1 : x.kind === 'refund' ? -1 : 0; if (!k) return; const o = own(x.method), a = k * Number(x.amount); if (o && A[o]) A[o].part += a; else un.part += a; });
     finRowsAll().forEach((x) => { if (x.by && A[x.by]) A[x.by][x.kind === 'income' ? 'inc' : 'exp'] += x.amount; else un.fin += x.kind === 'income' ? x.amount : -x.amount; });
+    state.promoPays.forEach((x) => { if (x.by_email && A[x.by_email]) A[x.by_email].exp += Number(x.amount); else un.chan += 1; });   // תשלומים לדרכי הגעה: הוצאה של המנהל ששילם
     state.finTr.forEach((x) => { if (A[x.from_email]) A[x.from_email].out += Number(x.amount); if (A[x.to_email]) A[x.to_email].inn += Number(x.amount); });
     let total = 0; admins.forEach((e) => { const a = A[e]; a.held = a.part + a.inc - a.exp - a.out + a.inn; total += a.part + a.inc - a.exp; });
     const share = admins.length ? total / admins.length : 0; admins.forEach((e) => { A[e].diff = A[e].held - share; });
@@ -2425,7 +2427,7 @@
     $('#finRecLbl').hidden = !state.finRec.length;
     $('#finRec').innerHTML = state.finRec.map((r) => '<button type="button" class="finrow' + (r.active ? '' : ' off') + '" data-frec="' + r.id + '"><span class="ft"><b>' + esc(r.title) + '</b><span>' + PERIODS[r.period] + ' · מ-' + finDmy(r.start_date) + (r.end_date ? ' עד ' + finDmy(r.end_date) : '') + (r.active ? '' : ' · מושהה') + '</span></span><span class="fa ' + (r.kind === 'income' ? 'in' : 'out') + '">₪' + nfm(Number(r.amount)) + '</span></button>').join('');
     const shown = state.finFilter ? rows.filter((x) => x.kind === state.finFilter) : rows;
-    $('#finList').innerHTML = shown.length ? shown.map((x) => { const m = x.meeting_id && state.meetings.find((q) => q.id === x.meeting_id); return '<button type="button" class="finrow" ' + (x.channel ? 'data-fch="' + x.channel + '"' : x.rec ? 'data-frec="' + x.id + '"' : 'data-fent="' + x.id + '"') + '><span class="ft"><b>' + esc(x.title) + (x.rec ? '<i class="frec">מחזורי</i>' : '') + (x.channel ? '<i class="frec">דרך הגעה</i>' : '') + '</b><span>' + finDmy(x.date) + ' · ' + (x.channel ? 'לחיצה לפתיחת ההתחשבנות' : (m ? 'מפגש ' + dmShort(m) : 'כללי') + (x.by ? ' · דרך ' + esc(finName(x.by)) : '')) + '</span></span><span class="fa ' + (x.kind === 'income' ? 'in' : 'out') + '">₪' + nfm(x.amount) + '</span></button>'; }).join('') : '<p class="mnone">עוד אין תנועות' + (state.finPeriod === 'month' ? ' החודש' : '') + '</p>';
+    $('#finList').innerHTML = shown.length ? shown.map((x) => { const m = x.meeting_id && state.meetings.find((q) => q.id === x.meeting_id); return '<button type="button" class="finrow" ' + (x.channel ? 'data-fch="' + x.channel + '"' : x.rec ? 'data-frec="' + x.id + '"' : 'data-fent="' + x.id + '"') + '><span class="ft"><b>' + esc(x.title) + (x.rec ? '<i class="frec">מחזורי</i>' : '') + (x.channel ? '<i class="frec">דרך הגעה</i>' : '') + '</b><span>' + finDmy(x.date) + ' · ' + (x.channel ? 'לחיצה לפתיחת ההתחשבנות' + (x.by ? ' · דרך ' + esc(finName(x.by)) : '') : (m ? 'מפגש ' + dmShort(m) : 'כללי') + (x.by ? ' · דרך ' + esc(finName(x.by)) : '')) + '</span></span><span class="fa ' + (x.kind === 'income' ? 'in' : 'out') + '">₪' + nfm(x.amount) + '</span></button>'; }).join('') : '<p class="mnone">עוד אין תנועות' + (state.finPeriod === 'month' ? ' החודש' : '') + '</p>';
   }
   function finView(v) {
     finV = v; $('#finMain').hidden = v !== 'main'; $('#finForm').hidden = v !== 'form'; $('#finLog').hidden = v !== 'log'; $('#finSettle').hidden = v !== 'settle'; $('#finArrow').hidden = v === 'main'; $('#finLogBtn').hidden = v !== 'main'; $('#finSetBtn').hidden = v !== 'main';
@@ -2476,7 +2478,7 @@
       '<div class="fsc"><div class="fsl"><span>סך הכל נטו (כולל כל המנהלים)</span><b>' + n(S.total) + '</b></div><div class="fsl hd"><span>חלק של כל מנהל (חלוקה שווה)</span><b>' + n(S.share) + '</b></div></div>' +
       (S.sug.length ? S.sug.map((s) => '<div class="fsug">' + esc(finName(s.from)) + ' מעביר ל' + esc(finName(s.to)) + ' ' + n(s.amount) + '<button type="button" data-ftr="' + esc(s.from) + '|' + esc(s.to) + '|' + s.amount + '">סימון שההעברה בוצעה</button></div>').join('') : '<div class="fsug ok">הכול מסולק ✓</div>') +
       ((S.un.part || S.un.fin) ? '<p class="fsnote">לא נכללו בחלוקה: ' + (S.un.part ? n(S.un.part) + ' מתשלומי משתתפים בדרכי תשלום ובהחזרים בלי "הקופה של" (להגדרה: הגדרות ← דרכי תשלום)' : '') + (S.un.part && S.un.fin ? ', ' : '') + (S.un.fin ? n(S.un.fin) + ' מתנועות כספים בלי מנהל' : '') + '.</p>' : '') +
-      (S.un.chan ? '<p class="fsnote">תשלומים לדרכי הגעה עדיין לא משויכים למנהל ולכן לא נכללים בהתחשבנות.</p>' : '') +
+      (S.un.chan ? '<p class="fsnote">' + S.un.chan + ' תשלומים לדרכי הגעה בלי מנהל לא נכללו בהתחשבנות.</p>' : '') +
       (state.finTr.length ? '<div class="clabel">העברות שנרשמו</div>' + state.finTr.map((x) => '<div class="finrow"><span class="ft"><b>' + esc(finName(x.from_email)) + ' ← ' + esc(finName(x.to_email)) + '</b><span>' + finDmy(x.transfer_date) + '</span></span><span class="fa">' + n(Number(x.amount)) + '</span><button type="button" class="stdel" data-ftdel="' + x.id + '" aria-label="מחיקה" title="מחיקה (לחיצה כפולה)">×</button></div>').join('') : '');
   }
   function openFinSettle() { renderFinSettle(); finView('settle'); }
@@ -2617,7 +2619,7 @@
     const leadsAll = byLead ? state.participants.filter((q) => (channelOf(q) || {}).id === id) : [], leadsNew = leadsAll.filter((q) => String(q.created_at || '') > lastTs);
     const leadRow = (n) => ({ kind: 'c', date: todayISO(), amount: n * rate, who: 'עלות לידים', sub: n + ' לידים × ₪' + rate, key: 'leads' });
     const accNew = acc.filter((r) => !lastTs || String(r.ts || '') > lastTs).concat(leadsNew.length ? [leadRow(leadsNew.length)] : []);
-    const lastRow = lp ? [{ kind: 'p', date: lp.paid_at, amount: -Number(lp.amount), who: 'תשלום לדרך הגעה', sub: lp.note || '', id: lp.id, key: lp.id }] : [];
+    const lastRow = lp ? [{ kind: 'p', date: lp.paid_at, amount: -Number(lp.amount), who: 'תשלום לדרך הגעה', sub: ((lp.by_email ? 'שולם דרך ' + finName(lp.by_email) : '') + (lp.by_email && lp.note ? ' · ' : '') + (lp.note || '')), id: lp.id, key: lp.id }] : [];
     const rows = accNew.concat(lastRow).sort((a, b) => String(a.date).localeCompare(String(b.date)) || (a.kind === 'c' ? -1 : 1)); { let run3 = 0; rows.forEach((r) => { run3 += r.amount; r.bal = run3; }); }
     const accrued = acc.reduce((s, r) => s + r.amount, 0) + leadsAll.length * rate, paid = myPays.reduce((s, x) => s + Number(x.amount), 0);
     return { rows: rows.reverse(), accrued, paid, balance: accNew.reduce((s, r) => s + r.amount, 0) };
@@ -2690,6 +2692,7 @@
   $('#ppOpen').addEventListener('click', () => {
     const f = $('#ppForm'), L = ledgerOf(prCur);
     f.amount.value = L.balance > 0 ? L.balance : ''; f.date.value = todayISO(); f.note.value = '';
+    f.by.innerHTML = '<option value="">לא הוגדר</option>' + finAdmins().map((e2) => '<option value="' + esc(e2) + '">' + esc(finName(e2)) + '</option>').join(''); f.by.value = emailOf() || '';
     f.hidden = false; $('#ppOpen').hidden = true; setTimeout(() => f.amount.focus(), 50);
   });
   $('#ppCancel').addEventListener('click', () => { $('#ppForm').hidden = true; $('#ppOpen').hidden = false; });
@@ -2697,7 +2700,7 @@
     e.preventDefault();
     const f = e.target, amount = parseFloat(f.amount.value);
     if (!(amount > 0)) { f.amount.focus(); return; }
-    const body = { promoter_id: prCur, amount, paid_at: f.date.value || todayISO(), note: f.note.value.trim() || null };
+    const body = { promoter_id: prCur, amount, paid_at: f.date.value || todayISO(), note: f.note.value.trim() || null, by_email: f.by.value || null };
     try { const [row] = await api(T.pp, { method: 'POST', body, prefer: 'return=representation' }); if (row && !state.promoPays.some((q) => q.id === row.id)) state.promoPays.push(row); toast('התשלום נרשם'); showPromoterDetail(prCur); }
     catch (err) { fail(err); }
   });
