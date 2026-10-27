@@ -244,7 +244,8 @@
       if (!gender) { genderBox.classList.add('bad'); q('genderErr').textContent = 'נא לבחור'; ok = false; }
       if (!ok) return;
       /* אפשרות תשלום רק בטווח הגילאים שמתאים למפגש: גברים 40 עד 55, נשים 35 עד 50 (ההרשמה עצמה נשמרת תמיד) */
-      const payOk = gender === 'male' ? (age >= 40 && age <= 55) : (age >= 35 && age <= 50);
+      /* תשלום רק אחרי הרשמה למפגש: בלי מפגש (השארת פרטים בלבד) אין כפתור תשלום */
+      const payOk = (gender === 'male' ? (age >= 40 && age <= 55) : (age >= 35 && age <= 50)) && !!(selMeeting || nearest);
       const allDone = () => { suRoots.forEach(f => f(payOk)); };   // בלי שמירה בדפדפן: בכל טעינה של הדף הטופס מוצג מחדש
       if (q('hp').value || Date.now() - t0 < 1500) { allDone(); return; }   // בוט: מציגים הצלחה בלי לשמור
       btn.disabled = true; btn.textContent = 'שולחים...';
