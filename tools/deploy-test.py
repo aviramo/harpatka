@@ -23,7 +23,7 @@ def run(*a, cwd=None):
 def build_test_admin():
     """דף הניהול של הבדיקות, נגזר מ-admin/index.html: סכמת test בבקשות וב-realtime, פס "סביבת בדיקות", כותרת וקיזוז גובה."""
     t = (ROOT / 'admin' / 'index.html').read_text(encoding='utf-8').replace('\r\n', '\n')
-    testbar_css = ("    #testBadge { inset: auto; margin: 0; border: 0; overflow: visible; position: fixed; top: 3px; right: 6px; background: rgba(201,111,82,.85); color: #fff; font: 700 11px/1 Arial, sans-serif; padding: 5px 9px; border-radius: 999px; pointer-events: none; }\n")
+    testbar_css = ("    #testBadge { inset: auto; margin: 0; border: 0; overflow: visible; position: fixed; top: 2px; left: 50%; transform: translateX(-50%); background: rgba(201,111,82,.5); color: #fff; font: 700 9px/1 Arial, sans-serif; padding: 3px 8px; border-radius: 999px; pointer-events: none; }\n")
     testbar_div = '  <div id="testBadge" popover="manual">בדיקות</div>\n'
 
     def rep(old, new):
