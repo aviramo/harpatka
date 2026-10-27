@@ -1055,7 +1055,7 @@
 
     /* ===== המפגשים: הקודם (אחד), הקרוב והעתידיים. אפשר להירשם לכל מפגש שעוד לא עבר. מקור: harpatka_meetings ומדרגות המחיר (harpatka_price_tiers); הצגה מיידית מהמטמון המקומי של הביקור הקודם ואז רענון ===== */
     const normT = t => (t && !Array.isArray(t) && Number.isFinite(Number(t.base))) ? { base: Number(t.base), steps: (Array.isArray(t.steps) ? t.steps : []).map(x => ({ days: Number(x.days), price: Number(x.price) })).filter(x => x.days >= 1 && Number.isFinite(x.price)) } : null;
-    const MEET_CACHE = 'harpatka_meetings_v17';
+    const MEET_CACHE = 'harpatka_meetings_v18';
     const meetingsReady = (async () => {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
       const H = { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey };
@@ -1069,7 +1069,7 @@
         if (fu.ok && pa.ok) {
           const f = await fu.json(), p = await pa.json(), sv = st.ok ? await st.json() : [], sget = k => String(((sv.find(x => x.key === k) || {}).value) || '').trim(), defName = sget('default_meeting_name'), defImg = /^https:\/\//i.test(sget('default_meeting_image')) ? sget('default_meeting_image') : '';   // שם ברירת מחדל: למפגש בלי שם
           const mk = r => ({ id: r.id, date: r.meeting_date, time: String(r.meeting_time).slice(0, 5), name: String(r.name || '').trim() || defName, city: String(r.city || '').trim(), img: (/^https:\/\//i.test(r.image_url || '') ? r.image_url : '') || defImg, max: r.max_participants, tiers: normT(r.price_tiers), dir: String(r.directions || '').trim() });
-          return { past: p.map(mk).reverse(), future: f.map(mk), defName };
+          return { past: p.map(mk).reverse(), future: f.map(mk), defName, defImg };
         }
       } catch (e) {}
       return null;
@@ -1131,9 +1131,10 @@
         return c;
       };
       /* אין מפגש עתידי: אותו כרטיס (מורחב, בלי הרחבה) עם שם ברירת המחדל והזמנה להשאיר פרטים */
-      const emptyCard = (defName) => {
+      const emptyCard = (defName, defImg) => {
         const mk = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
         const c = mk('div', 'mt-card still open'), inn = mk('div', 'mt-in');
+        if (defImg) { const im = mk('img', 'mt-bg'); im.src = defImg; im.alt = ''; im.decoding = 'async'; c.append(im); }   // בלי מפגש: תמונת ברירת המחדל מההגדרות
         inn.append(mk('div', 'mt-when font-display', defName || 'המפגש הבא בדרך אליכם'));
         inn.append(mk('div', 'mt-city', 'רוצים לדעת ראשונים? השאירו פרטים ונעדכן ברגע שהתאריך ייקבע'));
         const more = mk('div', 'mt-more'), box = mk('div'), b = mk('a', 'mt-cta', 'השארת פרטים'); b.href = '#'; b.addEventListener('click', e => { e.preventDefault(); reg(null); });
@@ -1147,7 +1148,7 @@
         const frag = document.createDocumentFragment();
         (d.past || []).forEach(m => frag.append(meetingCard(m, today, true, false)));
         if (future.length) future.forEach((m, i) => frag.append(meetingCard(m, today, false, i === 0)));
-        else frag.append(emptyCard(d.defName));
+        else frag.append(emptyCard(d.defName, d.defImg));
         list.replaceChildren(frag);
         const sb = el('stickyRegBtn'); if (sb) sb.textContent = future.length ? 'הרשמה למפגש הקרוב' : 'השארת פרטים';
       };
@@ -1340,7 +1341,7 @@
     }
   };
   let cached = null;
-  try { cached = JSON.parse(localStorage.getItem(typeof MEET_CACHE !== 'undefined' ? MEET_CACHE : 'harpatka_meetings_v17') || 'null'); } catch (e) {}
+  try { cached = JSON.parse(localStorage.getItem(typeof MEET_CACHE !== 'undefined' ? MEET_CACHE : 'harpatka_meetings_v18') || 'null'); } catch (e) {}
   if (cached && cached.future) render(cached);
   if (typeof meetingsReady !== 'undefined') meetingsReady.then((d) => { if (d) render(d); else if (!cached) render(null); });
   else if (!cached) render(null);
