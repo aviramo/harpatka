@@ -97,7 +97,8 @@
     $('#gBtn').onclick = goGoogle;
   }
   function viewClaim(note) {
-    app.innerHTML = '<div class="card"><h2>חיבור לחשבון</h2><p class="muted" style="margin:0">הזינו את הטלפון שבו נרשמתם למפגש כדי לחבר אליו את חשבון הגוגל. החיבור מאושר על ידינו ואז האזור האישי נפתח</p>' + (note ? '<p class="msg bad">' + esc(note) + '</p>' : '') +
+    const adm = data && data.admin ? '<div class="imp">מחוברים כמנהלים. לצפייה באזור האישי של משתתף פותחים את כרטיס המשתתף בדף הניהול ולוחצים "צפייה באזור האישי כמשתתף"</div><a class="btn ghost" href="../admin/">לדף הניהול</a>' : '';
+    app.innerHTML = adm + '<div class="card"><h2>חיבור לחשבון</h2><p class="muted" style="margin:0">הזינו את הטלפון שבו נרשמתם למפגש כדי לחבר אליו את חשבון הגוגל. החיבור מאושר על ידינו ואז האזור האישי נפתח</p>' + (note ? '<p class="msg bad">' + esc(note) + '</p>' : '') +
       '<label for="ph">טלפון</label><input id="ph" type="tel" inputmode="tel" autocomplete="tel" placeholder="05X-XXXXXXX" dir="ltr" style="text-align:right" /><button type="button" class="btn" id="claimBtn">שליחה</button><div class="msg" id="cm"></div></div>';
     $('#claimBtn').onclick = async () => {
       const b = $('#claimBtn'); b.disabled = true;
@@ -105,7 +106,7 @@
         const r = await rpc('harpatka_me_claim', { p_phone: $('#ph').value });
         if (r === 'not_registered') { toast($('#cm'), 'המספר הזה עוד לא רשום למפגש. כדי להשתמש באזור האישי צריך להירשם תחילה למפגש', true); b.disabled = false; return; }
         if (r === 'invalid_phone') { toast($('#cm'), 'מספר הטלפון לא תקין', true); b.disabled = false; return; }
-        load();
+        load(false, true);
       } catch (e) { toast($('#cm'), 'משהו השתבש, אפשר לנסות שוב', true); b.disabled = false; }
     };
   }
@@ -160,7 +161,7 @@
     };
   }
 
-  async function load(keepMsg) {
+  async function load(keepMsg, afterClaim) {
     try {
       data = await rpc('harpatka_me', asId ? { p_as: asId } : {});
     } catch (e) { if (e.message === 'auth' || (asId && /HTTP (400|403|404)/.test(e.message))) { viewLogin(); return; } app.innerHTML = '<div class="center">הטעינה נכשלה. אפשר לרענן</div>'; return; }
@@ -168,7 +169,7 @@
     if (data.status === 'ok') { const keep = keepMsg ? $('#sm') && $('#sm').textContent : ''; viewMain(); if (keep) toast($('#sm'), keep); }
     else if (data.status === 'pending') viewPending();
     else if (data.status === 'blocked') viewBlocked();
-    else viewClaim();
+    else viewClaim(afterClaim ? 'המספר הזה לא נמצא בין המשתתפים הרשומים. אפשר לבדוק שהוזן המספר שבו נרשמתם' : '');
   }
 
   async function start() {
