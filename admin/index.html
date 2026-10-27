@@ -1511,7 +1511,8 @@
     const top = NAV.stack[NAV.stack.length - 1]; if (!top) return;
     NAV.fromPop = true;
     try {
-      if (top.sub > 0 && NAV_BACK[top.d.id]) { const b = $(NAV_BACK[top.d.id]); if (b) b.click(); navSync(top.d); }
+      const dep = navDepthOf(top.d);   // ההחלטה לפי המסך שמוצג בפועל (לא לפי מונה שמור שעלול להתפספס): בתוך מסך משנה חוזרים צעד, רק במסך הראשי סוגרים
+      if (dep > 0 && NAV_BACK[top.d.id] && $(NAV_BACK[top.d.id]) && !$(NAV_BACK[top.d.id]).hidden) { $(NAV_BACK[top.d.id]).click(); top.sub = navDepthOf(top.d); }
       else top.d.close();
     } finally { NAV.fromPop = false; }
   });
@@ -3479,7 +3480,7 @@
       d.insertBefore(g, d.firstChild);
       d.addEventListener('cancel', (e) => {   // Escape או כפתור "חזרה" של הדפדפן/אנדרואיד (Chrome סוגר דיאלוג מודלי לפני ההיסטוריה): בתוך מסך משנה חוזרים צעד אחד כמו בחץ שבפופאפ, ורק במסך הראשי סוגרים
         e.preventDefault();
-        const top = NAV.stack.find((x) => x.d === d), bk = top && top.sub > 0 && NAV_BACK[d.id] ? $(NAV_BACK[d.id]) : null;
+        const top = NAV.stack.find((x) => x.d === d), bk = top && navDepthOf(d) > 0 && NAV_BACK[d.id] ? $(NAV_BACK[d.id]) : null;
         if (bk && !bk.hidden) bk.click(); else d.close();
       });
       d.addEventListener('click', (e) => { if (e.target === d) d.close(); });    // לחיצה בחוץ
