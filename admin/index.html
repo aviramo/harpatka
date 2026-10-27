@@ -1208,6 +1208,11 @@
     .row .nm .name { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
     .hfilt.neu { background: var(--line); border: 1px solid var(--line); color: var(--muted); }   /* ניטרלי (בלי קו חוצה): עוד אין מידע, מפגש עתידי, לא משויכים */
     .fopt .hfilt { font-weight: 800; }
+  .mimg { display: flex; flex-direction: column; gap: 8px; }
+  .mimg img { width: 100%; max-height: 200px; object-fit: cover; border-radius: 14px; border: 1px solid var(--line); background: #fff; }
+  .mimgbtns { display: flex; gap: 8px; }
+  .mimgpick, .mimgbtns button { flex: 1 1 0; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: #fff; color: var(--terra); font-weight: 700; font-size: 14px; display: grid; place-items: center; cursor: pointer; }
+  .mimgbtns button { color: var(--muted); }
   .mt2 { border: 1px solid var(--line); border-radius: 14px; background: #fff; overflow: hidden; }
   .mt2row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--line); font-size: 14px; font-weight: 600; color: var(--muted); }
   .mt2row:last-child { border-bottom: 0; }
@@ -1403,6 +1408,13 @@
       </div>
       <label class="field"><span>כמות משתתפים</span><input name="max" type="number" inputmode="numeric" min="1" max="500" step="1" placeholder="ללא הגבלה" /></label>
       <label class="field"><span>הוראות הגעה</span><textarea name="directions" id="mDirs" rows="1" maxlength="800" placeholder="כתובת, חנייה, איך מגיעים"></textarea></label>
+      <div class="field"><span>תמונה</span>
+        <div class="mimg" id="mImgBox">
+          <img id="mImgPrev" alt="" hidden />
+          <div class="mimgbtns"><label class="mimgpick" for="mImgFile">בחירת תמונה</label><button type="button" id="mImgDel" hidden>הסרת התמונה</button></div>
+          <input type="file" id="mImgFile" accept="image/jpeg,image/png,image/webp" hidden />
+        </div>
+      </div>
       <div class="field"><span>מחירים</span>
         <div class="mt2" id="mTierList"></div>
         <div class="mt2add"><button type="button" id="mTierAdd">+ מדרגה</button></div>
@@ -3981,6 +3993,33 @@
   /* ---------- חלון מפגש ---------- */
   const mDlg = $('#mDlg'), mForm = $('#mForm');
   let editingMeeting = null, mTiers = { base: 80, steps: [] };
+  /* תמונת המפגש: url = הכתובת השמורה (מועתקת למפגש חדש מהקודם), blob = תמונה חדשה שנבחרה ועוד לא הועלתה */
+  let mImg = { url: null, blob: null, objUrl: null };
+  function paintMImg() {
+    const src = mImg.objUrl || mImg.url || '';
+    $('#mImgPrev').hidden = !src; if (src) $('#mImgPrev').src = src; $('#mImgDel').hidden = !src;
+  }
+  /* דחיסה בדפדפן: עד 1400px בצד הארוך, JPEG איכות 0.82 */
+  function compressImage(file) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file), im = new Image();
+      im.onload = () => { const k = Math.min(1, 1400 / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(url); c.toBlob((b) => (b ? resolve(b) : reject(new Error('compress'))), 'image/jpeg', 0.82); };
+      im.onerror = () => { URL.revokeObjectURL(url); reject(new Error('לא ניתן לקרוא את התמונה')); };
+      im.src = url;
+    });
+  }
+  async function uploadMeetingImage(blob) {
+    const path = 'm/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
+    const r = await fetch(DB.url + '/storage/v1/object/meeting-images/' + path, { method: 'POST', headers: { apikey: DB.key, Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'image/jpeg', 'Cache-Control': '31536000' }, body: blob });
+    if (!r.ok) throw new Error('העלאת התמונה נכשלה (' + r.status + ')');
+    return DB.url + '/storage/v1/object/public/meeting-images/' + path;
+  }
+  $('#mImgFile').addEventListener('change', async (e) => {
+    const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
+    try { const b = await compressImage(f); if (mImg.objUrl) URL.revokeObjectURL(mImg.objUrl); mImg.blob = b; mImg.objUrl = URL.createObjectURL(b); paintMImg(); }
+    catch (err) { toast(err.message || 'לא ניתן לקרוא את התמונה'); }
+  });
+  $('#mImgDel').addEventListener('click', () => { if (mImg.objUrl) URL.revokeObjectURL(mImg.objUrl); mImg = { url: null, blob: null, objUrl: null }; paintMImg(); });
   /* עורך המחירים של המפגש (קומפקטי, מהמוקדם למאוחר): מחיר רגיל (בלי מספר ימים) ומדרגות "החל מ-N ימים לפני" (N נבחר מרשימה); המדרגה האחרונה חלה עד יום המפגש */
   const mtOpt = (n, sel) => '<option value="' + n + '"' + (n === sel ? ' selected' : '') + '>' + n + '</option>';
   function renderMTiers() {
@@ -4021,7 +4060,9 @@
     mForm.mname.placeholder = defMeetingName() || 'למשל: מפגש פתיחת עונה';   // בלי שם: בעמוד הבית יוצג שם ברירת המחדל
     mForm.directions.value = src.directions || '';
     mForm.max.value = src.max_participants == null ? (m || prev ? '' : '40') : src.max_participants;
-    mTiers = tiersOf(src); renderMTiers();   // מפגש חדש: מדרגות המחיר מועתקות מהמפגש הקודם
+    mTiers = tiersOf(src); renderMTiers();
+    if (mImg.objUrl) URL.revokeObjectURL(mImg.objUrl);
+    mImg = { url: src.image_url || null, blob: null, objUrl: null }; paintMImg();   // תמונה: מועתקת למפגש חדש מהקודם   // מפגש חדש: מדרגות המחיר מועתקות מהמפגש הקודם
     $('#mTitle').textContent = m ? 'עריכת מפגש' : 'מפגש חדש';
     $('#mSubmit').textContent = m ? 'שמירה' : 'יצירת מפגש';
     $('#mDelete').hidden = !m;
@@ -4042,6 +4083,8 @@
     const pt = { base: Number(mTiers.base), steps: mTiers.steps.map((x) => ({ days: Number(x.days), price: Number(x.price) })) };
     if (!Number.isFinite(pt.base) || pt.base < 0 || mTiers.base === '' || pt.steps.some((x) => !Number.isFinite(x.price) || x.price < 0) || mTiers.steps.some((x) => x.price === '')) { toast('מחיר חסר או לא תקין'); return; }
     body.price_tiers = { base: pt.base, steps: pt.steps.sort((a, b) => b.days - a.days) };
+    try { body.image_url = mImg.blob ? await uploadMeetingImage(mImg.blob) : (mImg.url || null); }
+    catch (err) { toast(err.message || 'העלאת התמונה נכשלה'); return; }
     const btn = $('#mSubmit'); btn.disabled = true;
     try {
       if (editingMeeting) {

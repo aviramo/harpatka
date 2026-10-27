@@ -302,7 +302,8 @@
     .mt-tier.cur{ background:#3F382F; color:#FFFDF9; }
     .mt-tier.done{ opacity:.5; text-decoration:line-through; }
     .mt-next{ border-radius:28px; padding:1.5rem 1.35rem 1.4rem; text-align:center; color:#FFFDF9; background:linear-gradient(120deg,#C96F52 0%,#BD6247 55%,#B05640 100%); min-height:15rem; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.55rem; }
-    .mt-next .mt-pill{ display:inline-flex; align-items:center; gap:.4rem; border-radius:999px; background:rgba(255,253,249,.18); color:#FFFDF9; font-weight:700; font-size:.85rem; padding:.3rem .8rem; line-height:1; }
+    .mt-img{ display:block; width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:18px; margin:0 0 .35rem; background:rgba(201,111,82,.08); }
+    .mt-next .mt-pill{ align-items:center; gap:.4rem; border-radius:999px; background:rgba(255,253,249,.18); color:#FFFDF9; font-weight:700; font-size:.85rem; padding:.3rem .8rem; line-height:1; }
     .mt-name{ font-weight:700; font-size:1.05rem; line-height:1.3; }
     .mt-next .mt-name{ color:#FFE9DE; }
     .mt-row .mt-name{ color:#B85C40; }
@@ -814,6 +815,7 @@
       <div class="mt-list" id="mList" aria-live="polite">
         <div id="mPast" style="display:contents"></div>
         <div class="mt-next sk" id="mNext">
+          <img class="mt-img" id="mImg" alt="" hidden width="1200" height="675" decoding="async">
           <span class="mt-pill" id="mPill">המפגש הקרוב</span>
           <div class="mt-name font-display" id="mName" hidden></div>
           <div class="mt-when font-display" id="mWhen">&nbsp;</div>
@@ -1118,11 +1120,11 @@
 
     /* ===== המפגשים: הקודם (אחד), הקרוב והעתידיים. אפשר להירשם לכל מפגש שעוד לא עבר. מקור: harpatka_meetings ומדרגות המחיר (harpatka_price_tiers); הצגה מיידית מהמטמון המקומי של הביקור הקודם ואז רענון ===== */
     const normT = t => (t && !Array.isArray(t) && Number.isFinite(Number(t.base))) ? { base: Number(t.base), steps: (Array.isArray(t.steps) ? t.steps : []).map(x => ({ days: Number(x.days), price: Number(x.price) })).filter(x => x.days >= 1 && Number.isFinite(x.price)) } : null;
-    const MEET_CACHE = 'harpatka_meetings_v13';
+    const MEET_CACHE = 'harpatka_meetings_v14';
     const meetingsReady = (async () => {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
       const H = { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey };
-      const base = CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time,name,max_participants,directions,price_tiers';
+      const base = CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time,name,max_participants,directions,price_tiers,image_url';
       try {
         const [fu, pa, st] = await Promise.all([
           fetch(base + '&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc', { headers: H }),
@@ -1131,7 +1133,7 @@
         ]);
         if (fu.ok && pa.ok) {
           const f = await fu.json(), p = await pa.json(), sv = st.ok ? await st.json() : [], defName = String((sv[0] && sv[0].value) || '').trim();   // שם ברירת מחדל: למפגש בלי שם
-          const mk = r => ({ id: r.id, date: r.meeting_date, time: String(r.meeting_time).slice(0, 5), name: String(r.name || '').trim() || defName, max: r.max_participants, tiers: normT(r.price_tiers), dir: String(r.directions || '').trim() });
+          const mk = r => ({ id: r.id, date: r.meeting_date, time: String(r.meeting_time).slice(0, 5), name: String(r.name || '').trim() || defName, img: /^https:\/\//i.test(r.image_url || '') ? r.image_url : '', max: r.max_participants, tiers: normT(r.price_tiers), dir: String(r.directions || '').trim() });
           return { past: p.map(mk).reverse(), future: f.map(mk), defName };
         }
       } catch (e) {}
@@ -1174,6 +1176,7 @@
       const laterInner = (m, today) => {
         const c = document.createElement('div'); c.className = 'mt-next later';
         const mk = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+        if (m.img) { const im = mk('img', 'mt-img'); im.src = m.img; im.alt = ''; im.loading = 'lazy'; im.decoding = 'async'; c.append(im); }
         c.append(mk('span', 'mt-pill', 'מפגש עתידי' + (m.max ? ' · ' + m.max + ' משתתפים' : '')));
         if (m.name) c.append(mk('div', 'mt-name font-display', m.name));
         c.append(mk('div', 'mt-when font-display', label(m) + ' · ' + m.time));
@@ -1234,6 +1237,7 @@
         const cta = el('mCta');
         if (nx) {
           const sp = tierSplit(nx, nx.tiers, today);
+          { const im = el('mImg'); if (nx.img) { im.src = nx.img; im.hidden = false; } else { im.hidden = true; im.removeAttribute('src'); } }
           el('mPill').textContent = 'המפגש הקרוב' + (nx.max ? ' · ' + nx.max + ' משתתפים' : '');
           el('mName').textContent = nx.name; el('mName').hidden = !nx.name;
           el('mWhen').textContent = label(nx) + ' · ' + nx.time;
@@ -1242,6 +1246,7 @@
           setCta(cta, sp); cta.__meeting = nx;
           const sb = el('stickyRegBtn'); if (sb) sb.textContent = 'הרשמה למפגש הקרוב';
         } else {
+          el('mImg').hidden = true;
           el('mPill').textContent = 'בקרוב';
           el('mName').hidden = true;
           el('mWhen').textContent = d.defName || 'המפגש הבא בדרך אליכם';   // בלי מפגש: שם ברירת המחדל (אם הוגדר)
@@ -1442,7 +1447,7 @@
     }
   };
   let cached = null;
-  try { cached = JSON.parse(localStorage.getItem(typeof MEET_CACHE !== 'undefined' ? MEET_CACHE : 'harpatka_meetings_v13') || 'null'); } catch (e) {}
+  try { cached = JSON.parse(localStorage.getItem(typeof MEET_CACHE !== 'undefined' ? MEET_CACHE : 'harpatka_meetings_v14') || 'null'); } catch (e) {}
   if (cached && cached.future) render(cached);
   if (typeof meetingsReady !== 'undefined') meetingsReady.then((d) => { if (d) render(d); else if (!cached) render(null); });
   else if (!cached) render(null);
