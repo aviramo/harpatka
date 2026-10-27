@@ -362,7 +362,15 @@
     .mt-acc .mt-next .mt-when{ display:none; }
     /* תמונה לכל רוחב הכרטיס (צמודה לקצוות ולחלק העליון) */
     .mt-next .mt-img{ width:calc(100% + 2.7rem); max-width:none; margin:-1.5rem -1.35rem .8rem; border-radius:28px 28px 0 0; }
-    .mt-acc .mt-next .mt-img{ margin:-.3rem -1.35rem .8rem; border-radius:0; }
+    .mt-acc .mt-next .mt-img{ display:none; }   /* בתוך האקורדיון התמונה היא ראש הכרטיס (בכותרת) */
+    /* מפגש עתידי עם תמונה: התמונה היא ראש הכרטיס המצומצם (התאריך והשעה עליה), והכרטיס נפתח מתחתיה */
+    .mt-acc-h.has-img{ display:block; position:relative; padding:0; color:#FFFDF9; }
+    .mt-acc.open .mt-acc-h.has-img{ color:#FFFDF9; }
+    .mt-acc-cover{ display:block; width:100%; aspect-ratio:4/1; object-fit:cover; background:rgba(201,111,82,.1); }
+    .mt-acc-ov{ position:absolute; left:0; right:0; bottom:0; display:flex; align-items:flex-end; justify-content:space-between; gap:.75rem; padding:1.4rem 1.1rem .65rem; background:linear-gradient(to top, rgba(40,28,22,.78) 0%, rgba(40,28,22,0) 100%); }
+    .mt-acc-ov .mt-acc-t{ text-shadow:0 1px 6px rgba(0,0,0,.4); }
+    /* מפגש שעבר עם תמונה: התמונה בראש הכרטיס הקטן */
+    .mt-next.pastc .mt-img{ margin:-.9rem -1rem .55rem; width:calc(100% + 2rem); border-radius:22px 22px 0 0; }
     /* צל לכרטיסי המפגש הקרוב והמפגשים הבאים: בולטים מעל הרקע (מפגשים שעברו בלי צל) */
     .mt-next:not(.pastc){ box-shadow:0 0 14px 0 rgba(150,80,55,.2); }   /* צל סימטרי מכל הכיוונים (בלי היסט) */
     .mt-acc, .mt-acc.open{ box-shadow:0 0 12px 0 rgba(150,80,55,.18); }
@@ -1179,7 +1187,6 @@
       const laterInner = (m, today) => {
         const c = document.createElement('div'); c.className = 'mt-next later';
         const mk = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
-        if (m.img) { const im = mk('img', 'mt-img'); im.src = m.img; im.alt = ''; im.loading = 'lazy'; im.decoding = 'async'; c.append(im); }
         c.append(mk('span', 'mt-pill', 'מפגש עתידי' + (m.max ? ' · ' + m.max + ' משתתפים' : '')));
         if (m.name) c.append(mk('div', 'mt-name font-display', m.name));
         c.append(mk('div', 'mt-when font-display', label(m) + ' · ' + m.time));
@@ -1196,7 +1203,12 @@
         const h = document.createElement('button'); h.type = 'button'; h.className = 'mt-acc-h'; h.setAttribute('aria-expanded', 'false');
         const tt = document.createElement('span'); tt.className = 'mt-acc-t'; tt.textContent = label(m) + ' · ' + m.time;
         const end = document.createElement('span'); end.className = 'mt-acc-end'; end.innerHTML = 'פרטים<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
-        h.append(tt, end);
+        if (m.img) {
+          h.classList.add('has-img');
+          const cv = document.createElement('img'); cv.className = 'mt-acc-cover'; cv.src = m.img; cv.alt = ''; cv.loading = 'lazy'; cv.decoding = 'async';
+          const ov = document.createElement('span'); ov.className = 'mt-acc-ov'; ov.append(tt, end);
+          h.append(cv, ov);
+        } else h.append(tt, end);
         const b = document.createElement('div'); b.className = 'mt-acc-b'; const bi = document.createElement('div'); bi.className = 'mt-acc-bi'; bi.append(laterInner(m, today)); b.append(bi);
         h.addEventListener('click', () => { const on = !acc.classList.contains('open'); acc.classList.toggle('open', on); h.setAttribute('aria-expanded', String(on)); });
         acc.append(h, b);
@@ -1207,6 +1219,7 @@
         const c = document.createElement('div'); c.className = 'mt-next later pastc';
         const pl = document.createElement('span'); pl.className = 'mt-pill'; pl.textContent = 'התקיים';
         const w = document.createElement('div'); w.className = 'mt-when font-display'; w.textContent = label(m) + ' · ' + m.time;
+        if (m.img) { const im = document.createElement('img'); im.className = 'mt-img'; im.src = m.img; im.alt = ''; im.loading = 'lazy'; im.decoding = 'async'; c.append(im); }
         c.append(pl);
         if (m.name) { const nm = document.createElement('div'); nm.className = 'mt-name font-display'; nm.textContent = m.name; c.append(nm); }   // שם המפגש (אם הוזן)
         c.append(w);
