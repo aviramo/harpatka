@@ -540,6 +540,8 @@
     .mt-tier.done{ opacity:.8; text-decoration:line-through; text-decoration-thickness:1.5px; }   /* מחוק רק מה שעבר; מדרגה עתידית רגילה */
     .mt-tier b{ font-weight:800; }
     .mt-cta{ display:inline-flex; align-items:center; justify-content:center; border-radius:999px; background:#C96F52; color:#FFFDF9; font-weight:700; font-size:1.1rem; padding:.8rem 1.9rem; min-height:50px; text-shadow:none; box-shadow:0 10px 22px -10px rgba(0,0,0,.6); }
+    .mt-card.is-past{ opacity:.5; }
+    .mt-chev{ display:none; }
     @media (prefers-reduced-motion:reduce){ .mt-skel{ animation:none; } .mt-more, .mt-more > div, .mt-chev, .mt-name, .mt-when, .mt-city, .mt-card::before{ transition:none; } }
   </style>
   <script>
@@ -1113,7 +1115,7 @@
       const toggleCard = (c, on) => { c.classList.toggle('open', on); c.setAttribute('aria-expanded', String(on)); };
       const meetingCard = (m, today, past, open) => {
         const mk = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
-        const c = mk('div', 'mt-card' + (past ? ' still' : '') + (open ? ' open' : ''));
+        const c = mk('div', 'mt-card still' + (past ? ' is-past' : ' open'));   // עבר: ממוזער ועמום; עתיד: מורחב, בלי החלפת מצב
         if (m.img) { const im = mk('img', 'mt-bg'); im.src = m.img; im.alt = ''; im.loading = 'lazy'; im.decoding = 'async'; c.append(im); }
         const inn = mk('div', 'mt-in');
         if (m.name) inn.append(mk('div', 'mt-name font-display', m.name));
@@ -1125,10 +1127,6 @@
           const b = mk('a', 'mt-cta'); b.href = '#'; setCta(b, sp); b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); reg(m); }); box.append(b);
           const fb = fill(mkBox(), sp.future, 'fut'); if (!fb.hidden) box.append(fb);
           more.append(box); inn.append(more);
-          const ch = mk('span', 'mt-chev'); ch.innerHTML = CHEV; ch.setAttribute('aria-hidden', 'true'); inn.append(ch);
-          c.setAttribute('role', 'button'); c.tabIndex = 0; c.setAttribute('aria-expanded', String(!!open));
-          c.addEventListener('click', () => toggleCard(c, !c.classList.contains('open')));
-          c.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === c) { e.preventDefault(); toggleCard(c, !c.classList.contains('open')); } });
         }
         c.append(inn);
         return c;
