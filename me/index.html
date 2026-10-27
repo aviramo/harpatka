@@ -138,12 +138,12 @@
     const nxM = nx ? ms.find((m) => m.id === nx.id) : null;
     const credit = Number(data.balance) || 0;
     let h = '';
-    if (imp) h += '<div class="imp">מצב צפייה כמנהל: כך ' + esc(p.first_name + ' ' + p.last_name) + ' רואה את האזור האישי (בלי אפשרות לשנות)</div>';
+    if (imp) h += '<div class="imp">מצב צפייה כמנהל: כך ' + esc(p.first_name + ' ' + p.last_name) + ' רואה את האזור האישי (אפשר לבצע פעולות בשמו, והן נרשמות בשם המנהל ביומן)</div>';
     h += '<div class="card"><div class="big">שלום ' + esc(p.first_name) + '</div>' + (credit > 0 ? '<div style="margin-top:8px"><span class="chip ok">יתרה לטובתכם ' + ils(credit) + '</span></div>' : credit < 0 ? '<div style="margin-top:8px"><span class="chip no">יתרת חוב ' + ils(credit) + '</span></div>' : '') + '</div>';
     if (nx) {
       const reg = nx.registered, paid = nxM ? Number(nxM.paid) > 0 : false, free = nxM ? nxM.free : false;
       h += '<div class="card"><h2>המפגש הבא</h2><div class="big">' + esc(fmtDate(nx.date)) + '</div><div class="muted">' + esc(nx.time) + ' · הזמר העברי 5, הרצליה</div>';
-      if (!reg) h += '<button type="button" class="btn" id="regBtn"' + (imp ? ' disabled' : '') + '>שמירת מקום</button><div class="msg" id="rm"></div>';
+      if (!reg) h += '<button type="button" class="btn" id="regBtn">שמירת מקום</button><div class="msg" id="rm"></div>';
       else {
         h += '<div style="margin-top:10px"><span class="chip ok">נרשמתם ✓</span> ' + (free ? '<span class="chip sky">חינם</span>' : paid ? '<span class="chip ok">שולם ' + ils(nxM.paid) + '</span>' : '<span class="chip no">טרם שולם</span>') + '</div>';
         if (!paid && !free && CFG.payboxLink) h += '<a class="btn" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">תשלום ' + (nx.price ? ils(nx.price) : '') + ' בפייבוקס</a><p class="muted" style="margin:8px 0 0">המקום נשמר אחרי התשלום</p>';
@@ -159,21 +159,21 @@
     h += '<div class="card"><h2>הפרטים שלי</h2><div class="two"><div><label for="fn">שם פרטי</label><input id="fn" value="' + esc(p.first_name) + '"></div><div><label for="ln">שם משפחה</label><input id="ln" value="' + esc(p.last_name) + '"></div></div>' +
       '<label for="ph2">טלפון</label><input id="ph2" type="tel" inputmode="tel" dir="ltr" style="text-align:right" value="' + esc(String(p.phone || '').replace(/^\+972/, '0')) + '">' +
       '<div class="two"><div><label for="ag">גיל</label><input id="ag" type="number" inputmode="numeric" min="18" max="99" value="' + esc(p.age == null ? '' : p.age) + '"></div><div><label for="gn">מגדר</label><select id="gn"><option value="">לא צוין</option><option value="female"' + (gv === 'female' ? ' selected' : '') + '>נקבה</option><option value="male"' + (gv === 'male' ? ' selected' : '') + '>זכר</option></select></div></div>' +
-      '<button type="button" class="btn" id="saveBtn"' + (imp ? ' disabled' : '') + '>שמירה</button><div class="msg" id="sm"></div></div>';
+      '<button type="button" class="btn" id="saveBtn">שמירה</button><div class="msg" id="sm"></div></div>';
     h += '<div class="card"><h2>עוד</h2><a class="btn ghost" href="../board/" style="margin-top:0">לוח השיתופים</a></div>';
     app.innerHTML = h;
 
     const rb = $('#regBtn');
     if (rb) rb.onclick = async () => {
       rb.disabled = true;
-      try { const r = await rpc('harpatka_me_register', { p_meeting: nx.id }); if (r === 'registered' || r === 'exists') load(); else { toast($('#rm'), 'אי אפשר להירשם למפגש הזה', true); rb.disabled = false; } }
+      try { const r = await rpc('harpatka_me_register', Object.assign({ p_meeting: nx.id }, imp ? { p_as: asId } : {})); if (r === 'registered' || r === 'exists') load(); else { toast($('#rm'), 'אי אפשר להירשם למפגש הזה', true); rb.disabled = false; } }
       catch (e) { toast($('#rm'), 'משהו השתבש, אפשר לנסות שוב', true); rb.disabled = false; }
     };
     $('#saveBtn').onclick = async () => {
       const b = $('#saveBtn'); b.disabled = true;
       try {
         const age = $('#ag').value === '' ? null : Number($('#ag').value);
-        const r = await rpc('harpatka_me_update', { p_first: $('#fn').value, p_last: $('#ln').value, p_age: age, p_gender: $('#gn').value, p_phone: $('#ph2').value });
+        const r = await rpc('harpatka_me_update', Object.assign({ p_first: $('#fn').value, p_last: $('#ln').value, p_age: age, p_gender: $('#gn').value, p_phone: $('#ph2').value }, imp ? { p_as: asId } : {}));
         const bad = { invalid_name: 'צריך שם פרטי ושם משפחה', invalid_age: 'הגיל צריך להיות בין 18 ל-99', invalid_phone: 'מספר הטלפון לא תקין', phone_taken: 'המספר הזה כבר רשום אצל משתתף אחר' }[r];
         if (bad) toast($('#sm'), bad, true); else { toast($('#sm'), 'הפרטים נשמרו'); load(true); }
       } catch (e) { toast($('#sm'), 'משהו השתבש, אפשר לנסות שוב', true); }

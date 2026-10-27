@@ -84,41 +84,54 @@ revoke all on function public.harpatka_me(uuid) from public;
 grant execute on function public.harpatka_me(uuid) to authenticated;
 
 -- הרשמה למפגש הקרוב (או למפגש עתידי אחר) בלחיצה
-create or replace function public.harpatka_me_register(p_meeting uuid)
+drop function if exists public.harpatka_me_register(uuid);
+create or replace function public.harpatka_me_register(p_meeting uuid, p_as uuid default null)
 returns text language plpgsql security definer set search_path = public as $$
 declare m public.harpatka_members; pid uuid; mt public.harpatka_meetings; today date := (now() at time zone 'Asia/Jerusalem')::date;
 begin
-  select * into m from public.harpatka_members where user_id = auth.uid();
-  if not found or m.status <> 'approved' or m.participant_id is null then raise exception 'forbidden'; end if;
-  pid := m.participant_id;
+  if p_as is not null then
+    if not public.harpatka_is_admin() then raise exception 'forbidden'; end if;   -- מנהל פועל במקום המשתתף (התחזות)
+    pid := p_as;
+  else
+    select * into m from public.harpatka_members where user_id = auth.uid();
+    if not found or m.status <> 'approved' or m.participant_id is null then raise exception 'forbidden'; end if;
+    pid := m.participant_id;
+  end if;
   select * into mt from public.harpatka_meetings where id = p_meeting;
   if not found or mt.meeting_date < today then return 'past'; end if;
   if exists (select 1 from public.harpatka_attendance where participant_id = pid and meeting_id = p_meeting) then return 'exists'; end if;
   insert into public.harpatka_attendance (participant_id, meeting_id, paid) values (pid, p_meeting, false);
   return 'registered';
 end $$;
-revoke all on function public.harpatka_me_register(uuid) from public;
-grant execute on function public.harpatka_me_register(uuid) to authenticated;
+revoke all on function public.harpatka_me_register(uuid, uuid) from public;
+grant execute on function public.harpatka_me_register(uuid, uuid) to authenticated;
 
 -- עריכת פרטים אישיים (שם, גיל, מגדר, טלפון). שינוי טלפון מעדכן גם את הקישור לחשבון
-create or replace function public.harpatka_me_update(p_first text, p_last text, p_age int, p_gender text, p_phone text)
+drop function if exists public.harpatka_me_update(text, text, int, text, text);
+create or replace function public.harpatka_me_update(p_first text, p_last text, p_age int, p_gender text, p_phone text, p_as uuid default null)
 returns text language plpgsql security definer set search_path = public as $$
-declare m public.harpatka_members; norm text := public.harpatka_normalize_phone(p_phone);
+declare m public.harpatka_members; norm text := public.harpatka_normalize_phone(p_phone); target uuid;
 begin
-  select * into m from public.harpatka_members where user_id = auth.uid();
-  if not found or m.status <> 'approved' or m.participant_id is null then raise exception 'forbidden'; end if;
+  if p_as is not null then
+    if not public.harpatka_is_admin() then raise exception 'forbidden'; end if;   -- מנהל פועל במקום המשתתף (התחזות)
+    target := p_as;
+  else
+    select * into m from public.harpatka_members where user_id = auth.uid();
+    if not found or m.status <> 'approved' or m.participant_id is null then raise exception 'forbidden'; end if;
+    target := m.participant_id;
+  end if;
   if length(trim(coalesce(p_first, ''))) < 2 or length(trim(coalesce(p_last, ''))) < 2 then return 'invalid_name'; end if;
   if p_age is not null and (p_age < 18 or p_age > 99) then return 'invalid_age'; end if;
   if norm = '' then return 'invalid_phone'; end if;
-  if exists (select 1 from public.harpatka_participants where phone_norm = norm and id <> m.participant_id and active) then return 'phone_taken'; end if;
+  if exists (select 1 from public.harpatka_participants where phone_norm = norm and id <> target and active) then return 'phone_taken'; end if;
   update public.harpatka_participants set first_name = trim(p_first), last_name = trim(p_last), age = p_age, age_set_at = current_date,
     gender = case when p_gender in ('male', 'female') then p_gender else null end, phone = trim(p_phone), phone_norm = norm
-  where id = m.participant_id;
-  update public.harpatka_members set phone_norm = norm where user_id = auth.uid();
+  where id = target;
+  update public.harpatka_members set phone_norm = norm where participant_id = target and p_as is null and user_id = auth.uid();
   return 'ok';
 end $$;
-revoke all on function public.harpatka_me_update(text, text, int, text, text) from public;
-grant execute on function public.harpatka_me_update(text, text, int, text, text) to authenticated;
+revoke all on function public.harpatka_me_update(text, text, int, text, text, uuid) from public;
+grant execute on function public.harpatka_me_update(text, text, int, text, text, uuid) to authenticated;
 
 -- הרשמה לאתר מהאזור האישי, בלי שיוך למפגש: כשהטלפון לא נמצא בין המשתתפים נוצר משתתף חדש ומחובר לחשבון (מאושר מיד, כי המשתתף נוצר על ידו ורואה רק את עצמו)
 create or replace function public.harpatka_me_signup(p_first text, p_last text, p_age int, p_gender text, p_phone text)
