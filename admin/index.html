@@ -1543,9 +1543,10 @@
     if (openPid) { sp.set('p', openPid); if (pTab && pTab !== 'main' && pTab !== 'contact' && pTab !== 'meets') { sp.set('pt', pTab); if (pTab === 'deposit' && sheet && sheet.depMid) sp.set('pm', sheet.depMid); } }
     if ($('#setDlg').open) sp.set('set', setView === 'main' ? '1' : (setView === 'st' || setView === 'del') ? (stScope === 'meeting' ? 'st' : 'tag') : setView);
     if ($('#prDlg').open && prCur) sp.set('pr', prCur);
-    if (editingMeeting && mDlg.open) sp.set('em', editingMeeting.id);
+    if (mDlg.open) sp.set('em', editingMeeting ? editingMeeting.id : 'new');   // עריכת מפגש או מפגש חדש
+    if ($('#bdDlg').open) sp.set('bd', '1');
     if ($('#stDlg').open) { sp.set('st', '1'); if (stCur && stCur !== 'main') sp.set('stv', stCur); }
-    if ($('#finDlg').open) sp.set('fin', '1');
+    if ($('#finDlg').open) sp.set('fin', finV === 'log' ? 'log' : finV === 'settle' ? 'settle' : finV === 'form' ? (finEdit && finEdit.id ? 'edit-' + finEdit.type + '-' + finEdit.id : 'new-' + ((finEdit && finEdit.kind) || 'expense')) : '1');   // כל שלב בכספים: ראשי, יומן, התחשבנות, טופס חדש או עריכה
     const s = sp.toString();
     try { history.replaceState(null, '', location.pathname + (s ? '?' + s : '')); } catch (e) {}
   }
@@ -1944,6 +1945,7 @@
           else if (d.pt === 'deposit') { viewStack = []; openDeposit(d.pm && state.meetings.some((x) => x.id === d.pm) ? d.pm : null); }
           if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
         }
+        else if (d.em === 'new') openMeeting(null);
         else if (d.em && state.meetings.some((x) => x.id === d.em)) openMeeting(d.em);
         else if (d.set || d.pr) {
           renderSettings(); $('#setDlg').showModal();
@@ -1953,7 +1955,7 @@
           else if (['pay', 'src', 'pm', 'em'].includes(v)) showSetView(v);
           if (document.activeElement && document.activeElement.closest('#setDlg')) document.activeElement.blur(); syncUrl();
         }
-        else if (d.fin) { openFinance(); }
+        else if (d.fin) { openFinance(d.fin); }
         else if (d.st) { renderStats(); $('#stDlg').showModal(); if (d.stv && ST_TITLES[d.stv] && d.stv !== 'main') stView(d.stv, true); if (document.activeElement && document.activeElement.closest('#stDlg')) document.activeElement.blur(); syncUrl(); }
         else if (d.bd) boardOpen();
         return;
@@ -2441,7 +2443,13 @@
     $('#finTitle').textContent = v === 'main' ? 'כספים' : v === 'log' ? 'יומן שינויים' : v === 'settle' ? 'התחשבנות בין מנהלים' : (finEdit && finEdit.id ? 'עריכה' : (finEdit && finEdit.kind === 'income' ? 'הכנסה חדשה' : 'הוצאה חדשה'));
     $('#finDlg').scrollTop = 0; navSync($('#finDlg')); syncUrl();
   }
-  function openFinance() { renderFinance(); finV = 'main'; finView('main'); if (!$('#finDlg').open) $('#finDlg').showModal(); if (document.activeElement && document.activeElement.closest('#finDlg')) document.activeElement.blur(); }
+  function openFinance(v) {
+    renderFinance(); finV = 'main'; finView('main'); if (!$('#finDlg').open) $('#finDlg').showModal();
+    if (v === 'log') openFinLog(); else if (v === 'settle') openFinSettle();
+    else if (v === 'new-expense' || v === 'new-income') openFinForm({ kind: v.slice(4) });
+    else if (v && v.startsWith('edit-')) { const m = /^edit-(entry|rec)-(.+)$/.exec(v); if (m && (m[1] === 'rec' ? state.finRec : state.fin).some((x) => x.id === m[2])) openFinForm({ type: m[1], id: m[2] }); }
+    if (document.activeElement && document.activeElement.closest('#finDlg')) document.activeElement.blur();
+  }
   function openFinForm(edit) {
     finEdit = edit; const f = $('#finForm');
     const src = edit.type === 'rec' ? state.finRec.find((x) => x.id === edit.id) : edit.type === 'entry' ? state.fin.find((x) => x.id === edit.id) : null;
