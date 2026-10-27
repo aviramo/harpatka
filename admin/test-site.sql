@@ -51,3 +51,24 @@ grant select, insert, update, delete on test.harpatka_likes, test.harpatka_anon_
 drop trigger if exists harpatka_members_publish_pending on test.harpatka_members;
 create trigger harpatka_members_publish_pending after update of status on test.harpatka_members
   for each row execute function test.harpatka_members_publish_pending();
+
+-- קשרים בין טבלאות הלוח בסכמת test (בלעדיהם הטבלאות מועתקות בלי מפתחות זרים, ודף הניהול לא מצליח לטעון את "התחברויות ללוח")
+do $fk$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'harpatka_members_participant_id_fkey' and connamespace = 'test'::regnamespace) then
+    alter table test.harpatka_members add constraint harpatka_members_participant_id_fkey foreign key (participant_id) references test.harpatka_participants(id) on delete set null;
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'harpatka_posts_user_id_fkey' and connamespace = 'test'::regnamespace) then
+    alter table test.harpatka_posts add constraint harpatka_posts_user_id_fkey foreign key (user_id) references test.harpatka_members(user_id) on delete restrict;
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'harpatka_posts_parent_id_fkey' and connamespace = 'test'::regnamespace) then
+    alter table test.harpatka_posts add constraint harpatka_posts_parent_id_fkey foreign key (parent_id) references test.harpatka_posts(id) on delete cascade;
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'harpatka_likes_post_id_fkey' and connamespace = 'test'::regnamespace) then
+    alter table test.harpatka_likes add constraint harpatka_likes_post_id_fkey foreign key (post_id) references test.harpatka_posts(id) on delete cascade;
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'harpatka_likes_user_id_fkey' and connamespace = 'test'::regnamespace) then
+    alter table test.harpatka_likes add constraint harpatka_likes_user_id_fkey foreign key (user_id) references test.harpatka_members(user_id) on delete cascade;
+  end if;
+end $fk$;
+notify pgrst, 'reload schema';

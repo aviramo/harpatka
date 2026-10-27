@@ -552,6 +552,8 @@
     .ptab .tcount:empty { display: none; }
     .nform { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 14px; }
     .nform textarea { flex: 1 1 auto; min-width: 0; min-height: 46px; max-height: 140px; resize: none; border-radius: 14px; border: 1px solid var(--line); background: #fff; padding: 10px 12px; font-size: 16px; line-height: 1.4; }
+    .field textarea { width: 100%; min-height: 48px; max-height: 260px; resize: none; overflow-y: auto; border-radius: 14px; border: 1px solid var(--line); background: #fff; padding: 12px 14px; font-size: 17px; line-height: 1.5; font-family: inherit; color: var(--ink); text-align: start; }
+    .field textarea:focus { border-color: var(--terra); outline: none; }
     .nform textarea:focus { border-color: var(--terra); outline: none; }
     #pDlg .nform .nadd { flex: 0 0 auto; width: auto; height: 46px; padding: 0 18px; margin: 0; font-size: 16px; }
     .nattach { flex: 0 0 auto; width: 46px; height: 46px; border-radius: 14px; border: 1px solid var(--line); background: #fff; color: var(--muted); display: grid; place-items: center; }
@@ -1330,6 +1332,7 @@
         <label class="field"><span>תאריך</span><input name="date" type="date" required /></label>
         <label class="field"><span>שעה</span><input name="time" type="time" required value="20:00" /></label>
       </div>
+      <label class="field"><span>הוראות הגעה</span><textarea name="directions" id="mDirs" rows="1" maxlength="800" placeholder="כתובת, חנייה, איך מגיעים"></textarea></label>
       <button class="btn" id="mSubmit" type="submit">יצירת מפגש</button>
       <button class="btn ghost" id="mDelete" type="button">מחיקת מפגש</button>
     </form>
@@ -3852,17 +3855,22 @@
     editingMeeting = m;
     mForm.date.value = m ? m.meeting_date : '';
     mForm.time.value = m ? String(m.meeting_time).slice(0, 5) : '20:00';
+    mForm.directions.value = (m && m.directions) || '';
     $('#mTitle').textContent = m ? 'עריכת מפגש' : 'מפגש חדש';
     $('#mSubmit').textContent = m ? 'שמירה' : 'יצירת מפגש';
     $('#mDelete').hidden = !m;
     { const linked = !!(m && state.att.some((x) => x.meeting_id === m.id)); $('#mDelete').classList.toggle('locked', linked); $('#mDelete').title = linked ? 'לא ניתן למחוק מפגש שמשויכים אליו משתתפים' : ''; }
     mDlg.showModal();
+    autoGrow($('#mDirs'));
     syncUrl();
   }
+  /* שדה מרובה שורות: מתחיל בשורה אחת ומתרחב לפי הטקסט */
+  function autoGrow(ta) { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight + 2, 260) + 'px'; }
+  $('#mDirs').addEventListener('input', (e) => autoGrow(e.target));
 
   mForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const body = { meeting_date: mForm.date.value, meeting_time: mForm.time.value || '20:00' };
+    const body = { meeting_date: mForm.date.value, meeting_time: mForm.time.value || '20:00', directions: mForm.directions.value.trim() };
     if (!body.meeting_date) { mForm.date.focus(); toast('חסר תאריך'); return; }
     const btn = $('#mSubmit'); btn.disabled = true;
     try {

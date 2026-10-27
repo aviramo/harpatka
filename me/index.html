@@ -42,6 +42,8 @@
   .msg { margin-top: 10px; font-size: 15px; min-height: 20px; }
   .msg.bad { color: var(--red); }
   .msg.good { color: var(--green); }
+  .dirs { margin-top: 12px; padding: 12px 14px; background: var(--cream); border-radius: 16px; white-space: pre-wrap; font-size: 16px; line-height: 1.55; }
+  .dirs b { display: block; font-size: 14px; color: var(--muted); margin-bottom: 4px; }
   .center { text-align: center; padding: 40px 0; color: var(--muted); }
 </style>
 </head>
@@ -142,7 +144,7 @@
     h += '<div class="card"><div class="big">שלום ' + esc(p.first_name) + '</div>' + (credit > 0 ? '<div style="margin-top:8px"><span class="chip ok">יתרה לטובתכם ' + ils(credit) + '</span></div>' : credit < 0 ? '<div style="margin-top:8px"><span class="chip no">יתרת חוב ' + ils(credit) + '</span></div>' : '') + '</div>';
     if (nx) {
       const reg = nx.registered, paid = nxM ? Number(nxM.paid) > 0 : false, free = nxM ? nxM.free : false;
-      h += '<div class="card"><h2>המפגש הבא</h2><div class="big">' + esc(fmtDate(nx.date)) + '</div><div class="muted">' + esc(nx.time) + ' · הזמר העברי 5, הרצליה</div>';
+      h += '<div class="card"><h2>המפגש הבא</h2><div class="big">' + esc(fmtDate(nx.date)) + '</div><div class="muted">' + esc(nx.time) + ' · הזמר העברי 5, הרצליה</div>' + (nx.directions ? '<div class="dirs"><b>הוראות הגעה</b>' + esc(nx.directions) + '</div>' : '');
       if (!reg) h += '<button type="button" class="btn" id="regBtn">שמירת מקום</button><div class="msg" id="rm"></div>';
       else {
         h += '<div style="margin-top:10px"><span class="chip ok">נרשמתם ✓</span> ' + (free ? '<span class="chip sky">חינם</span>' : paid ? '<span class="chip ok">שולם ' + ils(nxM.paid) + '</span>' : '<span class="chip no">טרם שולם</span>') + '</div>';

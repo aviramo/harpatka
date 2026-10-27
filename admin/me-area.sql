@@ -59,7 +59,7 @@ begin
 
   select coalesce(jsonb_agg(x order by (x->>'date') desc), '[]'::jsonb) into meetings from (
     select jsonb_build_object(
-      'id', mt.id, 'date', mt.meeting_date, 'time', to_char(mt.meeting_time, 'HH24:MI'),
+      'id', mt.id, 'date', mt.meeting_date, 'time', to_char(mt.meeting_time, 'HH24:MI'), 'directions', mt.directions,
       'attended', coalesce(a.attended, false), 'free', coalesce(a.no_pay, false),
       'paid', coalesce((select sum(case when p.kind = 'payment' then p.amount when p.kind = 'credit' or (p.kind = 'refund' and not coalesce(p.from_credit, false)) then -p.amount else 0 end)
                          from public.harpatka_payments p where p.participant_id = pid and p.meeting_id = mt.id), 0),
@@ -71,7 +71,7 @@ begin
   select * into nxt from public.harpatka_meetings where meeting_date >= today order by meeting_date, meeting_time limit 1;
   if found then
     select t.price into price from public.harpatka_price_tiers t where t.days <= (nxt.meeting_date - today) order by t.days desc limit 1;
-    nxt_json := jsonb_build_object('id', nxt.id, 'date', nxt.meeting_date, 'time', to_char(nxt.meeting_time, 'HH24:MI'), 'price', price,
+    nxt_json := jsonb_build_object('id', nxt.id, 'date', nxt.meeting_date, 'time', to_char(nxt.meeting_time, 'HH24:MI'), 'directions', nxt.directions, 'price', price,
       'registered', exists (select 1 from public.harpatka_attendance where participant_id = pid and meeting_id = nxt.id));
   end if;
 
