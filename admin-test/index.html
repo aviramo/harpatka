@@ -468,9 +468,10 @@
     .finsum .fsub { margin: 2px 0 0; font-size: 11.5px; line-height: 1.3; }
     .finsum .cred { background: var(--yellow-bg); }
     .finsum .net.wide { grid-column: 1 / -1; }
-    .finsum .net .fsub { color: rgba(255,253,249,.75); }
-    .finsum .net b.cpos, .finsum .net i.cpos { color: var(--green-bg); }   /* על הכרטיס הכהה: גוון בהיר של ירוק ואדום, בלי פלוס ומינוס */
-    .finsum .net b.cneg, .finsum .net i.cneg { color: var(--red-bg); }
+    .finsum .net.pos { background: var(--green-bg); }   /* נטו חיובי: ירוק בהיר; שלילי: אדום בהיר; אפס: קרם (צבעי הפלטה) */
+    .finsum .net.neg { background: var(--red-bg); }
+    .finsum .net.pos small, .finsum .net.pos b, .finsum .net.pos i { color: var(--green); }
+    .finsum .net.neg small, .finsum .net.neg b, .finsum .net.neg i { color: var(--red); }
     .finsum .net i { font-style: normal; font-weight: 800; }
     .finsum .cred small { color: var(--yellow); }
     .finsum .cred b { color: var(--yellow); }
@@ -481,10 +482,8 @@
     .finsum b { font-family: "Rubik", sans-serif; font-size: 18px; font-weight: 800; line-height: 1.2; }
     .finsum .in b { color: var(--green); }
     .finsum .out b { color: var(--red); }
-    .finsum .net { background: var(--ink); color: var(--paper); }
-    .finsum .net b { color: var(--paper); }
+    .finsum .net { background: var(--cream); }
     #finRec { margin-bottom: 14px; }
-    .finsum .net small { color: rgba(255,253,249,.75); }
     .finsetbtn { width: 100%; height: 44px; margin: 0 0 10px; background: var(--sky-bg); color: var(--sky); font-size: 16px; }
     #finSettle .fsc { background: var(--cream); border-radius: 16px; padding: 12px 14px; margin-bottom: 10px; }
     #finSettle .fsc h4 { margin: 0 0 6px; font-size: 17px; font-weight: 800; }
@@ -2456,7 +2455,7 @@
   function renderFinance() {
     $('#finPerTxt').textContent = finPeriodLabel();
     const sg = (v) => Math.round(v) > 0 ? 'cpos' : Math.round(v) < 0 ? 'cneg' : '', ab = (v) => '₪' + nfm(Math.abs(v)); const rows = finRows(), inc = rows.filter((x) => x.kind === 'income').reduce((s, x) => s + x.amount, 0), exp = rows.filter((x) => x.kind === 'expense').reduce((s, x) => s + x.amount, 0), part = finPartIncome(), expCh = rows.filter((x) => x.channel).reduce((s, x) => s + x.amount, 0), credHolders = [...new Set(state.payments.map((x) => x.participant_id))].map((id) => ({ id, c: Math.round(creditOf(id) * 100) / 100 })).filter((x) => x.c > 0), cred = credHolders.reduce((s, x) => s + x.c, 0), owed = state.promoters.reduce((s, x) => s + Math.max(0, ledgerOf(x.id).balance), 0);
-    $('#finSum').innerHTML = '<div class="in"><small>הכנסות ממשתתפים</small><b>₪' + nfm(part) + '</b></div><div class="out" data-ff="expense" role="button" tabindex="0" aria-pressed="' + (state.finFilter === 'expense') + '"><small>הוצאות</small><b>₪' + nfm(exp) + '</b>' + (expCh ? '<small class="fsub">מתוכן דרכי הגעה ₪' + nfm(expCh) + '</small>' : '') + '</div><div class="in" data-ff="income" role="button" tabindex="0" aria-pressed="' + (state.finFilter === 'income') + '"><small>הכנסות אחרות</small><b>₪' + nfm(inc) + '</b></div>' + (cred > 0 ? '<div class="cred"><small>קרדיט שמור</small><b>₪' + nfm(cred) + '</b><small class="fsub">' + credHolders.length + ' משתתפים, טרם נוצל</small></div><div class="net wide"><small>נטו</small><b class="' + sg(part + inc - exp) + '">' + ab(part + inc - exp) + '</b><small class="fsub">נטו אחרי קרדיט שמור: <i class="' + sg(part + inc - exp - cred) + '">' + ab(part + inc - exp - cred) + '</i></small></div>' : '<div class="net"><small>נטו</small><b class="' + sg(part + inc - exp) + '">' + ab(part + inc - exp) + '</b></div>') + (owed > 0 ? '<p class="finowed">עלויות דרכי הגעה שנצברו ועוד לא שולמו: ₪' + nfm(owed) + ' (לא נכללות בהוצאות עד התשלום)</p>' : '');
+    $('#finSum').innerHTML = '<div class="in"><small>הכנסות ממשתתפים</small><b>₪' + nfm(part) + '</b></div><div class="out" data-ff="expense" role="button" tabindex="0" aria-pressed="' + (state.finFilter === 'expense') + '"><small>הוצאות</small><b>₪' + nfm(exp) + '</b>' + (expCh ? '<small class="fsub">מתוכן דרכי הגעה ₪' + nfm(expCh) + '</small>' : '') + '</div><div class="in" data-ff="income" role="button" tabindex="0" aria-pressed="' + (state.finFilter === 'income') + '"><small>הכנסות אחרות</small><b>₪' + nfm(inc) + '</b></div>' + (cred > 0 ? '<div class="cred"><small>קרדיט שמור</small><b>₪' + nfm(cred) + '</b><small class="fsub">' + credHolders.length + ' משתתפים, טרם נוצל</small></div><div class="net wide ' + (Math.round(part + inc - exp) > 0 ? 'pos' : Math.round(part + inc - exp) < 0 ? 'neg' : '') + '"><small>נטו</small><b class="' + sg(part + inc - exp) + '">' + ab(part + inc - exp) + '</b><small class="fsub">נטו אחרי קרדיט שמור: <i class="' + sg(part + inc - exp - cred) + '">' + ab(part + inc - exp - cred) + '</i></small></div>' : '<div class="net ' + (Math.round(part + inc - exp) > 0 ? 'pos' : Math.round(part + inc - exp) < 0 ? 'neg' : '') + '"><small>נטו</small><b class="' + sg(part + inc - exp) + '">' + ab(part + inc - exp) + '</b></div>') + (owed > 0 ? '<p class="finowed">עלויות דרכי הגעה שנצברו ועוד לא שולמו: ₪' + nfm(owed) + ' (לא נכללות בהוצאות עד התשלום)</p>' : '');
     $('#finRecLbl').hidden = !state.finRec.length;
     $('#finRec').innerHTML = state.finRec.map((r) => '<button type="button" class="finrow' + (r.active ? '' : ' off') + '" data-frec="' + r.id + '"><span class="ft"><b>' + esc(r.title) + '</b><span>' + PERIODS[r.period] + ' · מ-' + finDmy(r.start_date) + (r.end_date ? ' עד ' + finDmy(r.end_date) : '') + (r.active ? '' : ' · מושהה') + '</span></span><span class="fa ' + (r.kind === 'income' ? 'in' : 'out') + '">₪' + nfm(Number(r.amount)) + '</span></button>').join('');
     const shown = state.finFilter ? rows.filter((x) => x.kind === state.finFilter) : rows;
