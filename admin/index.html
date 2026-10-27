@@ -2407,7 +2407,7 @@
     const un = { part: 0, fin: 0, chan: 0 };
     const own = (key) => (state.payMethods.find((m) => m.key === key) || {}).owner_email;
     state.payments.forEach((x) => { const k = ((x.kind === 'payment' || x.kind === 'deposit') && !x.from_credit) ? 1 : x.kind === 'refund' ? -1 : 0; if (!k) return; const o = own(x.method), a = k * Number(x.amount); if (o && A[o]) A[o].part += a; else un.part += a; });
-    finRowsAll().forEach((x) => { if (x.by && A[x.by]) A[x.by][x.kind === 'income' ? 'inc' : 'exp'] += x.amount; else un.fin += x.kind === 'income' ? x.amount : -x.amount; });
+    finRowsAll().filter((x) => !x.channel).forEach((x) => { if (x.by && A[x.by]) A[x.by][x.kind === 'income' ? 'inc' : 'exp'] += x.amount; else un.fin += x.kind === 'income' ? x.amount : -x.amount; });
     state.promoPays.forEach((x) => { if (x.by_email && A[x.by_email]) A[x.by_email].exp += Number(x.amount); else un.chan += 1; });   // תשלומים לדרכי הגעה: הוצאה של המנהל ששילם
     state.finTr.forEach((x) => { if (A[x.from_email]) A[x.from_email].out += Number(x.amount); if (A[x.to_email]) A[x.to_email].inn += Number(x.amount); });
     let total = 0; admins.forEach((e) => { const a = A[e]; a.held = a.part + a.inc - a.exp - a.out + a.inn; total += a.part + a.inc - a.exp; });
