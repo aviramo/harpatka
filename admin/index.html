@@ -1052,6 +1052,7 @@
     .evc:active { transform: scale(.92); }
     .evc.sent { background: var(--sky); border-style: solid; color: #fff; }
     .evc.off { border-color: var(--sand); color: var(--muted); }
+    .row .evc.inert { cursor: default; }   /* אחרי תחילת המפגש: תצוגה בלבד (הלחיצה נבלעת ב-listClick) */
     .row .main.bl { grid-template-columns: 54px minmax(0, max-content) minmax(0, 1fr) auto 124px 38px; }
     .row .balic { cursor: pointer; grid-column: 6; grid-row: 1; justify-self: center; margin-inline-start: 6px; width: 26px; height: 26px; border-radius: 50%; box-sizing: border-box; display: inline-grid; place-items: center; font-size: 14px; font-weight: 800; line-height: 1; }   /* מצב יתרה של המשתתף: זכאי ירוק, חייב אדום, מאוזן ניטרלי */
     .row .balic.pos { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-bg); }
@@ -3347,11 +3348,15 @@
   const EV_OPEN_OPTS = [['day', 'מתחילת יום המפגש'], ['08', 'מ-08:00'], ['09', 'מ-09:00'], ['12', 'מ-12:00'], ['180', '3 שעות לפני'], ['120', 'שעתיים לפני'], ['60', 'שעה לפני'], ['always', 'תמיד']];
   const evOpenPref = () => { const v = (state.prefs[emailOf()] || {}).event_open; return EV_OPEN_OPTS.some((o) => o[0] === v) ? v : '09'; };
   const evOpenAt = (m) => { const [y, mo, d] = m.meeting_date.split('-').map(Number), [h, mi] = String(m.meeting_time).split(':').map(Number), v = evOpenPref(); if (v === 'always') return -Infinity; return v === 'day' ? Date.UTC(y, mo - 1, d, 0, 0) : v.length === 2 && Number(v) <= 23 && v[0] === '0' || v === '12' ? Date.UTC(y, mo - 1, d, Number(v), 0) : Date.UTC(y, mo - 1, d, h, mi) - Number(v) * 60000; };
+  /* מרגע שהמפגש התחיל, עיגול שליחת פרטי המפגש רק מציג מצב (נשלח / לא נשלח) ולחיצה עליו לא עושה כלום */
+  const evStarted = (m) => { if (!m) return false; const [y, mo, d] = m.meeting_date.split('-').map(Number), [h, mi] = String(m.meeting_time).split(':').map(Number); return nowIL() >= Date.UTC(y, mo - 1, d, h, mi); };
   const evCircle = (p) => {
     if (!state.filter || state.showSent === false) return '';   // שליחת פרטי המפגש כבויה בתפריט התצוגה, או בתצוגת "הכל" (אין מפגש)
     const m = state.meetings.find((x) => x.id === state.filter), l = m && linkOf(p.id, m.id); if (!l) return '';
-    if (l.details_sent_at) return '<button type="button" class="evc sent" data-evun="' + p.id + '" title="פרטי המפגש נשלחו (לחיצה מחזירה ללא נשלח)" aria-label="פרטי המפגש נשלחו, לחיצה מחזירה ללא נשלח">' + PIN_ICON + '</button>';   // נשאר מוצג גם אחרי שהחלון נסגר: רואים למי נשלחו
+    const inert = evStarted(m);
+    if (l.details_sent_at) return inert ? '<span class="evc sent inert" title="פרטי המפגש נשלחו" aria-label="פרטי המפגש נשלחו">' + PIN_ICON + '</span>' : '<button type="button" class="evc sent" data-evun="' + p.id + '" title="פרטי המפגש נשלחו (לחיצה מחזירה ללא נשלח)" aria-label="פרטי המפגש נשלחו, לחיצה מחזירה ללא נשלח">' + PIN_ICON + '</button>';   // נשאר מוצג גם אחרי שהחלון נסגר: רואים למי נשלחו
     if (!(state.showSent === true || evOnFor(m) || hasSent(m) || evRecent(m)) || !evElig(p.id, l)) return '';   // גם אחרי שחלון השליחה נסגר: במפגש שנשלחו בו פרטים, ביטול סימון "נשלח" מחזיר עיגול "לא נשלח" ולא גורם לו להיעלם   // בהפעלה ידנית: גם לפני החלון ובמפגש שטרם התחיל   // עוד לא נשלח: רק בחלון השליחה (עד שנפתחת ההגעה) ולמי שלא בסטטוס ברירת המחדל
+    if (inert) return '<span class="evc inert" title="פרטי המפגש לא נשלחו" aria-label="פרטי המפגש לא נשלחו">' + PIN_ICON + '</span>';
     const base = waLink(p.phone);
     return base ? '<a class="evc" data-evrow="' + p.id + '" href="' + base + '?text=' + encodeURIComponent(eventDayMessage(m)) + '" target="_blank" rel="noopener" title="שליחת פרטי המפגש בוואטסאפ" aria-label="שליחת פרטי המפגש בוואטסאפ">' + PIN_ICON + '</a>'
       : '<span class="evc off" title="אין טלפון" aria-label="אין טלפון">' + PIN_ICON + '</span>';
@@ -4306,6 +4311,7 @@
   }
   window.addEventListener('scroll', () => { const m = $('#cntMenu'); if (m && !m.hidden) { m.hidden = true; m.dataset.pid = ''; } }, true);
   const listClick = (e) => {
+    if (e.target.closest('.evc.inert')) { e.stopPropagation(); e.preventDefault(); return; }   // אחרי תחילת המפגש: עיגול שליחת הפרטים לא עושה כלום (לא וואטסאפ, לא שינוי נתונים, ולא פותח את הכרטיס)
     const cn = e.target.closest('.ptag.cnt');
     if (cn) { e.stopPropagation(); openCnt(cn); return; }   // צ'יף "הגיע X/Y": תפריט הסבר ופירוט
     if (e.target.closest('.rowwa')) { e.stopPropagation(); return; }   // וואטסאפ מהרשימה: רק פותח את השיחה, לא את כרטיס המשתתף
