@@ -290,6 +290,10 @@
     .mt-row .mt-tag{ font-size:.85rem; font-weight:700; border-radius:999px; padding:.25rem .7rem; white-space:nowrap; background:#E8E2D8; color:#6b6459; }
     .mt-row.past{ opacity:.62; }
     .mt-row .mt-reg{ align-self:flex-start; display:inline-flex; align-items:center; justify-content:center; border-radius:999px; background:#C96F52; color:#FFFDF9; font-weight:700; font-size:1rem; padding:.55rem 1.3rem; min-height:44px; }
+    .mt-links{ display:flex; flex-wrap:wrap; gap:.45rem; }
+    .mt-link{ display:inline-flex; align-items:center; gap:.35rem; border-radius:999px; border:1px solid #E3CDB3; background:#FFFDF9; color:#3F382F; font-weight:700; font-size:.88rem; padding:.4rem .9rem; min-height:36px; }
+    .mt-next .mt-links{ justify-content:center; }
+    .mt-next .mt-link{ background:rgba(255,253,249,.16); border-color:transparent; color:#FFFDF9; }
     .mt-tiers{ display:flex; flex-wrap:wrap; gap:.4rem; }
     .mt-tier{ display:inline-flex; align-items:baseline; gap:.35rem; border-radius:999px; padding:.3rem .75rem; font-size:.88rem; background:rgba(232,213,190,.45); color:#3F382F; line-height:1.2; }
     .mt-tier b{ font-weight:700; }
@@ -727,6 +731,7 @@
           <span class="mt-pill" id="mPill">המפגש הבא</span>
           <div class="mt-when font-display" id="mWhen">&nbsp;</div>
           <p class="mt-sub" id="mSub">&nbsp;</p>
+          <div class="mt-links" id="mLinks" hidden></div>
           <div class="mt-tiers" id="mTiers">&nbsp;</div>
           <a href="#" data-contact class="mt-cta" id="mCta">הרשמה למפגש</a>
         </div>
@@ -829,6 +834,16 @@
       </div>
     </section>
 
+    <!-- כניסה ללוח השיתופים: מעל שאלות ותשובות (23.10.26) -->
+    <section id="boardEntry" class="relative pt-2 md:pt-4 pb-10 md:pb-14">
+      <div class="max-w-md mx-auto px-5 reveal">
+        <a href="board/" class="block card-soft overflow-hidden text-center" aria-label="כניסה ללוח השיתופים">
+          <img src="images/board-entry.webp" alt="אנשים מדביקים פתקים על לוח שיתופים: טרמפים ושיתופים כלליים" width="1000" height="1000" loading="lazy" decoding="async" class="w-full h-auto block">
+          <span class="flex items-center justify-center gap-2 px-6 py-5 font-display font-bold text-[1.25rem]" style="color:#B85C40">כניסה ללוח השיתופים<svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></span>
+        </a>
+      </div>
+    </section>
+
     <!-- ====================== FAQ ====================== -->
     <section id="faq" class="relative py-12 md:py-16">
       <div class="relative z-10 max-w-3xl mx-auto px-5">
@@ -858,15 +873,6 @@
       </div>
     </section>
 
-    <!-- כניסה ללוח השיתופים: מתחת לשאלות ותשובות (23.10.26) -->
-    <section id="boardEntry" class="relative pt-2 md:pt-4 pb-10 md:pb-14">
-      <div class="max-w-md mx-auto px-5 reveal">
-        <a href="board/" class="block card-soft overflow-hidden text-center" aria-label="כניסה ללוח השיתופים">
-          <img src="images/board-entry.webp" alt="אנשים מדביקים פתקים על לוח שיתופים: טרמפים ושיתופים כלליים" width="1000" height="1000" loading="lazy" decoding="async" class="w-full h-auto block">
-          <span class="flex items-center justify-center gap-2 px-6 py-5 font-display font-bold text-[1.25rem]" style="color:#B85C40">כניסה ללוח השיתופים<svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></span>
-        </a>
-      </div>
-    </section>
   </main>
 
   <!-- ====================== פוטר ====================== -->
@@ -1024,11 +1030,11 @@
     if (shareBtn) shareBtn.href = 'https://wa.me/?text=' + encodeURIComponent(location.origin + location.pathname);
 
     /* ===== המפגשים: הקודם (אחד), הקרוב והעתידיים. אפשר להירשם לכל מפגש שעוד לא עבר. מקור: harpatka_meetings ומדרגות המחיר (harpatka_price_tiers); הצגה מיידית מהמטמון המקומי של הביקור הקודם ואז רענון ===== */
-    const MEET_CACHE = 'harpatka_meetings_v3';
+    const MEET_CACHE = 'harpatka_meetings_v4';
     const meetingsReady = (async () => {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
       const H = { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey };
-      const base = CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time,max_participants,directions';
+      const base = CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time,max_participants,directions,maps_url,waze_url';
       try {
         const [fu, pa, ti] = await Promise.all([
           fetch(base + '&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc', { headers: H }),
@@ -1037,7 +1043,7 @@
         ]);
         if (fu.ok && pa.ok) {
           const f = await fu.json(), p = await pa.json(), t = ti.ok ? await ti.json() : [];
-          const mk = r => ({ id: r.id, date: r.meeting_date, time: String(r.meeting_time).slice(0, 5), max: r.max_participants, dir: String(r.directions || '').trim() });
+          const mk = r => ({ id: r.id, date: r.meeting_date, time: String(r.meeting_time).slice(0, 5), max: r.max_participants, dir: String(r.directions || '').trim(), maps: /^https?:\/\//i.test(r.maps_url || '') ? r.maps_url : '', waze: /^https?:\/\//i.test(r.waze_url || '') ? r.waze_url : '' });
           return { past: p[0] ? mk(p[0]) : null, future: f.map(mk), tiers: t.map(x => ({ days: Number(x.days), price: Number(x.price) })) };
         }
       } catch (e) {}
@@ -1074,6 +1080,13 @@
         return box;
       };
       const priceNow = (m, tiers, today) => { const left = dayN(m.date) - today; const T = (tiers || []).filter(x => x.days <= left).sort((a, b) => b.days - a.days)[0]; return T ? T.price : null; };
+      /* קישורי ניווט של המפגש (גוגל מפות, וויז), מוזנים בעריכת המפגש בדף הניהול */
+      const linksEl = (m, id) => {
+        if (!m.maps && !m.waze) return null;
+        const box = document.createElement('div'); box.className = 'mt-links'; if (id) box.id = id;
+        [['maps', 'גוגל מפות'], ['waze', 'וויז']].forEach(([k, name]) => { if (!m[k]) return; const a = document.createElement('a'); a.className = 'mt-link'; a.href = m[k]; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'ניווט ב' + name; box.append(a); });
+        return box;
+      };
       const reg = (m) => { window.HarpatkaRegister && window.HarpatkaRegister.open(false, m); };
       const row = (m, tiers, today, past) => {
         const r = document.createElement('div'); r.className = 'mt-row' + (past ? ' past' : '');
@@ -1081,6 +1094,7 @@
         const a = document.createElement('div'); const d1 = document.createElement('div'); d1.className = 'mt-d'; d1.textContent = label(m) + ' · ' + m.time; const d2 = document.createElement('div'); d2.className = 'mt-t'; d2.style.whiteSpace = 'pre-line'; d2.textContent = where(m); a.append(d1, d2); top.append(a);
         if (past) { const tag = document.createElement('span'); tag.className = 'mt-tag'; tag.textContent = 'התקיים'; top.append(tag); }
         r.append(top);
+        const le = linksEl(m); if (le) r.append(le);
         const te = tiersEl(m, tiers, today); if (te) r.append(te);
         if (!past) { const b = document.createElement('a'); b.href = '#'; b.className = 'mt-reg'; b.textContent = 'הרשמה למפגש'; b.addEventListener('click', e => { e.preventDefault(); reg(m); }); r.append(b); }
         return r;
@@ -1097,6 +1111,7 @@
           el('mPill').textContent = 'המפגש הבא';
           el('mWhen').textContent = label(nx) + ' · ' + nx.time;
           el('mSub').textContent = where(nx); el('mSub').style.whiteSpace = 'pre-line';
+          const lk = el('mLinks'), nl = linksEl(nx, 'mLinks'); lk.replaceWith(nl || Object.assign(document.createElement('div'), { id: 'mLinks', hidden: true }));
           const te = tiersEl(nx, tiers, today); tiersBox.replaceWith(te || Object.assign(document.createElement('div'), { id: 'mTiers' })); if (te) te.id = 'mTiers';
           cta.textContent = 'הרשמה למפגש'; cta.__meeting = nx;
         } else {
@@ -1104,6 +1119,7 @@
           el('mWhen').textContent = 'המפגש הבא בדרך אליכם';
           el('mSub').style.whiteSpace = ''; el('mSub').textContent = 'רוצים לדעת ראשונים? השאירו פרטים ונעדכן ברגע שהתאריך נקבע';
           tiersBox.replaceWith(Object.assign(document.createElement('div'), { id: 'mTiers' }));
+          el('mLinks').replaceWith(Object.assign(document.createElement('div'), { id: 'mLinks', hidden: true }));
           cta.textContent = 'השארת פרטים'; cta.__meeting = null;
         }
         const later = el('mLater'); later.innerHTML = '';
