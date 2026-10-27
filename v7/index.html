@@ -1131,6 +1131,9 @@
           const b = mk('a', 'mt-cta'); b.href = '#'; setCta(b, sp); b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); reg(m); }); box.append(b);
           const fb = fill(mkBox(), sp.future, 'fut'); if (!fb.hidden) box.append(fb);
           more.append(box); inn.append(more);
+          c.setAttribute('role', 'button'); c.tabIndex = 0; c.style.cursor = 'pointer'; c.setAttribute('aria-label', 'הרשמה למפגש ' + label(m));
+          c.addEventListener('click', () => reg(m));   // לחיצה על כל הכרטיס פותחת את הפופאפ של המפגש
+          c.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === c) { e.preventDefault(); reg(m); } });
         }
         c.append(inn);
         return c;
@@ -1170,8 +1173,12 @@
           if (!window.__mtMulti) return;   // מפגש אחד או אין: הפופאפ כרגיל
           const first = document.querySelector('#mList .mt-card:not(.is-past)'); if (!first) return;
           e.preventDefault(); e.stopImmediatePropagation();
-          const off = 96;   // גובה הבאנר המצומצם (בגלילה) ועוד מעט רווח
-          window.scrollTo({ top: first.getBoundingClientRect().top + window.scrollY - off, behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth' });
+          const bar = document.getElementById('topbar'), cur = bar.style.getPropertyValue('--p'); bar.style.setProperty('--p', '1'); const hc = bar.offsetHeight; bar.style.setProperty('--p', cur || '0');
+          const gap = parseFloat(getComputedStyle(first.parentElement).rowGap) || 14, off = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tbtop')) || 0) + hc + gap;   // כמו הרווח בין כרטיס לכרטיס מעליו
+          const go = (smooth) => window.scrollTo({ top: first.getBoundingClientRect().top + window.scrollY - off, behavior: smooth && !matchMedia('(prefers-reduced-motion:reduce)').matches ? 'smooth' : 'auto' });
+          go(true);
+          const fix = () => { const d = first.getBoundingClientRect().top - off; if (Math.abs(d) > 2) window.scrollBy({ top: d, behavior: 'auto' }); };   // תיקון אחרי הגלילה (פריסה שזזה בזמן הגלילה)
+          if ('onscrollend' in window) window.addEventListener('scrollend', fix, { once: true }); else setTimeout(fix, 900);
         }, true); }
       let cached = null;
       try { cached = JSON.parse(localStorage.getItem(MEET_CACHE) || 'null'); } catch (e) {}
