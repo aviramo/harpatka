@@ -428,6 +428,8 @@
     .tchip.ad b, .tchip.pr b { color: inherit; }
     #pTitle.tap { cursor: pointer; }
     #pMsgs { display: contents; }
+    #pViewAs { margin-inline-start: auto; }
+    #pViewAs[hidden] { display: none; }
     #pMsgs[hidden] { display: none; }
     #pDlg .sheet-head .saved { position: absolute; left: 0; top: 50%; transform: translateY(-50%); }
     #pDlg .close { position: absolute; top: -3.5rem; left: 50%; margin-left: -22px; width: 44px; height: 44px; background: var(--paper); box-shadow: 0 4px 14px rgba(0,0,0,.25); font-size: 26px; }
@@ -1217,6 +1219,7 @@
         <h2 id="pTitle">משתתף חדש</h2>
         <div class="paychip" id="pPayChip" hidden></div>
         <div id="pMsgs"></div>
+        <a class="hbtn" id="pViewAs" target="_blank" rel="noopener" aria-label="צפייה באזור האישי כמשתתף" title="צפייה באזור האישי כמשתתף" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></a>
         <span class="saved" id="savedMark">נשמר ✓</span>
       </div>
       <p id="pViewSub" class="pviewsub" hidden></p>
@@ -3232,9 +3235,7 @@
     const pend = pendingLinks(p);
     const first = String(p.first_name || p.name || '').trim().split(/\s+/)[0] || '';
     const waHref = base;   // וואטסאפ נפתח לשיחה בלבד, בלי הודעת פתיחה
-    const VIEW_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
     let h = '<div class="ctop">' +
-      '<a class="cico cb-view" href="../me/?as=' + encodeURIComponent(p.id) + '" target="_blank" rel="noopener" aria-label="צפייה באזור האישי כמשתתף" title="צפייה באזור האישי כמשתתף">' + VIEW_ICON + '</a>' +
       (base ? '<a class="cico cb-wa" href="' + waHref + '"' + '' + ' target="_blank" rel="noopener" aria-label="וואטסאפ" title="וואטסאפ">' + WA_ICON + '</a>' : '<span class="cico off" aria-label="וואטסאפ">' + WA_ICON + '</span>') + '</div>';
     box.innerHTML = h;
   }
@@ -3353,6 +3354,7 @@
       if (show && !instant && prev !== tab && !reducedMotion()) { void d.offsetWidth; d.classList.add(tab === 'main' ? 'enter-r' : 'enter-l'); }
     });
     const ex = !!(sheet && sheet.id);
+    { const va = $('#pViewAs'); va.hidden = !(ex && tab === 'info'); if (ex) va.href = '../me/?as=' + encodeURIComponent(sheet.id); }   // כניסה לאזור האישי כפי שהמשתתף רואה: בפרטי המשתתף, בשמאל למעלה
     $('#pBack').hidden = !(ex && tab !== 'main'); $('#pPayChip').dataset.tab = tab; $('#pTitle').classList.toggle('tap', ex && tab === 'main'); $('#pTitle').tabIndex = (ex && tab === 'main') ? 0 : -1; $('#pTitle').setAttribute('role', (ex && tab === 'main') ? 'button' : 'heading'); $('#pMsgs').hidden = tab !== 'main';
     { const sub = tab === 'confirm' ? cvTitle : SUBVIEW[tab], pp0 = ex ? state.participants.find((x) => x.id === sheet.id) : null;
       const pm = sub && payCtx && state.meetings.find((x) => x.id === payCtx.mid);
@@ -3523,7 +3525,7 @@
   /* לחיצה על הכותרת (השם והתגית, כל האזור) במסך הראשי פותחת את פרטי המשתתף */
   const openInfo = () => { if (pTab === 'main' && sheet && sheet.id) { viewStack = []; setPTab('info'); } };
   /* מאזינים על כל הכותרת ובודקים אם הלחיצה באזור השם והתגית (הכותרת נבנית מחדש בעדכונים, ולכן היעד של הלחיצה יכול להיות ההורה) */
-  $('#pDlg .sheet-head').addEventListener('click', (e) => { if (e.target.closest('#pBack, #pMsgs, .saved')) return; { const cr = $('#pPayChip').getBoundingClientRect(); if (!$('#pPayChip').hidden && $('#pPayChip').offsetParent && e.clientX >= cr.left && e.clientX <= cr.right && e.clientY >= cr.top && e.clientY <= cr.bottom) { if (!e.target.closest('#pPayChip')) $('#pPayChip').click(); return; } } const r = $('#pTitle').getBoundingClientRect(); if (e.target.closest('#pTitle') || (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom)) openInfo(); });
+  $('#pDlg .sheet-head').addEventListener('click', (e) => { if (e.target.closest('#pBack, #pMsgs, #pViewAs, .saved')) return; { const cr = $('#pPayChip').getBoundingClientRect(); if (!$('#pPayChip').hidden && $('#pPayChip').offsetParent && e.clientX >= cr.left && e.clientX <= cr.right && e.clientY >= cr.top && e.clientY <= cr.bottom) { if (!e.target.closest('#pPayChip')) $('#pPayChip').click(); return; } } const r = $('#pTitle').getBoundingClientRect(); if (e.target.closest('#pTitle') || (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom)) openInfo(); });
   $('#pTitle').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && $('#pTitle').classList.contains('tap')) { e.preventDefault(); openInfo(); } });
   $('#pBack').addEventListener('click', () => { if (pTab === 'promoter') promoFromPay = null; setPTab(viewStack.pop() || 'main'); });
   const goView = (v) => { viewStack.push(pTab); setPTab(v); };
