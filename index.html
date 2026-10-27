@@ -511,6 +511,10 @@
     /* ===== כרטיס מפגש (27.10.26): כרטיס אחד, אותם אלמנטים בשני המצבים, ממוזער ומורחב =====
        התמונה ממלאת את כל הכרטיס (רוחב קבוע, והגובה גדל במעבר, לכן נוצר זום פנימה); כל הטקסטים מעל התמונה, לבנים עם צל ושכבת הכהיה.
        במעבר אותם אלמנטים משנים גודל ומקום (התאריך גדל, מופיעים הכפתור והמדרגות), ושום אלמנט לא משוכפל. */
+    /* כפתור ההרשמה הקבוע: בזמן שמפגשים עתידיים בתצוגה הוא יורד ונעלם באנימציה (וחוזר כשיוצאים מהם) */
+    #stickyReg{ transition:transform .45s cubic-bezier(.22,.8,.2,1), opacity .35s ease; }
+    #stickyReg.cta-away{ transform:translateY(130%); opacity:0; }
+    #stickyReg.cta-away [data-contact]{ pointer-events:none !important; }
     .mt-list{ display:flex; flex-direction:column; gap:.9rem; }
     .mt-skel{ height:15rem; border-radius:26px; background:linear-gradient(90deg, rgba(201,111,82,.10) 25%, rgba(201,111,82,.22) 50%, rgba(201,111,82,.10) 75%); background-size:200% 100%; animation:mtShim 1.3s linear infinite; }
     @keyframes mtShim{ from{ background-position:200% 0; } to{ background-position:-200% 0; } }
@@ -1150,8 +1154,24 @@
         if (future.length) future.forEach((m, i) => frag.append(meetingCard(m, today, false, i === 0)));
         else frag.append(emptyCard(d.defName, d.defImg));
         list.replaceChildren(frag);
+        /* יותר ממפגש עתידי אחד: הכפתור הקבוע גולל לראשון (במקום לפתוח פופאפ) ונעלם כשהמפגשים העתידיים בתצוגה */
+        window.__mtMulti = future.length > 1;
+        { const sr = el('stickyReg'); if (window.__mtIO) window.__mtIO.disconnect();
+          if (sr && 'IntersectionObserver' in window) {
+            const seen = new Set(), io = new IntersectionObserver(es => { es.forEach(e => { if (e.isIntersecting) seen.add(e.target); else seen.delete(e.target); }); sr.classList.toggle('cta-away', seen.size > 0); }, { threshold: .05 });
+            window.__mtIO = io; sr.classList.remove('cta-away');
+            if (future.length > 1) [...list.querySelectorAll('.mt-card:not(.is-past)')].forEach(c => io.observe(c));
+          } }
         const sb = el('stickyRegBtn'); if (sb) sb.textContent = future.length ? 'הרשמה למפגש הקרוב' : 'השארת פרטים';
       };
+      { const sb = document.getElementById('stickyRegBtn');
+        if (sb) sb.addEventListener('click', (e) => {
+          if (!window.__mtMulti) return;   // מפגש אחד או אין: הפופאפ כרגיל
+          const first = document.querySelector('#mList .mt-card:not(.is-past)'); if (!first) return;
+          e.preventDefault(); e.stopImmediatePropagation();
+          const off = 56;   // גובה הבאנר המצומצם (בגלילה) ועוד מעט רווח
+          window.scrollTo({ top: first.getBoundingClientRect().top + window.scrollY - off, behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth' });
+        }, true); }
       let cached = null;
       try { cached = JSON.parse(localStorage.getItem(MEET_CACHE) || 'null'); } catch (e) {}
       if (cached && cached.future) render(cached);
