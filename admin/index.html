@@ -1032,6 +1032,7 @@
     .row .balic { cursor: pointer; grid-column: 6; grid-row: 1; justify-self: center; margin-inline-start: 6px; width: 26px; height: 26px; border-radius: 50%; box-sizing: border-box; display: inline-grid; place-items: center; font-size: 14px; font-weight: 800; line-height: 1; }   /* מצב יתרה של המשתתף: זכאי ירוק, חייב אדום, מאוזן ניטרלי */
     .row .balic.pos { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-bg); }
     .row .balic.neg { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-bg); }
+    .row .balic.fr { background: var(--sky-bg); color: var(--sky); border: 1px solid var(--sky-bg); }
     .row .balic.zero { background: #fff; color: var(--muted); border: 1px solid var(--line); position: relative; }   /* מאוזן: כמו חינם, אפור עם קו חוצה */
     .row .balic.zero::after { content: ''; position: absolute; left: 4px; right: 4px; top: 50%; height: 1px; background: currentColor; transform: rotate(-35deg); }
     .row .main.ev { grid-template-columns: 54px minmax(0, max-content) minmax(0, 1fr) auto 124px 38px; }
@@ -1134,6 +1135,7 @@
     .row .payic.free { background: #fff; border: 1px solid var(--line); color: var(--muted); position: relative; }
     .hfilt.all { background: #fff; border: 1px solid var(--line); color: var(--muted); }
     .hfilt.free { background: #fff; border: 1px solid var(--line); color: var(--muted); position: relative; }   /* חינם: אפור עם קו חוצה, כמו ברשימה */
+    .hfilt.fr { background: var(--sky-bg); border: 1px solid var(--sky-bg); color: var(--sky); }   /* חינם בסינון היתרה: כחול בהיר, כמו סטטוס חינם */
     .hfilt.free::after { content: ''; position: absolute; left: 4px; right: 4px; top: 50%; height: 1px; background: currentColor; transform: rotate(-35deg); }
     .hfilt.neu { background: #fff; border: 1px solid var(--line); color: var(--muted); }   /* מאוזן: ניטרלי */
     .hfilt.on { background: var(--ink); border: 1px solid var(--ink); color: var(--paper); }   /* כפתור תגיות פעיל */
@@ -1974,7 +1976,7 @@
         if (d.at === '1' || d.at === '0') state.here = d.at;
         if (d.pd === '1' || d.pd === '0' || d.pd === 'n' || /^a\d+$/.test(d.pd || '')) state.paidF = d.pd;
         if (d.sv === '1' || d.sv === '0') state.sent = d.sv;
-        if (d.bl === '1' || d.bl === '0' || d.bl === 'n') state.bal = d.bl;
+        if (d.bl === '1' || d.bl === '0' || d.bl === 'n' || d.bl === 'f') state.bal = d.bl;
         if (d.tg === '0') state.showTags = false;
         if (d.g === 'male' || d.g === 'female' || d.g === 'none') state.gender = d.g;
         if (d.sc) state.srcF = d.sc;
@@ -2118,8 +2120,11 @@
   const effSent = () => (state.q.trim() || !state.filter || !evOnFor(state.meetings.find((x) => x.id === state.filter))) ? null : state.sent;
   /* מצב יתרה (רק בתצוגת הכל): זכאי (יש יתרה לטובתו), חייב (יתרת חובה), מאוזן */
   const balState = (p) => { const b = Math.round(creditOf(p.id) * 100) / 100; return b > 0 ? '1' : b < 0 ? '0' : 'n'; };
+  /* חינם בסינון היתרה: משתתף שרשום לפחות למפגש אחד והוא בחינם בכל המפגשים שהוא רשום אליהם */
+  const freeAll = (p) => { const ls = linksOf(p.id); return ls.length > 0 && ls.every((l) => noPayOf(p, l)); };
+  const balMatch = (p, v) => v === 'f' ? freeAll(p) : balState(p) === v;
   const effBal = () => (state.q.trim() || state.filter) ? null : state.bal;
-  const balOk = (p) => { const b = effBal(); return !b || balState(p) === b; };
+  const balOk = (p) => { const b = effBal(); return !b || balMatch(p, b); };
   const sentOk = (p) => { if (!balOk(p)) return false; const s = effSent(); if (!s) return true; const l = linkOf(p.id, state.filter); if (!l || !evElig(p.id, l)) return false; return (l.details_sent_at ? '1' : '0') === s; };
   const payF = (p, f) => (f && f[0] === 'a') ? (!noPayOf(p, linkOf(p.id, state.filter)) && Math.round(allocatedOf(p.id, state.filter)) === Number(f.slice(1))) : payStateOf(p) === f;   // 'a80': ששולם בדיוק 80 למפגש הזה
   const paidOk = (p) => { const f = effPaidF(); return (!f || payF(p, f)) && sentOk(p); };
@@ -2172,20 +2177,20 @@
         here: (p) => { const h = effHere(); return !h || (((lk(p) || {}).attended) ? '1' : '0') === h; },
         pay: (p) => { const f = effPaidF(); return !f || payF(p, f); },
         sent: (p) => { const s = effSent(); if (!s) return true; return eligible(p) && ((lk(p).details_sent_at ? '1' : '0') === s); },
-        bal: (p) => { const b = effBal(); return !b || balState(p) === b; },
+        bal: (p) => { const b = effBal(); return !b || balMatch(p, b); },
       };
       const match = {
         here: (p, v) => (((lk(p) || {}).attended) ? '1' : '0') === v, pay: (p, v) => payF(p, v),
-        sent: (p, v) => eligible(p) && ((lk(p).details_sent_at ? '1' : '0') === v), bal: (p, v) => balState(p) === v,
+        sent: (p, v) => eligible(p) && ((lk(p).details_sent_at ? '1' : '0') === v), bal: (p, v) => balMatch(p, v),
       };
       FC = {};
       ['here', 'pay', 'sent', 'bal'].forEach((k) => {
         FC[k] = {}; const pool = base.filter((p) => genOk(p) && matchPay(p, epk) && Object.keys(only).filter((o) => o !== k).every((o) => only[o](p)));
-        FC[k][''] = pool.length; ['1', '0', 'n'].forEach((v) => { FC[k][v] = ((k === 'here' || k === 'sent') && v === 'n') ? 0 : pool.filter((p) => match[k](p, v)).length; });
+        FC[k][''] = pool.length; ['1', '0', 'n', 'f'].forEach((v) => { FC[k][v] = ((k === 'here' || k === 'sent') && v === 'n') ? 0 : pool.filter((p) => match[k](p, v)).length; });
       });
       FC.payAmts = {}; if (mid) base.filter((p) => genOk(p) && matchPay(p, epk) && only.here(p) && only.sent(p) && only.bal(p)).forEach((p) => { const l = lk(p); if (!l || noPayOf(p, l)) return; const a = Math.round(allocatedOf(p.id, mid)); if (a > 0) FC.payAmts[a] = (FC.payAmts[a] || 0) + 1; });   // סכומים ששולמו במפגש הזה, עם כמות המשתתפים לכל סכום
     }
-    const fbtn = (kind, v, n1, n0) => { const isA = v && String(v)[0] === 'a', c = (v === '1' || isA) ? 'yes' : v === '0' ? 'no' : v === 'n' ? 'free' : 'all', lab = FLAB[kind]; return '<button type="button" class="hfilt ' + c + '" data-fk="' + kind + '" aria-label="' + FNAME[kind] + ': ' + (isA ? '₪' + v.slice(1) : v === '1' ? lab[1] : v === '0' ? lab[2] : v === 'n' ? lab[3] : lab[0]) + '" title="' + (isA ? 'ששולמו ₪' + v.slice(1) : v === '1' ? lab[1] + ' (' + n1 + ')' : v === '0' ? lab[2] + ' (' + n0 + ')' : v === 'n' ? lab[3] : lab[0] + ': ' + lab[1] + ' ' + n1 + ', ' + lab[2] + ' ' + n0) + ' (לחיצה לפתיחת תפריט)">' + fglyph(kind, c) + '</button>'; };
+    const fbtn = (kind, v, n1, n0) => { const isA = v && String(v)[0] === 'a', c = (v === '1' || isA) ? 'yes' : v === '0' ? 'no' : v === 'n' ? 'free' : v === 'f' ? 'fr' : 'all', lab = FLAB[kind]; return '<button type="button" class="hfilt ' + c + '" data-fk="' + kind + '" aria-label="' + FNAME[kind] + ': ' + (isA ? '₪' + v.slice(1) : v === '1' ? lab[1] : v === '0' ? lab[2] : v === 'n' ? lab[3] : v === 'f' ? lab[4] : lab[0]) + '" title="' + (isA ? 'ששולמו ₪' + v.slice(1) : v === '1' ? lab[1] + ' (' + n1 + ')' : v === '0' ? lab[2] + ' (' + n0 + ')' : v === 'n' ? lab[3] : v === 'f' ? lab[4] : lab[0] + ': ' + lab[1] + ' ' + n1 + ', ' + lab[2] + ' ' + n0) + ' (לחיצה לפתיחת תפריט)">' + fglyph(kind, c) + '</button>'; };
     const sentN = (v) => base.filter((p) => { if (!genOk(p) || !paidOk(p) || !hereOkNoSent(p) || !matchPay(p, epk)) return false; const l = linkOf(p.id, state.filter); return !!l && evElig(p.id, l) && (l.details_sent_at ? '1' : '0') === v; }).length;
     $('#listHere').innerHTML = attOn ? fbtn('here', eh, hereN('1'), hereN('0')) : '';
     $('#listPay').innerHTML = state.filter ? fbtn('pay', (state.paidF === '1' || state.paidF === '0' || state.paidF === 'n' || /^a\d+$/.test(state.paidF || '')) ? state.paidF : null, paidN('1'), paidN('0')) : '';
@@ -2317,7 +2322,7 @@
           // הערה אחרונה וסימון צירוף תמונה לא מוצגים ברשימה (הערות רק בכרטיס המשתתף)
           (showHere ? '<button type="button" class="here' + (tgl && tgl.attended ? '' : ' no') + '" data-hr="' + p.id + '" data-hm="' + tgm.id + '" aria-pressed="' + !!(tgl && tgl.attended) + '" aria-label="' + (tgl && tgl.attended ? 'הגיע' : (tgl ? 'סימון הגעה' : 'הגיע בלי הרשמה')) + '" title="' + (tgl ? 'סימון הגעה' : 'לא רשום למפגש: סימון הגעה (הפתעה)') + '">' + (tgl && tgl.attended ? '✓' : '✕') + '</button>' : '') +
           evc +
-          (!state.filter ? (() => { const b = Math.round(creditOf(p.id) * 100) / 100; return '<span class="balic ' + (b > 0 ? 'pos' : b < 0 ? 'neg' : 'zero') + '" title="' + (b > 0 ? 'זכאי: יתרה לטובתו ₪' + nfm(b) : b < 0 ? 'חייב: יתרת חובה ₪' + nfm(-b) : 'מאוזן') + '">₪</span>'; })() : '') +
+          (!state.filter ? (() => { const b = Math.round(creditOf(p.id) * 100) / 100; const fa = b === 0 && freeAll(p); return '<span class="balic ' + (b > 0 ? 'pos' : b < 0 ? 'neg' : fa ? 'fr' : 'zero') + '" title="' + (b > 0 ? 'זכאי: יתרה לטובתו ₪' + nfm(b) : b < 0 ? 'חייב: יתרת חובה ₪' + nfm(-b) : fa ? 'חינם: בכל המפגשים שנרשם אליהם' : 'מאוזן') + '">₪</span>'; })() : '') +
         '</div>' +
       '</li>';
     };
@@ -3175,7 +3180,7 @@
   };
   /* הודעת "היום זה קורה": רק למשתתף ששילם על מפגש שמתקיים היום (שעון ישראל). התאריך והשעות לפי המפגש; המקום קבוע */
   const TAG_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.2"/></svg>';
-  const FLAB = { here: ['הכל', 'הגיעו', 'לא הגיעו'], sent: ['הכל', 'נשלחו', 'לא נשלחו'], pay: ['הכל', 'שולם', 'לא שולם', 'חינם'], bal: ['הכל', 'זכאי', 'חייב', 'מאוזן'] }, FNAME = { here: 'סינון הגעה', sent: 'סינון שליחת פרטים', pay: 'סינון תשלום', bal: 'סינון יתרה' };
+  const FLAB = { here: ['הכל', 'הגיעו', 'לא הגיעו'], sent: ['הכל', 'נשלחו', 'לא נשלחו'], pay: ['הכל', 'שולם', 'לא שולם', 'חינם'], bal: ['הכל', 'זכאי', 'חייב', 'מאוזן', 'חינם'] }, FNAME = { here: 'סינון הגעה', sent: 'סינון שליחת פרטים', pay: 'סינון תשלום', bal: 'סינון יתרה' };
   const fglyph = (k, c) => k === 'here' ? (c === 'no' ? '✕' : '✓') : k === 'sent' ? PIN_ICON : '₪';
   const PIN_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.6"/></svg>';
   const FORCE_EVENT_BTN = false;   // זמני לבדיקה: מציג את הכפתור והסימון גם בלי יום מפגש ותשלום (להחזיר ל-false)
@@ -3930,7 +3935,7 @@
   function openF(kind, anchor) {
     const m = $('#fMenu'); if (!m.hidden && m.dataset.kind === kind) { closeF(); return; }
     const cur = fstate(kind) || null, lab = FLAB[kind];
-    const opts = [[null, 'all', lab[0]], ['1', 'yes', lab[1]], ['0', 'no', lab[2]]].concat(kind === 'pay' ? [['n', 'free', lab[3]]] : kind === 'bal' ? [['n', 'free', lab[3]]] : []);
+    const opts = [[null, 'all', lab[0]], ['1', 'yes', lab[1]], ['0', 'no', lab[2]]].concat(kind === 'pay' ? [['n', 'free', lab[3]]] : kind === 'bal' ? [['n', 'free', lab[3]], ['f', 'fr', lab[4]]] : []);
     m.innerHTML = opts.map((o) => '<button type="button" role="menuitem" class="fopt" data-fv="' + (o[0] === null ? '' : o[0]) + '" aria-pressed="' + (cur === o[0]) + '"><span class="hfilt ' + o[1] + '">' + fglyph(kind, o[1]) + '</span><span>' + o[2] + '</span><b class="fcnt">' + ((FC[kind] || {})[o[0] === null ? '' : o[0]] ?? 0) + '</b></button>').join('');
     if (kind === 'pay') {   // בנוסף: סינון לפי הסכום ששולם למפגש
       const am = FC.payAmts || {}, ks = Object.keys(am).map(Number).sort((a, b) => b - a);
