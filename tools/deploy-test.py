@@ -96,22 +96,6 @@ for p in OUT.rglob('*.html'):
     rel = p.relative_to(OUT).as_posix()
     adapt(p, inject_env=(rel != 'admin/index.html'))
 
-# 3b. תכונות לבדיקה בלבד (tools/test-only/): באנר "המפגש הקרוב" בעמוד הבית של הבדיקות. לא נוגע בקוד האמיתי; ההעברה לאמת = העתקה ל-index.html
-def inject_topbar(path):
-    d = ROOT / 'tools' / 'test-only'
-    css, html, js = [(d / n).read_text(encoding='utf-8') for n in ('topbar.css', 'topbar.html', 'topbar.js')]
-    t = path.read_text(encoding='utf-8')
-    NL = chr(10)
-    t, n1 = re.subn(r'</head>', lambda m: '<style>' + NL + css + '</style>' + NL + '</head>', t, count=1)
-    t, n2 = re.subn(r'(<body[^>]*>)', lambda m: m.group(1) + NL + html, t, count=1)
-    t, n3 = re.subn(r'</body>', lambda m: '<script>' + NL + js + '</script>' + NL + '</body>', t, count=1)
-    if not (n1 and n2 and n3):
-        sys.exit('אי אפשר להזריק את הבאנר ל-' + str(path))
-    path.write_text(t, encoding='utf-8', newline=NL)
-
-
-inject_topbar(OUT / 'index.html')
-
 # 4. בדיקה שלא נשאר מעקב
 bad = [p.relative_to(OUT).as_posix() for p in OUT.rglob('*.html')
        if re.search(r'googletagmanager|fbevents|429806621602468|G-KPSZRGZQRK', p.read_text(encoding='utf-8'))]

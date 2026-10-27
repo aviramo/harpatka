@@ -25,7 +25,7 @@
     if (document.getElementById('testEnvBadge')) return;
     /* פס בדיקות לרוחב כל המסך (18px, אטום) בראש הדף, וכל המסכים מתחילים מתחתיו: הדף נדחף למטה, ופופאפים מוגבלים בגובה; הפס עצמו בשכבה העליונה כדי שיוצג תמיד */
     var st = document.createElement('style');
-    st.textContent = 'html{margin-top:18px}';
+    st.textContent = 'html{margin-top:18px}:root{--tbtop:18px}';
     document.head.appendChild(st);
     var d = document.createElement('div');
     d.id = 'testEnvBadge';
