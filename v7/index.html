@@ -316,6 +316,7 @@
     .mt-next.later{ min-height:0; opacity:.72; }
     .mt-next.pastc{ opacity:.42; padding:.9rem 1rem; gap:.35rem; border-radius:22px; }
     .mt-next.pastc .mt-when{ font-size:1.1rem; }
+    .mt-next.pastc .mt-name{ font-size:1rem; }
     .mt-next.sk .mt-pill, .mt-next.sk .mt-when, .mt-next.sk .mt-sub, .mt-next.sk .mt-tiers, .mt-next.sk .mt-cta{ color:transparent; background:rgba(255,253,249,.16); border-radius:12px; animation:mtPulse 1.4s ease-in-out infinite; pointer-events:none; }
     .mt-next.sk .mt-when{ min-width:12rem; min-height:2rem; } .mt-next.sk .mt-sub{ min-width:15rem; min-height:1.3rem; } .mt-next.sk .mt-tiers{ min-width:14rem; min-height:2rem; } .mt-next.sk .mt-cta{ min-width:9.5rem; }
     .mt-tier.done{ opacity:.55; text-decoration:none; font-size:.78rem; padding:.2rem .65rem; }
@@ -1116,7 +1117,9 @@
         const c = document.createElement('div'); c.className = 'mt-next later pastc';
         const pl = document.createElement('span'); pl.className = 'mt-pill'; pl.textContent = 'התקיים';
         const w = document.createElement('div'); w.className = 'mt-when font-display'; w.textContent = label(m) + ' · ' + m.time;
-        c.append(pl, w);
+        c.append(pl);
+        if (m.name) { const nm = document.createElement('div'); nm.className = 'mt-name font-display'; nm.textContent = m.name; c.append(nm); }   // שם המפגש (אם הוזן)
+        c.append(w);
         return c;
       };
       const row = (m, tiers, today, past) => {
