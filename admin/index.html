@@ -1200,16 +1200,17 @@
     .row .nm .name { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
     .hfilt.neu { background: var(--line); border: 1px solid var(--line); color: var(--muted); }   /* ניטרלי (בלי קו חוצה): עוד אין מידע, מפגש עתידי, לא משויכים */
     .fopt .hfilt { font-weight: 800; }
-  .mtiers-hint { margin: 0 2px 8px; font-size: 13px; color: var(--muted); line-height: 1.45; }
-  .mtier { display: grid; grid-template-columns: auto minmax(0, 1fr) 30px; align-items: center; column-gap: 12px; background: var(--cream); border: 1px solid var(--line); border-radius: 16px; padding: 10px 12px; margin-bottom: 8px; }
-  .mtier .mtp { display: flex; align-items: center; gap: 4px; direction: ltr; }
-  .mtier .mtp input { width: 84px; height: 52px; box-sizing: border-box; border-radius: 14px; border: 1px solid var(--line); background: #fff; text-align: center; font-size: 22px; font-weight: 800; color: var(--ink); }
-  .mtier .mtp b { font-size: 20px; color: var(--ink); }
-  .mtier .mtl { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); font-weight: 600; white-space: nowrap; }
-  .mtier .mtl input { width: 54px; height: 36px; box-sizing: border-box; border-radius: 10px; border: 1px solid var(--line); background: #fff; text-align: center; font-size: 16px; font-weight: 700; color: var(--ink); }
-  .mtier .mtr { grid-column: 1 / -1; margin-top: 8px; text-align: center; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 5px 8px; font-size: 14px; color: var(--ink); font-weight: 700; }
-  .mtier .mtr:empty { display: none; }
-  .mtier .mtdel { width: 30px; height: 30px; border: 0; background: transparent; color: var(--muted); font-size: 20px; cursor: pointer; justify-self: center; }
+  .mt2 { border: 1px solid var(--line); border-radius: 14px; background: #fff; overflow: hidden; }
+  .mt2row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--line); font-size: 14px; font-weight: 600; color: var(--muted); }
+  .mt2row:last-child { border-bottom: 0; }
+  .mt2row .mtp { display: flex; align-items: center; gap: 3px; direction: ltr; }
+  .mt2row .mtp input { width: 70px; height: 40px; box-sizing: border-box; border-radius: 10px; border: 1px solid var(--line); background: var(--cream); text-align: center; font-size: 18px; font-weight: 800; color: var(--ink); }
+  .mt2row .mtp b { font-size: 16px; color: var(--ink); }
+  .mt2row .mtlbl { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; white-space: nowrap; }
+  .mt2row select { height: 36px; min-width: 56px; border-radius: 10px; border: 1px solid var(--line); background-color: var(--cream); font-size: 15px; font-weight: 700; color: var(--ink); padding: 0 8px; }
+  .mt2row .mtdel { width: 28px; height: 28px; border: 0; background: transparent; color: var(--muted); font-size: 20px; cursor: pointer; flex: 0 0 28px; }
+  .mt2add { display: flex; gap: 8px; margin-top: 8px; }
+  .mt2add button { flex: 1 1 0; height: 38px; border-radius: 12px; border: 1px solid var(--line); background: #fff; color: var(--terra); font-weight: 700; font-size: 14px; cursor: pointer; }
 </style>
 </head>
 <body class="locked">
@@ -1394,10 +1395,9 @@
       </div>
       <label class="field"><span>מקסימום משתתפים</span><input name="max" type="number" inputmode="numeric" min="1" max="500" step="1" placeholder="ללא הגבלה" /></label>
       <label class="field"><span>הוראות הגעה</span><textarea name="directions" id="mDirs" rows="1" maxlength="800" placeholder="כתובת, חנייה, איך מגיעים"></textarea></label>
-      <div class="field"><span>מדרגות מחיר</span>
-        <p class="mtiers-hint">המחיר נקבע לפי מועד ההרשמה. כל מדרגה מתחילה מספר ימים לפני המפגש וחלה עד שמתחילה הבאה אחריה (המדרגה האחרונה עד יום המפגש).</p>
-        <div id="mTierList"></div>
-        <button type="button" class="btn ghost" id="mTierAdd" style="margin-top:6px">+ מדרגה</button>
+      <div class="field"><span>מחירים</span>
+        <div class="mt2" id="mTierList"></div>
+        <div class="mt2add"><button type="button" id="mTierAdd">+ מדרגה</button><button type="button" id="mFinalAdd">+ מחיר ביום המפגש</button></div>
       </div>
       <button class="btn" id="mSubmit" type="submit">יצירת מפגש</button>
       <button class="btn ghost" id="mDelete" type="button">מחיקת מפגש</button>
@@ -1860,12 +1860,14 @@
   /* המפגש שעליו מסמנים הגעה ברשימה הראשית: המפגש שנבחר בכותרת, אחרת הקרוב ביותר (או של היום) */
   const attTarget = () => state.filter ? state.meetings.find((m) => m.id === state.filter) : state.meetings.filter((m) => !isPast(m)).sort((a, b) => (a.meeting_date + a.meeting_time).localeCompare(b.meeting_date + b.meeting_time))[0];
   /* מחיר ברירת מחדל לפי מועד התשלום: 80 ₪ עד יומיים לפני ההתייקרות, ומשלושה ימים לפני המפגש 100 ₪ */
-  /* מדרגות מחיר לכל מפגש (העמודה price_tiers במפגש, מועתקת למפגש חדש מהמפגש הקודם): מחיר המדרגה הגבוהה ביותר ש-days שלה קטן או שווה לימים שנותרו עד המפגש */
-  const DEFAULT_TIERS = [{ days: 4, price: 80 }, { days: 0, price: 100 }];   // רק למפגש שעדיין אין לו מדרגות
-  const tiersOf = (m) => { const a = (m && Array.isArray(m.price_tiers) ? m.price_tiers : []).map((x) => ({ days: Number(x.days), price: Number(x.price) })).filter((x) => x.days >= 0 && x.price >= 0); return (a.length ? a : DEFAULT_TIERS).slice().sort((x, y) => y.days - x.days); };
+  /* מדרגות מחיר לכל מפגש (העמודה price_tiers, מועתקת למפגש חדש מהמפגש הקודם): { base, steps: [{ days, price }], final }.
+     base = המחיר הרגיל (מתחילת ההרשמה), כל שלב = "החל מ-N ימים לפני המפגש" והמחיר שלו, final = מחיר ביום המפגש (אופציונלי).
+     המחיר ביום מסוים: final אם זה יום המפגש, אחרת המדרגה שמתחילה הכי קרוב למפגש מבין אלה שכבר התחילו, אחרת base */
+  const DEFAULT_TIERS = { base: 80, steps: [{ days: 3, price: 100 }], final: null };   // רק למפגש שעדיין אין לו מדרגות
+  const tiersOf = (m) => { const q = m && m.price_tiers; if (q && !Array.isArray(q) && Number.isFinite(Number(q.base))) return { base: Number(q.base), steps: (Array.isArray(q.steps) ? q.steps : []).map((x) => ({ days: Number(x.days), price: Number(x.price) })).filter((x) => x.days >= 1 && Number.isFinite(x.price)).sort((a, b) => b.days - a.days), final: q.final == null ? null : Number(q.final) }; return JSON.parse(JSON.stringify(DEFAULT_TIERS)); };
   const PRICE_EARLY = 80;
-  const quickPrices = (m) => [...new Set(tiersOf(m).map((x) => x.price))];
-  const priceForDays = (left, m) => { const s = tiersOf(m); const hit = s.find((x) => left >= x.days); return (hit || s[s.length - 1]).price; };
+  const quickPrices = (m) => { const q = tiersOf(m); return [...new Set([q.base].concat(q.steps.map((x) => x.price), q.final == null ? [] : [q.final]))]; };
+  const priceForDays = (left, m) => { const q = tiersOf(m); if (q.final != null && left <= 0) return q.final; const s = q.steps.filter((x) => left <= x.days).sort((a, b) => a.days - b.days)[0]; return s ? s.price : q.base; };
   const daysTo = (m, iso) => { const a = m.meeting_date.split('-').map(Number), b = (iso || todayISO()).split('-').map(Number); return Math.round((Date.UTC(a[0], a[1] - 1, a[2]) - Date.UTC(b[0], b[1] - 1, b[2])) / 864e5); };
   const defaultPrice = (m, iso) => priceForDays(daysTo(m, iso), m);
   /* קרדיט משתתף: סכומים שנשארו אצלנו בביטול בלי החזר כסף, פחות מה ששימש לתשלום חדש */
@@ -3965,31 +3967,37 @@
 
   /* ---------- חלון מפגש ---------- */
   const mDlg = $('#mDlg'), mForm = $('#mForm');
-  let editingMeeting = null, mTiers = [];
-  /* עורך מדרגות המחיר של המפגש: כרטיס לכל מדרגה (מחיר גדול, כמה ימים לפני המפגש היא מתחילה, וטווח התאריכים שמתקבל מתאריך המפגש), מסודר מהמוקדם למאוחר */
-  const isoDay = (s) => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d) / 864e5; };
-  const shortDay = (n) => { const dt = new Date(n * 864e5); return dt.getUTCDate() + '.' + (dt.getUTCMonth() + 1); };
-  function mTierRanges() {
-    const md = mForm.date.value ? isoDay(mForm.date.value) : null, rows = mTiers.slice().sort((a, b) => Number(b.days) - Number(a.days));
-    const out = new Map();
-    rows.forEach((x, k) => {
-      if (md === null || x.days === '' || !Number.isFinite(Number(x.days))) { out.set(x, ''); return; }
-      const start = md - Number(x.days), next = rows[k + 1], end = next && next.days !== '' ? md - Number(next.days) - 1 : md;
-      out.set(x, k === rows.length - 1 ? shortDay(start) + ' עד יום המפגש' : (start > end ? '' : shortDay(start) + ' עד ' + shortDay(end)));
-    });
-    return out;
-  }
-  function paintMTierRanges() { const r = mTierRanges(); $('#mTierList').querySelectorAll('.mtier').forEach((el) => { const x = mTiers[Number(el.dataset.i)]; const o = el.querySelector('.mtr'); if (x && o) o.textContent = r.get(x) || ''; }); }
+  let editingMeeting = null, mTiers = { base: 80, steps: [], final: null };
+  /* עורך המחירים של המפגש (קומפקטי, מהמוקדם למאוחר): מחיר רגיל (בלי מספר ימים), מדרגות "החל מ-N ימים לפני" (N נבחר מרשימה) ומחיר ביום המפגש (אופציונלי) */
+  const mtOpt = (n, sel) => '<option value="' + n + '"' + (n === sel ? ' selected' : '') + '>' + n + '</option>';
   function renderMTiers() {
-    mTiers.sort((a, b) => Number(b.days) - Number(a.days));
-    const r = mTierRanges();
-    $('#mTierList').innerHTML = mTiers.map((x, i) => '<div class="mtier" data-i="' + i + '"><span class="mtp"><input data-f="price" type="number" inputmode="numeric" min="0" max="9999" value="' + x.price + '" aria-label="מחיר" /><b>₪</b></span><div class="mtl"><span>מתחיל</span><input data-f="days" type="number" inputmode="numeric" min="0" max="365" value="' + x.days + '" aria-label="ימים לפני המפגש" /><span>ימים לפני</span></div>' + (mTiers.length > 1 ? '<button type="button" class="mtdel" data-del="' + i + '" aria-label="מחיקת מדרגה" title="מחיקת מדרגה">×</button>' : '<span></span>') + '<div class="mtr">' + (r.get(x) || '') + '</div></div>').join('');
+    mTiers.steps.sort((a, b) => b.days - a.days);
+    const pr = (v, k) => '<span class="mtp"><input data-k="' + k + '" type="number" inputmode="numeric" min="0" max="9999" value="' + v + '" aria-label="מחיר" /><b>₪</b></span>';
+    let h = '<div class="mt2row">' + pr(mTiers.base, 'base') + '<span class="mtlbl">' + (mTiers.steps.length || mTiers.final != null ? 'מחיר רגיל, מתחילת ההרשמה' : 'מחיר הכרטיס') + '</span></div>';
+    mTiers.steps.forEach((x, i) => {
+      const days = []; for (let d = 1; d <= 30; d++) days.push(d); if (!days.includes(x.days)) days.push(x.days);
+      h += '<div class="mt2row">' + pr(x.price, 's' + i) + '<span class="mtlbl">החל מ<select data-k="d' + i + '" aria-label="ימים לפני המפגש">' + days.sort((a, b) => a - b).map((d) => mtOpt(d, x.days)).join('') + '</select>ימים לפני</span><button type="button" class="mtdel" data-del="s' + i + '" aria-label="מחיקת מדרגה" title="מחיקת מדרגה">×</button></div>';
+    });
+    if (mTiers.final != null) h += '<div class="mt2row">' + pr(mTiers.final, 'final') + '<span class="mtlbl">ביום המפגש</span><button type="button" class="mtdel" data-del="final" aria-label="מחיקת מחיר ביום המפגש" title="מחיקה">×</button></div>';
+    $('#mTierList').innerHTML = h;
+    $('#mFinalAdd').hidden = mTiers.final != null;
   }
-  $('#mTierList').addEventListener('input', (e) => { const inp = e.target.closest('input'); if (!inp) return; const x = mTiers[Number(inp.closest('.mtier').dataset.i)]; if (x) { x[inp.dataset.f] = inp.value === '' ? '' : Math.max(0, Math.round(Number(inp.value))); paintMTierRanges(); } });
-  $('#mTierList').addEventListener('change', (e) => { if (e.target.closest('input') && e.target.dataset.f === 'days') renderMTiers(); });   // סידור מחדש רק בסיום ההקלדה
-  $('#mTierList').addEventListener('click', (e) => { const d = e.target.closest('[data-del]'); if (!d) return; mTiers.splice(Number(d.dataset.del), 1); renderMTiers(); });
-  mForm.date.addEventListener('change', paintMTierRanges);
-  $('#mTierAdd').addEventListener('click', () => { const mx = mTiers.reduce((a, x) => (Number(x.days) > Number(a.days) ? x : a), mTiers[0] || { days: 0, price: 100 }); mTiers.push({ days: Number(mx.days) + 7, price: Math.max(0, Number(mx.price) - 10) }); renderMTiers(); });
+  $('#mTierList').addEventListener('input', (e) => {
+    const inp = e.target.closest('input'); if (!inp) return; const v = inp.value === '' ? '' : Math.max(0, Math.round(Number(inp.value))), k = inp.dataset.k;
+    if (k === 'base') mTiers.base = v; else if (k === 'final') mTiers.final = v; else if (k[0] === 's') mTiers.steps[Number(k.slice(1))].price = v;
+  });
+  $('#mTierList').addEventListener('change', (e) => {
+    const sel = e.target.closest('select'); if (!sel) return; const i = Number(sel.dataset.k.slice(1)), d = Number(sel.value);
+    if (mTiers.steps.some((x, j) => j !== i && x.days === d)) { toast('כבר יש מדרגה שמתחילה באותו מספר ימים'); renderMTiers(); return; }
+    mTiers.steps[i].days = d; renderMTiers();
+  });
+  $('#mTierList').addEventListener('click', (e) => { const d = e.target.closest('[data-del]'); if (!d) return; if (d.dataset.del === 'final') mTiers.final = null; else mTiers.steps.splice(Number(d.dataset.del.slice(1)), 1); renderMTiers(); });
+  $('#mTierAdd').addEventListener('click', () => {
+    let d = 1; while (mTiers.steps.some((x) => x.days === d)) d++;
+    const last = mTiers.steps.length ? mTiers.steps[mTiers.steps.length - 1].price : Number(mTiers.base) || 0;
+    mTiers.steps.push({ days: d, price: last + 20 }); renderMTiers();
+  });
+  $('#mFinalAdd').addEventListener('click', () => { const last = mTiers.steps.length ? mTiers.steps[mTiers.steps.length - 1].price : Number(mTiers.base) || 0; mTiers.final = last + 20; renderMTiers(); });
 
   function openMeeting(id) {
     const m = id ? state.meetings.find((x) => x.id === id) : null;
@@ -4002,7 +4010,7 @@
     mForm.mname.value = src.name || '';
     mForm.directions.value = src.directions || '';
     mForm.max.value = src.max_participants == null ? (m || prev ? '' : '40') : src.max_participants;
-    mTiers = tiersOf(src).map((x) => ({ days: x.days, price: x.price })); renderMTiers();   // מפגש חדש: מדרגות המחיר מועתקות מהמפגש הקודם
+    mTiers = tiersOf(src); renderMTiers();   // מפגש חדש: מדרגות המחיר מועתקות מהמפגש הקודם
     $('#mTitle').textContent = m ? 'עריכת מפגש' : 'מפגש חדש';
     $('#mSubmit').textContent = m ? 'שמירה' : 'יצירת מפגש';
     $('#mDelete').hidden = !m;
@@ -4019,10 +4027,9 @@
     e.preventDefault();
     const body = { meeting_date: mForm.date.value, meeting_time: mForm.time.value || '20:00', name: mForm.mname.value.trim() || null, directions: mForm.directions.value.trim(), max_participants: mForm.max.value === '' ? null : Math.max(1, Math.min(500, parseInt(mForm.max.value, 10) || 1)) };
     if (!body.meeting_date) { mForm.date.focus(); toast('חסר תאריך'); return; }
-    const tiers = mTiers.map((x) => ({ days: Number(x.days), price: Number(x.price) }));
-    if (!tiers.length || tiers.some((x) => !Number.isFinite(x.days) || !Number.isFinite(x.price) || x.days < 0 || x.price < 0)) { toast('מדרגות המחיר לא תקינות'); return; }
-    if (new Set(tiers.map((x) => x.days)).size !== tiers.length) { toast('מספר הימים כבר קיים במדרגה אחרת'); return; }
-    body.price_tiers = tiers.sort((a, b) => b.days - a.days);
+    const pt = { base: Number(mTiers.base), steps: mTiers.steps.map((x) => ({ days: Number(x.days), price: Number(x.price) })), final: mTiers.final == null ? null : Number(mTiers.final) };
+    if (!Number.isFinite(pt.base) || pt.base < 0 || mTiers.base === '' || pt.steps.some((x) => !Number.isFinite(x.price) || x.price < 0) || (pt.final !== null && (!Number.isFinite(pt.final) || pt.final < 0)) || mTiers.steps.some((x) => x.price === '') || mTiers.final === '') { toast('מחיר חסר או לא תקין'); return; }
+    body.price_tiers = { base: pt.base, steps: pt.steps.sort((a, b) => b.days - a.days), final: pt.final };
     const btn = $('#mSubmit'); btn.disabled = true;
     try {
       if (editingMeeting) {

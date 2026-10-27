@@ -302,9 +302,14 @@
   const HE_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
   const dayN = (s) => { const [y, mm, d] = s.split('-').map(Number); return Date.UTC(y, mm - 1, d) / 864e5; };
   let selMeeting = null, nearest = CONFIG.meetingFallback || { date: '2026-10-25', time: '20:00' };
-  /* מחיר לפי מדרגות המחיר של המפגש עצמו (m.tiers, מהעמודה price_tiers); בלי מדרגות: 100 ₪ ב-3 הימים האחרונים, אחרת 80 ₪ */
-  const priceFor = (left, tiers) => {
-    if (tiers && tiers.length) { const t = tiers.filter((x) => x.days <= left).sort((a, b) => b.days - a.days)[0] || tiers[tiers.length - 1]; return String(t.price); }
+  /* מחיר לפי מדרגות המחיר של המפגש עצמו (T = { base, steps: [{ days, price }], final }): מחיר ביום המפגש (אם הוגדר), אחרת המדרגה שמתחילה הכי קרוב למפגש מבין אלה שכבר התחילו, אחרת המחיר הרגיל. בלי מדרגות: 100 ₪ ב-3 הימים האחרונים, אחרת 80 ₪ */
+  const normT = (t) => (t && !Array.isArray(t) && Number.isFinite(Number(t.base))) ? { base: Number(t.base), steps: (Array.isArray(t.steps) ? t.steps : []).map((x) => ({ days: Number(x.days), price: Number(x.price) })).filter((x) => x.days >= 1 && Number.isFinite(x.price)), final: t.final == null ? null : Number(t.final) } : null;
+  const priceFor = (left, T) => {
+    if (T) {
+      if (T.final != null && left <= 0) return String(T.final);
+      const s = T.steps.filter((x) => left <= x.days).sort((a, b) => a.days - b.days)[0];
+      return String(s ? s.price : T.base);
+    }
     return left <= 3 ? '100' : '80';
   };
   const showMeeting = (m) => {
@@ -323,7 +328,7 @@
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
       const r = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time,price_tiers&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc&limit=1', { headers: H });
       const rows = r.ok ? await r.json() : [];
-      if (rows && rows[0]) nearest = { id: rows[0].id, date: rows[0].meeting_date, time: String(rows[0].meeting_time).slice(0, 5), tiers: (Array.isArray(rows[0].price_tiers) ? rows[0].price_tiers : []).map((x) => ({ days: Number(x.days), price: Number(x.price) })) };
+      if (rows && rows[0]) nearest = { id: rows[0].id, date: rows[0].meeting_date, time: String(rows[0].meeting_time).slice(0, 5), tiers: normT(rows[0].price_tiers) };
       showMeeting(selMeeting || nearest);
     } catch (e) {}
   })();

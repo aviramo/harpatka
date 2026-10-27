@@ -1042,7 +1042,8 @@
     if (shareBtn) shareBtn.href = 'https://wa.me/?text=' + encodeURIComponent(location.origin + location.pathname);
 
     /* ===== המפגשים: הקודם (אחד), הקרוב והעתידיים. אפשר להירשם לכל מפגש שעוד לא עבר. מקור: harpatka_meetings ומדרגות המחיר (harpatka_price_tiers); הצגה מיידית מהמטמון המקומי של הביקור הקודם ואז רענון ===== */
-    const MEET_CACHE = 'harpatka_meetings_v9';
+    const normT = t => (t && !Array.isArray(t) && Number.isFinite(Number(t.base))) ? { base: Number(t.base), steps: (Array.isArray(t.steps) ? t.steps : []).map(x => ({ days: Number(x.days), price: Number(x.price) })).filter(x => x.days >= 1 && Number.isFinite(x.price)), final: t.final == null ? null : Number(t.final) } : null;
+    const MEET_CACHE = 'harpatka_meetings_v10';
     const meetingsReady = (async () => {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
       const H = { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey };
@@ -1054,7 +1055,7 @@
         ]);
         if (fu.ok && pa.ok) {
           const f = await fu.json(), p = await pa.json();
-          const mk = r => ({ id: r.id, date: r.meeting_date, time: String(r.meeting_time).slice(0, 5), name: String(r.name || '').trim(), max: r.max_participants, tiers: (Array.isArray(r.price_tiers) ? r.price_tiers : []).map(x => ({ days: Number(x.days), price: Number(x.price) })), dir: String(r.directions || '').trim() });
+          const mk = r => ({ id: r.id, date: r.meeting_date, time: String(r.meeting_time).slice(0, 5), name: String(r.name || '').trim(), max: r.max_participants, tiers: normT(r.price_tiers), dir: String(r.directions || '').trim() });
           return { past: p.map(mk).reverse(), future: f.map(mk) };
         }
       } catch (e) {}
@@ -1068,24 +1069,27 @@
       const label = m => { const [, mo, dd] = m.date.split('-'); return 'יום ' + heDay(m.date) + ' ' + Number(dd) + '.' + Number(mo); };
       /* המקום והוראות ההגעה נלקחים משדה "הוראות הגעה" של המפגש (דף הניהול); בלי טקסט לא מוצג מקום */
       const where = m => [m.dir, m.max ? 'עד ' + m.max + ' משתתפים' : ''].filter(Boolean).join('\n');
-      /* מדרגות המחיר של מפגש (לפי הימים שנותרו עד אותו מפגש): מה שעבר (צ'יפים קטנים "עד תאריך"), המדרגה הנוכחית (המחיר על כפתור ההרשמה) ומה שיהיה (צ'יפים "מתאריך") */
-      const tierSplit = (m, tiers, today) => {
-        const T = (tiers || []).slice().sort((a, b) => b.days - a.days), md = dayN(m.date), out = { past: [], cur: null, future: [] };
-        T.forEach((t, k) => {
-          const s = k === 0 ? null : md - T[k - 1].days + 1, last = k === T.length - 1, e = last ? md : md - t.days, x = { price: t.price, s, e, last };
-          if (e < today) out.past.push(x); else if (s !== null && s > today) out.future.push(x); else out.cur = x;
-        });
+      /* מדרגות המחיר של מפגש: מחיר רגיל (מתחילת ההרשמה), מדרגות "החל מ-N ימים לפני המפגש" ומחיר ביום המפגש (אופציונלי). מחזירים מה שעבר, המדרגה הנוכחית ומה שיהיה */
+      const tierSplit = (m, T, today) => {
+        const out = { past: [], cur: null, future: [] };
+        if (!T) return out;
+        const md = dayN(m.date), steps = (T.steps || []).slice().sort((a, b) => b.days - a.days), hasFinal = T.final != null;
+        const seq = [{ price: T.base, days: null }].concat(steps), items = [];
+        seq.forEach((x, k) => { const nx = seq[k + 1]; items.push({ price: x.price, s: x.days == null ? null : md - x.days, e: nx ? md - nx.days - 1 : (hasFinal ? md - 1 : md) }); });
+        if (hasFinal) items.push({ price: T.final, s: md, e: md, final: true });
+        items.forEach(x => { if (x.e < x.s && x.s !== null) return; if (x.e < today) out.past.push(x); else if (x.s !== null && x.s > today) out.future.push(x); else out.cur = x; });
         return out;
       };
       const chip = (x, kind) => {
         const c = document.createElement('span'); c.className = 'mt-tier ' + kind;
         const b = document.createElement('b'); b.textContent = x.price + ' ₪';
-        c.append((kind === 'fut' ? 'מתאריך ' + short(x.s) : (x.s === null ? 'עד ' + short(x.e) : short(x.s) + ' עד ' + short(x.e))) + ' ', b);   // התאריך קודם והמחיר בסוף
+        const when = x.final ? 'ביום המפגש' : kind === 'fut' ? 'מתאריך ' + short(x.s) : (x.s === null ? 'עד ' + short(x.e) : short(x.s) + ' עד ' + short(x.e));
+        c.append(when + ' ', b);   // התאריך קודם והמחיר בסוף
         return c;
       };
       const fill = (box, arr, kind) => { box.innerHTML = ''; arr.forEach(x => box.append(chip(x, kind))); box.hidden = !arr.length; return box; };
       const mkBox = () => { const b = document.createElement('div'); b.className = 'mt-tiers'; return b; };
-      const noteText = sp => sp.cur && !sp.cur.last && sp.future.length ? 'המחיר עד ' + short(sp.cur.e) : '';
+      const noteText = sp => sp.cur && sp.future.length ? 'המחיר עד ' + short(sp.cur.e) : '';
       /* קישורי ניווט של המפגש (גוגל מפות, וויז), מוזנים בעריכת המפגש בדף הניהול */
       const reg = (m) => { window.HarpatkaRegister && window.HarpatkaRegister.open(false, m); };
       const ctaText = sp => 'הרשמה למפגש' + (sp.cur ? ' · ' + sp.cur.price + ' ₪' : '');
