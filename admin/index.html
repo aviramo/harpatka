@@ -1305,6 +1305,7 @@
           <span id="pTagsHome" hidden></span><div class="field" id="pTagsField"><span>תגיות</span><div class="pstchips" id="pStatusChips" role="group" aria-label="תגיות"></div></div>
         </div>
         <div class="note" id="pRegLine" style="color:var(--muted);font-size:14px;margin:2px 4px 10px"></div>
+        <a class="btn ghost" id="pViewAs" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;margin-bottom:8px">צפייה באזור האישי כמשתתף</a>
         <button class="btn ghost" id="pDelete" type="button">מחיקת משתתף</button>
       </div>
       <button class="btn" id="pSubmit" type="submit">הוספה</button>
@@ -1845,7 +1846,7 @@
   /* ---------- לוח שיתופים (board/): אישור חיבור גוגל לטלפון ומחיקת פוסטים ---------- */
   async function boardBadge() {
     try {
-      const [pm, pp] = await Promise.all([api('harpatka_members?select=user_id&status=eq.pending'), api('harpatka_posts?select=user_id&approved_at=is.null&deleted_at=is.null')]), withPosts = new Set(pp.map((x) => x.user_id)), n = pm.filter((m) => withPosts.has(m.user_id)).length;   // רק מי שכתב משהו וממתין לאישור
+      const [pm, pp] = await Promise.all([api('harpatka_members?select=user_id,wants_me&status=eq.pending'), api('harpatka_posts?select=user_id&approved_at=is.null&deleted_at=is.null')]), withPosts = new Set(pp.map((x) => x.user_id)), n = pm.filter((m) => withPosts.has(m.user_id) || m.wants_me).length;   // רק מי שכתב משהו וממתין לאישור
       ['#bdBadge', '#menuBadge'].forEach((s) => { const b = $(s); b.textContent = n; b.hidden = !n; });
     } catch (e) {}
   }
@@ -1854,11 +1855,11 @@
     let ms, pend_posts = [];
     try {
       [ms, pend_posts] = await Promise.all([
-        api('harpatka_members?select=user_id,email,google_name,phone_norm,participant_id,status,created_at,harpatka_participants(name,phone)&order=created_at.desc'),
+        api('harpatka_members?select=user_id,email,google_name,phone_norm,participant_id,status,wants_me,created_at,harpatka_participants(name,phone)&order=created_at.desc'),
         api('harpatka_posts?select=user_id,body,parent_id&approved_at=is.null&deleted_at=is.null&order=created_at.asc').catch(() => []),
       ]);
     } catch (e) { $('#bdBody').innerHTML = '<div class="empty">הלוח עוד לא הוקם (להריץ admin/board.sql)</div>'; return; }
-    const withPosts = new Set(pend_posts.map((x) => x.user_id)), allPend = ms.filter((m) => m.status === 'pending'), pend = allPend.filter((m) => withPosts.has(m.user_id)), linkedOnly = allPend.length - pend.length, appr = ms.filter((m) => m.status === 'approved'), blocked = ms.filter((m) => m.status === 'blocked'), removed = ms.filter((m) => m.status === 'removed');
+    const withPosts = new Set(pend_posts.map((x) => x.user_id)), allPend = ms.filter((m) => m.status === 'pending'), pend = allPend.filter((m) => withPosts.has(m.user_id) || m.wants_me), linkedOnly = allPend.length - pend.length, appr = ms.filter((m) => m.status === 'approved'), blocked = ms.filter((m) => m.status === 'blocked'), removed = ms.filter((m) => m.status === 'removed');
     const taken = new Set(appr.map((m) => m.participant_id).filter(Boolean));
     const memCard = (m, act) => {
       const pa = m.harpatka_participants;
@@ -3652,6 +3653,7 @@
     mLimit = 3;
     $('#nText').value = ''; setPending(null);
     $('#pDelete').hidden = !p;
+    $('#pViewAs').hidden = !p; if (p) $('#pViewAs').href = '../me/?as=' + encodeURIComponent(p.id);
     $('#savedMark').classList.remove('on');
     refreshSheetMeetings();
     openPid = p ? p.id : null;

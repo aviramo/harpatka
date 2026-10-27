@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>האזור האישי | יוצאים להרפתקה</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Rubik:wght@500;700&display=swap" rel="stylesheet" />
+<style>
+  :root { --cream:#F6EFE4; --sand:#E8D5BE; --terra:#C96F52; --ink:#3F382F; --paper:#FFFDF9; --muted:#8A7F72; --line:#E8D5BE; --green:#2F7D4F; --green-bg:#E3F1E8; --red:#B5483A; --red-bg:#F6E0DA; --sky:#1F5C6B; --sky-bg:#E3EEF3; }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--cream); color: var(--ink); font-family: Assistant, system-ui, sans-serif; font-size: 17px; line-height: 1.5; }
+  h1, h2 { font-family: Rubik, Assistant, sans-serif; margin: 0; }
+  .wrap { max-width: 520px; margin: 0 auto; padding: 14px 16px 48px; }
+  .top { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+  .top h1 { flex: 1; font-size: 22px; }
+  .link { background: none; border: 0; color: var(--muted); font: inherit; font-size: 15px; padding: 6px 4px; cursor: pointer; text-decoration: underline; }
+  .card { background: var(--paper); border: 1px solid var(--line); border-radius: 24px; padding: 18px; margin-top: 14px; }
+  .card h2 { font-size: 18px; margin-bottom: 10px; }
+  .big { font-family: Rubik, sans-serif; font-weight: 700; font-size: 22px; }
+  .muted { color: var(--muted); font-size: 15px; }
+  .btn { display: block; width: 100%; border: 0; border-radius: 999px; padding: 14px 18px; font: inherit; font-weight: 700; font-size: 18px; text-align: center; text-decoration: none; cursor: pointer; background: var(--terra); color: #fff; margin-top: 12px; }
+  .btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  .btn[disabled] { opacity: .5; cursor: default; }
+  .chip { display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 999px; font-size: 14px; font-weight: 700; background: var(--cream); color: var(--muted); }
+  .chip.ok { background: var(--green-bg); color: var(--green); }
+  .chip.no { background: var(--red-bg); color: var(--red); }
+  .chip.sky { background: var(--sky-bg); color: var(--sky); }
+  .row { display: flex; align-items: center; gap: 8px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .row:first-of-type { border-top: 0; }
+  .row .d { flex: 1; font-weight: 700; }
+  label { display: block; font-size: 14px; color: var(--muted); margin: 12px 0 4px; }
+  input, select { width: 100%; font: inherit; font-size: 17px; padding: 11px 14px; border: 1px solid var(--line); border-radius: 14px; background: #fff; color: var(--ink); }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .gbtn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 13px; font: inherit; font-weight: 700; font-size: 17px; cursor: pointer; margin-top: 14px; }
+  .gbtn svg { width: 22px; height: 22px; }
+  .imp { background: var(--sky-bg); color: var(--sky); border-radius: 16px; padding: 10px 14px; margin-top: 12px; font-size: 15px; font-weight: 700; }
+  .msg { margin-top: 10px; font-size: 15px; min-height: 20px; }
+  .msg.bad { color: var(--red); }
+  .msg.good { color: var(--green); }
+  .center { text-align: center; padding: 40px 0; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><h1>האזור האישי</h1><button type="button" class="link" id="outBtn" hidden>יציאה</button></div>
+  <div id="app"><div class="center">טוען…</div></div>
+</div>
+<script src="../shared/config.js"></script>
+<script>
+(() => {
+  const DB = {
+    url: 'https://ezakarwqstnldqixgreb.supabase.co',
+    key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6YWthcndxc3RubGRxaXhncmViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTA3MzIsImV4cCI6MjEwNjc4NjczMn0.Bg0eFBC4zKjyJc5kBw3wLgSP-PkxLFVv3o7-4YUdq4c',
+  };
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const SKEY = 'harpatka_me_session', AKEY = 'harpatka_admin_session_v2', AS_KEY = 'harpatka_me_as';
+  const CFG = (typeof CONFIG !== 'undefined') ? CONFIG : {};
+  let session = null, data = null, asId = null, usingAdmin = false;
+
+  const jwtData = (tok) => { try { return JSON.parse(decodeURIComponent(escape(atob(tok.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))))); } catch (e) { return {}; } };
+  const sessionOk = (s) => s && s.access_token && (jwtData(s.access_token).exp || 0) * 1000 > Date.now() + 30000;
+  const store = () => (usingAdmin ? AKEY : SKEY);
+  const saveSession = (s) => { session = s; try { localStorage.setItem(store(), JSON.stringify(s)); } catch (e) {} };
+  const clearSession = () => { session = null; try { localStorage.removeItem(store()); } catch (e) {} };
+  async function refreshSession() {
+    if (!session || !session.refresh_token) return false;
+    try {
+      const r = await fetch(DB.url + '/auth/v1/token?grant_type=refresh_token', { method: 'POST', headers: { apikey: DB.key, 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh_token: session.refresh_token }) });
+      if (!r.ok) return false;
+      const d = await r.json(); saveSession({ access_token: d.access_token, refresh_token: d.refresh_token }); return true;
+    } catch (e) { return false; }
+  }
+  const goGoogle = () => { try { if (asId) sessionStorage.setItem(AS_KEY, asId); } catch (e) {} location.href = DB.url + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(location.origin + location.pathname); };
+  async function rpc(name, body) {
+    const call = () => fetch(DB.url + '/rest/v1/rpc/' + name, { method: 'POST', headers: { apikey: DB.key, Authorization: 'Bearer ' + ((session && session.access_token) || DB.key), 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+    let res = await call();
+    if (res.status === 401 && session && await refreshSession()) res = await call();
+    if (res.status === 401 || res.status === 403) { clearSession(); throw new Error('auth'); }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const t = await res.text(); return t ? JSON.parse(t) : null;
+  }
+
+  const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+  const fmtDate = (iso) => { const [y, m, d] = iso.split('-').map(Number); return 'יום ' + DAYS[new Date(y, m - 1, d).getDay()] + ' ' + String(d).padStart(2, '0') + '.' + String(m).padStart(2, '0'); };
+  const ils = (n) => '₪' + Math.round(Math.abs(n)).toLocaleString('he-IL');
+  const G = '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>';
+
+  const app = $('#app');
+  const toast = (el, text, bad) => { el.textContent = text; el.className = 'msg ' + (bad ? 'bad' : 'good'); };
+
+  function viewLogin() {
+    app.innerHTML = '<div class="card"><h2>כניסה</h2><p class="muted" style="margin:0">כאן אפשר לראות את המפגשים שלכם, את התשלומים והיתרה, להירשם למפגש הבא ולעדכן פרטים</p><button type="button" class="gbtn" id="gBtn">' + G + 'כניסה עם גוגל</button></div>';
+    $('#gBtn').onclick = goGoogle;
+  }
+  function viewClaim(note) {
+    app.innerHTML = '<div class="card"><h2>חיבור לחשבון</h2><p class="muted" style="margin:0">הזינו את הטלפון שבו נרשמתם למפגש כדי לחבר אליו את חשבון הגוגל. החיבור מאושר על ידינו ואז האזור האישי נפתח</p>' + (note ? '<p class="msg bad">' + esc(note) + '</p>' : '') +
+      '<label for="ph">טלפון</label><input id="ph" type="tel" inputmode="tel" autocomplete="tel" placeholder="05X-XXXXXXX" dir="ltr" style="text-align:right" /><button type="button" class="btn" id="claimBtn">שליחה</button><div class="msg" id="cm"></div></div>';
+    $('#claimBtn').onclick = async () => {
+      const b = $('#claimBtn'); b.disabled = true;
+      try {
+        const r = await rpc('harpatka_me_claim', { p_phone: $('#ph').value });
+        if (r === 'not_registered') { toast($('#cm'), 'המספר הזה עוד לא רשום למפגש. כדי להשתמש באזור האישי צריך להירשם תחילה למפגש', true); b.disabled = false; return; }
+        if (r === 'invalid_phone') { toast($('#cm'), 'מספר הטלפון לא תקין', true); b.disabled = false; return; }
+        load();
+      } catch (e) { toast($('#cm'), 'משהו השתבש, אפשר לנסות שוב', true); b.disabled = false; }
+    };
+  }
+  function viewPending() { app.innerHTML = '<div class="card"><h2>הבקשה התקבלה</h2><p class="muted" style="margin:0">אנחנו מאשרים את החיבור, ובקרוב האזור האישי יהיה זמין. אפשר לחזור לכאן בעוד קצת זמן</p></div>'; }
+  function viewBlocked() { app.innerHTML = '<div class="card"><h2>אין גישה</h2><p class="muted" style="margin:0">החשבון הזה לא מחובר לאזור אישי. אפשר לפנות אלינו בוואטסאפ</p></div>'; }
+
+  function viewMain() {
+    const p = data.participant, nx = data.next, imp = !!data.impersonating, ms = data.meetings || [];
+    const nxM = nx ? ms.find((m) => m.id === nx.id) : null;
+    const credit = Number(data.balance) || 0;
+    let h = '';
+    if (imp) h += '<div class="imp">מצב צפייה כמנהל: כך ' + esc(p.first_name + ' ' + p.last_name) + ' רואה את האזור האישי (בלי אפשרות לשנות)</div>';
+    h += '<div class="card"><div class="big">שלום ' + esc(p.first_name) + '</div>' + (credit > 0 ? '<div style="margin-top:8px"><span class="chip ok">יתרה לטובתכם ' + ils(credit) + '</span></div>' : credit < 0 ? '<div style="margin-top:8px"><span class="chip no">יתרת חוב ' + ils(credit) + '</span></div>' : '') + '</div>';
+    if (nx) {
+      const reg = nx.registered, paid = nxM ? Number(nxM.paid) > 0 : false, free = nxM ? nxM.free : false;
+      h += '<div class="card"><h2>המפגש הבא</h2><div class="big">' + esc(fmtDate(nx.date)) + '</div><div class="muted">' + esc(nx.time) + ' · הזמר העברי 5, הרצליה</div>';
+      if (!reg) h += '<button type="button" class="btn" id="regBtn"' + (imp ? ' disabled' : '') + '>שמירת מקום</button><div class="msg" id="rm"></div>';
+      else {
+        h += '<div style="margin-top:10px"><span class="chip ok">נרשמתם ✓</span> ' + (free ? '<span class="chip sky">חינם</span>' : paid ? '<span class="chip ok">שולם ' + ils(nxM.paid) + '</span>' : '<span class="chip no">טרם שולם</span>') + '</div>';
+        if (!paid && !free && CFG.payboxLink) h += '<a class="btn" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">תשלום ' + (nx.price ? ils(nx.price) : '') + ' בפייבוקס</a><p class="muted" style="margin:8px 0 0">המקום נשמר אחרי התשלום</p>';
+      }
+      h += '</div>';
+    } else h += '<div class="card"><h2>המפגש הבא</h2><p class="muted" style="margin:0">עוד לא נקבע מפגש קרוב. נעדכן בקבוצת העדכונים</p>' + (CFG.updatesGroupLink ? '<a class="btn ghost" href="' + esc(CFG.updatesGroupLink) + '" target="_blank" rel="noopener">הצטרפות לקבוצת העדכונים</a>' : '') + '</div>';
+
+    h += '<div class="card"><h2>המפגשים שלי</h2>' + (ms.length ? ms.map((m) => '<div class="row"><div class="d">' + esc(fmtDate(m.date)) + '<div class="muted" style="font-weight:400">' + esc(m.time) + '</div></div>' +
+      (m.attended ? '<span class="chip ok">הגעתם</span>' : m.future ? '<span class="chip">בקרוב</span>' : '<span class="chip">לא הגעתם</span>') +
+      (m.free ? '<span class="chip sky">חינם</span>' : Number(m.paid) > 0 ? '<span class="chip ok">' + ils(m.paid) + '</span>' : '<span class="chip no">לא שולם</span>') + '</div>').join('') : '<p class="muted" style="margin:0">עוד לא נרשמתם למפגש</p>') + '</div>';
+
+    const gv = p.gender || '';
+    h += '<div class="card"><h2>הפרטים שלי</h2><div class="two"><div><label for="fn">שם פרטי</label><input id="fn" value="' + esc(p.first_name) + '"></div><div><label for="ln">שם משפחה</label><input id="ln" value="' + esc(p.last_name) + '"></div></div>' +
+      '<label for="ph2">טלפון</label><input id="ph2" type="tel" inputmode="tel" dir="ltr" style="text-align:right" value="' + esc(String(p.phone || '').replace(/^\+972/, '0')) + '">' +
+      '<div class="two"><div><label for="ag">גיל</label><input id="ag" type="number" inputmode="numeric" min="18" max="99" value="' + esc(p.age == null ? '' : p.age) + '"></div><div><label for="gn">מגדר</label><select id="gn"><option value="">לא צוין</option><option value="female"' + (gv === 'female' ? ' selected' : '') + '>נקבה</option><option value="male"' + (gv === 'male' ? ' selected' : '') + '>זכר</option></select></div></div>' +
+      '<button type="button" class="btn" id="saveBtn"' + (imp ? ' disabled' : '') + '>שמירה</button><div class="msg" id="sm"></div></div>';
+    h += '<div class="card"><h2>עוד</h2><a class="btn ghost" href="../board/" style="margin-top:0">לוח השיתופים</a></div>';
+    app.innerHTML = h;
+
+    const rb = $('#regBtn');
+    if (rb) rb.onclick = async () => {
+      rb.disabled = true;
+      try { const r = await rpc('harpatka_me_register', { p_meeting: nx.id }); if (r === 'registered' || r === 'exists') load(); else { toast($('#rm'), 'אי אפשר להירשם למפגש הזה', true); rb.disabled = false; } }
+      catch (e) { toast($('#rm'), 'משהו השתבש, אפשר לנסות שוב', true); rb.disabled = false; }
+    };
+    $('#saveBtn').onclick = async () => {
+      const b = $('#saveBtn'); b.disabled = true;
+      try {
+        const age = $('#ag').value === '' ? null : Number($('#ag').value);
+        const r = await rpc('harpatka_me_update', { p_first: $('#fn').value, p_last: $('#ln').value, p_age: age, p_gender: $('#gn').value, p_phone: $('#ph2').value });
+        const bad = { invalid_name: 'צריך שם פרטי ושם משפחה', invalid_age: 'הגיל צריך להיות בין 18 ל-99', invalid_phone: 'מספר הטלפון לא תקין', phone_taken: 'המספר הזה כבר רשום אצל משתתף אחר' }[r];
+        if (bad) toast($('#sm'), bad, true); else { toast($('#sm'), 'הפרטים נשמרו'); load(true); }
+      } catch (e) { toast($('#sm'), 'משהו השתבש, אפשר לנסות שוב', true); }
+      b.disabled = false;
+    };
+  }
+
+  async function load(keepMsg) {
+    try {
+      data = await rpc('harpatka_me', asId ? { p_as: asId } : {});
+    } catch (e) { if (e.message === 'auth' || (asId && /HTTP (400|403|404)/.test(e.message))) { viewLogin(); return; } app.innerHTML = '<div class="center">הטעינה נכשלה. אפשר לרענן</div>'; return; }
+    $('#outBtn').hidden = false;
+    if (data.status === 'ok') { const keep = keepMsg ? $('#sm') && $('#sm').textContent : ''; viewMain(); if (keep) toast($('#sm'), keep); }
+    else if (data.status === 'pending') viewPending();
+    else if (data.status === 'blocked') viewBlocked();
+    else viewClaim();
+  }
+
+  async function start() {
+    const q = new URLSearchParams(location.search);
+    try { asId = q.get('as') || sessionStorage.getItem(AS_KEY) || null; sessionStorage.removeItem(AS_KEY); } catch (e) { asId = q.get('as'); }
+    const h = new URLSearchParams(location.hash.replace(/^#/, ''));
+    if (h.get('access_token')) { saveSession({ access_token: h.get('access_token'), refresh_token: h.get('refresh_token') }); history.replaceState(null, '', location.pathname + (asId ? '?as=' + encodeURIComponent(asId) : '')); }
+    else if (h.get('error_description')) { history.replaceState(null, '', location.pathname); }
+    else { try { session = JSON.parse(localStorage.getItem(SKEY) || 'null'); } catch (e) { session = null; } }
+    if (asId && !sessionOk(session)) {   // התחזות: מנהל שכבר מחובר לדף הניהול נכנס בלי כניסה נוספת
+      try { const a = JSON.parse(localStorage.getItem(AKEY) || 'null'); if (a && a.access_token) { usingAdmin = true; session = a; } } catch (e) {}
+    }
+    if (session && !sessionOk(session) && !(await refreshSession())) clearSession();
+    if (!session) { viewLogin(); return; }
+    load();
+  }
+  $('#outBtn').onclick = () => { if (!usingAdmin) clearSession(); else { try { sessionStorage.removeItem(AS_KEY); } catch (e) {} } location.href = location.pathname; };
+  start();
+})();
+</script>
+</body>
+</html>
