@@ -2575,9 +2575,10 @@
   async function setLinkedWithStatus(pid, mid, st) {
     if (linkOf(pid, mid)) { setPayStatus(pid, mid, st); return; }
     const row = Object.assign({ participant_id: pid, meeting_id: mid }, statusBody(st));
+    const h = pendBegin(pid, mid, statusBody(st), row);
     state.att.push(row); render(); refreshSheetMeetings();
-    try { await api(T.a, { method: 'POST', body: row, prefer: 'resolution=ignore-duplicates' }); }
-    catch (err) { state.att = state.att.filter((a) => a !== row); render(); refreshSheetMeetings(); fail(err); return; }
+    try { await api(T.a, { method: 'POST', body: row, prefer: 'resolution=ignore-duplicates' }); pendDone(h); }
+    catch (err) { pendFail(h); state.att = state.att.filter((a) => a !== row); render(); refreshSheetMeetings(); fail(err); return; }
     // שינוי סטטוס / שיוך לא נוגע בכסף: אין הקצאה אוטומטית מהיתרה (תשלום רק במסך התשלום)
   }
   function openRefundView(pid, mid, st) {
@@ -2720,8 +2721,12 @@
   const attPending = new Map();
   function applyAttPending() {
     const now = Date.now();
-    attPending.forEach((ov, key) => { if (ov.exp <= now) { attPending.delete(key); return; } const [pid, mid] = key.split('|'), l = linkOf(pid, mid); if (l) Object.assign(l, ov.body); });
+    attPending.forEach((ov, key) => { if (ov.exp <= now) { attPending.delete(key); return; } const [pid, mid] = key.split('|'); let l = linkOf(pid, mid); if (!l && ov.row) { l = Object.assign({}, ov.row); state.att.push(l); } if (l) Object.assign(l, ov.body); });
   }
+  /* שינוי סטטוס אופטימי: עד שהכתיבה נקלטת (ועוד 3 שניות להד של הזמן אמת) טעינה מחדש לא מחזירה את הערך הישן, כדי שלא יהבהב ישן-חדש-ישן-חדש */
+  function pendBegin(pid, mid, body, row) { const key = pid + '|' + mid, old = attPending.get(key), ov = { body: Object.assign({}, old && old.body, body), exp: Infinity, row: row || (old && old.row) }; attPending.set(key, ov); return { key, ov }; }
+  const pendDone = (h) => { if (attPending.get(h.key) === h.ov) h.ov.exp = Date.now() + 3000; };
+  const pendFail = (h) => { if (attPending.get(h.key) === h.ov) attPending.delete(h.key); };
   /* הגיע בלי להיות רשום למפגש (הפתעה): נוצר שיוך עם הגעה מסומנת, סטטוס "משויך" */
   async function walkIn(pid, mid, after) {
     if (linkOf(pid, mid)) { setAttended(pid, mid, true); if (after) after(); return; }
@@ -2795,9 +2800,9 @@
   }
   async function setAfterStatus(pid, mid, key) {
     const l = linkOf(pid, mid); if (!l) return;
-    const prev = l.after_key || null; l.after_key = key; render(); if (sheet && sheet.id) { refreshSheetMeetings(); renderContact(); }
-    try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body: { after_key: key } }); toast(key ? 'הסטטוס עודכן: ' + STATUS_LABEL[key] : 'סטטוס אחרי המפגש הוסר'); }
-    catch (err) { l.after_key = prev; render(); if (sheet && sheet.id) { refreshSheetMeetings(); renderContact(); } fail(err); }
+    const prev = l.after_key || null, h = pendBegin(pid, mid, { after_key: key }); l.after_key = key; render(); if (sheet && sheet.id) { refreshSheetMeetings(); renderContact(); }
+    try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body: { after_key: key } }); pendDone(h); toast(key ? 'הסטטוס עודכן: ' + STATUS_LABEL[key] : 'סטטוס אחרי המפגש הוסר'); }
+    catch (err) { pendFail(h); l.after_key = prev; render(); if (sheet && sheet.id) { refreshSheetMeetings(); renderContact(); } fail(err); }
   }
   function openQuickMenu(pid, anchor, mid) {
     const menu = $('#qMenu'), inMeeting = !!(mid || state.filter);
@@ -2892,9 +2897,10 @@
     const prev = { paid: l.paid, pay_requested_at: l.pay_requested_at, exempt: l.exempt, will_pay: l.will_pay, maybe: l.maybe, status_key: l.status_key };
     const body = Object.assign({ paid: false, exempt: false, will_pay: false, maybe: false, pay_requested_at: null, status_key: BUILTIN.includes(st) ? null : st },
       st === 'paid' ? { paid: true } : st === 'requested' ? { pay_requested_at: new Date().toISOString() } : st === 'willpay' ? { will_pay: true } : st === 'maybe' ? { maybe: true } : st === 'exempt' ? { exempt: true } : {});
+    const h = pendBegin(pid, mid, body);
     Object.assign(l, body); render(); refreshSheetMeetings();
-    try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body }); }
-    catch (err) { Object.assign(l, prev); render(); refreshSheetMeetings(); fail(err); }
+    try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body }); pendDone(h); }
+    catch (err) { pendFail(h); Object.assign(l, prev); render(); refreshSheetMeetings(); fail(err); }
   }
   /* יומן תשלומים: כל סימון תשלום או החזר יוצר רשומה חדשה (תיקון תשלום = החזר של הישן + תשלום חדש) */
   /* חבילות: הפקדה עם pkg_n מפגשים (מחיר למפגש = סכום / pkg_n); כל הקצאה מחבילה (pkg) לוקחת מחיר חבילה ומורידה מפגש; זיכוי של הקצאה כזו מחזיר מפגש */
