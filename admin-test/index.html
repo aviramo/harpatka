@@ -726,7 +726,7 @@
     .qmenu .qi[aria-pressed="true"] { border-color: currentColor; }
     .qmenu .qedit, .qeditlink { display: flex; align-items: center; justify-content: center; gap: 6px; height: 30px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 700; border-radius: 10px; }
     .qeditlink { margin: 8px auto 0; padding: 0 12px; }
-    #fMenu .fsep { flex: 1 1 100%; font-size: 12px; font-weight: 800; color: var(--muted); text-align: center; padding: 8px 4px 2px; border-top: 1px solid var(--line); margin-top: 4px; }
+    #fMenu .fsep { flex: 1 1 100%; height: 0; border-top: 1px solid var(--line); margin: 2px 4px; }   /* קו מפריד בין מצבי התשלום לסכומים, בלי כותרת */
     .qmenu .qhd { font-size: 12px; font-weight: 800; color: var(--muted); text-align: center; padding: 4px 0 0; }
     .qmenu .qi small { opacity: .7; font-weight: 700; margin-inline-start: 4px; }
     .fx.stsel { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
@@ -3876,7 +3876,7 @@
     m.innerHTML = opts.map((o) => '<button type="button" role="menuitem" class="fopt" data-fv="' + (o[0] === null ? '' : o[0]) + '" aria-pressed="' + (cur === o[0]) + '"><span class="hfilt ' + o[1] + '">' + fglyph(kind, o[1]) + '</span><span>' + o[2] + '</span><b class="fcnt">' + ((FC[kind] || {})[o[0] === null ? '' : o[0]] ?? 0) + '</b></button>').join('');
     if (kind === 'pay') {   // בנוסף: סינון לפי הסכום ששולם למפגש
       const am = FC.payAmts || {}, ks = Object.keys(am).map(Number).sort((a, b) => b - a);
-      if (ks.length) m.innerHTML += '<div class="fsep">לפי סכום ששולם</div>' + ks.map((a) => '<button type="button" role="menuitem" class="fopt" data-fv="a' + a + '" aria-pressed="' + (cur === 'a' + a) + '"><span class="hfilt yes">₪</span><span>₪' + nfm(a) + '</span><b class="fcnt">' + am[a] + '</b></button>').join('');
+      if (ks.length) m.innerHTML += '<div class="fsep" role="separator"></div>' + ks.map((a) => '<button type="button" role="menuitem" class="fopt" data-fv="a' + a + '" aria-pressed="' + (cur === 'a' + a) + '"><span class="hfilt yes">₪</span><span>₪' + nfm(a) + '</span><b class="fcnt">' + am[a] + '</b></button>').join('');
     }
     m.dataset.kind = kind; m.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = m.offsetWidth;
