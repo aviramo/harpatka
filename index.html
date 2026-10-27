@@ -1044,21 +1044,20 @@
     if (shareBtn) shareBtn.href = 'https://wa.me/?text=' + encodeURIComponent(location.origin + location.pathname);
 
     /* ===== המפגשים: הקודם (אחד), הקרוב והעתידיים. אפשר להירשם לכל מפגש שעוד לא עבר. מקור: harpatka_meetings ומדרגות המחיר (harpatka_price_tiers); הצגה מיידית מהמטמון המקומי של הביקור הקודם ואז רענון ===== */
-    const MEET_CACHE = 'harpatka_meetings_v6';
+    const MEET_CACHE = 'harpatka_meetings_v7';
     const meetingsReady = (async () => {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
       const H = { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey };
-      const base = CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time,max_participants,directions,maps_url,waze_url';
+      const base = CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time,max_participants,directions,maps_url,waze_url,price_tiers';
       try {
-        const [fu, pa, ti] = await Promise.all([
+        const [fu, pa] = await Promise.all([
           fetch(base + '&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc', { headers: H }),
-          fetch(base + '&meeting_date=lt.' + today + '&order=meeting_date.desc,meeting_time.desc&limit=2', { headers: H }),
-          fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_price_tiers?select=days,price&order=days.desc', { headers: H })
+          fetch(base + '&meeting_date=lt.' + today + '&order=meeting_date.desc,meeting_time.desc&limit=2', { headers: H })
         ]);
         if (fu.ok && pa.ok) {
-          const f = await fu.json(), p = await pa.json(), t = ti.ok ? await ti.json() : [];
-          const mk = r => ({ id: r.id, date: r.meeting_date, time: String(r.meeting_time).slice(0, 5), max: r.max_participants, dir: String(r.directions || '').trim(), maps: /^https?:\/\//i.test(r.maps_url || '') ? r.maps_url : '', waze: /^https?:\/\//i.test(r.waze_url || '') ? r.waze_url : '' });
-          return { past: p.map(mk).reverse(), future: f.map(mk), tiers: t.map(x => ({ days: Number(x.days), price: Number(x.price) })) };
+          const f = await fu.json(), p = await pa.json();
+          const mk = r => ({ id: r.id, date: r.meeting_date, time: String(r.meeting_time).slice(0, 5), max: r.max_participants, tiers: (Array.isArray(r.price_tiers) ? r.price_tiers : []).map(x => ({ days: Number(x.days), price: Number(x.price) })), dir: String(r.directions || '').trim(), maps: /^https?:\/\//i.test(r.maps_url || '') ? r.maps_url : '', waze: /^https?:\/\//i.test(r.waze_url || '') ? r.waze_url : '' });
+          return { past: p.map(mk).reverse(), future: f.map(mk) };
         }
       } catch (e) {}
       return null;
@@ -1106,7 +1105,7 @@
         if (past) { const tag = document.createElement('span'); tag.className = 'mt-tag'; tag.textContent = 'התקיים'; top.append(tag); }
         r.append(top);
         const le = linksEl(m); if (le) r.append(le);
-        const sp = tierSplit(m, tiers, today);
+        const sp = tierSplit(m, m.tiers, today);
         const pb = fill(mkBox(), sp.past, 'done'); if (!pb.hidden) r.append(pb);
         if (past) return r;
         const b = document.createElement('a'); b.href = '#'; b.className = 'mt-reg'; b.textContent = ctaText(sp); b.addEventListener('click', e => { e.preventDefault(); reg(m); }); r.append(b);
@@ -1122,7 +1121,7 @@
         nextEl.classList.remove('sk');
         const cta = el('mCta'), lk = el('mLinks');
         if (nx) {
-          const sp = tierSplit(nx, tiers, today);
+          const sp = tierSplit(nx, nx.tiers, today);
           el('mPill').textContent = 'המפגש הקרוב' + (nx.max ? ' · עד ' + nx.max + ' משתתפים' : '');
           el('mWhen').textContent = label(nx) + ' · ' + nx.time;
           el('mSub').textContent = nx.dir; el('mSub').style.whiteSpace = 'pre-line'; el('mSub').hidden = !el('mSub').textContent;

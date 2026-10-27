@@ -70,7 +70,8 @@ begin
 
   select * into nxt from public.harpatka_meetings where meeting_date >= today order by meeting_date, meeting_time limit 1;
   if found then
-    select t.price into price from public.harpatka_price_tiers t where t.days <= (nxt.meeting_date - today) order by t.days desc limit 1;
+    -- מדרגות המחיר של המפגש עצמו (עמודה price_tiers)
+    select (e->>'price')::int into price from jsonb_array_elements(coalesce(nxt.price_tiers, '[]'::jsonb)) e where (e->>'days')::int <= (nxt.meeting_date - today) order by (e->>'days')::int desc limit 1;
     nxt_json := jsonb_build_object('id', nxt.id, 'date', nxt.meeting_date, 'time', to_char(nxt.meeting_time, 'HH24:MI'), 'directions', nxt.directions, 'price', price,
       'registered', exists (select 1 from public.harpatka_attendance where participant_id = pid and meeting_id = nxt.id));
   end if;

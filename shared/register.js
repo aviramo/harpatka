@@ -301,8 +301,9 @@
   /* ===== המפגש שנבחר להרשמה (ברירת מחדל: הקרוב) ומחיר בכפתור התשלום לפי מדרגות המחיר (harpatka_price_tiers; בלי מדרגות: 100 ₪ ב-3 הימים האחרונים, אחרת 80 ₪) ===== */
   const HE_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
   const dayN = (s) => { const [y, mm, d] = s.split('-').map(Number); return Date.UTC(y, mm - 1, d) / 864e5; };
-  let selMeeting = null, nearest = CONFIG.meetingFallback || { date: '2026-10-25', time: '20:00' }, tiers = null;
-  const priceFor = (left) => {
+  let selMeeting = null, nearest = CONFIG.meetingFallback || { date: '2026-10-25', time: '20:00' };
+  /* מחיר לפי מדרגות המחיר של המפגש עצמו (m.tiers, מהעמודה price_tiers); בלי מדרגות: 100 ₪ ב-3 הימים האחרונים, אחרת 80 ₪ */
+  const priceFor = (left, tiers) => {
     if (tiers && tiers.length) { const t = tiers.filter((x) => x.days <= left).sort((a, b) => b.days - a.days)[0] || tiers[tiers.length - 1]; return String(t.price); }
     return left <= 3 ? '100' : '80';
   };
@@ -312,7 +313,7 @@
     document.querySelectorAll('[data-meeting-when]').forEach((e) => { e.textContent = when; });
     document.querySelectorAll('[data-meeting-place]').forEach((e) => { e.textContent = CONFIG.meetingPlace || ''; });
     const left = dayN(m.date) - dayN(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()));
-    const price = priceFor(left);
+    const price = priceFor(left, m.tiers);
     document.querySelectorAll('[data-price]').forEach((e) => { e.textContent = price + ' ₪'; });
   };
   showMeeting(nearest);   // מיד, בלי להמתין לרשת
@@ -320,13 +321,9 @@
     const H = { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey };
     try {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
-      const [r, rt] = await Promise.all([
-        fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc&limit=1', { headers: H }),
-        fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_price_tiers?select=days,price', { headers: H })
-      ]);
-      const rows = r.ok ? await r.json() : [], tr = rt.ok ? await rt.json() : [];
-      if (tr && tr.length) tiers = tr.map((x) => ({ days: Number(x.days), price: Number(x.price) }));
-      if (rows && rows[0]) nearest = { id: rows[0].id, date: rows[0].meeting_date, time: String(rows[0].meeting_time).slice(0, 5) };
+      const r = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time,price_tiers&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc&limit=1', { headers: H });
+      const rows = r.ok ? await r.json() : [];
+      if (rows && rows[0]) nearest = { id: rows[0].id, date: rows[0].meeting_date, time: String(rows[0].meeting_time).slice(0, 5), tiers: (Array.isArray(rows[0].price_tiers) ? rows[0].price_tiers : []).map((x) => ({ days: Number(x.days), price: Number(x.price) })) };
       showMeeting(selMeeting || nearest);
     } catch (e) {}
   })();
