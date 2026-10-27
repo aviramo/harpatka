@@ -1205,10 +1205,6 @@
   .mtier .mtp { margin-inline-start: auto; display: flex; align-items: center; gap: 6px; direction: ltr; }
   .mtier .mtp input { width: 76px; }
   .mtier .mtdel { width: 30px; height: 30px; border: 0; background: transparent; color: var(--muted); font-size: 20px; cursor: pointer; }
-  .lnkrow { display: flex; gap: 6px; align-items: center; }
-  .lnkrow input { flex: 1 1 auto; min-width: 0; font-size: 14px; }
-  .lnktest { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: #fff; color: var(--ink); display: grid; place-items: center; cursor: pointer; }
-  .lnk2 .field span { font-size: 13px; }
 </style>
 </head>
 <body class="locked">
@@ -1386,16 +1382,13 @@
       <div class="sheet-head">
         <h2 id="mTitle">מפגש חדש</h2>
       </div>
+      <label class="field"><span>שם המפגש (אופציונלי)</span><input name="mname" type="text" maxlength="80" placeholder="למשל: מפגש פתיחת עונה" /></label>
       <div class="two" style="grid-template-columns: 1fr 1fr">
         <label class="field"><span>תאריך</span><input name="date" type="date" required /></label>
         <label class="field"><span>שעה</span><input name="time" type="time" required value="20:00" /></label>
       </div>
       <label class="field"><span>מקסימום משתתפים</span><input name="max" type="number" inputmode="numeric" min="1" max="500" step="1" placeholder="ללא הגבלה" /></label>
       <label class="field"><span>הוראות הגעה</span><textarea name="directions" id="mDirs" rows="1" maxlength="800" placeholder="כתובת, חנייה, איך מגיעים"></textarea></label>
-      <div class="two lnk2" style="grid-template-columns: 1fr 1fr">
-        <label class="field"><span>קישור גוגל מפות</span><div class="lnkrow"><input name="maps" type="url" inputmode="url" dir="ltr" placeholder="https://maps.app.goo.gl/..." /><button type="button" class="lnktest" data-lnk="maps" title="פתיחת הקישור לבדיקה" aria-label="בדיקת קישור גוגל מפות"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></button></div></label>
-        <label class="field"><span>קישור וויז</span><div class="lnkrow"><input name="waze" type="url" inputmode="url" dir="ltr" placeholder="https://waze.com/ul/..." /><button type="button" class="lnktest" data-lnk="waze" title="פתיחת הקישור לבדיקה" aria-label="בדיקת קישור וויז"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></button></div></label>
-      </div>
       <div class="field"><span>מדרגות מחיר</span>
         <div id="mTierList"></div>
         <button type="button" class="btn ghost" id="mTierAdd" style="margin-top:6px">+ מדרגה</button>
@@ -3978,13 +3971,12 @@
     const m = id ? state.meetings.find((x) => x.id === id) : null;
     editingMeeting = m;
     mForm.date.value = m ? m.meeting_date : '';
-    mForm.time.value = m ? String(m.meeting_time).slice(0, 5) : '20:00';
     /* מפגש חדש: משכפלים את פרטי המקום מהמפגש האחרון (הוראות הגעה, שני קישורי הניווט ומקסימום משתתפים); אפשר לערוך אחר כך */
     const prev = m ? null : state.meetings.slice().sort((a, b) => (b.meeting_date + b.meeting_time).localeCompare(a.meeting_date + a.meeting_time))[0] || null;
     const src = m || prev || {};
+    mForm.time.value = m ? String(m.meeting_time).slice(0, 5) : prev ? String(prev.meeting_time).slice(0, 5) : '20:00';   // מפגש חדש: כל השדות חוץ מהתאריך מועתקים מהמפגש הקודם
+    mForm.mname.value = src.name || '';
     mForm.directions.value = src.directions || '';
-    mForm.maps.value = src.maps_url || '';
-    mForm.waze.value = src.waze_url || '';
     mForm.max.value = src.max_participants == null ? (m || prev ? '' : '40') : src.max_participants;
     mTiers = tiersOf(src).map((x) => ({ days: x.days, price: x.price })); renderMTiers();   // מפגש חדש: מדרגות המחיר מועתקות מהמפגש הקודם
     $('#mTitle').textContent = m ? 'עריכת מפגש' : 'מפגש חדש';
@@ -3998,22 +3990,15 @@
   /* שדה מרובה שורות: מתחיל בשורה אחת ומתרחב לפי הטקסט */
   function autoGrow(ta) { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight + 2, 260) + 'px'; }
   $('#mDirs').addEventListener('input', (e) => autoGrow(e.target));
-  /* כפתור בדיקה ליד כל קישור: פותח אותו בלשונית חדשה */
-  mForm.querySelectorAll('.lnktest').forEach((b) => b.addEventListener('click', () => {
-    const v = mForm[b.dataset.lnk].value.trim();
-    if (!/^https?:\/\//i.test(v)) { toast(v ? 'הקישור צריך להתחיל ב-https://' : 'עוד לא הוזן קישור'); return; }
-    window.open(v, '_blank', 'noopener');
-  }));
 
   mForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const body = { meeting_date: mForm.date.value, meeting_time: mForm.time.value || '20:00', directions: mForm.directions.value.trim(), maps_url: mForm.maps.value.trim() || null, waze_url: mForm.waze.value.trim() || null, max_participants: mForm.max.value === '' ? null : Math.max(1, Math.min(500, parseInt(mForm.max.value, 10) || 1)) };
+    const body = { meeting_date: mForm.date.value, meeting_time: mForm.time.value || '20:00', name: mForm.mname.value.trim() || null, directions: mForm.directions.value.trim(), max_participants: mForm.max.value === '' ? null : Math.max(1, Math.min(500, parseInt(mForm.max.value, 10) || 1)) };
     if (!body.meeting_date) { mForm.date.focus(); toast('חסר תאריך'); return; }
     const tiers = mTiers.map((x) => ({ days: Number(x.days), price: Number(x.price) }));
     if (!tiers.length || tiers.some((x) => !Number.isFinite(x.days) || !Number.isFinite(x.price) || x.days < 0 || x.price < 0)) { toast('מדרגות המחיר לא תקינות'); return; }
     if (new Set(tiers.map((x) => x.days)).size !== tiers.length) { toast('מספר הימים כבר קיים במדרגה אחרת'); return; }
     body.price_tiers = tiers.sort((a, b) => b.days - a.days);
-    for (const k of ['maps_url', 'waze_url']) if (body[k] && !/^https?:\/\//i.test(body[k])) { toast('הקישור צריך להתחיל ב-https://'); return; }
     const btn = $('#mSubmit'); btn.disabled = true;
     try {
       if (editingMeeting) {
