@@ -106,7 +106,7 @@
     window.scrollTo({ top: lockY, left: 0, behavior: 'instant' });
   }
   function openModal(m, noFocus){
-    if (m.id === 'contactModal') regUrl(true);
+    if (m.id === 'contactModal') { regUrl(true); modalHistPush(); }
     modalLastFocus = document.activeElement;
     m.hidden = false;
     requestAnimationFrame(() => m.classList.add('open'));
@@ -142,8 +142,23 @@
     };
     g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
   }
-  function closeModal(m){
-    if (m.id === 'contactModal') regUrl(false);
+  /* כפתור "חזרה" של הדפדפן (ובאנדרואיד) כשפופאפ ההרשמה פתוח סוגר את הפופאפ ולא עוזב את העמוד: בפתיחה נוספת רשומת היסטוריה אחת,
+     חזרה בדפדפן (popstate) סוגרת את הפופאפ, וסגירה אחרת (X, רקע, Esc, החלקה) חוזרת אחורה ברשומה שהוספנו */
+  let modalHist = false, skipPop = false;
+  function modalHistPush() {
+    if (modalHist) return;
+    try { history.pushState({ harpatkaModal: 1 }, '', location.href); modalHist = true; } catch (e) {}
+  }
+  window.addEventListener('popstate', () => {
+    if (skipPop) { skipPop = false; modalHist = false; regUrl(false); return; }
+    const open = document.querySelector('#contactModal.open');
+    if (open && modalHist) { modalHist = false; closeModal(open, true); }
+  });
+  function closeModal(m, fromPop){
+    if (m.id === 'contactModal') {
+      if (modalHist && !fromPop) { skipPop = true; try { history.back(); } catch (e) { skipPop = false; modalHist = false; regUrl(false); } }
+      else regUrl(false);
+    }
     m.classList.remove('open');
     setTimeout(() => { m.hidden = true; if (!document.querySelector('.modal:not([hidden])')) unlockPage(); }, 360);
     if (modalLastFocus) modalLastFocus.focus();
