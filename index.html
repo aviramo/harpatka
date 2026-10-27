@@ -1184,10 +1184,10 @@
         const se = mk('span', 'sum-end'); se.append(mk('span', 'sum-lbl', 'פרטים')); se.insertAdjacentHTML('beforeend', CHEV);
         sum.append(st, se); sum.addEventListener('click', () => toggleCard(c, !c.classList.contains('open'))); c.append(sum);
         const bx = mk('div', 'mt-bx'), bxi = mk('div', 'mt-bxi'), body = mk('div', 'mt-body');
-        { const pt = past ? 'התקיים' : (m.max ? m.max + ' משתתפים' : ''); if (pt) body.append(mk('span', 'mt-pill', pt)); }   // אין הבדל בין קרוב לעתידי: הצ'יפ הוא כמות המשתתפים (או "התקיים")
+        if (past) body.append(mk('span', 'mt-pill', 'התקיים'));   // אין הבדל בין קרוב לעתידי: הצ'יפ הוא כמות המשתתפים (או "התקיים")
         if (m.name) body.append(mk('div', 'mt-name font-display', m.name));
         body.append(mk('div', 'mt-when font-display', label(m) + ' · ' + m.time));
-        if (m.city) body.append(mk('div', 'mt-city', m.city));
+        { const cl = [m.city, !past && m.max ? m.max + ' משתתפים' : ''].filter(Boolean).join(' · '); if (cl) body.append(mk('div', 'mt-city', cl)); }   // עיר וכמות משתתפים בשורה אחת עם נקודה מפרידה
         if (!past) {
           const sp = tierSplit(m, m.tiers, today);
           const pb = fill(mkBox(), sp.past, 'done'); if (!pb.hidden) body.append(pb);
@@ -1209,10 +1209,10 @@
         if (nx) {
           const sp = tierSplit(nx, nx.tiers, today);
           { const im = el('mImg'); if (nx.img) { im.src = nx.img; im.hidden = false; } else { im.hidden = true; im.removeAttribute('src'); } }
-          el('mPill').textContent = nx.max ? nx.max + ' משתתפים' : ''; el('mPill').hidden = !nx.max;
+          el('mPill').hidden = true;
           el('mName').textContent = nx.name; el('mName').hidden = !nx.name;
           el('mWhen').textContent = label(nx) + ' · ' + nx.time;
-          el('mCity').textContent = nx.city; el('mCity').hidden = !nx.city;
+          { const cl = [nx.city, nx.max ? nx.max + ' משתתפים' : ''].filter(Boolean).join(' · '); el('mCity').textContent = cl; el('mCity').hidden = !cl; }
           { const si = sumInfo(nx); el('mSumN').textContent = si.n; el('mSumN').hidden = !si.n; el('mSumD').textContent = si.d; nextEl.classList.remove('nosum'); }
           el('mSub').hidden = true;   // הוראות הגעה לא מוצגות בעמוד הבית
           fill(el('mTP'), sp.past, 'done'); fill(el('mTF'), sp.future, 'fut');
