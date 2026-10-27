@@ -1198,6 +1198,8 @@
     .row .main .here, .row .evc, .row .balic { margin-inline-start: 0; }
     .row .nm .ptags { margin-inline-end: 0; }
     .row .nm .name { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
+    .hfilt.neu { background: var(--line); border: 1px solid var(--line); color: var(--muted); }   /* ניטרלי (בלי קו חוצה): עוד אין מידע, מפגש עתידי, לא משויכים */
+    .fopt .hfilt { font-weight: 800; }
 </style>
 </head>
 <body class="locked">
@@ -2200,7 +2202,10 @@
   const effBal = () => (state.q.trim() || state.filter || !state.showPay) ? null : state.bal;
   const balOk = (p) => { const b = effBal(); return !b || balMatch(p, b); };
   /* סינון חכם לפי דפוס הגעה (תמונת מצב כללית): התמדה (ירוק/צהוב/אדום לפי הממוצע, כמו צבע הצ'יפ "הגיע X/Y"), הגיעו לכל המפגשים, אף פעם לא הגיעו, רשומים למפגש עתידי */
-  const ATT_OPTS_F = [['g', 'התמדה טובה', 'g'], ['y', 'התמדה בינונית', 'y'], ['r', 'התמדה נמוכה', 'r'], ['n', 'עוד אין מידע', 'n'], ['all', 'הגיעו לכל המפגשים', 'g'], ['never', 'נרשמו ולא הגיעו אף פעם', 'r'], ['fut', 'רשומים למפגש עתידי', 'n'], ['nolink', 'לא משויכים לאף מפגש', 'n']];
+  /* [מפתח, תווית, צבע (g ירוק / y צהוב / r אדום / n ניטרלי), צורה]: רמות ההתמדה בצורת עמודות בצבע שלהן; "הגיעו לכל" ✓ ירוק; "נרשמו ולא הגיעו" ✕ אדום; מפגש עתידי ויומן; לא משויכים ∅ (ניטרלי) */
+  const ATT_OPTS_F = [['g', 'התמדה טובה', 'g', 'bars'], ['y', 'התמדה בינונית', 'y', 'bars'], ['r', 'התמדה נמוכה', 'r', 'bars'], ['n', 'עוד אין מידע', 'n', 'bars'], ['all', 'הגיעו לכל המפגשים', 'g', 'ok'], ['never', 'נרשמו ולא הגיעו אף פעם', 'r', 'no'], ['fut', 'רשומים למפגש עתידי', 'n', 'cal'], ['nolink', 'לא משויכים לאף מפגש', 'n', 'none']];
+  const ATT_GLYPH = { bars: () => PERSIST_ICON, ok: () => '✓', no: () => '✕', cal: () => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16"/><path d="M9 3v4"/><path d="M15 3v4"/></svg>', none: () => '∅' };
+  const attCls = (c) => c === 'g' ? 'yes' : c === 'r' ? 'no' : c === 'y' ? 'mid' : 'neu';
   let attCache = null;
   function attCtx() {
     if (attCache) return attCache;
@@ -2292,7 +2297,7 @@
     $('#listHere').innerHTML = attOn ? fbtn('here', eh, hereN('1'), hereN('0')) : '';
     $('#listPay').innerHTML = state.filter && state.showPay ? fbtn('pay', (state.paidF === '1' || state.paidF === '0' || state.paidF === 'n' || /^a\d+$/.test(state.paidF || '')) ? state.paidF : null, paidN('1'), paidN('0')) : '';
     $('#listTags').innerHTML = '<button type="button" class="hfilt all viewpill" id="viewBtn" aria-haspopup="menu" aria-expanded="' + !$('#viewMenu').hidden + '" aria-label="תצוגה: תגיות ושליחת פרטי המפגש" title="תצוגה: הפעלה וכיבוי של תגיות ושל שליחת פרטי המפגש"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h9"/><path d="M17 7h3"/><circle cx="15" cy="7" r="2"/><path d="M4 17h3"/><path d="M11 17h9"/><circle cx="9" cy="17" r="2"/></svg><span>תצוגה</span></button>';   // כפתור אחד עם מילה, שפותח את הטוגלים
-    $('#listAtt').innerHTML = !state.filter && state.showAtt !== false ? '<button type="button" class="hfilt ' + (() => { const k = effAttF(), o = k && ATT_OPTS_F.find((x) => x[0] === k); return !o ? 'all' : o[2] === 'g' ? 'yes' : o[2] === 'r' ? 'no' : o[2] === 'y' ? 'mid' : 'fr'; })() + '" data-fk="att" aria-haspopup="menu" aria-label="סינון לפי התמדה" title="סינון לפי התמדה והגעה (לחיצה לפתיחת תפריט)">' + PERSIST_ICON + '</button>' : '';
+    $('#listAtt').innerHTML = !state.filter && state.showAtt !== false ? '<button type="button" class="hfilt ' + (() => { const k = effAttF(), o = k && ATT_OPTS_F.find((x) => x[0] === k); return !o ? 'all' : attCls(o[2]); })() + '" data-fk="att" aria-haspopup="menu" aria-label="סינון לפי התמדה" title="סינון לפי התמדה והגעה (לחיצה לפתיחת תפריט)">' + PERSIST_ICON + '</button>' : '';
     $('#listBal').innerHTML = !state.filter && state.showPay ? fbtn('bal', effBal(), '', '') : '';
     $('#listSent').innerHTML = evOn ? fbtn('sent', effSent(), sentN('1'), sentN('0')) : '';
     requestAnimationFrame(alignFilters);   // שולם / לא שולם בשורת החיפוש מעל הרשימה
@@ -4054,8 +4059,8 @@
     const m = $('#fMenu'); if (!m.hidden && m.dataset.kind === kind) { closeF(); return; }
     if (kind === 'att') {   // תפריט דפוס הגעה: כל אפשרות עם הכמות שהייתה מוצגת (לפי שאר הסינונים והחיפוש)
       const keep = state.attF; state.attF = null; const q = state.q.trim().toLowerCase(), qd = digits(q), pool = state.participants.filter((p) => rowPass(p, q, qd)); state.attF = keep;
-      const row = (k, label, cls, n) => '<button type="button" role="menuitem" class="fopt" data-fv="' + k + '" aria-pressed="' + (keep === k || (!keep && k === '')) + '"><span class="hfilt ' + (cls === 'g' ? 'yes' : cls === 'r' ? 'no' : cls === 'y' ? 'mid' : 'all') + '">' + (cls === 'y' ? '~' : cls === 'n' ? '–' : cls === 'x' ? '•' : cls === 'r' ? '✕' : '✓') + '</span><span>' + label + '</span><b class="fcnt">' + n + '</b></button>';
-      m.innerHTML = row('', 'הכל', 'x', pool.length) + ATT_OPTS_F.map((o, i) => (i === 4 ? '<div class="fsep" role="separator"></div>' : '') + row(o[0], o[1], o[2], pool.filter((p) => attMatch(p, o[0])).length)).join('');
+      const row = (k, label, cls, n, gl) => '<button type="button" role="menuitem" class="fopt" data-fv="' + k + '" aria-pressed="' + (keep === k || (!keep && k === '')) + '"><span class="hfilt ' + (k === '' ? 'all' : attCls(cls)) + '">' + (k === '' ? PERSIST_ICON : ATT_GLYPH[gl]()) + '</span><span>' + label + '</span><b class="fcnt">' + n + '</b></button>';
+      m.innerHTML = row('', 'הכל', 'x', pool.length, 'bars') + ATT_OPTS_F.map((o, i) => (i === 4 ? '<div class="fsep" role="separator"></div>' : '') + row(o[0], o[1], o[2], pool.filter((p) => attMatch(p, o[0])).length, o[3])).join('');
       m.dataset.kind = kind; m.hidden = false;
       const r0 = anchor.getBoundingClientRect(), mw0 = m.offsetWidth;
       m.style.left = Math.min(Math.max(8, r0.left), window.innerWidth - mw0 - 8) + 'px'; m.style.top = (r0.bottom + 6) + 'px';
