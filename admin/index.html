@@ -440,8 +440,12 @@
     #finDlg .sheet > #finMain[hidden] { display: none; }
     #finMain > * { flex: 0 0 auto; }
     #finMain > #finScroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; padding-bottom: 12px; }   /* רק רשימת התנועות גוללת; הכותרת, הסיכום והכפתורים קבועים */
-    #finPerMenu { width: 150px; min-width: 0; flex-wrap: nowrap; flex-direction: column; }
-    #finPerMenu .qi { flex: 0 0 auto; }
+    #finPerMenu { display: block; width: auto; min-width: 150px; max-width: 240px; max-height: 55vh; overflow-y: auto; padding: 6px; border-radius: 16px; }
+    #finPerMenu[hidden] { display: none; }
+    #finPerMenu .qi { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; height: 40px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: var(--ink); font-size: 15.5px; font-weight: 600; text-align: right; }
+    #finPerMenu .qi + .qi { margin-top: 2px; }
+    #finPerMenu .qi[aria-pressed="true"] { background: var(--cream); font-weight: 800; }
+    #finPerMenu .qi[aria-pressed="true"]::after { content: "✓"; color: var(--terra); font-weight: 800; }
     .finperbtn { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px; border-radius: 999px; background: var(--cream); color: var(--ink); font-size: 15px; font-weight: 700; }
     .finperbtn svg { width: 14px; height: 14px; }
     .finperbtn[hidden] { display: none; }
@@ -2500,8 +2504,8 @@
     const m = $('#finPerMenu'); if (!m.hidden) { closeFinPer(); return; }
     m.innerHTML = finPeriodList().map((o) => '<button type="button" role="menuitem" class="qi" data-fp="' + o[0] + '" aria-pressed="' + (o[0] === state.finPeriod) + '">' + o[1] + '</button>').join('');
     m.hidden = false; $('#finPerBtn').setAttribute('aria-expanded', 'true');
-    const r = $('#finPerBtn').getBoundingClientRect(), mw = m.offsetWidth;
-    m.style.left = Math.min(Math.max(8, r.right - mw), window.innerWidth - mw - 8) + 'px'; m.style.top = (r.bottom + 6) + 'px';
+    const r = $('#finPerBtn').getBoundingClientRect(); m.style.minWidth = Math.max(150, Math.round(r.width)) + 'px'; const mw = m.offsetWidth;
+    m.style.left = Math.min(Math.max(8, r.right - mw), window.innerWidth - mw - 8) + 'px'; m.style.top = (r.bottom + 6) + 'px';   // מיושר לקצה הימני של הכפתור, מתחתיו
   });
   $('#finPerMenu').addEventListener('click', (e) => { const b = e.target.closest('[data-fp]'); if (!b) return; state.finPeriod = b.dataset.fp; closeFinPer(); renderFinance(); });
   $('#finMain').addEventListener('click', (e) => {
