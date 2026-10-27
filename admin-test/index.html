@@ -342,6 +342,8 @@
     .tb .tr > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
     .tb .tr > span:first-child { text-align: right; font-weight: 700; }
     .tb .th2 { border-top: 0; background: var(--cream); color: var(--muted); font-weight: 800; font-size: 13px; }
+    .stp .cpos, .tnums .cpos { color: var(--green); }
+    .stp .cneg, .tnums .cneg { color: var(--red); }
     .stkpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
     @media (min-width: 640px) { .stkpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
     .kpi { background: var(--cream); border-radius: 18px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
@@ -2318,7 +2320,7 @@
     const perMeeting = asc.map((m) => {
       const ls = all.filter((l) => l.meeting_id === m.id), S = new Set(ls.map((l) => l.participant_id));
       const ret = [...S].filter((id) => seen.has(id)).length, kept = [...S].filter((id) => prev.has(id)).length;
-      const row = { m, regs: ls.length, ad: ls.filter((l) => adCodeOf(l.p)).length, ex: ls.filter((l) => l.exempt || l.will_pay || l.maybe).length, paid: ls.filter((l) => l.paid && !l.exempt).length, rev: ls.reduce((s, l) => s + Math.max(0, allocatedOf(l.participant_id, l.meeting_id)), 0),
+      const row = { m, regs: ls.length, ad: ls.filter((l) => adCodeOf(l.p)).length, ex: ls.filter((l) => l.no_pay).length, paid: ls.filter((l) => allocatedOf(l.participant_id, l.meeting_id) > 0).length, rev: ls.reduce((s, l) => s + Math.max(0, allocatedOf(l.participant_id, l.meeting_id)), 0),
         news: S.size - ret, ret, kept, prevN: prev.size };
       S.forEach((id) => seen.add(id)); prev = S;
       return row;
@@ -2345,7 +2347,7 @@
   $('#stBody').addEventListener('click', (e) => { const b = e.target.closest('[data-topic]'); if (b) stView(b.dataset.topic); });
   function renderStats() {
     const S = computeStats(), links = S.links;
-    if (!links.length) { $('#stBody').innerHTML = '<div class="empty"><b>אין עדיין נתונים</b>כשיהיו הרשמות, הסטטיסטיקות יופיעו כאן</div>'; $('#stArrow').hidden = true; return; }
+    if (!state.participants.length) { $('#stBody').innerHTML = '<div class="empty"><b>אין עדיין נתונים</b>כשיהיו הרשמות, הסטטיסטיקות יופיעו כאן</div>'; $('#stArrow').hidden = true; return; }
     const ilsB = (n) => '<bdi dir="ltr">₪' + nfm(n) + '</bdi>';
     const dlab = (m) => meetingLabel(m).split(' · ')[0];
     const price = (l) => (l.st === 'paid' && l.paid_amount != null) ? Number(l.paid_amount) : priceAtReg(l.m, l.created_at);
@@ -2355,59 +2357,64 @@
     const tbl = (head, rows) => '<div class="tb"><div class="tr th2">' + head.map((h) => '<span>' + h + '</span>').join('') + '</div>' + rows.map((r) => '<div class="tr">' + r.map((c) => '<span>' + c + '</span>').join('') + '</div>').join('') + '</div>';
     const part = (title, body) => '<section class="stp"><h4>' + title + '</h4>' + body + '</section>';
 
-    const n = links.length, uniq = new Set(links.map((l) => l.participant_id)), people = [...uniq].map((id) => state.participants.find((x) => x.id === id));
-    const pmAll = S.perMeeting;
-    const paid = links.filter((l) => l.st === 'paid'), req = links.filter((l) => l.st === 'requested'), unp = links.filter((l) => l.st === 'unpaid'), exm = links.filter((l) => l.st === 'exempt'), wpl = links.filter((l) => l.st === 'willpay'), mby = links.filter((l) => l.st === 'maybe'), nPay = n - exm.length - wpl.length - mby.length;   // "חינם" ו"ישלם" לא נספרים בהמרה
-    const rev = pmAll.reduce((s, r) => s + r.rev, 0), comm = state.payments.reduce((s, x) => s + (x.promoter_id && x.commission != null ? (x.kind === 'payment' ? 1 : -1) * Number(x.commission) : 0), 0);
+    /* כל המדדים לפי כל המשתתפים הפעילים (גם מי שלא שויך לאף מפגש), והכסף לפי רשומות התשלום: הכנסה נטו = תשלומים והפקדות (בלי הקצאה מהיתרה) פחות החזרים, בדיוק כמו במסך הכספים */
+    const allP = state.participants, n = allP.length, pmAll = S.perMeeting;
+    const cashOf = (x) => (((x.kind === 'payment' || x.kind === 'deposit') && !x.from_credit) ? Number(x.amount) : x.kind === 'refund' ? -Number(x.amount) : 0);
+    const paidBy = new Map(allP.map((p) => [p.id, state.payments.filter((x) => x.participant_id === p.id).reduce((s, x) => s + cashOf(x), 0)]));
+    const isFreeP = (p) => { const ls = linksOf(p.id); return ls.length > 0 && ls.every((l) => l.no_pay); };
+    const payers = allP.filter((p) => paidBy.get(p.id) > 0), freeP = allP.filter(isFreeP), cohort = allP.filter((p) => !isFreeP(p)), unpaidP = cohort.filter((p) => !(paidBy.get(p.id) > 0));
+    const noMeetingN = allP.filter((p) => !linksOf(p.id).length).length;
+    const cash = state.payments.reduce((s, x) => s + cashOf(x), 0), conv = P(payers.length, cohort.length);
+    const credHold = [...new Set(state.payments.map((x) => x.participant_id))].map((id) => Math.round(creditOf(id) * 100) / 100).filter((c) => c > 0), credit = credHold.reduce((s, c) => s + c, 0);
+    const refunds = state.payments.filter((x) => x.kind === 'refund').reduce((s, x) => s + Number(x.amount), 0);
     const pm = S.perMeeting.filter((r) => r.regs), last = pm[pm.length - 1], prev = pm[pm.length - 2];
-    const conv = P(paid.length, nPay);
+    const fr = finRowsAll(), expAll = fr.filter((x) => x.kind === 'expense').reduce((s, x) => s + x.amount, 0), incOther = fr.filter((x) => x.kind === 'income').reduce((s, x) => s + x.amount, 0), profit = cash + incOther - expAll;
+    const sgn = (v) => '<span class="' + (Math.round(v) > 0 ? 'cpos' : Math.round(v) < 0 ? 'cneg' : '') + '">' + ilsB(Math.abs(v)) + '</span>';   // צבע במקום פלוס ומינוס
 
     // ----- כספים -----
-    const credit = state.participants.reduce((s, q) => s + Math.max(0, creditOf(q.id)), 0);
-    const refunds = state.payments.filter((x) => x.kind === 'refund').reduce((s, x) => s + Number(x.amount), 0);
-    const maxRev = Math.max(1, ...pm.map((r) => r.rev));
-    const money = part('הכנסה לפי מפגש', tbl(['מפגש', 'הכנסה', 'שילמו', 'מגמה'], pm.map((r, k) => [dlab(r.m), ilsB(r.rev), r.paid + '/' + (r.regs - r.ex), k ? trend(r.rev, pm[k - 1].rev) : '—']))) +
-      part('מצב תשלומים', '<div class="stkpis">' + kpi(paid.length, 'שילמו', Ps(paid.length, nPay), 'good') + kpi(req.length, STATUS_LABEL.requested, '', 'warn') + kpi(unp.length, STATUS_LABEL.unpaid, '', unp.length ? 'bad' : '') + kpi(exm.length, STATUS_LABEL.exempt, '') + kpi(wpl.length, STATUS_LABEL.willpay, '') + kpi(mby.length, STATUS_LABEL.maybe, '') + '</div>') +
-      part('גבייה', tbl(['מדד', 'ערך'], [['המרה לתשלום', Ps(paid.length, nPay)], ['ממוצע לתשלום', paid.length ? ilsB(rev / paid.length) : '—'], ['נטו אחרי עמלות', ilsB(rev - comm)], ['עמלות לדרכי הגעה', ilsB(comm)], ['קרדיט פתוח', ilsB(credit)], ['הוחזר', ilsB(refunds)]])) +
-      (() => { const byM = {}; state.payments.forEach((x) => { const a = Number(x.amount) || 0, v = (x.kind === 'deposit' || (x.kind === 'payment' && !x.from_credit)) ? a : x.kind === 'refund' ? -a : 0; if (!v) return; const k = ilDay(x.created_at || new Date().toISOString()).slice(0, 7); byM[k] = (byM[k] || 0) + v; }); const ks = Object.keys(byM).sort(), mx = Math.max(1, ...ks.map((k) => byM[k])); return ks.length > 1 ? part('הכנסה לפי חודש', ks.map((k) => barRow(k.slice(5) + '/' + k.slice(2, 4), byM[k], mx, 'var(--green)', ilsB(byM[k]))).join('')) : ''; })();
+    const money = part('הכנסה לפי מפגש', '<p class="sthint">לפי התשלום ששויך לכל מפגש. הפקדות ויתרות שלא שויכו למפגש לא נספרות בטבלה, אבל נכללות בהכנסה הכוללת</p>' + tbl(['מפגש', 'נרשמו', 'שילמו', 'הכנסה', 'מגמה'], pm.map((r, k) => [dlab(r.m), r.regs, r.paid + '/' + (r.regs - r.ex), ilsB(r.rev), k ? trend(r.rev, pm[k - 1].rev) : '—']))) +
+      part('כל המשתתפים לפי תשלום', '<p class="sthint">' + n + ' משתתפים במערכת, מהם ' + noMeetingN + ' שלא שויכו לאף מפגש</p><div class="stkpis">' + kpi(payers.length, 'שילמו', Ps(payers.length, cohort.length) + ' מהמשתתפים', 'good') + kpi(unpaidP.length, 'עוד לא שילמו', '', unpaidP.length ? 'warn' : '') + kpi(freeP.length, 'חינם', 'לא משלמים על המפגש') + kpi(credHold.length, 'עם קרדיט פתוח', ilsB(credit)) + '</div>') +
+      part('סיכום', tbl(['מדד', 'ערך'], [['הכנסה נטו ממשתתפים (אחרי החזרים)', ilsB(cash)], ['הכנסות אחרות', ilsB(incOther)], ['הוצאות (כולל תשלומים לדרכי הגעה)', ilsB(expAll)], ['רווח', sgn(profit)], ['המרה לתשלום (מכלל המשתתפים)', Ps(payers.length, cohort.length)], ['ממוצע לשולם', payers.length ? ilsB(Math.round(cash / payers.length)) : '—'], ['הוחזר', ilsB(refunds)], ['קרדיט פתוח', ilsB(credit)]])) +
+      (() => { const byM = {}; state.payments.forEach((x) => { const v = cashOf(x); if (!v) return; const k = ilDay(x.created_at || new Date().toISOString()).slice(0, 7); byM[k] = (byM[k] || 0) + v; }); const ks = Object.keys(byM).sort(), mx = Math.max(1, ...ks.map((k) => byM[k])); return ks.length > 1 ? part('הכנסה לפי חודש', ks.map((k) => barRow(k.slice(5) + '/' + k.slice(2, 4), byM[k], mx, 'var(--green)', ilsB(byM[k]))).join('')) : ''; })();
 
     // ----- דרכי הגעה -----
-    const src = (l) => (l.promoter_id || (l.p && l.p.promoter_id)) ? 'promo' : adCodeOf(l.p) ? 'ad' : l.p.source === 'site' ? 'site' : 'other';
-    const adL = links.filter((l) => adCodeOf(l.p)), adPaid = adL.filter((l) => l.paid && !l.exempt);
-    const proRows = state.promoters.map((x) => { const L = ledgerOf(x.id), recs = state.payments.filter((q) => q.promoter_id === x.id), leads = state.participants.filter((q) => (channelOf(q) || {}).id === x.id), alloc = leads.reduce((s, q) => s + state.meetings.reduce((s2, m) => s2 + Math.max(0, allocatedOf(q.id, m.id)), 0), 0), paidN = leads.filter((q) => state.meetings.some((m) => allocatedOf(q.id, m.id) > 0)).length, inc = alloc || recs.reduce((s, q) => s + (q.kind === 'payment' ? 1 : -1) * Number(q.amount), 0), cm = (!x.cost_from_payment ? leads.length * Number(x.rate || 0) : 0) + recs.reduce((s, q) => s + (q.kind === 'payment' ? 1 : -1) * (Number(q.commission) || 0), 0), cnt = recs.filter((q) => q.kind === 'payment').length; return { x, inc, cm, cnt, bal: L.balance, leadsN: leads.length, paidN }; });
+    const src = (p) => channelOf(p) ? 'promo' : adCodeOf(p) ? 'ad' : String(p.source || '').startsWith('site') ? 'site' : 'other';
+    const adP = allP.filter((p) => adCodeOf(p)), adPaid = adP.filter((p) => paidBy.get(p.id) > 0 && !isFreeP(p));
+    const proRows = state.promoters.map((x) => { const L = ledgerOf(x.id), recs = state.payments.filter((q) => q.promoter_id === x.id), leads = allP.filter((q) => (channelOf(q) || {}).id === x.id), paidN = leads.filter((q) => paidBy.get(q.id) > 0).length, inc = leads.reduce((s, q) => s + paidBy.get(q.id), 0), cm = (!x.cost_from_payment ? leads.length * Number(x.rate || 0) : 0) + recs.reduce((s, q) => s + (q.kind === 'payment' ? 1 : -1) * (Number(q.commission) || 0), 0); return { x, inc, cm, bal: L.balance, leadsN: leads.length, paidN }; });
+    const noCh = allP.filter((q) => !channelOf(q)), noChPaid = noCh.filter((q) => paidBy.get(q.id) > 0);
     const proOwed = proRows.reduce((s, r) => s + Math.max(0, r.bal), 0), proInc = proRows.reduce((s, r) => s + r.inc, 0);
     const proCost = proRows.reduce((s, r) => s + r.cm, 0), proLeads = proRows.reduce((s, r) => s + r.leadsN, 0), proPaidN = proRows.reduce((s, r) => s + r.paidN, 0);
-    const srcCount = (r, k) => links.filter((l) => l.meeting_id === r.m.id && src(l) === k).length;
+    const srcCount = (r, k) => links.filter((l) => l.meeting_id === r.m.id && src(l.p) === k).length;
     // שעות הרשמה (שעון ישראל): מתי ביום נרשמים דרך האתר, כדי לתזמן מודעות ופוסטים
     const hourFmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jerusalem', hour: '2-digit', hour12: false });
-    const hrs = Array.from({ length: 24 }, () => 0), hrsAd = Array.from({ length: 24 }, () => 0);
-    state.participants.filter((q) => q.created_at && String(q.source || '').startsWith('site')).forEach((q) => { const h = Number(hourFmt.format(new Date(q.created_at))) % 24; hrs[h]++; if (adCodeOf(q)) hrsAd[h]++; });
+    const hrs = Array.from({ length: 24 }, () => 0);
+    allP.filter((q) => q.created_at && String(q.source || '').startsWith('site')).forEach((q) => { const h = Number(hourFmt.format(new Date(q.created_at))) % 24; hrs[h]++; });
     const hrsTotal = hrs.reduce((s, v) => s + v, 0), peak = hrs.indexOf(Math.max(...hrs)), hh = (h) => String(h % 24).padStart(2, '0') + ':00';
     const win = (h0, h1) => hrs.slice(h0, h1).reduce((s, v) => s + v, 0);
     const hoursPart = hrsTotal ? '<p class="sthint">כמה נרשמו בכל שעה ביום (שעון ישראל), לפי כל ההרשמות מהאתר</p>' +
       colsChart(hrs.map((v, h) => ({ l: h % 3 === 0 ? String(h) : '', v, color: h === peak ? '#C96F52' : '#686A48' })), '#686A48', true) +
       '<div class="stkpis">' + kpi('<bdi dir="ltr">' + hh(peak) + '</bdi>', 'שעת השיא', hrs[peak] + ' הרשמות (' + Ps(hrs[peak], hrsTotal) + ')', 'good') + kpi(Ps(win(18, 23), hrsTotal), '<bdi dir="ltr">18:00–23:00</bdi>', win(18, 23) + ' הרשמות') + kpi(Ps(win(6, 12), hrsTotal), '<bdi dir="ltr">06:00–12:00</bdi>', win(6, 12) + ' הרשמות') + '</div>' : '<p class="sthint">עוד אין הרשמות מהאתר</p>';
-    const promo = part('נתונים עיקריים', '<div class="stkpis">' + kpi(ilsB(proCost), 'עלות דרכי הגעה', proLeads ? 'ליד ממוצע ₪' + nfm(Math.round(proCost / proLeads)) : '') + kpi(proPaidN ? ilsB(Math.round(proCost / proPaidN)) : '—', 'עלות למשלם', proPaidN + ' משלמים מתוך ' + proLeads + ' לידים') + kpi(ilsB(proInc), 'הכנסה דרך דרכי הגעה', Ps(proInc, rev) + ' מההכנסה') + kpi(ilsB(proOwed), 'נשאר לשלם לדרכי הגעה', '', proOwed ? 'warn' : '') + kpi(adL.length, 'נרשמו ממודעה', Ps(adL.length, n) + ' מההרשמות') + kpi(Ps(adPaid.length, adL.filter((l) => !l.exempt).length), 'המרה ממודעה', adPaid.length + ' שילמו') + '</div>') +
+    const promo = part('נתונים עיקריים', '<div class="stkpis">' + kpi(ilsB(proCost), 'עלות דרכי הגעה', proLeads ? 'ליד ממוצע ₪' + nfm(Math.round(proCost / proLeads)) : '') + kpi(proPaidN ? ilsB(Math.round(proCost / proPaidN)) : '—', 'עלות למשלם', proPaidN + ' משלמים מתוך ' + proLeads + ' לידים') + kpi(ilsB(proInc), 'הכנסה דרך דרכי הגעה', Ps(proInc, cash) + ' מההכנסה') + kpi(ilsB(proOwed), 'נשאר לשלם לדרכי הגעה', '', proOwed ? 'warn' : '') + kpi(adP.length, 'נרשמו ממודעה', Ps(adP.length, n) + ' מהמשתתפים') + kpi(Ps(adPaid.length, adP.filter((q) => !isFreeP(q)).length), 'המרה ממודעה', adPaid.length + ' שילמו') + '</div>') +
       part('שעות הרשמה', hoursPart) +
-      (proRows.length ? part('דרכי הגעה', tbl(['דרך הגעה', 'לידים', 'שילמו', 'הכנסה', 'עלות'], proRows.map((r) => [esc(r.x.name), r.leadsN, r.paidN + (r.leadsN ? ' <small>(' + Math.round(r.paidN / r.leadsN * 100) + '%)</small>' : ''), ilsB(r.inc), ilsB(r.cm)]))) : part('דרכי הגעה', '<p class="sthint">עוד אין דרכי הגעה. אפשר להוסיף בהגדרות</p>')) +
+      part('דרכי הגעה', tbl(['דרך הגעה', 'לידים', 'שילמו', 'הכנסה', 'עלות'], proRows.map((r) => [esc(r.x.name), r.leadsN, r.paidN + (r.leadsN ? ' <small>(' + Math.round(r.paidN / r.leadsN * 100) + '%)</small>' : ''), ilsB(r.inc), ilsB(r.cm)]).concat([['ללא דרך הגעה', noCh.length, noChPaid.length + (noCh.length ? ' <small>(' + Math.round(noChPaid.length / noCh.length * 100) + '%)</small>' : ''), ilsB(noChPaid.reduce((s, q) => s + paidBy.get(q.id), 0)), '—']]))) +
       part('מקורות לפי מפגש', tbl(['מפגש', 'אתר', 'מודעה', 'דרך הגעה', 'אחר'], pm.map((r) => [dlab(r.m), srcCount(r, 'site'), srcCount(r, 'ad'), srcCount(r, 'promo'), srcCount(r, 'other')])));
 
-    // ----- דמוגרפיה -----
-    const male = people.filter((q) => q.gender === 'male'), female = people.filter((q) => q.gender === 'female'), noG = people.length - male.length - female.length;
+    // ----- דמוגרפיה (כל המשתתפים) -----
+    const people = allP, male = people.filter((q) => q.gender === 'male'), female = people.filter((q) => q.gender === 'female'), noG = people.length - male.length - female.length;
     const ages = people.map(shownAge).filter((a) => a != null), avgAge = ages.length ? ages.reduce((a, b) => a + b, 0) / ages.length : 0, target = ages.filter((a) => a >= 40 && a <= 50);
     const bucket = (lo, hi) => ages.filter((a) => a >= lo && a <= hi).length;
-    const convBy = (pred) => { const ls = links.filter((l) => pred(l.p) && l.st !== 'exempt' && l.st !== 'willpay' && l.st !== 'maybe'); return { n: ls.length, paid: ls.filter((l) => l.paid).length }; };
+    const convBy = (pred) => { const ls = people.filter((q) => pred(q) && !isFreeP(q)); return { n: ls.length, paid: ls.filter((q) => paidBy.get(q.id) > 0).length }; };
     const cM = convBy((q) => q.gender === 'male'), cF = convBy((q) => q.gender === 'female');
     const demo = part('מגדר', barRow('נקבה', female.length, people.length, 'var(--red)') + barRow('זכר', male.length, people.length, 'var(--sky)') + (noG ? barRow('לא צוין', noG, people.length, '#B9B2A5') : '') +
         tbl(['המרה לתשלום', 'ערך'], [['נקבה', Ps(cF.paid, cF.n)], ['זכר', Ps(cM.paid, cM.n)]])) +
-      part('גילאים', barRow('עד 39', bucket(0, 39), ages.length, '#9A9A75') + barRow('40 עד 44', bucket(40, 44), ages.length, '#686A48') + barRow('45 עד 50', bucket(45, 50), ages.length, '#686A48') + barRow('51 ומעלה', bucket(51, 120), ages.length, 'var(--yellow)') + '<p class="stline">בטווח היעד 40–50: <b>' + Ps(target.length, ages.length) + '</b> · גיל ממוצע <b>' + avgAge.toFixed(1) + '</b></p>') +
+      part('גילאים', barRow('עד 39', bucket(0, 39), ages.length, '#9A9A75') + barRow('40 עד 44', bucket(40, 44), ages.length, '#686A48') + barRow('45 עד 50', bucket(45, 50), ages.length, '#686A48') + barRow('51 ומעלה', bucket(51, 120), ages.length, 'var(--yellow)') + '<p class="stline">בטווח היעד 40–50: <b>' + Ps(target.length, ages.length) + '</b> · גיל ממוצע <b>' + avgAge.toFixed(1) + '</b>' + (people.length - ages.length ? ' · ' + (people.length - ages.length) + ' בלי גיל' : '') + '</p>') +
       part('חדשים וחוזרים', tbl(['מפגש', 'חדשים', 'חוזרים', 'מגמה'], pm.map((r, k) => [dlab(r.m), r.news, r.ret, k ? trend(r.news + r.ret, pm[k - 1].news + pm[k - 1].ret) : '—'])));
 
     // ----- מסך ראשי: שורה תחתונה לכל נושא -----
-    const bottom = '<div class="stbottom"><div><b>' + ilsB(rev - comm) + '</b><small>הכנסה נטו</small></div><div><b>' + paid.length + '/' + nPay + '</b><small>שילמו</small></div><div><b>' + (conv == null ? '—' : conv + '%') + '</b><small>המרה</small></div></div>';
+    const bottom = '<div class="stbottom"><div><b>' + ilsB(cash) + '</b><small>הכנסה נטו</small></div><div><b>' + payers.length + '/' + cohort.length + '</b><small>שילמו</small></div><div><b>' + (conv == null ? '—' : conv + '%') + '</b><small>המרה</small></div></div>';
     const main = bottom +
-      topic('money', 'כספים', last && prev ? trend(last.rev, prev.rev) : '', num(ilsB(rev), 'הכנסה') + num(req.length, 'בטיפול') + num(ilsB(credit), 'קרדיט')) +
-      topic('promo', 'דרכי הגעה', '', num(ilsB(proInc), 'דרך דרכי הגעה') + num(adL.length, 'ממודעה') + num(ilsB(proOwed), 'לתשלום לדרכי הגעה')) +
+      topic('money', 'כספים', last && prev ? trend(last.rev, prev.rev) : '', num(ilsB(cash), 'הכנסות') + num(ilsB(expAll), 'הוצאות') + num(sgn(profit), 'רווח')) +
+      topic('promo', 'דרכי הגעה', '', num(ilsB(proInc), 'דרך דרכי הגעה') + num(adP.length, 'ממודעה') + num(ilsB(proCost), 'עלות')) +
       topic('demo', 'דמוגרפיה', last && prev ? trend(last.news, prev.news) : '', num(Ps(female.length, people.length), 'נקבה') + num(avgAge ? avgAge.toFixed(0) : '—', 'גיל ממוצע') + num(Ps(target.length, ages.length), '40 עד 50'));
 
     $('#stBody').innerHTML = '<div class="ppanel" data-sp="main">' + main + '</div><div class="ppanel" data-sp="money" hidden>' + money + '</div><div class="ppanel" data-sp="promo" hidden>' + promo + '</div><div class="ppanel" data-sp="demo" hidden>' + demo + '</div>';
