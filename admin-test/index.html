@@ -1535,7 +1535,7 @@
       else top.d.close();
     } finally { NAV.fromPop = false; }
   });
-  const state = { prefs: {}, statuses: [], pstatuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, here: null, paidF: null, gender: null, sort: 'new', sent: null, bal: null, showTags: true, fin: [], finRec: [], finTr: [], finPeriod: 'month', finFilter: null };
+  const state = { prefs: {}, statuses: [], pstatuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, here: null, paidF: null, gender: null, sort: 'new', sent: null, bal: null, showTags: true, fin: [], finRec: [], finTr: [], finPeriod: 'all', finFilter: null };
   /* קישור עמוק מהמייל: ?m=<מפגש>&p=<משתתף>; נשמר בזמן הכניסה עם גוגל (שמחזירה בלי הפרמטרים) */
   let deep = null;
   try {
@@ -2419,6 +2419,7 @@
   const finName = (e) => noteAuthor(e, String(e || '').split('@')[0]);
   const finAdmins = () => [...new Set(ADMINS.concat(state.fin.map((x) => x.by_email), state.finRec.map((x) => x.by_email), state.payMethods.map((x) => x.owner_email)).filter(Boolean))];
   const isoAdd = (iso, period, n) => { const [y, m, d] = iso.split('-').map(Number); const dt = new Date(Date.UTC(y, m - 1, d)); if (period === 'weekly') dt.setUTCDate(dt.getUTCDate() + 7 * n); else if (period === 'monthly') { const day = dt.getUTCDate(); dt.setUTCDate(1); dt.setUTCMonth(dt.getUTCMonth() + n); const last = new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth() + 1, 0)).getUTCDate(); dt.setUTCDate(Math.min(day, last)); } else { const day = dt.getUTCDate(); dt.setUTCDate(1); dt.setUTCFullYear(dt.getUTCFullYear() + n); const last = new Date(Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth() + 1, 0)).getUTCDate(); dt.setUTCDate(Math.min(day, last)); } return dt.toISOString().slice(0, 10); };
+  const finIn = (d) => state.finPeriod === 'all' || String(d).slice(0, 7) === (state.finPeriod === 'month' ? todayISO().slice(0, 7) : state.finPeriod);
   const recOccurrences = (r) => { if (!r.active) return []; const upto = (r.end_date && r.end_date < todayISO()) ? r.end_date : todayISO(), out = []; for (let n = 0; n < 800; n++) { const d = isoAdd(r.start_date, r.period, n); if (d > upto) break; out.push(d); } return out; };
   const finDmy = (iso) => { const [y, m, d] = iso.split('-'); return d + '.' + m + '.' + y.slice(2); };
   function finRowsAll() {
@@ -2428,8 +2429,7 @@
     return rows;
   }
   function finRows() {
-    const mo = todayISO().slice(0, 7);
-    return finRowsAll().filter((x) => state.finPeriod === 'all' || x.date.slice(0, 7) === mo).sort((a, b) => b.date.localeCompare(a.date));
+    return finRowsAll().filter((x) => finIn(x.date)).sort((a, b) => b.date.localeCompare(a.date));
   }
   /* התחשבנות בין מנהלים: הכנסות ממשתתפים לפי הקופה של דרך התשלום, הכנסות והוצאות אחרות לפי המנהל שדרכו עברו, ועוד העברות ביניהם; החלוקה שווה */
   function finSettle() {
@@ -2447,17 +2447,16 @@
     return { admins, A, un, total, share, sug };
   }
   function finPartIncome() {   // הכנסה נטו ממשתתפים: הפקדות ותשלומים (בלי הקצאה מהיתרה) פחות החזרים
-    const mo = todayISO().slice(0, 7);
-    return state.payments.filter((x) => state.finPeriod === 'all' || String(x.created_at || x.paid_at || '').slice(0, 7) === mo).reduce((s, x) => s + ((x.kind === 'payment' || x.kind === 'deposit') && !x.from_credit ? Number(x.amount) : x.kind === 'refund' ? -Number(x.amount) : 0), 0);
+    return state.payments.filter((x) => finIn(String(x.created_at || x.paid_at || ''))).reduce((s, x) => s + ((x.kind === 'payment' || x.kind === 'deposit') && !x.from_credit ? Number(x.amount) : x.kind === 'refund' ? -Number(x.amount) : 0), 0);
   }
   function renderFinance() {
-    $('#finPerTxt').textContent = FIN_PERIODS.find((x) => x[0] === state.finPeriod)[1];
+    $('#finPerTxt').textContent = finPeriodLabel();
     const sg = (v) => Math.round(v) > 0 ? 'cpos' : Math.round(v) < 0 ? 'cneg' : '', ab = (v) => '₪' + nfm(Math.abs(v)); const rows = finRows(), inc = rows.filter((x) => x.kind === 'income').reduce((s, x) => s + x.amount, 0), exp = rows.filter((x) => x.kind === 'expense').reduce((s, x) => s + x.amount, 0), part = finPartIncome(), expCh = rows.filter((x) => x.channel).reduce((s, x) => s + x.amount, 0), credHolders = [...new Set(state.payments.map((x) => x.participant_id))].map((id) => ({ id, c: Math.round(creditOf(id) * 100) / 100 })).filter((x) => x.c > 0), cred = credHolders.reduce((s, x) => s + x.c, 0), owed = state.promoters.reduce((s, x) => s + Math.max(0, ledgerOf(x.id).balance), 0);
     $('#finSum').innerHTML = '<div class="in"><small>הכנסות ממשתתפים</small><b>₪' + nfm(part) + '</b></div><div class="out" data-ff="expense" role="button" tabindex="0" aria-pressed="' + (state.finFilter === 'expense') + '"><small>הוצאות</small><b>₪' + nfm(exp) + '</b>' + (expCh ? '<small class="fsub">מתוכן דרכי הגעה ₪' + nfm(expCh) + '</small>' : '') + '</div><div class="in" data-ff="income" role="button" tabindex="0" aria-pressed="' + (state.finFilter === 'income') + '"><small>הכנסות אחרות</small><b>₪' + nfm(inc) + '</b></div>' + (cred > 0 ? '<div class="cred"><small>קרדיט שמור למשתתפים</small><b>₪' + nfm(cred) + '</b><small class="fsub">' + credHolders.length + ' משתתפים · כסף שנכנס וטרם נוצל</small></div><div class="net wide"><small>נטו</small><b class="' + sg(part + inc - exp) + '">' + ab(part + inc - exp) + '</b><small class="fsub">נטו אחרי קרדיט שמור: <i class="' + sg(part + inc - exp - cred) + '">' + ab(part + inc - exp - cred) + '</i></small></div>' : '<div class="net"><small>נטו</small><b class="' + sg(part + inc - exp) + '">' + ab(part + inc - exp) + '</b></div>') + (owed > 0 ? '<p class="finowed">עלויות דרכי הגעה שנצברו ועוד לא שולמו: ₪' + nfm(owed) + ' (לא נכללות בהוצאות עד התשלום)</p>' : '');
     $('#finRecLbl').hidden = !state.finRec.length;
     $('#finRec').innerHTML = state.finRec.map((r) => '<button type="button" class="finrow' + (r.active ? '' : ' off') + '" data-frec="' + r.id + '"><span class="ft"><b>' + esc(r.title) + '</b><span>' + PERIODS[r.period] + ' · מ-' + finDmy(r.start_date) + (r.end_date ? ' עד ' + finDmy(r.end_date) : '') + (r.active ? '' : ' · מושהה') + '</span></span><span class="fa ' + (r.kind === 'income' ? 'in' : 'out') + '">₪' + nfm(Number(r.amount)) + '</span></button>').join('');
     const shown = state.finFilter ? rows.filter((x) => x.kind === state.finFilter) : rows;
-    $('#finList').innerHTML = shown.length ? shown.map((x) => { const m = x.meeting_id && state.meetings.find((q) => q.id === x.meeting_id); return '<button type="button" class="finrow" ' + (x.channel ? 'data-fch="' + x.channel + '"' : x.rec ? 'data-frec="' + x.id + '"' : 'data-fent="' + x.id + '"') + '><span class="ft"><b>' + esc(x.title) + (x.rec ? '<i class="frec">מחזורי</i>' : '') + (x.channel ? '<i class="frec">דרך הגעה</i>' : '') + '</b><span>' + finDmy(x.date) + ' · ' + (x.channel ? 'לחיצה לפתיחת ההתחשבנות' + (x.by ? ' · דרך ' + esc(finName(x.by)) : '') : (m ? 'מפגש ' + dmShort(m) : 'כללי') + (x.by ? ' · דרך ' + esc(finName(x.by)) : '')) + '</span></span><span class="fa ' + (x.kind === 'income' ? 'in' : 'out') + '">₪' + nfm(x.amount) + '</span></button>'; }).join('') : '<p class="mnone">עוד אין תנועות' + (state.finPeriod === 'month' ? ' החודש' : '') + '</p>';
+    $('#finList').innerHTML = shown.length ? shown.map((x) => { const m = x.meeting_id && state.meetings.find((q) => q.id === x.meeting_id); return '<button type="button" class="finrow" ' + (x.channel ? 'data-fch="' + x.channel + '"' : x.rec ? 'data-frec="' + x.id + '"' : 'data-fent="' + x.id + '"') + '><span class="ft"><b>' + esc(x.title) + (x.rec ? '<i class="frec">מחזורי</i>' : '') + (x.channel ? '<i class="frec">דרך הגעה</i>' : '') + '</b><span>' + finDmy(x.date) + ' · ' + (x.channel ? 'לחיצה לפתיחת ההתחשבנות' + (x.by ? ' · דרך ' + esc(finName(x.by)) : '') : (m ? 'מפגש ' + dmShort(m) : 'כללי') + (x.by ? ' · דרך ' + esc(finName(x.by)) : '')) + '</span></span><span class="fa ' + (x.kind === 'income' ? 'in' : 'out') + '">₪' + nfm(x.amount) + '</span></button>'; }).join('') : '<p class="mnone">עוד אין תנועות' + ((state.finPeriod === 'all' ? '' : state.finPeriod === 'month' ? ' החודש' : ' ב' + finPeriodLabel())) + '</p>';
   }
   function finView(v) {
     finV = v; $('#finMain').hidden = v !== 'main'; $('#finForm').hidden = v !== 'form'; $('#finLog').hidden = v !== 'log'; $('#finSettle').hidden = v !== 'settle'; $('#finArrow').hidden = v === 'main'; $('#finLogBtn').hidden = v !== 'main'; $('#finSetBtn').hidden = v !== 'main'; $('#finPerBtn').hidden = v !== 'main'; if (typeof closeFinPer === 'function') closeFinPer();
@@ -2486,11 +2485,22 @@
     f.querySelector('[name=date]').previousElementSibling.textContent = edit.type === 'rec' ? 'מתאריך' : 'תאריך';
     finView('form');
   }
-  const FIN_PERIODS = [['month', 'החודש'], ['all', 'הכל']];
+  /* תקופה: הכל, החודש, וחודשים קודמים לפי ההיסטוריה (תנועות, תשלומי משתתפים ותשלומי דרכי הגעה); ערך חודש הוא YYYY-MM */
+  const finMonthLabel = (ym) => { const [y, m] = ym.split('-').map(Number); return new Date(y, m - 1, 1).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' }); };
+  const finPeriodList = () => {
+    const cur = todayISO().slice(0, 7), ms = new Set();
+    state.fin.forEach((x) => ms.add(String(x.entry_date).slice(0, 7)));
+    state.finRec.forEach((r) => recOccurrences(r).forEach((d) => ms.add(d.slice(0, 7))));
+    state.payments.forEach((x) => ms.add(String(x.created_at || x.paid_at || '').slice(0, 7)));
+    state.promoPays.forEach((x) => ms.add(String(x.paid_at || '').slice(0, 7)));
+    const prev = [...ms].filter((m) => /^\d{4}-\d{2}$/.test(m) && m < cur).sort().reverse();
+    return [['all', 'הכל'], ['month', 'החודש']].concat(prev.map((m) => [m, finMonthLabel(m)]));
+  };
+  const finPeriodLabel = () => { const o = finPeriodList().find((x) => x[0] === state.finPeriod); return o ? o[1] : 'הכל'; };
   const closeFinPer = () => { $('#finPerMenu').hidden = true; $('#finPerBtn').setAttribute('aria-expanded', 'false'); };
   $('#finPerBtn').addEventListener('click', () => {
     const m = $('#finPerMenu'); if (!m.hidden) { closeFinPer(); return; }
-    m.innerHTML = FIN_PERIODS.map((o) => '<button type="button" role="menuitem" class="qi" data-fp="' + o[0] + '" aria-pressed="' + (o[0] === state.finPeriod) + '">' + o[1] + '</button>').join('');
+    m.innerHTML = finPeriodList().map((o) => '<button type="button" role="menuitem" class="qi" data-fp="' + o[0] + '" aria-pressed="' + (o[0] === state.finPeriod) + '">' + o[1] + '</button>').join('');
     m.hidden = false; $('#finPerBtn').setAttribute('aria-expanded', 'true');
     const r = $('#finPerBtn').getBoundingClientRect(), mw = m.offsetWidth;
     m.style.left = Math.min(Math.max(8, r.right - mw), window.innerWidth - mw - 8) + 'px'; m.style.top = (r.bottom + 6) + 'px';
