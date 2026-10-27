@@ -1595,7 +1595,7 @@
       else top.d.close();
     } finally { NAV.fromPop = false; }
   });
-  const state = { prefs: {}, statuses: [], pstatuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, here: null, paidF: null, gender: null, sort: 'new', sent: null, bal: null, showTags: true, showSent: null, showPay: true, showAtt: null, srcF: null, ageF: null, fin: [], finRec: [], finTr: [], finPeriod: 'all', finFilter: null };
+  const state = { prefs: {}, statuses: [], pstatuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, here: null, paidF: null, gender: null, sort: 'new', sent: null, bal: null, viewScopes: {}, srcF: null, ageF: null, fin: [], finRec: [], finTr: [], finPeriod: 'all', finFilter: null };
   /* קישור עמוק מהמייל: ?m=<מפגש>&p=<משתתף>; נשמר בזמן הכניסה עם גוגל (שמחזירה בלי הפרמטרים) */
   let deep = null;
   try {
@@ -2149,14 +2149,13 @@
   const matchPay = (p, keys) => { if (!keys.length) return true; const S = keys.filter((k) => !isPKey(k)), T = keys.filter((k) => isPKey(k)); return (!S.length || S.some((k) => stMatch(p, k))) && (!T.length || T.every((k) => stMatch(p, k))); };
   const effPay = () => state.q.trim() ? null : state.pay;
   /* טוגלים "הגעה למפגש" ו"שליחת פרטי המפגש": ברירת מחדל (null) = אוטומטי לפי התזמונים שבהגדרות; הפעלה ידנית (true) מציגה את העמודה מיד, גם במפגש שטרם התחיל; כיבוי ידני (false) מסתיר */
-  /* העדפות תצוגה ברמת המשתמש (מנהל): נשמרות ב-harpatka_admin_prefs ונטענות בכניסה, בלי קשר לכתובת הדף */
-  function applyViewPrefs() {
-    const pr = state.prefs[emailOf()] || {};
-    state.showTags = pr.view_tags == null ? true : !!pr.view_tags; state.showPay = pr.view_pay == null ? true : !!pr.view_pay;
-    state.showSent = pr.view_sent == null ? null : !!pr.view_sent; state.showAtt = pr.view_att == null ? null : !!pr.view_att;
-  }
+  /* העדפות תצוגה ברמת המשתמש ובמפגש (27.10.26): לכל מנהל, לכל מפגש ולתמונת המצב הכללית ("all") ערכים משלהם לטוגלים (תגיות, תשלום: true/false; שליחה, הגעה: null = אוטומטי לפי התזמונים של אותו מפגש). state.showTags וחבריו הם מאפיינים שמחזירים וכותבים את ערכי ההקשר הנוכחי (המפגש הנבחר או "all"), כך שבמעבר בין מפגשים התצוגה מתחלפת איתם. נשמר ב-harpatka_admin_prefs.view_scopes */
+  const VIEW_DEF = { tags: true, pay: true, sent: null, att: null };
+  const viewCtx = () => { const k = state.filter || 'all'; return state.viewScopes[k] || (state.viewScopes[k] = Object.assign({}, VIEW_DEF)); };
+  [['showTags', 'tags'], ['showPay', 'pay'], ['showSent', 'sent'], ['showAtt', 'att']].forEach(([prop, key]) => Object.defineProperty(state, prop, { get() { const c = state.viewScopes[state.filter || 'all']; return c ? c[key] : VIEW_DEF[key]; }, set(v) { viewCtx()[key] = v; }, enumerable: true }));
+  function applyViewPrefs() { const pr = state.prefs[emailOf()] || {}; state.viewScopes = (pr.view_scopes && typeof pr.view_scopes === 'object') ? JSON.parse(JSON.stringify(pr.view_scopes)) : {}; }
   async function saveViewPrefs() {
-    const em = emailOf(), body = { email: em, view_tags: state.showTags, view_pay: state.showPay, view_sent: state.showSent, view_att: state.showAtt };
+    const em = emailOf(), body = { email: em, view_scopes: state.viewScopes };
     state.prefs[em] = Object.assign({}, state.prefs[em], body);
     try { await api(T.pf, { method: 'POST', body, prefer: 'resolution=merge-duplicates,return=minimal' }); } catch (err) { fail(err); }
   }
