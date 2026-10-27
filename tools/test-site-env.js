@@ -31,7 +31,7 @@
     d.id = 'testEnvBadge';
     d.setAttribute('popover', 'manual');
     d.textContent = 'סביבת בדיקות · נתונים נפרדים מהאמיתיים';
-    d.setAttribute('style', 'inset:auto;margin:0;border:0;position:fixed;top:0;left:0;right:0;width:auto;height:18px;padding:0;overflow:hidden;background:#C96F52;color:#fff;font:700 11px/18px Arial,sans-serif;text-align:center;pointer-events:none');
+    d.setAttribute('style', 'inset:auto;margin:0;border:0;position:fixed;top:0;left:0;right:0;width:auto;height:18px;padding:0;overflow:hidden;background:#3F382F;color:#fff;font:700 11px/18px Arial,sans-serif;text-align:center;pointer-events:none');
     document.body.appendChild(d);
     raise(d);
     new MutationObserver(function (m) { if (m.some(function (r) { return r.target.nodeName === 'DIALOG'; })) raise(d); }).observe(document.documentElement, { subtree: true, attributes: true, attributeFilter: ['open'] });
