@@ -1177,7 +1177,7 @@
       const setCta = (b, sp) => { b.textContent = ctaText(sp); };   // בלי שורת "המחיר עד": התאריך כבר בצ'יפ של המדרגה הבאה
       /* מפגש עתידי (אחרי הקרוב): אותו כרטיס בדיוק כמו המפגש הקרוב, רק דהוי */
       /* כרטיס מפגש אחד לכל המפגשים, בשתי וריאציות: ממוזער (תמונה ושורת תקציר) ומורחב (הכרטיס המלא); לחיצה מחליפה ביניהם באנימציה.
-         מפגש שעבר: אותו כרטיס בלי כפתור ומדרגות והצ'יפ "התקיים" (העיצוב שלו ייקבע בנפרד) */
+         מפגש שעבר: אותו כרטיס בלי כפתור ומדרגות (העיצוב שלו ייקבע בנפרד) */
       const CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
       const sumInfo = (m) => ({ n: m.name || '', d: label(m) + ' · ' + m.time + (m.city ? ' · ' + m.city : '') });
       const toggleCard = (c, on) => { c.classList.toggle('open', on); const s = c.querySelector('.mt-sum'); if (s) s.setAttribute('aria-expanded', String(on)); };
@@ -1190,7 +1190,6 @@
         const se = mk('span', 'sum-end'); se.append(mk('span', 'sum-lbl', 'פרטים')); se.insertAdjacentHTML('beforeend', CHEV);
         sum.append(st, se); sum.addEventListener('click', () => toggleCard(c, !c.classList.contains('open'))); c.append(sum);
         const bx = mk('div', 'mt-bx'), bxi = mk('div', 'mt-bxi'), body = mk('div', 'mt-body');
-        if (past) body.append(mk('span', 'mt-pill', 'התקיים'));   // אין הבדל בין קרוב לעתידי: הצ'יפ הוא כמות המשתתפים (או "התקיים")
         if (m.name) body.append(mk('div', 'mt-name font-display', m.name));
         body.append(mk('div', 'mt-when font-display', label(m) + ' · ' + m.time));
         { const cl = [m.city, !past && m.max ? m.max + ' משתתפים' : ''].filter(Boolean).join(' · '); if (cl) body.append(mk('div', 'mt-city', cl)); }   // עיר וכמות משתתפים בשורה אחת עם נקודה מפרידה
