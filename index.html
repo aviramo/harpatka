@@ -313,6 +313,8 @@
     .mt-next .mt-tier.cur{ background:#8FD3DC; color:#0A2236; }
     .mt-next .mt-cta{ margin-top:.35rem; display:inline-flex; align-items:center; justify-content:center; border-radius:999px; background:#FFFDF9; color:#0F3A4D; font-weight:700; font-size:1.05rem; padding:.75rem 1.7rem; min-height:48px; }
     .mt-next.later{ min-height:0; opacity:.72; }
+    .mt-next.pastc{ opacity:.42; padding:.9rem 1rem; gap:.35rem; border-radius:22px; }
+    .mt-next.pastc .mt-when{ font-size:1.1rem; }
     .mt-next.sk .mt-pill, .mt-next.sk .mt-when, .mt-next.sk .mt-sub, .mt-next.sk .mt-tiers, .mt-next.sk .mt-cta{ color:transparent; background:rgba(255,253,249,.16); border-radius:12px; animation:mtPulse 1.4s ease-in-out infinite; pointer-events:none; }
     .mt-next.sk .mt-when{ min-width:12rem; min-height:2rem; } .mt-next.sk .mt-sub{ min-width:15rem; min-height:1.3rem; } .mt-next.sk .mt-tiers{ min-width:14rem; min-height:2rem; } .mt-next.sk .mt-cta{ min-width:9.5rem; }
     .mt-tier.done{ opacity:.55; text-decoration:none; font-size:.78rem; padding:.2rem .65rem; }
@@ -1109,8 +1111,17 @@
         const fb = fill(mkBox(), sp.future, 'fut'); if (!fb.hidden) c.append(fb);
         return c;
       };
+      /* מפגש שעבר: אותו כרטיס כהה, דהוי יותר, בלי פרטים ובלי מחיר: רק מתי זה היה ושכבר התקיים */
+      const pastCard = (m) => {
+        const c = document.createElement('div'); c.className = 'mt-next later pastc';
+        const pl = document.createElement('span'); pl.className = 'mt-pill'; pl.textContent = 'התקיים';
+        const w = document.createElement('div'); w.className = 'mt-when font-display'; w.textContent = label(m) + ' · ' + m.time;
+        c.append(pl, w);
+        return c;
+      };
       const row = (m, tiers, today, past) => {
-        if (!past) return laterCard(m, today);
+        if (past) return pastCard(m);
+        return laterCard(m, today);
         const r = document.createElement('div'); r.className = 'mt-row' + (past ? ' past' : '');
         const top = document.createElement('div'); top.className = 'mt-top';
         const a = document.createElement('div'); if (past) { if (m.name) { const nm = document.createElement('div'); nm.className = 'mt-name'; nm.textContent = m.name; a.append(nm); } } else { const head = [m.name, m.max ? m.max + ' משתתפים' : ''].filter(Boolean).join(' · '); if (head) { const nm = document.createElement('div'); nm.className = 'mt-name'; nm.textContent = head; a.append(nm); } } const d1 = document.createElement('div'); d1.className = 'mt-d'; d1.textContent = label(m) + ' · ' + m.time; const d2 = document.createElement('div'); d2.className = 'mt-t'; d2.style.whiteSpace = 'pre-line'; d2.textContent = where(m); a.append(d1); if (!past && d2.textContent) a.append(d2); top.append(a);
