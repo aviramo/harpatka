@@ -900,7 +900,7 @@
 
   <!-- כפתור הרשמה קבוע בתחתית המסך (לבקשת המשתמש 20.10.26; מחליף את כפתורי ההרשמה שהיו בתוך הדף) -->
   <div id="stickyReg" class="fixed inset-x-0 bottom-0 z-40 px-5 pt-5 pointer-events-none" style="padding-bottom:calc(.9rem + env(safe-area-inset-bottom));background:linear-gradient(to top, rgba(246,239,228,.97) 55%, rgba(246,239,228,0))">
-    <a href="#" target="_blank" rel="noopener" data-contact class="btn-primary rounded-full pointer-events-auto block mx-auto w-full max-w-[24rem] text-center py-4 text-[1.2rem] font-bold" style="box-shadow:0 10px 24px -8px rgba(184,92,64,.55)">הרשמה</a>
+    <a href="#" target="_blank" rel="noopener" data-contact class="btn-primary rounded-full pointer-events-auto block mx-auto w-full max-w-[24rem] text-center py-4 text-[1.2rem] font-bold" id="stickyRegBtn" style="box-shadow:0 10px 24px -8px rgba(184,92,64,.55)">הרשמה למפגש הקרוב</a>
   </div>
 
 
@@ -1131,6 +1131,7 @@
           fill(el('mTP'), sp.past, 'done'); fill(el('mTF'), sp.future, 'fut');
           const nt = noteText(sp); el('mTN').textContent = nt; el('mTN').hidden = !nt;
           cta.textContent = ctaText(sp); cta.__meeting = nx;
+          const sb = el('stickyRegBtn'); if (sb) sb.textContent = 'הרשמה למפגש הקרוב';
         } else {
           el('mPill').textContent = 'בקרוב';
           el('mWhen').textContent = 'המפגש הבא בדרך אליכם';
@@ -1138,6 +1139,7 @@
           lk.replaceWith(Object.assign(document.createElement('div'), { id: 'mLinks', hidden: true }));
           ['mTP', 'mTF', 'mTN'].forEach(i => { el(i).hidden = true; });
           cta.textContent = 'השארת פרטים'; cta.__meeting = null;
+          const sb = el('stickyRegBtn'); if (sb) sb.textContent = 'השארת פרטים';
         }
         const later = el('mLater'); later.innerHTML = '';
         future.slice(1).forEach(m => later.append(row(m, tiers, today, false)));
