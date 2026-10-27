@@ -1055,7 +1055,7 @@
 
     /* ===== המפגשים: הקודם (אחד), הקרוב והעתידיים. אפשר להירשם לכל מפגש שעוד לא עבר. מקור: harpatka_meetings ומדרגות המחיר (harpatka_price_tiers); הצגה מיידית מהמטמון המקומי של הביקור הקודם ואז רענון ===== */
     const normT = t => (t && !Array.isArray(t) && Number.isFinite(Number(t.base))) ? { base: Number(t.base), steps: (Array.isArray(t.steps) ? t.steps : []).map(x => ({ days: Number(x.days), price: Number(x.price) })).filter(x => x.days >= 1 && Number.isFinite(x.price)) } : null;
-    const MEET_CACHE = 'harpatka_meetings_v18';
+    const MEET_CACHE = 'harpatka_meetings_v19';
     const meetingsReady = (async () => {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
       const H = { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey };
@@ -1135,9 +1135,9 @@
         const mk = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
         const c = mk('div', 'mt-card still open'), inn = mk('div', 'mt-in');
         if (defImg) { const im = mk('img', 'mt-bg'); im.src = defImg; im.alt = ''; im.decoding = 'async'; c.append(im); }   // בלי מפגש: תמונת ברירת המחדל מההגדרות
-        inn.append(mk('div', 'mt-when font-display', defName || 'המפגש הבא בדרך אליכם'));
-        inn.append(mk('div', 'mt-city', 'רוצים לדעת ראשונים? השאירו פרטים ונעדכן ברגע שהתאריך ייקבע'));
-        const more = mk('div', 'mt-more'), box = mk('div'), b = mk('a', 'mt-cta', 'השארת פרטים'); b.href = '#'; b.addEventListener('click', e => { e.preventDefault(); reg(null); });
+        inn.append(mk('div', 'mt-when font-display', 'המפגש הבא כבר בדרך'));   // בלי שם ברירת המחדל
+        inn.append(mk('div', 'mt-city', 'התאריך עוד לא נקבע, אבל המקומות מוגבלים. השאירו פרטים ותקבלו הודעה ראשונים, לפני שההרשמה נפתחת לכולם'));
+        const more = mk('div', 'mt-more'), box = mk('div'), b = mk('a', 'mt-cta', 'עדכנו אותי ראשונים'); b.href = '#'; b.addEventListener('click', e => { e.preventDefault(); reg(null); });
         box.append(b); more.append(box); inn.append(more); c.append(inn);
         return c;
       };
@@ -1332,7 +1332,7 @@
       el('tbSub').textContent = ' ';
     } else {
       el('tbPillT').parentElement.style.visibility = ''; el('tbPillT').textContent = 'בקרוב';
-      el('tbMain').textContent = (d && d.defName) || 'המפגש הבא בדרך אליכם';   // בלי מפגש: שם ברירת המחדל (אם הוגדר)
+      el('tbMain').textContent = 'המפגש הבא כבר בדרך';   // בלי מפגש (בלי שם ברירת המחדל)
       el('tbSub').textContent = 'השאירו פרטים ונעדכן ברגע שהתאריך ייקבע';
     }
     /* מעבר מונפש כשהמצב או התוכן השתנו (טעינה ← תוכן, אין מפגש ← יש מפגש); בלי אנימציה כשהתוכן זהה (למשל רענון אחרי המטמון) */
@@ -1341,7 +1341,7 @@
     }
   };
   let cached = null;
-  try { cached = JSON.parse(localStorage.getItem(typeof MEET_CACHE !== 'undefined' ? MEET_CACHE : 'harpatka_meetings_v18') || 'null'); } catch (e) {}
+  try { cached = JSON.parse(localStorage.getItem(typeof MEET_CACHE !== 'undefined' ? MEET_CACHE : 'harpatka_meetings_v19') || 'null'); } catch (e) {}
   if (cached && cached.future) render(cached);
   if (typeof meetingsReady !== 'undefined') meetingsReady.then((d) => { if (d) render(d); else if (!cached) render(null); });
   else if (!cached) render(null);
