@@ -1139,7 +1139,7 @@
     .row .evc.off { background: #fff; border-color: var(--sand); color: var(--muted); }   /* אין טלפון: אפור, לא אדום */
     .hfilt svg, .row .evc svg { width: 17px; height: 17px; }   /* סיכת פרטי הערב באותה נוכחות ויזואלית כמו ה-✓ וה-₪ */
     .row .main .here[aria-pressed="true"], .row .evc.sent, .row .payic.ok, .hfilt.yes { background: var(--green-bg); border: 1px solid var(--green-bg); color: var(--green); }   /* "כן": הירוק הבהיר של הפלטה (כמו צ'יפ "שילם") */
-    .row .payic.free { background: #fff; border: 1px solid var(--line); color: var(--muted); position: relative; }
+    .row .payic.free { background: var(--line); border: 1px solid var(--line); color: var(--muted); position: relative; }   /* חינם: ניטרלי מלא עם ₪ מחוק */
     .hfilt.all { background: #fff; border: 1px solid var(--line); color: var(--muted); }
     .hfilt.free { background: #fff; border: 1px solid var(--line); color: var(--muted); position: relative; }   /* חינם: אפור עם קו חוצה, כמו ברשימה */
     .hfilt.fr { background: var(--line); border: 1px solid var(--line); color: var(--muted); position: relative; }   /* חינם בסינון היתרה: ניטרלי מלא עם ₪ מחוק (מאוזן: לבן עם גבול) */
@@ -2199,7 +2199,7 @@
       });
       FC.payAmts = {}; if (mid) base.filter((p) => genOk(p) && matchPay(p, epk) && only.here(p) && only.sent(p) && only.bal(p)).forEach((p) => { const l = lk(p); if (!l || noPayOf(p, l)) return; const a = Math.round(allocatedOf(p.id, mid)); if (a > 0) FC.payAmts[a] = (FC.payAmts[a] || 0) + 1; });   // סכומים ששולמו במפגש הזה, עם כמות המשתתפים לכל סכום
     }
-    const fbtn = (kind, v, n1, n0) => { const isA = v && String(v)[0] === 'a', c = (v === '1' || isA) ? 'yes' : v === '0' ? 'no' : v === 'n' ? 'free' : v === 'f' ? 'fr' : 'all', lab = FLAB[kind]; return '<button type="button" class="hfilt ' + c + '" data-fk="' + kind + '" aria-label="' + FNAME[kind] + ': ' + (isA ? '₪' + v.slice(1) : v === '1' ? lab[1] : v === '0' ? lab[2] : v === 'n' ? lab[3] : v === 'f' ? lab[4] : lab[0]) + '" title="' + (isA ? 'ששולמו ₪' + v.slice(1) : v === '1' ? lab[1] + ' (' + n1 + ')' : v === '0' ? lab[2] + ' (' + n0 + ')' : v === 'n' ? lab[3] : v === 'f' ? lab[4] : lab[0] + ': ' + lab[1] + ' ' + n1 + ', ' + lab[2] + ' ' + n0) + ' (לחיצה לפתיחת תפריט)">' + fglyph(kind, c) + '</button>'; };
+    const fbtn = (kind, v, n1, n0) => { const isA = v && String(v)[0] === 'a', c = (v === '1' || isA) ? 'yes' : v === '0' ? 'no' : v === 'n' ? (kind === 'pay' ? 'fr' : 'free') : v === 'f' ? 'fr' : 'all', lab = FLAB[kind]; return '<button type="button" class="hfilt ' + c + '" data-fk="' + kind + '" aria-label="' + FNAME[kind] + ': ' + (isA ? '₪' + v.slice(1) : v === '1' ? lab[1] : v === '0' ? lab[2] : v === 'n' ? lab[3] : v === 'f' ? lab[4] : lab[0]) + '" title="' + (isA ? 'ששולמו ₪' + v.slice(1) : v === '1' ? lab[1] + ' (' + n1 + ')' : v === '0' ? lab[2] + ' (' + n0 + ')' : v === 'n' ? lab[3] : v === 'f' ? lab[4] : lab[0] + ': ' + lab[1] + ' ' + n1 + ', ' + lab[2] + ' ' + n0) + ' (לחיצה לפתיחת תפריט)">' + fglyph(kind, c) + '</button>'; };
     const sentN = (v) => base.filter((p) => { if (!genOk(p) || !paidOk(p) || !hereOkNoSent(p) || !matchPay(p, epk)) return false; const l = linkOf(p.id, state.filter); return !!l && evElig(p.id, l) && (l.details_sent_at ? '1' : '0') === v; }).length;
     $('#listHere').innerHTML = attOn ? fbtn('here', eh, hereN('1'), hereN('0')) : '';
     $('#listPay').innerHTML = state.filter ? fbtn('pay', (state.paidF === '1' || state.paidF === '0' || state.paidF === 'n' || /^a\d+$/.test(state.paidF || '')) ? state.paidF : null, paidN('1'), paidN('0')) : '';
@@ -3948,7 +3948,7 @@
   function openF(kind, anchor) {
     const m = $('#fMenu'); if (!m.hidden && m.dataset.kind === kind) { closeF(); return; }
     const cur = fstate(kind) || null, lab = FLAB[kind];
-    const opts = [[null, 'all', lab[0]], ['1', 'yes', lab[1]], ['0', 'no', lab[2]]].concat(kind === 'pay' ? [['n', 'free', lab[3]]] : kind === 'bal' ? [['n', 'free', lab[3]], ['f', 'fr', lab[4]]] : []);
+    const opts = [[null, 'all', lab[0]], ['1', 'yes', lab[1]], ['0', 'no', lab[2]]].concat(kind === 'pay' ? [['n', 'fr', lab[3]]] : kind === 'bal' ? [['n', 'free', lab[3]], ['f', 'fr', lab[4]]] : []);
     m.innerHTML = opts.map((o) => '<button type="button" role="menuitem" class="fopt" data-fv="' + (o[0] === null ? '' : o[0]) + '" aria-pressed="' + (cur === o[0]) + '"><span class="hfilt ' + o[1] + '">' + fglyph(kind, o[1]) + '</span><span>' + o[2] + '</span><b class="fcnt">' + ((FC[kind] || {})[o[0] === null ? '' : o[0]] ?? 0) + '</b></button>').join('');
     if (kind === 'pay') {   // בנוסף: סינון לפי הסכום ששולם למפגש
       const am = FC.payAmts || {}, ks = Object.keys(am).map(Number).sort((a, b) => b - a);
