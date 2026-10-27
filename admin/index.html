@@ -572,6 +572,7 @@
     .cico { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; }
     .cico svg { width: 26px; height: 26px; }
     .cico.cb-wa { background: #E3F4E9; color: var(--green); }
+    .cico.cb-view { background: var(--sky-bg); color: var(--sky); }
     .cico.cb-call { background: var(--sky-bg); color: var(--sky); }
     .cico.off { background: var(--line); color: var(--muted); }
     .cbtn { flex: 1 1 0; height: 46px; border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-size: 16px; text-decoration: none; }
@@ -1305,7 +1306,6 @@
           <span id="pTagsHome" hidden></span><div class="field" id="pTagsField"><span>תגיות</span><div class="pstchips" id="pStatusChips" role="group" aria-label="תגיות"></div></div>
         </div>
         <div class="note" id="pRegLine" style="color:var(--muted);font-size:14px;margin:2px 4px 10px"></div>
-        <a class="btn ghost" id="pViewAs" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;margin-bottom:8px">צפייה באזור האישי כמשתתף</a>
         <button class="btn ghost" id="pDelete" type="button">מחיקת משתתף</button>
       </div>
       <button class="btn" id="pSubmit" type="submit">הוספה</button>
@@ -3208,7 +3208,9 @@
     const pend = pendingLinks(p);
     const first = String(p.first_name || p.name || '').trim().split(/\s+/)[0] || '';
     const waHref = base;   // וואטסאפ נפתח לשיחה בלבד, בלי הודעת פתיחה
+    const VIEW_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
     let h = '<div class="ctop">' +
+      '<a class="cico cb-view" href="../me/?as=' + encodeURIComponent(p.id) + '" target="_blank" rel="noopener" aria-label="צפייה באזור האישי כמשתתף" title="צפייה באזור האישי כמשתתף">' + VIEW_ICON + '</a>' +
       (base ? '<a class="cico cb-wa" href="' + waHref + '"' + '' + ' target="_blank" rel="noopener" aria-label="וואטסאפ" title="וואטסאפ">' + WA_ICON + '</a>' : '<span class="cico off" aria-label="וואטסאפ">' + WA_ICON + '</span>') + '</div>';
     box.innerHTML = h;
   }
@@ -3653,7 +3655,6 @@
     mLimit = 3;
     $('#nText').value = ''; setPending(null);
     $('#pDelete').hidden = !p;
-    $('#pViewAs').hidden = !p; if (p) $('#pViewAs').href = '../me/?as=' + encodeURIComponent(p.id);
     $('#savedMark').classList.remove('on');
     refreshSheetMeetings();
     openPid = p ? p.id : null;
