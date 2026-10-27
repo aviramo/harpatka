@@ -2068,12 +2068,12 @@
   const PNONE = '__pnone';   // סינון "בלי סטטוס"
   const isPKey = (k) => String(k).startsWith('p_') || k === PNONE;
   const BUILTIN = DEFAULT_STATUSES.map((s) => s.key);   // סטטוסי מפגש מובנים (מותאמים נוספים: מפתח m_...)
-  const SYSTEM_STATUS = 'unpaid';   // סטטוס מערכת: ברירת המחדל לכל הרשמה חדשה; נעול ותמיד אחרון
+  const SYSTEM_STATUS = 'unpaid';   // סטטוס מערכת: ברירת המחדל לכל הרשמה חדשה; נעול ותמיד ראשון
   state.statuses = DEFAULT_STATUSES.map((s) => Object.assign({}, s));
   const astatusList = () => state.astatuses.slice().sort((a, b) => a.sort - b.sort);
   const afterOf = (l) => (l && l.after_key && state.astatuses.some((s) => s.key === l.after_key)) ? l.after_key : null;
   const isAfterKey = (k) => state.astatuses.some((s) => s.key === k);
-  const statusList = () => state.statuses.slice().sort((a, b) => ((a.key === SYSTEM_STATUS) - (b.key === SYSTEM_STATUS)) || (a.sort - b.sort));
+  const statusList = () => state.statuses.slice().sort((a, b) => ((b.key === SYSTEM_STATUS) - (a.key === SYSTEM_STATUS)) || (a.sort - b.sort));   // סטטוס ברירת המחדל תמיד ראשון, ואחריו לפי סדר; חדש נוסף בסוף
   function applyStatuses() {
     let css = '';
     state.statuses.concat(state.astatuses, state.pstatuses).forEach((s) => {
@@ -2201,7 +2201,7 @@
     $('#listBal').innerHTML = !state.filter ? fbtn('bal', effBal(), '', '') : '';
     $('#listSent').innerHTML = evOn ? fbtn('sent', effSent(), sentN('1'), sentN('0')) : '';
     requestAnimationFrame(alignFilters);   // שולם / לא שולם בשורת החיפוש מעל הרשימה
-    const stItems = (state.filter ? (state.showTags ? [{ key: PNONE, label: 'ללא תגית' }].concat(pstatusList().slice().reverse()) : []).concat(statusList().slice().reverse()).concat(((m0) => (m0 && meetingStarted(m0)) ? astatusList().slice().reverse() : [])(state.meetings.find((x) => x.id === state.filter))) : (state.showTags ? [{ key: PNONE, label: 'ללא תגית' }].concat(pstatusList().slice().reverse()) : [])).filter((s) => epk.includes(s.key) || state.participants.some((p) => (!state.filter || linkOf(p.id, state.filter)) && stMatch(p, s.key)));
+    const stItems = (state.filter ? (state.showTags ? [{ key: PNONE, label: 'ללא תגית' }].concat(pstatusList().slice().reverse()) : []).concat(statusList()).concat(((m0) => (m0 && meetingStarted(m0)) ? astatusList() : [])(state.meetings.find((x) => x.id === state.filter))) : (state.showTags ? [{ key: PNONE, label: 'ללא תגית' }].concat(pstatusList().slice().reverse()) : [])).filter((s) => epk.includes(s.key) || state.participants.some((p) => (!state.filter || linkOf(p.id, state.filter)) && stMatch(p, s.key)));
     const onlyNone = !state.filter && stItems.every((s) => s.key === PNONE) && !epk.includes(PNONE);   // אין תגיות בשימוש: בלי השורה בכלל
     $('#stStrip').innerHTML = true ? (onlyNone ? [] : stItems).map((s) => { const n = nP(s.key); return '<button type="button" class="stc ' + (isPKey(s.key) ? 'tagc' : s.key) + (n || epk.includes(s.key) ? '' : ' zero') + '" data-stc="' + s.key + '" aria-pressed="' + epk.includes(s.key) + '">' + esc(s.label) + ' <small>' + n + '</small></button>'; }).join('') + '' : '';   // "חינם" (לא משלם) נמצא בתפריט סינון התשלום, לא כצ'יפ נפרד
     $('#listCount').innerHTML = '';   // "מוצגים N" הוחלף בצ'יפ "הכל" עם הכמות
@@ -2656,7 +2656,7 @@
   function pickPayStatus(pid, mid) {
     const l = linkOf(pid, mid), cur = l ? linkStatus(l) : '__none';
     payCtx = { pid, mid }; viewStack = ['main'];
-    $('#sOpts').innerHTML = statusList().slice().reverse().map((x) => x.key).map((s) => '<button type="button" class="sopt ' + s + '" data-st="' + s + '" aria-pressed="' + (s === cur) + '">' + esc(STATUS_LABEL[s]) + '</button>').join('') +
+    $('#sOpts').innerHTML = statusList().map((x) => x.key).map((s) => '<button type="button" class="sopt ' + s + '" data-st="' + s + '" aria-pressed="' + (s === cur) + '">' + esc(STATUS_LABEL[s]) + '</button>').join('') +
       (l && l.attended ? '' : '<button type="button" class="sopt psnone" data-st="__none" aria-pressed="' + (cur === '__none') + '">לא משויך</button>');
     $('#sOpts').querySelectorAll('[data-st]').forEach((b) => b.onclick = () => {
       const st = b.dataset.st; toMain();
@@ -2937,7 +2937,7 @@
     const tagSet = new Set(inMeeting ? [] : ptagsOf(state.participants.find((x) => x.id === pid)));
     menu.innerHTML = 
       (inMeeting && noneOk ? '<button type="button" role="menuitem" class="qi" data-qk="__none" aria-pressed="' + (cur === '__none') + '" style="background:var(--cream);color:var(--muted)">לא משויך</button>' : '') +
-      (inMeeting ? statusList() : pstatusList()).slice().reverse().map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-qk="' + s.key + '" aria-pressed="' + (inMeeting ? s.key === cur : tagSet.has(s.key)) + '">' + esc(s.label) + '</button>').join('') +
+      (inMeeting ? statusList() : pstatusList().slice().reverse()).map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-qk="' + s.key + '" aria-pressed="' + (inMeeting ? s.key === cur : tagSet.has(s.key)) + '">' + esc(s.label) + '</button>').join('') +
       ((inMeeting && (() => { const ll = mid ? linkOf(pid, mid) : quickLink(pid); const mm = state.meetings.find((x) => x.id === (mid || (ll && ll.meeting_id))); return !!(ll && mm && meetingStarted(mm) && state.astatuses.length); })()) ? '<div class="qhd">אחרי המפגש</div>' + astatusList().slice().reverse().map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-qa="' + s.key + '" aria-pressed="' + (afterOf(mid ? linkOf(pid, mid) : quickLink(pid)) === s.key) + '">' + esc(s.label) + '</button>').join('') : '');
     menu.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
@@ -2992,7 +2992,7 @@
     const people = state.participants.filter((p) => (!state.filter || linkOf(p.id, state.filter)) && (eg === 'none' ? !p.gender : (!eg || p.gender === eg)));
     const cnt = (key) => people.filter((p) => stMatch(p, key)).length;
     menu.innerHTML = '<button type="button" role="menuitem" class="qi" data-sf="" aria-pressed="' + !state.pay + '" style="background:var(--cream);color:var(--ink)">הכל <small>' + people.length + '</small></button>' +
-      (state.filter ? statusList() : pstatusList()).slice().reverse().map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-sf="' + s.key + '" aria-pressed="' + payKeys(state.pay).includes(s.key) + '">' + esc(s.label) + ' <small>' + cnt(s.key) + '</small></button>').join('') +
+      (state.filter ? statusList() : pstatusList().slice().reverse()).map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-sf="' + s.key + '" aria-pressed="' + payKeys(state.pay).includes(s.key) + '">' + esc(s.label) + ' <small>' + cnt(s.key) + '</small></button>').join('') +
       (state.filter ? '<div class="qhd">הגעה</div><button type="button" role="menuitem" class="qi" data-at="1" aria-pressed="' + (state.here === '1') + '" style="background:var(--green-bg);color:var(--green)">הגיע</button><button type="button" role="menuitem" class="qi" data-at="0" aria-pressed="' + (state.here === '0') + '" style="background:var(--cream);color:var(--muted)">לא הגיע</button>' : '<button type="button" role="menuitem" class="qi" data-sf="' + PNONE + '" aria-pressed="' + payKeys(state.pay).includes(PNONE) + '" style="background:var(--cream);color:var(--muted)">בלי תגיות <small>' + cnt(PNONE) + '</small></button>') + editBtn(state.filter ? 'meeting' : 'participant');
     menu.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
@@ -4150,14 +4150,16 @@
     const noCol = stScope === 'participant';   // תוויות משתתף בלי צבעים
     const mkRows = (arr) => arr.map((s) => s.key === sys
       ? '<div class="strow locked" data-k="' + s.key + '">' +
+      '<span class="stspacer" aria-hidden="true"></span>' +
       '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם סטטוס המערכת" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1] + '" />' +
       '<button type="button" class="swcur" data-c="' + s.color + '" aria-haspopup="menu" aria-label="צבע: ' + (PALETTE[s.color] || PALETTE.sky)[2] + ' (לחיצה לשינוי)" title="שינוי צבע" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + '"></button>' +
-      '<span class="stspacer" aria-hidden="true"></span><span class="stlockic" title="המיקום קבוע: תמיד אחרון"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>' +
+      '<span class="stlockic" title="המיקום קבוע: תמיד ראשון"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>' +
       '<small class="stcap">' + 'סטטוס מערכת: ברירת המחדל בשיוך משתתף למפגש' + '</small></div>'
       : '<div class="strow" data-k="' + s.key + '">' +
+      '<button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg></button>' +
       '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם הסטטוס" style="' + (noCol ? 'background:#fff;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)' : 'background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1]) + '" />' +
       (noCol ? '' : '<button type="button" class="swcur" data-c="' + s.color + '" aria-haspopup="menu" aria-label="צבע: ' + (PALETTE[s.color] || PALETTE.sky)[2] + ' (לחיצה לשינוי)" title="שינוי צבע" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + '"></button>') +
-      '<button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg></button>' + (s.key !== SYSTEM_STATUS ? '<button type="button" class="stdel" data-del="' + s.key + '" aria-label="מחיקת הסטטוס" title="מחיקת הסטטוס">×</button>' : '') + '</div>').join('');
+ (s.key !== SYSTEM_STATUS ? '<button type="button" class="stdel" data-del="' + s.key + '" aria-label="מחיקת הסטטוס" title="מחיקת הסטטוס">×</button>' : '') + '</div>').join('');
     $('#stList').innerHTML = mkRows(list);
     const two = stScope === 'meeting';
     $('#stSecBefore').hidden = !two; $('#stSecAfter').hidden = !two; $('#stAddAfter').hidden = !two; $('#stListAfter').innerHTML = two ? mkRows(astatusList()) : '';
@@ -4221,7 +4223,7 @@
     place();
     for (let g = 0; g < 8; g++) {
       const r = row.getBoundingClientRect(), prev = row.previousElementSibling, next = row.nextElementSibling;
-      if (prev && r.top + r.height / 2 < prev.getBoundingClientRect().top + prev.getBoundingClientRect().height / 2) { list.insertBefore(row, prev); place(); }
+      if (prev && !prev.classList.contains('locked') && r.top + r.height / 2 < prev.getBoundingClientRect().top + prev.getBoundingClientRect().height / 2) { list.insertBefore(row, prev); place(); }
       else if (next && r.top + r.height / 2 > next.getBoundingClientRect().top + next.getBoundingClientRect().height / 2) { list.insertBefore(next, row); place(); }
       else break;
     }
@@ -4401,7 +4403,7 @@
         const s0 = state.astatuses.find((x) => x.key === k), used0 = state.att.filter((l) => l.after_key === k);
         if (!used0.length) { await removeAfter(k, null, used0); return; }
         $('#setDelText').innerHTML = 'יש <b>' + used0.length + '</b> משתתפים בסטטוס <b>"' + esc(s0.label) + '"</b> (אחרי המפגש). להחליף אותו בסטטוס אחר, או רק להסיר?';
-        $('#setDelOpts').innerHTML = astatusList().slice().reverse().filter((x) => x.key !== k).map((x) => '<button type="button" class="sopt ' + x.key + '" data-to="' + x.key + '">' + esc(x.label) + '</button>').join('') + '<button type="button" class="sopt psnone" data-to="">רק להסיר</button>';
+        $('#setDelOpts').innerHTML = astatusList().filter((x) => x.key !== k).map((x) => '<button type="button" class="sopt ' + x.key + '" data-to="' + x.key + '">' + esc(x.label) + '</button>').join('') + '<button type="button" class="sopt psnone" data-to="">רק להסיר</button>';
         $('#setDelOpts').onclick = async (ev) => { const b = ev.target.closest('[data-to]'); if (!b) return; await removeAfter(k, b.dataset.to || null, used0); };
         showSetView('del'); return;
       }
@@ -4411,7 +4413,7 @@
       const used = isM ? state.att.filter((l) => bi ? linkStatus(l) === k : l.status_key === k) : state.participants.filter((p) => (p.tags || []).includes(k));
       if (!used.length) { await removeStatus(k, isM, null, used, fl); return; }
       /* יש משתמשים בסטטוס: שואלים לאיזה סטטוס להעביר אותם (מסך בתוך ההגדרות) */
-      const others = (isM ? statusList() : pstatusList()).slice().reverse().filter((x) => x.key !== k);
+      const others = (isM ? statusList() : pstatusList().slice().reverse()).filter((x) => x.key !== k);
       $('#setDelText').innerHTML = 'יש <b>' + used.length + '</b> ' + (isM ? 'משתתפים במפגשים בסטטוס' : 'משתתפים עם התגית') + ' <b>"' + esc(s.label) + '"</b>. ' + (isM ? 'לאיזה סטטוס להעביר אותם לפני המחיקה?' : 'להחליף אותה בתגית אחרת, או רק להסיר?');
       $('#setDelOpts').innerHTML = others.map((x) => '<button type="button" class="sopt ' + x.key + '" data-to="' + x.key + '">' + esc(x.label) + '</button>').join('') + (isM ? '' : '<button type="button" class="sopt psnone" data-to="">רק להסיר</button>');
       $('#setDelOpts').onclick = async (ev) => { const b = ev.target.closest('[data-to]'); if (!b) return; await removeStatus(k, isM, b.dataset.to || null, used, fl); };
@@ -4460,7 +4462,7 @@
     place();
     for (let guard = 0; guard < 8; guard++) {
       const r = row.getBoundingClientRect(), prev = row.previousElementSibling, next = row.nextElementSibling;
-      if (prev && r.top + r.height / 2 < prev.getBoundingClientRect().top + prev.getBoundingClientRect().height / 2) { list.insertBefore(row, prev); place(); }
+      if (prev && !prev.classList.contains('locked') && r.top + r.height / 2 < prev.getBoundingClientRect().top + prev.getBoundingClientRect().height / 2) { list.insertBefore(row, prev); place(); }
       else if (next && !next.classList.contains('locked') && r.top + r.height / 2 > next.getBoundingClientRect().top + next.getBoundingClientRect().height / 2) { list.insertBefore(next, row); place(); }
       else break;
     }
