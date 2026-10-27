@@ -2202,8 +2202,11 @@
     /* צבע ההתמדה לפי דירוג: המשתתפים עם נתוני הגעה מדורגים לפי אחוז ההגעה (ואז מספר ההגעות), והם מתחלקים לשלישים שווים: שליש עליון ירוק, אמצעי צהוב, תחתון אדום; אפור = עוד אין מפגש שהתחיל */
     const ranked = state.participants.filter((p) => per[p.id].total > 0).sort((a, b) => { const x = per[a.id], y = per[b.id]; return (y.came / y.total) - (x.came / x.total) || y.came - x.came || x.total - y.total || a.name.localeCompare(b.name, 'he'); });
     const nR = ranked.length, rankOf = {}, clsOf = {};
-    /* נתונים זהים (אותו X מתוך Y) תמיד באותו צבע ובאותו דירוג: הקבוצה כולה נכנסת לשליש שבו נמצא מרכזה */
-    for (let i = 0; i < nR;) { let j = i; const a0 = per[ranked[i].id]; while (j < nR && per[ranked[j].id].came === a0.came && per[ranked[j].id].total === a0.total) j++; const mid = (i + j - 1) / 2, c = mid < nR / 3 ? 'g' : mid >= nR * 2 / 3 ? 'r' : 'y'; for (let k = i; k < j; k++) { rankOf[ranked[k].id] = i + 1; clsOf[ranked[k].id] = c; } i = j; }
+    /* חלוקה לשלושה צבעים שמתקרבת לשלישים אבל לא חותכת נתונים זהים: משתתפים עם אותו "הגיע X מתוך Y" הם קבוצה אחת (אותו צבע ואותו דירוג). חותכים רק בין קבוצות, בשתי הנקודות הקרובות ביותר ל-⅓ ול-⅔ (ולפחות קבוצה אחת בכל צבע כשיש שלוש קבוצות ומעלה) */
+    const groups = []; for (let i = 0; i < nR;) { let j = i; const a0 = per[ranked[i].id]; while (j < nR && per[ranked[j].id].came === a0.came && per[ranked[j].id].total === a0.total) j++; groups.push([i, j]); i = j; }
+    let b1 = 0, b2 = 0; const G = groups.length;
+    if (G >= 3) { let best = Infinity; for (let x = 1; x <= G - 2; x++) for (let y = x + 1; y <= G - 1; y++) { const d = Math.abs(groups[x][0] - nR / 3) + Math.abs(groups[y][0] - nR * 2 / 3); if (d < best) { best = d; b1 = x; b2 = y; } } } else if (G === 2) { b1 = 1; b2 = 2; } else { b1 = 0; b2 = 1; }
+    groups.forEach((gr, gi) => { const c = G === 1 ? 'y' : gi < b1 ? 'g' : gi < b2 ? 'y' : 'r'; for (let k = gr[0]; k < gr[1]; k++) { rankOf[ranked[k].id] = gr[0] + 1; clsOf[ranked[k].id] = c; } });
     const by = {}; state.participants.forEach((p) => { const pr = per[p.id], fut = linksOf(p.id).filter((l) => { const m = state.meetings.find((x) => x.id === l.meeting_id); return m && !started(m); }).length; by[p.id] = { came: pr.came, total: pr.total, fut, cls: !pr.total ? 'n' : clsOf[p.id], rank: rankOf[p.id] || 0, n: nR }; });
     return (attCache = { by });
   }
