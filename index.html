@@ -315,6 +315,12 @@
     .mt-next .mt-cta{ margin-top:.35rem; display:inline-flex; align-items:center; justify-content:center; border-radius:999px; background:#FFFDF9; color:#0F3A4D; font-weight:700; font-size:1.05rem; padding:.75rem 1.7rem; min-height:48px; }
     .mt-next.sk .mt-pill, .mt-next.sk .mt-when, .mt-next.sk .mt-sub, .mt-next.sk .mt-tiers, .mt-next.sk .mt-cta{ color:transparent; background:rgba(255,253,249,.16); border-radius:12px; animation:mtPulse 1.4s ease-in-out infinite; pointer-events:none; }
     .mt-next.sk .mt-when{ min-width:12rem; min-height:2rem; } .mt-next.sk .mt-sub{ min-width:15rem; min-height:1.3rem; } .mt-next.sk .mt-tiers{ min-width:14rem; min-height:2rem; } .mt-next.sk .mt-cta{ min-width:9.5rem; }
+    .mt-tier.done{ opacity:.55; text-decoration:none; font-size:.78rem; padding:.2rem .65rem; }
+    .mt-tier.fut{ background:transparent; box-shadow:inset 0 0 0 1px #E3CDB3; font-size:.85rem; }
+    .mt-next .mt-tier.fut{ background:transparent; box-shadow:inset 0 0 0 1px rgba(255,253,249,.4); color:#FFFDF9; }
+    .mt-note{ font-size:.85rem; opacity:.75; margin:-.2rem 0 0; }
+    .mt-next .mt-note{ margin:0; }
+    .mt-next.sk .mt-tiers, .mt-next.sk .mt-note{ display:none; }
     @keyframes mtPulse{ 0%,100%{ opacity:.55; } 50%{ opacity:1; } }
     @media (prefers-reduced-motion:reduce){ .mt-next.sk *{ animation:none !important; } }
     .btn-ghost{
@@ -738,8 +744,10 @@
           <div class="mt-when font-display" id="mWhen">&nbsp;</div>
           <p class="mt-sub" id="mSub">&nbsp;</p>
           <div class="mt-links" id="mLinks" hidden></div>
-          <div class="mt-tiers" id="mTiers">&nbsp;</div>
+          <div class="mt-tiers" id="mTP" hidden></div>
           <a href="#" data-contact class="mt-cta" id="mCta">הרשמה למפגש</a>
+          <p class="mt-note" id="mTN" hidden></p>
+          <div class="mt-tiers" id="mTF" hidden></div>
         </div>
         <div id="mLater" style="display:contents"></div>
       </div>
@@ -1036,7 +1044,7 @@
     if (shareBtn) shareBtn.href = 'https://wa.me/?text=' + encodeURIComponent(location.origin + location.pathname);
 
     /* ===== המפגשים: הקודם (אחד), הקרוב והעתידיים. אפשר להירשם לכל מפגש שעוד לא עבר. מקור: harpatka_meetings ומדרגות המחיר (harpatka_price_tiers); הצגה מיידית מהמטמון המקומי של הביקור הקודם ואז רענון ===== */
-    const MEET_CACHE = 'harpatka_meetings_v5';
+    const MEET_CACHE = 'harpatka_meetings_v6';
     const meetingsReady = (async () => {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
       const H = { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey };
@@ -1063,29 +1071,24 @@
       const label = m => { const [, mo, dd] = m.date.split('-'); return 'יום ' + heDay(m.date) + ' ' + Number(dd) + '.' + Number(mo); };
       /* המקום והוראות ההגעה נלקחים משדה "הוראות הגעה" של המפגש (דף הניהול); בלי טקסט לא מוצג מקום */
       const where = m => [m.dir, m.max ? 'עד ' + m.max + ' משתתפים' : ''].filter(Boolean).join('\n');
-      /* מדרגות המחיר של מפגש: המחיר הוא של המדרגה הגבוהה ביותר שמספר הימים שלה קטן או שווה לימים שנותרו עד המפגש.
-         לכל מדרגה טווח תאריכים (המדרגה הראשונה: עד התאריך, האחרונה: מהתאריך ועד המפגש), ומסומן מה שהיה (done), מה שעכשיו (cur) ומה שיהיה */
-      const tiersEl = (m, tiers, today) => {
-        const box = document.createElement('div'); box.className = 'mt-tiers';
-        const T = (tiers || []).slice().sort((a, b) => b.days - a.days);
-        if (!T.length) return null;
-        const md = dayN(m.date);
+      /* מדרגות המחיר של מפגש (לפי הימים שנותרו עד אותו מפגש): מה שעבר (צ'יפים קטנים "עד תאריך"), המדרגה הנוכחית (המחיר על כפתור ההרשמה) ומה שיהיה (צ'יפים "מתאריך") */
+      const tierSplit = (m, tiers, today) => {
+        const T = (tiers || []).slice().sort((a, b) => b.days - a.days), md = dayN(m.date), out = { past: [], cur: null, future: [] };
         T.forEach((t, k) => {
-          const start = k === 0 ? null : md - T[k - 1].days + 1;          // מהיום הראשון שבו המדרגה הקודמת כבר לא חלה
-          const end = md - t.days;                                          // היום האחרון שבו המדרגה חלה
-          const last = k === T.length - 1;
-          const s0 = start, e0 = last ? md : end;
-          let txt = T.length === 1 ? '' : (s0 === null ? 'עד ' + short(e0) : last ? short(s0) + ' ואילך' : (s0 === e0 ? short(s0) : short(s0) + ' עד ' + short(e0)));
-          const isCur = today >= (s0 === null ? -Infinity : s0) && today <= (last ? md : e0);
-          const done = (last ? md : e0) < today;
-          const chip = document.createElement('span'); chip.className = 'mt-tier' + (isCur ? ' cur' : done ? ' done' : '');
-          const b = document.createElement('b'); b.textContent = t.price + ' ₪'; chip.append(b);
-          if (txt) chip.append(' ' + txt);
-          if (isCur) chip.title = 'המחיר כרגע'; box.append(chip);
+          const s = k === 0 ? null : md - T[k - 1].days + 1, last = k === T.length - 1, e = last ? md : md - t.days, x = { price: t.price, s, e, last };
+          if (e < today) out.past.push(x); else if (s !== null && s > today) out.future.push(x); else out.cur = x;
         });
-        return box;
+        return out;
       };
-      const priceNow = (m, tiers, today) => { const left = dayN(m.date) - today; const T = (tiers || []).filter(x => x.days <= left).sort((a, b) => b.days - a.days)[0]; return T ? T.price : null; };
+      const chip = (x, kind) => {
+        const c = document.createElement('span'); c.className = 'mt-tier ' + kind;
+        const b = document.createElement('b'); b.textContent = x.price + ' ₪'; c.append(b);
+        c.append(' ' + (kind === 'fut' ? 'מתאריך ' + short(x.s) : (x.s === null ? 'עד ' + short(x.e) : short(x.s) + ' עד ' + short(x.e))));
+        return c;
+      };
+      const fill = (box, arr, kind) => { box.innerHTML = ''; arr.forEach(x => box.append(chip(x, kind))); box.hidden = !arr.length; return box; };
+      const mkBox = () => { const b = document.createElement('div'); b.className = 'mt-tiers'; return b; };
+      const noteText = sp => sp.cur && !sp.cur.last && sp.future.length ? 'המחיר הזה עד ' + short(sp.cur.e) : '';
       /* קישורי ניווט של המפגש (גוגל מפות, וויז), מוזנים בעריכת המפגש בדף הניהול */
       const linksEl = (m, id) => {
         if (!m.maps && !m.waze) return null;
@@ -1094,6 +1097,7 @@
         return box;
       };
       const reg = (m) => { window.HarpatkaRegister && window.HarpatkaRegister.open(false, m); };
+      const ctaText = sp => 'הרשמה למפגש' + (sp.cur ? ' · ' + sp.cur.price + ' ₪' : '');
       const row = (m, tiers, today, past) => {
         const r = document.createElement('div'); r.className = 'mt-row' + (past ? ' past' : '');
         const top = document.createElement('div'); top.className = 'mt-top';
@@ -1101,31 +1105,36 @@
         if (past) { const tag = document.createElement('span'); tag.className = 'mt-tag'; tag.textContent = 'התקיים'; top.append(tag); }
         r.append(top);
         const le = linksEl(m); if (le) r.append(le);
-        const te = tiersEl(m, tiers, today); if (te) r.append(te);
-        if (!past) { const b = document.createElement('a'); b.href = '#'; b.className = 'mt-reg'; b.textContent = 'הרשמה למפגש'; b.addEventListener('click', e => { e.preventDefault(); reg(m); }); r.append(b); }
+        const sp = tierSplit(m, tiers, today);
+        const pb = fill(mkBox(), sp.past, 'done'); if (!pb.hidden) r.append(pb);
+        if (past) return r;
+        const b = document.createElement('a'); b.href = '#'; b.className = 'mt-reg'; b.textContent = ctaText(sp); b.addEventListener('click', e => { e.preventDefault(); reg(m); }); r.append(b);
+        const nt = noteText(sp); if (nt) { const n = document.createElement('p'); n.className = 'mt-note'; n.textContent = nt; r.append(n); }
+        const fb = fill(mkBox(), sp.future, 'fut'); if (!fb.hidden) r.append(fb);
         return r;
       };
       const render = (d) => {
         const nextEl = el('mNext'); if (!nextEl) return;
-        const today = dayN(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()));
-        const todayIso = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
+        const todayIso = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()), today = dayN(todayIso);
         const future = (d.future || []).filter(m => m.date >= todayIso), nx = future[0] || null, tiers = d.tiers || [];
         const past = el('mPast'); past.innerHTML = ''; (d.past || []).forEach(m => past.append(row(m, tiers, today, true)));
         nextEl.classList.remove('sk');
-        const cta = el('mCta'), tiersBox = el('mTiers');
+        const cta = el('mCta'), lk = el('mLinks');
         if (nx) {
+          const sp = tierSplit(nx, tiers, today);
           el('mPill').textContent = 'המפגש הבא';
           el('mWhen').textContent = label(nx) + ' · ' + nx.time;
           el('mSub').textContent = where(nx); el('mSub').style.whiteSpace = 'pre-line';
-          const lk = el('mLinks'), nl = linksEl(nx, 'mLinks'); lk.replaceWith(nl || Object.assign(document.createElement('div'), { id: 'mLinks', hidden: true }));
-          const te = tiersEl(nx, tiers, today); tiersBox.replaceWith(te || Object.assign(document.createElement('div'), { id: 'mTiers' })); if (te) te.id = 'mTiers';
-          cta.textContent = 'הרשמה למפגש'; cta.__meeting = nx;
+          const nl = linksEl(nx, 'mLinks'); lk.replaceWith(nl || Object.assign(document.createElement('div'), { id: 'mLinks', hidden: true }));
+          fill(el('mTP'), sp.past, 'done'); fill(el('mTF'), sp.future, 'fut');
+          const nt = noteText(sp); el('mTN').textContent = nt; el('mTN').hidden = !nt;
+          cta.textContent = ctaText(sp); cta.__meeting = nx;
         } else {
           el('mPill').textContent = 'בקרוב';
           el('mWhen').textContent = 'המפגש הבא בדרך אליכם';
           el('mSub').style.whiteSpace = ''; el('mSub').textContent = 'רוצים לדעת ראשונים? השאירו פרטים ונעדכן ברגע שהתאריך נקבע';
-          tiersBox.replaceWith(Object.assign(document.createElement('div'), { id: 'mTiers' }));
-          el('mLinks').replaceWith(Object.assign(document.createElement('div'), { id: 'mLinks', hidden: true }));
+          lk.replaceWith(Object.assign(document.createElement('div'), { id: 'mLinks', hidden: true }));
+          ['mTP', 'mTF', 'mTN'].forEach(i => { el(i).hidden = true; });
           cta.textContent = 'השארת פרטים'; cta.__meeting = null;
         }
         const later = el('mLater'); later.innerHTML = '';
