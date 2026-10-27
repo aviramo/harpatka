@@ -1101,7 +1101,7 @@
       const row = (m, tiers, today, past) => {
         const r = document.createElement('div'); r.className = 'mt-row' + (past ? ' past' : '');
         const top = document.createElement('div'); top.className = 'mt-top';
-        const a = document.createElement('div'); const d1 = document.createElement('div'); d1.className = 'mt-d'; d1.textContent = label(m) + ' · ' + m.time; const d2 = document.createElement('div'); d2.className = 'mt-t'; d2.style.whiteSpace = 'pre-line'; d2.textContent = where(m); a.append(d1); if (!past) a.append(d2); top.append(a);
+        const a = document.createElement('div'); const d1 = document.createElement('div'); d1.className = 'mt-d'; d1.textContent = label(m) + ' · ' + m.time; const d2 = document.createElement('div'); d2.className = 'mt-t'; d2.style.whiteSpace = 'pre-line'; d2.textContent = where(m); a.append(d1); if (!past && d2.textContent) a.append(d2); top.append(a);
         if (past) { const tag = document.createElement('span'); tag.className = 'mt-tag'; tag.textContent = 'התקיים'; top.append(tag); }
         r.append(top);
         const le = linksEl(m); if (le) r.append(le);
@@ -1124,7 +1124,7 @@
           const sp = tierSplit(nx, tiers, today);
           el('mPill').textContent = 'המפגש הבא';
           el('mWhen').textContent = label(nx) + ' · ' + nx.time;
-          el('mSub').textContent = where(nx); el('mSub').style.whiteSpace = 'pre-line';
+          el('mSub').textContent = where(nx); el('mSub').style.whiteSpace = 'pre-line'; el('mSub').hidden = !el('mSub').textContent;
           const nl = linksEl(nx, 'mLinks'); lk.replaceWith(nl || Object.assign(document.createElement('div'), { id: 'mLinks', hidden: true }));
           fill(el('mTP'), sp.past, 'done'); fill(el('mTF'), sp.future, 'fut');
           const nt = noteText(sp); el('mTN').textContent = nt; el('mTN').hidden = !nt;
@@ -1132,7 +1132,7 @@
         } else {
           el('mPill').textContent = 'בקרוב';
           el('mWhen').textContent = 'המפגש הבא בדרך אליכם';
-          el('mSub').style.whiteSpace = ''; el('mSub').textContent = 'רוצים לדעת ראשונים? השאירו פרטים ונעדכן ברגע שהתאריך נקבע';
+          el('mSub').hidden = false; el('mSub').style.whiteSpace = ''; el('mSub').textContent = 'רוצים לדעת ראשונים? השאירו פרטים ונעדכן ברגע שהתאריך נקבע';
           lk.replaceWith(Object.assign(document.createElement('div'), { id: 'mLinks', hidden: true }));
           ['mTP', 'mTF', 'mTN'].forEach(i => { el(i).hidden = true; });
           cta.textContent = 'השארת פרטים'; cta.__meeting = null;
