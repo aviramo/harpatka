@@ -1114,7 +1114,7 @@
 
     /* ===== המפגשים: הקודם (אחד), הקרוב והעתידיים. אפשר להירשם לכל מפגש שעוד לא עבר. מקור: harpatka_meetings ומדרגות המחיר (harpatka_price_tiers); הצגה מיידית מהמטמון המקומי של הביקור הקודם ואז רענון ===== */
     const normT = t => (t && !Array.isArray(t) && Number.isFinite(Number(t.base))) ? { base: Number(t.base), steps: (Array.isArray(t.steps) ? t.steps : []).map(x => ({ days: Number(x.days), price: Number(x.price) })).filter(x => x.days >= 1 && Number.isFinite(x.price)) } : null;
-    const MEET_CACHE = 'harpatka_meetings_v12';
+    const MEET_CACHE = 'harpatka_meetings_v13';
     const meetingsReady = (async () => {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
       const H = { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey };
@@ -1128,7 +1128,7 @@
         if (fu.ok && pa.ok) {
           const f = await fu.json(), p = await pa.json(), sv = st.ok ? await st.json() : [], defName = String((sv[0] && sv[0].value) || '').trim();   // שם ברירת מחדל: למפגש בלי שם
           const mk = r => ({ id: r.id, date: r.meeting_date, time: String(r.meeting_time).slice(0, 5), name: String(r.name || '').trim() || defName, max: r.max_participants, tiers: normT(r.price_tiers), dir: String(r.directions || '').trim() });
-          return { past: p.map(mk).reverse(), future: f.map(mk) };
+          return { past: p.map(mk).reverse(), future: f.map(mk), defName };
         }
       } catch (e) {}
       return null;
@@ -1240,7 +1240,7 @@
         } else {
           el('mPill').textContent = 'בקרוב';
           el('mName').hidden = true;
-          el('mWhen').textContent = 'המפגש הבא בדרך אליכם';
+          el('mWhen').textContent = d.defName || 'המפגש הבא בדרך אליכם';   // בלי מפגש: שם ברירת המחדל (אם הוגדר)
           el('mSub').hidden = false; el('mSub').style.whiteSpace = ''; el('mSub').textContent = 'רוצים לדעת ראשונים? השאירו פרטים ונעדכן ברגע שהתאריך נקבע';
           ['mTP', 'mTF'].forEach(i => { el(i).hidden = true; });
           cta.textContent = 'השארת פרטים'; cta.__meeting = null;
@@ -1429,7 +1429,7 @@
       el('tbSub').textContent = nx.name || ' ';   // בלי מיקום בבאנר: רק שם המפגש (אם הוזן)
     } else {
       el('tbPillT').textContent = 'בקרוב';
-      el('tbMain').textContent = 'המפגש הבא בדרך אליכם';
+      el('tbMain').textContent = (d && d.defName) || 'המפגש הבא בדרך אליכם';   // בלי מפגש: שם ברירת המחדל (אם הוגדר)
       el('tbSub').textContent = 'השאירו פרטים ונעדכן ברגע שהתאריך נקבע';
     }
     /* מעבר מונפש כשהמצב או התוכן השתנו (טעינה ← תוכן, אין מפגש ← יש מפגש); בלי אנימציה כשהתוכן זהה (למשל רענון אחרי המטמון) */
@@ -1438,7 +1438,7 @@
     }
   };
   let cached = null;
-  try { cached = JSON.parse(localStorage.getItem(typeof MEET_CACHE !== 'undefined' ? MEET_CACHE : 'harpatka_meetings_v12') || 'null'); } catch (e) {}
+  try { cached = JSON.parse(localStorage.getItem(typeof MEET_CACHE !== 'undefined' ? MEET_CACHE : 'harpatka_meetings_v13') || 'null'); } catch (e) {}
   if (cached && cached.future) render(cached);
   if (typeof meetingsReady !== 'undefined') meetingsReady.then((d) => { if (d) render(d); else if (!cached) render(null); });
   else if (!cached) render(null);
