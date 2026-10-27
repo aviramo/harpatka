@@ -304,6 +304,7 @@
     .mt-tier.done{ opacity:.5; text-decoration:line-through; }
     .mt-next{ border-radius:28px; padding:1.5rem 1.35rem 1.4rem; text-align:center; color:#FFFDF9; background:linear-gradient(120deg,#0A2236 0%,#0F3A4D 55%,#1B6170 100%); min-height:15rem; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.55rem; }
     .mt-next .mt-pill{ display:inline-flex; align-items:center; gap:.4rem; border-radius:999px; background:rgba(255,253,249,.18); color:#FFFDF9; font-weight:700; font-size:.85rem; padding:.3rem .8rem; line-height:1; }
+    .mt-pill2{ display:inline-block; border-radius:999px; background:rgba(232,213,190,.55); color:#3F382F; font-weight:700; font-size:.85rem; padding:.3rem .8rem; line-height:1; margin-bottom:.35rem; }
     .mt-name{ font-weight:700; font-size:1.05rem; line-height:1.3; }
     .mt-next .mt-name{ color:#E9D8C4; }
     .mt-row .mt-name{ color:#B85C40; }
@@ -1069,7 +1070,7 @@
       const short = n => { const dt = new Date(n * 864e5); return dt.getUTCDate() + '.' + (dt.getUTCMonth() + 1); };
       const label = m => { const [, mo, dd] = m.date.split('-'); return 'יום ' + heDay(m.date) + ' ' + Number(dd) + '.' + Number(mo); };
       /* המקום והוראות ההגעה נלקחים משדה "הוראות הגעה" של המפגש (דף הניהול); בלי טקסט לא מוצג מקום */
-      const where = m => [m.dir, m.max ? m.max + ' משתתפים' : ''].filter(Boolean).join('\n');
+      const where = m => m.dir;
       /* מדרגות המחיר של מפגש: מחיר רגיל (מתחילת ההרשמה) ומדרגות "החל מ-N ימים לפני המפגש" (האחרונה חלה עד יום המפגש). מחזירים מה שעבר, המדרגה הנוכחית ומה שיהיה */
       const tierSplit = (m, T, today) => {
         const out = { past: [], cur: null, future: [] };
@@ -1098,7 +1099,7 @@
       const row = (m, tiers, today, past) => {
         const r = document.createElement('div'); r.className = 'mt-row' + (past ? ' past' : '');
         const top = document.createElement('div'); top.className = 'mt-top';
-        const a = document.createElement('div'); if (m.name) { const nm = document.createElement('div'); nm.className = 'mt-name'; nm.textContent = m.name; a.append(nm); } const d1 = document.createElement('div'); d1.className = 'mt-d'; d1.textContent = label(m) + ' · ' + m.time; const d2 = document.createElement('div'); d2.className = 'mt-t'; d2.style.whiteSpace = 'pre-line'; d2.textContent = where(m); a.append(d1); if (!past && d2.textContent) a.append(d2); top.append(a);
+        const a = document.createElement('div'); if (past) { if (m.name) { const nm = document.createElement('div'); nm.className = 'mt-name'; nm.textContent = m.name; a.append(nm); } } else { const head = [m.name, m.max ? m.max + ' משתתפים' : ''].filter(Boolean).join(' · '); if (head) { const pl = document.createElement('div'); pl.className = 'mt-pill2'; pl.textContent = head; a.append(pl); } } const d1 = document.createElement('div'); d1.className = 'mt-d'; d1.textContent = label(m) + ' · ' + m.time; const d2 = document.createElement('div'); d2.className = 'mt-t'; d2.style.whiteSpace = 'pre-line'; d2.textContent = where(m); a.append(d1); if (!past && d2.textContent) a.append(d2); top.append(a);
         if (past) { const tag = document.createElement('span'); tag.className = 'mt-tag'; tag.textContent = 'התקיים'; top.append(tag); }
         r.append(top);
         const sp = tierSplit(m, m.tiers, today);
