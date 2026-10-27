@@ -1032,7 +1032,7 @@
     if (shareBtn) shareBtn.href = 'https://wa.me/?text=' + encodeURIComponent(location.origin + location.pathname);
 
     /* ===== המפגשים: הקודם (אחד), הקרוב והעתידיים. אפשר להירשם לכל מפגש שעוד לא עבר. מקור: harpatka_meetings ומדרגות המחיר (harpatka_price_tiers); הצגה מיידית מהמטמון המקומי של הביקור הקודם ואז רענון ===== */
-    const MEET_CACHE = 'harpatka_meetings_v4';
+    const MEET_CACHE = 'harpatka_meetings_v5';
     const meetingsReady = (async () => {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
       const H = { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey };
@@ -1040,13 +1040,13 @@
       try {
         const [fu, pa, ti] = await Promise.all([
           fetch(base + '&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc', { headers: H }),
-          fetch(base + '&meeting_date=lt.' + today + '&order=meeting_date.desc,meeting_time.desc&limit=1', { headers: H }),
+          fetch(base + '&meeting_date=lt.' + today + '&order=meeting_date.desc,meeting_time.desc&limit=2', { headers: H }),
           fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_price_tiers?select=days,price&order=days.desc', { headers: H })
         ]);
         if (fu.ok && pa.ok) {
           const f = await fu.json(), p = await pa.json(), t = ti.ok ? await ti.json() : [];
           const mk = r => ({ id: r.id, date: r.meeting_date, time: String(r.meeting_time).slice(0, 5), max: r.max_participants, dir: String(r.directions || '').trim(), maps: /^https?:\/\//i.test(r.maps_url || '') ? r.maps_url : '', waze: /^https?:\/\//i.test(r.waze_url || '') ? r.waze_url : '' });
-          return { past: p[0] ? mk(p[0]) : null, future: f.map(mk), tiers: t.map(x => ({ days: Number(x.days), price: Number(x.price) })) };
+          return { past: p.map(mk).reverse(), future: f.map(mk), tiers: t.map(x => ({ days: Number(x.days), price: Number(x.price) })) };
         }
       } catch (e) {}
       return null;
@@ -1106,7 +1106,7 @@
         const today = dayN(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()));
         const todayIso = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
         const future = (d.future || []).filter(m => m.date >= todayIso), nx = future[0] || null, tiers = d.tiers || [];
-        const past = el('mPast'); past.innerHTML = ''; if (d.past) past.append(row(d.past, tiers, today, true));
+        const past = el('mPast'); past.innerHTML = ''; (d.past || []).forEach(m => past.append(row(m, tiers, today, true)));
         nextEl.classList.remove('sk');
         const cta = el('mCta'), tiersBox = el('mTiers');
         if (nx) {
