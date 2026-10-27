@@ -607,7 +607,7 @@
   <div id="tbWrap">
     <div id="topbar" class="tb-loading" role="button" tabindex="0" aria-label="מעבר למפגשים">
       <div class="tb-in">
-        <p class="tb-pill"><span id="tbPillT">בודקים מה המפגש הקרוב</span></p>
+        <p class="tb-pill"><span id="tbPillT">בודקים מפגשים</span></p>
         <p class="tb-main font-display" id="tbMain">&nbsp;</p>
         <p class="tb-sub" id="tbSub">&nbsp;</p>
       </div>
@@ -811,7 +811,7 @@
           <img class="mt-img" id="mImg" alt="" hidden width="1200" height="300" decoding="async">
           <button type="button" class="mt-sum" id="mSum" aria-expanded="true"><span class="sum-t"><span class="sum-n" id="mSumN" hidden></span><span class="sum-d" id="mSumD"></span></span><span class="sum-end"><span class="sum-lbl">פרטים</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span></button>
           <div class="mt-bx"><div class="mt-bxi"><div class="mt-body">
-            <span class="mt-pill" id="mPill">המפגש הקרוב</span>
+            <span class="mt-pill" id="mPill">&nbsp;</span>
             <div class="mt-name font-display" id="mName" hidden></div>
             <div class="mt-when font-display" id="mWhen">&nbsp;</div>
             <div class="mt-city" id="mCity" hidden></div>
@@ -1184,7 +1184,7 @@
         const se = mk('span', 'sum-end'); se.append(mk('span', 'sum-lbl', 'פרטים')); se.insertAdjacentHTML('beforeend', CHEV);
         sum.append(st, se); sum.addEventListener('click', () => toggleCard(c, !c.classList.contains('open'))); c.append(sum);
         const bx = mk('div', 'mt-bx'), bxi = mk('div', 'mt-bxi'), body = mk('div', 'mt-body');
-        body.append(mk('span', 'mt-pill', past ? 'התקיים' : 'מפגש עתידי' + (m.max ? ' · ' + m.max + ' משתתפים' : '')));
+        { const pt = past ? 'התקיים' : (m.max ? m.max + ' משתתפים' : ''); if (pt) body.append(mk('span', 'mt-pill', pt)); }   // אין הבדל בין קרוב לעתידי: הצ'יפ הוא כמות המשתתפים (או "התקיים")
         if (m.name) body.append(mk('div', 'mt-name font-display', m.name));
         body.append(mk('div', 'mt-when font-display', label(m) + ' · ' + m.time));
         if (m.city) body.append(mk('div', 'mt-city', m.city));
@@ -1210,7 +1210,7 @@
         if (nx) {
           const sp = tierSplit(nx, nx.tiers, today);
           { const im = el('mImg'); if (nx.img) { im.src = nx.img; im.hidden = false; } else { im.hidden = true; im.removeAttribute('src'); } }
-          el('mPill').textContent = 'המפגש הקרוב' + (nx.max ? ' · ' + nx.max + ' משתתפים' : '');
+          el('mPill').textContent = nx.max ? nx.max + ' משתתפים' : ''; el('mPill').hidden = !nx.max;
           el('mName').textContent = nx.name; el('mName').hidden = !nx.name;
           el('mWhen').textContent = label(nx) + ' · ' + nx.time;
           el('mCity').textContent = nx.city; el('mCity').hidden = !nx.city;
@@ -1221,7 +1221,7 @@
           const sb = el('stickyRegBtn'); if (sb) sb.textContent = 'הרשמה למפגש הקרוב';
         } else {
           el('mImg').hidden = true;
-          el('mPill').textContent = 'בקרוב';
+          el('mPill').hidden = false; el('mPill').textContent = 'בקרוב';
           el('mName').hidden = true;
           el('mCity').hidden = true; nextEl.classList.add('nosum'); toggleCard(nextEl, true);
           el('mWhen').textContent = d.defName || 'המפגש הבא בדרך אליכם';   // בלי מפגש: שם ברירת המחדל (אם הוגדר)
@@ -1408,11 +1408,11 @@
     bar.classList.remove('tb-loading');
     if (nx) {
       const [, mo, dd] = nx.date.split('-');
-      el('tbPillT').textContent = 'המפגש הקרוב' + (nx.max ? ' · ' + nx.max + ' משתתפים' : '');
+      el('tbPillT').textContent = nx.max ? nx.max + ' משתתפים' : ''; el('tbPillT').parentElement.style.visibility = nx.max ? '' : 'hidden';
       el('tbMain').textContent = 'יום ' + dayName(nx.date) + ' ' + Number(dd) + '.' + Number(mo) + ' · ' + nx.time;
       el('tbSub').textContent = nx.name || ' ';   // בלי מיקום בבאנר: רק שם המפגש (אם הוזן)
     } else {
-      el('tbPillT').textContent = 'בקרוב';
+      el('tbPillT').parentElement.style.visibility = ''; el('tbPillT').textContent = 'בקרוב';
       el('tbMain').textContent = (d && d.defName) || 'המפגש הבא בדרך אליכם';   // בלי מפגש: שם ברירת המחדל (אם הוגדר)
       el('tbSub').textContent = 'השאירו פרטים ונעדכן ברגע שהתאריך ייקבע';
     }
