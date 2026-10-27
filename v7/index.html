@@ -318,8 +318,8 @@
     .mt-tier.done{ opacity:.55; text-decoration:none; font-size:.78rem; padding:.2rem .65rem; }
     .mt-tier.fut{ background:transparent; box-shadow:inset 0 0 0 1px #E3CDB3; font-size:.85rem; }
     .mt-next .mt-tier.fut{ background:transparent; box-shadow:inset 0 0 0 1px rgba(255,253,249,.4); color:#FFFDF9; }
-    .mt-note{ font-size:.85rem; opacity:.75; margin:-.2rem 0 0; }
-    .mt-next .mt-note{ margin:0; }
+    .mt-cta, .mt-reg{ flex-direction:column; gap:.1rem; line-height:1.25; text-align:center; }
+    .mt-cta small, .mt-reg small{ font-size:.78rem; font-weight:600; opacity:.8; }
     .mt-next.sk .mt-tiers, .mt-next.sk .mt-note{ display:none; }
     @keyframes mtPulse{ 0%,100%{ opacity:.55; } 50%{ opacity:1; } }
     @media (prefers-reduced-motion:reduce){ .mt-next.sk *{ animation:none !important; } }
@@ -746,7 +746,6 @@
           <p class="mt-sub" id="mSub">&nbsp;</p>
           <div class="mt-tiers" id="mTP" hidden></div>
           <a href="#" data-contact class="mt-cta" id="mCta">הרשמה למפגש</a>
-          <p class="mt-note" id="mTN" hidden></p>
           <div class="mt-tiers" id="mTF" hidden></div>
         </div>
         <div id="mLater" style="display:contents"></div>
@@ -1087,10 +1086,12 @@
       };
       const fill = (box, arr, kind) => { box.innerHTML = ''; arr.forEach(x => box.append(chip(x, kind))); box.hidden = !arr.length; return box; };
       const mkBox = () => { const b = document.createElement('div'); b.className = 'mt-tiers'; return b; };
-      const noteText = sp => sp.cur && !sp.cur.last && sp.future.length ? 'המחיר הזה עד ' + short(sp.cur.e) : '';
+      const noteText = sp => sp.cur && !sp.cur.last && sp.future.length ? 'המחיר עד ' + short(sp.cur.e) : '';
       /* קישורי ניווט של המפגש (גוגל מפות, וויז), מוזנים בעריכת המפגש בדף הניהול */
       const reg = (m) => { window.HarpatkaRegister && window.HarpatkaRegister.open(false, m); };
       const ctaText = sp => 'הרשמה למפגש' + (sp.cur ? ' · ' + sp.cur.price + ' ₪' : '');
+      /* כפתור ההרשמה: שורה ראשית עם המחיר הנוכחי, ומתחתיה (בתוך הכפתור) עד מתי המחיר הזה חל */
+      const setCta = (b, sp) => { b.textContent = ctaText(sp); const nt = noteText(sp); if (nt) { const s = document.createElement('small'); s.textContent = nt; b.append(s); } };
       const row = (m, tiers, today, past) => {
         const r = document.createElement('div'); r.className = 'mt-row' + (past ? ' past' : '');
         const top = document.createElement('div'); top.className = 'mt-top';
@@ -1100,8 +1101,7 @@
         const sp = tierSplit(m, m.tiers, today);
         const pb = fill(mkBox(), sp.past, 'done'); if (!pb.hidden) r.append(pb);
         if (past) return r;
-        const b = document.createElement('a'); b.href = '#'; b.className = 'mt-reg'; b.textContent = ctaText(sp); b.addEventListener('click', e => { e.preventDefault(); reg(m); }); r.append(b);
-        const nt = noteText(sp); if (nt) { const n = document.createElement('p'); n.className = 'mt-note'; n.textContent = nt; r.append(n); }
+        const b = document.createElement('a'); b.href = '#'; b.className = 'mt-reg'; setCta(b, sp); b.addEventListener('click', e => { e.preventDefault(); reg(m); }); r.append(b);
         const fb = fill(mkBox(), sp.future, 'fut'); if (!fb.hidden) r.append(fb);
         return r;
       };
@@ -1119,15 +1119,14 @@
           el('mWhen').textContent = label(nx) + ' · ' + nx.time;
           el('mSub').textContent = nx.dir; el('mSub').style.whiteSpace = 'pre-line'; el('mSub').hidden = !el('mSub').textContent;
           fill(el('mTP'), sp.past, 'done'); fill(el('mTF'), sp.future, 'fut');
-          const nt = noteText(sp); el('mTN').textContent = nt; el('mTN').hidden = !nt;
-          cta.textContent = ctaText(sp); cta.__meeting = nx;
+          setCta(cta, sp); cta.__meeting = nx;
           const sb = el('stickyRegBtn'); if (sb) sb.textContent = 'הרשמה למפגש הקרוב';
         } else {
           el('mPill').textContent = 'בקרוב';
           el('mName').hidden = true;
           el('mWhen').textContent = 'המפגש הבא בדרך אליכם';
           el('mSub').hidden = false; el('mSub').style.whiteSpace = ''; el('mSub').textContent = 'רוצים לדעת ראשונים? השאירו פרטים ונעדכן ברגע שהתאריך נקבע';
-          ['mTP', 'mTF', 'mTN'].forEach(i => { el(i).hidden = true; });
+          ['mTP', 'mTF'].forEach(i => { el(i).hidden = true; });
           cta.textContent = 'השארת פרטים'; cta.__meeting = null;
           const sb = el('stickyRegBtn'); if (sb) sb.textContent = 'השארת פרטים';
         }
