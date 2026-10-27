@@ -1102,8 +1102,12 @@
         if (past) { const tag = document.createElement('span'); tag.className = 'mt-tag'; tag.textContent = 'התקיים'; top.append(tag); }
         r.append(top);
         const sp = tierSplit(m, m.tiers, today);
+        if (past) {   // מפגש שעבר: רק המחיר האחרון, בלי תאריכים
+          const lastT = sp.past[sp.past.length - 1];
+          if (lastT) { const pb = mkBox(), c = document.createElement('span'), b = document.createElement('b'); c.className = 'mt-tier done'; b.textContent = lastT.price + ' ₪'; c.append(b); pb.append(c); r.append(pb); }
+          return r;
+        }
         const pb = fill(mkBox(), sp.past, 'done'); if (!pb.hidden) r.append(pb);
-        if (past) return r;
         const b = document.createElement('a'); b.href = '#'; b.className = 'mt-reg'; setCta(b, sp); b.addEventListener('click', e => { e.preventDefault(); reg(m); }); r.append(b);
         const fb = fill(mkBox(), sp.future, 'fut'); if (!fb.hidden) r.append(fb);
         return r;
