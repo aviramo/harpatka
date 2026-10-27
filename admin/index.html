@@ -168,6 +168,18 @@
     .hsearch { margin: 0; margin-inline-start: 11px; width: 30px; height: 30px; flex: 0 0 30px; }   /* מרכז הכפתור מיושר עם עיגולי הוואטסאפ ברשימה */   /* בגובה הצ'יפים (30px) */
     .lbstart { display: flex; align-items: center; gap: 8px; justify-self: start; min-width: 0; }
     .lbend { justify-self: end; margin-inline-end: 6px; }
+    .stcmore { flex: 0 0 auto; width: 30px; height: 30px; border-radius: 999px; border: 1px solid var(--line); background: #fff; color: var(--ink); display: inline-grid; place-items: center; padding: 0; }
+    .stcmore svg { width: 16px; height: 16px; }
+    .stcmore.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+    .listbar:has(.hsearch:focus-within) .stcmore, .listbar:has(.hsearch input:not(:placeholder-shown)) .stcmore { visibility: hidden; }
+    #moreMenu { display: block; width: min(300px, calc(100vw - 16px)); padding: 8px 10px 10px; border-radius: 16px; max-height: 70vh; overflow-y: auto; }
+    #moreMenu[hidden] { display: none; }
+    #moreMenu .mgt { font-size: 12.5px; font-weight: 800; color: var(--muted); margin: 6px 4px; text-align: right; }
+    #moreMenu .mgc { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    #moreMenu .mc { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: #fff; color: var(--ink); font-size: 15px; font-weight: 700; }
+    #moreMenu .mc small { color: var(--muted); font-size: 13px; font-weight: 700; }
+    #moreMenu .mc[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+    #moreMenu .mc[aria-pressed="true"] small { color: rgba(255,253,249,.75); }
     .hsearch input { display: block; width: 30px; height: 30px; padding: 0; border-radius: 999px; box-sizing: border-box; cursor: pointer; font-size: 16px; }
     .search.hsearch svg { right: 7px; top: 50%; margin-top: -8px; width: 16px; height: 16px; transform: none; }
     .hsearch:not(:focus-within) input:placeholder-shown::placeholder { color: transparent; }
@@ -1184,7 +1196,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/><path d="M10.5 8v5M8 10.5h5" stroke-width="1.8"/></svg>
         <input id="q" type="search" placeholder="חיפוש או הוספת משתתף" autocomplete="off" aria-label="חיפוש" />
         <button type="button" class="sclear" id="qClear" aria-label="ניקוי החיפוש" tabindex="-1">×</button>
-      </label><div class="genderchips" id="genderChips"></div><div class="listcount" id="listCount" aria-live="polite"></div></div><div class="listpay" id="listPay"></div><div class="lbend" id="listHere"></div><div class="lbend" id="listSent"></div><div class="lbend" id="listBal"></div>
+      </label><div class="genderchips" id="genderChips"></div><button type="button" class="stcmore" id="moreBtn" aria-haspopup="menu" aria-expanded="false" aria-label="סינונים נוספים" title="סינונים נוספים"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button><div class="listcount" id="listCount" aria-live="polite"></div></div><div class="listpay" id="listPay"></div><div class="lbend" id="listHere"></div><div class="lbend" id="listSent"></div><div class="lbend" id="listBal"></div>
     </div>
     <ul class="list" id="list"></ul>
     <div class="addbox" id="addBox"></div>
@@ -1489,6 +1501,7 @@
   </dialog>
 
   <div class="qmenu" id="qMenu" role="menu" hidden></div>
+  <div class="qmenu" id="moreMenu" role="menu" hidden></div>
   <div class="qmenu" id="fMenu" role="menu" hidden></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -1539,12 +1552,12 @@
       else top.d.close();
     } finally { NAV.fromPop = false; }
   });
-  const state = { prefs: {}, statuses: [], pstatuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, here: null, paidF: null, gender: null, sort: 'new', sent: null, bal: null, showTags: true, fin: [], finRec: [], finTr: [], finPeriod: 'all', finFilter: null };
+  const state = { prefs: {}, statuses: [], pstatuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, here: null, paidF: null, gender: null, sort: 'new', sent: null, bal: null, showTags: true, srcF: null, ageF: null, fin: [], finRec: [], finTr: [], finPeriod: 'all', finFilter: null };
   /* קישור עמוק מהמייל: ?m=<מפגש>&p=<משתתף>; נשמר בזמן הכניסה עם גוגל (שמחזירה בלי הפרמטרים) */
   let deep = null;
   try {
     const sp = new URLSearchParams(location.search);
-    if (['m', 'p', 'pay', 'at', 'pd', 'sv', 'bl', 'tg', 'tga', 'q', 'em', 'g', 's', 'st', 'pt', 'bd', 'pm', 'set', 'stv', 'pr', 'fin'].some((k) => sp.get(k))) { deep = { m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), at: sp.get('at'), pd: sp.get('pd'), sv: sp.get('sv'), bl: sp.get('bl'), tg: sp.get('tg'), tga: sp.get('tga'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g'), s: sp.get('s'), st: sp.get('st'), pt: sp.get('pt'), bd: sp.get('bd'), pm: sp.get('pm'), set: sp.get('set'), stv: sp.get('stv'), pr: sp.get('pr'), fin: sp.get('fin') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
+    if (['m', 'p', 'pay', 'at', 'pd', 'sv', 'bl', 'tg', 'tga', 'q', 'em', 'g', 's', 'st', 'pt', 'bd', 'pm', 'set', 'stv', 'pr', 'fin', 'sc', 'ag'].some((k) => sp.get(k))) { deep = { m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), at: sp.get('at'), pd: sp.get('pd'), sv: sp.get('sv'), bl: sp.get('bl'), tg: sp.get('tg'), tga: sp.get('tga'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g'), s: sp.get('s'), st: sp.get('st'), pt: sp.get('pt'), bd: sp.get('bd'), pm: sp.get('pm'), set: sp.get('set'), stv: sp.get('stv'), pr: sp.get('pr'), fin: sp.get('fin'), sc: sp.get('sc'), ag: sp.get('ag') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
     else { deep = JSON.parse(sessionStorage.getItem('harpatka_deep') || 'null'); }
   } catch (e) {}
   const $ = (s) => document.querySelector(s);
@@ -1562,6 +1575,8 @@
     if (state.bal) sp.set('bl', state.bal);
     if (!state.showTags) sp.set('tg', '0');
     if (state.gender) sp.set('g', state.gender);
+    if (state.srcF) sp.set('sc', state.srcF);
+    if (state.ageF) sp.set('ag', state.ageF);
     if (state.sort !== 'new') sp.set('s', state.sort);
     if (state.q.trim()) sp.set('q', state.q.trim());
     if (openPid) { sp.set('p', openPid); if (pTab && pTab !== 'main' && pTab !== 'contact' && pTab !== 'meets') { sp.set('pt', pTab); if (pTab === 'deposit' && sheet && sheet.depMid) sp.set('pm', sheet.depMid); } }
@@ -1868,6 +1883,7 @@
   const FLOAT_MENUS = [
     { el: () => $('#cntMenu'), keep: '#cntMenu, .ptag.cnt', close: () => { const m = $('#cntMenu'); if (m) { m.hidden = true; m.dataset.pid = ''; } } },
     { el: () => $('#finPerMenu'), keep: '#finPerMenu, #finPerBtn', close: () => { $('#finPerMenu').hidden = true; $('#finPerBtn').setAttribute('aria-expanded', 'false'); } },
+    { el: () => $('#moreMenu'), keep: '#moreMenu, #moreBtn', close: () => { $('#moreMenu').hidden = true; $('#moreBtn').setAttribute('aria-expanded', 'false'); } },
     { el: () => $('#qMenu'), keep: '#qMenu', close: () => closeQ() },
     { el: () => $('#fMenu'), keep: '#fMenu', close: () => { $('#fMenu').hidden = true; $('#fMenu').dataset.kind = ''; } },
     { el: () => document.getElementById('colMenu'), keep: '#colMenu', close: () => { const m = document.getElementById('colMenu'); if (m) m.hidden = true; } },
@@ -1960,6 +1976,8 @@
         if (d.bl === '1' || d.bl === '0' || d.bl === 'n') state.bal = d.bl;
         if (d.tg === '0') state.showTags = false;
         if (d.g === 'male' || d.g === 'female' || d.g === 'none') state.gender = d.g;
+        if (d.sc) state.srcF = d.sc;
+        if (d.ag && AGE_B.some((x) => x[0] === d.ag)) state.ageF = d.ag;
         if (d.s && SORTS.some((x) => x[0] === d.s)) state.sort = d.s;
         if (d.q) { state.q = d.q; $('#q').value = d.q; }
         urlReady = true;
@@ -2079,6 +2097,10 @@
   /* מונים וסינון: גברים/נשים ושילמו/טרם שילמו. כל מונה סופר לפי הסינון האחר והחיפוש, כך שהמספר הוא בדיוק מה שיוצג בלחיצה */
   /* בזמן חיפוש טקסט, סינוני המגדר והתשלום מושהים (כדי למצוא מישהו בוודאות); הם נשמרים ב-state וחוזרים כשהחיפוש נסגר */
   const effGender = () => state.q.trim() ? null : state.gender;
+  /* סינונים נוספים (תפריט ⋯ משמאל לצ'יפי המגדר): דרך הגעה וקבוצת גיל; מושהים בזמן חיפוש כמו שאר הסינונים */
+  const AGE_B = [['u39', 'עד 39', 0, 39], ['40', '40 עד 44', 40, 44], ['45', '45 עד 50', 45, 50], ['51', '51 ומעלה', 51, 200]];
+  const moreOk = (p) => { if (state.q.trim()) return true; if (state.srcF) { const c = channelOf(p); if (state.srcF === '__none' ? !!c : !(c && c.id === state.srcF)) return false; } if (state.ageF) { const b = AGE_B.find((x) => x[0] === state.ageF), a = shownAge(p); if (b && (a == null || a < b[2] || a > b[3])) return false; } return true; };
+  const moreOn = () => !state.q.trim() && !!(state.srcF || state.ageF);
   const payKeys = (s) => s ? String(s).split(',').filter(Boolean) : [];   // סינון סטטוסים מרובה: state.pay הוא מפתחות מופרדים בפסיק
   /* סינון בתוך מפגש: איחוד (אחד מהסטטוסים). בתצוגת הכל: חיתוך (כל התגיות שנבחרו יחד) */
   /* חיתוך בין קבוצות: סטטוסים של מפגש (אחד מהם) וגם תגיות של משתתף (כולן); תגיות מוצגות בתוך מפגש רק כשהכפתור פעיל */
@@ -2108,6 +2130,7 @@
     const q = state.q.trim().toLowerCase(), qd = digits(q), eg = effGender(), ep = effPay();
     const base = state.participants.filter((p) => {
       if (state.filter && !linkOf(p.id, state.filter)) return false;
+      if (!moreOk(p)) return false;
       if (!q) return true;
       return p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd)) || hasNote(p, q);
     });
@@ -2130,7 +2153,8 @@
     $('#facets').innerHTML = '';   // המגדר והסטטוס עברו לפס הצ'יפים (#stStrip)
     /* כל הסטטוסים (בתוך מפגש) או התגיות (בתצוגת הכל) כצ'יפים מעל הסינונים, ממורכזים ועוברים שורה: לחיצה מסננת (בחירה מרובה) */
     const gchip = (g, label, cls) => { const n = nG(g); return '<button type="button" class="stc ' + cls + (n ? '' : ' zero') + '" data-stg="' + g + '" aria-pressed="' + (eg === g) + '" title="' + (g === 'male' ? 'זכר' : 'נקבה') + '" aria-label="' + (g === 'male' ? 'זכר' : 'נקבה') + '">' + label + ' <small>' + n + '</small></button>'; };
-    const anyF = !!(eg || eh || effPaidF() || effSent() || effBal());   // יש סינון פעיל: "הכל" לא מסומן, ולחיצה עליו מאפסת הכול
+    const anyF = !!(eg || eh || effPaidF() || effSent() || effBal() || moreOn());
+    $('#moreBtn').classList.toggle('on', moreOn());   // יש סינון פעיל: "הכל" לא מסומן, ולחיצה עליו מאפסת הכול
     { const sc = state.participants.filter((q) => !state.filter || linkOf(q.id, state.filter)), both = sc.some((q) => q.gender === 'male') && sc.some((q) => q.gender === 'female'), allN = base.filter((p) => payOk(p)).length;
       $('#genderChips').innerHTML = '<button type="button" class="stc gall' + (allN ? '' : ' zero') + '" data-stg="all" aria-pressed="' + !anyF + '" title="' + (anyF ? 'איפוס סינוני השורה' : 'כל המוצגים ברשימה') + '">הכל <small>' + allN + '</small></button>' + ((eg || both) ? gchip('male', 'ז', 'gm') + gchip('female', 'נ', 'gf') : ''); }   // ליד כפתור התפריט בכותרת
     const attOn = !!(state.filter && attendOpen(state.meetings.find((x) => x.id === state.filter))), evOn = !!(state.filter && evOnFor(state.meetings.find((x) => x.id === state.filter)));
@@ -2225,6 +2249,7 @@
     const qd = digits(q);
     let rows = state.participants.filter((p) => {
       if (state.filter && !linkOf(p.id, state.filter)) return false;
+      if (!moreOk(p)) return false;
       if (effPay() && !matchPay(p, payKeys(effPay()))) return false;
       if (!hereOk(p) || !paidOk(p)) return false;
       if (effGender() === 'none' ? p.gender : (effGender() && p.gender !== effGender())) return false;
@@ -3862,7 +3887,23 @@
     state.filter = c.dataset.filter || null;
     render();
   });
-  $('#genderChips').addEventListener('click', (e) => { const gb = e.target.closest('[data-stg]'); if (gb) { if (gb.dataset.stg === 'all') { state.gender = null; state.here = null; state.paidF = null; state.sent = null; state.bal = null; } else state.gender = state.gender === gb.dataset.stg ? null : gb.dataset.stg; render(); syncUrl(); } });
+  function renderMoreMenu() {
+    const scope = state.participants.filter((p) => !state.filter || linkOf(p.id, state.filter));
+    const cnt = (f) => scope.filter(f).length;
+    const chip = (kind, val, label, n) => '<button type="button" class="mc" data-mk="' + kind + '" data-mv="' + esc(val) + '" aria-pressed="' + ((kind === 'src' ? state.srcF : state.ageF) === val) + '">' + esc(label) + ' <small>' + n + '</small></button>';
+    $('#moreMenu').innerHTML = '<div class="mgt">דרך הגעה</div><div class="mgc">' + state.promoters.map((x) => chip('src', x.id, x.name, cnt((p) => (channelOf(p) || {}).id === x.id))).join('') + chip('src', '__none', 'ללא דרך הגעה', cnt((p) => !channelOf(p))) + '</div><div class="mgt">גיל</div><div class="mgc">' + AGE_B.map((b) => chip('age', b[0], b[1], cnt((p) => { const a = shownAge(p); return a != null && a >= b[2] && a <= b[3]; }))).join('') + '</div>';
+  }
+  $('#moreBtn').addEventListener('click', () => {
+    const m = $('#moreMenu'); if (!m.hidden) { m.hidden = true; $('#moreBtn').setAttribute('aria-expanded', 'false'); return; }
+    renderMoreMenu(); m.hidden = false; $('#moreBtn').setAttribute('aria-expanded', 'true');
+    const r = $('#moreBtn').getBoundingClientRect(), mw = m.offsetWidth; m.style.left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8) + 'px'; m.style.top = (r.bottom + 6) + 'px';
+  });
+  $('#moreMenu').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-mk]'); if (!b) return; const k = b.dataset.mk, v = b.dataset.mv;
+    if (k === 'src') state.srcF = state.srcF === v ? null : v; else state.ageF = state.ageF === v ? null : v;
+    renderMoreMenu(); render(); syncUrl();
+  });
+  $('#genderChips').addEventListener('click', (e) => { const gb = e.target.closest('[data-stg]'); if (gb) { if (gb.dataset.stg === 'all') { state.gender = null; state.here = null; state.paidF = null; state.sent = null; state.bal = null; state.srcF = null; state.ageF = null; } else state.gender = state.gender === gb.dataset.stg ? null : gb.dataset.stg; render(); syncUrl(); } });
   /* סינון הגעה / שליחת פרטים / תשלום: לחיצה פותחת תפריט עם המצבים ואייקוניהם; הבחירה מבצעת את הסינון */
   let FC = {};   // ספירות לתפריטי הסינון, מתעדכן ב-renderFacets
   const fstate = (k) => k === 'here' ? state.here : k === 'sent' ? state.sent : k === 'bal' ? state.bal : state.paidF;
