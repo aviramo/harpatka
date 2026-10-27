@@ -23,10 +23,9 @@ def run(*a, cwd=None):
 def build_test_admin():
     """דף הניהול של הבדיקות, נגזר מ-admin/index.html: סכמת test בבקשות וב-realtime, פס "סביבת בדיקות", כותרת וקיזוז גובה."""
     t = (ROOT / 'admin' / 'index.html').read_text(encoding='utf-8').replace('\r\n', '\n')
-    testbar_css = ("    #testBar { position: fixed; top: 0; left: 0; right: 0; z-index: 9999; height: 22px; display: grid; "
-                   "place-items: center; background: #C96F52; color: #fff; font-size: 12px; font-weight: 800; "
-                   "letter-spacing: .02em; pointer-events: none; }\n")
-    testbar_div = '  <div id="testBar" role="note">סביבת בדיקות · נתונים נפרדים מהאמיתיים</div>\n'
+    testbar_css = ("    #testBar { position: fixed; top: 0; left: 0; right: 0; z-index: 9999; height: 3px; background: #C96F52; pointer-events: none; }\n"
+                   "    #testBadge { position: fixed; left: 8px; bottom: 8px; z-index: 9999; background: rgba(201,111,82,.85); color: #fff; font: 700 11px/1 Arial, sans-serif; padding: 5px 9px; border-radius: 999px; pointer-events: none; }\n")
+    testbar_div = '  <div id="testBar" role="note" aria-label="סביבת בדיקות"></div><div id="testBadge">בדיקות</div>\n'
 
     def rep(old, new):
         nonlocal t
@@ -42,7 +41,7 @@ def build_test_admin():
     rep("schema: 'public'", "schema: 'test'")
     rep("DB.key) };", "DB.key), 'Accept-Profile': 'test', 'Content-Profile': 'test' };   // סביבת בדיקות: סכמה test")
     rep('height: 100vh; height: 100dvh; margin-top: 0;',
-        'height: calc(100vh - 22px); height: calc(100dvh - 22px); margin-top: 22px;')
+        'height: calc(100vh - 3px); height: calc(100dvh - 3px); margin-top: 3px;')
     return t
 
 

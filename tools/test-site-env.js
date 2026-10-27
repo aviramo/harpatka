@@ -23,8 +23,8 @@
     if (document.getElementById('testEnvBadge') || document.getElementById('testBar')) return;
     var d = document.createElement('div');
     d.id = 'testEnvBadge';
-    d.textContent = 'סביבת בדיקות';
-    d.setAttribute('style', 'position:fixed;left:8px;bottom:8px;z-index:2147483000;background:#C96F52;color:#fff;font:800 12px/1 Arial,sans-serif;padding:6px 10px;border-radius:999px;pointer-events:none;opacity:.92');
+    d.textContent = 'בדיקות';
+    d.setAttribute('style', 'position:fixed;left:8px;bottom:8px;z-index:2147483000;background:#C96F52;color:#fff;font:700 11px/1 Arial,sans-serif;padding:5px 9px;border-radius:999px;pointer-events:none;opacity:.8');
     document.body.appendChild(d);
   }
   if (document.body) badge(); else document.addEventListener('DOMContentLoaded', badge);
