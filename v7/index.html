@@ -290,7 +290,12 @@
     .mt-row .mt-d{ font-weight:600; font-size:1.1rem; line-height:1.25; }
     .mt-row .mt-t{ font-size:.95rem; opacity:.72; }
     .mt-row .mt-tag{ font-size:.85rem; font-weight:700; border-radius:999px; padding:.25rem .7rem; white-space:nowrap; background:#E8E2D8; color:#6b6459; }
-    .mt-row.past{ opacity:.62; }
+    .mt-row.past{ opacity:.62; padding:.6rem 1rem .7rem; gap:.35rem; border-radius:20px; }
+    .mt-row.past .mt-top{ flex-direction:row; flex-wrap:wrap; gap:.2rem .6rem; }
+    .mt-row.past .mt-d{ font-size:.98rem; }
+    .mt-row.past .mt-tag{ font-size:.75rem; padding:.12rem .55rem; }
+    .mt-row.past .mt-tier{ font-size:.75rem; padding:.15rem .6rem; }
+    .mt-row.past .mt-tiers{ gap:.3rem; }
     .mt-row .mt-reg{ align-self:center; display:inline-flex; align-items:center; justify-content:center; border-radius:999px; background:#C96F52; color:#FFFDF9; font-weight:700; font-size:1rem; padding:.55rem 1.3rem; min-height:44px; }
     .mt-links{ display:flex; flex-wrap:wrap; gap:.45rem; }
     .mt-link{ display:inline-flex; align-items:center; gap:.35rem; border-radius:999px; border:1px solid #E3CDB3; background:#FFFDF9; color:#3F382F; font-weight:700; font-size:.88rem; padding:.4rem .9rem; min-height:36px; }
@@ -307,7 +312,7 @@
     .mt-next .mt-sub{ font-size:1rem; opacity:.88; max-width:26rem; line-height:1.45; }
     .mt-next .mt-tiers{ justify-content:center; }
     .mt-next .mt-tier{ background:rgba(255,253,249,.16); color:#FFFDF9; }
-    .mt-next .mt-tier.cur{ background:#FFFDF9; color:#0F3A4D; }
+    .mt-next .mt-tier.cur{ background:#8FD3DC; color:#0A2236; }
     .mt-next .mt-cta{ margin-top:.35rem; display:inline-flex; align-items:center; justify-content:center; border-radius:999px; background:#FFFDF9; color:#0F3A4D; font-weight:700; font-size:1.05rem; padding:.75rem 1.7rem; min-height:48px; }
     .mt-next.sk .mt-pill, .mt-next.sk .mt-when, .mt-next.sk .mt-sub, .mt-next.sk .mt-tiers, .mt-next.sk .mt-cta{ color:transparent; background:rgba(255,253,249,.16); border-radius:12px; animation:mtPulse 1.4s ease-in-out infinite; pointer-events:none; }
     .mt-next.sk .mt-when{ min-width:12rem; min-height:2rem; } .mt-next.sk .mt-sub{ min-width:15rem; min-height:1.3rem; } .mt-next.sk .mt-tiers{ min-width:14rem; min-height:2rem; } .mt-next.sk .mt-cta{ min-width:9.5rem; }
@@ -1093,7 +1098,7 @@
       const row = (m, tiers, today, past) => {
         const r = document.createElement('div'); r.className = 'mt-row' + (past ? ' past' : '');
         const top = document.createElement('div'); top.className = 'mt-top';
-        const a = document.createElement('div'); const d1 = document.createElement('div'); d1.className = 'mt-d'; d1.textContent = label(m) + ' · ' + m.time; const d2 = document.createElement('div'); d2.className = 'mt-t'; d2.style.whiteSpace = 'pre-line'; d2.textContent = where(m); a.append(d1, d2); top.append(a);
+        const a = document.createElement('div'); const d1 = document.createElement('div'); d1.className = 'mt-d'; d1.textContent = label(m) + ' · ' + m.time; const d2 = document.createElement('div'); d2.className = 'mt-t'; d2.style.whiteSpace = 'pre-line'; d2.textContent = where(m); a.append(d1); if (!past) a.append(d2); top.append(a);
         if (past) { const tag = document.createElement('span'); tag.className = 'mt-tag'; tag.textContent = 'התקיים'; top.append(tag); }
         r.append(top);
         const le = linksEl(m); if (le) r.append(le);
