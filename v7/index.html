@@ -1043,8 +1043,8 @@
     if (shareBtn) shareBtn.href = 'https://wa.me/?text=' + encodeURIComponent(location.origin + location.pathname);
 
     /* ===== המפגשים: הקודם (אחד), הקרוב והעתידיים. אפשר להירשם לכל מפגש שעוד לא עבר. מקור: harpatka_meetings ומדרגות המחיר (harpatka_price_tiers); הצגה מיידית מהמטמון המקומי של הביקור הקודם ואז רענון ===== */
-    const normT = t => (t && !Array.isArray(t) && Number.isFinite(Number(t.base))) ? { base: Number(t.base), steps: (Array.isArray(t.steps) ? t.steps : []).map(x => ({ days: Number(x.days), price: Number(x.price) })).filter(x => x.days >= 1 && Number.isFinite(x.price)), final: t.final == null ? null : Number(t.final) } : null;
-    const MEET_CACHE = 'harpatka_meetings_v10';
+    const normT = t => (t && !Array.isArray(t) && Number.isFinite(Number(t.base))) ? { base: Number(t.base), steps: (Array.isArray(t.steps) ? t.steps : []).map(x => ({ days: Number(x.days), price: Number(x.price) })).filter(x => x.days >= 1 && Number.isFinite(x.price)) } : null;
+    const MEET_CACHE = 'harpatka_meetings_v11';
     const meetingsReady = (async () => {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
       const H = { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey };
@@ -1070,21 +1070,20 @@
       const label = m => { const [, mo, dd] = m.date.split('-'); return 'יום ' + heDay(m.date) + ' ' + Number(dd) + '.' + Number(mo); };
       /* המקום והוראות ההגעה נלקחים משדה "הוראות הגעה" של המפגש (דף הניהול); בלי טקסט לא מוצג מקום */
       const where = m => [m.dir, m.max ? 'עד ' + m.max + ' משתתפים' : ''].filter(Boolean).join('\n');
-      /* מדרגות המחיר של מפגש: מחיר רגיל (מתחילת ההרשמה), מדרגות "החל מ-N ימים לפני המפגש" ומחיר ביום המפגש (אופציונלי). מחזירים מה שעבר, המדרגה הנוכחית ומה שיהיה */
+      /* מדרגות המחיר של מפגש: מחיר רגיל (מתחילת ההרשמה) ומדרגות "החל מ-N ימים לפני המפגש" (האחרונה חלה עד יום המפגש). מחזירים מה שעבר, המדרגה הנוכחית ומה שיהיה */
       const tierSplit = (m, T, today) => {
         const out = { past: [], cur: null, future: [] };
         if (!T) return out;
-        const md = dayN(m.date), steps = (T.steps || []).slice().sort((a, b) => b.days - a.days), hasFinal = T.final != null;
+        const md = dayN(m.date), steps = (T.steps || []).slice().sort((a, b) => b.days - a.days);
         const seq = [{ price: T.base, days: null }].concat(steps), items = [];
-        seq.forEach((x, k) => { const nx = seq[k + 1]; items.push({ price: x.price, s: x.days == null ? null : md - x.days, e: nx ? md - nx.days - 1 : (hasFinal ? md - 1 : md) }); });
-        if (hasFinal) items.push({ price: T.final, s: md, e: md, final: true });
+        seq.forEach((x, k) => { const nx = seq[k + 1]; items.push({ price: x.price, s: x.days == null ? null : md - x.days, e: nx ? md - nx.days - 1 : md }); });
         items.forEach(x => { if (x.e < x.s && x.s !== null) return; if (x.e < today) out.past.push(x); else if (x.s !== null && x.s > today) out.future.push(x); else out.cur = x; });
         return out;
       };
       const chip = (x, kind) => {
         const c = document.createElement('span'); c.className = 'mt-tier ' + kind;
         const b = document.createElement('b'); b.textContent = x.price + ' ₪';
-        const when = x.final ? 'ביום המפגש' : kind === 'fut' ? 'מתאריך ' + short(x.s) : (x.s === null ? 'עד ' + short(x.e) : short(x.s) + ' עד ' + short(x.e));
+        const when = kind === 'fut' ? 'מתאריך ' + short(x.s) : (x.s === null ? 'עד ' + short(x.e) : short(x.s) + ' עד ' + short(x.e));
         c.append(when + ' ', b);   // התאריך קודם והמחיר בסוף
         return c;
       };

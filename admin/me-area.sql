@@ -70,15 +70,14 @@ begin
 
   select * into nxt from public.harpatka_meetings where meeting_date >= today order by meeting_date, meeting_time limit 1;
   if found then
-    -- מדרגות המחיר של המפגש עצמו (עמודה price_tiers = {base, steps, final}): מחיר ביום המפגש, אחרת המדרגה שמתחילה הכי קרוב למפגש מבין אלה שכבר התחילו, אחרת המחיר הרגיל
+    -- מדרגות המחיר של המפגש עצמו (עמודה price_tiers = {base, steps}): המדרגה שמתחילה הכי קרוב למפגש מבין אלה שכבר התחילו, אחרת המחיר הרגיל
     declare lft int := nxt.meeting_date - today; pt jsonb := coalesce(nxt.price_tiers, '{"base": 80, "steps": [{"days": 3, "price": 100}]}'::jsonb);
     begin
       if jsonb_typeof(pt) = 'object' then
-        if pt->>'final' is not null and lft <= 0 then price := (pt->>'final')::int;
-        else
+        begin
           select (e->>'price')::int into price from jsonb_array_elements(coalesce(pt->'steps', '[]'::jsonb)) e where lft <= (e->>'days')::int order by (e->>'days')::int asc limit 1;
           if price is null then price := (pt->>'base')::int; end if;
-        end if;
+        end;
       end if;
     end;
     nxt_json := jsonb_build_object('id', nxt.id, 'date', nxt.meeting_date, 'time', to_char(nxt.meeting_time, 'HH24:MI'), 'directions', nxt.directions, 'price', price,

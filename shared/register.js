@@ -302,11 +302,10 @@
   const HE_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
   const dayN = (s) => { const [y, mm, d] = s.split('-').map(Number); return Date.UTC(y, mm - 1, d) / 864e5; };
   let selMeeting = null, nearest = CONFIG.meetingFallback || { date: '2026-10-25', time: '20:00' };
-  /* מחיר לפי מדרגות המחיר של המפגש עצמו (T = { base, steps: [{ days, price }], final }): מחיר ביום המפגש (אם הוגדר), אחרת המדרגה שמתחילה הכי קרוב למפגש מבין אלה שכבר התחילו, אחרת המחיר הרגיל. בלי מדרגות: 100 ₪ ב-3 הימים האחרונים, אחרת 80 ₪ */
-  const normT = (t) => (t && !Array.isArray(t) && Number.isFinite(Number(t.base))) ? { base: Number(t.base), steps: (Array.isArray(t.steps) ? t.steps : []).map((x) => ({ days: Number(x.days), price: Number(x.price) })).filter((x) => x.days >= 1 && Number.isFinite(x.price)), final: t.final == null ? null : Number(t.final) } : null;
+  /* מחיר לפי מדרגות המחיר של המפגש עצמו (T = { base, steps: [{ days, price }] }): המדרגה שמתחילה הכי קרוב למפגש מבין אלה שכבר התחילו, אחרת המחיר הרגיל. בלי מדרגות: 100 ₪ ב-3 הימים האחרונים, אחרת 80 ₪ */
+  const normT = (t) => (t && !Array.isArray(t) && Number.isFinite(Number(t.base))) ? { base: Number(t.base), steps: (Array.isArray(t.steps) ? t.steps : []).map((x) => ({ days: Number(x.days), price: Number(x.price) })).filter((x) => x.days >= 1 && Number.isFinite(x.price)) } : null;
   const priceFor = (left, T) => {
     if (T) {
-      if (T.final != null && left <= 0) return String(T.final);
       const s = T.steps.filter((x) => left <= x.days).sort((a, b) => a.days - b.days)[0];
       return String(s ? s.price : T.base);
     }
