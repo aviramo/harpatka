@@ -93,8 +93,18 @@
   }
   /* נעילת גלילת הדף מאחורי הפופאפ (גם במובייל); הפופאפ עצמו נגלל, למשל כשהמקלדת פתוחה */
   let locked = false;
-  function lockPage(){ locked = true; document.documentElement.classList.add('modal-lock'); }
-  function unlockPage(){ locked = false; document.documentElement.classList.remove('modal-lock'); }
+  /* נעילת גלילת הדף כשהפופאפ פתוח: הגוף מקובע במקומו (position: fixed עם היסט הגלילה), כך שגם הזזת הדף על ידי המקלדת או גרירה על הרקע לא גוללת את הדף מאחור; בסגירה הגלילה חוזרת למקום */
+  let lockY = 0;
+  function lockPage(){
+    if (locked) return;
+    locked = true; lockY = window.scrollY || document.documentElement.scrollTop || 0;
+    document.body.style.top = (-lockY) + 'px'; document.documentElement.classList.add('modal-lock');
+  }
+  function unlockPage(){
+    if (!locked) return;
+    locked = false; document.documentElement.classList.remove('modal-lock'); document.body.style.top = '';
+    window.scrollTo({ top: lockY, left: 0, behavior: 'instant' });
+  }
   function openModal(m, noFocus){
     if (m.id === 'contactModal') regUrl(true);
     modalLastFocus = document.activeElement;
