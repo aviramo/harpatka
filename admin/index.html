@@ -434,7 +434,7 @@
     #finDlg .sheet-head { position: relative; justify-content: flex-start; gap: 8px; min-height: 40px; }
     #finDlg .sheet-head h2 { flex: 1 1 auto; }
     .finlogbtn { margin-inline-start: auto; }
-    .finlogbtn[hidden] { display: none; }
+    .finlogbtn[hidden], .finlogbtn2[hidden] { display: none; }
     #finLog .logrow { padding: 11px 4px; border-top: 1px solid var(--line); }
     #finLog .logrow:first-child { border-top: 0; }
     #finLog .logrow b { display: block; font-size: 15.5px; font-weight: 600; line-height: 1.45; }
@@ -1417,14 +1417,14 @@
       <div class="sheet-head">
         <button type="button" class="hbtn hback" id="finArrow" aria-label="חזרה" title="חזרה" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         <h2 id="finTitle">כספים</h2>
-        <button type="button" class="hbtn finlogbtn" id="finLogBtn" aria-label="יומן שינויים" title="יומן שינויים"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
+        <button type="button" class="hbtn finlogbtn" id="finSetBtn" aria-label="התחשבנות בין מנהלים" title="התחשבנות בין מנהלים"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"/></svg></button>
+        <button type="button" class="hbtn finlogbtn2" id="finLogBtn" aria-label="יומן שינויים" title="יומן שינויים"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
       </div>
       <div id="finLog" hidden></div>
       <div id="finSettle" hidden></div>
       <div id="finMain">
         <div class="finper" id="finPer" role="group" aria-label="תקופה"><button type="button" class="stc" data-fp="month">החודש</button><button type="button" class="stc" data-fp="all">הכל</button></div>
         <div class="finsum" id="finSum"></div>
-        <button type="button" class="btn finsetbtn" id="finSetBtn">התחשבנות בין המנהלים</button>
         <div class="fincmds"><button type="button" class="btn fexp" data-fadd="expense">+ הוצאה</button><button type="button" class="btn finc" data-fadd="income">+ הכנסה</button></div>
         <div class="clabel" id="finRecLbl" hidden>מחזוריות</div>
         <div id="finRec"></div>
@@ -2426,7 +2426,7 @@
     $('#finList').innerHTML = shown.length ? shown.map((x) => { const m = x.meeting_id && state.meetings.find((q) => q.id === x.meeting_id); return '<button type="button" class="finrow" ' + (x.channel ? 'data-fch="' + x.channel + '"' : x.rec ? 'data-frec="' + x.id + '"' : 'data-fent="' + x.id + '"') + '><span class="ft"><b>' + esc(x.title) + (x.rec ? '<i class="frec">מחזורי</i>' : '') + (x.channel ? '<i class="frec">דרך הגעה</i>' : '') + '</b><span>' + finDmy(x.date) + ' · ' + (x.channel ? 'לחיצה לפתיחת ההתחשבנות' : (m ? 'מפגש ' + dmShort(m) : 'כללי') + (x.by ? ' · דרך ' + esc(finName(x.by)) : '')) + '</span></span><span class="fa ' + (x.kind === 'income' ? 'in' : 'out') + '">₪' + nfm(x.amount) + '</span></button>'; }).join('') : '<p class="mnone">עוד אין תנועות' + (state.finPeriod === 'month' ? ' החודש' : '') + '</p>';
   }
   function finView(v) {
-    finV = v; $('#finMain').hidden = v !== 'main'; $('#finForm').hidden = v !== 'form'; $('#finLog').hidden = v !== 'log'; $('#finSettle').hidden = v !== 'settle'; $('#finArrow').hidden = v === 'main'; $('#finLogBtn').hidden = v !== 'main';
+    finV = v; $('#finMain').hidden = v !== 'main'; $('#finForm').hidden = v !== 'form'; $('#finLog').hidden = v !== 'log'; $('#finSettle').hidden = v !== 'settle'; $('#finArrow').hidden = v === 'main'; $('#finLogBtn').hidden = v !== 'main'; $('#finSetBtn').hidden = v !== 'main';
     $('#finTitle').textContent = v === 'main' ? 'כספים' : v === 'log' ? 'יומן שינויים' : v === 'settle' ? 'התחשבנות בין מנהלים' : (finEdit && finEdit.id ? 'עריכה' : (finEdit && finEdit.kind === 'income' ? 'הכנסה חדשה' : 'הוצאה חדשה'));
     $('#finDlg').scrollTop = 0; navSync($('#finDlg')); syncUrl();
   }
@@ -2449,7 +2449,6 @@
   $('#finPer').addEventListener('click', (e) => { const b = e.target.closest('[data-fp]'); if (!b) return; state.finPeriod = b.dataset.fp; renderFinance(); });
   $('#finMain').addEventListener('click', (e) => {
     const ff = e.target.closest('[data-ff]'); if (ff) { state.finFilter = state.finFilter === ff.dataset.ff ? null : ff.dataset.ff; renderFinance(); return; }
-    if (e.target.closest('#finSetBtn')) { openFinSettle(); return; }
     const a = e.target.closest('[data-fadd]'); if (a) { openFinForm({ kind: a.dataset.fadd }); return; }
     const r = e.target.closest('[data-frec]'); if (r) { openFinForm({ type: 'rec', id: r.dataset.frec }); return; }
     const ch = e.target.closest('[data-fch]'); if (ch) { showPromoterDetail(ch.dataset.fch); $('#prDlg').showModal(); return; }   // תשלום לדרך הגעה: פותח את ההתחשבנות שלה
@@ -2465,6 +2464,7 @@
     } catch (err) { box.innerHTML = '<p class="mnone">לא הצלחנו לטעון את היומן</p>'; fail(err); }
   }
   $('#finLogBtn').addEventListener('click', openFinLog);
+  $('#finSetBtn').addEventListener('click', () => openFinSettle());
   function renderFinSettle() {
     const S = finSettle(), box = $('#finSettle'), n = (v) => (v < 0 ? '-' : '') + '₪' + nfm(Math.abs(Math.round(v * 100) / 100));
     box.innerHTML = S.admins.map((e) => { const a = S.A[e]; return '<div class="fsc"><h4>' + esc(finName(e)) + '</h4>' +
