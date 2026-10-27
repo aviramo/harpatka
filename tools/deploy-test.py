@@ -3,7 +3,7 @@
 בונה עותק של האתר בתיקייה מחוץ ל-repo (~/harpatka-test-deploy), ומתאים אותו לבדיקות:
   - מזריק shared/env.js של הבדיקות (בקשות לסכמת test + תגית "סביבת בדיקות"), ומסיר Pixel ו-Google Analytics
   - noindex, robots.txt סוגר, CNAME של התת דומיין
-  - דף הניהול נלקח מ-admin-test/index.html (נוצר ע"י tools/sync-admin-test.py)
+  - דף הניהול של הבדיקות נוצר מ-admin/index.html (סכמת test בבקשות וב-realtime, פס "סביבת בדיקות"); אין יותר admin-test/
 הקוד של האתר עצמו לא משתנה: ההתאמות נעשות רק בעותק."""
 import os, re, shutil, subprocess, sys, pathlib
 
@@ -18,6 +18,32 @@ FILES = ['index.html', 'sw.js', 'favicon.ico']
 
 def run(*a, cwd=None):
     return subprocess.run(a, cwd=cwd or OUT, check=True, capture_output=True, text=True).stdout
+
+
+def build_test_admin():
+    """דף הניהול של הבדיקות, נגזר מ-admin/index.html: סכמת test בבקשות וב-realtime, פס "סביבת בדיקות", כותרת וקיזוז גובה."""
+    t = (ROOT / 'admin' / 'index.html').read_text(encoding='utf-8').replace('\r\n', '\n')
+    testbar_css = ("    #testBar { position: fixed; top: 0; left: 0; right: 0; z-index: 9999; height: 22px; display: grid; "
+                   "place-items: center; background: #C96F52; color: #fff; font-size: 12px; font-weight: 800; "
+                   "letter-spacing: .02em; pointer-events: none; }\n")
+    testbar_div = '  <div id="testBar" role="note">סביבת בדיקות · נתונים נפרדים מהאמיתיים</div>\n'
+
+    def rep(old, new):
+        nonlocal t
+        if t.count(old) != 1:
+            sys.exit('לא נמצא (או נמצא יותר מפעם אחת) בדף הניהול: ' + old[:70])
+        t = t.replace(old, new)
+
+    rep('<title>משתתפים · יוצאים להרפתקה</title>', '<title>בדיקות · משתתפים</title>')
+    rep('  <style>\n', '  <style>\n' + testbar_css)
+    body_start = t.index('<body')
+    end = t.index('>\n', body_start) + 2
+    t = t[:end] + testbar_div + t[end:]
+    rep("schema: 'public'", "schema: 'test'")
+    rep("DB.key) };", "DB.key), 'Accept-Profile': 'test', 'Content-Profile': 'test' };   // סביבת בדיקות: סכמה test")
+    rep('height: 100vh; height: 100dvh; margin-top: 0;',
+        'height: calc(100vh - 22px); height: calc(100dvh - 22px); margin-top: 22px;')
+    return t
 
 
 # 1. תיקיית עבודה (clone / init)
@@ -36,7 +62,7 @@ for d in DIRS:
 for f in FILES:
     shutil.copy2(ROOT / f, OUT / f)
 (OUT / 'admin').mkdir()
-shutil.copy2(ROOT / 'admin-test' / 'index.html', OUT / 'admin' / 'index.html')
+(OUT / 'admin' / 'index.html').write_text(build_test_admin(), encoding='utf-8', newline='\n')
 shutil.copy2(ROOT / 'tools' / 'test-site-env.js', OUT / 'shared' / 'env.js')
 (OUT / 'CNAME').write_text('test.harpatka.co.il\n', encoding='utf-8')
 (OUT / '.nojekyll').write_text('', encoding='utf-8')
