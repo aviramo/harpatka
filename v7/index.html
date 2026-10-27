@@ -1069,7 +1069,7 @@
       const short = n => { const dt = new Date(n * 864e5); return dt.getUTCDate() + '.' + (dt.getUTCMonth() + 1); };
       const label = m => { const [, mo, dd] = m.date.split('-'); return 'יום ' + heDay(m.date) + ' ' + Number(dd) + '.' + Number(mo); };
       /* המקום והוראות ההגעה נלקחים משדה "הוראות הגעה" של המפגש (דף הניהול); בלי טקסט לא מוצג מקום */
-      const where = m => [m.dir, m.max ? 'עד ' + m.max + ' משתתפים' : ''].filter(Boolean).join('\n');
+      const where = m => [m.dir, m.max ? m.max + ' משתתפים' : ''].filter(Boolean).join('\n');
       /* מדרגות המחיר של מפגש: מחיר רגיל (מתחילת ההרשמה) ומדרגות "החל מ-N ימים לפני המפגש" (האחרונה חלה עד יום המפגש). מחזירים מה שעבר, המדרגה הנוכחית ומה שיהיה */
       const tierSplit = (m, T, today) => {
         const out = { past: [], cur: null, future: [] };
@@ -1117,7 +1117,7 @@
         const cta = el('mCta');
         if (nx) {
           const sp = tierSplit(nx, nx.tiers, today);
-          el('mPill').textContent = 'המפגש הקרוב' + (nx.max ? ' · עד ' + nx.max + ' משתתפים' : '');
+          el('mPill').textContent = 'המפגש הקרוב' + (nx.max ? ' · ' + nx.max + ' משתתפים' : '');
           el('mName').textContent = nx.name; el('mName').hidden = !nx.name;
           el('mWhen').textContent = label(nx) + ' · ' + nx.time;
           el('mSub').textContent = nx.dir; el('mSub').style.whiteSpace = 'pre-line'; el('mSub').hidden = !el('mSub').textContent;
