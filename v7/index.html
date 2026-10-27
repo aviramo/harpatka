@@ -339,6 +339,27 @@
     .mt-next{ box-shadow:0 0 14px 0 rgba(150,80,55,.2); }   /* צל סימטרי מכל הכיוונים (בלי היסט) */
     @keyframes mtPulse{ 0%,100%{ opacity:.55; } 50%{ opacity:1; } }
     @media (prefers-reduced-motion:reduce){ .mt-next.sk *{ animation:none !important; } }
+    /* כרטיס מפגש בשתי וריאציות: ממוזער (תמונה + שורת תקציר) ומורחב (הכרטיס המלא). לחיצה על שורת התקציר מחליפה ביניהם באנימציה. */
+    .mt-next{ padding:0; min-height:0; display:block; overflow:hidden; gap:0; }
+    .mt-next .mt-img{ width:100%; margin:0; border-radius:0; max-width:none; }
+    .mt-sum{ width:100%; display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.9rem 1.2rem; background:transparent; color:#B05640; font:inherit; cursor:pointer; text-align:start; }
+    .mt-sum .sum-t{ display:flex; flex-direction:column; gap:.1rem; min-width:0; }
+    .mt-sum .sum-n{ font-size:.85rem; font-weight:700; opacity:.85; }
+    .mt-sum .sum-d{ font-weight:800; font-size:1rem; line-height:1.3; }
+    .mt-sum .sum-end{ display:inline-flex; align-items:center; gap:.4rem; font-weight:700; font-size:.88rem; white-space:nowrap; }
+    .mt-sum .sum-end svg{ width:1.3rem; height:1.3rem; transition:transform .4s cubic-bezier(.22,.8,.2,1); }
+    .mt-next.open .mt-sum{ justify-content:center; padding:.3rem 0 0; }
+    .mt-next.open .mt-sum .sum-t, .mt-next.open .mt-sum .sum-lbl{ display:none; }
+    .mt-next.open .mt-sum .sum-end svg{ transform:rotate(180deg); }
+    .mt-bx{ display:grid; grid-template-rows:0fr; transition:grid-template-rows .45s cubic-bezier(.22,.8,.2,1); }
+    .mt-next.open .mt-bx{ grid-template-rows:1fr; }
+    .mt-bxi{ overflow:hidden; min-height:0; visibility:hidden; transition:visibility 0s .45s; }
+    .mt-next.open .mt-bxi{ visibility:visible; transition-delay:0s; }
+    .mt-body{ display:flex; flex-direction:column; align-items:center; gap:.55rem; text-align:center; padding:.6rem 1.35rem 1.4rem; opacity:0; transform:translateY(-8px); transition:opacity .35s ease .05s, transform .45s cubic-bezier(.22,.8,.2,1); }
+    .mt-next.open .mt-body{ opacity:1; transform:none; }
+    .mt-next.nosum .mt-sum{ display:none; }
+    .mt-next.nosum .mt-body{ padding-top:1.4rem; }
+    @media (prefers-reduced-motion:reduce){ .mt-bx, .mt-bxi, .mt-body, .mt-sum .sum-end svg{ transition:none; } }
     .btn-ghost{
       display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
       border:1.5px solid rgba(63,56,47,.22); color:var(--ink); background:transparent; font-weight:600;
@@ -787,16 +808,19 @@
     <div class="max-w-3xl mx-auto px-5 reveal">
       <div class="mt-list" id="mList" aria-live="polite">
         <div id="mPast" style="display:contents"></div>
-        <div class="mt-next sk" id="mNext">
+        <div class="mt-next sk open nosum" id="mNext">
           <img class="mt-img" id="mImg" alt="" hidden width="1200" height="300" decoding="async">
-          <span class="mt-pill" id="mPill">המפגש הקרוב</span>
-          <div class="mt-name font-display" id="mName" hidden></div>
-          <div class="mt-when font-display" id="mWhen">&nbsp;</div>
-          <div class="mt-city" id="mCity" hidden></div>
-          <p class="mt-sub" id="mSub">&nbsp;</p>
-          <div class="mt-tiers" id="mTP" hidden></div>
-          <a href="#" data-contact class="mt-cta" id="mCta">הרשמה למפגש</a>
-          <div class="mt-tiers" id="mTF" hidden></div>
+          <button type="button" class="mt-sum" id="mSum" aria-expanded="true"><span class="sum-t"><span class="sum-n" id="mSumN" hidden></span><span class="sum-d" id="mSumD"></span></span><span class="sum-end"><span class="sum-lbl">פרטים</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span></button>
+          <div class="mt-bx"><div class="mt-bxi"><div class="mt-body">
+            <span class="mt-pill" id="mPill">המפגש הקרוב</span>
+            <div class="mt-name font-display" id="mName" hidden></div>
+            <div class="mt-when font-display" id="mWhen">&nbsp;</div>
+            <div class="mt-city" id="mCity" hidden></div>
+            <p class="mt-sub" id="mSub">&nbsp;</p>
+            <div class="mt-tiers" id="mTP" hidden></div>
+            <a href="#" data-contact class="mt-cta" id="mCta">הרשמה למפגש</a>
+            <div class="mt-tiers" id="mTF" hidden></div>
+          </div></div></div>
         </div>
         <div id="mLater" style="display:contents"></div>
       </div>
@@ -1147,31 +1171,42 @@
       /* כפתור ההרשמה: שורה ראשית עם המחיר הנוכחי, ומתחתיה (בתוך הכפתור) עד מתי המחיר הזה חל */
       const setCta = (b, sp) => { b.textContent = ctaText(sp); };   // בלי שורת "המחיר עד": התאריך כבר בצ'יפ של המדרגה הבאה
       /* מפגש עתידי (אחרי הקרוב): אותו כרטיס בדיוק כמו המפגש הקרוב, רק דהוי */
-      /* כרטיס מפגש אחד לכל המפגשים (העתידיים בדיוק כמו הקרוב): תמונה, צ'יפ, שם, תאריך ושעה, עיר, הוראות הגעה, מדרגות וכפתור הרשמה.
-         מפגש שעבר: אותו כרטיס בלי כפתור ומדרגות, והצ'יפ "התקיים" (העיצוב שלו ייקבע בנפרד) */
-      const meetingCard = (m, today, past) => {
-        const c = document.createElement('div'); c.className = 'mt-next' + (past ? ' is-past' : '');
+      /* כרטיס מפגש אחד לכל המפגשים, בשתי וריאציות: ממוזער (תמונה ושורת תקציר) ומורחב (הכרטיס המלא); לחיצה מחליפה ביניהם באנימציה.
+         מפגש שעבר: אותו כרטיס בלי כפתור ומדרגות והצ'יפ "התקיים" (העיצוב שלו ייקבע בנפרד) */
+      const CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+      const sumInfo = (m) => ({ n: m.name || '', d: label(m) + ' · ' + m.time + (m.city ? ' · ' + m.city : '') });
+      const toggleCard = (c, on) => { c.classList.toggle('open', on); const s = c.querySelector('.mt-sum'); if (s) s.setAttribute('aria-expanded', String(on)); };
+      const meetingCard = (m, today, past, open) => {
+        const c = document.createElement('div'); c.className = 'mt-next' + (past ? ' is-past' : '') + (open ? ' open' : '');
         const mk = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
         if (m.img) { const im = mk('img', 'mt-img'); im.src = m.img; im.alt = ''; im.loading = 'lazy'; im.decoding = 'async'; c.append(im); }
-        c.append(mk('span', 'mt-pill', past ? 'התקיים' : 'מפגש עתידי' + (m.max ? ' · ' + m.max + ' משתתפים' : '')));
-        if (m.name) c.append(mk('div', 'mt-name font-display', m.name));
-        c.append(mk('div', 'mt-when font-display', label(m) + ' · ' + m.time));
-        if (m.city) c.append(mk('div', 'mt-city', m.city));
-        if (m.dir) { const s = mk('p', 'mt-sub', m.dir); s.style.whiteSpace = 'pre-line'; c.append(s); }
-        if (past) return c;
-        const sp = tierSplit(m, m.tiers, today);
-        const pb = fill(mkBox(), sp.past, 'done'); if (!pb.hidden) c.append(pb);
-        const b = mk('a', 'mt-cta'); b.href = '#'; setCta(b, sp); b.addEventListener('click', e => { e.preventDefault(); reg(m); }); c.append(b);
-        const fb = fill(mkBox(), sp.future, 'fut'); if (!fb.hidden) c.append(fb);
+        const si = sumInfo(m), sum = mk('button', 'mt-sum'); sum.type = 'button'; sum.setAttribute('aria-expanded', String(!!open));
+        const st = mk('span', 'sum-t'); if (si.n) st.append(mk('span', 'sum-n', si.n)); st.append(mk('span', 'sum-d', si.d));
+        const se = mk('span', 'sum-end'); se.append(mk('span', 'sum-lbl', 'פרטים')); se.insertAdjacentHTML('beforeend', CHEV);
+        sum.append(st, se); sum.addEventListener('click', () => toggleCard(c, !c.classList.contains('open'))); c.append(sum);
+        const bx = mk('div', 'mt-bx'), bxi = mk('div', 'mt-bxi'), body = mk('div', 'mt-body');
+        body.append(mk('span', 'mt-pill', past ? 'התקיים' : 'מפגש עתידי' + (m.max ? ' · ' + m.max + ' משתתפים' : '')));
+        if (m.name) body.append(mk('div', 'mt-name font-display', m.name));
+        body.append(mk('div', 'mt-when font-display', label(m) + ' · ' + m.time));
+        if (m.city) body.append(mk('div', 'mt-city', m.city));
+        if (m.dir) { const s = mk('p', 'mt-sub', m.dir); s.style.whiteSpace = 'pre-line'; body.append(s); }
+        if (!past) {
+          const sp = tierSplit(m, m.tiers, today);
+          const pb = fill(mkBox(), sp.past, 'done'); if (!pb.hidden) body.append(pb);
+          const b = mk('a', 'mt-cta'); b.href = '#'; setCta(b, sp); b.addEventListener('click', e => { e.preventDefault(); reg(m); }); body.append(b);
+          const fb = fill(mkBox(), sp.future, 'fut'); if (!fb.hidden) body.append(fb);
+        }
+        bxi.append(body); bx.append(bxi); c.append(bx);
         return c;
       };
-      const row = (m, tiers, today, past) => meetingCard(m, today, past);
+      const row = (m, tiers, today, past) => meetingCard(m, today, past, false);
       const render = (d) => {
         const nextEl = el('mNext'); if (!nextEl) return;
         const todayIso = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()), today = dayN(todayIso);
         const future = (d.future || []).filter(m => m.date >= todayIso), nx = future[0] || null, tiers = d.tiers || [];
         const past = el('mPast'); past.innerHTML = ''; (d.past || []).forEach(m => past.append(row(m, tiers, today, true)));
         nextEl.classList.remove('sk');
+        if (!nextEl.dataset.bound) { nextEl.dataset.bound = '1'; el('mSum').addEventListener('click', () => toggleCard(nextEl, !nextEl.classList.contains('open'))); }
         const cta = el('mCta');
         if (nx) {
           const sp = tierSplit(nx, nx.tiers, today);
@@ -1180,6 +1215,7 @@
           el('mName').textContent = nx.name; el('mName').hidden = !nx.name;
           el('mWhen').textContent = label(nx) + ' · ' + nx.time;
           el('mCity').textContent = nx.city; el('mCity').hidden = !nx.city;
+          { const si = sumInfo(nx); el('mSumN').textContent = si.n; el('mSumN').hidden = !si.n; el('mSumD').textContent = si.d; nextEl.classList.remove('nosum'); }
           el('mSub').textContent = nx.dir; el('mSub').style.whiteSpace = 'pre-line'; el('mSub').hidden = !el('mSub').textContent;
           fill(el('mTP'), sp.past, 'done'); fill(el('mTF'), sp.future, 'fut');
           setCta(cta, sp); cta.__meeting = nx;
@@ -1188,7 +1224,7 @@
           el('mImg').hidden = true;
           el('mPill').textContent = 'בקרוב';
           el('mName').hidden = true;
-          el('mCity').hidden = true;
+          el('mCity').hidden = true; nextEl.classList.add('nosum'); toggleCard(nextEl, true);
           el('mWhen').textContent = d.defName || 'המפגש הבא בדרך אליכם';   // בלי מפגש: שם ברירת המחדל (אם הוגדר)
           el('mSub').hidden = false; el('mSub').style.whiteSpace = ''; el('mSub').textContent = 'רוצים לדעת ראשונים? השאירו פרטים ונעדכן ברגע שהתאריך ייקבע';
           ['mTP', 'mTF'].forEach(i => { el(i).hidden = true; });
