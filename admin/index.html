@@ -2341,7 +2341,7 @@
     };
     const pAll = state.participants.map(persist).filter((x) => x.total > 0), pAvg = pAll.length ? pAll.reduce((s, x) => s + x.came, 0) / pAll.reduce((s, x) => s + x.total, 0) : 0, BAND = 0.1, K = 0;
     cntCtx = { persist, started, startedMs, pAvg, BAND };
-    const anyEv = rows.some((p) => evCircle(p));   // אם לפחות שורה אחת עם עיגול שליחה, שומרים את העמודה בכל השורות כדי שהתגיות יהיו באותו קו
+    const anyEv = !!(state.filter && state.showSent && (sentView(state.meetings.find((x) => x.id === state.filter)) || rows.some((p) => evCircle(p))));   // אייקון הסינון קיים: שומרים לו עמודה בשורות, כך שהוא מיושר מעליה ולא נערם על התשלום או ההגעה   // אם לפחות שורה אחת עם עיגול שליחה, שומרים את העמודה בכל השורות כדי שהתגיות יהיו באותו קו
     const rowHtml = (p) => {
       const age = shownAge(p);
       const wa = waLink(p.phone);
@@ -4048,6 +4048,11 @@
       const b = document.querySelector(box), r = document.querySelector(ref); if (!b) return;
       if (box === '#listSent') b.style.visibility = (!r && !state.sent) ? 'hidden' : '';   // אין אף עיגול שליחה ברשימה (אף משתתף לא זכאי): אין מה לסנן, והאייקון לא נערם על אייקון התשלום
       if (r) { const rr = r.getBoundingClientRect(), bb = (b.firstElementChild || b).getBoundingClientRect(); b.style.left = Math.round(rr.left + rr.width / 2 - br.left - (bb.left - b.getBoundingClientRect().left) - bb.width / 2) + 'px'; }
+      else if (box === '#listSent') {   // אין בשורות עיגולי שליחה (למשל כשהחלון נסגר והסינון "לא נשלחו" פעיל): האייקון באמצע בין אייקון התשלום להגעה, ולא נערם על אחד מהם
+        const ic = (id) => { const e = document.querySelector(id + ' > *'); return e && e.getBoundingClientRect().width ? e.getBoundingClientRect() : null; }, a1 = ic('#listPay'), a2 = ic('#listHere'), bb = (b.firstElementChild || b).getBoundingClientRect();
+        const cx = a1 && a2 ? (a1.left + a1.width / 2 + a2.left + a2.width / 2) / 2 : a1 ? a1.left + a1.width / 2 - 36 : a2 ? a2.left + a2.width / 2 + 36 : null;
+        if (cx != null && bb.width) b.style.left = Math.round(cx - br.left - (bb.left - b.getBoundingClientRect().left) - bb.width / 2) + 'px';
+      }
     });
   }
   window.addEventListener('resize', alignFilters);
