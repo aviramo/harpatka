@@ -1446,6 +1446,7 @@
       <div id="setMain">
         <div class="setgrp">
           <label class="setfield"><div class="sethead"><span>השם שלי במערכת</span><span id="setMail" dir="ltr"></span></div><input class="setinp" id="setSender" maxlength="20" autocomplete="off" aria-label="שם השולח בהודעות" /></label>
+          <label class="setfield"><div class="sethead"><span>שם ברירת מחדל למפגש</span></div><input class="setinp" id="setMName" maxlength="80" autocomplete="off" placeholder="למשל: מפגש ביודנסה" aria-label="שם ברירת מחדל למפגש חדש" /></label>
         </div>
         <div class="setgrp">
           <button type="button" class="setrow setlink" id="setSrcBtn"><svg class="seti" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h11M11 7l5 5-5 5M20 5v14"/></svg><div class="setl"><b>דרכי הגעה</b><small id="setSrcHint"></small></div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="22" height="22"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
@@ -1592,7 +1593,7 @@
     url: 'https://ezakarwqstnldqixgreb.supabase.co',
     key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6YWthcndxc3RubGRxaXhncmViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTA3MzIsImV4cCI6MjEwNjc4NjczMn0.Bg0eFBC4zKjyJc5kBw3wLgSP-PkxLFVv3o7-4YUdq4c',
   };
-  const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance', n: 'harpatka_notes', pr: 'harpatka_promoters', pp: 'harpatka_promoter_payments', pay: 'harpatka_payments', st: 'harpatka_statuses', pf: 'harpatka_admin_prefs', sr: 'harpatka_sources', pm: 'harpatka_pay_methods', fin: 'harpatka_finance', finr: 'harpatka_finance_recurring', finlog: 'harpatka_finance_log', fintr: 'harpatka_finance_transfers' };
+  const T = { p: 'harpatka_participants', m: 'harpatka_meetings', a: 'harpatka_attendance', n: 'harpatka_notes', pr: 'harpatka_promoters', pp: 'harpatka_promoter_payments', pay: 'harpatka_payments', st: 'harpatka_statuses', pf: 'harpatka_admin_prefs', sr: 'harpatka_sources', pm: 'harpatka_pay_methods', fin: 'harpatka_finance', finr: 'harpatka_finance_recurring', finlog: 'harpatka_finance_log', fintr: 'harpatka_finance_transfers', ps: 'harpatka_public_settings' };
 
   /* חזרה בדפדפן: כל פתיחת פופאפ וכל כניסה למסך משנה בתוכו מוסיפות רשומת היסטוריה; חזרה בדפדפן חוזרת צעד אחד (מסך משנה ← המסך הראשי ← סגירה), וסגירה או חזרה בכפתורי המסך מנקות את הרשומות */
   const NAV = { stack: [], ignore: 0, fromPop: false };
@@ -1632,7 +1633,7 @@
       else top.d.close();
     } finally { NAV.fromPop = false; }
   });
-  const state = { prefs: {}, statuses: [], pstatuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, here: null, paidF: null, gender: null, sort: 'new', sent: null, bal: null, viewScopes: {}, attF: null, srcF: null, ageF: null, fin: [], finRec: [], finTr: [], finPeriod: 'all', finFilter: null };
+  const state = { pubSettings: {}, prefs: {}, statuses: [], pstatuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, here: null, paidF: null, gender: null, sort: 'new', sent: null, bal: null, viewScopes: {}, attF: null, srcF: null, ageF: null, fin: [], finRec: [], finTr: [], finPeriod: 'all', finFilter: null };
   /* קישור עמוק מהמייל: ?m=<מפגש>&p=<משתתף>; נשמר בזמן הכניסה עם גוגל (שמחזירה בלי הפרמטרים) */
   let deep = null;
   try {
@@ -2017,7 +2018,7 @@
   async function load(silent) {
     if (!silent) $('#status').innerHTML = '<div class="empty">טוען…</div>';
     try {
-      const [p, m, a, nn, prs, pps, pays, sts, pfs, pms, fin0, finr0, fintr0] = await Promise.all([
+      const [p, m, a, nn, prs, pps, pays, sts, pfs, pms, pubs, fin0, finr0, fintr0] = await Promise.all([
         api(T.p + '?select=*'),
         api(T.m + '?select=*'),
         api(T.a + '?select=after_key,participant_id,meeting_id,paid,pay_requested_at,status_key,created_at,exempt,attended,paid_amount,promoter_id,commission,paid_at,details_sent_at,will_pay,maybe,no_pay'),
@@ -2028,10 +2029,12 @@
         api(T.st + '?select=*').catch(() => null),
         api(T.pf + '?select=*').catch(() => null),
         api(T.pm + '?select=*&order=sort.asc').catch(() => null),
+        api(T.ps + '?select=*').catch(() => null),
         api(T.fin + '?select=*&order=entry_date.desc,created_at.desc').catch(() => null),
         api(T.finr + '?select=*&order=created_at.desc').catch(() => null),
         api(T.fintr + '?select=*&order=transfer_date.desc,created_at.desc').catch(() => null),
       ]);
+      state.pubSettings = Object.fromEntries((pubs || []).map((x) => [x.key, x.value]));
       state.fin = fin0 || []; state.finRec = finr0 || []; state.finTr = fintr0 || [];
       if (pms && pms.length) state.payMethods = pms.map((x) => Object.assign({}, x));
       if (pfs) { state.prefs = Object.fromEntries(pfs.map((x) => [String(x.email).toLowerCase(), x])); applyViewPrefs(); }
@@ -3230,6 +3233,7 @@
   const PAYBOX = 'https://links.payboxapp.com/zwi4JG24Y6b';
   const HE_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
   const dm = (m) => { const [, mo, d] = m.meeting_date.split('-').map(Number); return d + '.' + mo; };
+  const defMeetingName = () => String((state.pubSettings || {}).default_meeting_name || '').trim();
   const senderName = () => ((state.prefs[emailOf()] || {}).sender_name || '').trim() || SENDERS[emailOf()] || authorName();
   /* שם הכותב מוצג לפי השם שהוגדר בהגדרות ("שם השולח בהודעות") של אותו מנהל, ולא לפי שם חשבון הגוגל שנשמר בהערה */
   /* שם מנהל בכל המערכת: תמיד לפי מה שהוגדר בהגדרות ("השם שלי"), אחרת השם הקבוע; לעולם לא אימייל ולא שם חשבון הגוגל. בלי אימייל בכלל (הערות מערכת, הרשמה מהאתר): השם שנשמר ("מערכת") */
@@ -4013,7 +4017,7 @@
     const prev = m ? null : state.meetings.slice().sort((a, b) => (b.meeting_date + b.meeting_time).localeCompare(a.meeting_date + a.meeting_time))[0] || null;
     const src = m || prev || {};
     mForm.time.value = m ? String(m.meeting_time).slice(0, 5) : prev ? String(prev.meeting_time).slice(0, 5) : '20:00';   // מפגש חדש: כל השדות חוץ מהתאריך מועתקים מהמפגש הקודם
-    mForm.mname.value = src.name || '';
+    mForm.mname.value = m ? (m.name || '') : (defMeetingName() || src.name || '');   // מפגש חדש: שם ברירת המחדל מההגדרות, אחרת השם מהמפגש הקודם
     mForm.directions.value = src.directions || '';
     mForm.max.value = src.max_participants == null ? (m || prev ? '' : '40') : src.max_participants;
     mTiers = tiersOf(src); renderMTiers();   // מפגש חדש: מדרגות המחיר מועתקות מהמפגש הקודם
@@ -4293,9 +4297,17 @@
   function renderSettings() {
     const em = emailOf();
     $('#setMail').textContent = '';   // בלי אימייל בממשק: המנהל מזוהה בשם שהגדיר
-    { const si = $('#setSender'); if (document.activeElement !== si) si.value = senderName(); }
+    { const si = $('#setSender'); if (document.activeElement !== si) si.value = senderName(); const mi = $('#setMName'); if (document.activeElement !== mi) mi.value = defMeetingName(); }
     renderAttOpts(); $('#setSrcHint').textContent = state.promoters.length + ' דרכי הגעה'; $('#setPmHint').textContent = state.payMethods.map((x) => x.name).join(' · ');
   }
+  /* שם ברירת מחדל למפגש (הגדרה אחת לכל המערכת, בטבלת harpatka_public_settings): מוצע ביצירת מפגש חדש ומוצג בעמוד הבית למפגש בלי שם */
+  $('#setMName').addEventListener('change', async () => {
+    const v = $('#setMName').value.trim().slice(0, 80), prev = state.pubSettings.default_meeting_name;
+    state.pubSettings.default_meeting_name = v || '';
+    try { await api(T.ps, { method: 'POST', body: { key: 'default_meeting_name', value: v || null, updated_at: new Date().toISOString() }, prefer: 'resolution=merge-duplicates,return=minimal' }); toast(v ? 'שם ברירת המחדל למפגש: ' + v : 'שם ברירת המחדל נמחק'); }
+    catch (err) { state.pubSettings.default_meeting_name = prev || ''; fail(err); }
+    renderSettings();
+  });
   $('#setSender').addEventListener('change', async () => {
     const em = emailOf(), v = $('#setSender').value.trim().slice(0, 20), prev = state.prefs[em];
     state.prefs[em] = Object.assign({}, prev, { email: em, sender_name: v || null });

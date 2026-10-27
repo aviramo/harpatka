@@ -1114,19 +1114,20 @@
 
     /* ===== המפגשים: הקודם (אחד), הקרוב והעתידיים. אפשר להירשם לכל מפגש שעוד לא עבר. מקור: harpatka_meetings ומדרגות המחיר (harpatka_price_tiers); הצגה מיידית מהמטמון המקומי של הביקור הקודם ואז רענון ===== */
     const normT = t => (t && !Array.isArray(t) && Number.isFinite(Number(t.base))) ? { base: Number(t.base), steps: (Array.isArray(t.steps) ? t.steps : []).map(x => ({ days: Number(x.days), price: Number(x.price) })).filter(x => x.days >= 1 && Number.isFinite(x.price)) } : null;
-    const MEET_CACHE = 'harpatka_meetings_v11';
+    const MEET_CACHE = 'harpatka_meetings_v12';
     const meetingsReady = (async () => {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
       const H = { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey };
       const base = CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time,name,max_participants,directions,price_tiers';
       try {
-        const [fu, pa] = await Promise.all([
+        const [fu, pa, st] = await Promise.all([
           fetch(base + '&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc', { headers: H }),
-          fetch(base + '&meeting_date=lt.' + today + '&order=meeting_date.desc,meeting_time.desc&limit=2', { headers: H })
+          fetch(base + '&meeting_date=lt.' + today + '&order=meeting_date.desc,meeting_time.desc&limit=2', { headers: H }),
+          fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_public_settings?select=value&key=eq.default_meeting_name', { headers: H })
         ]);
         if (fu.ok && pa.ok) {
-          const f = await fu.json(), p = await pa.json();
-          const mk = r => ({ id: r.id, date: r.meeting_date, time: String(r.meeting_time).slice(0, 5), name: String(r.name || '').trim(), max: r.max_participants, tiers: normT(r.price_tiers), dir: String(r.directions || '').trim() });
+          const f = await fu.json(), p = await pa.json(), sv = st.ok ? await st.json() : [], defName = String((sv[0] && sv[0].value) || '').trim();   // שם ברירת מחדל: למפגש בלי שם
+          const mk = r => ({ id: r.id, date: r.meeting_date, time: String(r.meeting_time).slice(0, 5), name: String(r.name || '').trim() || defName, max: r.max_participants, tiers: normT(r.price_tiers), dir: String(r.directions || '').trim() });
           return { past: p.map(mk).reverse(), future: f.map(mk) };
         }
       } catch (e) {}
@@ -1437,7 +1438,7 @@
     }
   };
   let cached = null;
-  try { cached = JSON.parse(localStorage.getItem(typeof MEET_CACHE !== 'undefined' ? MEET_CACHE : 'harpatka_meetings_v11') || 'null'); } catch (e) {}
+  try { cached = JSON.parse(localStorage.getItem(typeof MEET_CACHE !== 'undefined' ? MEET_CACHE : 'harpatka_meetings_v12') || 'null'); } catch (e) {}
   if (cached && cached.future) render(cached);
   if (typeof meetingsReady !== 'undefined') meetingsReady.then((d) => { if (d) render(d); else if (!cached) render(null); });
   else if (!cached) render(null);
