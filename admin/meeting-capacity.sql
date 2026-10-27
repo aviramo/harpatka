@@ -9,5 +9,6 @@ begin
     -- מדרגות המחיר הן מידע ציבורי (מוצגות באתר): קריאה בלבד למבקרים
     execute format('drop policy if exists "harpatka public read tiers" on %I.harpatka_price_tiers', s);
     execute format('create policy "harpatka public read tiers" on %I.harpatka_price_tiers for select to anon using (true)', s);
+    execute format('grant select on %I.harpatka_price_tiers to anon', s);   -- בסכמת test אין הרשאות ברירת מחדל לטבלאות שהועתקו
   end loop;
 end $$;
