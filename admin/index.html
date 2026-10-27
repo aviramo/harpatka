@@ -1188,6 +1188,7 @@
     .row .main.bl { grid-template-columns: 54px minmax(0, max-content) minmax(0, 1fr) auto 38px 124px; }
     .row .main.bl .balic { grid-column: 5; }
     .row .main.bl .sidewrap { grid-column: 6; }
+    .hfilt.mid { background: var(--yellow-bg); border: 1px solid var(--yellow-bg); color: var(--yellow); }   /* התמדה בינונית: צהוב הפלטה */
 </style>
 </head>
 <body class="locked">
@@ -4040,7 +4041,7 @@
     const m = $('#fMenu'); if (!m.hidden && m.dataset.kind === kind) { closeF(); return; }
     if (kind === 'att') {   // תפריט דפוס הגעה: כל אפשרות עם הכמות שהייתה מוצגת (לפי שאר הסינונים והחיפוש)
       const keep = state.attF; state.attF = null; const q = state.q.trim().toLowerCase(), qd = digits(q), pool = state.participants.filter((p) => rowPass(p, q, qd)); state.attF = keep;
-      const row = (k, label, cls, n) => '<button type="button" role="menuitem" class="fopt" data-fv="' + k + '" aria-pressed="' + (keep === k || (!keep && k === '')) + '"><span class="hfilt ' + (cls === 'g' ? 'yes' : cls === 'r' ? 'no' : 'all') + '">' + (cls === 'y' ? '~' : cls === 'n' ? '–' : cls === 'x' ? '•' : cls === 'r' ? '✕' : '✓') + '</span><span>' + label + '</span><b class="fcnt">' + n + '</b></button>';
+      const row = (k, label, cls, n) => '<button type="button" role="menuitem" class="fopt" data-fv="' + k + '" aria-pressed="' + (keep === k || (!keep && k === '')) + '"><span class="hfilt ' + (cls === 'g' ? 'yes' : cls === 'r' ? 'no' : cls === 'y' ? 'mid' : 'all') + '">' + (cls === 'y' ? '~' : cls === 'n' ? '–' : cls === 'x' ? '•' : cls === 'r' ? '✕' : '✓') + '</span><span>' + label + '</span><b class="fcnt">' + n + '</b></button>';
       m.innerHTML = row('', 'הכל', 'x', pool.length) + ATT_OPTS_F.map((o, i) => (i === 4 ? '<div class="fsep" role="separator"></div>' : '') + row(o[0], o[1], o[2], pool.filter((p) => attMatch(p, o[0])).length)).join('');
       m.dataset.kind = kind; m.hidden = false;
       const r0 = anchor.getBoundingClientRect(), mw0 = m.offsetWidth;
