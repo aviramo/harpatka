@@ -737,6 +737,19 @@
     .row .ptag.cnt.y { background: var(--yellow-bg); color: var(--yellow); box-shadow: none; }
     .row .ptag.cnt.r { background: var(--red-bg); color: var(--red); box-shadow: none; }
     .row .ptag.empty { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); }
+    #viewMenu { display: block; width: min(300px, calc(100vw - 16px)); padding: 6px; }
+    #viewMenu[hidden] { display: none; }
+    #viewMenu .vrow { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 10px; border-radius: 14px; background: transparent; text-align: start; }
+    #viewMenu .vrow + .vrow { border-top: 1px solid var(--line); border-radius: 0 0 14px 14px; }
+    #viewMenu .vic { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--cream); color: var(--ink); }
+    #viewMenu .vic svg { width: 18px; height: 18px; }
+    #viewMenu .vtx { flex: 1 1 auto; min-width: 0; display: grid; gap: 1px; }
+    #viewMenu .vtx b { font-size: 16px; font-weight: 700; }
+    #viewMenu .vtx small { color: var(--muted); font-size: 12.5px; line-height: 1.3; }
+    #viewMenu .vsw { flex: 0 0 auto; position: relative; width: 38px; height: 22px; border-radius: 999px; background: var(--line); }
+    #viewMenu .vsw::after { content: ''; position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .15s; }
+    #viewMenu .vsw.on { background: var(--ink); }
+    #viewMenu .vsw.on::after { transform: translateX(-16px); }
     .qmenu { position: fixed; z-index: 300; background: var(--paper); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 14px 36px rgba(63,56,47,.24); padding: 6px; display: grid; gap: 5px; min-width: 150px; }
     .qmenu[hidden] { display: none; }
     .qmenu .qi { height: 42px; border-radius: 13px; font-weight: 700; font-size: 16px; padding: 0 16px; text-align: center; border: 1px solid transparent; }
@@ -1517,6 +1530,7 @@
   <div class="qmenu" id="qMenu" role="menu" hidden></div>
   <div class="qmenu" id="moreMenu" role="menu" hidden></div>
   <div class="qmenu" id="fMenu" role="menu" hidden></div>
+  <div class="qmenu" id="viewMenu" role="menu" hidden></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
@@ -1566,12 +1580,12 @@
       else top.d.close();
     } finally { NAV.fromPop = false; }
   });
-  const state = { prefs: {}, statuses: [], pstatuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, here: null, paidF: null, gender: null, sort: 'new', sent: null, bal: null, showTags: true, srcF: null, ageF: null, fin: [], finRec: [], finTr: [], finPeriod: 'all', finFilter: null };
+  const state = { prefs: {}, statuses: [], pstatuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, here: null, paidF: null, gender: null, sort: 'new', sent: null, bal: null, showTags: true, showSent: true, srcF: null, ageF: null, fin: [], finRec: [], finTr: [], finPeriod: 'all', finFilter: null };
   /* קישור עמוק מהמייל: ?m=<מפגש>&p=<משתתף>; נשמר בזמן הכניסה עם גוגל (שמחזירה בלי הפרמטרים) */
   let deep = null;
   try {
     const sp = new URLSearchParams(location.search);
-    if (['m', 'p', 'pay', 'at', 'pd', 'sv', 'bl', 'tg', 'tga', 'q', 'em', 'g', 's', 'st', 'pt', 'bd', 'pm', 'set', 'stv', 'pr', 'fin', 'sc', 'ag'].some((k) => sp.get(k))) { deep = { m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), at: sp.get('at'), pd: sp.get('pd'), sv: sp.get('sv'), bl: sp.get('bl'), tg: sp.get('tg'), tga: sp.get('tga'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g'), s: sp.get('s'), st: sp.get('st'), pt: sp.get('pt'), bd: sp.get('bd'), pm: sp.get('pm'), set: sp.get('set'), stv: sp.get('stv'), pr: sp.get('pr'), fin: sp.get('fin'), sc: sp.get('sc'), ag: sp.get('ag') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
+    if (['m', 'p', 'pay', 'at', 'pd', 'sv', 'bl', 'tg', 'tga', 'q', 'em', 'g', 's', 'st', 'pt', 'bd', 'pm', 'set', 'stv', 'pr', 'fin', 'sc', 'ag', 'se'].some((k) => sp.get(k))) { deep = { m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), at: sp.get('at'), pd: sp.get('pd'), sv: sp.get('sv'), bl: sp.get('bl'), tg: sp.get('tg'), tga: sp.get('tga'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g'), s: sp.get('s'), st: sp.get('st'), pt: sp.get('pt'), bd: sp.get('bd'), pm: sp.get('pm'), set: sp.get('set'), stv: sp.get('stv'), pr: sp.get('pr'), fin: sp.get('fin'), sc: sp.get('sc'), ag: sp.get('ag'), se: sp.get('se') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
     else { deep = JSON.parse(sessionStorage.getItem('harpatka_deep') || 'null'); }
   } catch (e) {}
   const $ = (s) => document.querySelector(s);
@@ -1588,6 +1602,7 @@
     if (state.sent) sp.set('sv', state.sent);
     if (state.bal) sp.set('bl', state.bal);
     if (!state.showTags) sp.set('tg', '0');
+    if (!state.showSent) sp.set('se', '0');
     if (state.gender) sp.set('g', state.gender);
     if (state.srcF) sp.set('sc', state.srcF);
     if (state.ageF) sp.set('ag', state.ageF);
@@ -1897,6 +1912,7 @@
   const FLOAT_MENUS = [
     { el: () => $('#cntMenu'), keep: '#cntMenu, .ptag.cnt', close: () => { const m = $('#cntMenu'); if (m) { m.hidden = true; m.dataset.pid = ''; } } },
     { el: () => $('#finPerMenu'), keep: '#finPerMenu, #finPerBtn', close: () => { $('#finPerMenu').hidden = true; $('#finPerBtn').setAttribute('aria-expanded', 'false'); } },
+    { el: () => $('#viewMenu'), keep: '#viewMenu, #viewBtn', close: () => closeView() },
     { el: () => $('#moreMenu'), keep: '#moreMenu, #moreBtn', close: () => { $('#moreMenu').hidden = true; $('#moreBtn').setAttribute('aria-expanded', 'false'); } },
     { el: () => $('#qMenu'), keep: '#qMenu', close: () => closeQ() },
     { el: () => $('#fMenu'), keep: '#fMenu', close: () => { $('#fMenu').hidden = true; $('#fMenu').dataset.kind = ''; } },
@@ -1989,6 +2005,7 @@
         if (d.sv === '1' || d.sv === '0') state.sent = d.sv;
         if (d.bl === '1' || d.bl === '0' || d.bl === 'n' || d.bl === 'f') state.bal = d.bl;
         if (d.tg === '0') state.showTags = false;
+        if (d.se === '0') state.showSent = false;
         if (d.g === 'male' || d.g === 'female' || d.g === 'none') state.gender = d.g;
         if (d.sc) state.srcF = d.sc;
         if (d.ag && AGE_B.some((x) => x[0] === d.ag)) state.ageF = d.ag;
@@ -2174,7 +2191,7 @@
     $('#moreBtn').classList.toggle('on', moreOn());   // יש סינון פעיל: "הכל" לא מסומן, ולחיצה עליו מאפסת הכול
     { const sc = state.participants.filter((q) => !state.filter || linkOf(q.id, state.filter)), both = sc.some((q) => q.gender === 'male') && sc.some((q) => q.gender === 'female'), allN = base.filter((p) => payOk(p)).length;
       $('#genderChips').innerHTML = '<button type="button" class="stc gall' + (allN ? '' : ' zero') + '" data-stg="all" aria-pressed="' + !anyF + '" title="' + (anyF ? 'איפוס סינוני השורה' : 'כל המוצגים ברשימה') + '">הכל <small>' + allN + '</small></button>' + ((eg || both) ? gchip('male', 'ז', 'gm') + gchip('female', 'נ', 'gf') : ''); }   // ליד כפתור התפריט בכותרת
-    const attOn = !!(state.filter && attendOpen(state.meetings.find((x) => x.id === state.filter))), evOn = !!(state.filter && evOnFor(state.meetings.find((x) => x.id === state.filter)));
+    const attOn = !!(state.filter && attendOpen(state.meetings.find((x) => x.id === state.filter))), evOn = !!(state.filter && state.showSent && evOnFor(state.meetings.find((x) => x.id === state.filter)));
     const hereOkNoSent = (p) => { const h = effHere(); return !h || (((linkOf(p.id, state.filter) || {}).attended) ? '1' : '0') === h; };   // הגעה רק מחצי שעה לפני המפגש (או במצב הגעה פתוח)
     const paidN = (v) => base.filter((p) => genOk(p) && hereOk(p) && matchPay(p, epk) && payF(p, v)).length;
     const pchip = (v, label, cls) => { const n = paidN(v); return '<button type="button" class="stc ' + cls + (n ? '' : ' zero') + '" data-stp="' + v + '" aria-pressed="' + (state.paidF === v && !!state.filter) + '">' + label + ' <small>' + n + '</small></button>'; };
@@ -2205,7 +2222,7 @@
     const sentN = (v) => base.filter((p) => { if (!genOk(p) || !paidOk(p) || !hereOkNoSent(p) || !matchPay(p, epk)) return false; const l = linkOf(p.id, state.filter); return !!l && evElig(p.id, l) && (l.details_sent_at ? '1' : '0') === v; }).length;
     $('#listHere').innerHTML = attOn ? fbtn('here', eh, hereN('1'), hereN('0')) : '';
     $('#listPay').innerHTML = state.filter ? fbtn('pay', (state.paidF === '1' || state.paidF === '0' || state.paidF === 'n' || /^a\d+$/.test(state.paidF || '')) ? state.paidF : null, paidN('1'), paidN('0')) : '';
-    { const tagsOn = state.showTags; const none = !state.pstatuses.length; $('#listTags').innerHTML = '<button type="button" class="hfilt ' + (!none && tagsOn ? 'on' : 'all') + '" data-tg="1" aria-pressed="' + (!none && tagsOn) + '" aria-label="תגיות משתתף" title="' + (none ? 'עוד לא הוגדרו תגיות: לחיצה פותחת את ההגדרות' : tagsOn ? 'הסתרת התגיות' : 'הצגת תגיות משתתף לסינון') + '">' + TAG_ICON + '</button>'; }
+    $('#listTags').innerHTML = '<button type="button" class="hfilt all" id="viewBtn" aria-haspopup="menu" aria-expanded="' + !$('#viewMenu').hidden + '" aria-label="תצוגה: תגיות ושליחת פרטי הערב" title="תצוגה: הפעלה וכיבוי של תגיות ושל שליחת פרטי הערב"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="5" rx="2.5"/><circle cx="17" cy="8.5" r="1.2" fill="currentColor"/><rect x="2" y="13" width="20" height="5" rx="2.5"/><circle cx="7" cy="15.5" r="1.2" fill="currentColor"/></svg></button>';   // כפתור אחד שפותח את הטוגלים
     $('#listBal').innerHTML = !state.filter ? fbtn('bal', effBal(), '', '') : '';
     $('#listSent').innerHTML = evOn ? fbtn('sent', effSent(), sentN('1'), sentN('0')) : '';
     requestAnimationFrame(alignFilters);   // שולם / לא שולם בשורת החיפוש מעל הרשימה
@@ -3212,7 +3229,7 @@
   const evOpenPref = () => { const v = (state.prefs[emailOf()] || {}).event_open; return EV_OPEN_OPTS.some((o) => o[0] === v) ? v : '09'; };
   const evOpenAt = (m) => { const [y, mo, d] = m.meeting_date.split('-').map(Number), [h, mi] = String(m.meeting_time).split(':').map(Number), v = evOpenPref(); if (v === 'always') return -Infinity; return v === 'day' ? Date.UTC(y, mo - 1, d, 0, 0) : v.length === 2 && Number(v) <= 23 && v[0] === '0' || v === '12' ? Date.UTC(y, mo - 1, d, Number(v), 0) : Date.UTC(y, mo - 1, d, h, mi) - Number(v) * 60000; };
   const evCircle = (p) => {
-    if (!state.filter) return '';   // עיגול שליחת פרטי הערב רק בתוך מפגש נבחר: בתצוגת "הכל" אין מפגש להקשר, ולא נשמרת עמודה ריקה
+    if (!state.filter || !state.showSent) return '';   // שליחת פרטי הערב כבויה בתפריט התצוגה   // עיגול שליחת פרטי הערב רק בתוך מפגש נבחר: בתצוגת "הכל" אין מפגש להקשר, ולא נשמרת עמודה ריקה
     const m = eventMeeting(); if (!m || (attendOpen(m) && evOpenPref() !== 'always')) return '';   // "תמיד" בהודעה לפני המפגש: הכפתור נשאר גם כשסימון ההגעה פתוח
     if (nowIL() < evOpenAt(m)) return '';   // מופיע מהרגע שהוגדר בהגדרות ← הודעה לפני המפגש (ברירת מחדל 9:00 בבוקר של יום המפגש)
     const l = evLink(p); if (!l || (!FORCE_EVENT_BTN && evAllSent(m) && !state.sent)) return '';
@@ -3979,10 +3996,27 @@
     const k = $('#fMenu').dataset.kind; if (k === 'here') state.here = v; else if (k === 'sent') state.sent = v; else if (k === 'bal') state.bal = v; else state.paidF = v;
     closeF(); render(); syncUrl();
   });
+  /* תפריט תצוגה: שני טוגלים, תגיות ושליחת פרטי הערב (נפתחת אוטומטית לפי ההגדרות; כאן אפשר לכבות או להחזיר) */
+  function renderViewMenu() {
+    const none = !state.pstatuses.length;
+    const row = (k, icon, label, hint, on) => '<button type="button" role="menuitemcheckbox" class="vrow" data-vt="' + k + '" aria-checked="' + on + '"><span class="vic">' + icon + '</span><span class="vtx"><b>' + label + '</b><small>' + hint + '</small></span><span class="vsw' + (on ? ' on' : '') + '" aria-hidden="true"></span></button>';
+    $('#viewMenu').innerHTML = row('tags', TAG_ICON, 'תגיות', none ? 'עוד לא הוגדרו תגיות (לחיצה פותחת הגדרות)' : 'פס תגיות המשתתפים לסינון', state.showTags && !none) + row('sent', PIN_ICON, 'שליחת פרטי הערב', 'עיגול שליחה וסינון, נפתח אוטומטית לפי ההגדרות', state.showSent);
+  }
+  const closeView = () => { const m = $('#viewMenu'); m.hidden = true; const b = $('#viewBtn'); if (b) b.setAttribute('aria-expanded', 'false'); };
   $('#listTags').addEventListener('click', (e) => {
-    const tg = e.target.closest('[data-tg]');
-    if (tg && !state.pstatuses.length) { openStatusSettings('participant'); return; }   // אין תגיות מוגדרות: פותח את הגדרת התגיות
-    if (tg) { state.showTags = !state.showTags; if (!state.showTags && state.pay) { const ks = payKeys(state.pay).filter((k) => !isPKey(k)); state.pay = ks.length ? ks.join(',') : null; } render(); syncUrl(); }   // הצגה / הסתרה של תגיות המשתתף בפס; הסתרה מנקה את בחירות התגיות
+    if (!e.target.closest('#viewBtn')) return;
+    const m = $('#viewMenu'); if (!m.hidden) { closeView(); return; }
+    renderViewMenu(); m.hidden = false; e.target.closest('#viewBtn').setAttribute('aria-expanded', 'true');
+    const r = e.target.closest('#viewBtn').getBoundingClientRect(), mw = m.offsetWidth;
+    m.style.left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8) + 'px'; m.style.top = (r.bottom + 6) + 'px';
+  });
+  $('#viewMenu').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-vt]'); if (!b) return;
+    if (b.dataset.vt === 'tags') {
+      if (!state.pstatuses.length) { closeView(); openStatusSettings('participant'); return; }   // אין תגיות מוגדרות: פותח את הגדרת התגיות
+      state.showTags = !state.showTags; if (!state.showTags && state.pay) { const ks = payKeys(state.pay).filter((k) => !isPKey(k)); state.pay = ks.length ? ks.join(',') : null; }
+    } else { state.showSent = !state.showSent; if (!state.showSent) state.sent = null; }
+    renderViewMenu(); render(); syncUrl();
   });
   $('.listbar').addEventListener('click', (e) => { const b = e.target.closest('[data-fk]'); if (b) openF(b.dataset.fk, b); });
   /* אייקוני הסינון בשורת "מוצגים" מיושרים לעמודות האייקונים ברשימה (₪ והגעה) */
