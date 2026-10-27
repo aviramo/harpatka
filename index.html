@@ -281,19 +281,32 @@
     .hv-cv{ position:absolute; inset:0; width:100%; height:100%; opacity:0; }
     .hv.on .hv-cv{ opacity:1; }
     .hv video{ pointer-events:none; }    /* ===== טופס הרשמה קצר (שם + טלפון) ===== */
-    /* ===== באנר עליון קבוע: ההצטמצמות צמודה לגלילה (--p = 0 בראש הדף, עד 1 אחרי ~110px) ===== */
-    #tbWrap{ position:relative; z-index:50; }
-    #tbWrap[hidden]{ display:none; }
-    #topbar{ --p:0; position:fixed; top:0; left:0; right:0; z-index:50; box-shadow:0 8px 20px -10px rgba(0,0,0,calc(var(--p) * .55)); }
-    #topbar > div{ padding-top:calc(.75rem - .3rem * var(--p)); padding-bottom:calc(.75rem - .3rem * var(--p)); }
-    #topbar .tb-pill{ overflow:hidden; max-height:calc(2rem * (1 - var(--p))); opacity:max(0, calc(1 - var(--p) * 1.7)); padding-top:calc(.25rem * (1 - var(--p))); padding-bottom:calc(.25rem * (1 - var(--p))); }
-    #topbar .tb-date{ margin-top:calc(.5rem * (1 - var(--p))); }
-    #topbar .tb-stage{ max-height:calc(1.3rem * (1 - var(--p))); opacity:max(0, calc(1 - var(--p) * 1.7)); margin-top:calc(.625rem * (1 - var(--p))); }
-    #topbar #barOld{ overflow:hidden; max-height:calc(1.5rem * (1 - var(--p))); opacity:max(0, calc(1 - var(--p) * 1.7)); margin-bottom:calc(.25rem * (1 - var(--p))); }
-    #topbar #barEarly{ overflow:hidden; max-height:calc(2.6rem * (1 - var(--p))); opacity:max(0, calc(1 - var(--p) * 1.7)); margin-top:calc(.375rem * (1 - var(--p))); }
-    #regFill{ transition:width 1.4s cubic-bezier(.22,1,.36,1); }
-    @media (prefers-reduced-motion:reduce){ #regFill{ transition:none; } }
-    #topbar #barPrice{ font-size:calc(1.5rem - .25rem * var(--p)); }
+    /* ===== רשימת המפגשים (מתחת ל"איפה נפגשים?"): הקודם, הקרוב (מודגש) והעתידיים; לכל מפגש תאריך, שעה, מקום, מקסימום משתתפים, מחיר ומדרגות המחיר ===== */
+    .mt-list{ display:flex; flex-direction:column; gap:.7rem; }
+    .mt-row{ border-radius:24px; background:#FFFDF9; box-shadow:0 0 0 1px rgba(232,213,190,.7); padding:1rem 1.25rem 1.05rem; display:flex; flex-direction:column; gap:.55rem; }
+    .mt-row .mt-top{ display:flex; align-items:center; justify-content:space-between; gap:.75rem; }
+    .mt-row .mt-d{ font-weight:600; font-size:1.1rem; line-height:1.25; }
+    .mt-row .mt-t{ font-size:.95rem; opacity:.72; }
+    .mt-row .mt-tag{ font-size:.85rem; font-weight:700; border-radius:999px; padding:.25rem .7rem; white-space:nowrap; background:#E8E2D8; color:#6b6459; }
+    .mt-row.past{ opacity:.62; }
+    .mt-row .mt-reg{ align-self:flex-start; display:inline-flex; align-items:center; justify-content:center; border-radius:999px; background:#C96F52; color:#FFFDF9; font-weight:700; font-size:1rem; padding:.55rem 1.3rem; min-height:44px; }
+    .mt-tiers{ display:flex; flex-wrap:wrap; gap:.4rem; }
+    .mt-tier{ display:inline-flex; align-items:baseline; gap:.35rem; border-radius:999px; padding:.3rem .75rem; font-size:.88rem; background:rgba(232,213,190,.45); color:#3F382F; line-height:1.2; }
+    .mt-tier b{ font-weight:700; }
+    .mt-tier.cur{ background:#3F382F; color:#FFFDF9; }
+    .mt-tier.done{ opacity:.5; text-decoration:line-through; }
+    .mt-next{ border-radius:28px; padding:1.5rem 1.35rem 1.4rem; text-align:center; color:#FFFDF9; background:linear-gradient(120deg,#0A2236 0%,#0F3A4D 55%,#1B6170 100%); min-height:15rem; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.55rem; }
+    .mt-next .mt-pill{ display:inline-flex; align-items:center; gap:.4rem; border-radius:999px; background:rgba(255,253,249,.18); color:#FFFDF9; font-weight:700; font-size:.85rem; padding:.3rem .8rem; line-height:1; }
+    .mt-next .mt-when{ font-weight:600; font-size:clamp(1.45rem,6vw,2.1rem); line-height:1.15; }
+    .mt-next .mt-sub{ font-size:1rem; opacity:.88; max-width:26rem; line-height:1.45; }
+    .mt-next .mt-tiers{ justify-content:center; }
+    .mt-next .mt-tier{ background:rgba(255,253,249,.16); color:#FFFDF9; }
+    .mt-next .mt-tier.cur{ background:#FFFDF9; color:#0F3A4D; }
+    .mt-next .mt-cta{ margin-top:.35rem; display:inline-flex; align-items:center; justify-content:center; border-radius:999px; background:#FFFDF9; color:#0F3A4D; font-weight:700; font-size:1.05rem; padding:.75rem 1.7rem; min-height:48px; }
+    .mt-next.sk .mt-pill, .mt-next.sk .mt-when, .mt-next.sk .mt-sub, .mt-next.sk .mt-tiers, .mt-next.sk .mt-cta{ color:transparent; background:rgba(255,253,249,.16); border-radius:12px; animation:mtPulse 1.4s ease-in-out infinite; pointer-events:none; }
+    .mt-next.sk .mt-when{ min-width:12rem; min-height:2rem; } .mt-next.sk .mt-sub{ min-width:15rem; min-height:1.3rem; } .mt-next.sk .mt-tiers{ min-width:14rem; min-height:2rem; } .mt-next.sk .mt-cta{ min-width:9.5rem; }
+    @keyframes mtPulse{ 0%,100%{ opacity:.55; } 50%{ opacity:1; } }
+    @media (prefers-reduced-motion:reduce){ .mt-next.sk *{ animation:none !important; } }
     .btn-ghost{
       display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
       border:1.5px solid rgba(63,56,47,.22); color:var(--ink); background:transparent; font-weight:600;
@@ -515,53 +528,6 @@
 
 <body class="grain">
   <a href="#register" class="skip-link">דילוג להצטרפות</a>
-
-  <!-- ====================== באנר "המפגש הבא": תאריך, שעה, מקום, מחיר (מחושב ב-JS) ושלב הרשמה (לפי תאריך) ====================== -->
-  <div id="tbWrap">
-  <div id="topbar" data-contact role="button" tabindex="0" aria-label="הרשמה למפגש הקרוב" class="relative z-10" style="background:linear-gradient(120deg,#0A2236 0%,#0F3A4D 55%,#1B6170 100%);color:#FFFDF9;cursor:pointer;">
-    <div class="max-w-2xl mx-auto px-5 py-3 flex items-center justify-between gap-3">
-      <div class="min-w-0 flex-1">
-        <p class="tb-pill flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-[.82rem] font-bold leading-none" style="background:#E9A68C;color:#3F382F"><span class="w-1.5 h-1.5 rounded-full" style="background:#663F4C" aria-hidden="true"></span>המפגש הבא</p>
-        <p class="tb-date font-display font-semibold leading-tight mt-2" style="font-size:clamp(.8rem,3.4vw,1.1rem)"><span id="barDate">יום ראשון 25.10</span> <span class="opacity-60" aria-hidden="true">·</span> <span id="barTime">20:00</span> <span class="opacity-60" aria-hidden="true">·</span> הרצליה</p>
-        <div class="tb-stage flex items-center gap-1.5 min-[375px]:gap-2 mt-2.5 leading-none whitespace-nowrap" style="font-size:clamp(.66rem,2.8vw,.88rem)">
-          <span id="regStage">ההרשמה התחילה</span>
-          <div class="h-[7px] rounded-full overflow-hidden" style="flex:1 1 1rem;min-width:.6rem;max-width:4.5rem;background:rgba(255,253,249,.25)" aria-hidden="true"><div id="regFill" class="h-full rounded-full" style="width:0%;background:#E9A68C"></div></div>
-          <span>עד 40 משתתפים</span>
-        </div>
-      </div>
-    </div>
-  </div>
-  </div>
-
-  <script>
-    /* באנר "המפגש הבא": הסטטוס, המחיר והתאריך מחושבים מיד בטעינה (מהמפגש ברירת המחדל), בלי להמתין לבסיס הנתונים, כדי שלא יוצג סטטוס ישן שמתחלף אחרי רגע.
-       סרגל ההתמלאות עולה באנימציה מ-0 עד הנקודה המתאימה. כשהמפגש מבסיס הנתונים מתקבל (meetingReady) הפונקציה רצה שוב עם הנתונים שלו. */
-    window.applyBanner = function (m) {
-      const el = id => document.getElementById(id);
-      /* אין מפגש עתידי: אין באנר */
-      if (!m) { if (el('tbWrap')) el('tbWrap').hidden = true; return; }
-      if (el('tbWrap')) el('tbWrap').hidden = false;
-      const day = s => { const [y, mm, d] = s.split('-').map(Number); return Date.UTC(y, mm - 1, d) / 864e5; };
-      const left = day(m.date) - day(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()));
-      const [, mo, dd] = m.date.split('-');
-      const heDay = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'][new Date(m.date + 'T12:00:00Z').getUTCDay()];
-      if (el('barDate')) el('barDate').textContent = 'יום ' + heDay + ' ' + Number(dd) + '.' + Number(mo);
-      if (el('barTime') && m.time) el('barTime').textContent = m.time;
-      const STAGES = [[15, 'ההרשמה התחילה', 25], [8, 'ההרשמה בעיצומה', 45], [4, 'המקומות מתמלאים', 65], [2, 'מעט מקומות נשארו', 85], [0, 'המקומות האחרונים', 95]];
-      let s = STAGES.find(x => left >= x[0]);
-      if (left < 0) s = [0, 'ההרשמה הסתיימה', 100];
-      if (!s) s = STAGES[0];
-      if (el('regStage')) el('regStage').textContent = s[1];
-      const fill = el('regFill');
-      if (fill) { if (!fill.dataset.go) { fill.dataset.go = '1'; requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => { fill.style.width = s[2] + '%'; }, 250))); } else fill.style.width = s[2] + '%'; }
-      // מחיר: 100 ₪ ב-3 הימים האחרונים, אחרת 80 ₪ (הנחת הרשמה מוקדמת)
-      const price = left <= 3 ? '100' : '80';
-      if (el('barPrice')) el('barPrice').textContent = price + ' ₪';
-      if (el('barEarly')) el('barEarly').hidden = price !== '80';
-      if (el('barOld')) el('barOld').hidden = price !== '80';
-    };
-    window.applyBanner(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()) <= '2026-10-25' ? { date: '2026-10-25', time: '20:00' } : null);   // חייב להתאים ל-MEETING_FALLBACK
-  </script>
 
   <!-- ====================== 1. HERO — מכתב הזמנה (מעטפת דואר בפסים): חוויה אנושית בלי מילים + מי מגיע + CTA ====================== -->
   <header id="hero" class="relative">
@@ -787,6 +753,25 @@
       </div>
     </div>
   </section>
+
+  <!-- ====================== המפגשים: הקודם, הקרוב (אפשר להירשם) והעתידיים (אפשר להירשם גם אליהם); נטען מבסיס הנתונים (harpatka_meetings, harpatka_price_tiers), מקום קבוע כך שהדף לא קופץ ====================== -->
+  <section id="meetings" class="relative pt-0 md:pt-2 pb-8 md:pb-10">
+    <div class="max-w-3xl mx-auto px-5 reveal">
+      <h2 class="h-sect text-center mb-5">המפגשים</h2>
+      <div class="mt-list" id="mList" aria-live="polite">
+        <div id="mPast" style="display:contents"></div>
+        <div class="mt-next sk" id="mNext">
+          <span class="mt-pill" id="mPill">המפגש הבא</span>
+          <div class="mt-when font-display" id="mWhen">&nbsp;</div>
+          <p class="mt-sub" id="mSub">&nbsp;</p>
+          <div class="mt-tiers" id="mTiers">&nbsp;</div>
+          <a href="#" data-contact class="mt-cta" id="mCta">הרשמה למפגש</a>
+        </div>
+        <div id="mLater" style="display:contents"></div>
+      </div>
+    </div>
+  </section>
+
 
 
     <!-- ====================== אז מה זה בעצם? (מעל "מי מלווה את המפגשים?", מתחת לסרטון) ====================== -->
@@ -1069,46 +1054,101 @@
     const shareBtn = document.getElementById('share');
     if (shareBtn) shareBtn.href = 'https://wa.me/?text=' + encodeURIComponent(location.origin + location.pathname);
 
-    /* ===== המפגש הבא: נטען מבסיס הנתונים (טבלת harpatka_meetings, המפגש הקרוב ביותר שעוד לא עבר, לפי שעון ישראל).
-       כשמפגש עובר הבאנר מתחלף אוטומטית לבא אחריו. אם הטעינה נכשלת או שאין מפגש: ברירת מחדל מהקוד ===== */
-    const MEETING_FALLBACK = { date: '2026-10-25', time: '20:00' };
-    const meetingReady = (async () => {
+    /* ===== המפגשים: הקודם (אחד), הקרוב והעתידיים. אפשר להירשם לכל מפגש שעוד לא עבר. מקור: harpatka_meetings ומדרגות המחיר (harpatka_price_tiers); הצגה מיידית מהמטמון המקומי של הביקור הקודם ואז רענון ===== */
+    const MEET_CACHE = 'harpatka_meetings_v3';
+    const meetingsReady = (async () => {
+      const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
+      const H = { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey };
+      const base = CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time,max_participants,directions';
       try {
-        const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
-        const r = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=meeting_date,meeting_time&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc&limit=1',
-          { headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey } });
-        const rows = r.ok ? await r.json() : [];
-        if (rows && rows[0]) return { date: rows[0].meeting_date, time: String(rows[0].meeting_time).slice(0, 5) };
-        if (r.ok) return null;   // אין מפגש עתידי
+        const [fu, pa, ti] = await Promise.all([
+          fetch(base + '&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc', { headers: H }),
+          fetch(base + '&meeting_date=lt.' + today + '&order=meeting_date.desc,meeting_time.desc&limit=1', { headers: H }),
+          fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_price_tiers?select=days,price&order=days.desc', { headers: H })
+        ]);
+        if (fu.ok && pa.ok) {
+          const f = await fu.json(), p = await pa.json(), t = ti.ok ? await ti.json() : [];
+          const mk = r => ({ id: r.id, date: r.meeting_date, time: String(r.meeting_time).slice(0, 5), max: r.max_participants, dir: String(r.directions || '').trim() });
+          return { past: p[0] ? mk(p[0]) : null, future: f.map(mk), tiers: t.map(x => ({ days: Number(x.days), price: Number(x.price) })) };
+        }
       } catch (e) {}
-      return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()) <= MEETING_FALLBACK.date ? MEETING_FALLBACK : null;
+      return null;
     })();
     const heDay = iso => ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'][new Date(iso + 'T12:00:00Z').getUTCDay()];
-
-    /* ===== באנר "המפגש הבא": תאריך, שעה ושלב הרשמה לפי המפגש מבסיס הנתונים, בלי חשיפת מספר נרשמים אמיתי.
-       שלב לפי כמה ימים נשארו עד המפגש: 15 ומעלה / 8 / 4 / 2 / 0 ===== */
-    meetingReady.then(m => window.applyBanner(m));
-
-    /* ===== ציר מחיר: 80 ₪ עד 21.10, 100 ₪ מ-22.10 (שלושת הימים האחרונים) ועד המפגש ב-25.10; הנקודה "היום" נעה על הציר.
-       הציר לא לינארי בכוונה: השנתה (22.10) תמיד באמצע, חצי שמאלי = מתחילת הציר (START) עד 22.10, חצי ימני = 22.10 עד המפגש ===== */
-    meetingReady.then(function(MEET){
-      if (!MEET) return;
-      const START = '2026-09-27', EVENT = MEET.date, RAISE_DAYS = 3;   // המחיר עולה תמיד RAISE_DAYS ימים לפני המפגש (מחושב מהמפגש בבסיס הנתונים)
-      const day = s => { const [y,m,d] = s.split('-').map(Number); return Date.UTC(y, m-1, d) / 864e5; };
-      const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());   // YYYY-MM-DD בשעון ישראל
-      const t = day(parts), a = day(START), c = day(EVENT), b = c - RAISE_DAYS;
-      let p;
-      if (t <= a) p = 0; else if (t < b) p = .5 * (t - a) / (b - a); else if (t <= c) p = .5 + .5 * (t - b) / (c - b); else p = 1;
-      const price = t >= b ? '100' : '80';
+    (function(){
       const el = id => document.getElementById(id);
-      if (el('priceNow')) el('priceNow').textContent = price + ' ₪';
-      if (el('barPrice')) el('barPrice').textContent = price + ' ₪';
-      if (price !== '80') { if (el('barEarly')) el('barEarly').hidden = true; if (el('barOld')) el('barOld').hidden = true; }
-      const pct = (p * 100).toFixed(2) + '%';
-      if (el('ptDot')) el('ptDot').style.left = pct;
-      if (el('ptNow')) el('ptNow').style.left = pct;
-      if (el('ptFill')) el('ptFill').style.width = pct;
-    });
+      const dayN = s => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d) / 864e5; };
+      const short = n => { const dt = new Date(n * 864e5); return dt.getUTCDate() + '.' + (dt.getUTCMonth() + 1); };
+      const label = m => { const [, mo, dd] = m.date.split('-'); return 'יום ' + heDay(m.date) + ' ' + Number(dd) + '.' + Number(mo); };
+      /* המקום והוראות ההגעה נלקחים משדה "הוראות הגעה" של המפגש (דף הניהול); בלי טקסט לא מוצג מקום */
+      const where = m => [m.dir, m.max ? 'עד ' + m.max + ' משתתפים' : ''].filter(Boolean).join('\n');
+      /* מדרגות המחיר של מפגש: המחיר הוא של המדרגה הגבוהה ביותר שמספר הימים שלה קטן או שווה לימים שנותרו עד המפגש.
+         לכל מדרגה טווח תאריכים (המדרגה הראשונה: עד התאריך, האחרונה: מהתאריך ועד המפגש), ומסומן מה שהיה (done), מה שעכשיו (cur) ומה שיהיה */
+      const tiersEl = (m, tiers, today) => {
+        const box = document.createElement('div'); box.className = 'mt-tiers';
+        const T = (tiers || []).slice().sort((a, b) => b.days - a.days);
+        if (!T.length) return null;
+        const md = dayN(m.date);
+        T.forEach((t, k) => {
+          const start = k === 0 ? null : md - T[k - 1].days + 1;          // מהיום הראשון שבו המדרגה הקודמת כבר לא חלה
+          const end = md - t.days;                                          // היום האחרון שבו המדרגה חלה
+          const last = k === T.length - 1;
+          const s0 = start, e0 = last ? md : end;
+          let txt = T.length === 1 ? '' : (s0 === null ? 'עד ' + short(e0) : last ? short(s0) + ' ואילך' : (s0 === e0 ? short(s0) : short(s0) + ' עד ' + short(e0)));
+          const isCur = today >= (s0 === null ? -Infinity : s0) && today <= (last ? md : e0);
+          const done = (last ? md : e0) < today;
+          const chip = document.createElement('span'); chip.className = 'mt-tier' + (isCur ? ' cur' : done ? ' done' : '');
+          const b = document.createElement('b'); b.textContent = t.price + ' ₪'; chip.append(b);
+          if (txt) chip.append(' ' + txt);
+          if (isCur) chip.title = 'המחיר כרגע'; box.append(chip);
+        });
+        return box;
+      };
+      const priceNow = (m, tiers, today) => { const left = dayN(m.date) - today; const T = (tiers || []).filter(x => x.days <= left).sort((a, b) => b.days - a.days)[0]; return T ? T.price : null; };
+      const reg = (m) => { window.HarpatkaRegister && window.HarpatkaRegister.open(false, m); };
+      const row = (m, tiers, today, past) => {
+        const r = document.createElement('div'); r.className = 'mt-row' + (past ? ' past' : '');
+        const top = document.createElement('div'); top.className = 'mt-top';
+        const a = document.createElement('div'); const d1 = document.createElement('div'); d1.className = 'mt-d'; d1.textContent = label(m) + ' · ' + m.time; const d2 = document.createElement('div'); d2.className = 'mt-t'; d2.style.whiteSpace = 'pre-line'; d2.textContent = where(m); a.append(d1, d2); top.append(a);
+        if (past) { const tag = document.createElement('span'); tag.className = 'mt-tag'; tag.textContent = 'התקיים'; top.append(tag); }
+        r.append(top);
+        const te = tiersEl(m, tiers, today); if (te) r.append(te);
+        if (!past) { const b = document.createElement('a'); b.href = '#'; b.className = 'mt-reg'; b.textContent = 'הרשמה למפגש'; b.addEventListener('click', e => { e.preventDefault(); reg(m); }); r.append(b); }
+        return r;
+      };
+      const render = (d) => {
+        const nextEl = el('mNext'); if (!nextEl) return;
+        const today = dayN(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()));
+        const todayIso = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
+        const future = (d.future || []).filter(m => m.date >= todayIso), nx = future[0] || null, tiers = d.tiers || [];
+        const past = el('mPast'); past.innerHTML = ''; if (d.past) past.append(row(d.past, tiers, today, true));
+        nextEl.classList.remove('sk');
+        const cta = el('mCta'), tiersBox = el('mTiers');
+        if (nx) {
+          el('mPill').textContent = 'המפגש הבא';
+          el('mWhen').textContent = label(nx) + ' · ' + nx.time;
+          el('mSub').textContent = where(nx); el('mSub').style.whiteSpace = 'pre-line';
+          const te = tiersEl(nx, tiers, today); tiersBox.replaceWith(te || Object.assign(document.createElement('div'), { id: 'mTiers' })); if (te) te.id = 'mTiers';
+          cta.textContent = 'הרשמה למפגש'; cta.__meeting = nx;
+        } else {
+          el('mPill').textContent = 'בקרוב';
+          el('mWhen').textContent = 'המפגש הבא בדרך אליכם';
+          el('mSub').style.whiteSpace = ''; el('mSub').textContent = 'רוצים לדעת ראשונים? השאירו פרטים ונעדכן ברגע שהתאריך נקבע';
+          tiersBox.replaceWith(Object.assign(document.createElement('div'), { id: 'mTiers' }));
+          cta.textContent = 'השארת פרטים'; cta.__meeting = null;
+        }
+        const later = el('mLater'); later.innerHTML = '';
+        future.slice(1).forEach(m => later.append(row(m, tiers, today, false)));
+      };
+      let cached = null;
+      try { cached = JSON.parse(localStorage.getItem(MEET_CACHE) || 'null'); } catch (e) {}
+      if (cached && cached.future) render(cached);
+      meetingsReady.then(d => {
+        if (!d) { if (!cached) render({ past: null, future: [], tiers: [] }); return; }
+        render(d);
+        try { localStorage.setItem(MEET_CACHE, JSON.stringify(d)); } catch (e) {}
+      });
+    })();
 
     /* ===== סרטון פתיחה: סרטון ביודנסה (4:5, 10 שניות), מושתק, מתנגן אוטומטית עד הסוף ונעצר בפריים האחרון.
        ?ad=N: סרטון מודעה N במקומו, נחתך ברגע שההזמנה בסרטון נכנסת (ads/video-cuts.json) ===== */
@@ -1249,28 +1289,6 @@
         if (h === HERO && !poster.hidden && !poster.complete) { poster.addEventListener('load', begin, { once: true }); poster.addEventListener('error', begin, { once: true }); }
         else begin();
       }).catch(fail);
-    })();
-
-    /* ===== באנר עליון קבוע: ההצטמצמות צמודה לגלילה (שומר גובה מקום קבוע כדי שהדף לא יקפוץ) ===== */
-    (function(){
-      const bar = document.getElementById('topbar'), wrap = document.getElementById('tbWrap'); if (!bar || !wrap) return;
-      const RANGE = 110;   // כמה פיקסלי גלילה עד המצב המצומצם המלא
-      let ticking = false;
-      const apply = () => {
-        ticking = false;
-        const y = window.scrollY || document.documentElement.scrollTop;
-        bar.style.setProperty('--p', Math.min(1, Math.max(0, y / RANGE)).toFixed(3));
-      };
-      const measure = () => {   // גובה המצב המלא, גם אם הדף נטען באמצע גלילה
-        const cur = bar.style.getPropertyValue('--p');
-        bar.style.setProperty('--p', '0'); const h = bar.offsetHeight; bar.style.setProperty('--p', cur || '0');
-        if (h) wrap.style.height = h + 'px';
-      };
-      measure(); apply();
-      window.addEventListener('load', measure); window.addEventListener('resize', measure);
-      if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
-      meetingReady.then(() => setTimeout(measure, 80));
-      window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(apply); } }, { passive: true });
     })();
 
     /* ====== Service Worker — מבטיח שכל רענון טוען את הגרסה האחרונה שפורסמה ======

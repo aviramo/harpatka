@@ -1381,6 +1381,7 @@
         <label class="field"><span>תאריך</span><input name="date" type="date" required /></label>
         <label class="field"><span>שעה</span><input name="time" type="time" required value="20:00" /></label>
       </div>
+      <label class="field"><span>מקסימום משתתפים</span><input name="max" type="number" inputmode="numeric" min="1" max="500" step="1" placeholder="ללא הגבלה" /></label>
       <label class="field"><span>הוראות הגעה</span><textarea name="directions" id="mDirs" rows="1" maxlength="800" placeholder="כתובת, חנייה, איך מגיעים"></textarea></label>
       <button class="btn" id="mSubmit" type="submit">יצירת מפגש</button>
       <button class="btn ghost" id="mDelete" type="button">מחיקת מפגש</button>
@@ -3966,6 +3967,7 @@
     mForm.date.value = m ? m.meeting_date : '';
     mForm.time.value = m ? String(m.meeting_time).slice(0, 5) : '20:00';
     mForm.directions.value = (m && m.directions) || '';
+    mForm.max.value = m ? (m.max_participants == null ? '' : m.max_participants) : '40';
     $('#mTitle').textContent = m ? 'עריכת מפגש' : 'מפגש חדש';
     $('#mSubmit').textContent = m ? 'שמירה' : 'יצירת מפגש';
     $('#mDelete').hidden = !m;
@@ -3980,7 +3982,7 @@
 
   mForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const body = { meeting_date: mForm.date.value, meeting_time: mForm.time.value || '20:00', directions: mForm.directions.value.trim() };
+    const body = { meeting_date: mForm.date.value, meeting_time: mForm.time.value || '20:00', directions: mForm.directions.value.trim(), max_participants: mForm.max.value === '' ? null : Math.max(1, Math.min(500, parseInt(mForm.max.value, 10) || 1)) };
     if (!body.meeting_date) { mForm.date.focus(); toast('חסר תאריך'); return; }
     const btn = $('#mSubmit'); btn.disabled = true;
     try {

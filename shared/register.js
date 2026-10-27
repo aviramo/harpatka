@@ -243,7 +243,7 @@
         const send = (extra) => fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_signup', {
           method: 'POST',
           headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' },
-          body: JSON.stringify(Object.assign({ p_first: first, p_last: last, p_phone: norm, p_age: age, p_gender: gender }, extra))
+          body: JSON.stringify(Object.assign({ p_first: first, p_last: last, p_phone: norm, p_age: age, p_gender: gender }, selMeeting && selMeeting.id ? { p_meeting: selMeeting.id } : {}, extra))
         });
         let res = await send(PAID ? { p_src: 'p' } : {});
         if (!res.ok && PAID) res = await send({});   // אם הפונקציה בבסיס הנתונים עוד לא עודכנה (admin/source.sql): ההרשמה נשמרת בלי הסימון
@@ -290,34 +290,44 @@
     el.setAttribute('href', waLinks[el.dataset.wa]);
   });
   const contactModal = document.getElementById('contactModal');
-  window.HarpatkaRegister = { open: (auto) => { if (contactModal) openModal(contactModal, auto === true); } };   // לשימוש עמודים אחרים
+  window.HarpatkaRegister = { open: (auto, meeting) => { selMeeting = meeting && meeting.id ? meeting : null; showMeeting(selMeeting || nearest); if (contactModal) openModal(contactModal, auto === true); } };   // לשימוש עמודים אחרים
   if (new URLSearchParams(location.search).has('register')) setTimeout(() => window.HarpatkaRegister.open(true), 500);   // הגעה דרך /register/: דף הבית נטען והפופאפ נפתח עליו
   document.querySelectorAll('[data-contact]').forEach(el => {
     el.setAttribute('href', '#');
-    el.addEventListener('click', (e) => { e.preventDefault(); if (contactModal) openModal(contactModal); });
-    if (el.getAttribute('role') === 'button') el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (contactModal) openModal(contactModal); } });   // אלמנט שאינו קישור (למשל הבאנר העליון) נגיש גם במקלדת
+    el.addEventListener('click', (e) => { e.preventDefault(); window.HarpatkaRegister.open(false, el.__meeting); });
+    if (el.getAttribute('role') === 'button') el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.HarpatkaRegister.open(false, el.__meeting); } });   // אלמנט שאינו קישור (למשל הבאנר העליון) נגיש גם במקלדת
   });
 
-  /* ===== המפגש הקרוב (תאריך ושעה בולטים בפופאפ) ומחיר בכפתור התשלום: 100 ₪ ב-3 הימים האחרונים לפני המפגש, אחרת 80 ₪ ===== */
+  /* ===== המפגש שנבחר להרשמה (ברירת מחדל: הקרוב) ומחיר בכפתור התשלום לפי מדרגות המחיר (harpatka_price_tiers; בלי מדרגות: 100 ₪ ב-3 הימים האחרונים, אחרת 80 ₪) ===== */
   const HE_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
   const dayN = (s) => { const [y, mm, d] = s.split('-').map(Number); return Date.UTC(y, mm - 1, d) / 864e5; };
+  let selMeeting = null, nearest = CONFIG.meetingFallback || { date: '2026-10-25', time: '20:00' }, tiers = null;
+  const priceFor = (left) => {
+    if (tiers && tiers.length) { const t = tiers.filter((x) => x.days <= left).sort((a, b) => b.days - a.days)[0] || tiers[tiers.length - 1]; return String(t.price); }
+    return left <= 3 ? '100' : '80';
+  };
   const showMeeting = (m) => {
     const [, mo, d] = m.date.split('-').map(Number), wd = HE_DAYS[new Date(m.date + 'T12:00:00Z').getUTCDay()];
     const when = 'יום ' + wd + ' ' + Number(d) + '.' + Number(mo) + (m.time ? ' · ' + m.time : '');
     document.querySelectorAll('[data-meeting-when]').forEach((e) => { e.textContent = when; });
     document.querySelectorAll('[data-meeting-place]').forEach((e) => { e.textContent = CONFIG.meetingPlace || ''; });
     const left = dayN(m.date) - dayN(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()));
-    const price = left <= 3 ? '100' : '80';
+    const price = priceFor(left);
     document.querySelectorAll('[data-price]').forEach((e) => { e.textContent = price + ' ₪'; });
   };
-  showMeeting(CONFIG.meetingFallback || { date: '2026-10-25', time: '20:00' });   // מיד, בלי להמתין לרשת
+  showMeeting(nearest);   // מיד, בלי להמתין לרשת
   (async () => {
+    const H = { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey };
     try {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
-      const r = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=meeting_date,meeting_time&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc&limit=1',
-        { headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey } });
-      const rows = r.ok ? await r.json() : [];
-      if (rows && rows[0]) showMeeting({ date: rows[0].meeting_date, time: String(rows[0].meeting_time).slice(0, 5) });
+      const [r, rt] = await Promise.all([
+        fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc&limit=1', { headers: H }),
+        fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_price_tiers?select=days,price', { headers: H })
+      ]);
+      const rows = r.ok ? await r.json() : [], tr = rt.ok ? await rt.json() : [];
+      if (tr && tr.length) tiers = tr.map((x) => ({ days: Number(x.days), price: Number(x.price) }));
+      if (rows && rows[0]) nearest = { id: rows[0].id, date: rows[0].meeting_date, time: String(rows[0].meeting_time).slice(0, 5) };
+      showMeeting(selMeeting || nearest);
     } catch (e) {}
   })();
 })();
