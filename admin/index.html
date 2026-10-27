@@ -2191,7 +2191,7 @@
   const effBal = () => (state.q.trim() || state.filter || !state.showPay) ? null : state.bal;
   const balOk = (p) => { const b = effBal(); return !b || balMatch(p, b); };
   /* סינון חכם לפי דפוס הגעה (תמונת מצב כללית): התמדה (ירוק/צהוב/אדום לפי הממוצע, כמו צבע הצ'יפ "הגיע X/Y"), הגיעו לכל המפגשים, אף פעם לא הגיעו, רשומים למפגש עתידי */
-  const ATT_OPTS_F = [['g', 'התמדה טובה', 'g'], ['y', 'התמדה בינונית', 'y'], ['r', 'התמדה נמוכה', 'r'], ['n', 'עוד אין מידע', 'n'], ['all', 'הגיעו לכל המפגשים', 'g'], ['never', 'לא הגיעו אף פעם', 'r'], ['fut', 'רשומים למפגש עתידי', 'n']];
+  const ATT_OPTS_F = [['g', 'התמדה טובה', 'g'], ['y', 'התמדה בינונית', 'y'], ['r', 'התמדה נמוכה', 'r'], ['n', 'עוד אין מידע', 'n'], ['all', 'הגיעו לכל המפגשים', 'g'], ['never', 'נרשמו ולא הגיעו אף פעם', 'r'], ['fut', 'רשומים למפגש עתידי', 'n'], ['nolink', 'לא משויכים לאף מפגש', 'n']];
   let attCache = null;
   function attCtx() {
     if (attCache) return attCache;
@@ -2210,7 +2210,7 @@
     const by = {}; state.participants.forEach((p) => { const pr = per[p.id], fut = linksOf(p.id).filter((l) => { const m = state.meetings.find((x) => x.id === l.meeting_id); return m && !started(m); }).length; by[p.id] = { came: pr.came, total: pr.total, fut, cls: !pr.total ? 'n' : clsOf[p.id], rank: rankOf[p.id] || 0, n: nR }; });
     return (attCache = { by });
   }
-  const attMatch = (p, k) => { const s = attCtx().by[p.id] || { came: 0, total: 0, fut: 0, cls: 'n' }; return k === 'all' ? (s.total > 0 && s.came === s.total) : k === 'never' ? (s.total > 0 && s.came === 0) : k === 'fut' ? s.fut > 0 : s.cls === k; };
+  const attMatch = (p, k) => { const s = attCtx().by[p.id] || { came: 0, total: 0, fut: 0, cls: 'n' }; return k === 'all' ? (s.total > 0 && s.came === s.total) : k === 'never' ? (s.total > 0 && s.came === 0) : k === 'fut' ? s.fut > 0 : k === 'nolink' ? linksOf(p.id).length === 0 : s.cls === k; };
   const effAttF = () => (state.q.trim() || state.filter || state.showAtt === false) ? null : state.attF;
   const attSumOk = (p) => { const k = effAttF(); return !k || attMatch(p, k); };
   const sentOk = (p) => { if (!balOk(p)) return false; const s = effSent(); if (!s) return true; const l = linkOf(p.id, state.filter); return sentMatch(p.id, l, s); };
