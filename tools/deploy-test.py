@@ -40,6 +40,8 @@ def build_test_admin():
     end = t.index('>\n', body_start) + 2
     t = t[:end] + testbar_div + t[end:]
     rep("schema: 'public'", "schema: 'test'")
+    # זמני (28.10.26, לבקשת בעל האתר): אופיר לא יכול להתחבר לדף הניהול של הבדיקות. להחזרה למחוק את שורת ה-rep הבאה. רק בדף הבדיקות (הדף האמיתי והמסד לא משתנים)
+    rep("if (!ADMINS.includes(emailOf())) {", "if (!ADMINS.includes(emailOf()) || emailOf() === 'ofir.aviram@gmail.com') {")
     rep("DB.key) };", "DB.key), 'Accept-Profile': 'test', 'Content-Profile': 'test' };   // סביבת בדיקות: סכמה test")
     js = ('<script>(function(){var els=[document.getElementById("testBadge")];'
           'function up(){els.forEach(function(e){try{e.hidePopover();e.showPopover();}catch(x){}});}up();'
