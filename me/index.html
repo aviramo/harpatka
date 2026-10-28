@@ -23,6 +23,7 @@
   .big { font-family: Rubik, sans-serif; font-weight: 700; font-size: 22px; }
   .muted { color: var(--muted); font-size: 15px; }
   .btn { display: block; width: 100%; border: 0; border-radius: 999px; padding: 14px 18px; font: inherit; font-weight: 700; font-size: 18px; text-align: center; text-decoration: none; cursor: pointer; background: var(--terra); color: #fff; margin-top: 12px; }
+  .btn.pay { background: var(--green); }   /* כפתור התשלום: הירוק הכהה של הפלטה (אין להמציא צבעים) */
   .btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
   .btn[disabled] { opacity: .5; cursor: default; }
   .chip { display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 999px; font-size: 14px; font-weight: 700; background: var(--cream); color: var(--muted); }
@@ -58,10 +59,12 @@
   .dethead:focus, .mthead:focus { outline: none; }
   .mtg { border-top: 1px solid var(--line); }
   .mtg:first-of-type { border-top: 0; }
-  .mthead { display: grid; grid-template-columns: 4.9em 3em 2.9em minmax(0, 1fr) 22px; align-items: center; column-gap: 6px; font-size: 15px; width: 100%; padding: 14px 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; text-align: start; }
-  .mthead .c1, .mthead .c2 { font-weight: 700; white-space: nowrap; }   /* שם היום, תאריך ושעה: עמודות קבועות, כמו טבלה */
-  .mthead .c3 { color: var(--muted); white-space: nowrap; }
-  .mthead .c4 { justify-self: end; }
+  .mthead { display: grid; grid-template-columns: 4.9em 7.2em minmax(0, 1fr) 22px; align-items: center; column-gap: 6px; row-gap: 4px; font-size: 15px; width: 100%; padding: 14px 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; text-align: start; }
+  .mthead .c1, .mthead .c2 { font-weight: 700; white-space: nowrap; }   /* שם היום, תאריך ושעה מחוברים, ועיר: עמודות קבועות, כמו טבלה */
+  .mthead .c3 { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mthead svg { grid-column: 4; grid-row: 1 / span 2; }
+  .mthead .c5 { grid-column: 1 / 4; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+  .mthead .mtname { color: var(--muted); font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .mthead .chip { white-space: nowrap; font-size: 13px; padding: 0 10px; }
   .mthead svg { width: 22px; height: 22px; color: var(--muted); transition: transform .35s ease; flex: 0 0 auto; }
   .mtg.open .mthead svg { transform: rotate(180deg); }
@@ -83,7 +86,7 @@
   <div id="app"><div class="center">טוען…</div></div>
 </div>
 <script src="../shared/config.js"></script>
-<script src="../shared/person-form.js?v=20261028k"></script>
+<script src="../shared/person-form.js?v=20261028m"></script>
 <script>
 (() => {
   const DB = {
@@ -190,13 +193,12 @@
     const chev = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
     const meetingBody = (m) => {
       const paid = Number(m.paid) > 0, free = !!m.free; let b = '';
-      if (m.name || m.city) b += '<div class="muted">' + esc([m.name, m.city].filter(Boolean).join(' · ')) + '</div>';
       if (m.directions) b += '<div class="muted dirs">' + esc(m.directions) + '</div>';
       if (m.future) {
         if (!m.registered) b += '<button type="button" class="btn" data-reg="' + m.id + '">שמירת מקום</button><div class="msg" data-rm="' + m.id + '"></div>';
         else {
           b += '<div style="margin-top:10px"><span class="chip ok">נרשמתם ✓</span> ' + (free ? '<span class="chip sky">חינם</span>' : paid ? '<span class="chip ok">שולם ' + ils(m.paid) + '</span>' : '<span class="chip no">טרם שולם</span>') + '</div>';
-          if (!paid && !free && CFG.payboxLink) b += '<a class="btn" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">תשלום ' + (m.price ? ils(m.price) : '') + ' בפייבוקס</a><p class="muted" style="margin:8px 0 0">המקום נשמר אחרי התשלום</p>';
+          if (!paid && !free && CFG.payboxLink) b += '<a class="btn pay" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">תשלום ' + (m.price ? ils(m.price) : '') + ' בפייבוקס</a><p class="muted" style="margin:8px 0 0;text-align:center">המקום נשמר אחרי התשלום</p>';
           if (!m.attended) b += '<button type="button" class="btn ghost" data-unreg="' + m.id + '">ביטול רישום</button><div class="msg" data-um="' + m.id + '"></div>';
         }
       } else b += '<div style="margin-top:10px">' + (m.attended ? '<span class="chip ok">הגעתם</span>' : '<span class="chip">לא הגעתם</span>') + ' ' + (free ? '<span class="chip sky">חינם</span>' : paid ? '<span class="chip ok">שולם ' + ils(m.paid) + '</span>' : '<span class="chip no">לא שולם</span>') + '</div>';
@@ -205,7 +207,7 @@
     const rowHtml = (m) => {
       const open = m.id === firstId;
       const badge = m.future ? (m.registered ? (Number(m.paid) > 0 || m.free ? '<span class="chip ok">נרשמתם ✓</span>' : '<span class="chip no">טרם שולם</span>') : '<span class="chip">פתוח להרשמה</span>') : (m.attended ? '<span class="chip ok">הגעתם</span>' : '<span class="chip">לא הגעתם</span>');
-      return '<div class="mtg' + (open ? ' open' : '') + '" data-mid="' + m.id + '"><button type="button" class="mthead" aria-expanded="' + open + '"><span class="c1">' + esc(dayParts(m.date).day) + '</span><span class="c2">' + esc(dayParts(m.date).date) + '</span><span class="c3"><bdi dir="ltr">' + esc(m.time) + '</bdi></span><span class="c4">' + badge + '</span>' + chev + '</button><div class="mtfold"><div>' + meetingBody(m) + '</div></div></div>';
+      return '<div class="mtg' + (open ? ' open' : '') + '" data-mid="' + m.id + '"><button type="button" class="mthead" aria-expanded="' + open + '"><span class="c1">' + esc(dayParts(m.date).day) + '</span><span class="c2"><bdi dir="ltr">' + esc(dayParts(m.date).date) + ' · ' + esc(m.time) + '</bdi></span><span class="c3">' + esc(m.city || '') + '</span>' + chev + '<span class="c5"><span class="mtname">' + esc(m.name || '') + '</span>' + badge + '</span></button><div class="mtfold"><div>' + meetingBody(m) + '</div></div></div>';
     };
     // שתי רשימות: מפגשים שנרשמתי אליהם, ומפגשים עתידיים שעוד לא נרשמתי אליהם ואפשר להצטרף (מהחדש לישן)
     const mine = ordered.filter((m) => m.registered), joinable = ordered.filter((m) => m.future && !m.registered);
