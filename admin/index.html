@@ -3795,7 +3795,7 @@
   }
   function openDeposit(mid) {
     const f = pForm, pid = sheet && sheet.id, m = mid ? state.meetings.find((x) => x.id === mid) : null;
-    sheet.depMid = m ? m.id : null; sheet.depCr = false;   // depCr: תשלום מהיתרה (בלי קבלת כסף חדש)
+    sheet.depMid = m ? m.id : null; sheet.depCr = false; sheet.depTyped = false;   // depCr: תשלום מהיתרה (בלי קבלת כסף חדש)
     f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; f.pay_depm.value = 'paybox'; f.pay_depn.value = ''; $('#depOtherField').hidden = true;
     { const al = m ? Math.max(0, allocatedOf(pid, m.id)) : 0, pr0 = m ? suggestPrice(pid, m) : 0; f.pay_dep.value = !m ? '' : al <= 0 ? pr0 : al < pr0 ? pr0 - al : ''; }   // מפגש ששולם חלקית: המוצע הוא היתרה
     { const pp = state.participants.find((x) => x.id === pid), lk = m && linkOf(pid, m.id), np = !!(m && pp && noPayOf(pp, lk)); $('#depFields').hidden = np; $('#depFree').hidden = !np; }
@@ -3824,7 +3824,7 @@
         sheet.depCr = !free;
         $('#depMethods').innerHTML = freeChip + '<button type="button" role="radio" data-cr="1" aria-pressed="' + !free + '">מהיתרה ₪' + nfm(crAvail()) + '</button>';
         pkgF.hidden = true; $('#depOtherField').hidden = true;
-        if (!free && !(parseFloat(f.pay_dep.value) > 0)) f.pay_dep.value = Math.min(needNow(), crAvail());
+        { const cv = parseFloat(f.pay_dep.value); if (!free && (!(cv > 0) || (cv > crAvail() + 0.001 && !sheet.depTyped))) f.pay_dep.value = Math.min(needNow(), crAvail()); }   // בתשלום מהיתרה הסכום המוצע לא עולה על היתרה (גם אם המחיר או הסכום שדווח גבוהים ממנה)
         f.pay_dep.max = String(crAvail()); return;
       }
       sheet.depCr = false; f.pay_dep.removeAttribute('max');
@@ -3870,7 +3870,7 @@
     };
     sheet.paintMeth = paintMeth; paintMeth();
     const paintPkg = () => { const n = parseInt(f.pay_pkg.value, 10), a = parseFloat(f.pay_dep.value); $('#depPkgHint').innerHTML = n >= 2 && a > 0 ? 'מחיר למפגש בחבילה: <b>₪' + nfm(Math.round(a / n)) + '</b>. ' + (m ? 'המפגש הזה ועוד עד ' + (n - 1) + ' מפגשים קרובים משויכים ייפרעו מיד, והשאר ייפרעו בשיוך' : 'כל שיוך למפגש ייקח את הסכום הזה מהיתרה, עד ' + n + ' מפגשים') : ''; };
-    f.pay_pkg.oninput = paintPkg; f.pay_dep.oninput = paintPkg;
+    sheet.depTyped = false; f.pay_pkg.oninput = paintPkg; f.pay_dep.oninput = () => { sheet.depTyped = true; paintPkg(); };
     goView('deposit'); if (document.activeElement && document.activeElement.blur) document.activeElement.blur();   // בלי פוקוס אוטומטי: המקלדת לא עולה בכניסה למסך
   }
   $('#walAdd').addEventListener('click', () => openDeposit(null));
@@ -3920,6 +3920,7 @@
   $('#depSave').addEventListener('click', () => {
     const f = pForm, pid = sheet && sheet.id, amt = parseFloat(f.pay_dep.value); if (!pid) return;
     if (!(amt > 0)) { f.pay_dep.focus(); return; }
+    if (sheet.depCr && sheet.depMid && amt > Math.max(0, creditOf(pid)) + 0.001) { toast('אין מספיק יתרה: היתרה ₪' + nfm(Math.max(0, creditOf(pid)))); return; }   // לפני פופאפ האישור
     const mid = sheet.depMid || null, mt = f.pay_depm.value, pm = state.payMethods.find((x) => x.key === mt);
     const src = sheet.depCr && mid ? 'מהיתרה' : (mt === 'other' ? (f.pay_depn.value.trim() || 'אחר') : (pm ? pm.name : mt));
     const html = 'סכום: <b>' + ils(amt) + '</b><br>' + (sheet.depCr && mid ? 'ירד מהיתרה של המשתתף' : 'דרך: <b>' + esc(src) + '</b>') + (mid ? '' : '<br>התשלום ייכנס ליתרה של המשתתף');
