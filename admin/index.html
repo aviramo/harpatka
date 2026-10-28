@@ -820,6 +820,8 @@
     .pviewsub[hidden] { display: none; }
     .metchips { display: flex; gap: 6px; flex-wrap: wrap; margin: 2px 0 8px; }
     .metchips button { height: 32px; border-radius: 999px; padding: 0 12px; background: #fff; box-shadow: inset 0 0 0 1px var(--line); font-weight: 700; font-size: 14px; color: var(--muted); }
+    #depMode[hidden], #depQuick[hidden], #depMethods:empty { display: none; }
+    #depMode button { flex: 1; justify-content: center; }
     .metchips button[aria-pressed="true"] { background: var(--ink); color: var(--paper); box-shadow: none; }
     .pnrow.compact { padding: 6px 12px; margin: 2px 0 6px; min-height: 0; }
     .pnrow.compact .setl b { font-size: 15px; }
@@ -1379,7 +1381,8 @@
       <div class="ppanel" data-panel="deposit" hidden>
         <p class="sthint" id="depIntro" style="margin:0 2px 12px">תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש</p>
         <div id="depLines" class="deplines" hidden></div>
-        <h4 class="depsec" id="depAddTitle" hidden>חינם או תשלום</h4>
+        <h4 class="depsec" id="depAddTitle" hidden>הקצאה למפגש</h4>
+        <div class="metchips" id="depMode" role="radiogroup" aria-label="סוג ההקצאה" hidden></div>
         <div class="metchips" id="depMethods" role="radiogroup" aria-label="דרך העברה"></div>
         <div id="depFree" hidden><p class="sthint" style="margin:12px 2px">המפגש סומן חינם ולא נדרש תשלום. בחירה בדרך תשלום או בהקצאה מהיתרה תבטל את החינם</p></div>
         <div id="depFields">
@@ -3669,36 +3672,52 @@
     f.pay_depm.innerHTML = METH.map((x) => '<option value="' + esc(x[0]) + '">' + esc(x[1]) + '</option>').join('') + '<option value="other">אחר</option>'; f.pay_depm.value = METH.length ? METH[0][0] : 'other';
     const isFree = () => { const pp = state.participants.find((x) => x.id === pid), lk = m && linkOf(pid, m.id); return !!(m && pp && lk && noPayOf(pp, lk)); };
     const crAvail = () => m ? Math.max(0, creditOf(pid)) : 0;
-    const paintMeth = () => { paintDepLines(); const free = isFree(); const debt = !!sheet.depDebt && !free; if (m && crAvail() > 0 && !free && !debt) sheet.depCr = true; const cr = !!sheet.depCr && !free && !debt;   // יש יתרה: קודם כל משתמשים בה, ורק אחרי שנגמרה נפתחות שאר האפשרויות
-      if (m && crAvail() > 0 && !free && !debt) {   // יש יתרה: קודם כל משתמשים בה (אפשר להקצות רק חלק ממנה); שאר דרכי התשלום נפתחות כשהיתרה נגמרת
-        $('#depMethods').innerHTML = (linkOf(pid, m.id) ? '<button type="button" role="radio" data-free="1" aria-pressed="false"><span class="nps">₪</span>חינם</button>' : '') + '<button type="button" role="radio" data-cr="1" aria-pressed="true">מהיתרה ₪' + nfm(crAvail()) + '</button>' + (m && linkOf(pid, m.id) ? '<button type="button" role="radio" data-debt="1" aria-pressed="' + !!sheet.depDebt + '">חוב</button>' : '');
-        $('#depFields').hidden = false; $('#depPkgSel').closest('.field').hidden = true;
-        if (!(parseFloat(f.pay_dep.value) > 0)) { const al = Math.max(0, allocatedOf(pid, m.id)), need = Math.max(0, expectedPrice(pid, m) - al); f.pay_dep.value = Math.min(need || expectedPrice(pid, m), crAvail()); }
+    const needNow = () => { const al = Math.max(0, allocatedOf(pid, m.id)); return Math.max(0, expectedPrice(pid, m) - al) || expectedPrice(pid, m); };
+    /* שלוש אפשרויות למעלה: משלם / חינם / חוב. משלם: כל אפשרויות התשלום למטה; חינם: למטה כלום; חוב: למטה רק סכום */
+    const paintMeth = () => {
+      paintDepLines();
+      const hasL = !!(m && linkOf(pid, m.id)), free = isFree(), debt = hasL && !free && !!sheet.depDebt, mode = free ? 'free' : debt ? 'debt' : 'pay';
+      $('#depMode').hidden = !hasL;
+      $('#depMode').innerHTML = hasL ? [['pay', 'משלם'], ['free', 'חינם'], ['debt', 'חוב']].map((x) => '<button type="button" role="radio" data-mode="' + x[0] + '" aria-pressed="' + (mode === x[0]) + '">' + x[1] + '</button>').join('') : '';
+      $('#depFree').hidden = true;
+      $('#depFields').hidden = mode === 'free';
+      const pkgF = $('#depPkgSel').closest('.field');
+      if (mode === 'free') { $('#depMethods').innerHTML = ''; return; }
+      if (mode === 'debt') { $('#depMethods').innerHTML = ''; pkgF.hidden = true; $('#depQuick').hidden = true; $('#depOtherField').hidden = true; $('#depPkgHint').textContent = ''; f.pay_dep.removeAttribute('max'); sheet.depCr = false; return; }
+      $('#depQuick').hidden = false;
+      if (m && crAvail() > 0) {   // יש יתרה: קודם כל משתמשים בה (אפשר להקצות רק חלק ממנה); שאר דרכי התשלום נפתחות כשהיתרה נגמרת
+        sheet.depCr = true;
+        $('#depMethods').innerHTML = '<button type="button" role="radio" data-cr="1" aria-pressed="true">מהיתרה ₪' + nfm(crAvail()) + '</button>';
+        pkgF.hidden = true; $('#depOtherField').hidden = true;
+        if (!(parseFloat(f.pay_dep.value) > 0)) f.pay_dep.value = Math.min(needNow(), crAvail());
         f.pay_dep.max = String(crAvail()); return;
       }
-      if (debt) f.pay_dep.removeAttribute('max');
-      $('#depFields').hidden = free; $('#depMethods').innerHTML = (m && linkOf(pid, m.id) ? '<button type="button" role="radio" data-free="1" aria-pressed="' + free + '"><span class="nps">₪</span>חינם</button>' : '') + (crAvail() > 0 ? '<button type="button" role="radio" data-cr="1" aria-pressed="' + cr + '">מהיתרה ₪' + nfm(crAvail()) + '</button>' : '') + (m && linkOf(pid, m.id) ? '<button type="button" role="radio" data-debt="1" aria-pressed="' + !!sheet.depDebt + '">חוב</button>' : '') + (m && crAvail() > 0 ? '' : METH.map((x) => '<button type="button" role="radio" data-m="' + x[0] + '" aria-pressed="' + (!free && !cr && !debt && f.pay_depm.value === x[0]) + '">' + x[1] + '</button>').join('')); $('#depPkgSel').closest('.field').hidden = cr || debt; };
+      sheet.depCr = false; f.pay_dep.removeAttribute('max');
+      $('#depMethods').innerHTML = METH.map((x) => '<button type="button" role="radio" data-m="' + x[0] + '" aria-pressed="' + (f.pay_depm.value === x[0]) + '">' + x[1] + '</button>').join('');
+      pkgF.hidden = false; $('#depOtherField').hidden = f.pay_depm.value !== 'other';
+    };
     f.pay_depm.onchange = () => { $('#depOtherField').hidden = f.pay_depm.value !== 'other'; paintMeth(); if (f.pay_depm.value === 'other') f.pay_depn.focus(); };
-    $('#depMethods').onclick = async (e) => {
-      const fb = e.target.closest('[data-free]'), b = e.target.closest('[data-m]'), cb = e.target.closest('[data-cr]'), db = e.target.closest('[data-debt]');
-      if (db) {   // חוב: הקצאה למפגש בלי תשלום; היתרה של המשתתף יורדת מתחת לאפס (חוב) עד שיתקבל תשלום
-        if (isFree()) await setNoPay(false, paintMeth);
-        sheet.depDebt = true; sheet.depCr = false; const al = Math.max(0, allocatedOf(pid, m.id)); f.pay_dep.value = Math.max(0, expectedPrice(pid, m) - al) || expectedPrice(pid, m); f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; paintMeth(); return;
-      }
-      sheet.depDebt = false;
-      if (fb) {   // חינם וקיום הקצאות לא יכולים להיות יחד: סימון חינם מסיר את ההקצאות (הכסף חוזר ליתרה)
-        sheet.depCr = false; if (isFree()) return;
+    $('#depMode').onclick = async (e) => {
+      const b = e.target.closest('[data-mode]'); if (!b || !m) return;
+      const md = b.dataset.mode;
+      if (md === 'free') {   // חינם והקצאות לא יכולים להיות יחד: סימון חינם מסיר את ההקצאות (הכסף חוזר ליתרה)
+        sheet.depDebt = false; sheet.depCr = false; if (isFree()) return;
         const rows = state.payments.filter((x) => x.participant_id === pid && x.meeting_id === m.id && x.kind === 'payment');
         try { for (const r of rows) await removeAlloc(r); } catch (err) { fail(err); }
         await setNoPay(true, paintMeth); depLinesRefresh();
         toast(rows.length ? 'המפגש סומן חינם, ההקצאות הוסרו והכסף נשאר ביתרה' : 'המפגש סומן חינם');
         return;
       }
-      if (cb) {   // תשלום מהיתרה: הסכום המוצע הוא מה שנשאר לשלם על המפגש (עד היתרה)
-        if (isFree()) await setNoPay(false, paintMeth);
-        sheet.depCr = true; const al = Math.max(0, allocatedOf(pid, m.id)), need = Math.max(0, expectedPrice(pid, m) - al); f.pay_dep.value = Math.min(need || expectedPrice(pid, m), crAvail()); f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; paintMeth(); return;
-      }
-      if (b) { sheet.depCr = false; if (isFree()) await setNoPay(false, paintMeth); f.pay_depm.value = b.dataset.m; f.pay_depm.onchange(); }
+      if (isFree()) await setNoPay(false, paintMeth);
+      f.pay_pkg.value = ''; $('#depPkgHint').textContent = '';
+      if (md === 'debt') { sheet.depDebt = true; sheet.depCr = false; f.pay_dep.value = needNow(); }   // חוב: הקצאה בלי כסף; היתרה יורדת מתחת לאפס עד שיתקבל תשלום
+      else { sheet.depDebt = false; f.pay_dep.value = crAvail() > 0 ? Math.min(needNow(), crAvail()) : needNow(); }
+      paintMeth();
+    };
+    $('#depMethods').onclick = (e) => {
+      const b = e.target.closest('[data-m]'), cb = e.target.closest('[data-cr]');
+      if (cb) { f.pay_dep.value = Math.min(needNow(), crAvail()); f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; paintMeth(); return; }
+      if (b) { f.pay_depm.value = b.dataset.m; f.pay_depm.onchange(); }
     };
     sheet.paintMeth = paintMeth; paintMeth();
     const paintPkg = () => { const n = parseInt(f.pay_pkg.value, 10), a = parseFloat(f.pay_dep.value); $('#depPkgHint').innerHTML = n >= 2 && a > 0 ? 'מחיר למפגש בחבילה: <b>₪' + nfm(Math.round(a / n)) + '</b>. ' + (m ? 'המפגש הזה ועוד עד ' + (n - 1) + ' מפגשים קרובים משויכים ייפרעו מיד, והשאר ייפרעו בשיוך' : 'כל שיוך למפגש ייקח את הסכום הזה מהיתרה, עד ' + n + ' מפגשים') : ''; };
