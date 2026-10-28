@@ -3832,6 +3832,10 @@
         confirmAct('חינם: למחוק את ההקצאה למפגש?', pid, m.id, () => switchLocked('free'), 'מוקצים למפגש <b>' + ils(al) + '</b>. סימון המפגש כחינם ימחק את ההקצאה, והכסף יישאר ליתרה של המשתתף (לא יוחזר ככסף).', 'כן, למחוק את ההקצאה');
         return;
       }
+      if (b.dataset.mode === 'pay') {   // חזרה מחינם ל"לתשלום": גם כאן שואלים קודם
+        confirmAct('לתשלום: לבטל את החינם?', pid, m.id, () => switchLocked('pay'), 'המפגש יחזור להיות לתשלום (כאילו לא סומן חינם), ואפשר יהיה להקצות אליו כסף.', 'כן, לתשלום', null, { primary: true });
+        return;
+      }
       await switchLocked(b.dataset.mode);
     };
     $('#depMethods').onclick = async (e) => {
