@@ -3730,7 +3730,7 @@
     { const pl = pkgLeft(pid); if (pl > 0) $('#walSum').insertAdjacentHTML('beforeend', '<div class="sub">בחבילה נשארו <b>' + pl + '</b> מפגשים · ₪' + nfm(pkgUnit(pid)) + ' למפגש</div>'); }
     $('#walZikuy').hidden = true;   // בארנק רק קבלת כסף או החזרת כסף; אין זיכוי (ביטול הקצאה למפגש נעשה במסך התשלום למפגש)
     const mlabel = (x) => { const m = state.meetings.find((q) => q.id === x.meeting_id); return m ? ' ' + dmShort(m) : ''; };
-    const rows = state.payments.filter((x) => x.participant_id === pid).slice().sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).map((x) => {
+    const rows = state.payments.filter((x) => x.participant_id === pid).slice().sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).flatMap((x) => {
       const a = Number(x.amount), mt = methodName(x); let lab, cls, sign;
       if (x.kind === 'deposit') { lab = 'קבלת תשלום' + (mt ? ' · ' + mt : ''); cls = 'up'; sign = ''; }
       else if (x.kind === 'credit') { lab = 'ביטול מפגש' + mlabel(x) + ', נשאר ביתרה'; cls = 'up'; sign = ''; }
@@ -3738,7 +3738,9 @@
       else if (x.kind === 'refund' && x.from_credit) { lab = 'החזרת כסף מהיתרה'; cls = 'down'; sign = ''; }
       else { lab = 'החזר כספי למפגש' + mlabel(x); cls = 'flat'; sign = ''; }
       const rc = x.kind === 'deposit' ? ' rcpt' : (x.kind === 'credit' || x.kind === 'refund') ? ' rfnd' : x.kind === 'payment' ? ' alloc' : '';   // קבלה בירוק, זיכוי/החזר באדום
-      return '<div class="walrow' + rc + '"><div class="wl"><b>' + esc(lab) + '</b><small>' + fmtD(x.created_at) + (x.author_name ? ' · ' + esc(noteAuthor(x.author_email, x.author_name)) : '') + '</small></div><span class="wamt ' + cls + '"><bdi dir="ltr">' + sign + '₪' + nfm(a) + '</bdi></span></div>';
+      const row = (lb, c, cl) => '<div class="walrow' + c + '"><div class="wl"><b>' + esc(lb) + '</b><small>' + fmtD(x.created_at) + (x.author_name ? ' · ' + esc(noteAuthor(x.author_email, x.author_name)) : '') + '</small></div><span class="wamt ' + cl + '"><bdi dir="ltr">' + sign + '₪' + nfm(a) + '</bdi></span></div>';
+      if (x.kind === 'payment' && !x.from_credit) return [row('הקצאה למפגש' + mlabel(x), ' alloc', 'flat'), row('קבלת תשלום' + (mt ? ' · ' + mt : ''), ' rcpt', 'up')];   // תשלום ישיר למפגש = שתי שורות: קבלת הכסף (ירוק) וההקצאה (כתום)
+      return [row(lab, rc, cls)];
     });
     $('#walHist').innerHTML = rows.length ? rows.join('') : '<p class="mnone">עוד אין תשלומים</p>';
   }
