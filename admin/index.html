@@ -2420,7 +2420,7 @@
   /* עמודת ההגעה ועמודת השליחה בשורות (ואייקון הסינון שלהן) קיימות רק כשיש בהן מה להציג: לפחות משתתף אחד עם עיגול, או סינון פעיל;
      בלי זה לא נשמרת עמודה ריקה שמצמצמת את השמות ודוחפת את התשלום הצידה */
   const colHere = (ids) => { const m = state.meetings.find((x) => x.id === state.filter); return !!(state.filter && m && attVisible(m) && (state.here || state.att.some((a) => a.meeting_id === m.id && (!ids || ids.has(a.participant_id)) && (dispStatus(a) !== SYSTEM_STATUS || a.attended)))); };
-  const colSent = (ids) => { const m = state.meetings.find((x) => x.id === state.filter); return !!(state.filter && m && sentView(m) && (state.sent || state.att.some((a) => a.meeting_id === m.id && (!ids || ids.has(a.participant_id)) && (a.details_sent_at || evElig(a.participant_id, a))))); };
+  const colSent = (ids) => { const m = state.meetings.find((x) => x.id === state.filter); return !!(state.filter && m && sentView(m) && (state.sent || state.att.some((a) => a.meeting_id === m.id && (!ids || ids.has(a.participant_id))))); };   // הטוגל דולק: העמודה קיימת (עם עיגול לא פעיל למי שעוד לא זכאי)
   const sentMatch = (pid, l, v) => !!l && (v === '1' ? !!l.details_sent_at : (!l.details_sent_at && evElig(pid, l)));
   const effSent = () => (state.q.trim() || !state.filter || !sentView(state.meetings.find((x) => x.id === state.filter))) ? null : state.sent;
   /* מצב יתרה (רק בתצוגת הכל): זכאי (יש יתרה לטובתו), חייב (יתרת חובה), מאוזן */
@@ -3562,7 +3562,8 @@
     const m = state.meetings.find((x) => x.id === state.filter), l = m && linkOf(p.id, m.id); if (!l) return '';
     const inert = evStarted(m);
     if (l.details_sent_at) return inert ? '<span class="evc sent inert" title="פרטי המפגש נשלחו" aria-label="פרטי המפגש נשלחו">' + PIN_ICON + '</span>' : '<button type="button" class="evc sent" data-evun="' + p.id + '" title="פרטי המפגש נשלחו (לחיצה מחזירה ללא נשלח)" aria-label="פרטי המפגש נשלחו, לחיצה מחזירה ללא נשלח">' + PIN_ICON + '</button>';   // נשאר מוצג גם אחרי שהחלון נסגר: רואים למי נשלחו
-    if (!(state.showSent === true || evOnFor(m) || hasSent(m) || evRecent(m)) || !evElig(p.id, l)) return '';   // גם אחרי שחלון השליחה נסגר: במפגש שנשלחו בו פרטים, ביטול סימון "נשלח" מחזיר עיגול "לא נשלח" ולא גורם לו להיעלם   // בהפעלה ידנית: גם לפני החלון ובמפגש שטרם התחיל   // עוד לא נשלח: רק בחלון השליחה (עד שנפתחת ההגעה) ולמי שלא בסטטוס ברירת המחדל
+    if (!(state.showSent === true || evOnFor(m) || hasSent(m) || evRecent(m))) return '';   // גם אחרי שחלון השליחה נסגר: במפגש שנשלחו בו פרטים, ביטול סימון "נשלח" מחזיר עיגול "לא נשלח" ולא גורם לו להיעלם   // בהפעלה ידנית: גם לפני החלון ובמפגש שטרם התחיל   // עוד לא נשלח: רק בחלון השליחה (עד שנפתחת ההגעה) ולמי שלא בסטטוס ברירת המחדל
+    if (!evElig(p.id, l)) return '<span class="evc off" title="עוד לא זכאי לשליחה (סטטוס ברירת מחדל)" aria-label="עוד לא זכאי לשליחת פרטי המפגש">' + PIN_ICON + '</span>';   // עמודה תמיד מלאה כשהטוגל דולק
     if (inert) return '<span class="evc inert" title="פרטי המפגש לא נשלחו" aria-label="פרטי המפגש לא נשלחו">' + PIN_ICON + '</span>';
     const base = waLink(p.phone);
     return base ? '<a class="evc" data-evrow="' + p.id + '" href="' + base + '?text=' + encodeURIComponent(eventDayMessage(m)) + '" target="_blank" rel="noopener" title="שליחת פרטי המפגש בוואטסאפ" aria-label="שליחת פרטי המפגש בוואטסאפ">' + PIN_ICON + '</a>'
