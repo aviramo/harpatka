@@ -73,6 +73,16 @@
   .mtg:not(.open) .mtfold > div { visibility: hidden; }
   .mtfold > div > :last-child { margin-bottom: 14px; }
   @media (prefers-reduced-motion: reduce) { .mtfold, .mthead svg { transition: none; } }
+  .payfold { display: grid; grid-template-rows: 1fr; transition: grid-template-rows .4s ease, opacity .4s ease; }
+  .payfold > div { overflow: hidden; min-height: 0; }
+  .payfold.closing { grid-template-rows: 0fr; opacity: 0; }
+  @media (prefers-reduced-motion: reduce) { .payfold { transition: none; } }
+  .paylinks { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 6px; }
+  .lnk { border: 0; background: none; padding: 8px 6px; font: inherit; font-size: 16px; font-weight: 700; color: var(--terra); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  #otherDlg { width: min(92vw, 420px); border: 1px solid var(--line); border-radius: 24px; background: var(--paper); color: var(--ink); padding: 22px 20px; }
+  #otherDlg::backdrop { background: rgba(63, 56, 47, .45); }
+  #otherDlg h2 { font-size: 20px; }
+  #otherDlg .otherinfo { margin: 10px 0 4px; padding: 10px 12px; border-radius: 14px; background: var(--cream); font-weight: 700; }
   .pf-err { color: var(--red); font-size: 13.5px; font-weight: 600; margin-top: 4px; }
   .pf-err:empty { display: none; }
   input.bad, select.bad { border-color: var(--red); }
@@ -83,9 +93,17 @@
 <div class="wrap">
   <div class="top"><h1>האזור האישי</h1><button type="button" class="link" id="outBtn" hidden>יציאה</button></div>
   <div id="app"><div class="center">טוען…</div></div>
+  <dialog id="otherDlg" aria-labelledby="otherTtl">
+    <h2 id="otherTtl">לשלם בדרך אחרת</h2>
+    <p class="muted" style="margin:8px 0 0">נפתחת שיחת וואטסאפ עם אחד המנהלים, וההודעה כבר מוכנה:</p>
+    <p class="otherinfo" id="otherInfo"></p>
+    <a class="btn" id="otherHadar" target="_blank" rel="noopener">שיחה עם הדר</a>
+    <a class="btn" id="otherOfir" target="_blank" rel="noopener">שיחה עם אופיר</a>
+    <button type="button" class="btn ghost" id="otherClose">סגירה</button>
+  </dialog>
 </div>
 <script src="../shared/config.js"></script>
-<script src="../shared/person-form.js?v=20261028r"></script>
+<script src="../shared/person-form.js?v=20261028s"></script>
 <script>
 (() => {
   const DB = {
@@ -196,8 +214,9 @@
       if (m.future) {
         if (!m.registered) b += '<button type="button" class="btn" data-reg="' + m.id + '">שמירת מקום</button><div class="msg" data-rm="' + m.id + '"></div>';
         else {
-          b += '<div style="margin-top:10px"><span class="chip ok">נרשמתם ✓</span> ' + (free ? '<span class="chip sky">חינם</span>' : paid ? '<span class="chip ok">שולם ' + ils(m.paid) + '</span>' : '<span class="chip no">טרם שולם</span>') + '</div>';
-          if (!paid && !free && CFG.payboxLink) b += '<a class="btn pay" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">תשלום ' + (m.price ? ils(m.price) : '') + ' בפייבוקס</a><p class="muted" style="margin:8px 0 0;text-align:center">המקום נשמר אחרי התשלום</p>';
+          b += '<div style="margin-top:10px"><span class="chip ok">נרשמתם ✓</span> ' + (free ? '<span class="chip sky">חינם</span>' : paid ? '<span class="chip ok">שולם ' + ils(m.paid) + '</span>' : (m.reported ? '<span class="chip sky">דיווחתם על תשלום, ממתין לאישור</span>' : '<span class="chip no">טרם שולם</span>')) + '</div>';
+          if (!paid && !free && !m.reported && CFG.payboxLink) b += '<div class="payfold" data-pf="' + m.id + '"><div><a class="btn pay" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">תשלום ' + (m.price ? ils(m.price) : '') + ' בפייבוקס</a><p class="muted" style="margin:8px 0 0;text-align:center">המקום נשמר אחרי התשלום</p><div class="paylinks"><button type="button" class="lnk" data-report="' + m.id + '">שילמתי, לעדכן את המארגנים</button><button type="button" class="lnk" data-other="' + m.id + '">רוצים לשלם בדרך אחרת?</button></div><div class="msg" data-pm="' + m.id + '"></div></div></div>';
+          if (m.reported && !paid && !free) b += '<p class="muted" style="margin:10px 0 0;text-align:center">קיבלנו את הדיווח. נוודא שהתשלום התקבל ונעדכן כאן</p>';
           if (!m.attended) b += '<button type="button" class="btn ghost" data-unreg="' + m.id + '">ביטול רישום</button><div class="msg" data-um="' + m.id + '"></div>';
         }
       } else b += '<div style="margin-top:10px">' + (m.attended ? '<span class="chip ok">הגעתם</span>' : '<span class="chip">לא הגעתם</span>') + ' ' + (free ? '<span class="chip sky">חינם</span>' : paid ? '<span class="chip ok">שולם ' + ils(m.paid) + '</span>' : '<span class="chip no">לא שולם</span>') + '</div>';
@@ -205,7 +224,7 @@
     };
     const rowHtml = (m) => {
       const open = m.id === firstId;
-      const badge = m.future ? (m.registered ? (Number(m.paid) > 0 || m.free ? '<span class="chip ok">נרשמתם ✓</span>' : '<span class="chip no">טרם שולם</span>') : '<span class="chip">פתוח להרשמה</span>') : (m.attended ? '<span class="chip ok">הגעתם</span>' : '<span class="chip">לא הגעתם</span>');
+      const badge = m.future ? (m.registered ? (Number(m.paid) > 0 || m.free ? '<span class="chip ok">נרשמתם ✓</span>' : m.reported ? '<span class="chip sky">ממתין לאישור</span>' : '<span class="chip no">טרם שולם</span>') : '<span class="chip">פתוח להרשמה</span>') : (m.attended ? '<span class="chip ok">הגעתם</span>' : '<span class="chip">לא הגעתם</span>');
       return '<div class="mtg' + (open ? ' open' : '') + '" data-mid="' + m.id + '"><button type="button" class="mthead" aria-expanded="' + open + '"><span class="c1">' + esc(dayParts(m.date).day) + '</span><span class="c2"><bdi dir="ltr">' + esc(m.time) + ' · ' + esc(dayParts(m.date).date) + '</bdi></span><span class="c4">' + badge + '</span>' + chev + '<span class="c5">' + esc([m.city, m.name].filter(Boolean).join(' · ')) + '</span></button><div class="mtfold"><div>' + meetingBody(m) + '</div></div></div>';
     };
     // שתי רשימות: מפגשים שנרשמתי אליהם, ומפגשים עתידיים שעוד לא נרשמתי אליהם ואפשר להצטרף (מהחדש לישן)
@@ -238,6 +257,25 @@
         if (r === 'cancelled' || r === 'not_registered') { keepOpen = id; load(); }
         else { toast(msg, r === 'attended' ? 'סומנה הגעה למפגש, אי אפשר לבטל' : 'אי אפשר לבטל את הרישום למפגש הזה', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול רישום'; }
       } catch (e) { toast(msg, 'משהו השתבש, אפשר לנסות שוב', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול רישום'; }
+    }; });
+    app.querySelectorAll('[data-report]').forEach((rb) => { rb.onclick = async () => {
+      const id = rb.dataset.report, msg = app.querySelector('[data-pm="' + id + '"]'), fold = app.querySelector('[data-pf="' + id + '"]'); rb.disabled = true;
+      try {
+        const r = await rpc('harpatka_me_report_payment', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {}));
+        if (r === 'ok' || r === 'reported' || r === 'already') {
+          keepOpen = id;
+          if (fold && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) { fold.classList.add('closing'); setTimeout(load, 450); } else load();   // הכפתור והקישורים נסגרים באנימציה, ואז הסטטוס מתחלף
+        } else { toast(msg, 'אי אפשר לדווח על התשלום למפגש הזה', true); rb.disabled = false; }
+      } catch (e) { toast(msg, 'משהו השתבש, אפשר לנסות שוב', true); rb.disabled = false; }
+    }; });
+    app.querySelectorAll('[data-other]').forEach((ob) => { ob.onclick = () => {
+      const m = ms.find((x) => x.id === ob.dataset.other); if (!m) return;
+      const info = fmtDate(m.date) + ' בשעה ' + m.time + (m.city ? ' (' + m.city + ')' : '') + (m.name ? ', ' + m.name : '');
+      const text = 'היי, אני רוצה להעביר את התשלום בדרך אחרת למפגש ביום ' + info.replace(/^יום /, '');
+      const wa = (num) => 'https://wa.me/' + num + '?text=' + encodeURIComponent(text);
+      $('#otherInfo').textContent = info;
+      $('#otherHadar').href = wa(CFG.whatsappHadar); $('#otherOfir').href = wa(CFG.whatsappOfir);
+      $('#otherDlg').showModal();
     }; });
     PersonForm.bind(app);
     $('#detHead').onclick = () => { const f = $('#detBody'), on = !f.classList.contains('open'); f.classList.toggle('open', on); $('#detHead').setAttribute('aria-expanded', String(on)); };
@@ -290,6 +328,8 @@
     load();
   }
   $('#outBtn').onclick = () => { if (!usingAdmin) clearSession(); else { try { sessionStorage.removeItem(AS_KEY); } catch (e) {} } location.href = location.pathname; };
+  $('#otherClose').onclick = () => $('#otherDlg').close();
+  $('#otherDlg').addEventListener('click', (e) => { if (e.target === $('#otherDlg')) $('#otherDlg').close(); });
   start();
 })();
 </script>
