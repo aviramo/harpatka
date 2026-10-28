@@ -2361,6 +2361,8 @@
   const noPayOf = (p, l) => !!(l && l.no_pay);   // "לא משלם" הוא עניין של מפגש בלבד (מתג במסך התשלום של המפגש)
   const reportedOf = (pid, mid) => { const l = linkOf(pid, mid), p = state.participants.find((x) => x.id === pid); return !!(l && l.pay_reported_at && allocatedOf(pid, mid) <= 0 && !(p && noPayOf(p, l))); };   // המשתתף דיווח (מהאזור האישי) ששילם ועוד לא הוזן תשלום
   const reportedAmt = (pid, mid) => { const l = linkOf(pid, mid); return l && l.pay_reported_amount ? ' ₪' + nfm(l.pay_reported_amount) : ''; };   // הסכום שדווח (המחיר ברגע הדיווח)
+  /* הסכום המוצע לתשלום במסך התשלום: אם המשתתף דיווח על תשלום, הסכום שדווח (מה שהוא אמור לשלם); אחרת מחיר המפגש לפי המדרגות */
+  const suggestPrice = (pid, m) => { const l = m && linkOf(pid, m.id), rep = l && l.pay_reported_at && Number(l.pay_reported_amount) > 0 ? Number(l.pay_reported_amount) : 0; return rep || expectedPrice(pid, m); };
   const payStateOf = (p) => noPayOf(p, linkOf(p.id, state.filter)) ? 'n' : (allocatedOf(p.id, state.filter) > 0) ? '1' : reportedOf(p.id, state.filter) ? 'w' : '0';   // שולם / לא שולם / לא משלם (מסומן במשתתף)
   /* שליחת פרטי המפגש: רק בתוך מפגש, ביום המפגש (לפי ההגדרה) ולפני שנפתחת ההגעה; רק למי שזכאי (שילם / חינם / ישלם) */
   const evOnFor = (m) => !!(m && !attendOpen(m) && nowIL() >= evOpenAt(m) && (eventMeeting() || {}).id === m.id);   // נכבה אוטומטית ברגע שנפתח סימון ההגעה (לפי ההגדרה "מתי נפתח סימון ההגעה")
@@ -3769,18 +3771,18 @@
     const f = pForm, pid = sheet && sheet.id, m = mid ? state.meetings.find((x) => x.id === mid) : null;
     sheet.depMid = m ? m.id : null; sheet.depCr = false;   // depCr: תשלום מהיתרה (בלי קבלת כסף חדש)
     f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; f.pay_depm.value = 'paybox'; f.pay_depn.value = ''; $('#depOtherField').hidden = true;
-    { const al = m ? Math.max(0, allocatedOf(pid, m.id)) : 0, pr0 = m ? expectedPrice(pid, m) : 0; f.pay_dep.value = !m ? '' : al <= 0 ? pr0 : al < pr0 ? pr0 - al : ''; }   // מפגש ששולם חלקית: המוצע הוא היתרה
+    { const al = m ? Math.max(0, allocatedOf(pid, m.id)) : 0, pr0 = m ? suggestPrice(pid, m) : 0; f.pay_dep.value = !m ? '' : al <= 0 ? pr0 : al < pr0 ? pr0 - al : ''; }   // מפגש ששולם חלקית: המוצע הוא היתרה
     { const pp = state.participants.find((x) => x.id === pid), lk = m && linkOf(pid, m.id), np = !!(m && pp && noPayOf(pp, lk)); $('#depFields').hidden = np; $('#depFree').hidden = !np; }
     $('#depIntro').hidden = !!m; $('#depIntro').textContent = m ? 'מפגש ' + dmShort(m) : 'תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש';
     { f.pay_dep.closest('label').querySelector('span').textContent = 'סכום (₪)'; $('#depSave').textContent = 'תשלום'; $('#depAddTitle').hidden = !m; paintDepLines(); }
     $('#depPkgLbl').textContent = m ? 'על כמה מפגשים' : 'חבילה'; f.pay_pkg.options[0].textContent = m ? '1' : '—';
-    $('#depQuick').innerHTML = quickPrices(m).map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
+    $('#depQuick').innerHTML = (() => { const q = quickPrices(m), l = m && linkOf(pid, m.id), r = l && l.pay_reported_at && Number(l.pay_reported_amount) > 0 ? Number(l.pay_reported_amount) : 0; return r && !q.includes(r) ? [r].concat(q) : q; })().map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
     $('#depQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) { f.pay_dep.value = b.dataset.q; paintPkg(); } };
     const METH = state.payMethods.map((x) => [x.key, x.name]);
     f.pay_depm.innerHTML = METH.map((x) => '<option value="' + esc(x[0]) + '">' + esc(x[1]) + '</option>').join('') + '<option value="other">אחר</option>'; f.pay_depm.value = METH.length ? METH[0][0] : 'other';
     const isFree = () => { const pp = state.participants.find((x) => x.id === pid), lk = m && linkOf(pid, m.id); return !!(m && pp && lk && noPayOf(pp, lk)); };
     const crAvail = () => m ? Math.max(0, creditOf(pid)) : 0;
-    const needNow = () => { const al = Math.max(0, allocatedOf(pid, m.id)); return Math.max(0, expectedPrice(pid, m) - al) || expectedPrice(pid, m); };
+    const needNow = () => { const al = Math.max(0, allocatedOf(pid, m.id)); return Math.max(0, suggestPrice(pid, m) - al) || suggestPrice(pid, m); };
     /* "חינם" הוא האפשרות הראשונה (מימין) בשורת דרכי התשלום: נבחרת = המפגש חינם ולמטה אין שדות; בחירה בדרך תשלום מבטלת אותה */
     const paintMeth = () => {
       paintDepLines();
