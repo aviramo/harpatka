@@ -490,6 +490,7 @@
     /* ===== באנר "המפגש הקרוב" (בבדיקה בלבד): קבוע בראש הדף, בגובה קבוע בכל המצבים (טעינה, אין מפגש, יש מפגש), מצטמצם בגלילה ===== */
     :root{ --tbtop:0px; }   /* בבדיקות env.js מגדיר 18px (מתחת לפס "סביבת בדיקות") */
     #tbWrap{ position:relative; z-index:50; }
+    #topbar.tb-me .tb-pill{ cursor:pointer; }
     #topbar{ --p:0; position:fixed; top:var(--tbtop); left:0; right:0; z-index:50; color:#FFFDF9; cursor:pointer; background:linear-gradient(120deg,#0A2236 0%,#0F3A4D 55%,#1B6170 100%); box-shadow:0 8px 20px -10px rgba(0,0,0,calc(var(--p) * .55)); }
     #topbar .tb-in{ max-width:42rem; margin:0 auto; padding:calc(.7rem - .35rem * var(--p)) 1.25rem calc(.7rem - .35rem * var(--p)); text-align:center; display:flex; flex-direction:column; align-items:center; gap:calc(.3rem * (1 - var(--p))); }   /* ריפוד עליון ותחתון זהים בכל מצב, והרווחים בין השורות נעלמים עם ההצטמצמות */
     #topbar .tb-sub{ display:none !important; }
@@ -544,6 +545,12 @@
     .mt-tier{ display:inline-flex; gap:.35rem; font-size:1.02rem; font-weight:600; color:#FFFDF9; opacity:.9; text-shadow:0 1px 6px rgba(0,0,0,.55); }
     .mt-tier.done{ opacity:.8; text-decoration:line-through; text-decoration-thickness:1.5px; }   /* מחוק רק מה שעבר; מדרגה עתידית רגילה */
     .mt-tier b{ font-weight:800; }
+    .mt-state{ display:flex; flex-direction:column; align-items:center; gap:.7rem; }
+    .mt-chips{ display:flex; flex-wrap:wrap; justify-content:center; gap:.4rem; }
+    .mt-chip{ display:inline-flex; align-items:center; border-radius:999px; padding:.25rem .8rem; font-weight:700; font-size:.95rem; background:#E3F1E8; color:#2F7D4F; text-shadow:none; }
+    .mt-chip.ok{ background:#E3F1E8; color:#2F7D4F; } .mt-chip.no{ background:#F6E0DA; color:#B5483A; } .mt-chip.wait{ background:#FBEBC8; color:#8A5A00; }
+    .mt-links{ display:flex; flex-direction:column; align-items:center; gap:.2rem; }
+    .mt-lnk{ border:0; background:none; padding:.35rem .5rem; font:inherit; font-size:1rem; font-weight:700; color:#FFFDF9; text-decoration:underline; text-underline-offset:3px; cursor:pointer; text-shadow:0 1px 6px rgba(0,0,0,.55); }
     .mt-cta{ display:inline-flex; align-items:center; justify-content:center; border-radius:999px; background:#FFFDF9; color:#B05640; font-weight:700; font-size:1.1rem; padding:.8rem 1.9rem; min-height:50px; text-shadow:none; box-shadow:0 10px 22px -10px rgba(0,0,0,.6); }
     .mt-card.is-past{ opacity:.5; }
     .mt-chev{ display:none; }
@@ -1132,7 +1139,22 @@
         if (m.name) inn.append(mk('div', 'mt-name font-display', m.name));
         inn.append(mk('div', 'mt-when font-display', label(m) + ' · ' + m.time));
         { const cl = [m.city, !past && m.max ? m.max + ' משתתפים' : ''].filter(Boolean).join(' · '); if (cl) inn.append(mk('div', 'mt-city', cl)); }
-        if (!past) {
+        const st = !past && window.HarpatkaMe ? HarpatkaMe.get(m.id) : null;   // משתתף מחובר שכבר רשום למפגש הזה: מצב ההרשמה והתשלום במקום מדרגות המחיר
+        if (st && st.registered) {
+          const more = mk('div', 'mt-more'), box = mk('div', 'mt-state'), paid = Number(st.paid) > 0, free = !!st.free;
+          const chips = mk('div', 'mt-chips'); chips.append(mk('span', 'mt-chip ok', 'נרשמתם ✓'));
+          chips.append(free ? mk('span', 'mt-chip', 'חינם') : paid ? mk('span', 'mt-chip ok', 'שולם ₪' + Math.round(st.paid)) : st.reported ? mk('span', 'mt-chip wait', 'דיווחתם על תשלום, ממתין לאישור') : mk('span', 'mt-chip no', 'טרם שולם'));
+          box.append(chips);
+          if (!paid && !free && !st.reported) {
+            const pay = mk('a', 'mt-cta', 'תשלום ' + (st.price ? '₪' + st.price + ' ' : '') + 'בפייבוקס'); pay.href = CONFIG.payboxLink; pay.target = '_blank'; pay.rel = 'noopener'; pay.addEventListener('click', e => e.stopPropagation()); box.append(pay);
+            const links = mk('div', 'mt-links');
+            const l1 = mk('button', 'mt-lnk', 'שילמתי, לעדכן את המארגנים'); l1.type = 'button'; l1.addEventListener('click', async e => { e.stopPropagation(); l1.disabled = true; try { await HarpatkaMe.report(m.id); } catch (er) { l1.disabled = false; l1.textContent = 'משהו השתבש, אפשר לנסות שוב'; } });
+            const l2 = mk('button', 'mt-lnk', 'רוצים לשלם בדרך אחרת?'); l2.type = 'button'; l2.addEventListener('click', e => { e.stopPropagation(); HarpatkaMe.other(m.id); });
+            links.append(l1, l2); box.append(links);
+          }
+          const me = document.getElementById('meAreaCard'); if (me) { const a2 = mk('a', 'mt-lnk', 'ביטול רישום ופרטים באזור האישי'); a2.href = me.getAttribute('href'); a2.addEventListener('click', e => e.stopPropagation()); box.append(a2); }
+          more.append(box); inn.append(more);
+        } else if (!past) {
           const more = mk('div', 'mt-more'), box = mk('div'), sp = tierSplit(m, m.tiers, today);
           const pb = fill(mkBox(), sp.past, 'done'); if (!pb.hidden) box.append(pb);
           const b = mk('a', 'mt-cta'); b.href = '#'; setCta(b, sp); b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); reg(m); }); box.append(b);
@@ -1156,7 +1178,9 @@
         box.append(b); more.append(box); inn.append(more); c.append(inn);
         return c;
       };
+      let lastMeetings = null;
       const render = (d) => {
+        lastMeetings = d;
         const list = el('mList'); if (!list) return;
         const todayIso = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()), today = dayN(todayIso);
         const future = (d.future || []).filter(m => m.date >= todayIso);
@@ -1189,6 +1213,7 @@
         }, true); }
       let cached = null;
       try { cached = JSON.parse(localStorage.getItem(MEET_CACHE) || 'null'); } catch (e) {}
+      window.addEventListener('harpatka:me', () => { if (lastMeetings) render(lastMeetings); });   // התחברות, יציאה או דיווח: הכרטיסים מתעדכנים לפי מצב המשתתף
       if (cached && cached.future) render(cached);
       meetingsReady.then(d => {
         if (!d) { if (!cached) render({ past: null, future: [], tiers: [] }); return; }
@@ -1356,7 +1381,9 @@
   const el = (id) => document.getElementById(id);
   const dayName = (iso) => ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'][new Date(iso + 'T12:00:00Z').getUTCDay()];
   const todayIso = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
+  let lastD = null;
   const render = (d) => {
+    lastD = d;
     const nx = ((d && d.future) || []).filter((m) => m.date >= todayIso())[0] || null;
     const before = el('tbPillT').textContent + '|' + el('tbMain').textContent + '|' + el('tbSub').textContent, wasLoading = bar.classList.contains('tb-loading');
     bar.classList.remove('tb-loading');
@@ -1370,13 +1397,14 @@
       el('tbMain').textContent = 'המפגש הבא כבר בדרך';   // בלי מפגש (בלי שם ברירת המחדל)
       el('tbSub').textContent = 'השאירו פרטים ונעדכן ברגע שהתאריך ייקבע';
     }
-    if (window.__meName) el('tbSub').textContent = 'שלום ' + window.__meName;   // משתתף מחובר: השם שלו בבאנר, כדי שידע שהוא מחובר
+    if (window.__meName) { el('tbPillT').textContent = window.__meName; bar.classList.add('tb-me'); } else bar.classList.remove('tb-me');   // משתתף מחובר: השם שלו במקום הצ'יפ, כדי שידע שהוא מחובר
     /* מעבר מונפש כשהמצב או התוכן השתנו (טעינה ← תוכן, אין מפגש ← יש מפגש); בלי אנימציה כשהתוכן זהה (למשל רענון אחרי המטמון) */
     if (wasLoading || before !== el('tbPillT').textContent + '|' + el('tbMain').textContent + '|' + el('tbSub').textContent) {
       const box = bar.querySelector('.tb-in'); box.classList.remove('tb-swap'); void box.offsetWidth; box.classList.add('tb-swap');
     }
   };
-  window.addEventListener('harpatka:me', () => { if (window.__meName) el('tbSub').textContent = 'שלום ' + window.__meName; });
+  window.addEventListener('harpatka:me', () => { if (lastD) render(lastD); });   // התחברות או יציאה: הצ'יפ מתעדכן
+  el('tbPillT').parentElement.addEventListener('click', (e) => { if (!window.__meName) return; e.stopPropagation(); if (window.HarpatkaMe) HarpatkaMe.confirmLogout(); });   // לחיצה על השם: שאלה אם לצאת מהחשבון
   let cached = null;
   try { cached = JSON.parse(localStorage.getItem(typeof MEET_CACHE !== 'undefined' ? MEET_CACHE : 'harpatka_meetings_v19') || 'null'); } catch (e) {}
   if (cached && cached.future) render(cached);
@@ -1396,7 +1424,7 @@
   window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(apply); } }, { passive: true });
 })();
 </script>
-  <script src="../shared/person-form.js?v=20261028v"></script>
-  <script src="../shared/register.js?v=20261028v"></script>
+  <script src="../shared/person-form.js?v=20261028x"></script>
+  <script src="../shared/register.js?v=20261028x"></script>
 </body>
 </html>
