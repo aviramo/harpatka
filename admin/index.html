@@ -2894,13 +2894,17 @@
     const tr = e.target.closest('[data-ftr]');
     if (tr) {
       const [from, to, amt] = tr.dataset.ftr.split('|');
-      try { const [row] = await api(T.fintr, { method: 'POST', body: { from_email: from, to_email: to, amount: Number(amt), transfer_date: todayISO() }, prefer: 'return=representation' }); state.finTr.unshift(row); toast('ההעברה נרשמה'); renderFinSettle(); } catch (err) { fail(err); }
+      confirmAct('אישור העברה בין מנהלים', null, null, async () => {
+        try { const [row] = await api(T.fintr, { method: 'POST', body: { from_email: from, to_email: to, amount: Number(amt), transfer_date: todayISO() }, prefer: 'return=representation', ui: tr }); state.finTr.unshift(row); toast('ההעברה נרשמה'); renderFinSettle(); } catch (err) { fail(err); }
+      }, '<b>' + esc(finName(from)) + ' ← ' + esc(finName(to)) + '</b><br>סכום: <b>' + ils(Number(amt)) + '</b><br>תירשם העברה (בוצעה) ביומן ההתחשבנות.', 'אישור העברה', null, { green: true, plain: true });
       return;
     }
     const d = e.target.closest('[data-ftdel]');
     if (d) {
-      if (!d.dataset.arm) { d.dataset.arm = '1'; d.textContent = 'למחוק?'; return; }
-      try { await api(T.fintr + '?id=eq.' + d.dataset.ftdel, { method: 'DELETE' }); state.finTr = state.finTr.filter((x) => x.id !== d.dataset.ftdel); toast('נמחק'); renderFinSettle(); } catch (err) { fail(err); }
+      const id = d.dataset.ftdel, x = state.finTr.find((y) => y.id === id);
+      confirmAct('מחיקת העברה', null, null, async () => {
+        try { await api(T.fintr + '?id=eq.' + id, { method: 'DELETE', ui: d }); state.finTr = state.finTr.filter((y) => y.id !== id); toast('נמחק'); renderFinSettle(); } catch (err) { fail(err); }
+      }, x ? '<b>' + esc(finName(x.from_email)) + ' ← ' + esc(finName(x.to_email)) + '</b><br>סכום: <b>' + ils(Number(x.amount)) + '</b><br>ההעברה תימחק מהיומן וההתחשבנות תתעדכן.' : 'ההעברה תימחק.', 'כן, למחוק');
     }
   });
   $('#finForm').addEventListener('submit', async (e) => {
@@ -2937,7 +2941,7 @@
   function confirmAct(title, pid, mid, fn, extraHtml, yesLabel, alt, opts) {
     const p = state.participants.find((x) => x.id === pid), m = state.meetings.find((x) => x.id === mid);
     $('#cTitle').textContent = title;
-    $('#cText').innerHTML = nameB(p ? p.name : '') + ' · ' + esc(m ? meetingLabel(m, true) : '') + (extraHtml ? '<br><br>' + extraHtml : '');
+    $('#cText').innerHTML = (opts && opts.plain) ? (extraHtml || '') : nameB(p ? p.name : '') + ' · ' + esc(m ? meetingLabel(m, true) : '') + (extraHtml ? '<br><br>' + extraHtml : '');   // plain: אישור שלא קשור למשתתף ולמפגש (למשל העברה בין מנהלים)
     $('#cYes').textContent = yesLabel || 'אישור'; $('#cYes').classList.toggle('danger', !(opts && (opts.primary || opts.green))); $('#cYes').classList.toggle('ok', !!(opts && opts.green));   // הסרה / החזר: אדום בהיר
     const dlg = $('#cDlg');
     $('#cAlt').hidden = !alt; if (alt) { $('#cAlt').textContent = alt.label; $('#cAlt').onclick = () => { dlg.close(); alt.fn(); }; }
