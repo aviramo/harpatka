@@ -838,6 +838,7 @@
     #depAddTitle, #depLines .dlt { display: none !important; }   /* בלי תווית "הקצאה למפגש": הכותרת העליונה כבר אומרת הקצאה */
     #pDelete.btn.ghost { color: var(--red); }   /* מחיקת משתתף: אדום */   /* בפופאפים אין כפתור ביטול: סוגרים בפס, בלחיצה בחוץ או ב-Esc */
     #depFields .payrow #depSave.paygo, #walAdd { background: var(--green); color: #fff; }   /* כפתור התשלום: הירוק הכהה של הפלטה */
+    #depFields .payrow #depSave.paygo.fromcr { background: var(--yellow); color: #fff; }   /* תשלום מהיתרה: צהוב כהה (צבע היתרה) ולא ירוק */
     .mlist .mrow .mmoney.free, .mmoney.free { background: #fff; color: var(--muted); border: 1px solid var(--line); }   /* חינם בכרטיס המפגש: לבן עם ₪ מחוק, כמו בעיגול הרשימה */
     #depMode { margin: 2px 0 12px; gap: 8px; }
     #depMode button { flex: 1; height: 46px; border-radius: 14px; font-size: 17px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--ink); background: var(--cream); box-shadow: none; }
@@ -3863,7 +3864,7 @@
     const needNow = () => { const al = Math.max(0, allocatedOf(pid, m.id)); return Math.max(0, suggestPrice(pid, m) - al) || suggestPrice(pid, m); };
     /* "חינם" הוא האפשרות הראשונה (מימין) בשורת דרכי התשלום: נבחרת = המפגש חינם ולמטה אין שדות; בחירה בדרך תשלום מבטלת אותה */
     /* כפתור "תשלום" כבוי כשבוחרים "מהיתרה" והסכום גדול מהיתרה הזמינה */
-    const syncDepSave = () => { const b = $('#depSave'); if (!b) return; const a = parseFloat(f.pay_dep.value); b.disabled = !!(sheet && sheet.depCr && sheet.depMid && a > Math.max(0, creditOf(pid)) + 0.001); };
+    const syncDepSave = () => { const b = $('#depSave'); if (!b) return; b.classList.toggle('fromcr', !!(sheet && sheet.depCr && sheet.depMid)); const a = parseFloat(f.pay_dep.value); b.disabled = !!(sheet && sheet.depCr && sheet.depMid && a > Math.max(0, creditOf(pid)) + 0.001); };
     const paintMeth = () => {
       queueMicrotask(syncDepSave);
       paintDepLines();
