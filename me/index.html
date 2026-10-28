@@ -104,7 +104,7 @@
   </dialog>
 </div>
 <script src="../shared/config.js"></script>
-<script src="../shared/person-form.js?v=20261028x"></script>
+<script src="../shared/person-form.js?v=20261029a"></script>
 <script>
 (() => {
   const DB = {
@@ -301,7 +301,7 @@
       data = await rpc('harpatka_me', asId ? { p_as: asId } : {});
     } catch (e) { if (e.message === 'auth' || (asId && /HTTP (400|403|404)/.test(e.message))) { viewLogin(); return; } app.innerHTML = '<div class="center">הטעינה נכשלה. אפשר לרענן</div>'; return; }
     $('#outBtn').hidden = false;
-    try { if (sessionStorage.getItem('harpatka_me_back') && data && data.status === 'ok' && !asId) { sessionStorage.removeItem('harpatka_me_back'); location.replace(location.pathname.replace(/me\/?$/, '') + '?register=1'); return; } } catch (e) {}   // הגיעו מהקישור "התחברות עם גוגל" בפופאפ ההרשמה: חוזרים לדף הבית והפופאפ נפתח במצב מחובר
+    try { const bk = sessionStorage.getItem('harpatka_me_back'); if (bk && data && !asId) { sessionStorage.removeItem('harpatka_me_back'); const home = location.pathname.replace(/me\/?$/, ''); if (data.status === 'ok' && !data.impersonating) location.replace(home + (bk === 'reg' ? '?register=1' : '')); else if (data.status !== 'ok') location.replace(home + '?register=1'); else return; return; } } catch (e) {}   // חוזרים לדף הבית: מחוברים (עם השם בצ'יפ), או בלי רשומה לחשבון הזה: נפתח פופאפ ההרשמה   // הגיעו מהקישור "התחברות עם גוגל" בפופאפ ההרשמה: חוזרים לדף הבית והפופאפ נפתח במצב מחובר
     if (data.status === 'ok') { const keep = keepMsg ? $('#sm') && $('#sm').textContent : ''; viewMain(); if (keep) toast($('#sm'), keep); }
     else if (data.status === 'pending') viewPending();
     else if (data.status === 'blocked') viewBlocked();
@@ -328,7 +328,7 @@
     }
     if (session && !sessionOk(session) && !(await refreshSession())) clearSession();
     if (session && !asId) await useClaimToken();
-    if (!session) { if (q.get('login') && !asId) { if (q.get('back')) { try { sessionStorage.setItem('harpatka_me_back', '1'); } catch (e) {} } goGoogle(); return; } viewLogin(); return; }   // ?login=1 (הקישור מההרשמה): ישר להתחברות עם גוגל, בלי מסך ביניים
+    if (!session) { if (q.get('login') && !asId) { if (q.get('back')) { try { sessionStorage.setItem('harpatka_me_back', q.get('back')); } catch (e) {} } goGoogle(); return; } viewLogin(); return; }   // ?login=1 (הקישור מההרשמה): ישר להתחברות עם גוגל, בלי מסך ביניים
     load();
   }
   $('#outBtn').onclick = () => { if (!usingAdmin) clearSession(); else { try { sessionStorage.removeItem(AS_KEY); } catch (e) {} } location.href = location.pathname; };

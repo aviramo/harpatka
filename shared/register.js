@@ -55,7 +55,7 @@
                 </div>
               </div>
               <div class="su-member" data-su="member"><p class="su-memberp">הפרטים שלכם כבר שמורים אצלנו</p><p class="su-who" data-su="who"></p></div>
-              <a href="__BASE__me/?login=1&back=1" class="su-glink" data-su="glink">נרשמתם בעבר? התחברות עם גוגל</a>
+              <a href="__BASE__me/?login=1&back=reg" class="su-glink" data-su="glink">נרשמתם בעבר? התחברות עם גוגל</a>
             </div></div>
             <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-3.5 text-[1.2rem] whitespace-nowrap w-full mt-4">הרשמה</button>
             <div data-su="fail" class="su-err mt-3 text-center" role="alert"></div>
@@ -71,7 +71,7 @@
   </div>`.replace(/__BASE__/g, BASE);
   if (window.REGISTER_MIN !== false) document.documentElement.classList.add('reg-min');
   /* שאלת יציאה מהחשבון: אותה מעטפת פופאפ של ההרשמה (נפתח מלמעלה, פס סגירה בתחתית) */
-  const LOGOUT_HTML = `<div id="logoutModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="logoutTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="logoutTtl"></p><p class="su-lgq">לצאת מהחשבון?</p><button type="button" class="su-lgyes" data-lg="yes">יציאה</button><button type="button" class="su-lgno" data-close-modal>ביטול</button></div></div>`;
+  const LOGOUT_HTML = `<div id="logoutModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="logoutTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="logoutTtl"></p><p class="su-lgq">לצאת מהחשבון?</p><button type="button" class="su-lgyes" data-lg="yes">יציאה</button></div></div>`;
   document.body.insertAdjacentHTML('beforeend', MODAL_HTML + LOGOUT_HTML);
 
   /* ===== מנגנון פופאפ כללי (משותף לכל ה-.modal) ===== */
@@ -313,15 +313,17 @@
     document.querySelectorAll('[data-su="who"]').forEach((e) => { e.textContent = on ? meInfo.first + ' ' + meInfo.last : ''; });
     if (on) { window.__meName = meInfo.first + ' ' + meInfo.last; try { window.dispatchEvent(new Event('harpatka:me')); } catch (e) {} }
   };
+  const clearMeName = () => { try { localStorage.removeItem('harpatka_me_name'); } catch (e) {} if (window.__meName) { window.__meName = null; } try { window.dispatchEvent(new Event('harpatka:me')); } catch (e) {} };
   async function loadMe() {
     try {
-      if (!(await meToken())) return;
+      if (!(await meToken())) { clearMeName(); return; }
       const d = await meRpc('harpatka_me', {});
       if (d && d.status === 'ok' && d.participant && d.participant.first_name) {
         meInfo = { first: d.participant.first_name, last: d.participant.last_name || '', age: d.participant.age, gender: d.participant.gender, meetings: d.meetings || [] };
         applyMemberMode();
-      }
-    } catch (e) { /* לא מחובר או תקלה: ממשיכים כאורח, עם הטופס הרגיל */ }
+        try { localStorage.setItem('harpatka_me_name', meInfo.first + ' ' + meInfo.last); } catch (e) {}
+      } else clearMeName();   // מחובר לגוגל אבל אין משתתף מקושר: מוצג "התחברות"
+    } catch (e) { /* תקלה זמנית: ממשיכים כאורח, עם הטופס הרגיל */ }
   }
   async function memberSubmit(root, btn, q, showDone) {
     const m = selMeeting || nearest, fail = q('fail'); fail.textContent = '';
@@ -344,7 +346,7 @@
     if (!m.dataset.bound) {
       m.dataset.bound = '1';
       m.querySelector('[data-lg="yes"]').addEventListener('click', () => {
-        try { localStorage.removeItem(ME_KEY); } catch (er) {}
+        try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {}
         meInfo = null; window.__meName = null; applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {}
         closeModal(m);
       });

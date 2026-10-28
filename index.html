@@ -500,7 +500,7 @@
     #topbar.tb-loading .tb-main, #topbar.tb-loading .tb-sub{ color:transparent; border-radius:10px; background:linear-gradient(90deg, rgba(255,253,249,.16) 25%, rgba(255,253,249,.34) 50%, rgba(255,253,249,.16) 75%); background-size:200% 100%; animation:tbShim 1.3s linear infinite; }
     #topbar.tb-loading .tb-main{ width:min(15rem, 70%); }
     #topbar.tb-loading .tb-sub{ width:min(11rem, 55%); }
-    #topbar.tb-loading .tb-pill #tbPillT::after{ content:''; animation:tbDots 1.2s steps(4,end) infinite; }
+    #topbar .tb-pill{ cursor:pointer; }
     /* מעבר בין מצבי הבאנר (טעינה, אין מפגש, יש מפגש): הטקסטים נכנסים בהחלקה קלה ובדהייה, בזה אחר זה */
     #topbar .tb-in.tb-swap > *{ animation:tbIn .5s cubic-bezier(.22,.8,.2,1) both; }
     #topbar .tb-in.tb-swap > :nth-child(2){ animation-delay:.07s; }
@@ -572,7 +572,7 @@
   <div id="tbWrap">
     <div id="topbar" class="tb-loading" role="button" tabindex="0" aria-label="מעבר למפגשים">
       <div class="tb-in">
-        <p class="tb-pill"><span id="tbPillT">בודקים מפגשים</span></p>
+        <p class="tb-pill"><span id="tbPillT">התחברות</span></p>
         <p class="tb-main font-display" id="tbMain">&nbsp;</p>
         <p class="tb-sub" id="tbSub">&nbsp;</p>
       </div>
@@ -1370,6 +1370,7 @@
   const dayName = (iso) => ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'][new Date(iso + 'T12:00:00Z').getUTCDay()];
   const todayIso = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
   let lastD = null;
+  const meName = () => { if (window.__meName) return window.__meName; try { return localStorage.getItem('harpatka_me_name') || ''; } catch (e) { return ''; } };   // השם מהמטמון מיד בטעינה, עד שהחשבון נבדק
   const render = (d) => {
     lastD = d;
     const nx = ((d && d.future) || []).filter((m) => m.date >= todayIso())[0] || null;
@@ -1377,22 +1378,26 @@
     bar.classList.remove('tb-loading');
     if (nx) {
       const [, mo, dd] = nx.date.split('-');
-      el('tbPillT').parentElement.style.visibility = ''; el('tbPillT').textContent = 'המפגש הקרוב';
+      el('tbPillT').parentElement.style.visibility = '';
       el('tbMain').textContent = 'יום ' + dayName(nx.date) + ' ' + Number(dd) + '.' + Number(mo) + ' · ' + nx.time + (nx.city ? ' · ' + nx.city : '');
       el('tbSub').textContent = ' ';
     } else {
-      el('tbPillT').parentElement.style.visibility = ''; el('tbPillT').textContent = 'בקרוב';
+      el('tbPillT').parentElement.style.visibility = '';
       el('tbMain').textContent = 'המפגש הבא כבר בדרך';   // בלי מפגש (בלי שם ברירת המחדל)
       el('tbSub').textContent = 'השאירו פרטים ונעדכן ברגע שהתאריך ייקבע';
     }
-    if (window.__meName) { el('tbPillT').textContent = window.__meName; bar.classList.add('tb-me'); } else bar.classList.remove('tb-me');   // משתתף מחובר: השם שלו במקום הצ'יפ, כדי שידע שהוא מחובר
+    el('tbPillT').textContent = meName() || 'התחברות';   // משתתף מחובר: השם שלו במקום הצ'יפ, כדי שידע שהוא מחובר
     /* מעבר מונפש כשהמצב או התוכן השתנו (טעינה ← תוכן, אין מפגש ← יש מפגש); בלי אנימציה כשהתוכן זהה (למשל רענון אחרי המטמון) */
     if (wasLoading || before !== el('tbPillT').textContent + '|' + el('tbMain').textContent + '|' + el('tbSub').textContent) {
       const box = bar.querySelector('.tb-in'); box.classList.remove('tb-swap'); void box.offsetWidth; box.classList.add('tb-swap');
     }
   };
   window.addEventListener('harpatka:me', () => { if (lastD) render(lastD); });   // התחברות או יציאה: הצ'יפ מתעדכן
-  el('tbPillT').parentElement.addEventListener('click', (e) => { if (!window.__meName) return; e.stopPropagation(); if (window.HarpatkaMe) HarpatkaMe.confirmLogout(); });   // לחיצה על השם: שאלה אם לצאת מהחשבון
+  el('tbPillT').parentElement.addEventListener('click', (e) => {   // מחובר: שאלה אם לצאת. לא מחובר: התחברות עם גוגל (ואם אין רשומה למייל הזה נפתח פופאפ ההרשמה)
+    e.stopPropagation();
+    if (window.__meName) { if (window.HarpatkaMe) HarpatkaMe.confirmLogout(); return; }
+    const me = document.getElementById('meAreaCard'); location.href = (me ? me.getAttribute('href') : 'me/') + '?login=1&back=1';
+  });   // לחיצה על השם: שאלה אם לצאת מהחשבון
   let cached = null;
   try { cached = JSON.parse(localStorage.getItem(typeof MEET_CACHE !== 'undefined' ? MEET_CACHE : 'harpatka_meetings_v19') || 'null'); } catch (e) {}
   if (cached && cached.future) render(cached);
@@ -1412,7 +1417,7 @@
   window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(apply); } }, { passive: true });
 })();
 </script>
-  <script src="shared/person-form.js?v=20261028z"></script>
-  <script src="shared/register.js?v=20261028z"></script>
+  <script src="shared/person-form.js?v=20261029a"></script>
+  <script src="shared/register.js?v=20261029a"></script>
 </body>
 </html>
