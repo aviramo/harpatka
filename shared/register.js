@@ -27,7 +27,8 @@
       <div id="cmFormView" data-su-root>
         <div data-su="formWrap">
           <div class="su-fold"><div>
-            <div class="mt-badge" role="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><b data-meeting-when>המפגש הקרוב</b></div>
+            <h2 class="su-title" data-meeting-name hidden></h2>
+            <div class="mt-badge" role="note"><b data-meeting-when>המפגש הקרוב</b></div>
           </div></div>
           <form data-su="form" novalidate class="text-start">
             <input type="text" name="website" data-su="hp" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
@@ -383,7 +384,7 @@
       if (r !== 'registered' && r !== 'exists') throw new Error('register failed');
       const mine = meInfo.meetings.find((x) => x.id === m.id);
       const payOk = (meInfo.gender === 'male' ? (meInfo.age >= 40 && meInfo.age <= 55) : (meInfo.age >= 35 && meInfo.age <= 50)) && !(mine && (Number(mine.paid) > 0 || mine.free));
-      showDone(payOk); return;
+      showDone(payOk); loadMe(); return;   // טעינה מחדש של המצב, כדי שכפתור המפגש בדף יתעדכן מיד
     } catch (e) { fail.textContent = 'משהו השתבש, אפשר לנסות שוב'; }
     btn.disabled = false; btn.textContent = submitLabel;
   }
@@ -467,9 +468,11 @@
   /* טקסט כפתור השליחה: "הרשמה" כשיש מפגש להירשם אליו, "השארת פרטים" כשאין (כמו הכפתור הראשי בעמוד) */
   let submitLabel = 'הרשמה';
   const setSubmitLabel = (m) => { submitLabel = m ? 'הרשמה' : 'השארת פרטים'; document.querySelectorAll('[data-su="btn"]:not(.saved):not(:disabled)').forEach((b) => { b.textContent = submitLabel; }); };
+  let defMeetingName = '';   // שם ברירת המחדל למפגש (harpatka_public_settings)
   const showMeeting = (m) => {
     setSubmitLabel(m);
     document.querySelectorAll('.mt-badge').forEach((e) => { e.hidden = !m; });   // אין מפגש: אין שורת תאריך בכותרת
+    { const nm = (m && m.name) || defMeetingName || ''; document.querySelectorAll('[data-meeting-name]').forEach((e) => { e.textContent = nm; e.hidden = !nm; }); }   // כותרת: שם המפגש, ואם אין לו שם: שם ברירת המחדל
     if (!m) { document.querySelectorAll('[data-price]').forEach((e) => { e.textContent = priceFor(999, null) + ' ₪'; }); return; }
     const [, mo, d] = m.date.split('-').map(Number), wd = HE_DAYS[new Date(m.date + 'T12:00:00Z').getUTCDay()];
     const when = 'יום ' + wd + ' ' + Number(d) + '.' + Number(mo) + (m.time ? ' · ' + m.time : '');
@@ -484,10 +487,11 @@
     const H = { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey };
     try {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
-      const r = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time,price_tiers&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc&limit=1', { headers: H });
+      const r = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time,price_tiers,name&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc&limit=1', { headers: H });
       const rows = r.ok ? await r.json() : [];
       if (r.ok && !(rows && rows[0])) nearest = null;   // אין מפגש עתידי
-      if (rows && rows[0]) nearest = { id: rows[0].id, date: rows[0].meeting_date, time: String(rows[0].meeting_time).slice(0, 5), tiers: normT(rows[0].price_tiers) };
+      try { const sr = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_public_settings?select=key,value&key=eq.default_meeting_name', { headers: H }); const sv = sr.ok ? await sr.json() : []; defMeetingName = String(((sv[0] || {}).value) || '').trim(); } catch (e) {}
+      if (rows && rows[0]) nearest = { id: rows[0].id, date: rows[0].meeting_date, time: String(rows[0].meeting_time).slice(0, 5), tiers: normT(rows[0].price_tiers), name: String(rows[0].name || '').trim() };
       showMeeting(selMeeting || nearest);
     } catch (e) {}
   })();

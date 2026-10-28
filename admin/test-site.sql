@@ -39,7 +39,7 @@ begin
     select p.oid, p.proname, pg_get_function_identity_arguments(p.oid) ia
     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname like 'harpatka\_%'
-      and p.proname not in ('harpatka_is_admin', 'harpatka_send_mail', 'harpatka_render', 'harpatka_html_esc', 'harpatka_board_signal', 'harpatka_posts_notify_comment')
+      and p.proname not in ('harpatka_is_admin', 'harpatka_send_mail', 'harpatka_render', 'harpatka_html_esc', 'harpatka_board_signal', 'harpatka_me_signal', 'harpatka_posts_notify_comment')
   loop
     def := pg_get_functiondef(r.oid);
     def := replace(def, 'public.harpatka_', 'test.harpatka_');
