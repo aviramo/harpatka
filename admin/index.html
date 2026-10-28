@@ -3539,6 +3539,8 @@
     const pid = sheet && sheet.id; if (!pid) return;
     const bal = creditOf(pid), owed = owedOf(pid);
     $('#walSum').innerHTML = '<div class="big ' + (bal > 0 ? 'pos' : 'zero') + '"><bdi dir="ltr">₪' + nfm(bal) + '</bdi></div><div class="sub">יתרה זמינה' + '' + '</div>';
+    { const pays = state.payments.filter((x) => x.participant_id === pid), inn = pays.filter((x) => (x.kind === 'payment' || x.kind === 'deposit') && !x.from_credit).reduce((s, x) => s + Number(x.amount), 0), out = pays.filter((x) => x.kind === 'refund').reduce((s, x) => s + Number(x.amount), 0);
+      $('#walSum').insertAdjacentHTML('beforeend', '<div class="sub">שילם בסך הכול <b><bdi dir="ltr">₪' + nfm(inn - out) + '</bdi></b>' + (out > 0 ? ' (אחרי החזרים של ₪' + nfm(out) + ')' : '') + '</div>'); }
     $('#walRefund').hidden = !(bal > 0);
     { const pl = pkgLeft(pid); if (pl > 0) $('#walSum').insertAdjacentHTML('beforeend', '<div class="sub">בחבילה נשארו <b>' + pl + '</b> מפגשים · ₪' + nfm(pkgUnit(pid)) + ' למפגש</div>'); }
     $('#walZikuy').hidden = !state.meetings.some((m) => allocatedOf(pid, m.id) > 0);
