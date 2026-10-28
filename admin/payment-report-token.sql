@@ -1,11 +1,15 @@
 -- דיווח תשלום גם מפופאפ ההרשמה בדף הבית (28.10.26): מי שנרשם עכשיו (משתתף חדש עם אסימון חיבור, claim_token) יכול לדווח "שילמתי" בלי להתחבר,
 -- ומי שמחובר דרך harpatka_me_report_payment. הלוגיקה בפונקציית ליבה אחת (harpatka_report_payment_core). אידמפוטנטי; להריץ על public ואז admin/test-site.sql.
 
+-- סכום הדיווח: המחיר למפגש ברגע הדיווח (לפי מדרגות המחיר של המפגש), נשמר ב-pay_reported_amount ומוצג בדף הניהול
+alter table public.harpatka_attendance add column if not exists pay_reported_amount numeric;
+alter table test.harpatka_attendance add column if not exists pay_reported_amount numeric;
+
 create or replace function public.harpatka_report_payment_core(pid uuid, p_meeting uuid)
 returns text language plpgsql security definer set search_path = public as $$
 declare
   mt public.harpatka_meetings; a public.harpatka_attendance; pa public.harpatka_participants;
-  today date := (now() at time zone 'Asia/Jerusalem')::date; paid numeric;
+  today date := (now() at time zone 'Asia/Jerusalem')::date; paid numeric; amt numeric;
 begin
   select * into mt from public.harpatka_meetings where id = p_meeting;
   if not found or mt.meeting_date < today then return 'past'; end if;
@@ -15,10 +19,11 @@ begin
     into paid from public.harpatka_payments p where p.participant_id = pid and p.meeting_id = p_meeting;
   if paid > 0 or coalesce(a.no_pay, false) then return 'already'; end if;
   if a.pay_reported_at is not null then return 'reported'; end if;
-  update public.harpatka_attendance set pay_reported_at = now() where participant_id = pid and meeting_id = p_meeting;
+  amt := public.harpatka_meeting_price(mt.price_tiers, mt.meeting_date - today);
+  update public.harpatka_attendance set pay_reported_at = now(), pay_reported_amount = amt where participant_id = pid and meeting_id = p_meeting;
   select * into pa from public.harpatka_participants where id = pid;
   begin
-    perform public.harpatka_sys_note(pid, 'דווח על תשלום למפגש ' || public.harpatka_meeting_short(p_meeting) || ' (ממתין לאימות)', 'payment_reported', p_meeting);
+    perform public.harpatka_sys_note(pid, 'דווח על תשלום' || coalesce(' ₪' || amt::text, '') || ' למפגש ' || public.harpatka_meeting_short(p_meeting) || ' (ממתין לאימות)', 'payment_reported', p_meeting);
   exception when others then null;
   end;
   begin
@@ -61,3 +66,9 @@ begin
 end $$;
 revoke all on function public.harpatka_report_payment_token(uuid, uuid) from public;
 grant execute on function public.harpatka_report_payment_token(uuid, uuid) to anon, authenticated;
+
+-- השלמת סכום לדיווחים שנעשו לפני שהסכום נשמר: המחיר לפי הימים שנותרו ברגע הדיווח
+update public.harpatka_attendance a set pay_reported_amount = public.harpatka_meeting_price(m.price_tiers, m.meeting_date - (a.pay_reported_at at time zone 'Asia/Jerusalem')::date)
+  from public.harpatka_meetings m where m.id = a.meeting_id and a.pay_reported_at is not null and a.pay_reported_amount is null;
+update test.harpatka_attendance a set pay_reported_amount = public.harpatka_meeting_price(m.price_tiers, m.meeting_date - (a.pay_reported_at at time zone 'Asia/Jerusalem')::date)
+  from test.harpatka_meetings m where m.id = a.meeting_id and a.pay_reported_at is not null and a.pay_reported_amount is null;

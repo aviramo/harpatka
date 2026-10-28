@@ -104,7 +104,7 @@
   </dialog>
 </div>
 <script src="../shared/config.js"></script>
-<script src="../shared/person-form.js?v=20261029a"></script>
+<script src="../shared/person-form.js?v=20261029b"></script>
 <script>
 (() => {
   const DB = {
@@ -196,6 +196,7 @@
   function viewPending() { app.innerHTML = '<div class="card"><h2>הבקשה התקבלה</h2><p class="muted" style="margin:0">אנחנו מאשרים את החיבור, ובקרוב האזור האישי יהיה זמין. אפשר לחזור לכאן בעוד קצת זמן</p></div>'; }
   function viewBlocked() { app.innerHTML = '<div class="card"><h2>אין גישה</h2><p class="muted" style="margin:0">החשבון הזה לא מחובר לאזור אישי. אפשר לפנות אלינו בוואטסאפ</p></div>'; }
 
+  let keepOpenSet = new Set(), keepDetOpen = false;   // מפגשים וכרטיס פרטים שהיו פתוחים בזמן רענון אוטומטי (זמן אמת)
   let keepOpen = null, scrollTo = null;   // scrollTo: מפגש מהקישור ?m= (מדף הבית): נפתח ונגללים אליו פעם אחת   // המפגש שנפתח לפני טעינה מחדש (אחרי הרשמה או ביטול) נשאר פתוח
   function viewMain() {
     const p = data.participant, nx = data.next, imp = !!data.impersonating, ms = data.meetings || [];
@@ -224,7 +225,7 @@
       return b;
     };
     const rowHtml = (m) => {
-      const open = m.id === firstId;
+      const open = m.id === firstId || keepOpenSet.has(m.id);
       const badge = m.future ? (m.registered ? (Number(m.paid) > 0 || m.free ? '<span class="chip ok">נרשמתם ✓</span>' : m.reported ? '<span class="chip wait">ממתין לאישור</span>' : '<span class="chip no">טרם שולם</span>') : '<span class="chip">פתוח להרשמה</span>') : (m.attended ? '<span class="chip ok">הגעתם</span>' : '<span class="chip">לא הגעתם</span>');
       return '<div class="mtg' + (open ? ' open' : '') + '" data-mid="' + m.id + '"><button type="button" class="mthead" aria-expanded="' + open + '"><span class="c1">' + esc(dayParts(m.date).day) + '</span><span class="c2"><bdi dir="ltr">' + esc(m.time) + ' · ' + esc(dayParts(m.date).date) + '</bdi></span><span class="c4">' + badge + '</span>' + chev + '<span class="c5">' + esc([m.city, m.name].filter(Boolean).join(' · ')) + '</span></button><div class="mtfold"><div>' + meetingBody(m) + '</div></div></div>';
     };
@@ -235,12 +236,13 @@
     else if (!mine.some((m) => m.future)) h += '<div class="card"><h2>מפגשים שאפשר להצטרף אליהם</h2><p class="muted" style="margin:0">עוד לא נקבע מפגש קרוב. נעדכן בקבוצת העדכונים</p></div>';
 
     const gv = p.gender || '';
-    const missing = !p.gender || p.age == null;   // חסר פרט חובה: הכרטיס נפתח מעצמו
+    const missing = !p.gender || p.age == null || keepDetOpen;   // חסר פרט חובה: הכרטיס נפתח מעצמו
     h += '<div class="card" id="detCard"><button type="button" class="dethead" id="detHead" aria-expanded="' + missing + '" aria-controls="detBody"><h2>הפרטים שלי</h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="detfold' + (missing ? ' open' : '') + '" id="detBody"><div><div class="two"><div>' + PersonForm.html('first', { id: 'fn', label: true, value: p.first_name }) + '</div><div>' + PersonForm.html('last', { id: 'ln', label: true, value: p.last_name }) + '</div></div>' + PersonForm.err('name') +
       PersonForm.html('phone', { id: 'ph2', label: true, value: String(p.phone || '').replace(/^\+972/, '0'), attr: 'style="text-align:right"' }) + PersonForm.err('phone') +
       '<div class="two"><div>' + PersonForm.html('age', { id: 'ag', label: true, value: p.age }) + PersonForm.err('age') + '</div><div>' + PersonForm.html('gender', { id: 'gn', label: true, value: gv }) + PersonForm.err('gender') + '</div></div>' +
       '<button type="button" class="btn" id="saveBtn">שמירה</button><div class="msg" id="sm"></div></div></div></div>';
     if (CFG.updatesGroupLink) h += '<div class="card"><h2>הקבוצה השקטה</h2><p class="muted" style="margin:0">קבוצת וואטסאפ שקטה לקבלת עדכונים על המפגשים הבאים</p><a class="btn ghost" href="' + esc(CFG.updatesGroupLink) + '" target="_blank" rel="noopener">כניסה לקבוצה השקטה</a></div>';
+    keepOpenSet = new Set(); keepDetOpen = false;
     app.innerHTML = h;
     if (scrollTo) { const row = app.querySelector('.mtg[data-mid="' + scrollTo + '"]'); scrollTo = null; if (row) setTimeout(() => row.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }), 120); }
 
@@ -332,6 +334,36 @@
     load();
   }
   $('#outBtn').onclick = () => { if (!usingAdmin) clearSession(); else { try { sessionStorage.removeItem(AS_KEY); } catch (e) {} } location.href = location.pathname; };
+  /* מצב המפגשים והתשלום בזמן אמת: אות ריק בערוץ ציבורי "me" (בבדיקות "me-test"; admin/me-realtime.sql) בכל שינוי בתשלומים, בשיוכים ובמפגשים,
+     וגם חזרה ללשונית, והגיבוי כל 45 שניות. הרענון לא קורה בזמן הקלדה, ושומר אילו מפגשים פתוחים */
+  let rtT = 0, rtDirty = false;
+  const typingNow = () => { const el = document.activeElement; return !!(el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) && app.contains(el)); };
+  const refreshNow = () => {
+    if (!data || data.status !== 'ok' || document.querySelector('dialog[open]')) return;
+    if (typingNow()) { rtDirty = true; return; }
+    rtDirty = false;
+    keepOpenSet = new Set([...app.querySelectorAll('.mtg.open')].map((x) => x.dataset.mid));
+    keepDetOpen = !!(app.querySelector('#detBody') && app.querySelector('#detBody').classList.contains('open'));
+    load(true);
+  };
+  const scheduleRefresh = () => { clearTimeout(rtT); rtT = setTimeout(refreshNow, 250); };
+  document.addEventListener('focusout', () => { if (rtDirty) setTimeout(refreshNow, 300); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) scheduleRefresh(); });
+  window.addEventListener('pageshow', (e) => { if (e.persisted) scheduleRefresh(); });
+  setInterval(() => { if (!document.hidden) scheduleRefresh(); }, 45000);
+  (function startRealtime() {
+    const topic = 'realtime:' + ((window.HARPATKA_ENV && window.HARPATKA_ENV.name === 'test') ? 'me-test' : 'me');
+    let ws, hb = 0, retry = 2000;
+    const open = () => {
+      try { ws = new WebSocket(DB.url.replace(/^http/, 'ws') + '/realtime/v1/websocket?apikey=' + encodeURIComponent(DB.key) + '&vsn=1.0.0'); } catch (e) { return; }
+      const send = (o) => { if (ws.readyState === 1) ws.send(JSON.stringify(o)); };
+      ws.onopen = () => { retry = 2000; send({ topic, event: 'phx_join', ref: '1', payload: { config: { broadcast: { ack: false, self: false }, presence: { key: '' }, private: false }, access_token: DB.key } }); hb = setInterval(() => send({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(Date.now()) }), 25000); };
+      ws.onmessage = (e) => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } if (m.topic === topic && m.event === 'broadcast') scheduleRefresh(); };
+      ws.onclose = () => { clearInterval(hb); setTimeout(open, retry); retry = Math.min(retry * 2, 60000); };
+      ws.onerror = () => { try { ws.close(); } catch (x) {} };
+    };
+    open();
+  })();
   $('#otherClose').onclick = () => $('#otherDlg').close();
   $('#otherDlg').addEventListener('click', (e) => { if (e.target === $('#otherDlg')) $('#otherDlg').close(); });
   start();
