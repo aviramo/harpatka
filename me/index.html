@@ -80,7 +80,7 @@
   <div id="app"><div class="center">טוען…</div></div>
 </div>
 <script src="../shared/config.js"></script>
-<script src="../shared/person-form.js?v=20261028e"></script>
+<script src="../shared/person-form.js?v=20261028f"></script>
 <script>
 (() => {
   const DB = {
@@ -181,8 +181,8 @@
     setTitle(p.first_name + ' ' + p.last_name);   // שם המשתתף מחליף את הכותרת "האזור האישי" (בלי כרטיס ברכה)
     if (credit !== 0) h += '<div style="margin-top:12px"><span class="chip ' + (credit > 0 ? 'ok' : 'no') + '">' + (credit > 0 ? 'יתרה לטובתכם ' : 'יתרת חוב ') + ils(credit) + '</span></div>';
     // סקשן אחד "המפגשים שלי": כל מפגש עתידי (אפשר להירשם, לשלם ולבטל) ומפגשים שהיו. כל מפגש נפתח ונסגר; הקרוב פתוח כברירת מחדל
-    const upcoming = ms.filter((m) => m.future), past = ms.filter((m) => !m.future).sort((a, b) => String(b.date).localeCompare(String(a.date)));
-    const ordered = upcoming.concat(past), firstId = keepOpen && ordered.some((m) => m.id === keepOpen) ? keepOpen : (upcoming.length ? upcoming[0].id : null); keepOpen = null;
+    const ordered = ms.slice().sort((a, b) => (String(b.date) + String(b.time)).localeCompare(String(a.date) + String(a.time))), upcoming = ordered.filter((m) => m.future);   // מהחדש לישן
+    const nearest = upcoming.length ? upcoming[upcoming.length - 1].id : null, firstId = keepOpen && ordered.some((m) => m.id === keepOpen) ? keepOpen : nearest; keepOpen = null;   // נפתח כברירת מחדל: המפגש העתידי הקרוב ביותר
     const chev = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
     const meetingBody = (m) => {
       const paid = Number(m.paid) > 0, free = !!m.free; let b = '';
