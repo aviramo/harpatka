@@ -828,9 +828,16 @@
     #depFields .payrow .field { flex: 1 1 0; margin-bottom: 8px; }
     #depFields .payrow .field:first-child { flex: 1.3 1 0; }
     #depFields .payrow .paygo { margin: 0 0 8px; height: 44px; }
-    .deplines { margin: 4px 0 14px; display: grid; gap: 8px; }
-    .deplines .dtot { display: flex; justify-content: space-between; align-items: center; font-weight: 800; padding: 2px 4px; }
-    .deplines .dtot small { color: var(--muted); font-weight: 700; }
+    .deplines { margin: 2px 0 6px; display: grid; gap: 8px; }
+    .dsum { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--cream); border-radius: 18px; padding: 14px 16px; }
+    .dsum .dsl { color: var(--muted); font-weight: 700; font-size: 14px; }
+    .dsum .dsv { font-family: "Rubik", sans-serif; font-weight: 800; font-size: 30px; line-height: 1.1; }
+    .dsum .dst { font-weight: 800; font-size: 14px; border-radius: 999px; padding: 4px 12px; background: var(--red-bg); color: var(--red); }
+    .dsum.ok .dst { background: var(--green-bg); color: var(--green); }
+    .dsum.ok .dsv { color: var(--green); }
+    .depsec { margin: 16px 2px 8px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 15px; font-weight: 800; color: var(--muted); }
+    .dlt { margin: 6px 2px 0; font-size: 13.5px; font-weight: 800; color: var(--muted); }
+    .deplnk { border: 0; background: none; padding: 6px 2px; font: inherit; font-size: 14px; font-weight: 700; color: var(--terra); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
     .dline { display: grid; grid-template-columns: minmax(0, 1fr) 96px 34px; align-items: center; gap: 8px; background: var(--cream); border-radius: 14px; padding: 8px 10px; }
     .dline .dsrc { font-weight: 700; }
     .dline .dsrc small { display: block; color: var(--muted); font-weight: 600; font-size: 12.5px; }
@@ -1365,6 +1372,7 @@
       <div class="ppanel" data-panel="deposit" hidden>
         <p class="sthint" id="depIntro" style="margin:0 2px 12px">תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש</p>
         <div id="depLines" class="deplines" hidden></div>
+        <h4 class="depsec" id="depAddTitle" hidden>הוספת תשלום</h4>
         <div class="metchips" id="depMethods" role="radiogroup" aria-label="דרך העברה"></div>
         <div id="depFree" hidden><p class="sthint" style="margin:12px 2px">המפגש הזה חינם, לא נדרש תשלום</p><button class="btn paygo" id="depFreePay" type="button">אישור</button></div>
         <div id="depFields">
@@ -1374,6 +1382,7 @@
           <button class="btn paygo" id="depSave" type="button">תשלום</button>
         </div>
         <div class="pquick" id="depQuick"></div>
+        <button type="button" class="deplnk" id="depPkgToggle" hidden>תשלום על כמה מפגשים</button>
         <label class="field payfield" id="depMethodSel" hidden><span>דרך העברה</span><select name="pay_depm"><option value="paybox">פייבוקס</option><option value="bit">ביט</option><option value="cash">מזומן</option><option value="bank">בנק</option><option value="other">אחר</option></select></label>
         <div class="payhint" id="depPkgHint"></div>
         <label class="field" id="depOtherField" hidden><span>פירוט קצר</span><input name="pay_depn" maxlength="60" autocomplete="off" placeholder="למשל: פייפאל, צ׳ק" /></label>
@@ -3601,15 +3610,15 @@
     if (!box) return; if (!m || !pid) { box.hidden = true; box.innerHTML = ''; return; }
     const rows = state.payments.filter((x) => x.participant_id === pid && x.meeting_id === m.id && (x.kind === 'payment' || x.kind === 'credit' || (x.kind === 'refund' && !x.from_credit))).sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
     const al = Math.round(allocatedOf(pid, m.id) * 100) / 100, price = expectedPrice(pid, m);
-    if (!rows.length) { box.hidden = true; box.innerHTML = ''; return; }
     box.hidden = false;
     const when = (x) => { const d = String(x.created_at || '').slice(0, 10).split('-'); return d.length === 3 ? d[2] + '.' + d[1] : ''; };
-    box.innerHTML = rows.map((x) => x.kind === 'payment'
+    const lines = rows.map((x) => x.kind === 'payment'
       ? '<div class="dline" data-id="' + x.id + '"><span class="dsrc">' + (x.from_credit ? 'מהיתרה' : esc(methodName(x) || 'תשלום')) + '<small>' + when(x) + '</small></span><input type="number" inputmode="decimal" min="0" step="any" value="' + Number(x.amount) + '" aria-label="סכום"><button type="button" class="ddel" aria-label="הסרת ההקצאה">×</button></div>'
-      : '<div class="dline ret"><span class="dsrc">' + (x.kind === 'credit' ? 'זיכוי ליתרה' : 'הוחזר כסף') + '<small>' + when(x) + '</small></span><b style="text-align:center">-₪' + nfm(Number(x.amount)) + '</b><span></span></div>').join('') +
-      '<div class="dtot"><span>שולם למפגש</span><span>₪' + nfm(al) + '' + '</span></div>';
+      : '<div class="dline ret"><span class="dsrc">' + (x.kind === 'credit' ? 'זיכוי ליתרה' : 'הוחזר כסף') + '<small>' + when(x) + '</small></span><b style="text-align:center">-₪' + nfm(Number(x.amount)) + '</b><span></span></div>').join('');
+    box.innerHTML = '<div class="dsum' + (al > 0 ? ' ok' : '') + '"><div><div class="dsl">שולם למפגש</div><div class="dsv">₪' + nfm(al) + '</div></div><span class="dst">' + (al > 0 ? 'שולם' : 'טרם שולם') + '</span></div>' + (rows.length ? '<div class="dlt">הקצאות (אפשר לשנות סכום או להסיר)</div>' + lines : '');
   }
   const depLinesRefresh = () => { paintDepLines(); renderContact(); refreshSheetMeetings(); render(); };
+  $('#depPkgToggle').addEventListener('click', () => { $('#depPkgSel').closest('label').hidden = false; $('#depPkgToggle').hidden = true; });
   $('#depLines').addEventListener('change', async (e) => {
     const inp = e.target.closest('input'); if (!inp) return;
     const line = inp.closest('.dline'), row = state.payments.find((x) => x.id === line.dataset.id), amt = parseFloat(inp.value);
@@ -3629,8 +3638,8 @@
     f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; f.pay_depm.value = 'paybox'; f.pay_depn.value = ''; $('#depOtherField').hidden = true;
     { const al = m ? Math.max(0, allocatedOf(pid, m.id)) : 0, pr0 = m ? expectedPrice(pid, m) : 0; f.pay_dep.value = !m ? '' : al <= 0 ? pr0 : al < pr0 ? pr0 - al : ''; }   // מפגש ששולם חלקית: המוצע הוא היתרה
     { const pp = state.participants.find((x) => x.id === pid), lk = m && linkOf(pid, m.id), np = !!(m && pp && noPayOf(pp, lk)); $('#depFields').hidden = np; $('#depFree').hidden = !np; }
-    $('#depIntro').textContent = m ? 'מפגש ' + dmShort(m) + ' · הקצאת כסף למפגש: מוסיפים תשלום בדרך העברה, לוקחים מהיתרה, או מסמנים חינם. אפשר לשנות כל הקצאה בשורות שלמעלה' : 'תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש';
-    { f.pay_dep.closest('label').querySelector('span').textContent = 'סכום (₪)'; $('#depSave').textContent = m ? 'הוספת תשלום' : 'תשלום'; paintDepLines(); }
+    $('#depIntro').textContent = m ? 'מפגש ' + dmShort(m) : 'תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש';
+    { f.pay_dep.closest('label').querySelector('span').textContent = 'סכום (₪)'; $('#depSave').textContent = m ? 'הוספה' : 'תשלום'; $('#depAddTitle').hidden = !m; $('#depPkgSel').closest('label').hidden = !!m; $('#depPkgToggle').hidden = !m; paintDepLines(); }
     $('#depPkgLbl').textContent = m ? 'על כמה מפגשים' : 'חבילה'; f.pay_pkg.options[0].textContent = m ? '1' : '—';
     $('#depQuick').innerHTML = quickPrices(m).map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
     $('#depQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) { f.pay_dep.value = b.dataset.q; paintPkg(); } };
