@@ -1364,8 +1364,8 @@
       </div>
       <div class="ppanel" data-panel="deposit" hidden>
         <p class="sthint" id="depIntro" style="margin:0 2px 12px">תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש</p>
-        <div class="metchips" id="depMethods" role="radiogroup" aria-label="דרך העברה"></div>
         <div id="depLines" class="deplines" hidden></div>
+        <div class="metchips" id="depMethods" role="radiogroup" aria-label="דרך העברה"></div>
         <div id="depFree" hidden><p class="sthint" style="margin:12px 2px">המפגש הזה חינם, לא נדרש תשלום</p><button class="btn paygo" id="depFreePay" type="button">אישור</button></div>
         <div id="depFields">
         <div class="payrow">
@@ -3607,7 +3607,7 @@
     box.innerHTML = rows.map((x) => x.kind === 'payment'
       ? '<div class="dline" data-id="' + x.id + '"><span class="dsrc">' + (x.from_credit ? 'מהיתרה' : esc(methodName(x) || 'תשלום')) + '<small>' + when(x) + '</small></span><input type="number" inputmode="decimal" min="0" step="any" value="' + Number(x.amount) + '" aria-label="סכום"><button type="button" class="ddel" aria-label="הסרת ההקצאה">×</button></div>'
       : '<div class="dline ret"><span class="dsrc">' + (x.kind === 'credit' ? 'זיכוי ליתרה' : 'הוחזר כסף') + '<small>' + when(x) + '</small></span><b style="text-align:center">-₪' + nfm(Number(x.amount)) + '</b><span></span></div>').join('') +
-      '<div class="dtot"><span>שולם למפגש</span><span>₪' + nfm(al) + (price > 0 ? ' <small>מתוך ₪' + nfm(price) + '</small>' : '') + '</span></div>';
+      '<div class="dtot"><span>שולם למפגש</span><span>₪' + nfm(al) + '' + '</span></div>';
   }
   const depLinesRefresh = () => { paintDepLines(); renderContact(); refreshSheetMeetings(); render(); };
   $('#depLines').addEventListener('change', async (e) => {
