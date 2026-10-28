@@ -1381,7 +1381,7 @@
         <div id="depLines" class="deplines" hidden></div>
         <h4 class="depsec" id="depAddTitle" hidden>חינם או תשלום</h4>
         <div class="metchips" id="depMethods" role="radiogroup" aria-label="דרך העברה"></div>
-        <div id="depFree" hidden><p class="sthint" style="margin:12px 2px">המפגש סומן חינם ולא נדרש תשלום. בחירה בדרך תשלום או בהקצאה מהיתרה תבטל את החינם</p><button class="btn paygo" id="depFreePay" type="button">אישור</button></div>
+        <div id="depFree" hidden><p class="sthint" style="margin:12px 2px">המפגש סומן חינם ולא נדרש תשלום. בחירה בדרך תשלום או בהקצאה מהיתרה תבטל את החינם</p></div>
         <div id="depFields">
         <div class="payrow">
           <label class="field"><span>סכום (₪)</span><input name="pay_dep" type="number" inputmode="decimal" min="0" step="any" /></label>
@@ -3707,7 +3707,6 @@
     try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body: { no_pay: v } }); toast(v ? 'לא משלם על המפגש הזה' : 'משלם על המפגש הזה'); }
     catch (err) { l.no_pay = prev; $('#depFields').hidden = !v; $('#depFree').hidden = v; if (repaint) repaint(); render(); refreshSheetMeetings(); fail(err); }
   }
-  $('#depFreePay').addEventListener('click', () => { const b = $('#pBack'); if (b) b.click(); toast('המפגש סומן חינם'); });   // אישור: חוזרים למסך הקודם (הסימון כבר נשמר בבחירת "חינם")
   $('#depSave').addEventListener('click', async () => {
     const f = pForm, pid = sheet && sheet.id; const amt = parseFloat(f.pay_dep.value); if (!pid) return;
     if (!(amt > 0)) { f.pay_dep.focus(); return; }
