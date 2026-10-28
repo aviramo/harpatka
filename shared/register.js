@@ -36,46 +36,39 @@
               <div class="su-grid">
                 <div class="su-cell su-wide">
                   <div class="su-names">
-                    <input id="cmFirst" data-autofocus data-su="first" name="first" type="text" class="su-input" autocomplete="given-name" maxlength="40" placeholder="שם פרטי" aria-label="שם פרטי" required>
-                    <input id="cmLast" data-su="last" name="last" type="text" class="su-input" autocomplete="family-name" maxlength="40" placeholder="שם משפחה" aria-label="שם משפחה" required>
+                    ${PersonForm.html('first', { id: 'cmFirst', cls: 'su-input', autofocus: true })}
+                    ${PersonForm.html('last', { id: 'cmLast', cls: 'su-input' })}
                   </div>
-                  <div data-su="nameErr" class="su-err" role="alert"></div>
+                  ${PersonForm.err('name', 'su-err')}
                 </div>
                 <div class="su-cell">
-                  <input id="cmPhone" data-su="phone" name="phone" type="tel" dir="ltr" inputmode="tel" class="su-input text-end" autocomplete="tel" maxlength="24" placeholder="טלפון" aria-label="טלפון" required>
-                  <div data-su="phoneErr" class="su-err" role="alert"></div>
+                  ${PersonForm.html('phone', { id: 'cmPhone', cls: 'su-input text-end' })}
+                  ${PersonForm.err('phone', 'su-err')}
                 </div>
                 <div class="su-cell">
-                  <input id="cmAge" data-su="age" name="age" type="number" inputmode="numeric" min="18" max="99" class="su-input" autocomplete="off" placeholder="גיל" aria-label="גיל" required>
-                  <div data-su="ageErr" class="su-err" role="alert"></div>
+                  ${PersonForm.html('age', { id: 'cmAge', cls: 'su-input' })}
+                  ${PersonForm.err('age', 'su-err')}
                 </div>
                 <div class="su-cell su-wide">
-                  <div class="su-seg eq" data-su="gender" role="radiogroup" aria-label="מגדר">
-                    <label><input type="radio" name="cmGender" value="male"><span>גבר</span></label>
-                    <label><input type="radio" name="cmGender" value="female"><span>אישה</span></label>
-                  </div>
-                  <div data-su="genderErr" class="su-err" role="alert"></div>
+                  ${PersonForm.html('gender', { id: 'cmGender', cls: 'su-input su-select' })}
+                  ${PersonForm.err('gender', 'su-err')}
                 </div>
               </div>
             </div></div>
             <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-3.5 text-[1.2rem] whitespace-nowrap w-full mt-4">הרשמה</button>
             <div data-su="fail" class="su-err mt-3 text-center" role="alert"></div>
             <div class="su-fold su-after shut" data-su="after"><div>
-              <p class="su-paynote">ההרשמה תושלם רק לאחר תשלום <span data-price>80 ₪</span> בפייבוקס</p>
+              <p class="su-paynote">המקום נשמר באופן זמני, והוא יישמר קבוע רק לאחר תשלום</p>
               <a href="#" target="_blank" rel="noopener" data-paybox class="btn-primary rounded-full px-8 py-4 text-[1.2rem] block text-center w-full">לתשלום <span data-price>80 ₪</span> בפייבוקס</a>
+              <a href="__BASE__me/?login=1" class="su-melink">כניסה לאזור האישי</a>
             </div></div>
           </form>
         </div>
       </div>
     </div>
   </div>`.replace(/__BASE__/g, BASE);
-  /* v7: מגדר כרשימה נפתחת רגילה במקום שני כפתורים (ברירת מחדל לכל העמודים; window.REGISTER_GENDER = 'buttons' מחזיר את הכפתורים) */
-  const GENDER_SELECT = '<select data-su="gender" name="cmGender" class="su-input su-select" aria-label="מגדר" required><option value="" selected disabled>מגדר</option><option value="male">גבר</option><option value="female">אישה</option></select>';
-  const MODAL_FINAL = window.REGISTER_GENDER !== 'buttons'
-    ? MODAL_HTML.replace(/<div class="su-seg eq" data-su="gender"[\s\S]*?<\/div>(?=\s*<div data-su="genderErr")/, GENDER_SELECT)
-    : MODAL_HTML;
   if (window.REGISTER_MIN !== false) document.documentElement.classList.add('reg-min');
-  document.body.insertAdjacentHTML('beforeend', MODAL_FINAL);
+  document.body.insertAdjacentHTML('beforeend', MODAL_HTML);
 
   /* ===== מנגנון פופאפ כללי (משותף לכל ה-.modal) ===== */
   let modalLastFocus = null, urlBeforeReg = null;
@@ -208,29 +201,14 @@
     catch (e) { if (window.__leadSent) return; window.__leadSent = true; }   // בלי אחסון: פעם אחת לטעינת דף
     try { fbq('track', 'Lead'); } catch (e) {}
   };
-  function normPhone(raw) {
-    const s = String(raw || '').trim();
-    if (!s) return '';
-    let plus = s[0] === '+', d = s.replace(/\D/g, '');
-    if (!d) return '';
-    if (d.startsWith('00')) { plus = true; d = d.slice(2); }
-    const IL = /^(5\d{8}|7\d{8}|[23489]\d{7})$/;
-    if (plus) {
-      if (d.startsWith('9720')) d = '972' + d.slice(4);
-      if (d.length < 8 || d.length > 15 || d[0] === '0') return '';
-      if (d.startsWith('972') && !IL.test(d.slice(3))) return '';
-      return '+' + d;
-    }
-    if (d[0] === '0') return IL.test(d.slice(1)) ? '+972' + d.slice(1) : '';
-    return '';
-  }
+  const normPhone = PersonForm.normPhone;   // הלוגיקה בטופס המשותף (shared/person-form.js)
   window.normPhone = normPhone;
   const suRoots = [];
   function initSignup(root) {
     const q = k => root.querySelector('[data-su="' + k + '"]');
     const form = q('form'); if (!form) return;
-    const firstI = q('first'), lastI = q('last'), phoneI = q('phone'), ageI = q('age'), btn = q('btn'), t0 = Date.now();
-    const setErr = (input, errEl, msg) => { errEl.textContent = msg || ''; input.classList.toggle('bad', !!msg); };
+    const btn = q('btn'), t0 = Date.now();
+    PersonForm.bind(root);
     /* אחרי הרשמה: התוכן נסגר מלמעלה, הכפתור מתחלף ל"נשמר זמנית" ואז נחשפים הטקסט וכפתור התשלום בפייבוקס (הכול באנימציה) */
     let saved = false;
     const showDone = (payOk = true) => {
@@ -241,23 +219,10 @@
       if (payOk) setTimeout(() => { const a = q('after'); if (a) a.classList.remove('shut'); }, 700);
     };
     suRoots.push(showDone);
-    const clrName = () => { q('nameErr').textContent = ''; firstI.classList.remove('bad'); lastI.classList.remove('bad'); };
-    firstI.addEventListener('input', clrName); lastI.addEventListener('input', clrName);
-    phoneI.addEventListener('input', () => setErr(phoneI, q('phoneErr'), ''));
-    ageI.addEventListener('input', () => setErr(ageI, q('ageErr'), ''));
-    const genderBox = q('gender');
-    genderBox.addEventListener('change', () => { genderBox.classList.remove('bad'); q('genderErr').textContent = ''; });
     form.addEventListener('submit', async (e) => {
       e.preventDefault(); q('fail').textContent = '';
-      const first = firstI.value.trim().replace(/\s+/g, ' '), last = lastI.value.trim().replace(/\s+/g, ' '), norm = normPhone(phoneI.value);
-      let ok = true;
-      if (first.length < 2 || last.length < 2) { q('nameErr').textContent = 'נא למלא שם פרטי ושם משפחה'; firstI.classList.toggle('bad', first.length < 2); lastI.classList.toggle('bad', last.length < 2); ok = false; }
-      if (!norm) { setErr(phoneI, q('phoneErr'), 'מספר לא תקין'); ok = false; }
-      const age = parseInt(ageI.value, 10);
-      if (!(age >= 18 && age <= 99)) { setErr(ageI, q('ageErr'), 'גיל לא תקין'); ok = false; }
-      const gEl = genderBox.matches('select') ? genderBox : genderBox.querySelector('input:checked'), gender = gEl && gEl.value ? gEl.value : null;
-      if (!gender) { genderBox.classList.add('bad'); q('genderErr').textContent = 'נא לבחור'; ok = false; }
-      if (!ok) return;
+      const chk = PersonForm.validate(root); if (!chk.ok) return;
+      const first = chk.v.first, last = chk.v.last, norm = chk.v.phone, age = chk.v.age, gender = chk.v.gender;
       /* אפשרות תשלום רק בטווח הגילאים שמתאים למפגש: גברים 40 עד 55, נשים 35 עד 50 (ההרשמה עצמה נשמרת תמיד) */
       /* תשלום רק אחרי הרשמה למפגש: בלי מפגש (השארת פרטים בלבד) אין כפתור תשלום */
       const payOk = (gender === 'male' ? (age >= 40 && age <= 55) : (age >= 35 && age <= 50)) && !!(selMeeting || nearest);
@@ -282,10 +247,7 @@
             try { if (window.fbq) fbq('trackCustom', 'RegistrationValue', { value: inRange ? 3 : 1, currency: 'ILS' }); } catch (e) {}
           }
           finished = true; allDone();
-        } else if (out === 'invalid_phone') setErr(phoneI, q('phoneErr'), 'מספר לא תקין');
-        else if (out === 'invalid_name') q('nameErr').textContent = 'נא למלא שם פרטי ושם משפחה';
-        else if (out === 'invalid_age') setErr(ageI, q('ageErr'), 'גיל לא תקין');
-        else if (out === 'invalid_gender') { genderBox.classList.add('bad'); q('genderErr').textContent = 'נא לבחור'; }
+        } else if (PersonForm.serverError(root, out)) { /* ההודעה הוצגה ליד השדה */ }
         else throw new Error('signup failed');
       } catch (err) {
         q('fail').innerHTML = 'משהו השתבש, אפשר ליצור קשר ישירות: <a href="#" class="underline font-bold">שיחה בוואטסאפ</a>';

@@ -43,6 +43,9 @@
   .msg.bad { color: var(--red); }
   .msg.good { color: var(--green); }
   .dirs { white-space: pre-wrap; margin-top: 2px; }   /* כתובת והוראות הגעה: אותו עיצוב כמו השעה, כמה שורות */
+  .pf-err { color: var(--red); font-size: 13.5px; font-weight: 600; margin-top: 4px; }
+  .pf-err:empty { display: none; }
+  input.bad, select.bad { border-color: var(--red); }
   .center { text-align: center; padding: 40px 0; color: var(--muted); }
 </style>
 </head>
@@ -52,6 +55,7 @@
   <div id="app"><div class="center">טוען…</div></div>
 </div>
 <script src="../shared/config.js"></script>
+<script src="../shared/person-form.js?v=20261028a"></script>
 <script>
 (() => {
   const DB = {
@@ -114,18 +118,26 @@
       } catch (e) { toast($('#cm'), 'משהו השתבש, אפשר לנסות שוב', true); b.disabled = false; }
     };
   }
+  /* השם מחשבון הגוגל (מהטוקן), למילוי ראשוני של שם פרטי ומשפחה */
+  function googleName() {
+    try { const m = (JSON.parse(atob(session.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).user_metadata) || {}, full = String(m.full_name || m.name || '').trim(); return { first: m.given_name || full.split(' ')[0] || '', last: m.family_name || full.split(' ').slice(1).join(' ') }; } catch (e) { return { first: '', last: '' }; }
+  }
   function viewSignup(phone) {
+    const gn = googleName();
     app.innerHTML = '<div class="card"><h2>הרשמה</h2><p class="muted" style="margin:0">המספר הזה עוד לא רשום אצלנו. אפשר להשלים הרשמה כאן (בלי שיוך למפגש) ואז להירשם למפגש מתוך האזור האישי</p>' +
-      '<div class="two"><div><label for="sfn">שם פרטי</label><input id="sfn" autocomplete="given-name"></div><div><label for="sln">שם משפחה</label><input id="sln" autocomplete="family-name"></div></div>' +
-      '<label for="sph">טלפון</label><input id="sph" type="tel" inputmode="tel" dir="ltr" style="text-align:right" value="' + esc(phone || '') + '">' +
-      '<div class="two"><div><label for="sag">גיל</label><input id="sag" type="number" inputmode="numeric" min="18" max="99"></div><div><label for="sgn">מגדר</label><select id="sgn"><option value="" selected disabled>בחירה</option><option value="female">נקבה</option><option value="male">זכר</option></select></div></div>' +
+      '<div class="two"><div>' + PersonForm.html('first', { id: 'sfn', label: true, value: gn.first }) + '</div><div>' + PersonForm.html('last', { id: 'sln', label: true, value: gn.last }) + '</div></div>' + PersonForm.err('name') +
+      PersonForm.html('phone', { id: 'sph', label: true, value: phone || '', attr: 'style="text-align:right"' }) + PersonForm.err('phone') +
+      '<div class="two"><div>' + PersonForm.html('age', { id: 'sag', label: true }) + PersonForm.err('age') + '</div><div>' + PersonForm.html('gender', { id: 'sgn', label: true }) + PersonForm.err('gender') + '</div></div>' +
       '<button type="button" class="btn" id="sgBtn">הרשמה</button><div class="msg" id="sgm"></div><button type="button" class="link" id="sgBack">חזרה</button></div>';
     $('#sgBack').onclick = () => viewClaim('');
+    PersonForm.bind(app);
     $('#sgBtn').onclick = async () => {
+      const chk = PersonForm.validate(app); if (!chk.ok) return;
       const b = $('#sgBtn'); b.disabled = true;
       try {
-        const r = await rpc('harpatka_me_signup', { p_first: $('#sfn').value, p_last: $('#sln').value, p_age: $('#sag').value === '' ? null : Number($('#sag').value), p_gender: $('#sgn').value, p_phone: $('#sph').value });
-        const bad = { invalid_name: 'צריך שם פרטי ושם משפחה', invalid_age: 'צריך להזין גיל בין 18 ל-99', invalid_gender: 'צריך לבחור מגדר', invalid_phone: 'מספר הטלפון לא תקין', exists: 'המספר הזה כבר רשום אצלנו. אפשר לחזור ולחבר אותו לחשבון, ואם זה לא עובד נשמח שתפנו אלינו', blocked: 'אי אפשר להשלים הרשמה מהחשבון הזה' }[r];
+        const r = await rpc('harpatka_me_signup', { p_first: chk.v.first, p_last: chk.v.last, p_age: chk.v.age, p_gender: chk.v.gender, p_phone: chk.v.phoneRaw });
+        if (PersonForm.serverError(app, r)) { b.disabled = false; return; }
+        const bad = { exists: 'המספר הזה כבר רשום אצלנו. אפשר לחזור ולחבר אותו לחשבון, ואם זה לא עובד נשמח שתפנו אלינו', blocked: 'אי אפשר להשלים הרשמה מהחשבון הזה' }[r];
         if (bad) { toast($('#sgm'), bad, true); b.disabled = false; return; }
         load();
       } catch (e) { toast($('#sgm'), 'משהו השתבש, אפשר לנסות שוב', true); b.disabled = false; }
@@ -158,9 +170,9 @@
       (m.free ? '<span class="chip sky">חינם</span>' : Number(m.paid) > 0 ? '<span class="chip ok">' + ils(m.paid) + '</span>' : '<span class="chip no">לא שולם</span>') + '</div>').join('') : '<p class="muted" style="margin:0">עוד לא נרשמתם למפגש</p>') + '</div>';
 
     const gv = p.gender || '';
-    h += '<div class="card"><h2>הפרטים שלי</h2><div class="two"><div><label for="fn">שם פרטי</label><input id="fn" value="' + esc(p.first_name) + '"></div><div><label for="ln">שם משפחה</label><input id="ln" value="' + esc(p.last_name) + '"></div></div>' +
-      '<label for="ph2">טלפון</label><input id="ph2" type="tel" inputmode="tel" dir="ltr" style="text-align:right" value="' + esc(String(p.phone || '').replace(/^\+972/, '0')) + '">' +
-      '<div class="two"><div><label for="ag">גיל</label><input id="ag" type="number" inputmode="numeric" min="18" max="99" value="' + esc(p.age == null ? '' : p.age) + '"></div><div><label for="gn">מגדר</label><select id="gn"><option value=""' + (gv ? '' : ' selected') + ' disabled>בחירה</option><option value="female"' + (gv === 'female' ? ' selected' : '') + '>נקבה</option><option value="male"' + (gv === 'male' ? ' selected' : '') + '>זכר</option></select></div></div>' +
+    h += '<div class="card"><h2>הפרטים שלי</h2><div class="two"><div>' + PersonForm.html('first', { id: 'fn', label: true, value: p.first_name }) + '</div><div>' + PersonForm.html('last', { id: 'ln', label: true, value: p.last_name }) + '</div></div>' + PersonForm.err('name') +
+      PersonForm.html('phone', { id: 'ph2', label: true, value: String(p.phone || '').replace(/^\+972/, '0'), attr: 'style="text-align:right"' }) + PersonForm.err('phone') +
+      '<div class="two"><div>' + PersonForm.html('age', { id: 'ag', label: true, value: p.age }) + PersonForm.err('age') + '</div><div>' + PersonForm.html('gender', { id: 'gn', label: true, value: gv }) + PersonForm.err('gender') + '</div></div>' +
       '<button type="button" class="btn" id="saveBtn">שמירה</button><div class="msg" id="sm"></div></div>';
     if (CFG.updatesGroupLink) h += '<div class="card"><h2>הקבוצה השקטה</h2><p class="muted" style="margin:0">קבוצת וואטסאפ שקטה לקבלת עדכונים על המפגשים הבאים</p><a class="btn ghost" href="' + esc(CFG.updatesGroupLink) + '" target="_blank" rel="noopener">כניסה לקבוצה השקטה</a></div>';
     app.innerHTML = h;
@@ -181,12 +193,14 @@
         else { toast($('#um'), r === 'attended' ? 'סומנה הגעה למפגש, אי אפשר לבטל' : 'אי אפשר לבטל את הרישום למפגש הזה', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול רישום'; }
       } catch (e) { toast($('#um'), 'משהו השתבש, אפשר לנסות שוב', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול רישום'; }
     };
+    PersonForm.bind(app);
     $('#saveBtn').onclick = async () => {
+      const chk = PersonForm.validate(app); if (!chk.ok) return;
       const b = $('#saveBtn'); b.disabled = true;
       try {
-        const age = $('#ag').value === '' ? null : Number($('#ag').value);
-        const r = await rpc('harpatka_me_update', Object.assign({ p_first: $('#fn').value, p_last: $('#ln').value, p_age: age, p_gender: $('#gn').value, p_phone: $('#ph2').value }, imp ? { p_as: asId } : {}));
-        const bad = { invalid_name: 'צריך שם פרטי ושם משפחה', invalid_age: 'הגיל צריך להיות בין 18 ל-99', invalid_gender: 'צריך לבחור מגדר', invalid_phone: 'מספר הטלפון לא תקין', phone_taken: 'המספר הזה כבר רשום אצל משתתף אחר' }[r];
+        const r = await rpc('harpatka_me_update', Object.assign({ p_first: chk.v.first, p_last: chk.v.last, p_age: chk.v.age, p_gender: chk.v.gender, p_phone: chk.v.phoneRaw }, imp ? { p_as: asId } : {}));
+        if (PersonForm.serverError(app, r)) { b.disabled = false; return; }
+        const bad = { phone_taken: 'המספר הזה כבר רשום אצל משתתף אחר' }[r];
         if (bad) toast($('#sm'), bad, true); else { toast($('#sm'), 'הפרטים נשמרו'); load(true); }
       } catch (e) { toast($('#sm'), 'משהו השתבש, אפשר לנסות שוב', true); }
       b.disabled = false;
@@ -216,7 +230,7 @@
       try { const a = JSON.parse(localStorage.getItem(AKEY) || 'null'); if (a && a.access_token) { usingAdmin = true; session = a; } } catch (e) {}
     }
     if (session && !sessionOk(session) && !(await refreshSession())) clearSession();
-    if (!session) { viewLogin(); return; }
+    if (!session) { if (q.get('login') && !asId) { goGoogle(); return; } viewLogin(); return; }   // ?login=1 (הקישור מההרשמה): ישר להתחברות עם גוגל, בלי מסך ביניים
     load();
   }
   $('#outBtn').onclick = () => { if (!usingAdmin) clearSession(); else { try { sessionStorage.removeItem(AS_KEY); } catch (e) {} } location.href = location.pathname; };
