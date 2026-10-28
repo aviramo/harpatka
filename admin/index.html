@@ -3703,8 +3703,9 @@
   function paintDepLines() {
     const box = $('#depLines'), pid = sheet && sheet.id, m = sheet && sheet.depMid ? state.meetings.find((x) => x.id === sheet.depMid) : null;
     if (!box) return; if (!m || !pid) { box.hidden = true; box.innerHTML = ''; return; }
-    const rows = state.payments.filter((x) => x.participant_id === pid && x.meeting_id === m.id && (x.kind === 'payment' || x.kind === 'credit' || (x.kind === 'refund' && !x.from_credit))).sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+    const rows = state.payments.filter((x) => x.participant_id === pid && x.meeting_id === m.id && x.kind === 'payment').sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
     const al = Math.round(allocatedOf(pid, m.id) * 100) / 100, price = expectedPrice(pid, m);
+    if (al <= 0) rows.length = 0;   // הקצאות שכבר בוטלו (זוכו או הוחזרו) לא מוצגות: כסף שנכנס או הוחזר לא קשור למפגש ונמצא רק במסך "יתרה ותשלומים"
     if (!rows.length) { box.hidden = true; box.innerHTML = ''; return; }
     box.hidden = false;
     const when = (x) => { const d = String(x.created_at || '').slice(0, 10).split('-'); return d.length === 3 ? d[2] + '.' + d[1] : ''; };
