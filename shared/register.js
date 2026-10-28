@@ -63,7 +63,7 @@
               <p class="su-paynote">המקום נשמר באופן זמני, והוא יישמר קבוע רק לאחר תשלום</p>
               <div class="su-payfold" data-su="payfold"><div>
                 <a href="#" target="_blank" rel="noopener" data-paybox class="btn-primary rounded-full px-8 py-4 text-[1.2rem] block text-center w-full">לתשלום <span data-price>80 ₪</span> בפייבוקס</a>
-                <div class="su-paylinks" data-su="paylinks" hidden><button type="button" class="su-lnk" data-su="report">שילמתי, לעדכן את המארגנים</button><button type="button" class="su-lnk" data-su="other">רוצים לשלם בדרך אחרת?</button></div>
+                <div class="su-paylinks" data-su="paylinks"><button type="button" class="su-lnk" data-su="report" hidden>שילמתי, לעדכן את המארגנים</button><button type="button" class="su-lnk" data-su="other">רוצים לשלם בדרך אחרת?</button></div>
               </div></div>
               <div class="su-reported" data-su="reported" hidden>דיווחתם על תשלום, ממתין לאישור</div>
               <a href="__BASE__me/?login=1" class="su-melink">כניסה לאזור האישי</a>
@@ -220,11 +220,10 @@
     suRoots.push(showDone);
     /* אחרי לחיצה על התשלום בפייבוקס: מתחת לכפתור מופיעים "שילמתי, לעדכן את המארגנים" ו"רוצים לשלם בדרך אחרת?" (אותו נוסח כמו באזור האישי) */
     const payA = root.querySelector('[data-paybox]');
-    if (payA) payA.addEventListener('click', () => {
-      const links = q('paylinks'); if (!links) return;
+    if (payA) payA.addEventListener('click', () => {   // "רוצים לשלם בדרך אחרת?" מופיע מיד אחרי ההרשמה; "שילמתי" רק אחרי הלחיצה על התשלום
+      const rb = q('report'); if (!rb) return;
       let tk = null; try { tk = localStorage.getItem('harpatka_claim_token'); } catch (e) {}
-      q('report').hidden = !(meInfo || tk);   // דיווח דורש חשבון מחובר או אסימון מהרשמה שהרגע נעשתה
-      links.hidden = false;
+      rb.hidden = !(meInfo || tk);   // דיווח דורש חשבון מחובר או אסימון מהרשמה שהרגע נעשתה
     });
     if (q('report')) q('report').addEventListener('click', async () => {
       const m = selMeeting || nearest; if (!m || !m.id) return;
