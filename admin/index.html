@@ -2539,15 +2539,20 @@
   }
 
   /* מיון הרשימה */
-  const SORTS = [
-    ['new', 'חדשים ראשונים'], ['old', 'ישנים ראשונים'], ['name', 'שם (א עד ת)'],
-    ['age_asc', 'גיל: מהצעיר'], ['age_desc', 'גיל: מהמבוגר'], ['unpaid', 'סטטוס חדש קודם'],
-  ];
+  const SORTS = [['new', 'הרשמה'], ['upd', 'עדכון']];   // הרשמה: לפי מועד ההרשמה; עדכון: לפי הפעולה האחרונה שבוצעה על המשתתף
   function sortCmp() {
     const byNew = (a, b) => String(b.created_at || '').localeCompare(String(a.created_at || ''));
     const byName = (a, b) => a.name.localeCompare(b.name, 'he');
     const ageOf = (p) => { const x = shownAge(p); return x == null ? null : x; };
     const byAge = (dir) => (a, b) => { const x = ageOf(a), y = ageOf(b); if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1; return dir * (x - y); };
+    if (state.sort === 'upd') {   // עדכון: הפעולה האחרונה על המשתתף: הרשמה, שיוך או שינוי במפגש, הגעה, שליחת פרטים, דיווח, תשלום או הערה (גם הערות מערכת)
+      const last = new Map(), bump = (id, v) => { if (id && v && String(v) > (last.get(id) || '')) last.set(id, String(v)); };
+      state.participants.forEach((q) => bump(q.id, q.created_at));
+      state.att.forEach((l) => ['created_at', 'attended_at', 'details_sent_at', 'pay_reported_at', 'pay_requested_at', 'paid_at'].forEach((k) => bump(l.participant_id, l[k])));
+      state.payments.forEach((x) => bump(x.participant_id, x.created_at));
+      state.notes.forEach((n) => bump(n.participant_id, n.created_at));
+      return (a, b) => (last.get(b.id) || '').localeCompare(last.get(a.id) || '') || byName(a, b);
+    }
     switch (state.sort) {
       case 'old': return (a, b) => -byNew(a, b) || byName(a, b);
       case 'name': return byName;
