@@ -783,12 +783,14 @@
     .paychip.zero { background: var(--cream); color: var(--muted); }
     .payhint { margin: 2px 4px 12px; font-size: 14.5px; color: var(--muted); line-height: 1.5; }
     .payhint b { color: var(--ink); }
-    .walsum { background: var(--cream); border-radius: 20px; padding: 16px; text-align: center; }
-    .walsum .big { font-family: "Rubik", sans-serif; font-weight: 800; font-size: 36px; line-height: 1.1; }
+    .walsum { background: var(--cream); border-radius: 18px; padding: 10px 12px; text-align: center; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .walsum .wl2 { font-size: 13px; color: var(--muted); }
+    .walsum .big.tot { color: var(--ink); }
+    .walsum .big { font-family: "Rubik", sans-serif; font-weight: 800; font-size: 26px; line-height: 1.15; }
     .walsum:has(.big.pos) { background: var(--yellow-bg); }   /* יתרה זמינה (זכאות): כרטיס צהוב */
-    .walsum:has(.big.pos) .sub { color: var(--yellow); }
+    .walsum:has(.big.pos) .sub, .walsum:has(.big.pos) .wl2 { color: var(--yellow); }
     .walsum .big.pos { color: var(--yellow); } .walsum .big.neg { color: var(--red); } .walsum .big.zero { color: var(--muted); }
-    .walsum .sub { margin-top: 4px; color: var(--muted); font-size: 14.5px; }
+    .walsum .sub { margin-top: 2px; color: var(--muted); font-size: 12.5px; }
     .walrow { display: flex; align-items: center; gap: 10px; background: var(--cream); border-radius: 16px; padding: 10px 14px; margin-bottom: 8px; }
     .walrow .wl { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
     .walrow .wl b { font-size: 16px; }
@@ -3724,9 +3726,8 @@
   function renderWallet() {
     const pid = sheet && sheet.id; if (!pid) return;
     const bal = creditOf(pid), owed = owedOf(pid);
-    $('#walSum').innerHTML = '<div class="big ' + (bal > 0 ? 'pos' : 'zero') + '"><bdi dir="ltr">₪' + nfm(bal) + '</bdi></div><div class="sub">יתרה זמינה' + '' + '</div>';
     { const pays = state.payments.filter((x) => x.participant_id === pid), inn = pays.filter((x) => (x.kind === 'payment' || x.kind === 'deposit') && !x.from_credit).reduce((s, x) => s + Number(x.amount), 0), out = pays.filter((x) => x.kind === 'refund').reduce((s, x) => s + Number(x.amount), 0);
-      $('#walSum').insertAdjacentHTML('beforeend', '<div class="sub">שילם בסך הכול <b><bdi dir="ltr">₪' + nfm(inn - out) + '</bdi></b>' + (out > 0 ? ' (אחרי החזרים של ₪' + nfm(out) + ')' : '') + '</div>'); }
+      $('#walSum').innerHTML = '<div class="wcell"><div class="wl2">יתרה זמינה</div><div class="big ' + (bal > 0 ? 'pos' : bal < 0 ? 'neg' : 'zero') + '"><bdi dir="ltr">₪' + nfm(bal) + '</bdi></div></div><div class="wcell"><div class="wl2">שילם בסך הכול</div><div class="big tot"><bdi dir="ltr">₪' + nfm(inn - out) + '</bdi></div>' + (out > 0 ? '<div class="sub">אחרי החזרים של ₪' + nfm(out) + '</div>' : '') + '</div>'; }
     $('#walRefund').hidden = !(bal > 0);
     { const pl = pkgLeft(pid); if (pl > 0) $('#walSum').insertAdjacentHTML('beforeend', '<div class="sub">בחבילה נשארו <b>' + pl + '</b> מפגשים · ₪' + nfm(pkgUnit(pid)) + ' למפגש</div>'); }
     $('#walZikuy').hidden = true;   // בארנק רק קבלת כסף או החזרת כסף; אין זיכוי (ביטול הקצאה למפגש נעשה במסך התשלום למפגש)
