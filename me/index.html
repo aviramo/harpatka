@@ -83,7 +83,7 @@
   <div id="app"><div class="center">טוען…</div></div>
 </div>
 <script src="../shared/config.js"></script>
-<script src="../shared/person-form.js?v=20261028j"></script>
+<script src="../shared/person-form.js?v=20261028k"></script>
 <script>
 (() => {
   const DB = {
@@ -202,11 +202,16 @@
       } else b += '<div style="margin-top:10px">' + (m.attended ? '<span class="chip ok">הגעתם</span>' : '<span class="chip">לא הגעתם</span>') + ' ' + (free ? '<span class="chip sky">חינם</span>' : paid ? '<span class="chip ok">שולם ' + ils(m.paid) + '</span>' : '<span class="chip no">לא שולם</span>') + '</div>';
       return b;
     };
-    h += '<div class="card"><h2>המפגשים שלי</h2>' + (ordered.length ? ordered.map((m) => {
+    const rowHtml = (m) => {
       const open = m.id === firstId;
       const badge = m.future ? (m.registered ? (Number(m.paid) > 0 || m.free ? '<span class="chip ok">נרשמתם ✓</span>' : '<span class="chip no">טרם שולם</span>') : '<span class="chip">פתוח להרשמה</span>') : (m.attended ? '<span class="chip ok">הגעתם</span>' : '<span class="chip">לא הגעתם</span>');
       return '<div class="mtg' + (open ? ' open' : '') + '" data-mid="' + m.id + '"><button type="button" class="mthead" aria-expanded="' + open + '"><span class="c1">' + esc(dayParts(m.date).day) + '</span><span class="c2">' + esc(dayParts(m.date).date) + '</span><span class="c3"><bdi dir="ltr">' + esc(m.time) + '</bdi></span><span class="c4">' + badge + '</span>' + chev + '</button><div class="mtfold"><div>' + meetingBody(m) + '</div></div></div>';
-    }).join('') : '<p class="muted" style="margin:0">עוד לא נקבע מפגש קרוב. נעדכן בקבוצת העדכונים</p>') + '</div>';
+    };
+    // שתי רשימות: מפגשים שנרשמתי אליהם, ומפגשים עתידיים שעוד לא נרשמתי אליהם ואפשר להצטרף (מהחדש לישן)
+    const mine = ordered.filter((m) => m.registered), joinable = ordered.filter((m) => m.future && !m.registered);
+    h += '<div class="card"><h2>המפגשים שלי</h2>' + (mine.length ? mine.map(rowHtml).join('') : '<p class="muted" style="margin:0">עוד לא נרשמתם לאף מפגש</p>') + '</div>';
+    if (joinable.length) h += '<div class="card"><h2>מפגשים שאפשר להצטרף אליהם</h2>' + joinable.map(rowHtml).join('') + '</div>';
+    else if (!mine.some((m) => m.future)) h += '<div class="card"><h2>מפגשים שאפשר להצטרף אליהם</h2><p class="muted" style="margin:0">עוד לא נקבע מפגש קרוב. נעדכן בקבוצת העדכונים</p></div>';
 
     const gv = p.gender || '';
     const missing = !p.gender || p.age == null;   // חסר פרט חובה: הכרטיס נפתח מעצמו
