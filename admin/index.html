@@ -828,6 +828,17 @@
     #depFields .payrow .field { flex: 1 1 0; margin-bottom: 8px; }
     #depFields .payrow .field:first-child { flex: 1.3 1 0; }
     #depFields .payrow .paygo { margin: 0 0 8px; height: 44px; }
+    .deplines { margin: 4px 0 14px; display: grid; gap: 8px; }
+    .deplines .dtot { display: flex; justify-content: space-between; align-items: center; font-weight: 800; padding: 2px 4px; }
+    .deplines .dtot small { color: var(--muted); font-weight: 700; }
+    .dline { display: grid; grid-template-columns: minmax(0, 1fr) 96px 34px; align-items: center; gap: 8px; background: var(--cream); border-radius: 14px; padding: 8px 10px; }
+    .dline .dsrc { font-weight: 700; }
+    .dline .dsrc small { display: block; color: var(--muted); font-weight: 600; font-size: 12.5px; }
+    .dline input { height: 38px; border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 0 8px; font: inherit; font-weight: 800; text-align: center; width: 100%; }
+    .dline .ddel { height: 34px; width: 34px; border: 0; border-radius: 50%; background: var(--red-bg); color: var(--red); font-size: 18px; font-weight: 800; cursor: pointer; }
+    .dline .ddel.sure { width: auto; padding: 0 10px; border-radius: 999px; font-size: 13px; grid-column: 3; }
+    .dline.ret { background: var(--yellow-bg); color: var(--yellow); }
+    .dline.ret .dsrc small { color: var(--yellow); }
     .payrow { display: flex; gap: 8px; align-items: flex-end; }
     .payrow .paygo { flex: 0 0 auto; width: auto; height: 48px; padding: 0 18px; margin: 0 0 14px; background: var(--green-bg); color: var(--green); font-size: 17px; }
     [data-panel="pay"] .payrow .field { flex: 1 1 0; }
@@ -1354,6 +1365,7 @@
       <div class="ppanel" data-panel="deposit" hidden>
         <p class="sthint" id="depIntro" style="margin:0 2px 12px">תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש</p>
         <div class="metchips" id="depMethods" role="radiogroup" aria-label="דרך העברה"></div>
+        <div id="depLines" class="deplines" hidden></div>
         <div id="depFree" hidden><p class="sthint" style="margin:12px 2px">המפגש הזה חינם, לא נדרש תשלום</p><button class="btn paygo" id="depFreePay" type="button">אישור</button></div>
         <div id="depFields">
         <div class="payrow">
@@ -3534,7 +3546,7 @@
     const ex = !!(sheet && sheet.id);
     { const va = $('#pViewAs'); va.hidden = !(ex && tab === 'info'); if (ex) va.href = '../me/?as=' + encodeURIComponent(sheet.id); const pp0 = ex && state.participants.find((x) => x.id === sheet.id), tl = pp0 && telLink(pp0.phone), ca = $('#pCall'); ca.hidden = !(tab === 'info' && tl); if (tl) ca.href = tl; }   // כניסה לאזור האישי כפי שהמשתתף רואה: בפרטי המשתתף, בשמאל למעלה
     $('#pBack').hidden = !(ex && tab !== 'main'); $('#pPayChip').dataset.tab = tab; $('#pTitle').classList.toggle('tap', ex && tab === 'main'); $('#pTitle').tabIndex = (ex && tab === 'main') ? 0 : -1; $('#pTitle').setAttribute('role', (ex && tab === 'main') ? 'button' : 'heading'); $('#pMsgs').hidden = tab !== 'main';
-    { const sub = tab === 'confirm' ? cvTitle : (tab === 'deposit' && sheet && sheet.depEdit) ? 'עריכת תשלום' : SUBVIEW[tab], pp0 = ex ? state.participants.find((x) => x.id === sheet.id) : null;
+    { const sub = tab === 'confirm' ? cvTitle : (tab === 'deposit' && sheet && sheet.depMid) ? 'תשלום למפגש' : SUBVIEW[tab], pp0 = ex ? state.participants.find((x) => x.id === sheet.id) : null;
       const pm = sub && payCtx && state.meetings.find((x) => x.id === payCtx.mid);
       $('#pViewSub').hidden = !(sub && pm);
       if (sub) { $('#pTitle').innerHTML = esc(sub) + (pp0 ? ' <span class="tsubname">· ' + esc(pp0.name) + '</span>' : ''); $('#pViewSub').innerHTML = pm ? esc(meetingLabel(pm, true)) : ''; }   // שם המשתתף ליד הכותרת
@@ -3583,15 +3595,43 @@
     const pp = state.participants.find((x) => x.id === pid), lk = linkOf(pid, mid), m = state.meetings.find((x) => x.id === mid);
     openDeposit(mid);
   }
+  /* הקצאות הכסף למפגש (מסך התשלום למפגש): כל תשלום שמוקצה למפגש הוא שורה: מהיתרה או בדרך העברה, עם סכום שאפשר לשנות ו-× להסרה. זיכוי והחזר מוצגים כשורות מידע */
+  function paintDepLines() {
+    const box = $('#depLines'), pid = sheet && sheet.id, m = sheet && sheet.depMid ? state.meetings.find((x) => x.id === sheet.depMid) : null;
+    if (!box) return; if (!m || !pid) { box.hidden = true; box.innerHTML = ''; return; }
+    const rows = state.payments.filter((x) => x.participant_id === pid && x.meeting_id === m.id && (x.kind === 'payment' || x.kind === 'credit' || (x.kind === 'refund' && !x.from_credit))).sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+    const al = Math.round(allocatedOf(pid, m.id) * 100) / 100, price = expectedPrice(pid, m);
+    if (!rows.length) { box.hidden = true; box.innerHTML = ''; return; }
+    box.hidden = false;
+    const when = (x) => { const d = String(x.created_at || '').slice(0, 10).split('-'); return d.length === 3 ? d[2] + '.' + d[1] : ''; };
+    box.innerHTML = rows.map((x) => x.kind === 'payment'
+      ? '<div class="dline" data-id="' + x.id + '"><span class="dsrc">' + (x.from_credit ? 'מהיתרה' : esc(methodName(x) || 'תשלום')) + '<small>' + when(x) + '</small></span><input type="number" inputmode="decimal" min="0" step="any" value="' + Number(x.amount) + '" aria-label="סכום"><button type="button" class="ddel" aria-label="הסרת ההקצאה">×</button></div>'
+      : '<div class="dline ret"><span class="dsrc">' + (x.kind === 'credit' ? 'זיכוי ליתרה' : 'הוחזר כסף') + '<small>' + when(x) + '</small></span><b style="text-align:center">-₪' + nfm(Number(x.amount)) + '</b><span></span></div>').join('') +
+      '<div class="dtot"><span>שולם למפגש</span><span>₪' + nfm(al) + (price > 0 ? ' <small>מתוך ₪' + nfm(price) + '</small>' : '') + '</span></div>';
+  }
+  const depLinesRefresh = () => { paintDepLines(); renderContact(); refreshSheetMeetings(); render(); };
+  $('#depLines').addEventListener('change', async (e) => {
+    const inp = e.target.closest('input'); if (!inp) return;
+    const line = inp.closest('.dline'), row = state.payments.find((x) => x.id === line.dataset.id), amt = parseFloat(inp.value);
+    if (!row || !(amt > 0)) { inp.value = row ? Number(row.amount) : ''; return; }
+    const delta = amt - Number(row.amount);
+    if (row.from_credit && delta > Math.max(0, creditOf(row.participant_id)) + 0.001) { toast('אין מספיק יתרה'); inp.value = Number(row.amount); return; }
+    try { await api(T.pay + '?id=eq.' + row.id, { method: 'PATCH', body: { amount: amt } }); row.amount = amt; toast('ההקצאה עודכנה'); depLinesRefresh(); } catch (err) { inp.value = Number(row.amount); fail(err); }
+  });
+  $('#depLines').addEventListener('click', async (e) => {
+    const b = e.target.closest('.ddel'); if (!b) return;
+    if (!b.classList.contains('sure')) { b.classList.add('sure'); b.textContent = 'להסיר?'; setTimeout(() => { if (b.isConnected) { b.classList.remove('sure'); b.textContent = '×'; } }, 3500); return; }
+    const row = state.payments.find((x) => x.id === b.closest('.dline').dataset.id); if (!row) return;
+    try { await api(T.pay + '?id=eq.' + row.id, { method: 'DELETE' }); state.payments = state.payments.filter((x) => x.id !== row.id); toast(row.from_credit ? 'ההקצאה הוסרה והכסף חזר ליתרה' : 'ההקצאה הוסרה'); depLinesRefresh(); } catch (err) { fail(err); }
+  });
   function openDeposit(mid) {
     const f = pForm, pid = sheet && sheet.id, m = mid ? state.meetings.find((x) => x.id === mid) : null;
     sheet.depMid = m ? m.id : null; sheet.depCr = false;   // depCr: תשלום מהיתרה (בלי קבלת כסף חדש)
-    { const al0 = m ? Math.round(allocatedOf(pid, m.id) * 100) / 100 : 0, pp0 = state.participants.find((x) => x.id === pid), lk0 = m && linkOf(pid, m.id); sheet.depEdit = (m && al0 > 0 && !(pp0 && lk0 && noPayOf(pp0, lk0))) ? al0 : 0; }   // יש כבר תשלום למפגש: מצב עריכה
     f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; f.pay_depm.value = 'paybox'; f.pay_depn.value = ''; $('#depOtherField').hidden = true;
     { const al = m ? Math.max(0, allocatedOf(pid, m.id)) : 0, pr0 = m ? expectedPrice(pid, m) : 0; f.pay_dep.value = !m ? '' : al <= 0 ? pr0 : al < pr0 ? pr0 - al : ''; }   // מפגש ששולם חלקית: המוצע הוא היתרה
     { const pp = state.participants.find((x) => x.id === pid), lk = m && linkOf(pid, m.id), np = !!(m && pp && noPayOf(pp, lk)); $('#depFields').hidden = np; $('#depFree').hidden = !np; }
-    $('#depIntro').textContent = sheet.depEdit ? 'מפגש ' + dmShort(m) + ' · שולם עד עכשיו ₪' + nfm(sheet.depEdit) + '. מזינים את הסכום הכולל למפגש: אם הוא גדול יותר, ההפרש יירשם כתשלום חדש (בדרך ההעברה שנבחרה); אם קטן יותר, ההפרש יחזור ליתרה של המשתתף' : m ? 'מפגש ' + dmShort(m) : 'תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש';
-    { const ed = !!sheet.depEdit; $('#depPkgSel').closest('label').hidden = ed; $('#depSave').textContent = ed ? 'שמירה' : 'תשלום'; const lb = f.pay_dep.closest('label').querySelector('span'); if (lb) lb.textContent = ed ? 'סכום כולל למפגש (₪)' : 'סכום (₪)'; if (ed) f.pay_dep.value = sheet.depEdit; }
+    $('#depIntro').textContent = m ? 'מפגש ' + dmShort(m) + ' · הקצאת כסף למפגש: מוסיפים תשלום בדרך העברה, לוקחים מהיתרה, או מסמנים חינם. אפשר לשנות כל הקצאה בשורות שלמעלה' : 'תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש';
+    { f.pay_dep.closest('label').querySelector('span').textContent = 'סכום (₪)'; $('#depSave').textContent = m ? 'הוספת תשלום' : 'תשלום'; paintDepLines(); }
     $('#depPkgLbl').textContent = m ? 'על כמה מפגשים' : 'חבילה'; f.pay_pkg.options[0].textContent = m ? '1' : '—';
     $('#depQuick').innerHTML = quickPrices(m).map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
     $('#depQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) { f.pay_dep.value = b.dataset.q; paintPkg(); } };
@@ -3606,7 +3646,7 @@
       if (fb) { sheet.depCr = false; if (!isFree()) await setNoPay(true, paintMeth); return; }
       if (cb) {   // תשלום מהיתרה: הסכום המוצע הוא מה שנשאר לשלם על המפגש (עד היתרה)
         if (isFree()) await setNoPay(false, paintMeth);
-        sheet.depCr = true; const al = Math.max(0, allocatedOf(pid, m.id)), need = Math.max(0, expectedPrice(pid, m) - al); f.pay_dep.value = sheet.depEdit ? sheet.depEdit : Math.min(need || expectedPrice(pid, m), crAvail()); f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; paintMeth(); return;
+        sheet.depCr = true; const al = Math.max(0, allocatedOf(pid, m.id)), need = Math.max(0, expectedPrice(pid, m) - al); f.pay_dep.value = Math.min(need || expectedPrice(pid, m), crAvail()); f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; paintMeth(); return;
       }
       if (b) { sheet.depCr = false; if (isFree()) await setNoPay(false, paintMeth); f.pay_depm.value = b.dataset.m; f.pay_depm.onchange(); }
     };
@@ -3625,29 +3665,12 @@
   }
   $('#depFreePay').addEventListener('click', () => { const b = $('#pBack'); if (b) b.click(); toast('המפגש סומן חינם'); });   // אישור: חוזרים למסך הקודם (הסימון כבר נשמר בבחירת "חינם")
   $('#depSave').addEventListener('click', async () => {
-    const f = pForm, pid = sheet && sheet.id; let amt = parseFloat(f.pay_dep.value); if (!pid) return;
+    const f = pForm, pid = sheet && sheet.id; const amt = parseFloat(f.pay_dep.value); if (!pid) return;
     if (!(amt > 0)) { f.pay_dep.focus(); return; }
-    if (sheet.depEdit && sheet.depMid) {   // עריכת תשלום קיים: הסכום שהוזן הוא הסכום הכולל למפגש
-      const mid = sheet.depMid, delta = Math.round((amt - allocatedOf(pid, mid)) * 100) / 100;
-      const back = () => { sheet.depMid = null; sheet.depEdit = 0; setPTab(viewStack.pop() || 'wallet'); renderContact(); refreshSheetMeetings(); render(); };
-      try {
-        if (delta === 0) { toast('אין שינוי בסכום'); back(); return; }
-        if (delta < 0) { await addPayRecord(pid, mid, 'credit', -delta, null, null); toast('₪' + nfm(-delta) + ' חזרו ליתרה'); back(); return; }
-        if (sheet.depCr) {   // ההפרש משולם מהיתרה של המשתתף
-          const use = Math.min(delta, Math.max(0, creditOf(pid))); if (!(use > 0)) { toast('אין יתרה לשימוש'); return; }
-          await addPayRecord(pid, mid, 'payment', use, null, null, true); toast('נוסף תשלום ₪' + nfm(use) + ' מהיתרה'); back(); return;
-        }
-        const method = f.pay_depm.value, mnote = method === 'other' ? f.pay_depn.value.trim().slice(0, 60) : '';
-        await addPayRecord(pid, null, 'deposit', delta, null, null, false, method, mnote || null, null);
-        await addPayRecord(pid, mid, 'payment', delta, null, null, true);
-        toast('נוסף תשלום ₪' + nfm(delta)); back();
-      } catch (err) { fail(err); }
-      return;
-    }
     if (sheet.depCr && sheet.depMid) {   // תשלום מהיתרה: רשומת תשלום מהיתרה (from_credit) למפגש, בלי הפקדה חדשה
       const use = Math.min(amt, Math.max(0, creditOf(pid)));
       if (!(use > 0)) { toast('אין יתרה לשימוש'); return; }
-      try { await addPayRecord(pid, sheet.depMid, 'payment', use, null, null, true); toast('שולם ₪' + nfm(use) + ' מהיתרה'); sheet.depMid = null; sheet.depCr = false; setPTab(viewStack.pop() || 'wallet'); renderContact(); refreshSheetMeetings(); render(); } catch (err) { fail(err); }
+      try { await addPayRecord(pid, sheet.depMid, 'payment', use, null, null, true); toast('שולם ₪' + nfm(use) + ' מהיתרה'); sheet.depCr = false; f.pay_dep.value = ''; depLinesRefresh(); } catch (err) { fail(err); }
       return;
     }
     const p = state.participants.find((x) => x.id === pid), pr = p && promoterOf(p.promoter_id);
@@ -3656,6 +3679,12 @@
     const payCm = pr && (isFirst || commOnEvery(pr)), cm = payCm ? calcCommission(pr, amt) : null, method = f.pay_depm.value, mnote = method === 'other' ? f.pay_depn.value.trim().slice(0, 60) : '';
     const pk = parseInt(f.pay_pkg.value, 10), pkgMeta = pk >= 2 ? { pkg_n: pk } : null;
     try {
+      if (sheet.depMid && !pkgMeta) {   // תשלום ישיר למפגש בדרך העברה (בלי הפקדה ליתרה): נרשם כהקצאה למפגש ונכנס להכנסות, והיתרה לא משתנה
+        const mid0 = sheet.depMid, l0 = linkOf(pid, mid0);
+        await addPayRecord(pid, mid0, 'payment', amt, payCm ? pr.id : null, Number.isFinite(cm) ? cm : null, false, method, mnote || null, null);
+        if (l0) { const body = { paid_amount: allocatedOf(pid, mid0), paid_at: new Date().toISOString() }; Object.assign(l0, body); await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid0, { method: 'PATCH', body }); }
+        toast('נרשם תשלום ₪' + nfm(amt)); f.pay_dep.value = ''; depLinesRefresh(); return;
+      }
       await addPayRecord(pid, null, 'deposit', amt, payCm ? pr.id : null, Number.isFinite(cm) ? cm : null, false, method, mnote || null, pkgMeta); toast('התקבל תשלום ₪' + nfm(amt));
       const mid = sheet.depMid;
       if (mid) {   // תשלום מתוך מפגש: המפגש הזה נפרע (גם חלקית), וחבילה פורעת גם מפגשים קרובים משויכים
