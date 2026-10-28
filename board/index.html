@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-KPSZRGZQRK"></script>
-  <script>
+  <script src="../shared/rt.js?v=1"></script>
+<script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
@@ -256,14 +257,22 @@
     } else w.innerHTML = 'לא מחובר · <button type="button" id="inBtn">התחברות</button>';
   }
 
+  /* טעינה בטוחה: תוצאה שהסתיימה אחרי טעינה חדשה יותר נזרקת, ושינויים שלי שעוד לא נקלטו בשרת מוחלים על כל טעינה שהתחילה לפניהם (HRT.reconcile) */
+  let ldSeq = 0, ldApplied = 0;
   async function load() {
+    const my = ++ldSeq, t0 = Date.now();
     try {
       const [feed, st] = await Promise.all([rpc('harpatka_board_feed', { p_device: deviceId() }), session ? rpc('harpatka_board_profile') : Promise.resolve(null)]);
-      posts = feed || []; me = st ? st.status : null; canShare = !!(st && st.can_share); canPost = !st || st.can_post !== false; meName = (st && st.name) || ''; meFirst = (st && st.first_name) || ''; meAdmin = !!(st && st.is_admin);
+      if (my < ldApplied) return;
+      ldApplied = my;
+      posts = HRT.reconcile(feed || [], t0); me = st ? st.status : null; canShare = !!(st && st.can_share); canPost = !st || st.can_post !== false; meName = (st && st.name) || ''; meFirst = (st && st.first_name) || ''; meAdmin = !!(st && st.is_admin);
     } catch (e) { if (e.message === 'auth') { /* נכנס מחדש כמבקר */ } }
     render();
   }
   const keepTyping = () => { const a = document.activeElement; return a && a.tagName === 'TEXTAREA' && a.value; };
+  /* שינוי שהשרת אישר: מוצג מיד ונשמר מול טעינות שהתחילו לפני שהשרת קלט אותו (בלי ערך חדש, ישן, חדש) */
+  function bApply(apply) { const h = HRT.optimistic(apply); apply(posts); h.done(); render(); }
+  const subtree = (list, id) => { const ids = new Set([id]); let grew = true; while (grew) { grew = false; list.forEach((x) => { if (x.parent_id && ids.has(x.parent_id) && !ids.has(x.id)) { ids.add(x.id); grew = true; } }); } return ids; };
 
   /* ---------- פעולות ---------- */
   async function submit(body, parent, share) {
@@ -285,7 +294,7 @@
   document.addEventListener('click', (e) => { const c = e.target.closest('.nchip'); if (!c) return; showName = !showName; try { localStorage.setItem('hb_showname', showName ? '1' : '0'); } catch (x) {} paintChips(); });
   const syncComposer = () => { $('#cmpAct').hidden = !$('#newText').value.trim(); paintChips(); };
   function closeCompose() { const ta = $('#newText'); ta.value = ''; grow(ta); syncComposer(); }
-  $('#newBtn').addEventListener('click', async () => { if (await submit($('#newText').value, null)) closeCompose(); });
+  $('#newBtn').addEventListener('click', async () => { const rel = HRT.busy($('#newBtn')); try { if (await submit($('#newText').value, null)) closeCompose(); } finally { rel(); } });
   /* התיבה מתחילה בשורה אחת ומתארכת לפי הטקסט */
   const grow = (ta) => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; };
   /* לחיצה מחוץ לתיבת התגובה סוגרת אותה */
@@ -308,40 +317,49 @@
     if (t.dataset.like) {
       const p = posts.find((x) => x.id === t.dataset.like); if (!p) return;
       const member = !!(session && me && me !== 'blocked' && me !== 'removed');   // מחובר ומאושר: לב רגיל; אחרת לב אנונימי לפי מכשיר (בלי התחברות)
-      p.liked = !p.liked; p.likes = Math.max(0, (p.likes || 0) + (p.liked ? 1 : -1)); render();
-      try { if (member) await rpc('harpatka_board_like', { p_id: p.id }); else await rpc('harpatka_board_like_anon', { p_id: p.id, p_device: deviceId() }); } catch (err) { p.liked = !p.liked; p.likes += p.liked ? 1 : -1; render(); }
+      const nl = !p.liked, pid = p.id;
+      const apply = (list) => { const x = list.find((y) => y.id === pid); if (!x || !!x.liked === nl) return; x.liked = nl; x.likes = Math.max(0, (x.likes || 0) + (nl ? 1 : -1)); };   // אידמפוטנטי: אם התמונה כבר כוללת את הלב, לא סופרים פעמיים
+      const h = HRT.optimistic(apply); apply(posts); render();
+      try { if (member) await rpc('harpatka_board_like', { p_id: pid }); else await rpc('harpatka_board_like_anon', { p_id: pid, p_device: deviceId() }); h.done(); } catch (err) { h.fail(); load(); }
       return;
     }
     if (t.dataset.edit) { const p = posts.find((x) => x.id === t.dataset.edit); if (!p) return; editId = p.id; editText = p.body; openReply = null; render(); return; }
     if (t.dataset.ecancel) { editId = null; render(); return; }
     if (t.dataset.esave) {
       const ta = $('[data-etext="' + t.dataset.esave + '"]'), txt = (ta && ta.value || '').trim(); if (!txt) return;
+      const rel = HRT.busy(t), eid = t.dataset.esave;
       try {
-        const r = await rpc('harpatka_board_edit', { p_id: t.dataset.esave, p_body: txt });
-        if (r === 'ok') toast('נשמר'); else if (r === 'pending') toast('העריכה נשלחה לאישור, עד אז מוצג הנוסח הקודם');
+        const r = await rpc('harpatka_board_edit', { p_id: eid, p_body: txt });
+        rel();
+        if (r === 'ok') { toast('נשמר'); editId = null; bApply((l) => { const x = l.find((y) => y.id === eid); if (x) { x.body = txt; x.edited = true; } }); }
+        else if (r === 'pending') { toast('העריכה נשלחה לאישור, עד אז מוצג הנוסח הקודם'); editId = null; await load(); }
         else { toast({ empty: 'אי אפשר לשמור ריק', long: 'הטקסט ארוך מדי', blocked: 'אין אפשרות לערוך' }[r] || 'משהו השתבש'); return; }
-        editId = null; await load();
-      } catch (err) { toast('משהו השתבש, אפשר לנסות שוב'); }
+        load();
+      } catch (err) { rel(); toast('משהו השתבש, אפשר לנסות שוב'); }
       return;
     }
     if (t.dataset.setname) {
-      try { await rpc('harpatka_board_set_name', { p_id: t.dataset.setname, p_show: t.dataset.show === '1' }); toast(t.dataset.show === '1' ? 'השם מוצג' : 'השם הוסר'); } catch (err) { toast('משהו השתבש'); }
+      const sid = t.dataset.setname, show = t.dataset.show === '1', rel = HRT.busy(t);
+      try { await rpc('harpatka_board_set_name', { p_id: sid, p_show: show }); rel(); toast(show ? 'השם מוצג' : 'השם הוסר'); bApply((l) => { const x = l.find((y) => y.id === sid); if (x) x.first_name = show ? (meFirst || x.first_name || '') : null; }); } catch (err) { rel(); toast('משהו השתבש'); }
       load(); return;
     }
     if (t.dataset.hide || t.dataset.unhide) {
       const id = t.dataset.hide || t.dataset.unhide;
-      try { await rpc('harpatka_board_hide', { p_id: id, p_hide: !!t.dataset.hide }); toast(t.dataset.hide ? 'הוסתר, רק מנהלים רואים' : 'ההסתרה בוטלה'); } catch (err) { toast('משהו השתבש'); }
+      const hv = !!t.dataset.hide, rel = HRT.busy(t);
+      try { await rpc('harpatka_board_hide', { p_id: id, p_hide: hv }); rel(); toast(hv ? 'הוסתר, רק מנהלים רואים' : 'ההסתרה בוטלה'); bApply((l) => { const x = l.find((y) => y.id === id); if (x) x.hidden = hv; }); } catch (err) { rel(); toast('משהו השתבש'); }
       load(); return;
     }
     if (t.dataset.approve) {
-      try { await rpc('harpatka_board_approve', { p_id: t.dataset.approve }); toast('פורסם'); } catch (err) { toast('משהו השתבש'); }
+      const aid = t.dataset.approve, rel = HRT.busy(t);
+      try { await rpc('harpatka_board_approve', { p_id: aid }); rel(); toast('פורסם'); bApply((l) => { const x = l.find((y) => y.id === aid); if (x) { x.pending = false; x.pending_edit = false; x.can_approve = false; } }); } catch (err) { rel(); toast('משהו השתבש'); }
       load(); return;
     }
     if (t.dataset.del) { delAsk = t.dataset.del; render(); return; }
     if (t.dataset.delno) { delAsk = null; render(); return; }
     if (t.dataset.delyes) {
       delAsk = null;
-      try { await rpc('harpatka_board_delete', { p_id: t.dataset.delyes }); toast('נמחק'); } catch (err) { toast('משהו השתבש'); }
+      const did = t.dataset.delyes, rel = HRT.busy(t);
+      try { await rpc('harpatka_board_delete', { p_id: did }); rel(); toast('נמחק'); bApply((l) => { const ids = subtree(l, did); for (let i = l.length - 1; i >= 0; i--) if (ids.has(l[i].id)) l.splice(i, 1); }); } catch (err) { rel(); toast('משהו השתבש'); }
       load();
     }
   });
@@ -367,31 +385,11 @@
   $('#phoneOk').addEventListener('click', claim);
   $('#phoneIn').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); claim(); } });
   $('#who').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; if (b.id === 'out') { clearSession(); location.reload(); } else if (b.id === 'inBtn') goGoogle(); });
-  document.addEventListener('visibilitychange', () => { if (!document.hidden && !keepTyping()) load(); });
   /* זמן אמת: אות ריק בערוץ ציבורי "board" (admin/board-realtime.sql) מרענן את הלוח; בזמן הקלדה מחכים לסיום כדי לא לאבד טקסט */
-  let rtWs = null, rtHb = 0, rtRetry = 1000, rtDirty = false, rtTimer = 0;
-  const RT_TOPIC = 'realtime:board';
+  let rtDirty = false;
   const refreshNow = () => { if (keepTyping() || document.querySelector('dialog[open]')) { rtDirty = true; return; } rtDirty = false; load(); };
   document.addEventListener('focusout', () => { if (rtDirty) setTimeout(refreshNow, 300); });
-  function startRealtime() {
-    if (rtWs) return;
-    let ws; try { ws = new WebSocket(DB.url.replace(/^http/, 'ws') + '/realtime/v1/websocket?apikey=' + encodeURIComponent(DB.key) + '&vsn=1.0.0'); } catch (e) { return; }
-    rtWs = ws;
-    const send = (o) => { if (ws.readyState === 1) ws.send(JSON.stringify(o)); };
-    ws.onopen = () => {
-      rtRetry = 1000;
-      send({ topic: RT_TOPIC, event: 'phx_join', ref: '1', payload: { config: { broadcast: { ack: false, self: false }, presence: { key: '' }, private: false }, access_token: DB.key } });
-      rtHb = setInterval(() => send({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(Date.now()) }), 25000);
-    };
-    ws.onmessage = (e) => {
-      let m; try { m = JSON.parse(e.data); } catch (x) { return; }
-      if (m.topic === RT_TOPIC && m.event === 'broadcast') { clearTimeout(rtTimer); rtTimer = setTimeout(refreshNow, 250); }
-    };
-    ws.onclose = () => { clearInterval(rtHb); rtWs = null; setTimeout(startRealtime, rtRetry); rtRetry = Math.min(rtRetry * 2, 30000); };
-    ws.onerror = () => { try { ws.close(); } catch (x) {} };
-  }
-  startRealtime();
-  setInterval(() => { if (!document.hidden && !keepTyping() && !document.querySelector('dialog[open]')) load(); }, 60000);
+  HRT.channel({ url: DB.url, key: DB.key }, 'board', () => setTimeout(refreshNow, 250), { poll: 60000 });   // חיבור מחדש, חזרה ללשונית וגיבוי כל דקה מגיעים מ-HRT.channel
 
   (async () => {
     await startAuth();

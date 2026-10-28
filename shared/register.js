@@ -228,6 +228,7 @@
     if (q('report')) q('report').addEventListener('click', async () => {
       const m = selMeeting || nearest; if (!m || !m.id) return;
       const rb = q('report'); rb.disabled = true;
+      const ob = meInfo ? meOptimistic(m.id, { reported: true }) : null, rel = HRT.busy(rb);
       try {
         let r;
         if (meInfo) r = await meRpc('harpatka_me_report_payment', { p_meeting: m.id });
@@ -237,10 +238,11 @@
           if (!res.ok) throw new Error('HTTP ' + res.status); r = await res.json();
         }
         if (r !== 'ok' && r !== 'reported' && r !== 'already') throw new Error('report failed');
+        if (ob) ob.done(); rel();
         const fold = q('payfold'), done = q('reported');
         if (fold) { fold.classList.add('closing'); setTimeout(() => { fold.hidden = true; done.hidden = false; }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 420); } else done.hidden = false;
-        if (meInfo) loadMe();
-      } catch (e) { rb.disabled = false; rb.textContent = 'משהו השתבש, אפשר לנסות שוב'; }
+        if (meInfo) meLoader.reload(0);
+      } catch (e) { if (ob) ob.fail(); rel(); rb.disabled = false; rb.textContent = 'משהו השתבש, אפשר לנסות שוב'; }
     });
     if (q('other')) q('other').addEventListener('click', () => openOtherPay(selMeeting || nearest));
     form.addEventListener('submit', async (e) => {
@@ -254,6 +256,7 @@
       const allDone = () => { suRoots.forEach(f => f(payOk)); };   // בלי שמירה בדפדפן: בכל טעינה של הדף הטופס מוצג מחדש
       if (q('hp').value || Date.now() - t0 < 1500) { allDone(); return; }   // בוט: מציגים הצלחה בלי לשמור
       btn.disabled = true; btn.textContent = 'שולחים...';
+      const relBtn = HRT.busy(btn);   // אפקט המתנה על הכפתור עד שהתשובה מגיעה
       let finished = false;
       const claimToken = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : null;   // אסימון חיבור לאזור האישי (נשמר על המשתתף החדש בלבד)
       try {
@@ -280,6 +283,7 @@
         q('fail').innerHTML = 'משהו השתבש, אפשר ליצור קשר ישירות: <a href="#" class="underline font-bold">שיחה בוואטסאפ</a>';
         q('fail').querySelector('a').addEventListener('click', ev => { ev.preventDefault(); const m = document.getElementById('contactModal'); if (m) { if (m.hidden) openModal(m); showChoose(); } });
       }
+      relBtn();
       if (!finished) { btn.disabled = false; btn.textContent = submitLabel; }
     });
   }
@@ -350,31 +354,47 @@
     return false;
   }
   const clearMeName = () => { try { localStorage.removeItem('harpatka_me_name'); } catch (e) {} if (window.__meName) { window.__meName = null; } try { window.dispatchEvent(new Event('harpatka:me')); } catch (e) {} };
-  async function loadMe() {
+  /* מצב המשתתף המחובר נטען דרך HRT.loader: טעינה אחת בכל פעם, תוצאה ישנה לא דורסת חדשה, ושינויים שלי (הרשמה, דיווח) שעוד לא נקלטו מוחלים על כל טעינה שהתחילה לפניהם */
+  let mePending = null;
+  const meLoader = HRT.loader(async () => {
+    if (!(await meToken())) return { status: 'noauth' };
+    return meRpc('harpatka_me', {});
+  }, (d) => {
+    const pending = mePending; mePending = null;
+    if (d && d.status === 'ok' && d.participant && d.participant.first_name) {
+      meInfo = { first: d.participant.first_name, last: d.participant.last_name || '', age: d.participant.age, gender: d.participant.gender, meetings: d.meetings || [] };
+      applyMemberMode();
+      try { localStorage.setItem('harpatka_me_name', meInfo.first + ' ' + meInfo.last); } catch (e) {}
+      ensureMeChannel();
+      if (pending === 'reg') setTimeout(() => window.HarpatkaRegister.open(true), 300);   // הגיעו מהקישור בפופאפ ההרשמה: חוזרים אליו, במצב מחובר
+    } else if (d && d.status === 'noauth') { clearMeName(); }
+    else { clearMeName(); if (pending) setTimeout(() => window.HarpatkaRegister.open(true), 300); }   // מחובר לגוגל אבל אין משתתף מקושר: פותחים את פופאפ ההרשמה
+  });
+  function loadMe() {
     takeLoginHash();
-    let pending = null; try { pending = sessionStorage.getItem(LOGIN_KEY); sessionStorage.removeItem(LOGIN_KEY); } catch (e) {}
-    try {
-      if (!(await meToken())) { clearMeName(); return; }
-      const d = await meRpc('harpatka_me', {});
-      if (d && d.status === 'ok' && d.participant && d.participant.first_name) {
-        meInfo = { first: d.participant.first_name, last: d.participant.last_name || '', age: d.participant.age, gender: d.participant.gender, meetings: d.meetings || [] };
-        applyMemberMode();
-        try { localStorage.setItem('harpatka_me_name', meInfo.first + ' ' + meInfo.last); } catch (e) {}
-        if (pending === 'reg') setTimeout(() => window.HarpatkaRegister.open(true), 300);   // הגיעו מהקישור בפופאפ ההרשמה: חוזרים אליו, במצב מחובר
-      } else { clearMeName(); if (pending) setTimeout(() => window.HarpatkaRegister.open(true), 300); }   // מחובר לגוגל אבל אין משתתף מקושר: פותחים את פופאפ ההרשמה
-    } catch (e) { /* תקלה זמנית: ממשיכים כאורח, עם הטופס הרגיל */ }
+    try { const pd = sessionStorage.getItem(LOGIN_KEY); if (pd) { mePending = pd; sessionStorage.removeItem(LOGIN_KEY); } } catch (e) {}
+    return meLoader.now();   // תקלה זמנית: ממשיכים כאורח, עם הטופס הרגיל
+  }
+  /* שינוי של המשתתף על מפגש (הרשמה, דיווח תשלום): מוצג מיד, נשמר גם מול טעינות שהתחילו לפני שהשרת קלט אותו, ומתבטל אם השליחה נכשלת */
+  function meOptimistic(mid, patch) {
+    const apply = (d) => { const mm = ((d && d.meetings) || []).find((x) => x.id === mid); if (mm) Object.assign(mm, patch); };
+    const h = HRT.optimistic(apply);
+    if (meInfo) { apply(meInfo); try { window.dispatchEvent(new Event('harpatka:me')); } catch (e) {} }
+    return { done: h.done, fail: () => { h.fail(); meLoader.reload(0); } };
   }
   async function memberSubmit(root, btn, q, showDone) {
     const m = selMeeting || nearest, fail = q('fail'); fail.textContent = '';
     if (!m || !m.id) { fail.textContent = 'עוד אין מפגש להירשם אליו. נעדכן ברגע שייקבע'; return; }
     btn.disabled = true; btn.textContent = 'שולחים...';
+    const ob = meOptimistic(m.id, { registered: true }), rel = HRT.busy(btn);
     try {
       const r = await meRpc('harpatka_me_register', { p_meeting: m.id });
       if (r !== 'registered' && r !== 'exists') throw new Error('register failed');
+      ob.done(); rel();
       const mine = meInfo.meetings.find((x) => x.id === m.id);
       const payOk = (meInfo.gender === 'male' ? (meInfo.age >= 40 && meInfo.age <= 55) : (meInfo.age >= 35 && meInfo.age <= 50)) && !(mine && (Number(mine.paid) > 0 || mine.free));
-      showDone(payOk); loadMe(); return;   // טעינה מחדש של המצב, כדי שכפתור המפגש בדף יתעדכן מיד
-    } catch (e) { fail.textContent = 'משהו השתבש, אפשר לנסות שוב'; }
+      showDone(payOk); meLoader.reload(0); return;   // טעינה מחדש של המצב (השינוי שלי כבר מוצג ונשמר מול טעינות ישנות)
+    } catch (e) { ob.fail(); rel(); fail.textContent = 'משהו השתבש, אפשר לנסות שוב'; }
     btn.disabled = false; btn.textContent = submitLabel;
   }
   /* יציאה מהחשבון (לחיצה על השם בבאנר): שואלים לפני שמנתקים */
@@ -408,28 +428,16 @@
   window.HarpatkaMe = { confirmLogout, get: meGet, login: loginGoogle };
   document.querySelectorAll('[data-su="glink"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); loginGoogle('reg'); }));
   loadMe();
-  /* מצב המפגשים של המשתתף המחובר מתעדכן בזמן אמת (כפתורי הכרטיסים בדף הבית): (1) אות ריק בערוץ ציבורי "me" (admin/me-realtime.sql) בכל שינוי בתשלומים, בשיוכים ובמפגשים;
-     (2) חזרה לדף (מהאזור האישי או מלשונית אחרת, גם מהמטמון של הדפדפן): טעינה מחדש; (3) גיבוי: בדיקה כל 45 שניות כשהלשונית גלויה */
-  let meReloadT = 0, meLast = 0;
-  const meRefresh = () => { clearTimeout(meReloadT); meReloadT = setTimeout(() => { try { if (!meInfo && !localStorage.getItem(ME_KEY)) return; } catch (e) { return; } meLast = Date.now(); loadMe(); }, 250); };
-  window.addEventListener('pageshow', (e) => { if (e.persisted) meRefresh(); });
-  document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - meLast > 3000) meRefresh(); });
-  window.addEventListener('focus', () => { if (Date.now() - meLast > 3000) meRefresh(); });
-  setInterval(() => { if (!document.hidden && meInfo) meRefresh(); }, 45000);
-  (function startMeRealtime() {
-    try { if (!localStorage.getItem(ME_KEY)) return; } catch (e) { return; }   // רק למי שמחובר
-    const topic = 'realtime:' + ((window.HARPATKA_ENV && window.HARPATKA_ENV.name === 'test') ? 'me-test' : 'me');
-    let ws, hb = 0, retry = 2000;
-    const open = () => {
-      try { ws = new WebSocket(CONFIG.supabaseUrl.replace(/^http/, 'ws') + '/realtime/v1/websocket?apikey=' + encodeURIComponent(CONFIG.supabaseKey) + '&vsn=1.0.0'); } catch (e) { return; }
-      const send = (o) => { if (ws.readyState === 1) ws.send(JSON.stringify(o)); };
-      ws.onopen = () => { retry = 2000; send({ topic, event: 'phx_join', ref: '1', payload: { config: { broadcast: { ack: false, self: false }, presence: { key: '' }, private: false }, access_token: CONFIG.supabaseKey } }); hb = setInterval(() => send({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(Date.now()) }), 25000); };
-      ws.onmessage = (e) => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } if (m.topic === topic && m.event === 'broadcast' && meInfo) meRefresh(); };
-      ws.onclose = () => { clearInterval(hb); setTimeout(open, retry); retry = Math.min(retry * 2, 60000); };
-      ws.onerror = () => { try { ws.close(); } catch (x) {} };
-    };
-    open();
-  })();
+  /* זמן אמת: מצב המשתתף המחובר דרך הערוץ "me" (בבדיקות "me-test"), ומפגשים והגדרות ציבוריות דרך הערוץ "meetings" (גם למבקרים לא מחוברים).
+     הערוצים, חיבור מחדש, חזרה ללשונית וגיבוי כל 45 שניות מגיעים מ-HRT.channel */
+  const IS_TEST = !!(window.HARPATKA_ENV && window.HARPATKA_ENV.name === 'test');
+  let meChan = null;
+  function ensureMeChannel() {
+    if (meChan) return;
+    meChan = HRT.channel({ url: CONFIG.supabaseUrl, key: CONFIG.supabaseKey }, IS_TEST ? 'me-test' : 'me', () => { try { if (!meInfo && !localStorage.getItem(ME_KEY)) return; } catch (e) { return; } meLoader.reload(250); }, { poll: 45000 });
+  }
+  try { if (localStorage.getItem(ME_KEY)) ensureMeChannel(); } catch (e) {}
+  HRT.channel({ url: CONFIG.supabaseUrl, key: CONFIG.supabaseKey }, IS_TEST ? 'meetings-test' : 'meetings', () => { setTimeout(() => { loadNearest(); try { window.dispatchEvent(new Event('harpatka:meetings')); } catch (e) {} }, 200 + Math.random() * 800); }, { poll: 90000 });   // פיזור קטן כדי שכל המבקרים לא יטענו באותו רגע
   const contactModal = document.getElementById('contactModal');
   window.HarpatkaRegister = { open: (auto, meeting) => { selMeeting = meeting && meeting.id ? meeting : null; showMeeting(selMeeting || nearest); applyMemberMode(); if (contactModal) openModal(contactModal, auto === true); } };   // לשימוש עמודים אחרים
   if (new URLSearchParams(location.search).has('register')) setTimeout(() => window.HarpatkaRegister.open(true), 500);   // הגעה דרך /register/: דף הבית נטען והפופאפ נפתח עליו
@@ -472,7 +480,7 @@
     document.querySelectorAll('[data-price]').forEach((e) => { e.textContent = price + ' ₪'; });
   };
   showMeeting(nearest);   // מיד, בלי להמתין לרשת
-  (async () => {
+  const loadNearest = async () => {
     const H = { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey };
     try {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
@@ -483,5 +491,6 @@
       if (rows && rows[0]) nearest = { id: rows[0].id, date: rows[0].meeting_date, time: String(rows[0].meeting_time).slice(0, 5), tiers: normT(rows[0].price_tiers), name: String(rows[0].name || '').trim() };
       showMeeting(selMeeting || nearest);
     } catch (e) {}
-  })();
+  };
+  loadNearest();
 })();

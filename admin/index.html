@@ -1660,6 +1660,7 @@
   <div class="qmenu" id="viewMenu" role="menu" hidden></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <script src="../shared/rt.js?v=1"></script>
   <script>
   /* Supabase ייעודי לפרויקט (ezakarwqstnldqixgreb). המפתח ציבורי מעצם הגדרתו;
      מה שמותר באמת נקבע במדיניות RLS שב-admin/schema.sql */
@@ -1782,7 +1783,7 @@
     ws.onopen = () => {
       rtRetry = 1000;
       rtSend({ topic: RT_TOPIC, event: 'phx_join', ref: '1', payload: { config: { broadcast: { ack: false, self: false }, presence: { key: '' }, private: false,
-        postgres_changes: [T.p, T.m, T.a, T.n, T.pr, T.pp, T.pay, T.st].map((table) => ({ event: '*', schema: 'public', table })) }, access_token: session.access_token } });
+        postgres_changes: [T.p, T.m, T.a, T.n, T.pr, T.pp, T.pay, T.st, T.pf, T.pm, T.ps, T.fin, T.finr, T.fintr, T.finlog].map((table) => ({ event: '*', schema: 'public', table })) }, access_token: session.access_token } });
       rtHb = setInterval(() => rtSend({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(Date.now()) }), 25000);
     };
     ws.onmessage = (e) => {
@@ -1820,23 +1821,90 @@
     startRealtime();
   }
 
-  async function api(path, { method = 'GET', body, prefer } = {}) {
-    const headers = { apikey: DB.key, Authorization: 'Bearer ' + ((session && session.access_token) || DB.key) };
-    if (body) headers['Content-Type'] = 'application/json';
-    if (prefer) headers.Prefer = prefer;
-    let res = await fetch(DB.url + '/rest/v1/' + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
-    if (res.status === 401 && session && await refreshSession()) {
-      headers.Authorization = 'Bearer ' + session.access_token;
-      res = await fetch(DB.url + '/rest/v1/' + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  /* ===== מנגנון זמן אמת לשינויים (28.10.26): כל כתיבה לשרת עוברת כאן, ולכן מקבלת אוטומטית (1) "שינוי ממתין" שמוחל על כל קריאה שהתחילה לפני שהכתיבה נקלטה,
+     כך שלא רואים ערך חדש, ישן, חדש בגלל טעינה מחדש מהזמן אמת, ו-(2) אפקט המתנה על האובייקט שהמשתמש לחץ עליו, עד שהתשובה מגיעה ===== */
+  const WOV = [];   // { table, match(row), patch | del | rows | upsert, doneAt, exp }
+  const WOV_SKIP = new Set(['select', 'order', 'limit', 'offset', 'on_conflict', 'columns']);
+  function wovParse(path) {
+    const qi = path.indexOf('?'), table = qi < 0 ? path : path.slice(0, qi), q = new URLSearchParams(qi < 0 ? '' : path.slice(qi + 1)), tests = [];
+    for (const [k, v] of q) {
+      if (WOV_SKIP.has(k)) continue;
+      let m;
+      if ((m = /^eq\.(.*)$/.exec(v))) { const x = m[1]; tests.push((r) => String(r[k]) === x); }
+      else if ((m = /^neq\.(.*)$/.exec(v))) { const x = m[1]; tests.push((r) => String(r[k]) !== x); }
+      else if (v === 'is.null') tests.push((r) => r[k] == null);
+      else if ((m = /^in\.\((.*)\)$/.exec(v))) { const set = new Set(m[1].split(',').map((s) => s.replace(/^"|"$/g, ''))); tests.push((r) => set.has(String(r[k]))); }
+      else return { table, match: null };   // תנאי שלא נתמך: בלי שינוי ממתין (הקוד שקורא מטפל בעצמו)
     }
-    const text = await res.text();
-    const data = text ? JSON.parse(text) : null;
-    if (!res.ok) {
-      const err = new Error((data && data.message) || ('HTTP ' + res.status));
-      err.code = data && data.code;
+    return { table, match: (r) => tests.every((f) => f(r)), conflict: q.get('on_conflict') };
+  }
+  function wovApply(table, rows) {
+    const now = Date.now();
+    for (let i = WOV.length - 1; i >= 0; i--) { if (WOV[i].exp <= now) WOV.splice(i, 1); }
+    WOV.forEach((o) => {
+      if (o.table !== table) return;
+      if (o.del && o.match) { for (let i = rows.length - 1; i >= 0; i--) if (o.match(rows[i])) rows.splice(i, 1); }
+      else if (o.patch && o.match) rows.forEach((r) => { if (o.match(r)) Object.assign(r, o.patch); });
+      else if (o.upsert) { const hit = rows.find((r) => o.upsert.cols.every((c) => String(r[c]) === String(o.upsert.row[c]))); if (hit) Object.assign(hit, o.upsert.row); else rows.push(Object.assign({}, o.upsert.row)); }
+      else if (o.rows) o.rows.forEach((nr) => { const hit = nr.id != null ? rows.find((r) => r.id === nr.id) : null; if (hit) Object.assign(hit, nr); else if (nr.id != null) rows.push(Object.assign({}, nr)); });
+    });
+    return rows;
+  }
+  /* אובייקט שהמשתמש לחץ עליו ממש עכשיו: מקבל אפקט המתנה בזמן שהכתיבה בדרך */
+  let lastUi = { el: null, t: 0 };
+  ['pointerdown', 'click', 'change', 'input', 'keydown'].forEach((ev) => document.addEventListener(ev, (e) => { if (e.target && e.target.closest) lastUi = { el: e.target, t: Date.now() }; }, true));
+  const UI_SEL = 'button, input, select, textarea, .row, .mrow, .dline, .stc, .chip, .hfilt, .mtr, .ptag, .swcur, .medit, .qopt, .mtoggle, .field';
+  function uiTargetFor() {
+    if (Date.now() - lastUi.t > 1500 || !lastUi.el || !lastUi.el.closest) return null;
+    const el = lastUi.el.closest(UI_SEL);
+    return el && !el.closest('#status') ? el : null;
+  }
+  const loadStart = { n: 0 };
+  async function api(path, { method = 'GET', body, prefer, ui } = {}) {
+    const isRead = method === 'GET', t0 = Date.now(), pr = wovParse(path), table = pr.table;
+    let ov = null, rel = null;
+    if (!isRead) {
+      const target = ui === false ? null : (ui || uiTargetFor());
+      if (target && window.HRT) rel = HRT.busy(target);
+      if (method === 'PATCH' && pr.match && body) ov = { table, match: pr.match, patch: body };
+      else if (method === 'DELETE' && pr.match) ov = { table, match: pr.match, del: true };
+      else if (method === 'POST' && body && !Array.isArray(body)) {
+        const cols = (pr.conflict ? pr.conflict.split(',') : ['email', 'key', 'id'].filter((c) => body[c] != null).slice(0, 1));
+        if (/merge-duplicates/.test(prefer || '') && cols.length && cols.every((c) => body[c] != null)) ov = { table, upsert: { cols, row: body } };
+      }
+      if (ov) { ov.doneAt = null; ov.exp = Date.now() + 60000; WOV.push(ov); }
+    }
+    try {
+      const headers = { apikey: DB.key, Authorization: 'Bearer ' + ((session && session.access_token) || DB.key) };
+      if (body) headers['Content-Type'] = 'application/json';
+      if (prefer) headers.Prefer = prefer;
+      let res = await fetch(DB.url + '/rest/v1/' + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+      if (res.status === 401 && session && await refreshSession()) {
+        headers.Authorization = 'Bearer ' + session.access_token;
+        res = await fetch(DB.url + '/rest/v1/' + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+      }
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : null;
+      if (!res.ok) {
+        const err = new Error((data && data.message) || ('HTTP ' + res.status));
+        err.code = data && data.code;
+        throw err;
+      }
+      if (!isRead) {
+        if (method === 'POST' && Array.isArray(data) && data.length && !ov && !table.startsWith('rpc/')) { ov = { table, rows: data.map((x) => Object.assign({}, x)), doneAt: null, exp: Date.now() + 60000 }; WOV.push(ov); }
+        if (ov) { ov.doneAt = Date.now(); ov.exp = Date.now() + 15000; }
+        return data;
+      }
+      if (Array.isArray(data)) {
+        /* שינוי שנקלט לפני שהקריאה הזו התחילה כבר כלול בה: מסירים אותו; כל השאר מוחל על התוצאה */
+        for (let i = WOV.length - 1; i >= 0; i--) { const o = WOV[i]; if (o.table === table && o.doneAt != null && t0 >= o.doneAt) WOV.splice(i, 1); }
+        wovApply(table, data);
+      }
+      return data;
+    } catch (err) {
+      if (ov) { const i = WOV.indexOf(ov); if (i >= 0) WOV.splice(i, 1); }
       throw err;
-    }
-    return data;
+    } finally { if (rel) rel(); }
   }
 
   /* ---------- עזרים ---------- */
@@ -2097,8 +2165,10 @@
     else if (pTab === 'deposit') { paintDepLines(); if (sheet.paintMeth) sheet.paintMeth(); }   // מסך הקצאות הכסף למפגש (לא נוגע בשדה הסכום שמוקלד)
   }
   /* ---------- טעינה ---------- */
+  let loadSeq = 0, loadApplied = 0;
   async function load(silent) {
     if (!silent) $('#status').innerHTML = '<div class="empty">טוען…</div>';
+    const myLoad = ++loadSeq;
     try {
       const [p, m, a, nn, prs, pps, pays, sts, pfs, pms, pubs, fin0, finr0, fintr0] = await Promise.all([
         api(T.p + '?select=*'),
@@ -2116,6 +2186,8 @@
         api(T.finr + '?select=*&order=created_at.desc').catch(() => null),
         api(T.fintr + '?select=*&order=transfer_date.desc,created_at.desc').catch(() => null),
       ]);
+      if (myLoad < loadApplied) return;   // טעינה ישנה שהסתיימה אחרי טעינה חדשה יותר: לא דורסת אותה
+      loadApplied = myLoad;
       state.pubSettings = Object.fromEntries((pubs || []).map((x) => [x.key, x.value]));
       state.fin = fin0 || []; state.finRec = finr0 || []; state.finTr = fintr0 || [];
       if (pms && pms.length) state.payMethods = pms.map((x) => Object.assign({}, x));

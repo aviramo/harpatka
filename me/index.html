@@ -104,6 +104,7 @@
   </dialog>
 </div>
 <script src="../shared/config.js"></script>
+<script src="../shared/rt.js?v=1"></script>
 <script src="../shared/person-form.js?v=20261029d"></script>
 <script>
 (() => {
@@ -249,28 +250,33 @@
     app.querySelectorAll('.mthead').forEach((hd) => { hd.onclick = () => { const c = hd.parentElement, on = !c.classList.contains('open'); c.classList.toggle('open', on); hd.setAttribute('aria-expanded', String(on)); }; });
     app.querySelectorAll('[data-reg]').forEach((rb) => { rb.onclick = async () => {
       const id = rb.dataset.reg, msg = app.querySelector('[data-rm="' + id + '"]'); rb.disabled = true;
-      try { const r = await rpc('harpatka_me_register', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {})); if (r === 'registered' || r === 'exists') { keepOpen = id; load(); } else { toast(msg, 'אי אפשר להירשם למפגש הזה', true); rb.disabled = false; } }
-      catch (e) { toast(msg, 'משהו השתבש, אפשר לנסות שוב', true); rb.disabled = false; }
+      const ob = meOpt(id, { registered: true }), rel = HRT.busy(rb);
+      try { const r = await rpc('harpatka_me_register', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {})); rel(); if (r === 'registered' || r === 'exists') { ob.done(); keepOpen = id; load(); } else { ob.fail(); toast(msg, 'אי אפשר להירשם למפגש הזה', true); rb.disabled = false; } }
+      catch (e) { rel(); ob.fail(); toast(msg, 'משהו השתבש, אפשר לנסות שוב', true); rb.disabled = false; }
     }; });
     app.querySelectorAll('[data-unreg]').forEach((ub) => { ub.onclick = async () => {   // שני שלבים: לחיצה ראשונה מבקשת אישור
       const id = ub.dataset.unreg, msg = app.querySelector('[data-um="' + id + '"]');
       if (!ub.dataset.sure) { ub.dataset.sure = '1'; ub.textContent = 'לחיצה נוספת לאישור ביטול הרישום'; return; }
       ub.disabled = true;
+      const ob = meOpt(id, { registered: false, reported: false }), rel = HRT.busy(ub);
       try {
         const r = await rpc('harpatka_me_unregister', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {}));
-        if (r === 'cancelled' || r === 'not_registered') { keepOpen = id; load(); }
-        else { toast(msg, r === 'attended' ? 'סומנה הגעה למפגש, אי אפשר לבטל' : 'אי אפשר לבטל את הרישום למפגש הזה', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול רישום'; }
-      } catch (e) { toast(msg, 'משהו השתבש, אפשר לנסות שוב', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול רישום'; }
+        rel();
+        if (r === 'cancelled' || r === 'not_registered') { ob.done(); keepOpen = id; load(); }
+        else { ob.fail(); toast(msg, r === 'attended' ? 'סומנה הגעה למפגש, אי אפשר לבטל' : 'אי אפשר לבטל את הרישום למפגש הזה', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול רישום'; }
+      } catch (e) { rel(); ob.fail(); toast(msg, 'משהו השתבש, אפשר לנסות שוב', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול רישום'; }
     }; });
     app.querySelectorAll('[data-report]').forEach((rb) => { rb.onclick = async () => {
       const id = rb.dataset.report, msg = app.querySelector('[data-pm="' + id + '"]'), fold = app.querySelector('[data-pf="' + id + '"]'); rb.disabled = true;
+      const ob = meOpt(id, { reported: true }, true), rel = HRT.busy(rb);
       try {
         const r = await rpc('harpatka_me_report_payment', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {}));
+        rel();
         if (r === 'ok' || r === 'reported' || r === 'already') {
-          keepOpen = id;
+          ob.done(); keepOpen = id;
           if (fold && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) { fold.classList.add('closing'); setTimeout(load, 450); } else load();   // הכפתור והקישורים נסגרים באנימציה, ואז הסטטוס מתחלף
-        } else { toast(msg, 'אי אפשר לדווח על התשלום למפגש הזה', true); rb.disabled = false; }
-      } catch (e) { toast(msg, 'משהו השתבש, אפשר לנסות שוב', true); rb.disabled = false; }
+        } else { ob.fail(); toast(msg, 'אי אפשר לדווח על התשלום למפגש הזה', true); rb.disabled = false; }
+      } catch (e) { rel(); ob.fail(); toast(msg, 'משהו השתבש, אפשר לנסות שוב', true); rb.disabled = false; }
     }; });
     app.querySelectorAll('[data-other]').forEach((ob) => { ob.onclick = () => {
       const m = ms.find((x) => x.id === ob.dataset.other); if (!m) return;
@@ -286,21 +292,40 @@
     $('#saveBtn').onclick = async () => {
       const chk = PersonForm.validate(app); if (!chk.ok) return;
       const b = $('#saveBtn'); b.disabled = true;
+      const pv = { first_name: chk.v.first, last_name: chk.v.last, age: chk.v.age, gender: chk.v.gender, phone: chk.v.phoneRaw };
+      const ob = HRT.optimistic((d) => { if (d && d.participant) Object.assign(d.participant, pv); }), rel = HRT.busy(b);
       try {
         const r = await rpc('harpatka_me_update', Object.assign({ p_first: chk.v.first, p_last: chk.v.last, p_age: chk.v.age, p_gender: chk.v.gender, p_phone: chk.v.phoneRaw }, imp ? { p_as: asId } : {}));
-        if (PersonForm.serverError(app, r)) { b.disabled = false; return; }
+        rel();
+        if (PersonForm.serverError(app, r)) { ob.fail(); b.disabled = false; return; }
         const bad = { phone_taken: 'המספר הזה כבר רשום אצל משתתף אחר' }[r];
-        if (bad) toast($('#sm'), bad, true); else { toast($('#sm'), 'הפרטים נשמרו'); load(true); }
-      } catch (e) { toast($('#sm'), 'משהו השתבש, אפשר לנסות שוב', true); }
+        if (bad) { ob.fail(); toast($('#sm'), bad, true); } else { ob.done(); toast($('#sm'), 'הפרטים נשמרו'); load(true); }
+      } catch (e) { rel(); ob.fail(); toast($('#sm'), 'משהו השתבש, אפשר לנסות שוב', true); }
       b.disabled = false;
     };
   }
 
   const setTitle = (txt) => { const h1 = document.querySelector('.top h1'); if (h1) h1.textContent = txt || 'האזור האישי'; };
+  /* טעינת המצב: תוצאה ישנה (שהסתיימה אחרי חדשה יותר) נזרקת, ושינויים שלי שעוד לא נקלטו בשרת מוחלים על כל טעינה שהתחילה לפניהם (HRT.reconcile) */
+  let meSeq = 0, meApplied = 0;
+  async function meFetch() {
+    const my = ++meSeq, t0 = Date.now();
+    const d = await rpc('harpatka_me', asId ? { p_as: asId } : {});
+    if (my < meApplied) return null;
+    meApplied = my; return HRT.reconcile(d, t0);
+  }
+  /* שינוי של המשתתף על מפגש: מוצג מיד (ציור מחדש עם שמירת המפגשים הפתוחים), נשמר מול טעינות ישנות, ומתבטל אם השרת דוחה */
+  function meOpt(mid, patch, keepFold) {
+    const apply = (d) => { const mm = ((d && d.meetings) || []).find((x) => x.id === mid); if (mm) Object.assign(mm, patch); };
+    const h = HRT.optimistic(apply);
+    if (data && data.status === 'ok' && !keepFold) { keepOpenSet = new Set([...app.querySelectorAll('.mtg.open')].map((x) => x.dataset.mid)); keepDetOpen = !!(app.querySelector('#detBody') && app.querySelector('#detBody').classList.contains('open')); keepOpen = mid; apply(data); viewMain(); }
+    else if (data) apply(data);
+    return { done: h.done, fail: () => { h.fail(); load(true); } };
+  }
   async function load(keepMsg, afterClaim) {
-    setTitle('');
+    if (!data) setTitle('');
     try {
-      data = await rpc('harpatka_me', asId ? { p_as: asId } : {});
+      const nd = await meFetch(); if (!nd) return; data = nd;
     } catch (e) { if (e.message === 'auth' || (asId && /HTTP (400|403|404)/.test(e.message))) { viewLogin(); return; } app.innerHTML = '<div class="center">הטעינה נכשלה. אפשר לרענן</div>'; return; }
     $('#outBtn').hidden = false;
     try { const bk = sessionStorage.getItem('harpatka_me_back'); if (bk && data && !asId) { sessionStorage.removeItem('harpatka_me_back'); const home = location.pathname.replace(/me\/?$/, ''); if (data.status === 'ok' && !data.impersonating) location.replace(home + (bk === 'reg' ? '?register=1' : '')); else if (data.status !== 'ok') location.replace(home + '?register=1'); else return; return; } } catch (e) {}   // חוזרים לדף הבית: מחוברים (עם השם בצ'יפ), או בלי רשומה לחשבון הזה: נפתח פופאפ ההרשמה   // הגיעו מהקישור "התחברות עם גוגל" בפופאפ ההרשמה: חוזרים לדף הבית והפופאפ נפתח במצב מחובר
@@ -334,8 +359,8 @@
     load();
   }
   $('#outBtn').onclick = () => { if (!usingAdmin) clearSession(); else { try { sessionStorage.removeItem(AS_KEY); } catch (e) {} } location.href = location.pathname; };
-  /* מצב המפגשים והתשלום בזמן אמת: אות ריק בערוץ ציבורי "me" (בבדיקות "me-test"; admin/me-realtime.sql) בכל שינוי בתשלומים, בשיוכים ובמפגשים,
-     וגם חזרה ללשונית, והגיבוי כל 45 שניות. הרענון לא קורה בזמן הקלדה, ושומר אילו מפגשים פתוחים */
+  /* זמן אמת: אות ריק בערוץ ציבורי "me" (בבדיקות "me-test") בכל שינוי בתשלומים, בשיוכים, במפגשים ובפרטי משתתפים (admin/realtime-all.sql); HRT.channel מטפל בחיבור מחדש, חזרה ללשונית וגיבוי כל 45 שניות.
+     הרענון לא קורה בזמן הקלדה (נדחה עד עזיבת השדה), ושומר אילו מפגשים פתוחים */
   let rtT = 0, rtDirty = false;
   const typingNow = () => { const el = document.activeElement; return !!(el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) && app.contains(el)); };
   const refreshNow = () => {
@@ -348,22 +373,7 @@
   };
   const scheduleRefresh = () => { clearTimeout(rtT); rtT = setTimeout(refreshNow, 250); };
   document.addEventListener('focusout', () => { if (rtDirty) setTimeout(refreshNow, 300); });
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) scheduleRefresh(); });
-  window.addEventListener('pageshow', (e) => { if (e.persisted) scheduleRefresh(); });
-  setInterval(() => { if (!document.hidden) scheduleRefresh(); }, 45000);
-  (function startRealtime() {
-    const topic = 'realtime:' + ((window.HARPATKA_ENV && window.HARPATKA_ENV.name === 'test') ? 'me-test' : 'me');
-    let ws, hb = 0, retry = 2000;
-    const open = () => {
-      try { ws = new WebSocket(DB.url.replace(/^http/, 'ws') + '/realtime/v1/websocket?apikey=' + encodeURIComponent(DB.key) + '&vsn=1.0.0'); } catch (e) { return; }
-      const send = (o) => { if (ws.readyState === 1) ws.send(JSON.stringify(o)); };
-      ws.onopen = () => { retry = 2000; send({ topic, event: 'phx_join', ref: '1', payload: { config: { broadcast: { ack: false, self: false }, presence: { key: '' }, private: false }, access_token: DB.key } }); hb = setInterval(() => send({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(Date.now()) }), 25000); };
-      ws.onmessage = (e) => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } if (m.topic === topic && m.event === 'broadcast') scheduleRefresh(); };
-      ws.onclose = () => { clearInterval(hb); setTimeout(open, retry); retry = Math.min(retry * 2, 60000); };
-      ws.onerror = () => { try { ws.close(); } catch (x) {} };
-    };
-    open();
-  })();
+  HRT.channel({ url: DB.url, key: DB.key }, (window.HARPATKA_ENV && window.HARPATKA_ENV.name === 'test') ? 'me-test' : 'me', scheduleRefresh, { poll: 45000 });
   $('#otherClose').onclick = () => $('#otherDlg').close();
   $('#otherDlg').addEventListener('click', (e) => { if (e.target === $('#otherDlg')) $('#otherDlg').close(); });
   start();

@@ -1069,7 +1069,7 @@
     /* ===== המפגשים: הקודם (אחד), הקרוב והעתידיים. אפשר להירשם לכל מפגש שעוד לא עבר. מקור: harpatka_meetings ומדרגות המחיר (harpatka_price_tiers); הצגה מיידית מהמטמון המקומי של הביקור הקודם ואז רענון ===== */
     const normT = t => (t && !Array.isArray(t) && Number.isFinite(Number(t.base))) ? { base: Number(t.base), steps: (Array.isArray(t.steps) ? t.steps : []).map(x => ({ days: Number(x.days), price: Number(x.price) })).filter(x => x.days >= 1 && Number.isFinite(x.price)) } : null;
     const MEET_CACHE = 'harpatka_meetings_v19';
-    const meetingsReady = (async () => {
+    const fetchMeetings = async () => {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
       const H = { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey };
       const base = CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time,name,max_participants,directions,price_tiers,image_url,city';
@@ -1086,7 +1086,8 @@
         }
       } catch (e) {}
       return null;
-    })();
+    };
+    const meetingsReady = fetchMeetings();
     const heDay = iso => ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'][new Date(iso + 'T12:00:00Z').getUTCDay()];
     (function(){
       const el = id => document.getElementById(id);
@@ -1209,6 +1210,9 @@
         render(d);
         try { localStorage.setItem(MEET_CACHE, JSON.stringify(d)); } catch (e) {}
       });
+      /* זמן אמת: שינוי במפגשים או בהגדרות הציבוריות (אות מהערוץ שב-shared/register.js) טוען מחדש, טעינה אחת בכל פעם */
+      let mLoader = null;   // נוצר בפעם הראשונה (HRT נטען מאוחר יותר בדף)
+      window.addEventListener('harpatka:meetings', () => { mLoader = mLoader || HRT.loader(fetchMeetings, d => { if (!d) return; render(d); try { localStorage.setItem(MEET_CACHE, JSON.stringify(d)); } catch (e) {} }); mLoader.reload(0); });
     })();
 
     /* ===== סרטון פתיחה: סרטון ביודנסה (4:5, 10 שניות), מושתק, מתנגן אוטומטית עד הסוף ונעצר בפריים האחרון.
@@ -1418,7 +1422,8 @@
   window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(apply); } }, { passive: true });
 })();
 </script>
+  <script src="../shared/rt.js?v=1"></script>
   <script src="../shared/person-form.js?v=20261029i"></script>
-  <script src="../shared/register.js?v=20261029j"></script>
+  <script src="../shared/register.js?v=20261030a"></script>
 </body>
 </html>
