@@ -43,6 +43,16 @@
   .msg.bad { color: var(--red); }
   .msg.good { color: var(--green); }
   .dirs { white-space: pre-wrap; margin-top: 2px; }   /* כתובת והוראות הגעה: אותו עיצוב כמו השעה, כמה שורות */
+  .dethead { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0; margin: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; text-align: start; }
+  .dethead h2 { margin: 0; }
+  .dethead svg { width: 24px; height: 24px; color: var(--muted); transition: transform .35s ease; }
+  .dethead[aria-expanded="true"] svg { transform: rotate(180deg); }
+  .detfold { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .35s ease; }
+  .detfold.open { grid-template-rows: 1fr; }
+  .detfold > div { overflow: hidden; min-height: 0; }
+  .detfold:not(.open) > div { visibility: hidden; }
+  .detfold > div > :first-child { margin-top: 10px; }
+  @media (prefers-reduced-motion: reduce) { .detfold, .dethead svg { transition: none; } }
   .pf-err { color: var(--red); font-size: 13.5px; font-weight: 600; margin-top: 4px; }
   .pf-err:empty { display: none; }
   input.bad, select.bad { border-color: var(--red); }
@@ -55,7 +65,7 @@
   <div id="app"><div class="center">טוען…</div></div>
 </div>
 <script src="../shared/config.js"></script>
-<script src="../shared/person-form.js?v=20261028b"></script>
+<script src="../shared/person-form.js?v=20261028c"></script>
 <script>
 (() => {
   const DB = {
@@ -170,10 +180,11 @@
       (m.free ? '<span class="chip sky">חינם</span>' : Number(m.paid) > 0 ? '<span class="chip ok">' + ils(m.paid) + '</span>' : '<span class="chip no">לא שולם</span>') + '</div>').join('') : '<p class="muted" style="margin:0">עוד לא נרשמתם למפגש</p>') + '</div>';
 
     const gv = p.gender || '';
-    h += '<div class="card"><h2>הפרטים שלי</h2><div class="two"><div>' + PersonForm.html('first', { id: 'fn', label: true, value: p.first_name }) + '</div><div>' + PersonForm.html('last', { id: 'ln', label: true, value: p.last_name }) + '</div></div>' + PersonForm.err('name') +
+    const missing = !p.gender || p.age == null;   // חסר פרט חובה: הכרטיס נפתח מעצמו
+    h += '<div class="card" id="detCard"><button type="button" class="dethead" id="detHead" aria-expanded="' + missing + '" aria-controls="detBody"><h2>הפרטים שלי</h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="detfold' + (missing ? ' open' : '') + '" id="detBody"><div><div class="two"><div>' + PersonForm.html('first', { id: 'fn', label: true, value: p.first_name }) + '</div><div>' + PersonForm.html('last', { id: 'ln', label: true, value: p.last_name }) + '</div></div>' + PersonForm.err('name') +
       PersonForm.html('phone', { id: 'ph2', label: true, value: String(p.phone || '').replace(/^\+972/, '0'), attr: 'style="text-align:right"' }) + PersonForm.err('phone') +
       '<div class="two"><div>' + PersonForm.html('age', { id: 'ag', label: true, value: p.age }) + PersonForm.err('age') + '</div><div>' + PersonForm.html('gender', { id: 'gn', label: true, value: gv }) + PersonForm.err('gender') + '</div></div>' +
-      '<button type="button" class="btn" id="saveBtn">שמירה</button><div class="msg" id="sm"></div></div>';
+      '<button type="button" class="btn" id="saveBtn">שמירה</button><div class="msg" id="sm"></div></div></div></div>';
     if (CFG.updatesGroupLink) h += '<div class="card"><h2>הקבוצה השקטה</h2><p class="muted" style="margin:0">קבוצת וואטסאפ שקטה לקבלת עדכונים על המפגשים הבאים</p><a class="btn ghost" href="' + esc(CFG.updatesGroupLink) + '" target="_blank" rel="noopener">כניסה לקבוצה השקטה</a></div>';
     app.innerHTML = h;
 
@@ -194,6 +205,7 @@
       } catch (e) { toast($('#um'), 'משהו השתבש, אפשר לנסות שוב', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול רישום'; }
     };
     PersonForm.bind(app);
+    $('#detHead').onclick = () => { const f = $('#detBody'), on = !f.classList.contains('open'); f.classList.toggle('open', on); $('#detHead').setAttribute('aria-expanded', String(on)); };
     $('#saveBtn').onclick = async () => {
       const chk = PersonForm.validate(app); if (!chk.ok) return;
       const b = $('#saveBtn'); b.disabled = true;
