@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Rubik:wght@500;700&display=swap" rel="stylesheet" />
 <style>
     html { -webkit-tap-highlight-color: transparent; }   /* בלי הבהוב הכחול של הדפדפן בלחיצה, בכל העמודים */
-  :root { --cream:#F6EFE4; --sand:#E8D5BE; --terra:#C96F52; --ink:#3F382F; --paper:#FFFDF9; --muted:#8A7F72; --line:#E8D5BE; --green:#2F7D4F; --green-bg:#E3F1E8; --red:#B5483A; --red-bg:#F6E0DA; --sky:#1F5C6B; --sky-bg:#E3EEF3; }
+  :root { --cream:#F6EFE4; --sand:#E8D5BE; --terra:#C96F52; --ink:#3F382F; --paper:#FFFDF9; --muted:#8A7F72; --line:#E8D5BE; --green:#2F7D4F; --green-bg:#E3F1E8; --red:#B5483A; --red-bg:#F6E0DA; --sky:#1F5C6B; --sky-bg:#E3EEF3; --yellow:#8A5A00; --yellow-bg:#FBEBC8; }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
   body { margin: 0; background: var(--cream); color: var(--ink); font-family: Assistant, system-ui, sans-serif; font-size: 17px; line-height: 1.5; }
@@ -29,6 +29,7 @@
   .chip { display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 999px; font-size: 14px; font-weight: 700; background: var(--cream); color: var(--muted); }
   .chip.ok { background: var(--green-bg); color: var(--green); }
   .chip.no { background: var(--red-bg); color: var(--red); }
+  .chip.wait { background: var(--yellow-bg); color: var(--yellow); }
   .chip.sky { background: var(--sky-bg); color: var(--sky); }
   .row { display: flex; align-items: center; gap: 8px; padding: 12px 0; border-top: 1px solid var(--line); }
   .row:first-of-type { border-top: 0; }
@@ -103,7 +104,7 @@
   </dialog>
 </div>
 <script src="../shared/config.js"></script>
-<script src="../shared/person-form.js?v=20261028u"></script>
+<script src="../shared/person-form.js?v=20261028v"></script>
 <script>
 (() => {
   const DB = {
@@ -214,7 +215,7 @@
       if (m.future) {
         if (!m.registered) b += '<button type="button" class="btn" data-reg="' + m.id + '">שמירת מקום</button><div class="msg" data-rm="' + m.id + '"></div>';
         else {
-          b += '<div style="margin-top:10px"><span class="chip ok">נרשמתם ✓</span> ' + (free ? '<span class="chip sky">חינם</span>' : paid ? '<span class="chip ok">שולם ' + ils(m.paid) + '</span>' : (m.reported ? '<span class="chip sky">דיווחתם על תשלום, ממתין לאישור</span>' : '<span class="chip no">טרם שולם</span>')) + '</div>';
+          b += '<div style="margin-top:10px"><span class="chip ok">נרשמתם ✓</span> ' + (free ? '<span class="chip sky">חינם</span>' : paid ? '<span class="chip ok">שולם ' + ils(m.paid) + '</span>' : (m.reported ? '<span class="chip wait">דיווחתם על תשלום, ממתין לאישור</span>' : '<span class="chip no">טרם שולם</span>')) + '</div>';
           if (!paid && !free && !m.reported && CFG.payboxLink) b += '<div class="payfold" data-pf="' + m.id + '"><div><a class="btn pay" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">תשלום ' + (m.price ? ils(m.price) : '') + ' בפייבוקס</a><p class="muted" style="margin:8px 0 0;text-align:center">המקום נשמר אחרי התשלום</p><div class="paylinks"><button type="button" class="lnk" data-report="' + m.id + '">שילמתי, לעדכן את המארגנים</button><button type="button" class="lnk" data-other="' + m.id + '">רוצים לשלם בדרך אחרת?</button></div><div class="msg" data-pm="' + m.id + '"></div></div></div>';
           if (m.reported && !paid && !free) b += '<p class="muted" style="margin:10px 0 0;text-align:center">קיבלנו את הדיווח. נוודא שהתשלום התקבל ונעדכן כאן</p>';
           if (!m.attended) b += '<button type="button" class="btn ghost" data-unreg="' + m.id + '">ביטול רישום</button><div class="msg" data-um="' + m.id + '"></div>';
@@ -224,7 +225,7 @@
     };
     const rowHtml = (m) => {
       const open = m.id === firstId;
-      const badge = m.future ? (m.registered ? (Number(m.paid) > 0 || m.free ? '<span class="chip ok">נרשמתם ✓</span>' : m.reported ? '<span class="chip sky">ממתין לאישור</span>' : '<span class="chip no">טרם שולם</span>') : '<span class="chip">פתוח להרשמה</span>') : (m.attended ? '<span class="chip ok">הגעתם</span>' : '<span class="chip">לא הגעתם</span>');
+      const badge = m.future ? (m.registered ? (Number(m.paid) > 0 || m.free ? '<span class="chip ok">נרשמתם ✓</span>' : m.reported ? '<span class="chip wait">ממתין לאישור</span>' : '<span class="chip no">טרם שולם</span>') : '<span class="chip">פתוח להרשמה</span>') : (m.attended ? '<span class="chip ok">הגעתם</span>' : '<span class="chip">לא הגעתם</span>');
       return '<div class="mtg' + (open ? ' open' : '') + '" data-mid="' + m.id + '"><button type="button" class="mthead" aria-expanded="' + open + '"><span class="c1">' + esc(dayParts(m.date).day) + '</span><span class="c2"><bdi dir="ltr">' + esc(m.time) + ' · ' + esc(dayParts(m.date).date) + '</bdi></span><span class="c4">' + badge + '</span>' + chev + '<span class="c5">' + esc([m.city, m.name].filter(Boolean).join(' · ')) + '</span></button><div class="mtfold"><div>' + meetingBody(m) + '</div></div></div>';
     };
     // שתי רשימות: מפגשים שנרשמתי אליהם, ומפגשים עתידיים שעוד לא נרשמתי אליהם ואפשר להצטרף (מהחדש לישן)
