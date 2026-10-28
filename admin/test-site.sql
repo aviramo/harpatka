@@ -19,6 +19,15 @@ alter table test.harpatka_settings enable row level security;
 create or replace function test.harpatka_send_mail(p_key text, p_vars jsonb, p_to text default null, p_extra jsonb default null)
 returns void language sql as $$ select $$;
 
+-- חסימה זמנית של מנהלים באתר הבדיקות בלבד (28.10.26): מנהל שהאימייל שלו בטבלה הזו לא נחשב מנהל בפונקציות האתר בסכמת test (אזור אישי, לוח, ...),
+-- כך אפשר לבדוק אותן כמשתתף רגיל. לא נוגע ב-public. להחזרה: delete from test.harpatka_admin_blocked where email = '...'.
+create table if not exists test.harpatka_admin_blocked (email text primary key);
+create or replace function test.harpatka_is_admin_site() returns boolean
+language sql stable security definer set search_path to 'test', 'public' as $$
+  select public.harpatka_is_admin() and not exists (select 1 from test.harpatka_admin_blocked b where lower(b.email) = lower(coalesce(auth.jwt() ->> 'email', '')));
+$$;
+grant execute on function test.harpatka_is_admin_site() to anon, authenticated;
+
 do $copy$
 declare
   r record; def text; args text; role_name text;
@@ -31,7 +40,7 @@ begin
   loop
     def := pg_get_functiondef(r.oid);
     def := replace(def, 'public.harpatka_', 'test.harpatka_');
-    def := replace(def, 'test.harpatka_is_admin', 'public.harpatka_is_admin');
+    def := replace(def, 'test.harpatka_is_admin', 'test.harpatka_is_admin_site');
     def := replace(def, 'test.harpatka_admins', 'public.harpatka_admins');
     def := replace(def, $$search_path TO 'public'$$, $$search_path TO 'test', 'public'$$);
     def := replace(def, 'FUNCTION public.' || r.proname, 'FUNCTION test.' || r.proname);
