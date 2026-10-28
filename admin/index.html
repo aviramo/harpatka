@@ -3753,12 +3753,13 @@
       else if (x.kind === 'refund' && x.from_credit) { lab = 'החזרת כסף' + (mt ? ' · ' + mt : ''); cls = 'down'; sign = ''; }
       else { lab = 'החזרת כסף למפגש' + mlabel(x); cls = 'flat'; sign = ''; }
       const rc = x.kind === 'deposit' ? ' rcpt' : (x.kind === 'credit' || x.kind === 'refund') ? (x.from_credit ? ' balmv' : ' rfnd') : x.kind === 'payment' ? (x.from_credit ? ' balmv' : ' alloc') : '';   // קבלה בירוק, זיכוי/החזר באדום
-      const row = (lb, c, cl) => '<div class="walrow' + c + '"><div class="wl"><b>' + esc(lb) + '</b><small>' + fmtDT(x.created_at) + (x.author_name ? ' · ' + esc(noteAuthor(x.author_email, x.author_name)) : '') + '</small></div><span class="wamt ' + cl + '"><bdi dir="ltr">' + sign + '₪' + nfm(a) + '</bdi></span></div>';
-      if (x.kind === 'deposit' && String(x.reason || '').startsWith('alloc_removed')) return [row('מחיקת הקצאה' + (x.reason.split(':')[1] ? ' למפגש' + mlabel({ meeting_id: x.reason.split(':')[1] }) : ''), ' balmv', 'flat'), row('קבלת תשלום' + (mt ? ' · ' + mt : ''), ' rcpt', 'up')];   // הכסף שחזר ליתרה במחיקת הקצאה: שתי שורות, התשלום המקורי (ירוק, עם דרך התשלום) והעברתו ליתרה (צהוב)
+      const row = (lb, c, cl, tm) => ({ t: String(tm || x.created_at), h: '<div class="walrow' + c + '"><div class="wl"><b>' + esc(lb) + '</b><small>' + fmtDT(tm || x.created_at) + (x.author_name ? ' · ' + esc(noteAuthor(x.author_email, x.author_name)) : '') + '</small></div><span class="wamt ' + cl + '"><bdi dir="ltr">' + sign + '₪' + nfm(a) + '</bdi></span></div>' });
+      if (x.kind === 'deposit' && String(x.reason || '').startsWith('alloc_removed')) { const pr = x.reason.split(':'), ml = pr[1] ? mlabel({ meeting_id: pr[1] }) : ''; return [row('מחיקת הקצאה' + (ml ? ' למפגש' + ml : ''), ' balmv', 'flat', pr[2] || x.created_at), row('הקצאה למפגש' + ml, ' alloc', 'flat'), row('קבלת תשלום' + (mt ? ' · ' + mt : ''), ' rcpt', 'up')]; }   // תשלום שהוקצה ואז ההקצאה נמחקה: קבלה, הקצאה (באותו מועד) ומחיקת הקצאה (במועד המחיקה, כשנשמר)
       if (x.kind === 'payment' && !x.from_credit) return [row('הקצאה למפגש' + mlabel(x), ' alloc', 'flat'), row('קבלת תשלום' + (mt ? ' · ' + mt : ''), ' rcpt', 'up')];   // תשלום ישיר למפגש = שתי שורות: קבלת הכסף (ירוק) וההקצאה (כתום)
       return [row(lab, rc, cls)];
     });
-    $('#walHist').innerHTML = rows.length ? rows.join('') : '<p class="mnone" style="text-align:center">עוד אין תשלומים</p>';
+    rows.sort((p1, p2) => p2.t.localeCompare(p1.t));   // מהחדש לישן (שורות עם אותו מועד נשארות בסדר: מחיקה, הקצאה, קבלה)
+    $('#walHist').innerHTML = rows.length ? rows.map((r) => r.h).join('') : '<p class="mnone" style="text-align:center">עוד אין תשלומים</p>';
   }
   const dmShort = (m) => { const [, mo, d] = m.meeting_date.split('-').map(Number); return d + '.' + mo; };
   /* צ'יפ מצב המפגש בכותרת (במסך ההקצאה): תפריט עם "לתשלום" ו"חינם" (המצבים שרשומים בפרטי המפגש בכרטיס המשתתף), ומעבר ביניהם עם פופאפ אישור בהתאם */
@@ -3823,7 +3824,7 @@
       const a = Number(r.amount);
       if (a <= rem + 0.001) { await removeAlloc(r); rem -= a; }
       else {
-        if (!r.from_credit) await addPayRecord(pid, null, 'deposit', rem, r.promoter_id || null, null, false, r.method || null, r.method_note || null, { reason: 'alloc_removed:' + (r.meeting_id || '') });
+        if (!r.from_credit) await addPayRecord(pid, null, 'deposit', rem, r.promoter_id || null, null, false, r.method || null, r.method_note || null, { reason: 'alloc_removed:' + (r.meeting_id || '') + ':' + new Date().toISOString(), created_at: r.created_at });
         await api(T.pay + '?id=eq.' + r.id, { method: 'PATCH', body: { amount: a - rem } }); r.amount = a - rem; rem = 0;
       }
     }
@@ -3860,7 +3861,7 @@
   async function removeAlloc(row) {
     {
       // תשלום ישיר בדרך העברה: הכסף כבר התקבל, ולכן מסירים רק את ההקצאה למפגש והכסף נשאר ביתרה (הפקדה באותו סכום ודרך העברה, עם אותה עמלה); הקצאה מהיתרה פשוט חוזרת ליתרה
-      if (!row.from_credit) await addPayRecord(row.participant_id, null, 'deposit', Number(row.amount), row.promoter_id || null, row.commission != null ? Number(row.commission) : null, false, row.method || null, row.method_note || null, { reason: 'alloc_removed:' + (row.meeting_id || '') });
+      if (!row.from_credit) await addPayRecord(row.participant_id, null, 'deposit', Number(row.amount), row.promoter_id || null, row.commission != null ? Number(row.commission) : null, false, row.method || null, row.method_note || null, { reason: 'alloc_removed:' + (row.meeting_id || '') + ':' + new Date().toISOString(), created_at: row.created_at });
       payTomb.set(row.id, Date.now() + 8000);
       await api(T.pay + '?id=eq.' + row.id, { method: 'DELETE' }); state.payments = state.payments.filter((x) => x.id !== row.id);
     }
