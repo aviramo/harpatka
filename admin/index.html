@@ -4553,13 +4553,18 @@
   let FC = {};   // ספירות לתפריטי הסינון, מתעדכן ב-renderFacets
   const fstate = (k) => k === 'att' ? state.attF : k === 'here' ? state.here : k === 'sent' ? state.sent : k === 'bal' ? state.bal : state.paidF;
   const closeF = () => { $('#fMenu').hidden = true; $('#fMenu').dataset.kind = ''; };
+  /* בתפריטי הסינון לא מציגים אפשרות בלי אף משתתף (0), חוץ מ"הכל" ומהאפשרות שנבחרה כרגע; ומנקים קווים מפרידים יתומים */
+  function pruneF(m) {
+    m.querySelectorAll('.fopt').forEach((b) => { if (b.dataset.fv !== '' && b.getAttribute('aria-pressed') !== 'true' && Number((b.querySelector('.fcnt') || {}).textContent) === 0) b.remove(); });
+    m.querySelectorAll('.fsep').forEach((s) => { const n = s.nextElementSibling; if (!n || n.classList.contains('fsep') || !s.previousElementSibling) s.remove(); });
+  }
   function openF(kind, anchor) {
     const m = $('#fMenu'); if (!m.hidden && m.dataset.kind === kind) { closeF(); return; }
     if (kind === 'att') {   // תפריט דפוס הגעה: כל אפשרות עם הכמות שהייתה מוצגת (לפי שאר הסינונים והחיפוש)
       const keep = state.attF; state.attF = null; const q = state.q.trim().toLowerCase(), qd = digits(q), pool = state.participants.filter((p) => rowPass(p, q, qd)); state.attF = keep;
       const row = (k, label, cls, n, gl) => '<button type="button" role="menuitem" class="fopt" data-fv="' + k + '" aria-pressed="' + (keep === k || (!keep && k === '')) + '"><span class="hfilt ' + (k === '' ? 'all' : attCls(cls)) + '">' + (k === '' ? PERSIST_ICON : ATT_GLYPH[gl]()) + '</span><span>' + label + '</span><b class="fcnt">' + n + '</b></button>';
       m.innerHTML = row('', 'הכל', 'x', pool.length, 'bars') + ATT_OPTS_F.map((o, i) => (i === 4 ? '<div class="fsep" role="separator"></div>' : '') + row(o[0], o[1], o[2], pool.filter((p) => attMatch(p, o[0])).length, o[3])).join('');
-      m.dataset.kind = kind; m.hidden = false;
+      pruneF(m); m.dataset.kind = kind; m.hidden = false;
       const r0 = anchor.getBoundingClientRect(), mw0 = m.offsetWidth;
       m.style.left = Math.min(Math.max(8, r0.left), window.innerWidth - mw0 - 8) + 'px'; m.style.top = (r0.bottom + 6) + 'px';
       return;
@@ -4573,7 +4578,7 @@
       const am = FC.payAmts || {}, ks = Object.keys(am).map(Number).sort((a, b) => b - a);
       if (ks.length) m.innerHTML += '<div class="fsep" role="separator"></div>' + ks.map((a) => '<button type="button" role="menuitem" class="fopt" data-fv="a' + a + '" aria-pressed="' + (cur === 'a' + a) + '"><span class="hfilt yes">₪</span><span>₪' + nfm(a) + '</span><b class="fcnt">' + am[a] + '</b></button>').join('');
     }
-    m.dataset.kind = kind; m.hidden = false;
+    pruneF(m); m.dataset.kind = kind; m.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = m.offsetWidth;
     m.style.left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8) + 'px'; m.style.top = (r.bottom + 6) + 'px';
   }
