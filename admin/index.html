@@ -1383,7 +1383,6 @@
           <button class="btn paygo" id="depSave" type="button">תשלום</button>
         </div>
         <div class="pquick" id="depQuick"></div>
-        <button type="button" class="deplnk" id="depPkgToggle" hidden>תשלום על כמה מפגשים</button>
         <label class="field payfield" id="depMethodSel" hidden><span>דרך העברה</span><select name="pay_depm"><option value="paybox">פייבוקס</option><option value="bit">ביט</option><option value="cash">מזומן</option><option value="bank">בנק</option><option value="other">אחר</option></select></label>
         <div class="payhint" id="depPkgHint"></div>
         <label class="field" id="depOtherField" hidden><span>פירוט קצר</span><input name="pay_depn" maxlength="60" autocomplete="off" placeholder="למשל: פייפאל, צ׳ק" /></label>
@@ -3625,7 +3624,6 @@
     box.innerHTML = '<div class="dsum' + (al > 0 ? ' ok' : '') + '"><div><div class="dsl">שולם למפגש</div><div class="dsv">₪' + nfm(al) + '</div></div><span class="dst">' + (al > 0 ? 'שולם' : 'טרם שולם') + '</span></div>' + (rows.length ? '<div class="dlt">הקצאות (אפשר לשנות סכום או להסיר)</div>' + lines : '');
   }
   const depLinesRefresh = () => { paintDepLines(); if (sheet && sheet.paintMeth) sheet.paintMeth(); renderContact(); refreshSheetMeetings(); render(); };   // אחרי כל שינוי: גם אפשרויות התשלום מתעדכנות (נגמרה היתרה: נפתחות שאר הדרכים)
-  $('#depPkgToggle').addEventListener('click', () => { $('#depPkgSel').closest('label').hidden = false; $('#depPkgToggle').hidden = true; });
   $('#depLines').addEventListener('change', async (e) => {
     const inp = e.target.closest('input'); if (!inp) return;
     const line = inp.closest('.dline'), row = state.payments.find((x) => x.id === line.dataset.id), amt = parseFloat(inp.value);
@@ -3651,7 +3649,7 @@
     { const al = m ? Math.max(0, allocatedOf(pid, m.id)) : 0, pr0 = m ? expectedPrice(pid, m) : 0; f.pay_dep.value = !m ? '' : al <= 0 ? pr0 : al < pr0 ? pr0 - al : ''; }   // מפגש ששולם חלקית: המוצע הוא היתרה
     { const pp = state.participants.find((x) => x.id === pid), lk = m && linkOf(pid, m.id), np = !!(m && pp && noPayOf(pp, lk)); $('#depFields').hidden = np; $('#depFree').hidden = !np; }
     $('#depIntro').textContent = m ? 'מפגש ' + dmShort(m) : 'תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש';
-    { f.pay_dep.closest('label').querySelector('span').textContent = 'סכום (₪)'; $('#depSave').textContent = m ? 'הוספה' : 'תשלום'; $('#depAddTitle').hidden = !m; $('#depPkgSel').closest('label').hidden = !!m; $('#depPkgToggle').hidden = !m; paintDepLines(); }
+    { f.pay_dep.closest('label').querySelector('span').textContent = 'סכום (₪)'; $('#depSave').textContent = m ? 'הוספה' : 'תשלום'; $('#depAddTitle').hidden = !m; paintDepLines(); }
     $('#depPkgLbl').textContent = m ? 'על כמה מפגשים' : 'חבילה'; f.pay_pkg.options[0].textContent = m ? '1' : '—';
     $('#depQuick').innerHTML = quickPrices(m).map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
     $('#depQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) { f.pay_dep.value = b.dataset.q; paintPkg(); } };
