@@ -792,6 +792,7 @@
     .walrow.rfnd { background: var(--red-bg); } .walrow.rfnd .wamt.wamt { color: var(--red); }
     #walAdd, #depSave { background: var(--green-bg); color: var(--green); }
     #cDlg #cYes.danger { background: var(--red-bg); color: var(--red); }
+    #cDlg #cYes.ok { background: var(--green-bg); color: var(--green); }   /* אישור תשלום: ירוק, כמו כפתור התשלום */
     #walZikuy { display: none !important; }
     #walAdd, #walRefund, #walZikuy { height: 46px; font-size: 16px; margin-top: 0; }   /* שלושת הכפתורים באותו גובה וגודל כתב (לכפתור הראשי היה 52px/18px, ל-ghost 44px/16px) */
     #zkCredit { background: var(--yellow-bg); color: var(--yellow); }   /* זיכוי ליתרה (בלי להחזיר כסף): צהוב */
@@ -2934,7 +2935,7 @@
     const p = state.participants.find((x) => x.id === pid), m = state.meetings.find((x) => x.id === mid);
     $('#cTitle').textContent = title;
     $('#cText').innerHTML = nameB(p ? p.name : '') + ' · ' + esc(m ? meetingLabel(m, true) : '') + (extraHtml ? '<br><br>' + extraHtml : '');
-    $('#cYes').textContent = yesLabel || 'אישור'; $('#cYes').classList.toggle('danger', !(opts && opts.primary));   // הסרה / החזר: אדום בהיר
+    $('#cYes').textContent = yesLabel || 'אישור'; $('#cYes').classList.toggle('danger', !(opts && (opts.primary || opts.green))); $('#cYes').classList.toggle('ok', !!(opts && opts.green));   // הסרה / החזר: אדום בהיר
     const dlg = $('#cDlg');
     $('#cAlt').hidden = !alt; if (alt) { $('#cAlt').textContent = alt.label; $('#cAlt').onclick = () => { dlg.close(); alt.fn(); }; }
     $('#cYes').onclick = () => { dlg.close(); fn(); };
@@ -2998,7 +2999,7 @@
     return 'המערכת תבצע <b>החזרה של תשלום בסך ₪' + nfm(amt) + '</b>. תירשם רשומת החזר ביומן התשלומים' + (pr && l.commission ? ', והעמלה לדרך הגעה ' + esc(pr.name) + ' (₪' + nfm(l.commission) + ') תבוטל' : '') + '.';
   }
   function confirmRefund(pid, mid, fn) { confirmAct('החזרת תשלום', pid, mid, fn, refundNote(pid, mid), 'כן, להחזיר תשלום'); }
-  $('#cDlg').addEventListener('close', () => { $('#cYes').textContent = 'אישור'; $('#cYes').classList.remove('danger'); $('#cAlt').hidden = true; });
+  $('#cDlg').addEventListener('close', () => { $('#cYes').textContent = 'אישור'; $('#cYes').classList.remove('danger', 'ok'); $('#cAlt').hidden = true; });
   /* משתתף שהגיע למפגש (סומנה הגעה) אי אפשר להסיר מהמפגש */
   const keepAttended = (pid, mid) => { const l = linkOf(pid, mid); if (l && l.attended) { toast('לא ניתן להסיר שיוך של משתתף שהגיע למפגש'); return true; } return false; };
   /* הסרה ממפגש לא יוצרת זיכוי ליתרה: למי ששולם אפשר רק להחזיר את התשלום */
@@ -3903,7 +3904,7 @@
     const mid = sheet.depMid || null, mt = f.pay_depm.value, pm = state.payMethods.find((x) => x.key === mt);
     const src = sheet.depCr && mid ? 'מהיתרה' : (mt === 'other' ? (f.pay_depn.value.trim() || 'אחר') : (pm ? pm.name : mt));
     const html = 'סכום: <b>' + ils(amt) + '</b><br>' + (sheet.depCr && mid ? 'ירד מהיתרה של המשתתף' : 'דרך: <b>' + esc(src) + '</b>') + (mid ? '' : '<br>התשלום ייכנס ליתרה של המשתתף');
-    confirmAct(mid ? 'אישור תשלום למפגש' : 'אישור קבלת תשלום', pid, mid, depSaveRun, html, 'אישור תשלום', null, { primary: true });
+    confirmAct(mid ? 'אישור תשלום למפגש' : 'אישור קבלת תשלום', pid, mid, depSaveRun, html, 'אישור תשלום', null, { green: true });
   });
   /* זיכוי: מחזיר חלק מתשלום שהוקצה למפגש. ליתרה (kind credit) או כסף למשתתף (kind refund) */
   $('#walZikuy').addEventListener('click', () => {
