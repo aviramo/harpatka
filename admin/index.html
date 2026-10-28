@@ -823,7 +823,7 @@
     .metchips { display: flex; gap: 6px; flex-wrap: wrap; margin: 2px 0 8px; }
     .metchips button { height: 32px; border-radius: 999px; padding: 0 12px; background: #fff; box-shadow: inset 0 0 0 1px var(--line); font-weight: 700; font-size: 14px; color: var(--muted); }
     #depMode[hidden], #depQuick[hidden], #depMethods:empty { display: none; }
-    #depFields .payrow #depSave.paygo { background: var(--green); color: #fff; }   /* כפתור התשלום: הירוק הכהה של הפלטה */
+    #depFields .payrow #depSave.paygo, #walAdd { background: var(--green); color: #fff; }   /* כפתור התשלום: הירוק הכהה של הפלטה */
     .mlist .mrow .mmoney.free, .mmoney.free { background: #fff; color: var(--muted); border: 1px solid var(--line); }   /* חינם בכרטיס המפגש: לבן עם ₪ מחוק, כמו בעיגול הרשימה */
     #depMode { margin: 2px 0 12px; gap: 8px; }
     #depMode button { flex: 1; height: 46px; border-radius: 14px; font-size: 17px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--ink); background: var(--cream); box-shadow: none; }
@@ -3789,14 +3789,12 @@
     const paintMeth = () => {
       paintDepLines();
       const hasL = !!(m && linkOf(pid, m.id)), free = isFree(), cr0 = m && crAvail() > 0;
-      $('#depMode').hidden = !hasL;
-      $('#depMode').innerHTML = hasL ? '<button type="button" role="radio" data-mode="pay" aria-pressed="' + !free + '">לתשלום</button><button type="button" role="radio" data-mode="free" aria-pressed="' + free + '"><span class="nps">₪</span>חינם</button>' : '';   // לתשלום מימין, חינם משמאלו; לתשלום מחזיר את המפגש למצב שלא טופל
-      $('#depAddTitle').hidden = !m || free;
+      $('#depMode').hidden = true; $('#depMode').innerHTML = '';   // בורר "לתשלום / חינם" הוסר: חינם הוא הצ'יפ הראשון בשורת דרכי התשלום
+      $('#depAddTitle').hidden = !m;
       $('#depFree').hidden = true;
       $('#depFields').hidden = free;
       const pkgF = $('#depPkgSel').closest('.field');
-      const freeChip = '';
-      if (free) { $('#depMethods').innerHTML = ''; return; }
+      const freeChip = hasL ? '<button type="button" role="radio" data-free="1" aria-pressed="' + free + '"><span class="nps">₪</span>חינם</button>' : '';
       $('#depQuick').hidden = false;
       if (cr0) {   // יש יתרה: קודם כל משתמשים בה (אפשר להקצות רק חלק ממנה); שאר דרכי התשלום נפתחות כשהיתרה נגמרת
         sheet.depCr = !free;
@@ -3828,27 +3826,23 @@
       f.pay_dep.value = crAvail() > 0 ? Math.min(needNow(), crAvail()) : needNow();
       paintMeth();
     };
-    $('#depMode').onclick = async (e) => {
-      const b = e.target.closest('[data-mode]'); if (!b || !m) return;
-      if ((b.dataset.mode === 'free') === isFree()) return;
-      const al = Math.round(allocatedOf(pid, m.id) * 100) / 100;
-      if (b.dataset.mode === 'free' && al > 0) {   // יש כסף מוקצה למפגש: חינם מוחק את ההקצאה, ולכן שואלים קודם
-        confirmAct('חינם: למחוק את ההקצאה למפגש?', pid, m.id, () => switchLocked('free'), 'מוקצים למפגש <b>' + ils(al) + '</b>. סימון המפגש כחינם ימחק את ההקצאה, והכסף יישאר ליתרה של המשתתף (לא יוחזר ככסף).', 'כן, למחוק את ההקצאה');
-        return;
-      }
-      if (b.dataset.mode === 'pay') {   // חזרה מחינם ל"לתשלום": גם כאן שואלים קודם
-        confirmAct('לתשלום: לבטל את החינם?', pid, m.id, () => switchLocked('pay'), 'המפגש יחזור להיות לתשלום (כאילו לא סומן חינם), ואפשר יהיה להקצות אליו כסף.', 'כן, לתשלום', null, { primary: true });
-        return;
-      }
-      await switchLocked(b.dataset.mode);
+    /* "חינם" הוא הצ'יפ הראשון (מימין) בשורת דרכי התשלום. חינם כשיש הקצאה: פופאפ אישור מחיקת ההקצאה; בחירה בדרך תשלום או ב"מהיתרה" כשהמפגש חינם: פופאפ אישור ביטול החינם */
+    const pickChoice = (b, cb) => {
+      if (cb) { f.pay_dep.value = Math.min(needNow(), crAvail()); f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; paintMeth(); return; }
+      f.pay_depm.value = b.dataset.m; f.pay_depm.onchange();
     };
     $('#depMethods').onclick = async (e) => {
       const fb = e.target.closest('[data-free]'), b = e.target.closest('[data-m]'), cb = e.target.closest('[data-cr]');
-      if (fb) { if (!isFree()) await switchLocked('free'); return; }
+      if (fb) {
+        if (isFree()) return;
+        const al = Math.round(allocatedOf(pid, m.id) * 100) / 100;
+        if (al > 0) confirmAct('חינם: למחוק את ההקצאה למפגש?', pid, m.id, () => switchLocked('free'), 'מוקצים למפגש <b>' + ils(al) + '</b>. סימון המפגש כחינם ימחק את ההקצאה, והכסף יישאר ליתרה של המשתתף (לא יוחזר ככסף).', 'כן, למחוק את ההקצאה');
+        else await switchLocked('free');
+        return;
+      }
       if (!b && !cb) return;
-      if (isFree()) await switchLocked('pay');   // בחירה בדרך תשלום מבטלת את החינם
-      if (cb) { f.pay_dep.value = Math.min(needNow(), crAvail()); f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; paintMeth(); return; }
-      f.pay_depm.value = b.dataset.m; f.pay_depm.onchange();
+      if (isFree()) { confirmAct('לתשלום: לבטל את החינם?', pid, m.id, async () => { await switchLocked('pay'); pickChoice(b, cb); }, 'המפגש יחזור להיות לתשלום (כאילו לא סומן חינם), ואפשר יהיה להקצות אליו כסף.', 'כן, לתשלום', null, { primary: true }); return; }
+      pickChoice(b, cb);
     };
     sheet.paintMeth = paintMeth; paintMeth();
     const paintPkg = () => { const n = parseInt(f.pay_pkg.value, 10), a = parseFloat(f.pay_dep.value); $('#depPkgHint').innerHTML = n >= 2 && a > 0 ? 'מחיר למפגש בחבילה: <b>₪' + nfm(Math.round(a / n)) + '</b>. ' + (m ? 'המפגש הזה ועוד עד ' + (n - 1) + ' מפגשים קרובים משויכים ייפרעו מיד, והשאר ייפרעו בשיוך' : 'כל שיוך למפגש ייקח את הסכום הזה מהיתרה, עד ' + n + ' מפגשים') : ''; };
