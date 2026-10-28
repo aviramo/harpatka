@@ -65,7 +65,7 @@
   <div id="app"><div class="center">טוען…</div></div>
 </div>
 <script src="../shared/config.js"></script>
-<script src="../shared/person-form.js?v=20261028c"></script>
+<script src="../shared/person-form.js?v=20261028d"></script>
 <script>
 (() => {
   const DB = {
@@ -162,7 +162,8 @@
     const credit = Number(data.balance) || 0;
     let h = '';
     if (imp) h += '<div class="imp">מצב צפייה כמנהל: כך ' + esc(p.first_name + ' ' + p.last_name) + ' רואה את האזור האישי (אפשר לבצע פעולות בשמו, והן נרשמות בשם המנהל ביומן)</div>';
-    h += '<div class="card"><div class="big">שלום ' + esc(p.first_name) + '</div>' + (credit > 0 ? '<div style="margin-top:8px"><span class="chip ok">יתרה לטובתכם ' + ils(credit) + '</span></div>' : credit < 0 ? '<div style="margin-top:8px"><span class="chip no">יתרת חוב ' + ils(credit) + '</span></div>' : '') + '</div>';
+    setTitle(p.first_name + ' ' + p.last_name);   // שם המשתתף מחליף את הכותרת "האזור האישי" (בלי כרטיס ברכה)
+    if (credit !== 0) h += '<div style="margin-top:12px"><span class="chip ' + (credit > 0 ? 'ok' : 'no') + '">' + (credit > 0 ? 'יתרה לטובתכם ' : 'יתרת חוב ') + ils(credit) + '</span></div>';
     if (nx) {
       const reg = nx.registered, paid = nxM ? Number(nxM.paid) > 0 : false, free = nxM ? nxM.free : false;
       h += '<div class="card"><h2>המפגש הבא</h2><div class="big">' + esc(fmtDate(nx.date)) + ' · <bdi dir="ltr">' + esc(nx.time) + '</bdi></div>' + (nx.directions ? '<div class="muted dirs">' + esc(nx.directions) + '</div>' : '');
@@ -219,7 +220,9 @@
     };
   }
 
+  const setTitle = (txt) => { const h1 = document.querySelector('.top h1'); if (h1) h1.textContent = txt || 'האזור האישי'; };
   async function load(keepMsg, afterClaim) {
+    setTitle('');
     try {
       data = await rpc('harpatka_me', asId ? { p_as: asId } : {});
     } catch (e) { if (e.message === 'auth' || (asId && /HTTP (400|403|404)/.test(e.message))) { viewLogin(); return; } app.innerHTML = '<div class="center">הטעינה נכשלה. אפשר לרענן</div>'; return; }
