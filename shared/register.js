@@ -61,7 +61,11 @@
             <div data-su="fail" class="su-err mt-3 text-center" role="alert"></div>
             <div class="su-fold su-after shut" data-su="after"><div>
               <p class="su-paynote">המקום נשמר באופן זמני, והוא יישמר קבוע רק לאחר תשלום</p>
-              <a href="#" target="_blank" rel="noopener" data-paybox class="btn-primary rounded-full px-8 py-4 text-[1.2rem] block text-center w-full">לתשלום <span data-price>80 ₪</span> בפייבוקס</a>
+              <div class="su-payfold" data-su="payfold"><div>
+                <a href="#" target="_blank" rel="noopener" data-paybox class="btn-primary rounded-full px-8 py-4 text-[1.2rem] block text-center w-full">לתשלום <span data-price>80 ₪</span> בפייבוקס</a>
+                <div class="su-paylinks" data-su="paylinks" hidden><button type="button" class="su-lnk" data-su="report">שילמתי, לעדכן את המארגנים</button><button type="button" class="su-lnk" data-su="other">רוצים לשלם בדרך אחרת?</button></div>
+              </div></div>
+              <div class="su-reported" data-su="reported" hidden>דיווחתם על תשלום, ממתין לאישור</div>
               <a href="__BASE__me/?login=1" class="su-melink">כניסה לאזור האישי</a>
             </div></div>
           </form>
@@ -72,7 +76,8 @@
   if (window.REGISTER_MIN !== false) document.documentElement.classList.add('reg-min');
   /* שאלת יציאה מהחשבון: אותה מעטפת פופאפ של ההרשמה (נפתח מלמעלה, פס סגירה בתחתית) */
   const LOGOUT_HTML = `<div id="logoutModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="logoutTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="logoutTtl"></p><p class="su-lgq">לצאת מהחשבון?</p><button type="button" class="su-lgyes" data-lg="yes">יציאה</button></div></div>`;
-  document.body.insertAdjacentHTML('beforeend', MODAL_HTML + LOGOUT_HTML);
+  const OTHER_HTML = `<div id="otherModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="otherTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="otherTtl">לשלם בדרך אחרת</p><p class="su-lgq">נפתחת שיחת וואטסאפ עם אחד המנהלים, וההודעה כבר מוכנה:</p><p class="su-lginfo" id="otherInfo"></p><a class="su-lgyes" id="otherHadar" target="_blank" rel="noopener">שיחה עם הדר</a><a class="su-lgyes" id="otherOfir" target="_blank" rel="noopener">שיחה עם אופיר</a></div></div>`;
+  document.body.insertAdjacentHTML('beforeend', MODAL_HTML + LOGOUT_HTML + OTHER_HTML);
 
   /* ===== מנגנון פופאפ כללי (משותף לכל ה-.modal) ===== */
   let modalLastFocus = null, urlBeforeReg = null;
@@ -223,6 +228,32 @@
       if (payOk) setTimeout(() => { const a = q('after'); if (a) a.classList.remove('shut'); }, 700);
     };
     suRoots.push(showDone);
+    /* אחרי לחיצה על התשלום בפייבוקס: מתחת לכפתור מופיעים "שילמתי, לעדכן את המארגנים" ו"רוצים לשלם בדרך אחרת?" (אותו נוסח כמו באזור האישי) */
+    const payA = root.querySelector('[data-paybox]');
+    if (payA) payA.addEventListener('click', () => {
+      const links = q('paylinks'); if (!links) return;
+      let tk = null; try { tk = localStorage.getItem('harpatka_claim_token'); } catch (e) {}
+      q('report').hidden = !(meInfo || tk);   // דיווח דורש חשבון מחובר או אסימון מהרשמה שהרגע נעשתה
+      links.hidden = false;
+    });
+    if (q('report')) q('report').addEventListener('click', async () => {
+      const m = selMeeting || nearest; if (!m || !m.id) return;
+      const rb = q('report'); rb.disabled = true;
+      try {
+        let r;
+        if (meInfo) r = await meRpc('harpatka_me_report_payment', { p_meeting: m.id });
+        else {
+          let tk = null; try { tk = localStorage.getItem('harpatka_claim_token'); } catch (e) {}
+          const res = await fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_report_payment_token', { method: 'POST', headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_token: tk, p_meeting: m.id }) });
+          if (!res.ok) throw new Error('HTTP ' + res.status); r = await res.json();
+        }
+        if (r !== 'ok' && r !== 'reported' && r !== 'already') throw new Error('report failed');
+        const fold = q('payfold'), done = q('reported');
+        if (fold) { fold.classList.add('closing'); setTimeout(() => { fold.hidden = true; done.hidden = false; }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 420); } else done.hidden = false;
+        if (meInfo) loadMe();
+      } catch (e) { rb.disabled = false; rb.textContent = 'משהו השתבש, אפשר לנסות שוב'; }
+    });
+    if (q('other')) q('other').addEventListener('click', () => openOtherPay(selMeeting || nearest));
     form.addEventListener('submit', async (e) => {
       e.preventDefault(); q('fail').textContent = '';
       if (meInfo) { await memberSubmit(root, btn, q, showDone); return; }   // משתתף מחובר: הפרטים כבר שמורים
@@ -374,9 +405,42 @@
   }
   /* מצב מפגש של המשתתף המחובר (להצגה בכפתור של כרטיסי המפגשים בדף הבית) */
   const meGet = (mid) => (meInfo && (meInfo.meetings || []).find((x) => x.id === mid)) || null;
+  /* תשלום בדרך אחרת: פופאפ (אותה מעטפת) עם שיחת וואטסאפ מוכנה להדר או לאופיר, עם פרטי המפגש */
+  function openOtherPay(m) {
+    const dlg = document.getElementById('otherModal'); if (!dlg) return;
+    let info = 'המפגש הקרוב';
+    if (m && m.date) { const [, mo, d] = String(m.date).split('-').map(Number), wd = HE_DAYS[new Date(m.date + 'T12:00:00Z').getUTCDay()]; info = 'יום ' + wd + ' ' + d + '.' + mo + (m.time ? ' בשעה ' + m.time : ''); }
+    const text = 'היי, אני רוצה להעביר את התשלום בדרך אחרת למפגש ביום ' + info.replace(/^יום /, '');
+    const wa = (num) => 'https://wa.me/' + num + '?text=' + encodeURIComponent(text);
+    dlg.querySelector('#otherInfo').textContent = info;
+    dlg.querySelector('#otherHadar').href = wa(CONFIG.whatsappHadar); dlg.querySelector('#otherOfir').href = wa(CONFIG.whatsappOfir);
+    openModal(dlg, true);
+  }
   window.HarpatkaMe = { confirmLogout, get: meGet, login: loginGoogle };
   document.querySelectorAll('[data-su="glink"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); loginGoogle('reg'); }));
   loadMe();
+  /* מצב המפגשים של המשתתף המחובר מתעדכן בזמן אמת (כפתורי הכרטיסים בדף הבית): (1) אות ריק בערוץ ציבורי "me" (admin/me-realtime.sql) בכל שינוי בתשלומים, בשיוכים ובמפגשים;
+     (2) חזרה לדף (מהאזור האישי או מלשונית אחרת, גם מהמטמון של הדפדפן): טעינה מחדש; (3) גיבוי: בדיקה כל 45 שניות כשהלשונית גלויה */
+  let meReloadT = 0, meLast = 0;
+  const meRefresh = () => { clearTimeout(meReloadT); meReloadT = setTimeout(() => { try { if (!meInfo && !localStorage.getItem(ME_KEY)) return; } catch (e) { return; } meLast = Date.now(); loadMe(); }, 250); };
+  window.addEventListener('pageshow', (e) => { if (e.persisted) meRefresh(); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - meLast > 3000) meRefresh(); });
+  window.addEventListener('focus', () => { if (Date.now() - meLast > 3000) meRefresh(); });
+  setInterval(() => { if (!document.hidden && meInfo) meRefresh(); }, 45000);
+  (function startMeRealtime() {
+    try { if (!localStorage.getItem(ME_KEY)) return; } catch (e) { return; }   // רק למי שמחובר
+    const topic = 'realtime:' + ((window.HARPATKA_ENV && window.HARPATKA_ENV.name === 'test') ? 'me-test' : 'me');
+    let ws, hb = 0, retry = 2000;
+    const open = () => {
+      try { ws = new WebSocket(CONFIG.supabaseUrl.replace(/^http/, 'ws') + '/realtime/v1/websocket?apikey=' + encodeURIComponent(CONFIG.supabaseKey) + '&vsn=1.0.0'); } catch (e) { return; }
+      const send = (o) => { if (ws.readyState === 1) ws.send(JSON.stringify(o)); };
+      ws.onopen = () => { retry = 2000; send({ topic, event: 'phx_join', ref: '1', payload: { config: { broadcast: { ack: false, self: false }, presence: { key: '' }, private: false }, access_token: CONFIG.supabaseKey } }); hb = setInterval(() => send({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(Date.now()) }), 25000); };
+      ws.onmessage = (e) => { let m; try { m = JSON.parse(e.data); } catch (x) { return; } if (m.topic === topic && m.event === 'broadcast' && meInfo) meRefresh(); };
+      ws.onclose = () => { clearInterval(hb); setTimeout(open, retry); retry = Math.min(retry * 2, 60000); };
+      ws.onerror = () => { try { ws.close(); } catch (x) {} };
+    };
+    open();
+  })();
   const contactModal = document.getElementById('contactModal');
   window.HarpatkaRegister = { open: (auto, meeting) => { selMeeting = meeting && meeting.id ? meeting : null; showMeeting(selMeeting || nearest); applyMemberMode(); if (contactModal) openModal(contactModal, auto === true); } };   // לשימוש עמודים אחרים
   if (new URLSearchParams(location.search).has('register')) setTimeout(() => window.HarpatkaRegister.open(true), 500);   // הגעה דרך /register/: דף הבית נטען והפופאפ נפתח עליו
