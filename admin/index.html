@@ -799,7 +799,8 @@
     .walrow.rfnd { background: var(--red-bg); } .walrow.rfnd .wamt.wamt { color: var(--red); }
     #walAdd, #depSave { background: var(--green-bg); color: var(--green); }
     #cDlg #cYes.danger { background: var(--red); color: #fff; }   /* מחיקה, הסרה והחזר: האדום הכהה של הפלטה */
-    #cDlg #cYes.ok { background: var(--green); color: #fff; }   /* אישור תשלום: הירוק הכהה של הפלטה */
+    #cDlg #cYes.ok { background: var(--green); color: #fff; }
+    #cDlg #cYes.yel { background: var(--yellow); color: #fff; }   /* העברת סכום ליתרה: צהוב */   /* אישור תשלום: הירוק הכהה של הפלטה */
     #walZikuy { display: none !important; }
     #walRefund { background: var(--red); color: #fff; }   /* החזרת כסף: האדום הכהה של הפלטה */
     #walAdd, #walRefund, #walZikuy { height: 46px; font-size: 16px; margin-top: 0; }   /* שלושת הכפתורים באותו גובה וגודל כתב (לכפתור הראשי היה 52px/18px, ל-ghost 44px/16px) */
@@ -2970,7 +2971,7 @@
     const p = state.participants.find((x) => x.id === pid), m = state.meetings.find((x) => x.id === mid);
     $('#cTitle').textContent = title;
     $('#cText').innerHTML = (opts && opts.plain) ? (extraHtml || '') : nameB(p ? p.name : '') + ' · ' + esc(m ? meetingLabel(m, true) : '') + (extraHtml ? '<br><br>' + extraHtml : '');   // plain: אישור שלא קשור למשתתף ולמפגש (למשל העברה בין מנהלים)
-    $('#cYes').textContent = yesLabel || 'אישור'; $('#cYes').classList.toggle('danger', !(opts && (opts.primary || opts.green))); $('#cYes').classList.toggle('ok', !!(opts && opts.green));   // הסרה / החזר: אדום בהיר
+    $('#cYes').textContent = yesLabel || 'אישור'; $('#cYes').classList.toggle('danger', !(opts && (opts.primary || opts.green || opts.yellow))); $('#cYes').classList.toggle('ok', !!(opts && opts.green)); $('#cYes').classList.toggle('yel', !!(opts && opts.yellow));   // הסרה / החזר: אדום בהיר
     const dlg = $('#cDlg');
     $('#cAlt').hidden = !alt; if (alt) { $('#cAlt').textContent = alt.label; $('#cAlt').onclick = () => { dlg.close(); alt.fn(); }; }
     $('#cYes').onclick = () => { dlg.close(); fn(); };
@@ -3034,7 +3035,7 @@
     return 'המערכת תבצע <b>החזרה של תשלום בסך ₪' + nfm(amt) + '</b>. תירשם רשומת החזר ביומן התשלומים' + (pr && l.commission ? ', והעמלה לדרך הגעה ' + esc(pr.name) + ' (₪' + nfm(l.commission) + ') תבוטל' : '') + '.';
   }
   function confirmRefund(pid, mid, fn) { confirmAct('החזרת תשלום', pid, mid, fn, refundNote(pid, mid), 'כן, להחזיר תשלום'); }
-  $('#cDlg').addEventListener('close', () => { $('#cYes').textContent = 'אישור'; $('#cYes').classList.remove('danger', 'ok'); $('#cAlt').hidden = true; });
+  $('#cDlg').addEventListener('close', () => { $('#cYes').textContent = 'אישור'; $('#cYes').classList.remove('danger', 'ok', 'yel'); $('#cAlt').hidden = true; });
   /* משתתף שהגיע למפגש (סומנה הגעה) אי אפשר להסיר מהמפגש */
   const keepAttended = (pid, mid) => { const l = linkOf(pid, mid); if (l && l.attended) { toast('לא ניתן להסיר שיוך של משתתף שהגיע למפגש'); return true; } return false; };
   /* הסרה ממפגש לא יוצרת זיכוי ליתרה: למי ששולם אפשר רק להחזיר את התשלום */
@@ -3753,13 +3754,13 @@
       const to = b.dataset.md, api = sheet.modeApi, pid = sheet.id, mid = sheet.depMid;
       if (to === 'del') {   // מחיקת הקצאה: אותו תהליך כמו במעבר לחינם (הכסף נשאר ביתרה של המשתתף), בלי לסמן חינם
         const al0 = Math.round(allocatedOf(pid, mid) * 100) / 100;
-        confirmAct('למחוק את ההקצאה למפגש?', pid, mid, () => api.del(), 'מוקצים למפגש <b>' + ils(al0) + '</b>. מחיקת ההקצאה תשאיר את הכסף ביתרה של המשתתף (לא יוחזר ככסף).', 'כן, למחוק את ההקצאה');
+        confirmAct('למחוק את ההקצאה למפגש?', pid, mid, () => api.del(), 'מוקצים למפגש <b>' + ils(al0) + '</b>. מחיקת ההקצאה תשאיר את הכסף ביתרה של המשתתף (לא יוחזר ככסף).', 'כן, העברת הסכום ליתרה', null, { yellow: true });
         return;
       }
       if ((to === 'free') === api.free()) return;
       if (to === 'free') {
         const al = Math.round(allocatedOf(pid, mid) * 100) / 100;
-        if (al > 0) confirmAct('חינם: למחוק את ההקצאה למפגש?', pid, mid, () => api.go('free'), 'מוקצים למפגש <b>' + ils(al) + '</b>. סימון המפגש כחינם ימחק את ההקצאה, והכסף יישאר ליתרה של המשתתף (לא יוחזר ככסף).', 'כן, למחוק את ההקצאה');
+        if (al > 0) confirmAct('חינם: למחוק את ההקצאה למפגש?', pid, mid, () => api.go('free'), 'מוקצים למפגש <b>' + ils(al) + '</b>. סימון המפגש כחינם ימחק את ההקצאה, והכסף יישאר ליתרה של המשתתף (לא יוחזר ככסף).', 'כן, העברת הסכום ליתרה', null, { yellow: true });
         else confirmAct('לסמן את המפגש כחינם?', pid, mid, () => api.go('free'), 'המפגש יסומן כחינם והמשתתף לא ישלם עליו.', 'כן, חינם', null, { primary: true });
       } else confirmAct('לתשלום: לבטל את החינם?', pid, mid, () => api.go('pay'), 'המפגש יחזור להיות לתשלום (כאילו לא סומן חינם), ואפשר יהיה להקצות אליו כסף.', 'כן, לתשלום', null, { primary: true });
     };
@@ -3912,7 +3913,7 @@
       if (fb) {
         if (isFree()) return;
         const al = Math.round(allocatedOf(pid, m.id) * 100) / 100;
-        if (al > 0) confirmAct('חינם: למחוק את ההקצאה למפגש?', pid, m.id, () => switchLocked('free'), 'מוקצים למפגש <b>' + ils(al) + '</b>. סימון המפגש כחינם ימחק את ההקצאה, והכסף יישאר ליתרה של המשתתף (לא יוחזר ככסף).', 'כן, למחוק את ההקצאה');
+        if (al > 0) confirmAct('חינם: למחוק את ההקצאה למפגש?', pid, m.id, () => switchLocked('free'), 'מוקצים למפגש <b>' + ils(al) + '</b>. סימון המפגש כחינם ימחק את ההקצאה, והכסף יישאר ליתרה של המשתתף (לא יוחזר ככסף).', 'כן, העברת הסכום ליתרה', null, { yellow: true });
         else await switchLocked('free');
         return;
       }
