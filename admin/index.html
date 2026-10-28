@@ -4218,7 +4218,7 @@
       return;
     }
     const cur = fstate(kind) || null, lab = FLAB[kind];
-    const opts = [[null, 'all', lab[0]], ['1', 'yes', lab[1]], ['0', 'no', lab[2]]].concat(kind === 'pay' ? [['n', 'fr', lab[3]], ['w', 'wait', lab[4]]] : kind === 'bal' ? [['n', 'free', lab[3]], ['f', 'fr', lab[4]]] : []);
+    const opts = [[null, 'all', lab[0]]].concat(kind === 'pay' ? [['w', 'wait', lab[4]]] : [], [['1', 'yes', lab[1]], ['0', 'no', lab[2]]]).concat(kind === 'pay' ? [['n', 'fr', lab[3]]] : kind === 'bal' ? [['n', 'free', lab[3]], ['f', 'fr', lab[4]]] : []);
     m.innerHTML = opts.map((o) => '<button type="button" role="menuitem" class="fopt" data-fv="' + (o[0] === null ? '' : o[0]) + '" aria-pressed="' + (cur === o[0]) + '"><span class="hfilt ' + o[1] + '">' + fglyph(kind, o[1]) + '</span><span>' + o[2] + '</span><b class="fcnt">' + ((FC[kind] || {})[o[0] === null ? '' : o[0]] ?? 0) + '</b></button>').join('');
     if (kind === 'pay') {   // בנוסף: סינון לפי דרך התשלום ולפי הסכום ששולם למפגש
       const pmc = FC.payMeth || {}, pks = state.payMethods.filter((pm) => pmc[pm.key]);
