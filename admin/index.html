@@ -100,7 +100,7 @@
     .title-row > .hgrp { grid-column: 3; }
     #listTags .hfilt { width: 38px; height: 38px; }   /* טוגל התגיות מימין לכפתור התפריט, באותו גודל */
     #listTags .hfilt svg { width: 18px; height: 18px; }
-    #listTags .hfilt.viewpill { width: auto; height: 38px; border-radius: 999px; padding: 0 14px; display: inline-flex; align-items: center; gap: 7px; font-size: 15px; font-weight: 700; color: var(--ink); }
+    #listTags .hfilt.viewpill { width: 38px; height: 38px; border-radius: 999px; padding: 0; justify-content: center; display: inline-flex; align-items: center; gap: 7px; font-size: 15px; font-weight: 700; color: var(--ink); }
     .title-row > .hgrp { justify-self: end; }
     .title-row > .msel { justify-self: start; }
     .title-row .mmenu { left: auto; right: 0; transform: none; }   /* גובה קבוע: פתיחת החיפוש לא מזיזה את הרשימה */
@@ -644,7 +644,7 @@
     .sortbtn { width: var(--ctl, 44px); height: var(--ctl, 44px); display: grid; place-items: center; border-radius: 999px; border: 1px solid var(--line); background: var(--paper); color: var(--muted); box-sizing: border-box; }
     .sortbtn svg { width: 20px; height: 20px; }
     .sortbtn.on { color: var(--terra); border-color: var(--coral); }
-    .sortmenu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; min-width: 190px; background: var(--paper); border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(63,56,47,.18); padding: 6px; }
+    .sortmenu { position: fixed; top: 0; left: 0; z-index: 300; min-width: 190px; background: var(--paper); border-radius: 16px; border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(63,56,47,.18); padding: 6px; }
     .sortmenu[hidden] { display: none; }
     .cntmenu { position: fixed; z-index: 300; width: min(340px, calc(100vw - 24px)); max-height: 70vh; overflow-y: auto; padding: 16px 16px 8px; text-align: right; }
     .cntmenu h4 { margin: 0 0 12px; font-size: 17px; font-weight: 800; line-height: 1.3; }
@@ -2156,7 +2156,7 @@
     { el: () => document.getElementById('attMenu'), keep: '#attMenu, #setAttBtn', close: () => { const m = document.getElementById('attMenu'); if (m) m.hidden = true; } },
     { el: () => $('#hMenu'), keep: '.hicons', close: () => closeHMenu() },
     { el: () => $('#mMenu'), keep: '.msel', close: () => closeMSel() },
-    { el: () => $('#sortMenu'), keep: '.sortwrap', close: () => closeSort() },
+    { el: () => $('#sortMenu'), keep: '#sortMenu, #sortBtnH', close: () => closeSort() },
   ];
   document.addEventListener('click', (e) => {
     const open = FLOAT_MENUS.filter((m) => { const x = m.el(); return x && !x.hidden; });
@@ -2527,7 +2527,7 @@
     const sentN = (v) => base.filter((p) => { if (!genOk(p) || !paidOk(p) || !hereOkNoSent(p) || !matchPay(p, epk)) return false; return sentMatch(p.id, linkOf(p.id, state.filter), v); }).length;
     $('#listHere').innerHTML = attOn ? fbtn('here', eh, hereN('1'), hereN('0')) : '';
     $('#listPay').innerHTML = state.filter && state.showPay ? fbtn('pay', (state.paidF === '1' || state.paidF === '0' || state.paidF === 'n' || state.paidF === 'w' || /^[am][A-Za-z0-9_]+$/.test(state.paidF || '')) ? state.paidF : null, paidN('1'), paidN('0')) : '';
-    $('#listTags').innerHTML = '<button type="button" class="hfilt all viewpill" id="viewBtn" aria-haspopup="menu" aria-expanded="' + !$('#viewMenu').hidden + '" aria-label="תצוגה: תגיות ושליחת פרטי המפגש" title="תצוגה: הפעלה וכיבוי של תגיות ושל שליחת פרטי המפגש"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h9"/><path d="M17 7h3"/><circle cx="15" cy="7" r="2"/><path d="M4 17h3"/><path d="M11 17h9"/><circle cx="9" cy="17" r="2"/></svg><span>תצוגה</span></button>';   // כפתור אחד עם מילה, שפותח את הטוגלים
+    $('#listTags').innerHTML = '<button type="button" class="hfilt all viewpill" id="viewBtn" aria-haspopup="menu" aria-expanded="' + !$('#viewMenu').hidden + '" aria-label="תצוגה: תגיות ושליחת פרטי המפגש" title="תצוגה: הפעלה וכיבוי של תגיות ושל שליחת פרטי המפגש"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h9"/><path d="M17 7h3"/><circle cx="15" cy="7" r="2"/><path d="M4 17h3"/><path d="M11 17h9"/><circle cx="9" cy="17" r="2"/></svg></button><button type="button" class="hfilt all" id="sortBtnH" aria-haspopup="menu" aria-expanded="' + !$('#sortMenu').hidden + '" aria-label="מיון הרשימה" title="מיון: ' + (SORTS.find((s) => s[0] === state.sort) || SORTS[0])[1] + '" style="' + (state.sort !== 'new' ? 'color:var(--terra)' : '') + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v15M7 19l-3-3M7 19l3-3M17 20V5M17 5l-3 3M17 5l3 3"/></svg></button>';   // כפתור אחד עם מילה, שפותח את הטוגלים
     $('#listAtt').innerHTML = !state.filter && state.showAtt !== false ? '<button type="button" class="hfilt ' + (() => { const k = effAttF(), o = k && ATT_OPTS_F.find((x) => x[0] === k); return !o ? 'all' : attCls(o[2]); })() + '" data-fk="att" aria-haspopup="menu" aria-label="סינון לפי התמדה" title="סינון לפי התמדה והגעה (לחיצה לפתיחת תפריט)">' + (() => { const k = effAttF(), o = k && ATT_OPTS_F.find((x) => x[0] === k); return o ? ATT_GLYPH[o[3]]() : PERSIST_ICON; })() + '</button>' : '';
     $('#listBal').innerHTML = !state.filter && state.showPay ? fbtn('bal', effBal(), '', '') : '';
     $('#listSent').innerHTML = evOn ? fbtn('sent', effSent(), sentN('1'), sentN('0')) : '';
@@ -2558,14 +2558,15 @@
     }
   }
   function renderSort() {
-    $('#sortBtn').classList.toggle('on', state.sort !== 'new');
-    $('#sortBtn').title = 'מיון: ' + (SORTS.find((s) => s[0] === state.sort) || SORTS[0])[1];
+    
+    
     $('#sortMenu').innerHTML = SORTS.map((s) => '<button type="button" role="menuitemradio" data-sort="' + s[0] + '" aria-checked="' + (state.sort === s[0]) + '">' + s[1] + '</button>').join('');
   }
-  const closeSort = () => { $('#sortMenu').hidden = true; $('#sortBtn').setAttribute('aria-expanded', 'false'); };
-  $('#sortBtn').addEventListener('click', (e) => { e.stopPropagation(); const m = $('#sortMenu'); m.hidden = !m.hidden; $('#sortBtn').setAttribute('aria-expanded', String(!m.hidden)); });
+  const closeSort = () => { $('#sortMenu').hidden = true; const b = $('#sortBtnH'); if (b) b.setAttribute('aria-expanded', 'false'); };   // התפריט הצף (מועבר ל-body) נפתח מכפתור המיון בכותרת
+  document.body.appendChild($('#sortMenu'));
+  $('#listTags').addEventListener('click', (e) => { const b = e.target.closest('#sortBtnH'); if (!b) return; e.stopPropagation(); const m = $('#sortMenu'); if (!m.hidden) { closeSort(); return; } m.hidden = false; b.setAttribute('aria-expanded', 'true'); const r = b.getBoundingClientRect(), mw = m.offsetWidth; m.style.left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8) + 'px'; m.style.top = (r.bottom + 6) + 'px'; });
   $('#sortMenu').addEventListener('click', (e) => { const b = e.target.closest('[data-sort]'); if (!b) return; state.sort = b.dataset.sort; closeSort(); render(); });
-  document.addEventListener('click', (e) => { if (!e.target.closest('.sortwrap')) closeSort(); });
+  document.addEventListener('click', (e) => { if (!e.target.closest('#sortMenu, #sortBtnH')) closeSort(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSort(); });
 
   /* הודעה כשאין תוצאות, לפי הסינון הפעיל */
