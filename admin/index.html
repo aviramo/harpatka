@@ -3569,10 +3569,10 @@
   const dmShort = (m) => { const [, mo, d] = m.meeting_date.split('-').map(Number); return d + '.' + mo; };
   $('#pPayChip').addEventListener('click', () => { if (!sheet || !sheet.id) return; viewStack = []; goView('wallet'); });
   /* קבלת תשלום: מהארנק (כללי) או מתוך מפגש (סמל ה-₪ ברשימה): אז הסכום המוצע הוא מחיר המפגש, ואפשר לשלם על כמה מפגשים (חבילה: הסכום מתחלק, והמפגש הזה ועוד קרובים שמשויכים אליהם נפרעים מיד) */
-  /* כפתור ₪ של מפגש: ששולם או חינם פותח "יתרה ותשלומים" (אין מה לשלם), אחרת קבלת תשלום */
+  /* כפתור ₪ של מפגש: ששולם פותח "יתרה ותשלומים", וחינם או לא שולם פותחים את מסך התשלום של המפגש */
   function openPayFor(pid, mid) {
     const pp = state.participants.find((x) => x.id === pid), lk = linkOf(pid, mid), m = state.meetings.find((x) => x.id === mid);
-    if (pp && lk && (allocatedOf(pid, mid) > 0 || noPayOf(pp, lk))) { viewStack = []; goView('wallet'); } else openDeposit(mid);
+    if (pp && lk && allocatedOf(pid, mid) > 0 && !noPayOf(pp, lk)) { viewStack = []; goView('wallet'); } else openDeposit(mid);
   }
   function openDeposit(mid) {
     const f = pForm, pid = sheet && sheet.id, m = mid ? state.meetings.find((x) => x.id === mid) : null;
