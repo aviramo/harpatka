@@ -3627,13 +3627,15 @@
     if (!box) return; if (!m || !pid) { box.hidden = true; box.innerHTML = ''; return; }
     const rows = state.payments.filter((x) => x.participant_id === pid && x.meeting_id === m.id && (x.kind === 'payment' || x.kind === 'credit' || (x.kind === 'refund' && !x.from_credit))).sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
     const al = Math.round(allocatedOf(pid, m.id) * 100) / 100, price = expectedPrice(pid, m);
+    const ttl = $('#depAddTitle'); if (ttl) { ttl.style.borderTop = rows.length ? '' : 'none'; ttl.style.marginTop = rows.length ? '' : '0'; ttl.style.paddingTop = rows.length ? '' : '0'; }
+    if (!rows.length) { box.hidden = true; box.innerHTML = ''; return; }
     box.hidden = false;
     const when = (x) => { const d = String(x.created_at || '').slice(0, 10).split('-'); return d.length === 3 ? d[2] + '.' + d[1] : ''; };
     const lines = rows.map((x) => x.kind === 'payment'
       ? '<div class="dline" data-id="' + x.id + '"><span class="dsrc">' + (x.method === 'debt' ? 'חוב' : x.from_credit ? 'מהיתרה' : esc(methodName(x) || 'תשלום')) + '<small>' + when(x) + '</small></span><input type="number" inputmode="decimal" min="0" step="any" value="' + Number(x.amount) + '" aria-label="סכום"><button type="button" class="ddel" aria-label="הסרת ההקצאה">×</button></div>'
       : '<div class="dline ret"><span class="dsrc">' + (x.kind === 'credit' ? 'זיכוי ליתרה' : 'הוחזר כסף') + '<small>' + when(x) + '</small></span><b style="text-align:center">-₪' + nfm(Number(x.amount)) + '</b><span></span></div>').join('');
     const pp = state.participants.find((x) => x.id === pid), free = !!(pp && noPayOf(pp, linkOf(pid, m.id))) && al <= 0;   // סומן חינם (ועוד לא הוקצה כסף): הסטטוס "חינם" ולא "טרם שולם"
-    box.innerHTML = '<div class="dsum' + (al > 0 ? ' ok' : free ? ' free' : '') + '"><div><div class="dsl">שולם למפגש</div><div class="dsv">₪' + nfm(al) + '</div></div><span class="dst">' + (al > 0 ? 'שולם' : free ? 'חינם' : 'טרם שולם') + '</span></div>' + (rows.length ? '<div class="dlt">הקצאות (אפשר לשנות סכום או להסיר)</div>' + lines : '');
+    box.innerHTML = '<div class="dlt">הקצאות (אפשר לשנות סכום או להסיר)</div>' + lines;
   }
   const depLinesRefresh = () => { paintDepLines(); if (sheet && sheet.paintMeth) sheet.paintMeth(); renderContact(); refreshSheetMeetings(); render(); };   // אחרי כל שינוי: גם אפשרויות התשלום מתעדכנות (נגמרה היתרה: נפתחות שאר הדרכים)
   $('#depLines').addEventListener('change', async (e) => {
@@ -3666,7 +3668,7 @@
     f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; f.pay_depm.value = 'paybox'; f.pay_depn.value = ''; $('#depOtherField').hidden = true;
     { const al = m ? Math.max(0, allocatedOf(pid, m.id)) : 0, pr0 = m ? expectedPrice(pid, m) : 0; f.pay_dep.value = !m ? '' : al <= 0 ? pr0 : al < pr0 ? pr0 - al : ''; }   // מפגש ששולם חלקית: המוצע הוא היתרה
     { const pp = state.participants.find((x) => x.id === pid), lk = m && linkOf(pid, m.id), np = !!(m && pp && noPayOf(pp, lk)); $('#depFields').hidden = np; $('#depFree').hidden = !np; }
-    $('#depIntro').textContent = m ? 'מפגש ' + dmShort(m) : 'תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש';
+    $('#depIntro').hidden = !!m; $('#depIntro').textContent = m ? 'מפגש ' + dmShort(m) : 'תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש';
     { f.pay_dep.closest('label').querySelector('span').textContent = 'סכום (₪)'; $('#depSave').textContent = m ? 'הוספה' : 'תשלום'; $('#depAddTitle').hidden = !m; paintDepLines(); }
     $('#depPkgLbl').textContent = m ? 'על כמה מפגשים' : 'חבילה'; f.pay_pkg.options[0].textContent = m ? '1' : '—';
     $('#depQuick').innerHTML = quickPrices(m).map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
