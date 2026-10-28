@@ -3731,7 +3731,7 @@
     { const pl = pkgLeft(pid); if (pl > 0) $('#walSum').insertAdjacentHTML('beforeend', '<div class="sub">בחבילה נשארו <b>' + pl + '</b> מפגשים · ₪' + nfm(pkgUnit(pid)) + ' למפגש</div>'); }
     $('#walZikuy').hidden = true;   // בארנק רק קבלת כסף או החזרת כסף; אין זיכוי (ביטול הקצאה למפגש נעשה במסך התשלום למפגש)
     const mlabel = (x) => { const m = state.meetings.find((q) => q.id === x.meeting_id); return m ? ' ' + dmShort(m) : ''; };
-    const rows = state.payments.filter((x) => x.participant_id === pid).slice().sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).flatMap((x) => {
+    const rows = state.payments.filter((x) => x.participant_id === pid && x.kind !== 'credit').slice().sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).flatMap((x) => {
       const a = Number(x.amount), mt = methodName(x); let lab, cls, sign;
       if (x.kind === 'deposit') { lab = 'קבלת תשלום' + (mt ? ' · ' + mt : ''); cls = 'up'; sign = ''; }
       else if (x.kind === 'credit') { lab = 'ביטול מפגש' + mlabel(x) + ', נשאר ביתרה'; cls = 'up'; sign = ''; }
