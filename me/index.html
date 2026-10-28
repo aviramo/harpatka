@@ -58,7 +58,7 @@
   @media (prefers-reduced-motion: reduce) { .detfold, .dethead svg { transition: none; } }
   button, a { -webkit-tap-highlight-color: transparent; }   /* בלי הבהוב הכחול של הדפדפן בלחיצה */
   .dethead:focus, .mthead:focus { outline: none; }
-  .mtg { border-top: 1px solid var(--line); }
+  .mtg { border-top: 1px solid var(--line); scroll-margin-top: 80px; }   /* בגלילה למפגש נשאר רווח מעליו */
   .mtg:first-of-type { border-top: 0; }
   .mthead { display: grid; grid-template-columns: 2.5em 7.2em minmax(0, 1fr) 22px; align-items: center; column-gap: 2px; row-gap: 4px; font-size: 15px; width: 100%; padding: 14px 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; text-align: start; }
   .mthead .c1, .mthead .c2 { font-weight: 700; white-space: nowrap; }   /* שם היום, תאריך ושעה מחוברים, ועיר: עמודות קבועות, כמו טבלה */
@@ -104,7 +104,7 @@
   </dialog>
 </div>
 <script src="../shared/config.js"></script>
-<script src="../shared/person-form.js?v=20261028v"></script>
+<script src="../shared/person-form.js?v=20261028x"></script>
 <script>
 (() => {
   const DB = {
@@ -196,7 +196,7 @@
   function viewPending() { app.innerHTML = '<div class="card"><h2>הבקשה התקבלה</h2><p class="muted" style="margin:0">אנחנו מאשרים את החיבור, ובקרוב האזור האישי יהיה זמין. אפשר לחזור לכאן בעוד קצת זמן</p></div>'; }
   function viewBlocked() { app.innerHTML = '<div class="card"><h2>אין גישה</h2><p class="muted" style="margin:0">החשבון הזה לא מחובר לאזור אישי. אפשר לפנות אלינו בוואטסאפ</p></div>'; }
 
-  let keepOpen = null;   // המפגש שנפתח לפני טעינה מחדש (אחרי הרשמה או ביטול) נשאר פתוח
+  let keepOpen = null, scrollTo = null;   // scrollTo: מפגש מהקישור ?m= (מדף הבית): נפתח ונגללים אליו פעם אחת   // המפגש שנפתח לפני טעינה מחדש (אחרי הרשמה או ביטול) נשאר פתוח
   function viewMain() {
     const p = data.participant, nx = data.next, imp = !!data.impersonating, ms = data.meetings || [];
     const nxM = nx ? ms.find((m) => m.id === nx.id) : null;
@@ -242,6 +242,7 @@
       '<button type="button" class="btn" id="saveBtn">שמירה</button><div class="msg" id="sm"></div></div></div></div>';
     if (CFG.updatesGroupLink) h += '<div class="card"><h2>הקבוצה השקטה</h2><p class="muted" style="margin:0">קבוצת וואטסאפ שקטה לקבלת עדכונים על המפגשים הבאים</p><a class="btn ghost" href="' + esc(CFG.updatesGroupLink) + '" target="_blank" rel="noopener">כניסה לקבוצה השקטה</a></div>';
     app.innerHTML = h;
+    if (scrollTo) { const row = app.querySelector('.mtg[data-mid="' + scrollTo + '"]'); scrollTo = null; if (row) setTimeout(() => row.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }), 120); }
 
     app.querySelectorAll('.mthead').forEach((hd) => { hd.onclick = () => { const c = hd.parentElement, on = !c.classList.contains('open'); c.classList.toggle('open', on); hd.setAttribute('aria-expanded', String(on)); }; });
     app.querySelectorAll('[data-reg]').forEach((rb) => { rb.onclick = async () => {
@@ -316,6 +317,7 @@
   }
   async function start() {
     const q = new URLSearchParams(location.search);
+    if (q.get('m')) { keepOpen = q.get('m'); scrollTo = q.get('m'); try { history.replaceState(null, '', location.pathname); } catch (e) {} }   // מדף הבית: פתיחת המפגש שנבחר וגלילה אליו
     try { asId = q.get('as') || sessionStorage.getItem(AS_KEY) || null; sessionStorage.removeItem(AS_KEY); } catch (e) { asId = q.get('as'); }
     const h = new URLSearchParams(location.hash.replace(/^#/, ''));
     if (h.get('access_token')) { saveSession({ access_token: h.get('access_token'), refresh_token: h.get('refresh_token') }); history.replaceState(null, '', location.pathname + (asId ? '?as=' + encodeURIComponent(asId) : '')); }

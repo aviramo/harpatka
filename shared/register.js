@@ -70,7 +70,9 @@
     </div>
   </div>`.replace(/__BASE__/g, BASE);
   if (window.REGISTER_MIN !== false) document.documentElement.classList.add('reg-min');
-  document.body.insertAdjacentHTML('beforeend', MODAL_HTML);
+  /* שאלת יציאה מהחשבון: אותה מעטפת פופאפ של ההרשמה (נפתח מלמעלה, פס סגירה בתחתית) */
+  const LOGOUT_HTML = `<div id="logoutModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="logoutTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="logoutTtl"></p><p class="su-lgq">לצאת מהחשבון?</p><button type="button" class="su-lgyes" data-lg="yes">יציאה</button><button type="button" class="su-lgno" data-close-modal>ביטול</button></div></div>`;
+  document.body.insertAdjacentHTML('beforeend', MODAL_HTML + LOGOUT_HTML);
 
   /* ===== מנגנון פופאפ כללי (משותף לכל ה-.modal) ===== */
   let modalLastFocus = null, urlBeforeReg = null;
@@ -337,43 +339,21 @@
   /* יציאה מהחשבון (לחיצה על השם בבאנר): שואלים לפני שמנתקים */
   function confirmLogout() {
     if (!meInfo) return;
-    let d = document.getElementById('logoutDlg');
-    if (!d) {
-      document.body.insertAdjacentHTML('beforeend', '<dialog id="logoutDlg" class="su-logout" aria-labelledby="logoutTtl"><p class="su-lgwho" id="logoutTtl"></p><p class="su-lgq">לצאת מהחשבון?</p><button type="button" class="su-lgyes" data-lg="yes">יציאה</button><button type="button" class="su-lgno" data-lg="no">ביטול</button></dialog>');
-      d = document.getElementById('logoutDlg');
-      d.addEventListener('click', (e) => {
-        const b = e.target.closest('[data-lg]');
-        if (b && b.dataset.lg === 'yes') { try { localStorage.removeItem(ME_KEY); } catch (er) {} meInfo = null; window.__meName = null; applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {} d.close(); }
-        else if ((b && b.dataset.lg === 'no') || e.target === d) d.close();
+    const m = document.getElementById('logoutModal');
+    m.querySelector('#logoutTtl').textContent = 'מחוברים כ' + meInfo.first + ' ' + meInfo.last;
+    if (!m.dataset.bound) {
+      m.dataset.bound = '1';
+      m.querySelector('[data-lg="yes"]').addEventListener('click', () => {
+        try { localStorage.removeItem(ME_KEY); } catch (er) {}
+        meInfo = null; window.__meName = null; applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {}
+        closeModal(m);
       });
     }
-    d.querySelector('#logoutTtl').textContent = 'מחוברים כ' + meInfo.first + ' ' + meInfo.last;
-    d.showModal();
+    openModal(m, true);
   }
-  /* מצב מפגש של המשתתף המחובר (להצגה בכרטיסי המפגשים בדף הבית), דיווח תשלום, ותשלום בדרך אחרת */
+  /* מצב מפגש של המשתתף המחובר (להצגה בכפתור של כרטיסי המפגשים בדף הבית) */
   const meGet = (mid) => (meInfo && (meInfo.meetings || []).find((x) => x.id === mid)) || null;
-  async function meReport(mid) {
-    const r = await meRpc('harpatka_me_report_payment', { p_meeting: mid });
-    if (r !== 'ok' && r !== 'reported' && r !== 'already') throw new Error('report failed');
-    await loadMe();   // מרענן את מצב המפגשים ומקפיץ את האירוע שמצייר מחדש את הכרטיסים
-  }
-  function meOther(mid) {
-    const m = meGet(mid); if (!m) return;
-    const [, mo, d] = String(m.date).split('-').map(Number), wd = HE_DAYS[new Date(m.date + 'T12:00:00Z').getUTCDay()];
-    const info = 'יום ' + wd + ' ' + d + '.' + mo + ' בשעה ' + m.time + (m.city ? ' (' + m.city + ')' : '') + (m.name ? ', ' + m.name : '');
-    const text = 'היי, אני רוצה להעביר את התשלום בדרך אחרת למפגש ביום ' + info.replace(/^יום /, '');
-    let dlg = document.getElementById('otherDlg');
-    if (!dlg) {
-      document.body.insertAdjacentHTML('beforeend', '<dialog id="otherDlg" class="su-logout" aria-labelledby="otherTtl"><p class="su-lgwho" id="otherTtl">לשלם בדרך אחרת</p><p class="su-lgq">נפתחת שיחת וואטסאפ עם אחד המנהלים, וההודעה כבר מוכנה:</p><p class="su-lginfo" id="otherInfo"></p><a class="su-lgyes" id="otherHadar" target="_blank" rel="noopener">שיחה עם הדר</a><a class="su-lgyes" id="otherOfir" target="_blank" rel="noopener">שיחה עם אופיר</a><button type="button" class="su-lgno" id="otherClose">סגירה</button></dialog>');
-      dlg = document.getElementById('otherDlg');
-      dlg.addEventListener('click', (e) => { if (e.target === dlg || e.target.id === 'otherClose') dlg.close(); });
-    }
-    const wa = (num) => 'https://wa.me/' + num + '?text=' + encodeURIComponent(text);
-    dlg.querySelector('#otherInfo').textContent = info;
-    dlg.querySelector('#otherHadar').href = wa(CONFIG.whatsappHadar); dlg.querySelector('#otherOfir').href = wa(CONFIG.whatsappOfir);
-    dlg.showModal();
-  }
-  window.HarpatkaMe = { confirmLogout, get: meGet, report: meReport, other: meOther };
+  window.HarpatkaMe = { confirmLogout, get: meGet };
   loadMe();
   const contactModal = document.getElementById('contactModal');
   window.HarpatkaRegister = { open: (auto, meeting) => { selMeeting = meeting && meeting.id ? meeting : null; showMeeting(selMeeting || nearest); applyMemberMode(); if (contactModal) openModal(contactModal, auto === true); } };   // לשימוש עמודים אחרים

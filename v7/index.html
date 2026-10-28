@@ -545,12 +545,6 @@
     .mt-tier{ display:inline-flex; gap:.35rem; font-size:1.02rem; font-weight:600; color:#FFFDF9; opacity:.9; text-shadow:0 1px 6px rgba(0,0,0,.55); }
     .mt-tier.done{ opacity:.8; text-decoration:line-through; text-decoration-thickness:1.5px; }   /* מחוק רק מה שעבר; מדרגה עתידית רגילה */
     .mt-tier b{ font-weight:800; }
-    .mt-state{ display:flex; flex-direction:column; align-items:center; gap:.7rem; }
-    .mt-chips{ display:flex; flex-wrap:wrap; justify-content:center; gap:.4rem; }
-    .mt-chip{ display:inline-flex; align-items:center; border-radius:999px; padding:.25rem .8rem; font-weight:700; font-size:.95rem; background:#E3F1E8; color:#2F7D4F; text-shadow:none; }
-    .mt-chip.ok{ background:#E3F1E8; color:#2F7D4F; } .mt-chip.no{ background:#F6E0DA; color:#B5483A; } .mt-chip.wait{ background:#FBEBC8; color:#8A5A00; }
-    .mt-links{ display:flex; flex-direction:column; align-items:center; gap:.2rem; }
-    .mt-lnk{ border:0; background:none; padding:.35rem .5rem; font:inherit; font-size:1rem; font-weight:700; color:#FFFDF9; text-decoration:underline; text-underline-offset:3px; cursor:pointer; text-shadow:0 1px 6px rgba(0,0,0,.55); }
     .mt-cta{ display:inline-flex; align-items:center; justify-content:center; border-radius:999px; background:#FFFDF9; color:#B05640; font-weight:700; font-size:1.1rem; padding:.8rem 1.9rem; min-height:50px; text-shadow:none; box-shadow:0 10px 22px -10px rgba(0,0,0,.6); }
     .mt-card.is-past{ opacity:.5; }
     .mt-chev{ display:none; }
@@ -1141,19 +1135,14 @@
         { const cl = [m.city, !past && m.max ? m.max + ' משתתפים' : ''].filter(Boolean).join(' · '); if (cl) inn.append(mk('div', 'mt-city', cl)); }
         const st = !past && window.HarpatkaMe ? HarpatkaMe.get(m.id) : null;   // משתתף מחובר שכבר רשום למפגש הזה: מצב ההרשמה והתשלום במקום מדרגות המחיר
         if (st && st.registered) {
-          const more = mk('div', 'mt-more'), box = mk('div', 'mt-state'), paid = Number(st.paid) > 0, free = !!st.free;
-          const chips = mk('div', 'mt-chips'); chips.append(mk('span', 'mt-chip ok', 'נרשמתם ✓'));
-          chips.append(free ? mk('span', 'mt-chip', 'חינם') : paid ? mk('span', 'mt-chip ok', 'שולם ₪' + Math.round(st.paid)) : st.reported ? mk('span', 'mt-chip wait', 'דיווחתם על תשלום, ממתין לאישור') : mk('span', 'mt-chip no', 'טרם שולם'));
-          box.append(chips);
-          if (!paid && !free && !st.reported) {
-            const pay = mk('a', 'mt-cta', 'תשלום ' + (st.price ? '₪' + st.price + ' ' : '') + 'בפייבוקס'); pay.href = CONFIG.payboxLink; pay.target = '_blank'; pay.rel = 'noopener'; pay.addEventListener('click', e => e.stopPropagation()); box.append(pay);
-            const links = mk('div', 'mt-links');
-            const l1 = mk('button', 'mt-lnk', 'שילמתי, לעדכן את המארגנים'); l1.type = 'button'; l1.addEventListener('click', async e => { e.stopPropagation(); l1.disabled = true; try { await HarpatkaMe.report(m.id); } catch (er) { l1.disabled = false; l1.textContent = 'משהו השתבש, אפשר לנסות שוב'; } });
-            const l2 = mk('button', 'mt-lnk', 'רוצים לשלם בדרך אחרת?'); l2.type = 'button'; l2.addEventListener('click', e => { e.stopPropagation(); HarpatkaMe.other(m.id); });
-            links.append(l1, l2); box.append(links);
-          }
-          const me = document.getElementById('meAreaCard'); if (me) { const a2 = mk('a', 'mt-lnk', 'ביטול רישום ופרטים באזור האישי'); a2.href = me.getAttribute('href'); a2.addEventListener('click', e => e.stopPropagation()); box.append(a2); }
-          more.append(box); inn.append(more);
+          /* משתתף מחובר שכבר רשום למפגש: הכפתור מציג את המצב (נרשמתם, שולם, דווח...) ולחיצה מובילה לאזור האישי על אותו מפגש */
+          const more = mk('div', 'mt-more'), box = mk('div'), paid = Number(st.paid) > 0, free = !!st.free;
+          const txt = free ? 'נרשמתם · חינם' : paid ? 'נרשמתם · שולם ₪' + Math.round(st.paid) : st.reported ? 'דיווחתם על תשלום, ממתין לאישור' : 'נרשמתם · תשלום' + (st.price ? ' ₪' + st.price : '');
+          const b = mk('a', 'mt-cta', txt), me = document.getElementById('meAreaCard');
+          b.href = (me ? me.getAttribute('href') : 'me/') + '?m=' + encodeURIComponent(m.id);
+          b.addEventListener('click', e => e.stopPropagation());
+          box.append(b); more.append(box); inn.append(more);
+          c.style.cursor = 'pointer'; c.addEventListener('click', () => { location.href = b.href; });
         } else if (!past) {
           const more = mk('div', 'mt-more'), box = mk('div'), sp = tierSplit(m, m.tiers, today);
           const pb = fill(mkBox(), sp.past, 'done'); if (!pb.hidden) box.append(pb);
@@ -1424,7 +1413,7 @@
   window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(apply); } }, { passive: true });
 })();
 </script>
-  <script src="../shared/person-form.js?v=20261028x"></script>
-  <script src="../shared/register.js?v=20261028x"></script>
+  <script src="../shared/person-form.js?v=20261028z"></script>
+  <script src="../shared/register.js?v=20261028z"></script>
 </body>
 </html>
