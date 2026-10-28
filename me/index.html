@@ -205,7 +205,7 @@
     let h = '';
     if (imp) h += '<div class="imp">מצב צפייה כמנהל: כך ' + esc(p.first_name + ' ' + p.last_name) + ' רואה את האזור האישי (אפשר לבצע פעולות בשמו, והן נרשמות בשם המנהל ביומן)</div>';
     setTitle(p.first_name + ' ' + p.last_name);   // שם המשתתף מחליף את הכותרת "האזור האישי" (בלי כרטיס ברכה)
-    if (credit !== 0) h += '<div style="margin-top:12px"><span class="chip ' + (credit > 0 ? 'ok' : 'no') + '">' + (credit > 0 ? 'יתרה לטובתכם ' : 'יתרת חוב ') + ils(credit) + '</span></div>';
+    h += '<div style="margin-top:12px"><span class="chip ' + (credit > 0 ? 'wait' : credit < 0 ? 'no' : '') + '">' + (credit > 0 ? 'יתרה לטובתכם ' : credit < 0 ? 'יתרת חוב ' : 'יתרה ') + ils(Math.abs(credit)) + '</span></div>';   // תמיד מוצגת: זכאות בצהוב, חוב באדום, אפס ניטרלי
     // סקשן אחד "המפגשים שלי": כל מפגש עתידי (אפשר להירשם, לשלם ולבטל) ומפגשים שהיו. כל מפגש נפתח ונסגר; הקרוב פתוח כברירת מחדל
     const ordered = ms.slice().sort((a, b) => (String(b.date) + String(b.time)).localeCompare(String(a.date) + String(a.time))), upcoming = ordered.filter((m) => m.future);   // מהחדש לישן
     const firstId = keepOpen && ordered.some((m) => m.id === keepOpen) ? keepOpen : null; keepOpen = null;   // אין מפגש פתוח כברירת מחדל; רק מפגש שהרגע נרשמו אליו או ביטלו נשאר פתוח
