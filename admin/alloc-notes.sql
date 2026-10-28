@@ -23,13 +23,13 @@ begin
   lbl := __S__.harpatka_meeting_short(r.meeting_id);
   if tg_op = 'INSERT' then
     if not coalesce(r.from_credit, false) then perform __S__.harpatka_sys_note(r.participant_id, 'התקבל תשלום ₪' || trim(to_char(r.amount, 'FM999990.##')) || coalesce(' ב' || __S__.harpatka_method_label(r.method, r.method_note), ''), 'payment_received', null, null, null, r.amount, null); end if;
-    perform __S__.harpatka_sys_note(r.participant_id, 'הוקצו ₪' || trim(to_char(r.amount, 'FM999990.##')) || ' למפגש ' || lbl || ' (' || src || ')', 'alloc_added', r.meeting_id, null, null, r.amount, null);
+    perform __S__.harpatka_sys_note(r.participant_id, 'הוקצו ₪' || trim(to_char(r.amount, 'FM999990.##')) || ' למפגש ' || lbl, 'alloc_added', r.meeting_id, null, null, r.amount, null);
   elsif tg_op = 'UPDATE' then
     if new.amount is distinct from old.amount then
-      perform __S__.harpatka_sys_note(r.participant_id, 'הקצאה למפגש ' || lbl || ' (' || src || ') שונתה מ-₪' || trim(to_char(old.amount, 'FM999990.##')) || ' ל-₪' || trim(to_char(new.amount, 'FM999990.##')), 'alloc_changed', r.meeting_id, null, null, new.amount, null);
+      perform __S__.harpatka_sys_note(r.participant_id, 'הקצאה למפגש ' || lbl || ' שונתה מ-₪' || trim(to_char(old.amount, 'FM999990.##')) || ' ל-₪' || trim(to_char(new.amount, 'FM999990.##')), 'alloc_changed', r.meeting_id, null, null, new.amount, null);
     end if;
   elsif tg_op = 'DELETE' then
-    perform __S__.harpatka_sys_note(r.participant_id, 'הוסרה הקצאה של ₪' || trim(to_char(r.amount, 'FM999990.##')) || ' למפגש ' || lbl || ' (' || src || ')', 'alloc_removed', r.meeting_id, null, null, r.amount, null);
+    perform __S__.harpatka_sys_note(r.participant_id, 'הוסרה הקצאה של ₪' || trim(to_char(r.amount, 'FM999990.##')) || ' למפגש ' || lbl, 'alloc_removed', r.meeting_id, null, null, r.amount, null);
   end if;
   return null;
 exception when others then return null;
