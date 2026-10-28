@@ -3729,7 +3729,6 @@
     $('#walHist').innerHTML = rows.length ? rows.join('') : '<p class="mnone">עוד אין תשלומים</p>';
   }
   const dmShort = (m) => { const [, mo, d] = m.meeting_date.split('-').map(Number); return d + '.' + mo; };
-  $('#pAllocChip').addEventListener('click', () => { if (!sheet) return; sheet.allocEdit = !sheet.allocEdit; paintDepLines(); });
   $('#pPayChip').addEventListener('click', () => { if (!sheet || !sheet.id) return; viewStack = []; goView('wallet'); });
   /* קבלת תשלום: מהארנק (כללי) או מתוך מפגש (סמל ה-₪ ברשימה): אז הסכום המוצע הוא מחיר המפגש, ואפשר לשלם על כמה מפגשים (חבילה: הסכום מתחלק, והמפגש הזה ועוד קרובים שמשויכים אליהם נפרעים מיד) */
   /* כפתור ₪ של מפגש: בכל מצב (שולם, לא שולם, חינם) פותח את מסך התשלום של המפגש */
@@ -3742,9 +3741,9 @@
     const box = $('#depLines'), pid = sheet && sheet.id, m = sheet && sheet.depMid ? state.meetings.find((x) => x.id === sheet.depMid) : null;
     if (!box) return; if (!m || !pid) { box.hidden = true; box.innerHTML = ''; { const c0 = $('#pAllocChip'); if (c0) c0.hidden = true; } return; }
     const al = Math.round(allocatedOf(pid, m.id) * 100) / 100, chip = $('#pAllocChip');
-    if (chip) { chip.hidden = !(al > 0); chip.textContent = '₪' + nfm(al); chip.title = 'עריכת ההקצאה למפגש'; }
+    if (chip) { chip.hidden = !(al > 0); chip.textContent = '₪' + nfm(al); chip.title = 'סכום שמוקצה למפגש'; chip.disabled = true; }
     if (!(al > 0)) { sheet.allocEdit = false; box.hidden = true; box.innerHTML = ''; return; }
-    if (!sheet.allocEdit) { box.hidden = true; box.innerHTML = ''; return; }   // העורך (סכום ו-×) נפתח בלחיצה על הצ'יפ
+    box.hidden = true; box.innerHTML = ''; return;   // בלי שורת הקצאה בתחתית: הסכום המוקצה מוצג רק בצ'יפ שבכותרת
     box.hidden = false;
     /* בהקצאות רק כמה כסף מוקצה למפגש (המקור, זיכויים והחזרים נמצאים ב"יתרה ותשלומים"); אפשר לשנות את הסכום או להסיר */
     const inp = box.querySelector('input'), same = inp && document.activeElement === inp;
