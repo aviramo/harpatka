@@ -219,6 +219,12 @@
     else viewClaim('');
   }
 
+  /* נרשמו עכשיו בטופס באתר: האסימון מהדפדפן מחבר את המשתתף שנוצר לחשבון הגוגל, בלי הזנת טלפון */
+  async function useClaimToken() {
+    let tk = null; try { tk = localStorage.getItem('harpatka_claim_token'); } catch (e) {}
+    if (!tk) return;
+    try { await rpc('harpatka_me_claim_token', { p_token: tk }); try { localStorage.removeItem('harpatka_claim_token'); } catch (e) {} } catch (e) { /* תקלה זמנית: האסימון נשאר לניסיון הבא */ }
+  }
   async function start() {
     const q = new URLSearchParams(location.search);
     try { asId = q.get('as') || sessionStorage.getItem(AS_KEY) || null; sessionStorage.removeItem(AS_KEY); } catch (e) { asId = q.get('as'); }
@@ -230,6 +236,7 @@
       try { const a = JSON.parse(localStorage.getItem(AKEY) || 'null'); if (a && a.access_token) { usingAdmin = true; session = a; } } catch (e) {}
     }
     if (session && !sessionOk(session) && !(await refreshSession())) clearSession();
+    if (session && !asId) await useClaimToken();
     if (!session) { if (q.get('login') && !asId) { goGoogle(); return; } viewLogin(); return; }   // ?login=1 (הקישור מההרשמה): ישר להתחברות עם גוגל, בלי מסך ביניים
     load();
   }

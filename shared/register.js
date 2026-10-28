@@ -230,17 +230,19 @@
       if (q('hp').value || Date.now() - t0 < 1500) { allDone(); return; }   // בוט: מציגים הצלחה בלי לשמור
       btn.disabled = true; btn.textContent = 'שולחים...';
       let finished = false;
+      const claimToken = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : null;   // אסימון חיבור לאזור האישי (נשמר על המשתתף החדש בלבד)
       try {
         const send = (extra) => fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_signup', {
           method: 'POST',
           headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' },
-          body: JSON.stringify(Object.assign({ p_first: first, p_last: last, p_phone: norm, p_age: age, p_gender: gender }, selMeeting && selMeeting.id ? { p_meeting: selMeeting.id } : {}, extra))
+          body: JSON.stringify(Object.assign({ p_first: first, p_last: last, p_phone: norm, p_age: age, p_gender: gender }, claimToken ? { p_token: claimToken } : {}, selMeeting && selMeeting.id ? { p_meeting: selMeeting.id } : {}, extra))
         });
         let res = await send(PAID ? { p_src: 'p' } : {});
         if (!res.ok && PAID) res = await send({});   // אם הפונקציה בבסיס הנתונים עוד לא עודכנה (admin/source.sql): ההרשמה נשמרת בלי הסימון
         const out = res.ok ? await res.json() : null;
         if (out === 'created' || out === 'exists') {   // כפילות: אותה הודעה, בלי לחשוף שהמספר כבר רשום
           if (out === 'created') {   // Lead רק על מספר חדש (חד ערכי), לא על כפילות
+            try { if (claimToken) localStorage.setItem('harpatka_claim_token', claimToken); } catch (e) {}   // האזור האישי יחבר את המשתתף לחשבון גוגל בלי טלפון
             leadOnce();
             /* RegistrationValue: ערך 3 למי שבטווח (נשים 35 עד 50, גברים 40 עד 55, זהה ל-payOk), 1 למי שמחוץ לטווח */
             const inRange = gender === 'male' ? (age >= 40 && age <= 55) : (age >= 35 && age <= 50);

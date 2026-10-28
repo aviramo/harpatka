@@ -200,3 +200,30 @@ begin
 end $$;
 revoke all on function public.harpatka_me_unregister(uuid, uuid) from public;
 grant execute on function public.harpatka_me_unregister(uuid, uuid) to authenticated;
+
+-- חיבור לחשבון גוגל בלי טלפון: מי שנרשם עכשיו בטופס (משתתף חדש) קיבל אסימון בדפדפן (harpatka_signup, p_token); בכניסה עם גוגל האסימון מחבר אותו למשתתף שנוצר (מאושר מיד, כי הוא יצר אותו מהמכשיר הזה). תקף יומיים, חד פעמי.
+create or replace function public.harpatka_me_claim_token(p_token uuid)
+returns text language plpgsql security definer set search_path = public as $$
+declare
+  uid uuid := auth.uid();
+  pid uuid; norm text; m public.harpatka_members;
+begin
+  if uid is null then raise exception 'auth'; end if;
+  if p_token is null then return 'invalid'; end if;
+  select id, phone_norm into pid, norm from public.harpatka_participants
+    where claim_token = p_token and claim_token_at > now() - interval '2 days' and active limit 1;
+  if pid is null then return 'invalid'; end if;
+  if exists (select 1 from public.harpatka_members where participant_id = pid and user_id <> uid) then return 'taken'; end if;
+  select * into m from public.harpatka_members where user_id = uid;
+  if found then
+    if m.status in ('blocked') then return 'blocked'; end if;
+    update public.harpatka_members set participant_id = pid, phone_norm = norm, status = 'approved', wants_me = true where user_id = uid;
+  else
+    insert into public.harpatka_members (user_id, email, google_name, phone_norm, participant_id, status, wants_me)
+    values (uid, lower(coalesce(auth.jwt() ->> 'email', '')), coalesce(auth.jwt() -> 'user_metadata' ->> 'full_name', auth.jwt() -> 'user_metadata' ->> 'name', ''), norm, pid, 'approved', true);
+  end if;
+  update public.harpatka_participants set claim_token = null where id = pid;
+  return 'ok';
+end $$;
+revoke all on function public.harpatka_me_claim_token(uuid) from public;
+grant execute on function public.harpatka_me_claim_token(uuid) to authenticated;

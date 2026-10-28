@@ -1,6 +1,12 @@
 -- הרשמה למפגש שנבחר (לא רק הקרוב): פרמטר p_meeting אופציונלי ל-harpatka_signup. אידמפוטנטי; להריץ על public, ואז admin/test-site.sql (מעתיק את הפונקציה ל-test).
+-- אסימון חיבור חד פעמי: ההרשמה מהאתר שומרת אסימון (שנוצר בדפדפן) על המשתתף החדש, ובכניסה עם גוגל באזור האישי (harpatka_me_claim_token) המשתתף מתחבר לחשבון בלי להזין טלפון שוב
+alter table public.harpatka_participants add column if not exists claim_token uuid;
+alter table public.harpatka_participants add column if not exists claim_token_at timestamptz;
+alter table test.harpatka_participants add column if not exists claim_token uuid;
+alter table test.harpatka_participants add column if not exists claim_token_at timestamptz;
 drop function if exists public.harpatka_signup(text, integer, text, text, text, text, text);
-CREATE OR REPLACE FUNCTION public.harpatka_signup(p_phone text, p_age integer DEFAULT NULL::integer, p_gender text DEFAULT NULL::text, p_src text DEFAULT NULL::text, p_first text DEFAULT NULL::text, p_last text DEFAULT NULL::text, p_name text DEFAULT NULL::text, p_meeting uuid DEFAULT NULL::uuid)
+drop function if exists public.harpatka_signup(text, integer, text, text, text, text, text, uuid);
+CREATE OR REPLACE FUNCTION public.harpatka_signup(p_phone text, p_age integer DEFAULT NULL::integer, p_gender text DEFAULT NULL::text, p_src text DEFAULT NULL::text, p_first text DEFAULT NULL::text, p_last text DEFAULT NULL::text, p_name text DEFAULT NULL::text, p_meeting uuid DEFAULT NULL::uuid, p_token uuid DEFAULT NULL::uuid)
  RETURNS text
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -44,8 +50,8 @@ begin
     else update public.harpatka_participants set active = true where id = pid; res := 'created'; react := true; end if;
   else
     begin
-      insert into public.harpatka_participants (first_name, last_name, phone, age, age_set_at, source, gender)
-        values (fn, ln, n, p_age, current_date, case when p_src = 'p' then 'site-ad' else 'site' end, p_gender)
+      insert into public.harpatka_participants (first_name, last_name, phone, age, age_set_at, source, gender, claim_token, claim_token_at)
+        values (fn, ln, n, p_age, current_date, case when p_src = 'p' then 'site-ad' else 'site' end, p_gender, p_token, case when p_token is not null then now() end)
         returning id into pid;
     exception when unique_violation then
       select id into pid from public.harpatka_participants where phone_norm = n limit 1;
@@ -72,7 +78,8 @@ begin
   return res;
 end $function$
 ;
-grant execute on function public.harpatka_signup(text, integer, text, text, text, text, text, uuid) to anon, authenticated;
+grant execute on function public.harpatka_signup(text, integer, text, text, text, text, text, uuid, uuid) to anon, authenticated;
 
 -- סביבת הבדיקות: מסירים את הגרסה הישנה לפני העתקה מחדש (למנוע עמימות בין שתי גרסאות)
 drop function if exists test.harpatka_signup(text, integer, text, text, text, text, text);
+drop function if exists test.harpatka_signup(text, integer, text, text, text, text, text, uuid);
