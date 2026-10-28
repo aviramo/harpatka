@@ -3630,7 +3630,12 @@
   $('#depLines').addEventListener('click', async (e) => {
     const b = e.target.closest('.ddel'); if (!b) return;
     const row = state.payments.find((x) => x.id === b.closest('.dline').dataset.id); if (!row) return;
-    try { await api(T.pay + '?id=eq.' + row.id, { method: 'DELETE' }); state.payments = state.payments.filter((x) => x.id !== row.id); toast(row.from_credit ? 'ההקצאה הוסרה והכסף חזר ליתרה' : 'ההקצאה הוסרה'); depLinesRefresh(); } catch (err) { fail(err); }
+    try {
+      // תשלום ישיר בדרך העברה: הכסף כבר התקבל, ולכן מסירים רק את ההקצאה למפגש והכסף נשאר ביתרה (הפקדה באותו סכום ודרך העברה, עם אותה עמלה); הקצאה מהיתרה פשוט חוזרת ליתרה
+      if (!row.from_credit) await addPayRecord(row.participant_id, null, 'deposit', Number(row.amount), row.promoter_id || null, row.commission != null ? Number(row.commission) : null, false, row.method || null, row.method_note || null, null);
+      await api(T.pay + '?id=eq.' + row.id, { method: 'DELETE' }); state.payments = state.payments.filter((x) => x.id !== row.id);
+      toast('ההקצאה הוסרה והכסף נשאר ביתרה'); depLinesRefresh();
+    } catch (err) { fail(err); }
   });
   function openDeposit(mid) {
     const f = pForm, pid = sheet && sheet.id, m = mid ? state.meetings.find((x) => x.id === mid) : null;
