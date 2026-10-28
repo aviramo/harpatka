@@ -1370,11 +1370,13 @@
       el('tbMain').textContent = 'המפגש הבא כבר בדרך';   // בלי מפגש (בלי שם ברירת המחדל)
       el('tbSub').textContent = 'השאירו פרטים ונעדכן ברגע שהתאריך ייקבע';
     }
+    if (window.__meName) el('tbSub').textContent = 'שלום ' + window.__meName;   // משתתף מחובר: השם שלו בבאנר, כדי שידע שהוא מחובר
     /* מעבר מונפש כשהמצב או התוכן השתנו (טעינה ← תוכן, אין מפגש ← יש מפגש); בלי אנימציה כשהתוכן זהה (למשל רענון אחרי המטמון) */
     if (wasLoading || before !== el('tbPillT').textContent + '|' + el('tbMain').textContent + '|' + el('tbSub').textContent) {
       const box = bar.querySelector('.tb-in'); box.classList.remove('tb-swap'); void box.offsetWidth; box.classList.add('tb-swap');
     }
   };
+  window.addEventListener('harpatka:me', () => { if (window.__meName) el('tbSub').textContent = 'שלום ' + window.__meName; });
   let cached = null;
   try { cached = JSON.parse(localStorage.getItem(typeof MEET_CACHE !== 'undefined' ? MEET_CACHE : 'harpatka_meetings_v19') || 'null'); } catch (e) {}
   if (cached && cached.future) render(cached);
@@ -1394,7 +1396,7 @@
   window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(apply); } }, { passive: true });
 })();
 </script>
-  <script src="../shared/person-form.js?v=20261028b"></script>
-  <script src="../shared/register.js?v=20261028b"></script>
+  <script src="../shared/person-form.js?v=20261028t"></script>
+  <script src="../shared/register.js?v=20261028t"></script>
 </body>
 </html>

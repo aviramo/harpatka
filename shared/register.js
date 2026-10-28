@@ -54,6 +54,8 @@
                   ${PersonForm.err('gender', 'su-err')}
                 </div>
               </div>
+              <div class="su-member" data-su="member"><p class="su-memberp">הפרטים שלכם כבר שמורים אצלנו</p><p class="su-who" data-su="who"></p></div>
+              <a href="__BASE__me/?login=1&back=1" class="su-glink" data-su="glink">נרשמתם בעבר? התחברות עם גוגל</a>
             </div></div>
             <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-3.5 text-[1.2rem] whitespace-nowrap w-full mt-4">הרשמה</button>
             <div data-su="fail" class="su-err mt-3 text-center" role="alert"></div>
@@ -221,6 +223,7 @@
     suRoots.push(showDone);
     form.addEventListener('submit', async (e) => {
       e.preventDefault(); q('fail').textContent = '';
+      if (meInfo) { await memberSubmit(root, btn, q, showDone); return; }   // משתתף מחובר: הפרטים כבר שמורים
       const chk = PersonForm.validate(root); if (!chk.ok) return;
       const first = chk.v.first, last = chk.v.last, norm = chk.v.phone, age = chk.v.age, gender = chk.v.gender;
       /* אפשרות תשלום רק בטווח הגילאים שמתאים למפגש: גברים 40 עד 55, נשים 35 עד 50 (ההרשמה עצמה נשמרת תמיד) */
@@ -280,8 +283,60 @@
   document.querySelectorAll('[data-wa]').forEach(el => {
     el.setAttribute('href', waLinks[el.dataset.wa]);
   });
+  /* ===== משתתף מחובר (חשבון גוגל מהאזור האישי, אותו מפתח session של me/): הרשמה למפגש בלחיצה אחת, בלי הזנת פרטים ===== */
+  const ME_KEY = 'harpatka_me_session';
+  let meInfo = null;   // { first, last, age, gender, meetings }
+  const jwtExp = (tok) => { try { return JSON.parse(atob(tok.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).exp || 0; } catch (e) { return 0; } };
+  async function meToken() {
+    let s = null; try { s = JSON.parse(localStorage.getItem(ME_KEY) || 'null'); } catch (e) {}
+    if (!s || !s.access_token) return null;
+    if (jwtExp(s.access_token) * 1000 > Date.now() + 30000) return s.access_token;
+    if (!s.refresh_token) return null;
+    try {
+      const r = await fetch(CONFIG.supabaseUrl + '/auth/v1/token?grant_type=refresh_token', { method: 'POST', headers: { apikey: CONFIG.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh_token: s.refresh_token }) });
+      if (!r.ok) return null;
+      const d = await r.json(); try { localStorage.setItem(ME_KEY, JSON.stringify({ access_token: d.access_token, refresh_token: d.refresh_token })); } catch (e) {}
+      return d.access_token;
+    } catch (e) { return null; }
+  }
+  async function meRpc(name, body) {
+    const tok = await meToken(); if (!tok) throw new Error('auth');
+    const r = await fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/' + name, { method: 'POST', headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }
+  const applyMemberMode = () => {
+    const on = !!meInfo;
+    document.documentElement.classList.toggle('reg-member', on);
+    document.querySelectorAll('[data-su="who"]').forEach((e) => { e.textContent = on ? meInfo.first + ' ' + meInfo.last : ''; });
+    if (on) { window.__meName = meInfo.first + ' ' + meInfo.last; try { window.dispatchEvent(new Event('harpatka:me')); } catch (e) {} }
+  };
+  async function loadMe() {
+    try {
+      if (!(await meToken())) return;
+      const d = await meRpc('harpatka_me', {});
+      if (d && d.status === 'ok' && d.participant && d.participant.first_name) {
+        meInfo = { first: d.participant.first_name, last: d.participant.last_name || '', age: d.participant.age, gender: d.participant.gender, meetings: d.meetings || [] };
+        applyMemberMode();
+      }
+    } catch (e) { /* לא מחובר או תקלה: ממשיכים כאורח, עם הטופס הרגיל */ }
+  }
+  async function memberSubmit(root, btn, q, showDone) {
+    const m = selMeeting || nearest, fail = q('fail'); fail.textContent = '';
+    if (!m || !m.id) { fail.textContent = 'עוד אין מפגש להירשם אליו. נעדכן ברגע שייקבע'; return; }
+    btn.disabled = true; btn.textContent = 'שולחים...';
+    try {
+      const r = await meRpc('harpatka_me_register', { p_meeting: m.id });
+      if (r !== 'registered' && r !== 'exists') throw new Error('register failed');
+      const mine = meInfo.meetings.find((x) => x.id === m.id);
+      const payOk = (meInfo.gender === 'male' ? (meInfo.age >= 40 && meInfo.age <= 55) : (meInfo.age >= 35 && meInfo.age <= 50)) && !(mine && (Number(mine.paid) > 0 || mine.free));
+      showDone(payOk); return;
+    } catch (e) { fail.textContent = 'משהו השתבש, אפשר לנסות שוב'; }
+    btn.disabled = false; btn.textContent = submitLabel;
+  }
+  loadMe();
   const contactModal = document.getElementById('contactModal');
-  window.HarpatkaRegister = { open: (auto, meeting) => { selMeeting = meeting && meeting.id ? meeting : null; showMeeting(selMeeting || nearest); if (contactModal) openModal(contactModal, auto === true); } };   // לשימוש עמודים אחרים
+  window.HarpatkaRegister = { open: (auto, meeting) => { selMeeting = meeting && meeting.id ? meeting : null; showMeeting(selMeeting || nearest); applyMemberMode(); if (contactModal) openModal(contactModal, auto === true); } };   // לשימוש עמודים אחרים
   if (new URLSearchParams(location.search).has('register')) setTimeout(() => window.HarpatkaRegister.open(true), 500);   // הגעה דרך /register/: דף הבית נטען והפופאפ נפתח עליו
   document.querySelectorAll('[data-contact]').forEach(el => {
     el.setAttribute('href', '#');
