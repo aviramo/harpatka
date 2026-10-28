@@ -2070,9 +2070,15 @@
   let sheetSig = '';
   function refreshOpenSheet() {
     if (!(sheet && sheet.id && pDlg.open)) { sheetSig = ''; return; }
-    const sig = notesOf(sheet.id).map((n) => n.id).join(',') + '|' + state.att.filter((a) => a.participant_id === sheet.id).map((a) => [a.meeting_id, a.paid, a.exempt, a.pay_requested_at, a.attended, a.paid_amount, a.details_sent_at, a.will_pay, a.maybe].join(':')).join(',');
+    /* חתימה של כל מה שמוצג בכרטיס המשתתף: הערות, שיוכים וסטטוסים, תשלומים והקצאות, ופרטי המשתתף; כשמשהו מזה משתנה (גם ממנהל אחר) הכרטיס והמסך הפתוח מתעדכנים בזמן אמת */
+    const pid = sheet.id, pp = state.participants.find((x) => x.id === pid) || {};
+    const sig = notesOf(pid).map((n) => n.id).join(',') + '|' + state.att.filter((a) => a.participant_id === pid).map((a) => [a.meeting_id, a.paid, a.exempt, a.pay_requested_at, a.attended, a.paid_amount, a.details_sent_at, a.will_pay, a.maybe, a.status_key, a.after_key, a.no_pay, a.pay_reported_at, a.pay_reported_amount].join(':')).join(',')
+      + '|' + state.payments.filter((x) => x.participant_id === pid).map((x) => [x.id, x.kind, x.amount, x.method, x.meeting_id, x.from_credit].join(':')).join(',')
+      + '|' + [pp.name, pp.phone, pp.age, pp.gender, pp.promoter_id, pp.source_code, (pp.tags || []).join('+'), pp.active].join(':');
     if (sig === sheetSig) return; sheetSig = sig;
-    renderNotes(); refreshSheetMeetings();
+    renderNotes(); refreshSheetMeetings(); renderContact();
+    if (pTab === 'wallet') renderWallet();   // מסך יתרה ותשלומים
+    else if (pTab === 'deposit') { paintDepLines(); if (sheet.paintMeth) sheet.paintMeth(); }   // מסך הקצאות הכסף למפגש (לא נוגע בשדה הסכום שמוקלד)
   }
   /* ---------- טעינה ---------- */
   async function load(silent) {
