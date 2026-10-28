@@ -19,6 +19,9 @@ alter table test.harpatka_settings enable row level security;
 create or replace function test.harpatka_send_mail(p_key text, p_vars jsonb, p_to text default null, p_extra jsonb default null)
 returns void language sql as $$ select $$;
 
+-- עמודות שנוספו ל-public אחרי שהסכמה הועתקה (אזור אישי)
+alter table test.harpatka_members add column if not exists wants_me boolean not null default false;
+
 -- חסימה זמנית של מנהלים באתר הבדיקות בלבד (28.10.26): מנהל שהאימייל שלו בטבלה הזו לא נחשב מנהל בפונקציות האתר בסכמת test (אזור אישי, לוח, ...),
 -- כך אפשר לבדוק אותן כמשתתף רגיל. לא נוגע ב-public. להחזרה: delete from test.harpatka_admin_blocked where email = '...'.
 create table if not exists test.harpatka_admin_blocked (email text primary key);
