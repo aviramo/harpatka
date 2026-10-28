@@ -3683,32 +3683,29 @@
     const isFree = () => { const pp = state.participants.find((x) => x.id === pid), lk = m && linkOf(pid, m.id); return !!(m && pp && lk && noPayOf(pp, lk)); };
     const crAvail = () => m ? Math.max(0, creditOf(pid)) : 0;
     const needNow = () => { const al = Math.max(0, allocatedOf(pid, m.id)); return Math.max(0, expectedPrice(pid, m) - al) || expectedPrice(pid, m); };
-    /* טוגל אחד "חינם" למעלה: כבוי (ברירת מחדל) = כל אפשרויות התשלום פתוחות למטה; דולק = למטה כלום */
+    /* "חינם" הוא האפשרות הראשונה (מימין) בשורת דרכי התשלום: נבחרת = המפגש חינם ולמטה אין שדות; בחירה בדרך תשלום מבטלת אותה */
     const paintMeth = () => {
       paintDepLines();
-      const hasL = !!(m && linkOf(pid, m.id)), free = isFree(), mode = free ? 'free' : 'pay';
-      $('#depMode').hidden = !hasL;
-      $('#depMode').innerHTML = hasL ? '<button type="button" role="switch" data-mode="' + (free ? 'pay' : 'free') + '" aria-checked="' + free + '"><span>חינם</span><i class="tgl"></i></button>' : '';
+      const hasL = !!(m && linkOf(pid, m.id)), free = isFree(), cr0 = m && crAvail() > 0;
+      $('#depMode').hidden = true; $('#depMode').innerHTML = '';
       $('#depFree').hidden = true;
-      $('#depFields').hidden = mode === 'free';
+      $('#depFields').hidden = free;
       const pkgF = $('#depPkgSel').closest('.field');
-      if (mode === 'free') { $('#depMethods').innerHTML = ''; return; }
+      const freeChip = hasL ? '<button type="button" role="radio" data-free="1" aria-pressed="' + free + '"><span class="nps">₪</span>חינם</button>' : '';
       $('#depQuick').hidden = false;
-      if (m && crAvail() > 0) {   // יש יתרה: קודם כל משתמשים בה (אפשר להקצות רק חלק ממנה); שאר דרכי התשלום נפתחות כשהיתרה נגמרת
-        sheet.depCr = true;
-        $('#depMethods').innerHTML = '<button type="button" role="radio" data-cr="1" aria-pressed="true">מהיתרה ₪' + nfm(crAvail()) + '</button>';
+      if (cr0) {   // יש יתרה: קודם כל משתמשים בה (אפשר להקצות רק חלק ממנה); שאר דרכי התשלום נפתחות כשהיתרה נגמרת
+        sheet.depCr = !free;
+        $('#depMethods').innerHTML = freeChip + '<button type="button" role="radio" data-cr="1" aria-pressed="' + !free + '">מהיתרה ₪' + nfm(crAvail()) + '</button>';
         pkgF.hidden = true; $('#depOtherField').hidden = true;
-        if (!(parseFloat(f.pay_dep.value) > 0)) f.pay_dep.value = Math.min(needNow(), crAvail());
+        if (!free && !(parseFloat(f.pay_dep.value) > 0)) f.pay_dep.value = Math.min(needNow(), crAvail());
         f.pay_dep.max = String(crAvail()); return;
       }
       sheet.depCr = false; f.pay_dep.removeAttribute('max');
-      $('#depMethods').innerHTML = METH.map((x) => '<button type="button" role="radio" data-m="' + x[0] + '" aria-pressed="' + (f.pay_depm.value === x[0]) + '">' + x[1] + '</button>').join('');
-      pkgF.hidden = false; $('#depOtherField').hidden = f.pay_depm.value !== 'other';
+      $('#depMethods').innerHTML = freeChip + METH.map((x) => '<button type="button" role="radio" data-m="' + x[0] + '" aria-pressed="' + (!free && f.pay_depm.value === x[0]) + '">' + x[1] + '</button>').join('');
+      pkgF.hidden = false; $('#depOtherField').hidden = free || f.pay_depm.value !== 'other';
     };
     f.pay_depm.onchange = () => { $('#depOtherField').hidden = f.pay_depm.value !== 'other'; paintMeth(); if (f.pay_depm.value === 'other') f.pay_depn.focus(); };
-    $('#depMode').onclick = async (e) => {
-      const b = e.target.closest('[data-mode]'); if (!b || !m) return;
-      const md = b.dataset.mode;
+    const switchLocked = async (md) => {
       sheet.depLock = Date.now() + 60000;   // נועל ציור מחדש מהזמן אמת עד שהמעבר מסתיים
       try { await modeSwitch(md); } finally { sheet.depLock = Date.now() + 1500; setTimeout(refreshOpenSheet, 1600); }
     };
@@ -3726,10 +3723,13 @@
       f.pay_dep.value = crAvail() > 0 ? Math.min(needNow(), crAvail()) : needNow();
       paintMeth();
     };
-    $('#depMethods').onclick = (e) => {
-      const b = e.target.closest('[data-m]'), cb = e.target.closest('[data-cr]');
+    $('#depMethods').onclick = async (e) => {
+      const fb = e.target.closest('[data-free]'), b = e.target.closest('[data-m]'), cb = e.target.closest('[data-cr]');
+      if (fb) { if (!isFree()) await switchLocked('free'); return; }
+      if (!b && !cb) return;
+      if (isFree()) await switchLocked('pay');   // בחירה בדרך תשלום מבטלת את החינם
       if (cb) { f.pay_dep.value = Math.min(needNow(), crAvail()); f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; paintMeth(); return; }
-      if (b) { f.pay_depm.value = b.dataset.m; f.pay_depm.onchange(); }
+      f.pay_depm.value = b.dataset.m; f.pay_depm.onchange();
     };
     sheet.paintMeth = paintMeth; paintMeth();
     const paintPkg = () => { const n = parseInt(f.pay_pkg.value, 10), a = parseFloat(f.pay_dep.value); $('#depPkgHint').innerHTML = n >= 2 && a > 0 ? 'מחיר למפגש בחבילה: <b>₪' + nfm(Math.round(a / n)) + '</b>. ' + (m ? 'המפגש הזה ועוד עד ' + (n - 1) + ' מפגשים קרובים משויכים ייפרעו מיד, והשאר ייפרעו בשיוך' : 'כל שיוך למפגש ייקח את הסכום הזה מהיתרה, עד ' + n + ' מפגשים') : ''; };
