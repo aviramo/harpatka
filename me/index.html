@@ -104,7 +104,7 @@
   </dialog>
 </div>
 <script src="../shared/config.js"></script>
-<script src="../shared/person-form.js?v=20261029b"></script>
+<script src="../shared/person-form.js?v=20261029c"></script>
 <script>
 (() => {
   const DB = {
@@ -226,7 +226,7 @@
     };
     const rowHtml = (m) => {
       const open = m.id === firstId || keepOpenSet.has(m.id);
-      const badge = m.future ? (m.registered ? (Number(m.paid) > 0 || m.free ? '<span class="chip ok">נרשמתם ✓</span>' : m.reported ? '<span class="chip wait">ממתין לאישור</span>' : '<span class="chip no">טרם שולם</span>') : '<span class="chip">פתוח להרשמה</span>') : (m.attended ? '<span class="chip ok">הגעתם</span>' : '<span class="chip">לא הגעתם</span>');
+      const badge = m.future ? (m.registered ? (Number(m.paid) > 0 ? '<span class="chip ok">שולם</span>' : m.free ? '<span class="chip sky">חינם</span>' : m.reported ? '<span class="chip wait">ממתין לאישור</span>' : '<span class="chip no">טרם שולם</span>') : '<span class="chip">פתוח להרשמה</span>') : (m.attended ? '<span class="chip ok">הגעתם</span>' : '<span class="chip">לא הגעתם</span>');
       return '<div class="mtg' + (open ? ' open' : '') + '" data-mid="' + m.id + '"><button type="button" class="mthead" aria-expanded="' + open + '"><span class="c1">' + esc(dayParts(m.date).day) + '</span><span class="c2"><bdi dir="ltr">' + esc(m.time) + ' · ' + esc(dayParts(m.date).date) + '</bdi></span><span class="c4">' + badge + '</span>' + chev + '<span class="c5">' + esc([m.city, m.name].filter(Boolean).join(' · ')) + '</span></button><div class="mtfold"><div>' + meetingBody(m) + '</div></div></div>';
     };
     // שתי רשימות: מפגשים שנרשמתי אליהם, ומפגשים עתידיים שעוד לא נרשמתי אליהם ואפשר להצטרף (מהחדש לישן)
