@@ -2076,8 +2076,10 @@
 
   /* פופאפ משתתף פתוח: רשימת ההערות והמפגשים מתעדכנות בזמן אמת (רק כשמשהו השתנה, בלי לגעת בשדה ההקלדה) */
   let sheetSig = '';
+  const payTomb = new Map();   // הקצאות שנמחקו הרגע: טעינה מחדש שהתחילה לפני המחיקה לא מחזירה אותן (מונע הבהוב)
   function refreshOpenSheet() {
     if (!(sheet && sheet.id && pDlg.open)) { sheetSig = ''; return; }
+    if (sheet.depLock && Date.now() < sheet.depLock) { sheetSig = ''; setTimeout(refreshOpenSheet, Math.max(100, sheet.depLock - Date.now() + 50)); return; }   // באמצע מעבר בין משלם / חינם / חוב: לא מציירים מחדש מנתוני ביניים
     /* חתימה של כל מה שמוצג בכרטיס המשתתף: הערות, שיוכים וסטטוסים, תשלומים והקצאות, ופרטי המשתתף; כשמשהו מזה משתנה (גם ממנהל אחר) הכרטיס והמסך הפתוח מתעדכנים בזמן אמת */
     const pid = sheet.id, pp = state.participants.find((x) => x.id === pid) || {};
     const sig = notesOf(pid).map((n) => n.id).join(',') + '|' + state.att.filter((a) => a.participant_id === pid).map((a) => [a.meeting_id, a.paid, a.exempt, a.pay_requested_at, a.attended, a.paid_amount, a.details_sent_at, a.will_pay, a.maybe, a.status_key, a.after_key, a.no_pay, a.pay_reported_at, a.pay_reported_amount].join(':')).join(',')
@@ -2118,7 +2120,7 @@
       /* משתתף שהוסר (active = false) מוסתר רק מרשימת כל המשתתפים (כשלא נבחר מפגש); במסך מפגש הוא מופיע כל עוד הוא משויך אליו, וכל הנתונים וההיסטוריה נשארים. יחזור אם יירשם שוב עם אותו טלפון */
       state.inactiveNames = new Map(p.filter((x) => x.active === false).map((x) => [x.id, x.name]));
       state.participants = p; state.meetings = m; state.att = a; applyAttPending(); state.notes = nn;   // "הסרת משתתף" רק מסתירה אותו ברשימת כל המשתתפים; השיוכים, ההערות וההיסטוריה נשארים
-      state.promoters = prs; state.promoPays = pps; state.payments = pays; rebuildNotes();
+      state.promoters = prs; state.promoPays = pps; state.payments = pays.filter((x) => !((payTomb.get(x.id) || 0) > Date.now())); rebuildNotes();
       sortMeetings();
       if (!silent) $('#status').innerHTML = '';
       setTimeout(prefetchNoteImages, 1500);   // טעינה מוקדמת של צילומי ההערות למטמון
@@ -3654,6 +3656,7 @@
     {
       // תשלום ישיר בדרך העברה: הכסף כבר התקבל, ולכן מסירים רק את ההקצאה למפגש והכסף נשאר ביתרה (הפקדה באותו סכום ודרך העברה, עם אותה עמלה); הקצאה מהיתרה פשוט חוזרת ליתרה
       if (!row.from_credit) await addPayRecord(row.participant_id, null, 'deposit', Number(row.amount), row.promoter_id || null, row.commission != null ? Number(row.commission) : null, false, row.method || null, row.method_note || null, null);
+      payTomb.set(row.id, Date.now() + 8000);
       await api(T.pay + '?id=eq.' + row.id, { method: 'DELETE' }); state.payments = state.payments.filter((x) => x.id !== row.id);
     }
   }
@@ -3700,6 +3703,10 @@
     $('#depMode').onclick = async (e) => {
       const b = e.target.closest('[data-mode]'); if (!b || !m) return;
       const md = b.dataset.mode;
+      sheet.depLock = Date.now() + 60000;   // נועל ציור מחדש מהזמן אמת עד שהמעבר מסתיים
+      try { await modeSwitch(md); } finally { sheet.depLock = Date.now() + 1500; setTimeout(refreshOpenSheet, 1600); }
+    };
+    const modeSwitch = async (md) => {
       if (md === 'free') {   // חינם והקצאות לא יכולים להיות יחד: סימון חינם מסיר את ההקצאות (הכסף חוזר ליתרה)
         sheet.depDebt = false; sheet.depCr = false; if (isFree()) return;
         const rows = state.payments.filter((x) => x.participant_id === pid && x.meeting_id === m.id && x.kind === 'payment');
@@ -3728,9 +3735,9 @@
   /* "לא משלם" לפי מפגש: עקיפה בשיוך למפגש (true/false), מעל ברירת המחדל של המשתתף */
   async function setNoPay(v, repaint) {
     const pid = sheet && sheet.id, mid = sheet && sheet.depMid, l = pid && mid && linkOf(pid, mid), pp = pid && state.participants.find((x) => x.id === pid); if (!l || !pp) return;
-    const prev = l.no_pay; l.no_pay = v; $('#depFields').hidden = v; $('#depFree').hidden = !v; if (repaint) repaint(); render(); refreshSheetMeetings();
-    try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body: { no_pay: v } }); toast(v ? 'לא משלם על המפגש הזה' : 'משלם על המפגש הזה'); }
-    catch (err) { l.no_pay = prev; $('#depFields').hidden = !v; $('#depFree').hidden = v; if (repaint) repaint(); render(); refreshSheetMeetings(); fail(err); }
+    const prev = l.no_pay, h = pendBegin(pid, mid, { no_pay: v }); l.no_pay = v; $('#depFields').hidden = v; $('#depFree').hidden = !v; if (repaint) repaint(); render(); refreshSheetMeetings();
+    try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body: { no_pay: v } }); pendDone(h); toast(v ? 'לא משלם על המפגש הזה' : 'משלם על המפגש הזה'); }
+    catch (err) { pendFail(h); l.no_pay = prev; $('#depFields').hidden = !v; $('#depFree').hidden = v; if (repaint) repaint(); render(); refreshSheetMeetings(); fail(err); }
   }
   $('#depSave').addEventListener('click', async () => {
     const f = pForm, pid = sheet && sheet.id; const amt = parseFloat(f.pay_dep.value); if (!pid) return;
