@@ -285,6 +285,7 @@
         } else if (out === 'invalid_phone') setErr(phoneI, q('phoneErr'), 'מספר לא תקין');
         else if (out === 'invalid_name') q('nameErr').textContent = 'נא למלא שם פרטי ושם משפחה';
         else if (out === 'invalid_age') setErr(ageI, q('ageErr'), 'גיל לא תקין');
+        else if (out === 'invalid_gender') { genderBox.classList.add('bad'); q('genderErr').textContent = 'נא לבחור'; }
         else throw new Error('signup failed');
       } catch (err) {
         q('fail').innerHTML = 'משהו השתבש, אפשר ליצור קשר ישירות: <a href="#" class="underline font-bold">שיחה בוואטסאפ</a>';

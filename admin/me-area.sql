@@ -130,7 +130,8 @@ begin
     target := m.participant_id;
   end if;
   if length(trim(coalesce(p_first, ''))) < 2 or length(trim(coalesce(p_last, ''))) < 2 then return 'invalid_name'; end if;
-  if p_age is not null and (p_age < 18 or p_age > 99) then return 'invalid_age'; end if;
+  if p_age is null or p_age < 18 or p_age > 99 then return 'invalid_age'; end if;
+  if p_gender is null or p_gender not in ('male', 'female') then return 'invalid_gender'; end if;
   if norm = '' then return 'invalid_phone'; end if;
   if exists (select 1 from public.harpatka_participants where phone_norm = norm and id <> target and active) then return 'phone_taken'; end if;
   update public.harpatka_participants set first_name = trim(p_first), last_name = trim(p_last), age = p_age, age_set_at = current_date,
@@ -154,6 +155,7 @@ begin
   if uid is null then raise exception 'auth'; end if;
   if length(trim(coalesce(p_first, ''))) < 2 or length(trim(coalesce(p_last, ''))) < 2 then return 'invalid_name'; end if;
   if p_age is null or p_age < 18 or p_age > 99 then return 'invalid_age'; end if;
+  if p_gender is null or p_gender not in ('male', 'female') then return 'invalid_gender'; end if;
   if norm = '' then return 'invalid_phone'; end if;
   select id, active into pid, was_active from public.harpatka_participants where phone_norm = norm order by active desc, created_at limit 1;
   if pid is not null then return 'exists'; end if;   -- טלפון שכבר קיים (גם של לא פעיל) לא נפתח מחדש כאן: הוא מחובר רק באישור מנהל (harpatka_me_claim)

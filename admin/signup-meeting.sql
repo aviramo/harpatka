@@ -20,10 +20,10 @@ begin
     fn := split_part(fullname, ' ', 1); ln := btrim(substr(fullname, length(fn) + 1));
   end if;
   nm := btrim(fn || ' ' || ln);
-  if char_length(fn) < 2 or char_length(fn) > 40 or char_length(ln) > 40 or char_length(nm) > 60 then return 'invalid_name'; end if;
+  if char_length(fn) < 2 or char_length(ln) < 2 or char_length(fn) > 40 or char_length(ln) > 40 or char_length(nm) > 60 then return 'invalid_name'; end if;
   if n = '' then return 'invalid_phone'; end if;
   if p_age is null or p_age < 18 or p_age > 99 then return 'invalid_age'; end if;
-  if p_gender is not null and p_gender not in ('male', 'female') then return 'invalid_gender'; end if;
+  if p_gender is null or p_gender not in ('male', 'female') then return 'invalid_gender'; end if;   -- מגדר, גיל, שם פרטי ושם משפחה וטלפון: שדות חובה
 
   -- מפגש שנבחר (p_meeting): אם הוא קיים ועוד לא עבר, ההרשמה אליו; אחרת למפגש הקרוב
   if p_meeting is not null then
