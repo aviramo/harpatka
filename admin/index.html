@@ -1416,6 +1416,7 @@
         <div id="depFields">
         <div class="payrow">
           <label class="field"><span>סכום (₪)</span><input name="pay_dep" type="number" inputmode="decimal" min="0" step="any" /></label>
+          <label class="field" id="depMSelF"><span>דרך תשלום</span><select id="depMSel" aria-label="דרך תשלום"></select></label>
           <label class="field" style="display: none !important" aria-hidden="true"><span id="depPkgLbl">על כמה מפגשים</span><select name="pay_pkg" id="depPkgSel"><option value="">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select></label>
           <button class="btn paygo" id="depSave" type="button">תשלום</button>
         </div>
@@ -3862,15 +3863,16 @@
       $('#depQuick').hidden = false;
       if (cr0) {   // יש יתרה: קודם כל משתמשים בה (אפשר להקצות רק חלק ממנה); שאר דרכי התשלום נפתחות כשהיתרה נגמרת
         sheet.depCr = !free;
-        $('#depMethods').innerHTML = freeChip + '<button type="button" role="radio" data-cr="1" aria-pressed="' + !free + '">מהיתרה ₪' + nfm(crAvail()) + '</button>';
+        $('#depMethods').innerHTML = ''; $('#depMSel').innerHTML = '<option value="__cr">מהיתרה ₪' + nfm(crAvail()) + '</option>'; $('#depMSel').value = '__cr';   // דרך התשלום: רשימה נפתחת בין הסכום לכפתור
         pkgF.hidden = true; $('#depOtherField').hidden = true;
         { const cv = parseFloat(f.pay_dep.value); if (!free && (!(cv > 0) || (cv > crAvail() + 0.001 && !sheet.depTyped))) f.pay_dep.value = Math.min(needNow(), crAvail()); }   // בתשלום מהיתרה הסכום המוצע לא עולה על היתרה (גם אם המחיר או הסכום שדווח גבוהים ממנה)
         f.pay_dep.max = String(crAvail()); return;
       }
       sheet.depCr = false; f.pay_dep.removeAttribute('max');
-      $('#depMethods').innerHTML = freeChip + METH.map((x) => '<button type="button" role="radio" data-m="' + x[0] + '" aria-pressed="' + (!free && f.pay_depm.value === x[0]) + '">' + x[1] + '</button>').join('');
+      $('#depMethods').innerHTML = ''; $('#depMSel').innerHTML = METH.map((x) => '<option value="' + esc(x[0]) + '">' + esc(x[1]) + '</option>').join(''); $('#depMSel').value = f.pay_depm.value;
       pkgF.hidden = false; $('#depOtherField').hidden = free || f.pay_depm.value !== 'other';
     };
+    $('#depMSel').onchange = () => { const v = $('#depMSel').value; if (v === '__cr') return; f.pay_depm.value = v; f.pay_depm.onchange(); };
     f.pay_depm.onchange = () => { $('#depOtherField').hidden = f.pay_depm.value !== 'other'; paintMeth(); if (f.pay_depm.value === 'other') f.pay_depn.focus(); };
     const switchLocked = async (md) => {
       sheet.depLock = Date.now() + 60000;   // נועל ציור מחדש מהזמן אמת עד שהמעבר מסתיים
