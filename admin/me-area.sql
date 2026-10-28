@@ -148,10 +148,13 @@ begin
   if p_age is null or p_age < 18 or p_age > 99 then return 'invalid_age'; end if;
   if p_gender is null or p_gender not in ('male', 'female') then return 'invalid_gender'; end if;
   if norm = '' then return 'invalid_phone'; end if;
-  if exists (select 1 from public.harpatka_participants where phone_norm = norm and id <> target and active) then return 'phone_taken'; end if;
-  update public.harpatka_participants set first_name = trim(p_first), last_name = trim(p_last), age = p_age, age_set_at = current_date,
-    gender = case when p_gender in ('male', 'female') then p_gender else null end, phone = trim(p_phone), phone_norm = norm
-  where id = target;
+  if exists (select 1 from public.harpatka_participants where phone_norm = norm and id <> target) then return 'phone_taken'; end if;   -- גם משתתף לא פעיל: הטלפון ייחודי במערכת
+  begin
+    update public.harpatka_participants set first_name = trim(p_first), last_name = trim(p_last), age = p_age, age_set_at = current_date,
+      gender = case when p_gender in ('male', 'female') then p_gender else null end, phone = trim(p_phone), phone_norm = norm
+    where id = target;
+  exception when unique_violation then return 'phone_taken';   -- מירוץ בין שני עדכונים
+  end;
   update public.harpatka_members set phone_norm = norm where participant_id = target and p_as is null and user_id = auth.uid();
   return 'ok';
 end $$;
