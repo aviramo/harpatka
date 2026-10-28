@@ -3617,7 +3617,7 @@
       : '<div class="dline ret"><span class="dsrc">' + (x.kind === 'credit' ? 'זיכוי ליתרה' : 'הוחזר כסף') + '<small>' + when(x) + '</small></span><b style="text-align:center">-₪' + nfm(Number(x.amount)) + '</b><span></span></div>').join('');
     box.innerHTML = '<div class="dsum' + (al > 0 ? ' ok' : '') + '"><div><div class="dsl">שולם למפגש</div><div class="dsv">₪' + nfm(al) + '</div></div><span class="dst">' + (al > 0 ? 'שולם' : 'טרם שולם') + '</span></div>' + (rows.length ? '<div class="dlt">הקצאות (אפשר לשנות סכום או להסיר)</div>' + lines : '');
   }
-  const depLinesRefresh = () => { paintDepLines(); renderContact(); refreshSheetMeetings(); render(); };
+  const depLinesRefresh = () => { paintDepLines(); if (sheet && sheet.paintMeth) sheet.paintMeth(); renderContact(); refreshSheetMeetings(); render(); };   // אחרי כל שינוי: גם אפשרויות התשלום מתעדכנות (נגמרה היתרה: נפתחות שאר הדרכים)
   $('#depPkgToggle').addEventListener('click', () => { $('#depPkgSel').closest('label').hidden = false; $('#depPkgToggle').hidden = true; });
   $('#depLines').addEventListener('change', async (e) => {
     const inp = e.target.closest('input'); if (!inp) return;
@@ -3652,7 +3652,9 @@
     f.pay_depm.innerHTML = METH.map((x) => '<option value="' + esc(x[0]) + '">' + esc(x[1]) + '</option>').join('') + '<option value="other">אחר</option>'; f.pay_depm.value = METH.length ? METH[0][0] : 'other';
     const isFree = () => { const pp = state.participants.find((x) => x.id === pid), lk = m && linkOf(pid, m.id); return !!(m && pp && lk && noPayOf(pp, lk)); };
     const crAvail = () => m ? Math.max(0, creditOf(pid)) : 0;
-    const paintMeth = () => { const free = isFree(), cr = !!sheet.depCr && !free; $('#depMethods').innerHTML = (m && linkOf(pid, m.id) ? '<button type="button" role="radio" data-free="1" aria-pressed="' + free + '"><span class="nps">₪</span>חינם</button>' : '') + (crAvail() > 0 ? '<button type="button" role="radio" data-cr="1" aria-pressed="' + cr + '">מהיתרה ₪' + nfm(crAvail()) + '</button>' : '') + METH.map((x) => '<button type="button" role="radio" data-m="' + x[0] + '" aria-pressed="' + (!free && !cr && f.pay_depm.value === x[0]) + '">' + x[1] + '</button>').join(''); $('#depPkgSel').closest('.field').hidden = cr; };
+    const paintMeth = () => { const free = isFree(); if (m && crAvail() > 0 && !free) sheet.depCr = true; const cr = !!sheet.depCr && !free;   // יש יתרה: קודם כל משתמשים בה, ורק אחרי שנגמרה נפתחות שאר האפשרויות
+      if (m && crAvail() > 0 && !free) { $('#depMethods').innerHTML = '<button type="button" role="radio" data-cr="1" aria-pressed="true">מהיתרה ₪' + nfm(crAvail()) + '</button>'; $('#depPkgSel').closest('.field').hidden = true; return; }
+      $('#depMethods').innerHTML = (m && linkOf(pid, m.id) ? '<button type="button" role="radio" data-free="1" aria-pressed="' + free + '"><span class="nps">₪</span>חינם</button>' : '') + (crAvail() > 0 ? '<button type="button" role="radio" data-cr="1" aria-pressed="' + cr + '">מהיתרה ₪' + nfm(crAvail()) + '</button>' : '') + METH.map((x) => '<button type="button" role="radio" data-m="' + x[0] + '" aria-pressed="' + (!free && !cr && f.pay_depm.value === x[0]) + '">' + x[1] + '</button>').join(''); $('#depPkgSel').closest('.field').hidden = cr; };
     f.pay_depm.onchange = () => { $('#depOtherField').hidden = f.pay_depm.value !== 'other'; paintMeth(); if (f.pay_depm.value === 'other') f.pay_depn.focus(); };
     $('#depMethods').onclick = async (e) => {
       const fb = e.target.closest('[data-free]'), b = e.target.closest('[data-m]'), cb = e.target.closest('[data-cr]');
@@ -3663,7 +3665,8 @@
       }
       if (b) { sheet.depCr = false; if (isFree()) await setNoPay(false, paintMeth); f.pay_depm.value = b.dataset.m; f.pay_depm.onchange(); }
     };
-    paintMeth();
+    sheet.paintMeth = paintMeth; paintMeth();
+    if (m && crAvail() > 0 && !isFree()) { const al = Math.max(0, allocatedOf(pid, m.id)), need = Math.max(0, expectedPrice(pid, m) - al); f.pay_dep.value = Math.min(need || expectedPrice(pid, m), crAvail()); }   // ברירת מחדל: מה שנשאר לשלם על המפגש, עד היתרה
     const paintPkg = () => { const n = parseInt(f.pay_pkg.value, 10), a = parseFloat(f.pay_dep.value); $('#depPkgHint').innerHTML = n >= 2 && a > 0 ? 'מחיר למפגש בחבילה: <b>₪' + nfm(Math.round(a / n)) + '</b>. ' + (m ? 'המפגש הזה ועוד עד ' + (n - 1) + ' מפגשים קרובים משויכים ייפרעו מיד, והשאר ייפרעו בשיוך' : 'כל שיוך למפגש ייקח את הסכום הזה מהיתרה, עד ' + n + ' מפגשים') : ''; };
     f.pay_pkg.oninput = paintPkg; f.pay_dep.oninput = paintPkg;
     goView('deposit'); if (document.activeElement && document.activeElement.blur) document.activeElement.blur();   // בלי פוקוס אוטומטי: המקלדת לא עולה בכניסה למסך
