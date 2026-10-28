@@ -3827,6 +3827,11 @@
     $('#depMode').onclick = async (e) => {
       const b = e.target.closest('[data-mode]'); if (!b || !m) return;
       if ((b.dataset.mode === 'free') === isFree()) return;
+      const al = Math.round(allocatedOf(pid, m.id) * 100) / 100;
+      if (b.dataset.mode === 'free' && al > 0) {   // יש כסף מוקצה למפגש: חינם מוחק את ההקצאה, ולכן שואלים קודם
+        confirmAct('חינם: למחוק את ההקצאה למפגש?', pid, m.id, () => switchLocked('free'), 'מוקצים למפגש <b>' + ils(al) + '</b>. סימון המפגש כחינם ימחק את ההקצאה, והכסף יישאר ליתרה של המשתתף (לא יוחזר ככסף).', 'כן, למחוק את ההקצאה');
+        return;
+      }
       await switchLocked(b.dataset.mode);
     };
     $('#depMethods').onclick = async (e) => {
