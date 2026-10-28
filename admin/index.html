@@ -3703,34 +3703,57 @@
   function paintDepLines() {
     const box = $('#depLines'), pid = sheet && sheet.id, m = sheet && sheet.depMid ? state.meetings.find((x) => x.id === sheet.depMid) : null;
     if (!box) return; if (!m || !pid) { box.hidden = true; box.innerHTML = ''; return; }
-    const rows = state.payments.filter((x) => x.participant_id === pid && x.meeting_id === m.id && x.kind === 'payment').sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
-    const al = Math.round(allocatedOf(pid, m.id) * 100) / 100, price = expectedPrice(pid, m);
-    if (al <= 0) rows.length = 0;   // הקצאות שכבר בוטלו (זוכו או הוחזרו) לא מוצגות: כסף שנכנס או הוחזר לא קשור למפגש ונמצא רק במסך "יתרה ותשלומים"
-    if (!rows.length) { box.hidden = true; box.innerHTML = ''; return; }
+    const al = Math.round(allocatedOf(pid, m.id) * 100) / 100;
+    if (!(al > 0)) { box.hidden = true; box.innerHTML = ''; return; }
     box.hidden = false;
-    const when = (x) => { const d = String(x.created_at || '').slice(0, 10).split('-'); return d.length === 3 ? d[2] + '.' + d[1] : ''; };
-    const lines = rows.map((x) => x.kind === 'payment'
-      ? '<div class="dline" data-id="' + x.id + '"><span class="dsrc">' + (x.from_credit ? 'מהיתרה' : esc(methodName(x) || 'תשלום')) + '<small>' + when(x) + '</small></span><input type="number" inputmode="decimal" min="0" step="any" value="' + Number(x.amount) + '" aria-label="סכום"><button type="button" class="ddel" aria-label="הסרת ההקצאה">×</button></div>'
-      : '<div class="dline ret"><span class="dsrc">' + (x.kind === 'credit' ? 'זיכוי ליתרה' : 'הוחזר כסף') + '<small>' + when(x) + '</small></span><b style="text-align:center">-₪' + nfm(Number(x.amount)) + '</b><span></span></div>').join('');
-    const pp = state.participants.find((x) => x.id === pid), free = !!(pp && noPayOf(pp, linkOf(pid, m.id))) && al <= 0;   // סומן חינם (ועוד לא הוקצה כסף): הסטטוס "חינם" ולא "טרם שולם"
-    box.innerHTML = '<div class="dlt">הקצאות (אפשר לשנות סכום או להסיר)</div>' + lines;
+    /* בהקצאות רק כמה כסף מוקצה למפגש (המקור, זיכויים והחזרים נמצאים ב"יתרה ותשלומים"); אפשר לשנות את הסכום או להסיר */
+    const inp = box.querySelector('input'), same = inp && document.activeElement === inp;
+    if (same) return;   // לא מציירים מחדש תיבה שמקלידים בה
+    box.innerHTML = '<div class="dlt">הקצאה למפגש</div><div class="dline" data-total="1"><span class="dsrc">מוקצה למפגש</span><input type="number" inputmode="decimal" min="0" step="any" value="' + al + '" aria-label="סכום מוקצה"><button type="button" class="ddel" aria-label="הסרת ההקצאה">×</button></div>';
   }
   const depLinesRefresh = () => { paintDepLines(); if (sheet && sheet.paintMeth) sheet.paintMeth(); renderContact(); refreshSheetMeetings(); render(); };   // אחרי כל שינוי: גם אפשרויות התשלום מתעדכנות (נגמרה היתרה: נפתחות שאר הדרכים)
+  /* הקטנת ההקצאה למפגש בסכום מסוים: מהקצאה האחרונה אחורה; כסף שהתקבל ישירות (פייבוקס, ביט...) נשאר למשתתף כיתרה (הפקדה), והקצאה מהיתרה חוזרת ליתרה */
+  async function reduceAlloc(pid, mid, amount) {
+    let rem = amount;
+    const rows = state.payments.filter((x) => x.participant_id === pid && x.meeting_id === mid && x.kind === 'payment').sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+    for (const r of rows) {
+      if (rem <= 0.001) break;
+      const a = Number(r.amount);
+      if (a <= rem + 0.001) { await removeAlloc(r); rem -= a; }
+      else {
+        if (!r.from_credit) await addPayRecord(pid, null, 'deposit', rem, r.promoter_id || null, null, false, r.method || null, r.method_note || null, null);
+        await api(T.pay + '?id=eq.' + r.id, { method: 'PATCH', body: { amount: a - rem } }); r.amount = a - rem; rem = 0;
+      }
+    }
+  }
   $('#depLines').addEventListener('change', async (e) => {
     const inp = e.target.closest('input'); if (!inp) return;
-    const line = inp.closest('.dline'), row = state.payments.find((x) => x.id === line.dataset.id), amt = parseFloat(inp.value);
-    if (!row || !(amt > 0)) { inp.value = row ? Number(row.amount) : ''; return; }
-    const delta = amt - Number(row.amount);
-    if (row.from_credit && delta > Math.max(0, creditOf(row.participant_id)) + 0.001) { toast('אין מספיק יתרה'); inp.value = Number(row.amount); return; }
-    try { await api(T.pay + '?id=eq.' + row.id, { method: 'PATCH', body: { amount: amt } }); row.amount = amt; toast('ההקצאה עודכנה'); depLinesRefresh(); } catch (err) { inp.value = Number(row.amount); fail(err); }
+    const pid = sheet && sheet.id, mid = sheet && sheet.depMid; if (!pid || !mid) return;
+    const cur = Math.round(allocatedOf(pid, mid) * 100) / 100, amt = parseFloat(inp.value);
+    if (!(amt >= 0)) { inp.value = cur; return; }
+    const delta = Math.round((amt - cur) * 100) / 100;
+    if (!delta) return;
+    sheet.depLock = Date.now() + 60000;
+    try {
+      if (delta < 0) { await reduceAlloc(pid, mid, -delta); toast('ההקצאה עודכנה, ההפרש נשאר ביתרה'); }
+      else {
+        if (delta > Math.max(0, creditOf(pid)) + 0.001) { toast('אין מספיק יתרה להגדלת ההקצאה'); inp.value = cur; return; }
+        await addPayRecord(pid, mid, 'payment', delta, null, null, true); toast('ההקצאה עודכנה');
+      }
+      depLinesRefresh();
+    } catch (err) { inp.value = cur; fail(err); }
+    finally { sheet.depLock = Date.now() + 1500; setTimeout(refreshOpenSheet, 1600); }
   });
   $('#depLines').addEventListener('click', async (e) => {
     const b = e.target.closest('.ddel'); if (!b) return;
-    const row = state.payments.find((x) => x.id === b.closest('.dline').dataset.id); if (!row) return;
+    const pid = sheet && sheet.id, mid = sheet && sheet.depMid; if (!pid || !mid) return;
+    sheet.depLock = Date.now() + 60000;
     try {
-      await removeAlloc(row);
+      const cur = Math.round(allocatedOf(pid, mid) * 100) / 100;
+      await reduceAlloc(pid, mid, cur);
       toast('ההקצאה הוסרה והכסף נשאר ביתרה'); depLinesRefresh();
     } catch (err) { fail(err); }
+    finally { sheet.depLock = Date.now() + 1500; setTimeout(refreshOpenSheet, 1600); }
   });
   async function removeAlloc(row) {
     {
