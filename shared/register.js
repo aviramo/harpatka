@@ -81,18 +81,8 @@
 
   /* ===== מנגנון פופאפ כללי (משותף לכל ה-.modal) ===== */
   let modalLastFocus = null, urlBeforeReg = null;
-  /* כשטופס ההרשמה פתוח, כתובת העמוד הופכת ל-/register/ (אפשר להעתיק ולשלוח); בסגירה היא חוזרת למה שהייתה */
-  function regUrl(open) {
-    try {
-      if (open) {
-        if (/\/register\/?$/.test(location.pathname) || urlBeforeReg) return;
-        const sp = new URLSearchParams(location.search); sp.delete('register');   // ?register=1 הוא רק מנגנון הפתיחה
-        const qs = sp.toString() ? '?' + sp.toString() : '';
-        urlBeforeReg = location.pathname + qs + location.hash;
-        history.replaceState(history.state, '', BASE + 'register/' + qs);
-      } else if (urlBeforeReg) { history.replaceState(history.state, '', urlBeforeReg); urlBeforeReg = null; }
-    } catch (e) {}
-  }
+  /* הכתובת בדפדפן לא משתנה כשהפופאפ פתוח (בוטל ה-/register/ בכתובת, 28.10.26); regUrl נשארה כפונקציה ריקה כדי שהקריאות אליה ימשיכו לעבוד */
+  function regUrl() {}
   /* נעילת גלילת הדף מאחורי הפופאפ (גם במובייל); הפופאפ עצמו נגלל, למשל כשהמקלדת פתוחה */
   let locked = false;
   /* נעילת גלילת הדף כשהפופאפ פתוח: הגוף מקובע במקומו (position: fixed עם היסט הגלילה), כך שגם הזזת הדף על ידי המקלדת או גרירה על הרקע לא גוללת את הדף מאחור; בסגירה הגלילה חוזרת למקום */
