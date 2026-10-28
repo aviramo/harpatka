@@ -3488,7 +3488,7 @@
     askConfirm(p, 'להעביר לסטטוס "בטיפול"?', 'נשלחה הודעה ל' + nameB(p.name) + '?', 'כן, ההודעה נשלחה', () => { ls.forEach((l) => setPayStatus(p.id, l.meeting_id, 'requested')); toast('הסטטוס עבר ל"בטיפול"'); });
   }
   /* אחרי שליחת הודעת פרטי המפגש: כשחוזרים לדשבורד מאשרים שנשלחה, ואז הכפתור והסימון ברשימה נעלמים */
-  let evAwait = null;
+  let evAwait = null, evAwaitM = null;
   async function setDetailsSent(pid, mid, val) {
     const l = linkOf(pid, mid); if (!l) return;
     const prev = l.details_sent_at; l.details_sent_at = val === false ? null : new Date().toISOString(); render(); renderContact();
@@ -3498,7 +3498,7 @@
   function askEventSent() {
     if (!evAwait) return;
     const p = state.participants.find((x) => x.id === evAwait); evAwait = null; if (!p) return;
-    const l = evLink(p); if (!l || l.details_sent_at) return;
+    const l = (evAwaitM && linkOf(p.id, evAwaitM)) || evLink(p); evAwaitM = null; if (!l || l.details_sent_at) return;   // המפגש שנלחץ (גם בהפעלה ידנית), לא רק מפגש הערב
     askConfirm(p, 'לסמן שפרטי המפגש נשלחו?', 'נשלחה הודעת פרטי המפגש ל' + nameB(p.name) + '?', 'כן, ההודעה נשלחה', () => { setDetailsSent(p.id, l.meeting_id); toast('סומן שפרטי המפגש נשלחו'); });
   }
   const askAwaited = () => { if (markAwait) askMarkRequested(); else if (evAwait) askEventSent(); };
@@ -4700,7 +4700,7 @@
     const eu = e.target.closest('[data-evun]');
     if (eu) { e.stopPropagation(); const l = linkOf(eu.dataset.evun, state.filter); if (l) setDetailsSent(eu.dataset.evun, l.meeting_id, false); return; }   // חזרה ללא נשלח
     const er = e.target.closest('[data-evrow]');
-    if (er) { e.stopPropagation(); evAwait = er.dataset.evrow; return; }   // וואטסאפ נפתח; בחזרה מאשרים שנשלח
+    if (er) { e.stopPropagation(); evAwait = er.dataset.evrow; evAwaitM = state.filter || null; return; }   // וואטסאפ נפתח; בחזרה מאשרים שנשלח
     const hr = e.target.closest('[data-hr]');
     if (hr) { e.stopPropagation(); if (hr.classList.contains('inert')) return;   // המפגש הסתיים: לא עושה כלום (לא כותב לבסיס הנתונים); שינוי רק מכרטיס המשתתף
       const pid = hr.dataset.hr, mid = hr.dataset.hm, l = linkOf(pid, mid); if (l) setAttended(pid, mid, !l.attended); else walkIn(pid, mid); return; }
