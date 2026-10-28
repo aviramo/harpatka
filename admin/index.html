@@ -836,7 +836,7 @@
     #depFields .payrow .field { flex: 1 1 0; margin-bottom: 8px; }
     #depFields .payrow .field:first-child { flex: 1.3 1 0; }
     #depFields .payrow .paygo { margin: 0 0 8px; height: 44px; }
-    .deplines { margin: 2px 0 6px; display: grid; gap: 8px; }
+    .deplines { margin: 14px 0 6px; padding-top: 14px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
     .dsum { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--cream); border-radius: 18px; padding: 14px 16px; }
     .dsum .dsl { color: var(--muted); font-weight: 700; font-size: 14px; }
     .dsum .dsv { font-family: "Rubik", sans-serif; font-weight: 800; font-size: 30px; line-height: 1.1; }
@@ -845,7 +845,7 @@
     .dsum.ok .dsv { color: var(--green); }
     .dsum.free .dst { background: var(--line); color: var(--muted); }
     .dsum.free .dsv { color: var(--muted); }
-    .depsec { margin: 16px 2px 8px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 15px; font-weight: 800; color: var(--muted); }
+    .depsec { margin: 4px 2px 8px; font-size: 15px; font-weight: 800; color: var(--muted); }
     .dlt { margin: 6px 2px 0; font-size: 13.5px; font-weight: 800; color: var(--muted); }
     .deplnk { border: 0; background: none; padding: 6px 2px; font: inherit; font-size: 14px; font-weight: 700; color: var(--terra); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
     .dline { display: grid; grid-template-columns: minmax(0, 1fr) 96px 34px; align-items: center; gap: 8px; background: var(--cream); border-radius: 14px; padding: 8px 10px; }
@@ -1385,7 +1385,6 @@
       </div>
       <div class="ppanel" data-panel="deposit" hidden>
         <p class="sthint" id="depIntro" style="margin:0 2px 12px">תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש</p>
-        <div id="depLines" class="deplines" hidden></div>
         <h4 class="depsec" id="depAddTitle" hidden>הקצאה למפגש</h4>
         <div class="metchips" id="depMode" role="radiogroup" aria-label="סוג ההקצאה" hidden></div>
         <div class="metchips" id="depMethods" role="radiogroup" aria-label="דרך העברה"></div>
@@ -1401,6 +1400,7 @@
         <div class="payhint" id="depPkgHint"></div>
         <label class="field" id="depOtherField" hidden><span>פירוט קצר</span><input name="pay_depn" maxlength="60" autocomplete="off" placeholder="למשל: פייפאל, צ׳ק" /></label>
         </div>
+        <div id="depLines" class="deplines" hidden></div>
       </div>
       <div class="ppanel" data-panel="zikuy" hidden>
         <p class="sthint" style="margin:0 2px 12px">זיכוי של תשלום שהתקבל למפגש: הסכום יורד מהמפגש, ואפשר להשאיר אותו ביתרה של המשתתף או להחזיר לו כסף</p>
@@ -3632,7 +3632,6 @@
     if (!box) return; if (!m || !pid) { box.hidden = true; box.innerHTML = ''; return; }
     const rows = state.payments.filter((x) => x.participant_id === pid && x.meeting_id === m.id && (x.kind === 'payment' || x.kind === 'credit' || (x.kind === 'refund' && !x.from_credit))).sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
     const al = Math.round(allocatedOf(pid, m.id) * 100) / 100, price = expectedPrice(pid, m);
-    const ttl = $('#depAddTitle'); if (ttl) { ttl.style.borderTop = rows.length ? '' : 'none'; ttl.style.marginTop = rows.length ? '' : '0'; ttl.style.paddingTop = rows.length ? '' : '0'; }
     if (!rows.length) { box.hidden = true; box.innerHTML = ''; return; }
     box.hidden = false;
     const when = (x) => { const d = String(x.created_at || '').slice(0, 10).split('-'); return d.length === 3 ? d[2] + '.' + d[1] : ''; };
