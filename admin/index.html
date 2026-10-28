@@ -1190,6 +1190,8 @@
     /* תצוגת "הכל": סדר העמודות מימין לשמאל כמו בתצוגת מפגש: קודם תשלום (יתרה) ואחריו התמדה */
     .row .main.bl { grid-template-columns: 54px minmax(0, max-content) minmax(0, 1fr) auto 38px 78px; }   /* עמודת ההתמדה צרה (רוחב הצ'יפ) וצמודה לתשלום, בלי רווח ביניהם */
     .row .main.bl .balic { grid-column: 5; }
+    .row .main.bl.nosum { grid-template-columns: 54px minmax(0, max-content) minmax(0, 1fr) auto 38px; }   /* ההתמדה מוסתרת: עיגול התשלום (היתרה) עד הקצה השמאלי, בלי עמודה ריקה */
+    .row .main.bl.nosum .sidewrap { display: none; }
     .row .main.bl .sidewrap { grid-column: 6; justify-content: flex-start; }
     .hfilt.mid { background: var(--yellow-bg); border: 1px solid var(--yellow-bg); color: var(--yellow); }   /* התמדה בינונית: צהוב הפלטה */
     /* רשומת משתתף: רווח אחיד וקטן יותר בין כל האלמנטים (6px, בלי שוליים מקומיים), עמודות צרות יותר, והשם תופס את כל הרוחב שנשאר ומוצג במלואו (גלישה לשורה שנייה במקום חיתוך) גם כשיש הרבה עמודות */
@@ -1197,6 +1199,7 @@
     .row .main.att, .row .main.ev { grid-template-columns: 48px minmax(0, 1fr) 0 auto 110px 26px; }
     .row .main.att.ev { grid-template-columns: 48px minmax(0, 1fr) 0 auto 110px 26px 26px; }
     .row .main.bl { grid-template-columns: 48px minmax(0, 1fr) 0 auto 26px 78px; }
+    .row .main.bl.nosum { grid-template-columns: 48px minmax(0, 1fr) 0 auto 26px; }
     .row .meta .age { margin-inline-end: 0; }
     .row .main .here, .row .evc, .row .balic { margin-inline-start: 0; }
     .row .nm .ptags { margin-inline-end: 0; }
@@ -2472,7 +2475,7 @@
       const tgm = attTarget(), tgl = tgm ? linkOf(p.id, tgm.id) : null, showHere = !!(tgm && (state.filter ? attVisible(tgm) : attendOpen(tgm))), attOk = !!(tgl && (dispStatus(tgl) !== SYSTEM_STATUS || tgl.attended)), evc = evCircle(p);   // עיגול ההגעה רק למי שלא בסטטוס ברירת המחדל (או שכבר סומנה לו הגעה, כדי שאפשר יהיה לבטל)
       return '<li class="row' + (hl && hl.attended && attendOpen(state.meetings.find((x) => x.id === state.filter)) ? ' arrived' : '') + '">' +
         (wa ? '<a class="rowwa" href="' + wa + '" target="_blank" rel="noopener" aria-label="וואטסאפ ל' + esc(p.name) + '" title="וואטסאפ">' + WA_ICON + '</a>' : '<span class="rowwa nophone" role="img" aria-label="אין טלפון" title="אין טלפון">' + WA_ICON + '</span>') +
-        '<div class="main' + ' hasw' + (showHere ? ' att' : '') + (anyEv ? ' ev' : '') + (!state.filter && state.showPay ? ' bl' : '') + '" role="button" tabindex="0" data-edit="' + p.id + '">' +
+        '<div class="main' + ' hasw' + (showHere ? ' att' : '') + (anyEv ? ' ev' : '') + (!state.filter && state.showPay ? ' bl' + (state.showAtt === false ? ' nosum' : '') : '') + '" role="button" tabindex="0" data-edit="' + p.id + '">' +
           '<div class="nm"><bdi class="name">' + esc(p.name) + '</bdi>' + '</div>' +
           (true ? '<div class="meta">' + (true ? '<span class="age' + (originOf(p) ? ' ' + originOf(p).kind : '') + '"' + originAttr(p) + ' title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? '<b class="gl">' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : (p.gender ? '' : '—')) + '</bdi></span>' : '') + '<span class="sidewrap">' + side + tags + payIc + '</span>' + '</div>' : '') +
           // הערה אחרונה וסימון צירוף תמונה לא מוצגים ברשימה (הערות רק בכרטיס המשתתף)
