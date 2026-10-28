@@ -2079,10 +2079,10 @@
       if (sts && sts.length) { const ps = sts.filter((x) => x.scope === 'participant'); state.pstatuses = ps.map((x) => Object.assign({}, x)).sort((a, b) => a.sort - b.sort); }
       if (sts && sts.length) { state.astatuses = sts.filter((x) => x.scope !== 'participant' && x.phase === 'after').map((x) => Object.assign({}, x)); const extra = sts.filter((x) => x.scope !== 'participant' && x.phase !== 'after' && !BUILTIN.includes(x.key)).map((x) => Object.assign({}, x)); state.statuses = DEFAULT_STATUSES.filter((d) => d.key === SYSTEM_STATUS || sts.some((x) => x.key === d.key && x.scope !== 'participant')).map((d) => Object.assign({}, d, sts.find((x) => x.key === d.key && x.scope !== 'participant') || {}, d.key === SYSTEM_STATUS ? { sort: d.sort } : {})).concat(extra); applyStatuses(); }
       boardBadge();
-      /* משתתף לא פעיל (הוסר) מוסתר מכל המסכים; הנתונים נשמרים ויחזרו אם יירשם שוב עם אותו טלפון. תשלומים נשארים (כספים) */
+      /* משתתף שהוסר (active = false) מוסתר רק מרשימת כל המשתתפים (כשלא נבחר מפגש); במסך מפגש הוא מופיע כל עוד הוא משויך אליו, וכל הנתונים וההיסטוריה נשארים. יחזור אם יירשם שוב עם אותו טלפון */
       state.inactiveNames = new Map(p.filter((x) => x.active === false).map((x) => [x.id, x.name]));
-      const act = p.filter((x) => x.active !== false), actIds = new Set(act.map((x) => x.id));
-      state.participants = act; state.meetings = m; state.att = a.filter((x) => actIds.has(x.participant_id)); applyAttPending(); state.notes = nn.filter((x) => actIds.has(x.participant_id)); state.promoters = prs; state.promoPays = pps; state.payments = pays; rebuildNotes();
+      state.participants = p; state.meetings = m; state.att = a; applyAttPending(); state.notes = nn;   // "הסרת משתתף" רק מסתירה אותו ברשימת כל המשתתפים; השיוכים, ההערות וההיסטוריה נשארים
+      state.promoters = prs; state.promoPays = pps; state.payments = pays; rebuildNotes();
       sortMeetings();
       if (!silent) $('#status').innerHTML = '';
       setTimeout(prefetchNoteImages, 1500);   // טעינה מוקדמת של צילומי ההערות למטמון
@@ -2147,7 +2147,7 @@
     const dayTime = (m) => esc(meetingLabel(m).split(' · ')[0]) + ' · ' + esc(meetingLabel(m, true).split(' ').slice(0, 2).join(' ')) + ' · ' + esc(String(m.meeting_time).slice(0, 5));
     const EDIT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"/><path d="M14 7l3 3"/></svg>';
     const nextM = state.meetings.filter((m) => !isPast(m)).sort((a, b) => (a.meeting_date + a.meeting_time).localeCompare(b.meeting_date + b.meeting_time))[0] || null;   // המפגש הקרוב: מודגש בתפריט
-    const paidAll = state.participants.filter((x) => { const ls = linksOf(x.id).filter((l) => !l.exempt); return ls.length && ls.every((l) => l.paid); }).length;
+    const paidAll = state.participants.filter((x) => x.active !== false).filter((x) => { const ls = linksOf(x.id).filter((l) => !l.exempt); return ls.length && ls.every((l) => l.paid); }).length;
     $('#mMenu').innerHTML = '<div class="mtr mhead" aria-hidden="true"><span>מפגש</span><span>נרשמו</span><span>שילמו</span><span></span></div>' +
       '<div class="mtr mrow2" role="menuitemradio" tabindex="0" data-filter="" aria-checked="' + (state.filter === null) + '"><span>כל המשתתפים</span><span class="mc">' + state.participants.length + '</span><span class="mc dim">' + paidAll + '</span><span></span></div>' +
       state.meetings.map((m) => {
@@ -2274,16 +2274,16 @@
     const started = (m) => { const [y, mo, da] = m.meeting_date.split('-').map(Number), [h, mi] = String(m.meeting_time).split(':').map(Number); return nowIL() >= Date.UTC(y, mo - 1, da, h, mi); };
     const startedMs = state.meetings.filter(started).sort((a, b) => (a.meeting_date + a.meeting_time).localeCompare(b.meeting_date + b.meeting_time));
     const persist = (p) => { const mine = linksOf(p.id).map((l) => state.meetings.find((x) => x.id === l.meeting_id)).filter((m) => m && started(m)).map((m) => m.meeting_date + m.meeting_time).sort(); if (!mine.length) return { came: 0, total: 0 }; const opp = startedMs.filter((m) => (m.meeting_date + m.meeting_time) >= mine[0]); return { came: opp.filter((m) => (linkOf(p.id, m.id) || {}).attended).length, total: opp.length }; };
-    const per = {}; state.participants.forEach((p) => { per[p.id] = persist(p); });
+    const per = {}; const visP = state.participants.filter((p) => p.active !== false); visP.forEach((p) => { per[p.id] = persist(p); });
     /* צבע ההתמדה לפי דירוג: המשתתפים עם נתוני הגעה מדורגים לפי אחוז ההגעה (ואז מספר ההגעות), והם מתחלקים לשלישים שווים: שליש עליון ירוק, אמצעי צהוב, תחתון אדום; אפור = עוד אין מפגש שהתחיל */
-    const ranked = state.participants.filter((p) => per[p.id].total > 0).sort((a, b) => { const x = per[a.id], y = per[b.id]; return (y.came / y.total) - (x.came / x.total) || y.came - x.came || x.total - y.total || a.name.localeCompare(b.name, 'he'); });
+    const ranked = visP.filter((p) => per[p.id].total > 0).sort((a, b) => { const x = per[a.id], y = per[b.id]; return (y.came / y.total) - (x.came / x.total) || y.came - x.came || x.total - y.total || a.name.localeCompare(b.name, 'he'); });
     const nR = ranked.length, rankOf = {}, clsOf = {};
     /* חלוקה לשלושה צבעים שמתקרבת לשלישים אבל לא חותכת נתונים זהים: משתתפים עם אותו "הגיע X מתוך Y" הם קבוצה אחת (אותו צבע ואותו דירוג). חותכים רק בין קבוצות, בשתי הנקודות הקרובות ביותר ל-⅓ ול-⅔ (ולפחות קבוצה אחת בכל צבע כשיש שלוש קבוצות ומעלה) */
     const groups = []; for (let i = 0; i < nR;) { let j = i; const a0 = per[ranked[i].id]; while (j < nR && per[ranked[j].id].came === a0.came && per[ranked[j].id].total === a0.total) j++; groups.push([i, j]); i = j; }
     let b1 = 0, b2 = 0; const G = groups.length;
     if (G >= 3) { let best = Infinity; for (let x = 1; x <= G - 2; x++) for (let y = x + 1; y <= G - 1; y++) { const d = Math.abs(groups[x][0] - nR / 3) + Math.abs(groups[y][0] - nR * 2 / 3); if (d < best) { best = d; b1 = x; b2 = y; } } } else if (G === 2) { b1 = 1; b2 = 2; } else { b1 = 0; b2 = 1; }
     groups.forEach((gr, gi) => { const c = G === 1 ? 'y' : gi < b1 ? 'g' : gi < b2 ? 'y' : 'r'; for (let k = gr[0]; k < gr[1]; k++) { rankOf[ranked[k].id] = gr[0] + 1; clsOf[ranked[k].id] = c; } });
-    const by = {}; state.participants.forEach((p) => { const pr = per[p.id], fut = linksOf(p.id).filter((l) => { const m = state.meetings.find((x) => x.id === l.meeting_id); return m && !started(m); }).length; by[p.id] = { came: pr.came, total: pr.total, fut, cls: !pr.total ? 'n' : clsOf[p.id], rank: rankOf[p.id] || 0, n: nR }; });
+    const by = {}; visP.forEach((p) => { const pr = per[p.id], fut = linksOf(p.id).filter((l) => { const m = state.meetings.find((x) => x.id === l.meeting_id); return m && !started(m); }).length; by[p.id] = { came: pr.came, total: pr.total, fut, cls: !pr.total ? 'n' : clsOf[p.id], rank: rankOf[p.id] || 0, n: nR }; });
     return (attCache = { by });
   }
   const attMatch = (p, k) => { const s = attCtx().by[p.id] || { came: 0, total: 0, fut: 0, cls: 'n' }; return k === 'all' ? (s.total > 0 && s.came === s.total) : k === 'never' ? (s.total > 0 && s.came === 0) : k === 'fut' ? s.fut > 0 : k === 'nolink' ? linksOf(p.id).length === 0 : s.cls === k; };
@@ -2302,6 +2302,7 @@
     const q = state.q.trim().toLowerCase(), qd = digits(q), eg = effGender(), ep = effPay();
     const base = state.participants.filter((p) => {
       if (state.filter && !linkOf(p.id, state.filter)) return false;
+      if (!state.filter && p.active === false) return false;
       if (!moreOk(p)) return false;
       if (!q) return true;
       return p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd)) || hasNote(p, q);
@@ -2327,7 +2328,7 @@
     const gchip = (g, label, cls) => { const n = nG(g); return '<button type="button" class="stc ' + cls + (n ? '' : ' zero') + '" data-stg="' + g + '" aria-pressed="' + (eg === g) + '" title="' + (g === 'male' ? 'זכר' : 'נקבה') + '" aria-label="' + (g === 'male' ? 'זכר' : 'נקבה') + '">' + label + ' <small>' + n + '</small></button>'; };
     const anyF = !!(eg || eh || effPaidF() || effSent() || effBal() || effAttF() || moreOn());
     $('#moreBtn').classList.toggle('on', moreOn());   // יש סינון פעיל: "הכל" לא מסומן, ולחיצה עליו מאפסת הכול
-    { const sc = state.participants.filter((q) => !state.filter || linkOf(q.id, state.filter)), both = sc.some((q) => q.gender === 'male') && sc.some((q) => q.gender === 'female'), allN = base.filter((p) => payOk(p)).length;
+    { const sc = state.participants.filter((q) => state.filter ? linkOf(q.id, state.filter) : q.active !== false), both = sc.some((q) => q.gender === 'male') && sc.some((q) => q.gender === 'female'), allN = base.filter((p) => payOk(p)).length;
       $('#genderChips').innerHTML = '<button type="button" class="stc gall' + (allN ? '' : ' zero') + '" data-stg="all" aria-pressed="' + !anyF + '" title="' + (anyF ? 'איפוס סינוני השורה' : 'כל המוצגים ברשימה') + '">הכל <small>' + allN + '</small></button>' + ((eg || both) ? gchip('male', 'ז', 'gm') + gchip('female', 'נ', 'gf') : ''); }   // ליד כפתור התפריט בכותרת
     const attOn = !!(state.filter && attVisible(state.meetings.find((x) => x.id === state.filter))), evOn = !!(state.filter && sentView(state.meetings.find((x) => x.id === state.filter)));
     const hereOkNoSent = (p) => { const h = effHere(); return !h || (((linkOf(p.id, state.filter) || {}).attended) ? '1' : '0') === h; };   // הגעה רק מחצי שעה לפני המפגש (או במצב הגעה פתוח)
@@ -2419,6 +2420,7 @@
   /* האם משתתף מוצג ברשימה לפי כל הסינונים והחיפוש (משמש גם לספירות בתפריט דפוס ההגעה) */
   function rowPass(p, q, qd) {
     if (state.filter && !linkOf(p.id, state.filter)) return false;
+    if (!state.filter && p.active === false) return false;   // הוסר: מוסתר רק ברשימת כל המשתתפים
     if (!moreOk(p)) return false;
     if (effPay() && !matchPay(p, payKeys(effPay()))) return false;
     if (!hereOk(p) || !paidOk(p) || !attSumOk(p)) return false;
@@ -2437,7 +2439,7 @@
     /* במסך מפגש + חיפוש: מציגים גם מי שלא רשום למפגש, כדי להוסיף אותם בלחיצה (למשל מי שהגיע בלי להודיע) */
     let others = [];
     if (state.filter && q) {
-      others = state.participants.filter((p) => !linkOf(p.id, state.filter) &&
+      others = state.participants.filter((p) => p.active !== false && !linkOf(p.id, state.filter) &&
         (p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd)) || hasNote(p, q)));
       others.sort((a, b) => a.name.localeCompare(b.name, 'he'));
     }
@@ -2460,7 +2462,7 @@
       const opp = startedMs.filter((m) => (m.meeting_date + m.meeting_time) >= mine[0]);
       return { came: opp.filter((m) => (linkOf(p.id, m.id) || {}).attended).length, total: opp.length };
     };
-    const pAll = state.participants.map(persist).filter((x) => x.total > 0), pAvg = pAll.length ? pAll.reduce((s, x) => s + x.came, 0) / pAll.reduce((s, x) => s + x.total, 0) : 0, BAND = 0.1, K = 0;
+    const pAll = state.participants.filter((p) => p.active !== false).map(persist).filter((x) => x.total > 0), pAvg = pAll.length ? pAll.reduce((s, x) => s + x.came, 0) / pAll.reduce((s, x) => s + x.total, 0) : 0, BAND = 0.1, K = 0;
     cntCtx = { persist, started, startedMs, pAvg, BAND };
     const anyEv = !!(state.filter && (sentView(state.meetings.find((x) => x.id === state.filter)) || rows.some((p) => evCircle(p))));   // אייקון הסינון קיים: שומרים לו עמודה בשורות, כך שהוא מיושר מעליה ולא נערם על התשלום או ההגעה   // אם לפחות שורה אחת עם עיגול שליחה, שומרים את העמודה בכל השורות כדי שהתגיות יהיו באותו קו
     const rowHtml = (p) => {
@@ -3156,7 +3158,7 @@
   }
   function openStatusFilterMenu(anchor) {
     const menu = $('#qMenu'), eg = effGender();
-    const people = state.participants.filter((p) => (!state.filter || linkOf(p.id, state.filter)) && (eg === 'none' ? !p.gender : (!eg || p.gender === eg)));
+    const people = state.participants.filter((p) => (state.filter ? linkOf(p.id, state.filter) : p.active !== false) && (eg === 'none' ? !p.gender : (!eg || p.gender === eg)));
     const cnt = (key) => people.filter((p) => stMatch(p, key)).length;
     menu.innerHTML = '<button type="button" role="menuitem" class="qi" data-sf="" aria-pressed="' + !state.pay + '" style="background:var(--cream);color:var(--ink)">הכל <small>' + people.length + '</small></button>' +
       (state.filter ? statusList() : pstatusList().slice().reverse()).map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-sf="' + s.key + '" aria-pressed="' + payKeys(state.pay).includes(s.key) + '">' + esc(s.label) + ' <small>' + cnt(s.key) + '</small></button>').join('') +
@@ -4026,12 +4028,11 @@
 
   $('#pDelete').addEventListener('click', async () => {
     const p = state.participants.find((x) => x.id === sheet.id);
-    if (!p || !confirm('להסיר את ' + p.name + '? הוא יוסתר מכל המסכים, והנתונים נשמרים ויחזרו אם יירשם שוב עם אותו טלפון')) return;
+    if (!p || !confirm('להסיר את ' + p.name + ' מרשימת כל המשתתפים? הוא יוסתר רק משם. השיוך שלו למפגשים, התשלומים, ההערות וההיסטוריה נשארים, והוא יחזור לרשימה אם יירשם שוב עם אותו טלפון')) return;
     try {
       await api(T.p + '?id=eq.' + p.id, { method: 'PATCH', body: { active: false } });
-      state.participants = state.participants.filter((x) => x !== p);
+      p.active = false;   // נשאר ב-state (מפגשים, הערות, היסטוריה); מוסתר רק ברשימת כל המשתתפים
       if (state.inactiveNames) state.inactiveNames.set(p.id, p.name);
-      state.att = state.att.filter((a) => a.participant_id !== p.id);
       pDlg.close(); render(); toast('הוסר');
     } catch (err) { fail(err); }
   });
@@ -4186,7 +4187,7 @@
     render();
   });
   function renderMoreMenu() {
-    const scope = state.participants.filter((p) => !state.filter || linkOf(p.id, state.filter));
+    const scope = state.participants.filter((p) => state.filter ? linkOf(p.id, state.filter) : p.active !== false);
     const cnt = (f) => scope.filter(f).length;
     const chip = (kind, val, label, n) => '<button type="button" class="mc" data-mk="' + kind + '" data-mv="' + esc(val) + '" aria-pressed="' + ((kind === 'src' ? state.srcF : state.ageF) === val) + '">' + esc(label) + ' <small>' + n + '</small></button>';
     $('#moreMenu').innerHTML = '<div class="mgt">דרך הגעה</div><div class="mgc">' + state.promoters.map((x) => chip('src', x.id, x.name, cnt((p) => (channelOf(p) || {}).id === x.id))).join('') + chip('src', '__none', 'ללא דרך הגעה', cnt((p) => !channelOf(p))) + '</div><div class="mgt">גיל</div><div class="mgc">' + AGE_B.map((b) => chip('age', b[0], b[1], cnt((p) => { const a = shownAge(p); return a != null && a >= b[2] && a <= b[3]; }))).join('') + '</div>';
