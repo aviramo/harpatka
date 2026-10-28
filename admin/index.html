@@ -3752,7 +3752,7 @@
       else if (x.kind === 'payment') { lab = 'הקצאה למפגש' + mlabel(x); cls = 'flat'; sign = ''; }
       else if (x.kind === 'refund' && x.from_credit) { lab = 'החזרת כסף' + (mt ? ' · ' + mt : ''); cls = 'down'; sign = ''; }
       else { lab = 'החזרת כסף למפגש' + mlabel(x); cls = 'flat'; sign = ''; }
-      const rc = x.kind === 'deposit' ? ' rcpt' : (x.kind === 'credit' || x.kind === 'refund') ? (x.from_credit ? ' balmv' : ' rfnd') : x.kind === 'payment' ? ' balmv' : '';   // קבלה בירוק, זיכוי/החזר באדום
+      const rc = x.kind === 'deposit' ? ' rcpt' : (x.kind === 'credit' || x.kind === 'refund') ? ' rfnd' : x.kind === 'payment' ? ' balmv' : '';   // קבלה בירוק, זיכוי/החזר באדום
       const row = (lb, c, cl, tm) => ({ t: String(tm || x.created_at), h: '<div class="walrow' + c + '"><div class="wl"><b>' + esc(lb) + '</b><small>' + fmtDT(tm || x.created_at) + (x.author_name ? ' · ' + esc(noteAuthor(x.author_email, x.author_name)) : '') + '</small></div><span class="wamt ' + cl + '"><bdi dir="ltr">' + sign + '₪' + nfm(a) + '</bdi></span></div>' });
       if (x.kind === 'deposit' && String(x.reason || '').startsWith('alloc_removed')) return [row('קבלת תשלום' + (mt ? ' · ' + mt : ''), ' rcpt', 'up')];   // הקצאה שנמחקה לא מוצגת (לא ההקצאה ולא המחיקה); נשאר רק התשלום שהתקבל
       if (x.kind === 'payment' && !x.from_credit) return [row('הקצאה למפגש' + mlabel(x), ' balmv', 'flat'), row('קבלת תשלום' + (mt ? ' · ' + mt : ''), ' rcpt', 'up')];   // תשלום ישיר למפגש = שתי שורות: קבלת הכסף (ירוק) וההקצאה (כתום)
