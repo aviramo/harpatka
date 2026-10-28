@@ -2931,11 +2931,11 @@
 
   /* ---------- אישור לפני שינוי: סטטוס תשלום, הוספה למפגש והסרה ממנו ---------- */
   const nameB = (n) => '<b style="color:var(--ink);font-weight:800">' + esc(n) + '</b>';   // שם מודגש בפופאפים
-  function confirmAct(title, pid, mid, fn, extraHtml, yesLabel, alt) {
+  function confirmAct(title, pid, mid, fn, extraHtml, yesLabel, alt, opts) {
     const p = state.participants.find((x) => x.id === pid), m = state.meetings.find((x) => x.id === mid);
     $('#cTitle').textContent = title;
     $('#cText').innerHTML = nameB(p ? p.name : '') + ' · ' + esc(m ? meetingLabel(m, true) : '') + (extraHtml ? '<br><br>' + extraHtml : '');
-    $('#cYes').textContent = yesLabel || 'אישור'; $('#cYes').classList.add('danger');   // הסרה / החזר: אדום בהיר
+    $('#cYes').textContent = yesLabel || 'אישור'; $('#cYes').classList.toggle('danger', !(opts && opts.primary));   // הסרה / החזר: אדום בהיר
     const dlg = $('#cDlg');
     $('#cAlt').hidden = !alt; if (alt) { $('#cAlt').textContent = alt.label; $('#cAlt').onclick = () => { dlg.close(); alt.fn(); }; }
     $('#cYes').onclick = () => { dlg.close(); fn(); };
@@ -3775,7 +3775,7 @@
     { const al = m ? Math.max(0, allocatedOf(pid, m.id)) : 0, pr0 = m ? expectedPrice(pid, m) : 0; f.pay_dep.value = !m ? '' : al <= 0 ? pr0 : al < pr0 ? pr0 - al : ''; }   // מפגש ששולם חלקית: המוצע הוא היתרה
     { const pp = state.participants.find((x) => x.id === pid), lk = m && linkOf(pid, m.id), np = !!(m && pp && noPayOf(pp, lk)); $('#depFields').hidden = np; $('#depFree').hidden = !np; }
     $('#depIntro').hidden = !!m; $('#depIntro').textContent = m ? 'מפגש ' + dmShort(m) : 'תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש';
-    { f.pay_dep.closest('label').querySelector('span').textContent = 'סכום (₪)'; $('#depSave').textContent = m ? 'הוספה' : 'תשלום'; $('#depAddTitle').hidden = !m; paintDepLines(); }
+    { f.pay_dep.closest('label').querySelector('span').textContent = 'סכום (₪)'; $('#depSave').textContent = 'תשלום'; $('#depAddTitle').hidden = !m; paintDepLines(); }
     $('#depPkgLbl').textContent = m ? 'על כמה מפגשים' : 'חבילה'; f.pay_pkg.options[0].textContent = m ? '1' : '—';
     $('#depQuick').innerHTML = quickPrices(m).map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
     $('#depQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) { f.pay_dep.value = b.dataset.q; paintPkg(); } };
@@ -3845,7 +3845,7 @@
     try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body: { no_pay: v } }); pendDone(h); toast(v ? 'לא משלם על המפגש הזה' : 'משלם על המפגש הזה'); }
     catch (err) { pendFail(h); l.no_pay = prev; $('#depFields').hidden = !v; $('#depFree').hidden = v; if (repaint) repaint(); render(); refreshSheetMeetings(); fail(err); }
   }
-  $('#depSave').addEventListener('click', async () => {
+  const depSaveRun = async () => {
     const f = pForm, pid = sheet && sheet.id; const amt = parseFloat(f.pay_dep.value); if (!pid) return;
     if (!(amt > 0)) { f.pay_dep.focus(); return; }
     if (sheet.depCr && sheet.depMid) {   // תשלום מהיתרה: רשומת תשלום מהיתרה (from_credit) למפגש, בלי הפקדה חדשה
@@ -3879,6 +3879,15 @@
       }
       setPTab(viewStack.pop() || 'wallet'); renderContact(); refreshSheetMeetings(); render();
     } catch (err) { fail(err); }
+  };
+  /* לחיצה על "תשלום": קודם פופאפ אישור מלמטה עם הסיכום (סכום, מקור ומפגש), ורק באישור התשלום נרשם */
+  $('#depSave').addEventListener('click', () => {
+    const f = pForm, pid = sheet && sheet.id, amt = parseFloat(f.pay_dep.value); if (!pid) return;
+    if (!(amt > 0)) { f.pay_dep.focus(); return; }
+    const mid = sheet.depMid || null, mt = f.pay_depm.value, pm = state.payMethods.find((x) => x.key === mt);
+    const src = sheet.depCr && mid ? 'מהיתרה' : (mt === 'other' ? (f.pay_depn.value.trim() || 'אחר') : (pm ? pm.name : mt));
+    const html = 'סכום: <b>' + ils(amt) + '</b><br>' + (sheet.depCr && mid ? 'ירד מהיתרה של המשתתף' : 'דרך: <b>' + esc(src) + '</b>') + (mid ? '' : '<br>התשלום ייכנס ליתרה של המשתתף');
+    confirmAct(mid ? 'אישור תשלום למפגש' : 'אישור קבלת תשלום', pid, mid, depSaveRun, html, 'אישור תשלום', null, { primary: true });
   });
   /* זיכוי: מחזיר חלק מתשלום שהוקצה למפגש. ליתרה (kind credit) או כסף למשתתף (kind refund) */
   $('#walZikuy').addEventListener('click', () => {
