@@ -770,6 +770,8 @@
     .qeditlink { margin: 8px auto 0; padding: 0 12px; }
     #fMenu .fsep { flex: 1 1 100%; height: 0; border-top: 1px solid var(--line); margin: 2px 4px; }   /* קו מפריד בין מצבי התשלום לסכומים, בלי כותרת */
     .qmenu .qhd { font-size: 12px; font-weight: 800; color: var(--muted); text-align: center; padding: 4px 0 0; }
+    #qMenu.am { width: max-content; min-width: 0; max-width: calc(100vw - 16px); flex-direction: column; flex-wrap: nowrap; align-items: stretch; }   /* תפריט שיוך למפגש: לפי גודל התוכן */
+    #qMenu.am .qi { background: rgba(201,111,82,.13); color: var(--terra); }   /* כתום בהיר */
     .qmenu .qi small { opacity: .7; font-weight: 700; margin-inline-start: 4px; }
     .fx.stsel { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
     .fx.stsel .stpill { padding: 3px 12px; border-radius: 999px; font-weight: 700; }
@@ -782,6 +784,8 @@
     .payhint b { color: var(--ink); }
     .walsum { background: var(--cream); border-radius: 20px; padding: 16px; text-align: center; }
     .walsum .big { font-family: "Rubik", sans-serif; font-weight: 800; font-size: 36px; line-height: 1.1; }
+    .walsum:has(.big.pos) { background: var(--yellow-bg); }   /* יתרה זמינה (זכאות): כרטיס צהוב */
+    .walsum:has(.big.pos) .sub { color: var(--yellow); }
     .walsum .big.pos { color: var(--yellow); } .walsum .big.neg { color: var(--red); } .walsum .big.zero { color: var(--muted); }
     .walsum .sub { margin-top: 4px; color: var(--muted); font-size: 14.5px; }
     .walrow { display: flex; align-items: center; gap: 10px; background: var(--cream); border-radius: 16px; padding: 10px 14px; margin-bottom: 8px; }
@@ -794,8 +798,9 @@
     .walrow.rfnd { background: var(--red-bg); } .walrow.rfnd .wamt.wamt { color: var(--red); }
     #walAdd, #depSave { background: var(--green-bg); color: var(--green); }
     #cDlg #cYes.danger { background: var(--red-bg); color: var(--red); }
-    #cDlg #cYes.ok { background: var(--green-bg); color: var(--green); }   /* אישור תשלום: ירוק, כמו כפתור התשלום */
+    #cDlg #cYes.ok { background: var(--green); color: #fff; }   /* אישור תשלום: הירוק הכהה של הפלטה */
     #walZikuy { display: none !important; }
+    #walRefund { background: var(--red); color: #fff; }   /* החזרת כסף: האדום הכהה של הפלטה */
     #walAdd, #walRefund, #walZikuy { height: 46px; font-size: 16px; margin-top: 0; }   /* שלושת הכפתורים באותו גובה וגודל כתב (לכפתור הראשי היה 52px/18px, ל-ghost 44px/16px) */
     #zkCredit { background: var(--yellow-bg); color: var(--yellow); }   /* זיכוי ליתרה (בלי להחזיר כסף): צהוב */
     #walRefund, #walZikuy, #zkCredit, #zkRefund, #creditRefundBtn, #refundYes, #creditYes { background: var(--red-bg); color: var(--red); margin-top: 0; }
@@ -825,6 +830,7 @@
     .metchips { display: flex; gap: 6px; flex-wrap: wrap; margin: 2px 0 8px; }
     .metchips button { height: 32px; border-radius: 999px; padding: 0 12px; background: #fff; box-shadow: inset 0 0 0 1px var(--line); font-weight: 700; font-size: 14px; color: var(--muted); }
     #depMode[hidden], #depQuick[hidden], #depMethods:empty { display: none; }
+    #cNo, #cvNo, #ppCancel, #refundNo { display: none !important; }   /* בפופאפים אין כפתור ביטול: סוגרים בפס, בלחיצה בחוץ או ב-Esc */
     #depFields .payrow #depSave.paygo, #walAdd { background: var(--green); color: #fff; }   /* כפתור התשלום: הירוק הכהה של הפלטה */
     .mlist .mrow .mmoney.free, .mmoney.free { background: #fff; color: var(--muted); border: 1px solid var(--line); }   /* חינם בכרטיס המפגש: לבן עם ₪ מחוק, כמו בעיגול הרשימה */
     #depMode { margin: 2px 0 12px; gap: 8px; }
@@ -962,6 +968,12 @@
     .close { width: 40px; height: 40px; border-radius: 50%; background: var(--cream); font-size: 22px; line-height: 1; }
     .field { display: block; margin-bottom: 12px; }
     .field[hidden] { display: none; }
+    .nitem.fold { cursor: pointer; }
+    .nitem .nmw { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .28s ease, opacity .22s ease; }
+    .nitem.open .nmw { grid-template-rows: 1fr; opacity: 1; }
+    .nitem .nmi { overflow: hidden; min-height: 0; }
+    .nitem .nmw .nmeta { margin: 6px 0 0; }
+    @media (prefers-reduced-motion: reduce) { .nitem .nmw { transition: none; } }
     .nitem.sys { background: var(--cream); }   /* אותו רקע כמו הערת צילום המסך */
     .nitem.sys .ntext { color: var(--ink); font-size: 16.5px; }   /* קריא: גם הערות מערכת בצבע הטקסט הרגיל */
     .idate { text-align: center; font-size: 13px; color: var(--muted); margin: 0 0 8px; min-height: 18px; }
@@ -3205,7 +3217,7 @@
     const up = ls.filter((l) => { const m = state.meetings.find((x) => x.id === l.meeting_id); return m && !isPast(m); }).sort((a, b) => key(a).localeCompare(key(b)))[0];
     return up || ls.slice().sort((a, b) => key(b).localeCompare(key(a)))[0] || null;
   };
-  const closeQ = () => { $('#qMenu').hidden = true; };
+  const closeQ = () => { $('#qMenu').hidden = true; $('#qMenu').className = 'qmenu'; };
   /* קישור קטן "עריכה" בכל מקום שבוחרים סטטוס: פותח את ניהול הסטטוסים בהגדרות על הסוג המתאים */
   const editBtn = () => '';   // עריכת סטטוסים ותוויות רק דרך ההגדרות
   function openStatusSettings(scope) {
@@ -3260,6 +3272,7 @@
     const free = state.meetings.filter((m) => !linkOf(pid, m.id)).sort((a, b) => (b.meeting_date + b.meeting_time).localeCompare(a.meeting_date + a.meeting_time));
     if (!free.length) return;
     const host = anchor.closest('dialog') || document.body; if (menu.parentNode !== host) host.appendChild(menu);
+    menu.className = 'qmenu am';
     menu.innerHTML = free.map((m) => '<button type="button" role="menuitem" class="qi" data-am="' + m.id + '">' + esc(dmShort(m)) + ' · ' + esc(String(m.meeting_time).slice(0, 5)) + '</button>').join('');
     menu.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
@@ -3559,9 +3572,10 @@
     const p = sheet && sheet.id ? state.participants.find((x) => x.id === sheet.id) : null;
     if (!p) { list.innerHTML = ''; return; }
     const ns = notesOf(p.id);   // הערות וצילומי מסך יחד, מהחדש לישן
-    list.innerHTML = ns.length ? ns.map((n) => '<div class="nitem' + (n.system ? ' sys' : '') + '"' + (n.event_type ? ' data-ev="' + esc(n.event_type) + '"' : '') + (n.new_status ? ' data-st="' + esc(n.new_status) + '"' : '') + '><div class="nmeta"><span><b>' + esc(noteAuthor(n.author_email, n.author_name)) + '</b> · ' + esc(fmtDT(n.created_at)) + '</span>' +
-      (n.system ? '' : '<button type="button" class="ndel" data-del="' + n.id + '" aria-label="מחיקת הערה" title="מחיקת הערה">×</button>') + '</div>' +
-      (n.has_image ? '<a class="nimg" data-img="' + n.id + '"><div class="nload">טוען תמונה…</div></a>' : '<div class="ntext">' + noteTextHtml(n.body) + '</div>') + '</div>').join('')
+    sheet.nOpen = sheet.nOpen || new Set();
+    const meta = (n) => '<div class="nmeta"><span><b>' + esc(noteAuthor(n.author_email, n.author_name)) + '</b> · ' + esc(fmtDT(n.created_at)) + '</span>' + (n.system ? '' : '<button type="button" class="ndel" data-del="' + n.id + '" aria-label="מחיקת הערה" title="מחיקת הערה">×</button>') + '</div>';
+    list.innerHTML = ns.length ? ns.map((n) => '<div class="nitem' + (n.system ? ' sys' : '') + (n.has_image ? ' img' : ' fold' + (sheet.nOpen.has(n.id) ? ' open' : '')) + '" data-nid="' + n.id + '"' + (n.event_type ? ' data-ev="' + esc(n.event_type) + '"' : '') + (n.new_status ? ' data-st="' + esc(n.new_status) + '"' : '') + '>' +
+      (n.has_image ? meta(n) + '<a class="nimg" data-img="' + n.id + '"><div class="nload">טוען תמונה…</div></a>' : '<div class="ntext">' + noteTextHtml(n.body) + '</div><div class="nmw"><div class="nmi">' + meta(n) + '</div></div>') + '</div>').join('')
       : '<p class="mnone">עוד אין הערות. אפשר לרשום למעלה מה דיברתם, מה הוחלט ומה צריך לזכור, או לצרף צילום מסך משיחה</p>';
     list.querySelectorAll('[data-img]').forEach(loadNoteImg);
   }
@@ -3609,7 +3623,9 @@
     try { await noteImage(n.id); } catch (e) {}
     if (gal[galI] === n) $('#iImg').src = imgCache.get(n.id) || '';
   }
-  $('#nList').addEventListener('click', (e) => {
+  $('#nList').addEventListener('click', (e) => {   // לחיצה על שורת הטקסט של הערה פותחת / סוגרת את שורת מי כתב ומתי (באנימציה)
+    const it = e.target.closest('.nitem.fold');
+    if (it && !e.target.closest('[data-del], a, button')) { const on = !it.classList.contains('open'); it.classList.toggle('open', on); if (sheet) { sheet.nOpen = sheet.nOpen || new Set(); on ? sheet.nOpen.add(it.dataset.nid) : sheet.nOpen.delete(it.dataset.nid); } return; }
     const a = e.target.closest('[data-img] img'); if (!a) return;
     const id = a.closest('[data-img]').dataset.img, p = sheet && sheet.id ? state.participants.find((x) => x.id === sheet.id) : null;
     gal = p ? notesOf(p.id).filter((n) => n.has_image) : []; const i = gal.findIndex((n) => n.id === id);

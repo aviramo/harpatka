@@ -111,7 +111,8 @@
     .gbtn svg { width: 20px; height: 20px; }
     .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 14px; font-weight: 600; opacity: 0; pointer-events: none; transition: .2s; z-index: 50; max-width: calc(100% - 32px); }
     .toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
-  </style>
+    #phoneCancel, #loginCancel { display: none !important; }   /* בפופאפים אין כפתור ביטול: סוגרים בלחיצה בחוץ או ב-Esc */
+</style>
 </head>
 <body>
   <div class="wrap">
@@ -366,6 +367,7 @@
 
   document.addEventListener('change', (e) => { if (e.target.dataset && e.target.dataset.rshare !== undefined) shareOn = e.target.checked; });
   $('#noMeetOk').addEventListener('click', () => $('#noMeetDlg').close());
+  document.querySelectorAll('dialog').forEach((d) => d.addEventListener('click', (e) => { if (e.target === d) d.close(); }));   // בלי כפתור ביטול: לחיצה בחוץ סוגרת
   $('#gBtn').addEventListener('click', goGoogle);
   $('#loginCancel').addEventListener('click', () => $('#loginDlg').close());
   $('#phoneCancel').addEventListener('click', () => { pendingAct = null; $('#phoneDlg').close(); });
