@@ -576,7 +576,7 @@
     .nprev img { height: 60px; width: 60px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); }
     .nprev button { position: absolute; top: -7px; inset-inline-start: -7px; width: 22px; height: 22px; border-radius: 50%; background: var(--ink); color: #fff; font-size: 15px; line-height: 1; }
     .nimg { display: block; margin-top: 6px; }
-    .nimg img { display: block; width: 100%; max-height: 220px; object-fit: cover; object-position: top; border-radius: 12px; border: 1px solid var(--line); cursor: zoom-in; background: #fff; min-height: 60px; }
+    .nimg img { display: block; width: 100%; aspect-ratio: 4 / 1; object-fit: cover; object-position: 50% 85%; border-radius: 12px; border: 1px solid var(--line); cursor: zoom-in; background: #fff; min-height: 60px; }
     .nimg .nload { color: var(--muted); font-size: 13px; padding: 14px 0; text-align: center; }
     .row .note svg { width: 13px; height: 13px; vertical-align: -2px; margin-inline-end: 3px; }
     .nitem { background: var(--cream); border-radius: 16px; padding: 10px 14px 12px; margin-bottom: 8px; }
@@ -3619,7 +3619,9 @@
     const id = a.dataset.img;
     try {
       const src = await noteImage(id); if (!src || !a.isConnected) return;
-      a.innerHTML = '<img alt="צילום מסך" loading="lazy" />'; a.firstChild.src = src;
+      a.innerHTML = '<img alt="צילום מסך" loading="lazy" />'; const im = a.firstChild;
+      im.onload = () => { const f = im.naturalWidth / (4 * im.naturalHeight), pos = f >= 1 ? 50 : Math.max(0, Math.min(100, (0.85 - f / 2) / (1 - f) * 100)); im.style.objectPosition = '50% ' + pos.toFixed(1) + '%'; };   // החלון 4:1 ממורכז על העשירון השני מלמטה (80% עד 90% מגובה התמונה)
+      im.src = src;
     } catch (e) { if (a.isConnected) a.innerHTML = '<div class="nload">לא ניתן לטעון את התמונה</div>'; }
   }
   /* צירוף תמונה: דחיסה בדפדפן (עד 1600px, JPEG) כדי שהשמירה תהיה קטנה ומהירה */
