@@ -31,6 +31,20 @@ for f in files:
     if f in ('-A', '.', '--all') or not (ROOT / f).exists():
         sys.exit('קובץ לא תקין (מוסיפים רק קבצים בשמם): ' + f)
 
+# בדיקת תחביר לפני כל פרסום: קבצי JS ובלוקי script בתוך HTML (גרסה שבורה לא עולה לאוויר)
+import re, tempfile, shutil
+if shutil.which('node'):
+    for f in files:
+        src = (ROOT / f).read_text(encoding='utf-8')
+        if f.endswith('.js'): blocks = [src]
+        elif f.endswith('.html'): blocks = [m.group(1) for m in re.finditer(r'<script(?![^>]*src=)[^>]*>(.*?)</script>', src, re.S) if m.group(1).strip() and 'application/ld+json' not in m.group(0)[:200]]
+        else: continue
+        for i, b in enumerate(blocks):
+            with tempfile.NamedTemporaryFile('w', suffix='.js', delete=False, encoding='utf-8') as tf: tf.write(b); tn = tf.name
+            r = subprocess.run(['node', '--check', tn], capture_output=True, text=True, encoding='utf-8')
+            os.unlink(tn)
+            if r.returncode: sys.exit('שגיאת תחביר ב-' + f + ' (בלוק ' + str(i) + '), לא מפרסם: ' + r.stderr[:400])
+
 print('1/2 סביבת בדיקות...')
 run(sys.executable, str(ROOT / 'tools' / 'deploy-test.py'))
 print('2/2 סביבת האמת...')
