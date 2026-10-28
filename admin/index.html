@@ -367,6 +367,7 @@
     .kpi b { font-family: "Rubik", sans-serif; font-size: 26px; line-height: 1.1; }
     .kpi span { font-weight: 700; font-size: 14px; }
     .kpi i { font-style: normal; font-size: 13px; color: var(--muted); }
+    .cyel { color: var(--yellow); }   /* זכאות (כסף בזיכוי) בצהוב */
     .kpi.good b { color: var(--green); } .kpi.warn b { color: var(--yellow); } .kpi.bad b { color: var(--red); }
     /* סולם ריווח אחיד: 4 / 8 / 12 / 16 */
     .stsec { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 16px; margin-bottom: 12px; }
@@ -2570,8 +2571,8 @@
 
     // ----- כספים -----
     const money = part('הכנסה לפי מפגש', '<p class="sthint">לפי התשלום ששויך לכל מפגש. הפקדות ויתרות שלא שויכו למפגש לא נספרות בטבלה, אבל נכללות בהכנסה הכוללת</p>' + tbl(['מפגש', 'נרשמו', 'שילמו', 'הכנסה', 'מגמה'], pm.map((r, k) => [dlab(r.m), r.regs, r.paid + '/' + (r.regs - r.ex), ilsB(r.rev), k ? trend(r.rev, pm[k - 1].rev) : '—']))) +
-      part('כל המשתתפים לפי תשלום', '<p class="sthint">' + n + ' משתתפים במערכת, מהם ' + noMeetingN + ' שלא שויכו לאף מפגש</p><div class="stkpis">' + kpi(payers.length, 'שילמו', Ps(payers.length, cohort.length) + ' מהמשתתפים', 'good') + kpi(unpaidP.length, 'עוד לא שילמו', '', unpaidP.length ? 'warn' : '') + kpi(freeP.length, 'חינם', 'לא משלמים על המפגש') + kpi(credHold.length, 'עם קרדיט פתוח', ilsB(credit)) + '</div>') +
-      part('סיכום', tbl(['מדד', 'ערך'], [['הכנסה נטו ממשתתפים (אחרי החזרים)', ilsB(cash)], ['הכנסות אחרות', ilsB(incOther)], ['הוצאות (כולל תשלומים לדרכי הגעה)', ilsB(expAll)], ['רווח', sgn(profit)], ['המרה לתשלום (מכלל המשתתפים)', Ps(payers.length, cohort.length)], ['ממוצע לשולם', payers.length ? ilsB(Math.round(cash / payers.length)) : '—'], ['הוחזר', ilsB(refunds)], ['קרדיט פתוח', ilsB(credit)]])) +
+      part('כל המשתתפים לפי תשלום', '<p class="sthint">' + n + ' משתתפים במערכת, מהם ' + noMeetingN + ' שלא שויכו לאף מפגש</p><div class="stkpis">' + kpi(payers.length, 'שילמו', Ps(payers.length, cohort.length) + ' מהמשתתפים', 'good') + kpi(unpaidP.length, 'עוד לא שילמו', '', unpaidP.length ? 'warn' : '') + kpi(freeP.length, 'חינם', 'לא משלמים על המפגש') + kpi(credHold.length, 'עם קרדיט פתוח', ilsB(credit), credHold.length ? 'warn' : '') + '</div>') +
+      part('סיכום', tbl(['מדד', 'ערך'], [['הכנסה נטו ממשתתפים (אחרי החזרים)', ilsB(cash)], ['הכנסות אחרות', ilsB(incOther)], ['הוצאות (כולל תשלומים לדרכי הגעה)', ilsB(expAll)], ['רווח', sgn(profit)], ['המרה לתשלום (מכלל המשתתפים)', Ps(payers.length, cohort.length)], ['ממוצע לשולם', payers.length ? ilsB(Math.round(cash / payers.length)) : '—'], ['הוחזר', ilsB(refunds)], ['קרדיט פתוח', '<bdi dir="ltr" class="cyel">₪' + nfm(credit) + '</bdi>']])) +
       (() => { const byM = {}; state.payments.forEach((x) => { const v = cashOf(x); if (!v) return; const k = ilDay(x.created_at || new Date().toISOString()).slice(0, 7); byM[k] = (byM[k] || 0) + v; }); const ks = Object.keys(byM).sort(), mx = Math.max(1, ...ks.map((k) => byM[k])); return ks.length > 1 ? part('הכנסה לפי חודש', ks.map((k) => barRow(k.slice(5) + '/' + k.slice(2, 4), byM[k], mx, 'var(--green)', ilsB(byM[k]))).join('')) : ''; })();
 
     // ----- דרכי הגעה -----
