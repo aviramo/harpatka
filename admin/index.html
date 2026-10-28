@@ -796,6 +796,7 @@
     /* קבלה בירוק וזיכוי באדום, בצבעים הבהירים של המערכת, בכל מקום */
     .walrow.rcpt { background: var(--green-bg); } .walrow.rcpt .wamt.wamt { color: var(--green); }
     .walrow.usecr { background: var(--yellow-bg); } .walrow.usecr .wamt.wamt { color: var(--yellow); }   /* שימוש ביתרה למפגש: צהוב */
+    .walrow.alloc { background: rgba(201,111,82,.13); } .walrow.alloc .wamt.wamt { color: var(--terra); }   /* הקצאה למפגש: כתום, כמו כל מה שקשור למפגש */
     .walrow.rfnd { background: var(--red-bg); } .walrow.rfnd .wamt.wamt { color: var(--red); }
     #walAdd, #depSave { background: var(--green-bg); color: var(--green); }
     #cDlg #cYes.danger { background: var(--red); color: #fff; }   /* מחיקה, הסרה והחזר: האדום הכהה של הפלטה */
@@ -3730,11 +3731,10 @@
       const a = Number(x.amount), mt = methodName(x); let lab, cls, sign;
       if (x.kind === 'deposit') { lab = 'קבלת תשלום' + (mt ? ' · ' + mt : ''); cls = 'up'; sign = ''; }
       else if (x.kind === 'credit') { lab = 'ביטול מפגש' + mlabel(x) + ', נשאר ביתרה'; cls = 'up'; sign = ''; }
-      else if (x.kind === 'payment' && x.from_credit) { lab = 'שימוש ביתרה למפגש' + mlabel(x); cls = 'down'; sign = ''; }
-      else if (x.kind === 'payment') { lab = 'תשלום למפגש' + mlabel(x) + (mt ? ' · ' + mt : ''); cls = 'flat'; sign = ''; }
+      else if (x.kind === 'payment') { lab = 'הקצאה למפגש' + mlabel(x) + ' · ' + (x.from_credit ? 'מהיתרה' : (mt || 'תשלום')); cls = 'flat'; sign = ''; }
       else if (x.kind === 'refund' && x.from_credit) { lab = 'החזרת כסף מהיתרה'; cls = 'down'; sign = ''; }
       else { lab = 'החזר כספי למפגש' + mlabel(x); cls = 'flat'; sign = ''; }
-      const rc = (x.kind === 'deposit' || (x.kind === 'payment' && !x.from_credit)) ? ' rcpt' : (x.kind === 'credit' || x.kind === 'refund') ? ' rfnd' : (x.kind === 'payment' && x.from_credit) ? ' usecr' : '';   // קבלה בירוק, זיכוי/החזר באדום
+      const rc = x.kind === 'deposit' ? ' rcpt' : (x.kind === 'credit' || x.kind === 'refund') ? ' rfnd' : x.kind === 'payment' ? ' alloc' : '';   // קבלה בירוק, זיכוי/החזר באדום
       return '<div class="walrow' + rc + '"><div class="wl"><b>' + esc(lab) + '</b><small>' + fmtD(x.created_at) + (x.author_name ? ' · ' + esc(noteAuthor(x.author_email, x.author_name)) : '') + '</small></div><span class="wamt ' + cls + '"><bdi dir="ltr">' + sign + '₪' + nfm(a) + '</bdi></span></div>';
     });
     $('#walHist').innerHTML = rows.length ? rows.join('') : '<p class="mnone">עוד אין תשלומים</p>';
