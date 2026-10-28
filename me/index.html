@@ -58,8 +58,11 @@
   .dethead:focus, .mthead:focus { outline: none; }
   .mtg { border-top: 1px solid var(--line); }
   .mtg:first-of-type { border-top: 0; }
-  .mthead { display: flex; align-items: center; gap: 8px; width: 100%; padding: 14px 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; text-align: start; }
-  .mthead .d { flex: 1; font-weight: 700; }
+  .mthead { display: grid; grid-template-columns: 4.9em 3em 2.9em minmax(0, 1fr) 22px; align-items: center; column-gap: 6px; font-size: 15px; width: 100%; padding: 14px 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; text-align: start; }
+  .mthead .c1, .mthead .c2 { font-weight: 700; white-space: nowrap; }   /* שם היום, תאריך ושעה: עמודות קבועות, כמו טבלה */
+  .mthead .c3 { color: var(--muted); white-space: nowrap; }
+  .mthead .c4 { justify-self: end; }
+  .mthead .chip { white-space: nowrap; font-size: 13px; padding: 0 10px; }
   .mthead svg { width: 22px; height: 22px; color: var(--muted); transition: transform .35s ease; flex: 0 0 auto; }
   .mtg.open .mthead svg { transform: rotate(180deg); }
   .mtfold { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .35s ease; }
@@ -80,7 +83,7 @@
   <div id="app"><div class="center">טוען…</div></div>
 </div>
 <script src="../shared/config.js"></script>
-<script src="../shared/person-form.js?v=20261028h"></script>
+<script src="../shared/person-form.js?v=20261028j"></script>
 <script>
 (() => {
   const DB = {
@@ -117,7 +120,7 @@
   }
 
   const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
-  const fmtDateShort = (iso) => { const [y, m, d] = iso.split('-').map(Number); return 'יום ' + ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'][new Date(y, m - 1, d).getDay()] + "'" + ' ' + String(d).padStart(2, '0') + '.' + String(m).padStart(2, '0'); };   // יום ה' 29.10 (ברשימת המפגשים)
+  const dayParts = (iso) => { const [y, m, d] = iso.split('-').map(Number); return { day: 'יום ' + DAYS[new Date(y, m - 1, d).getDay()], date: String(d).padStart(2, '0') + '.' + String(m).padStart(2, '0') }; };   // לטבלת המפגשים: שם היום, תאריך ושעה בעמודות מיושרות
   const fmtDate = (iso) => { const [y, m, d] = iso.split('-').map(Number); return 'יום ' + DAYS[new Date(y, m - 1, d).getDay()] + ' ' + String(d).padStart(2, '0') + '.' + String(m).padStart(2, '0'); };
   const ils = (n) => '₪' + Math.round(Math.abs(n)).toLocaleString('he-IL');
   const G = '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.3 0-9.7-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>';
@@ -202,7 +205,7 @@
     h += '<div class="card"><h2>המפגשים שלי</h2>' + (ordered.length ? ordered.map((m) => {
       const open = m.id === firstId;
       const badge = m.future ? (m.registered ? (Number(m.paid) > 0 || m.free ? '<span class="chip ok">נרשמתם ✓</span>' : '<span class="chip no">טרם שולם</span>') : '<span class="chip">פתוח להרשמה</span>') : (m.attended ? '<span class="chip ok">הגעתם</span>' : '<span class="chip">לא הגעתם</span>');
-      return '<div class="mtg' + (open ? ' open' : '') + '" data-mid="' + m.id + '"><button type="button" class="mthead" aria-expanded="' + open + '"><span class="d">' + esc(fmtDateShort(m.date)) + '<span class="muted" style="font-weight:400"> · <bdi dir="ltr">' + esc(m.time) + '</bdi></span></span>' + badge + chev + '</button><div class="mtfold"><div>' + meetingBody(m) + '</div></div></div>';
+      return '<div class="mtg' + (open ? ' open' : '') + '" data-mid="' + m.id + '"><button type="button" class="mthead" aria-expanded="' + open + '"><span class="c1">' + esc(dayParts(m.date).day) + '</span><span class="c2">' + esc(dayParts(m.date).date) + '</span><span class="c3"><bdi dir="ltr">' + esc(m.time) + '</bdi></span><span class="c4">' + badge + '</span>' + chev + '</button><div class="mtfold"><div>' + meetingBody(m) + '</div></div></div>';
     }).join('') : '<p class="muted" style="margin:0">עוד לא נקבע מפגש קרוב. נעדכן בקבוצת העדכונים</p>') + '</div>';
 
     const gv = p.gender || '';
