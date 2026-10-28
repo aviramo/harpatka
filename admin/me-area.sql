@@ -20,6 +20,18 @@ end $$;
 revoke all on function public.harpatka_me_claim(text) from public;
 grant execute on function public.harpatka_me_claim(text) to authenticated;
 
+-- מחיר מפגש לפי המדרגות שלו (price_tiers = {base, steps}) והימים שנותרו: המדרגה שמתחילה הכי קרוב למפגש מבין אלה שכבר התחילו, אחרת המחיר הרגיל
+create or replace function public.harpatka_meeting_price(pt0 jsonb, lft int)
+returns int language plpgsql stable set search_path = public as $$
+declare pt jsonb := coalesce(pt0, '{"base": 80, "steps": [{"days": 3, "price": 100}]}'::jsonb); price int;
+begin
+  if jsonb_typeof(pt) <> 'object' then return null; end if;
+  select (e->>'price')::int into price from jsonb_array_elements(coalesce(pt->'steps', '[]'::jsonb)) e where lft <= (e->>'days')::int order by (e->>'days')::int asc limit 1;
+  if price is null then price := (pt->>'base')::int; end if;
+  return price;
+end $$;
+grant execute on function public.harpatka_meeting_price(jsonb, int) to authenticated;
+
 -- כל מה שהמשתתף רואה (ומה שמנהל רואה בהתחזות)
 create or replace function public.harpatka_me(p_as uuid default null)
 returns jsonb language plpgsql security definer set search_path = public as $$
@@ -57,15 +69,18 @@ begin
                            when kind in ('payment', 'refund') and coalesce(from_credit, false) then -amount else 0 end), 0)
     into bal from public.harpatka_payments where participant_id = pid;
 
-  select coalesce(jsonb_agg(x order by (x->>'date') desc), '[]'::jsonb) into meetings from (
+  -- כל המפגשים שרלוונטיים למשתתף: כל מפגש עתידי (רשום או לא, עם מחיר לפי המדרגות של אותו מפגש) ומפגשים שעברו שהוא היה רשום אליהם
+  select coalesce(jsonb_agg(x order by (x->>'date')), '[]'::jsonb) into meetings from (
     select jsonb_build_object(
-      'id', mt.id, 'date', mt.meeting_date, 'time', to_char(mt.meeting_time, 'HH24:MI'), 'directions', mt.directions,
+      'id', mt.id, 'date', mt.meeting_date, 'time', to_char(mt.meeting_time, 'HH24:MI'), 'directions', mt.directions, 'name', mt.name, 'city', mt.city,
+      'registered', a.participant_id is not null,
       'attended', coalesce(a.attended, false), 'free', coalesce(a.no_pay, false),
       'paid', coalesce((select sum(case when p.kind = 'payment' then p.amount when p.kind = 'credit' or (p.kind = 'refund' and not coalesce(p.from_credit, false)) then -p.amount else 0 end)
                          from public.harpatka_payments p where p.participant_id = pid and p.meeting_id = mt.id), 0),
-      'future', mt.meeting_date >= today) as x
-    from public.harpatka_attendance a join public.harpatka_meetings mt on mt.id = a.meeting_id
-    where a.participant_id = pid
+      'future', mt.meeting_date >= today,
+      'price', case when mt.meeting_date >= today then public.harpatka_meeting_price(mt.price_tiers, mt.meeting_date - today) end) as x
+    from public.harpatka_meetings mt left join public.harpatka_attendance a on a.meeting_id = mt.id and a.participant_id = pid
+    where mt.meeting_date >= today or a.participant_id is not null
   ) s;
 
   select * into nxt from public.harpatka_meetings where meeting_date >= today order by meeting_date, meeting_time limit 1;

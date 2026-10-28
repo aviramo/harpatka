@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Rubik:wght@500;700&display=swap" rel="stylesheet" />
 <style>
+    html { -webkit-tap-highlight-color: transparent; }   /* בלי הבהוב הכחול של הדפדפן בלחיצה, בכל העמודים */
   :root { --cream:#F6EFE4; --sand:#E8D5BE; --terra:#C96F52; --ink:#3F382F; --paper:#FFFDF9; --muted:#8A7F72; --line:#E8D5BE; --green:#2F7D4F; --green-bg:#E3F1E8; --red:#B5483A; --red-bg:#F6E0DA; --sky:#1F5C6B; --sky-bg:#E3EEF3; }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
@@ -53,6 +54,20 @@
   .detfold:not(.open) > div { visibility: hidden; }
   .detfold > div > :first-child { margin-top: 10px; }
   @media (prefers-reduced-motion: reduce) { .detfold, .dethead svg { transition: none; } }
+  button, a { -webkit-tap-highlight-color: transparent; }   /* בלי הבהוב הכחול של הדפדפן בלחיצה */
+  .dethead:focus, .mthead:focus { outline: none; }
+  .mtg { border-top: 1px solid var(--line); }
+  .mtg:first-of-type { border-top: 0; }
+  .mthead { display: flex; align-items: center; gap: 8px; width: 100%; padding: 14px 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; text-align: start; }
+  .mthead .d { flex: 1; font-weight: 700; }
+  .mthead svg { width: 22px; height: 22px; color: var(--muted); transition: transform .35s ease; flex: 0 0 auto; }
+  .mtg.open .mthead svg { transform: rotate(180deg); }
+  .mtfold { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .35s ease; }
+  .mtg.open .mtfold { grid-template-rows: 1fr; }
+  .mtfold > div { overflow: hidden; min-height: 0; }
+  .mtg:not(.open) .mtfold > div { visibility: hidden; }
+  .mtfold > div > :last-child { margin-bottom: 14px; }
+  @media (prefers-reduced-motion: reduce) { .mtfold, .mthead svg { transition: none; } }
   .pf-err { color: var(--red); font-size: 13.5px; font-weight: 600; margin-top: 4px; }
   .pf-err:empty { display: none; }
   input.bad, select.bad { border-color: var(--red); }
@@ -65,7 +80,7 @@
   <div id="app"><div class="center">טוען…</div></div>
 </div>
 <script src="../shared/config.js"></script>
-<script src="../shared/person-form.js?v=20261028d"></script>
+<script src="../shared/person-form.js?v=20261028e"></script>
 <script>
 (() => {
   const DB = {
@@ -156,6 +171,7 @@
   function viewPending() { app.innerHTML = '<div class="card"><h2>הבקשה התקבלה</h2><p class="muted" style="margin:0">אנחנו מאשרים את החיבור, ובקרוב האזור האישי יהיה זמין. אפשר לחזור לכאן בעוד קצת זמן</p></div>'; }
   function viewBlocked() { app.innerHTML = '<div class="card"><h2>אין גישה</h2><p class="muted" style="margin:0">החשבון הזה לא מחובר לאזור אישי. אפשר לפנות אלינו בוואטסאפ</p></div>'; }
 
+  let keepOpen = null;   // המפגש שנפתח לפני טעינה מחדש (אחרי הרשמה או ביטול) נשאר פתוח
   function viewMain() {
     const p = data.participant, nx = data.next, imp = !!data.impersonating, ms = data.meetings || [];
     const nxM = nx ? ms.find((m) => m.id === nx.id) : null;
@@ -164,21 +180,29 @@
     if (imp) h += '<div class="imp">מצב צפייה כמנהל: כך ' + esc(p.first_name + ' ' + p.last_name) + ' רואה את האזור האישי (אפשר לבצע פעולות בשמו, והן נרשמות בשם המנהל ביומן)</div>';
     setTitle(p.first_name + ' ' + p.last_name);   // שם המשתתף מחליף את הכותרת "האזור האישי" (בלי כרטיס ברכה)
     if (credit !== 0) h += '<div style="margin-top:12px"><span class="chip ' + (credit > 0 ? 'ok' : 'no') + '">' + (credit > 0 ? 'יתרה לטובתכם ' : 'יתרת חוב ') + ils(credit) + '</span></div>';
-    if (nx) {
-      const reg = nx.registered, paid = nxM ? Number(nxM.paid) > 0 : false, free = nxM ? nxM.free : false;
-      h += '<div class="card"><h2>המפגש הבא</h2><div class="big">' + esc(fmtDate(nx.date)) + ' · <bdi dir="ltr">' + esc(nx.time) + '</bdi></div>' + (nx.directions ? '<div class="muted dirs">' + esc(nx.directions) + '</div>' : '');
-      if (!reg) h += '<button type="button" class="btn" id="regBtn">שמירת מקום</button><div class="msg" id="rm"></div>';
-      else {
-        h += '<div style="margin-top:10px"><span class="chip ok">נרשמתם ✓</span> ' + (free ? '<span class="chip sky">חינם</span>' : paid ? '<span class="chip ok">שולם ' + ils(nxM.paid) + '</span>' : '<span class="chip no">טרם שולם</span>') + '</div>';
-        if (!paid && !free && CFG.payboxLink) h += '<a class="btn" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">תשלום ' + (nx.price ? ils(nx.price) : '') + ' בפייבוקס</a><p class="muted" style="margin:8px 0 0">המקום נשמר אחרי התשלום</p>';
-      }
-      if (reg && !(nxM && nxM.attended)) h += '<button type="button" class="btn ghost" id="unregBtn">ביטול רישום</button><div class="msg" id="um"></div>';
-      h += '</div>';
-    } else h += '<div class="card"><h2>המפגש הבא</h2><p class="muted" style="margin:0">עוד לא נקבע מפגש קרוב. נעדכן בקבוצת העדכונים</p>' + (CFG.updatesGroupLink ? '<a class="btn ghost" href="' + esc(CFG.updatesGroupLink) + '" target="_blank" rel="noopener">הצטרפות לקבוצת העדכונים</a>' : '') + '</div>';
-
-    h += '<div class="card"><h2>המפגשים שלי</h2>' + (ms.length ? ms.map((m) => '<div class="row"><div class="d">' + esc(fmtDate(m.date)) + '<div class="muted" style="font-weight:400">' + esc(m.time) + '</div></div>' +
-      (m.attended ? '<span class="chip ok">הגעתם</span>' : m.future ? '<span class="chip">בקרוב</span>' : '<span class="chip">לא הגעתם</span>') +
-      (m.free ? '<span class="chip sky">חינם</span>' : Number(m.paid) > 0 ? '<span class="chip ok">' + ils(m.paid) + '</span>' : '<span class="chip no">לא שולם</span>') + '</div>').join('') : '<p class="muted" style="margin:0">עוד לא נרשמתם למפגש</p>') + '</div>';
+    // סקשן אחד "המפגשים שלי": כל מפגש עתידי (אפשר להירשם, לשלם ולבטל) ומפגשים שהיו. כל מפגש נפתח ונסגר; הקרוב פתוח כברירת מחדל
+    const upcoming = ms.filter((m) => m.future), past = ms.filter((m) => !m.future).sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    const ordered = upcoming.concat(past), firstId = keepOpen && ordered.some((m) => m.id === keepOpen) ? keepOpen : (upcoming.length ? upcoming[0].id : null); keepOpen = null;
+    const chev = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+    const meetingBody = (m) => {
+      const paid = Number(m.paid) > 0, free = !!m.free; let b = '';
+      if (m.name || m.city) b += '<div class="muted">' + esc([m.name, m.city].filter(Boolean).join(' · ')) + '</div>';
+      if (m.directions) b += '<div class="muted dirs">' + esc(m.directions) + '</div>';
+      if (m.future) {
+        if (!m.registered) b += '<button type="button" class="btn" data-reg="' + m.id + '">שמירת מקום</button><div class="msg" data-rm="' + m.id + '"></div>';
+        else {
+          b += '<div style="margin-top:10px"><span class="chip ok">נרשמתם ✓</span> ' + (free ? '<span class="chip sky">חינם</span>' : paid ? '<span class="chip ok">שולם ' + ils(m.paid) + '</span>' : '<span class="chip no">טרם שולם</span>') + '</div>';
+          if (!paid && !free && CFG.payboxLink) b += '<a class="btn" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">תשלום ' + (m.price ? ils(m.price) : '') + ' בפייבוקס</a><p class="muted" style="margin:8px 0 0">המקום נשמר אחרי התשלום</p>';
+          if (!m.attended) b += '<button type="button" class="btn ghost" data-unreg="' + m.id + '">ביטול רישום</button><div class="msg" data-um="' + m.id + '"></div>';
+        }
+      } else b += '<div style="margin-top:10px">' + (m.attended ? '<span class="chip ok">הגעתם</span>' : '<span class="chip">לא הגעתם</span>') + ' ' + (free ? '<span class="chip sky">חינם</span>' : paid ? '<span class="chip ok">שולם ' + ils(m.paid) + '</span>' : '<span class="chip no">לא שולם</span>') + '</div>';
+      return b;
+    };
+    h += '<div class="card"><h2>המפגשים שלי</h2>' + (ordered.length ? ordered.map((m) => {
+      const open = m.id === firstId;
+      const badge = m.future ? (m.registered ? (Number(m.paid) > 0 || m.free ? '<span class="chip ok">נרשמתם ✓</span>' : '<span class="chip no">טרם שולם</span>') : '<span class="chip">פתוח להרשמה</span>') : (m.attended ? '<span class="chip ok">הגעתם</span>' : '<span class="chip">לא הגעתם</span>');
+      return '<div class="mtg' + (open ? ' open' : '') + '" data-mid="' + m.id + '"><button type="button" class="mthead" aria-expanded="' + open + '"><span class="d">' + esc(fmtDate(m.date)) + '<span class="muted" style="font-weight:400"> · <bdi dir="ltr">' + esc(m.time) + '</bdi></span></span>' + badge + chev + '</button><div class="mtfold"><div>' + meetingBody(m) + '</div></div></div>';
+    }).join('') : '<p class="muted" style="margin:0">עוד לא נקבע מפגש קרוב. נעדכן בקבוצת העדכונים</p>') + '</div>';
 
     const gv = p.gender || '';
     const missing = !p.gender || p.age == null;   // חסר פרט חובה: הכרטיס נפתח מעצמו
@@ -189,22 +213,22 @@
     if (CFG.updatesGroupLink) h += '<div class="card"><h2>הקבוצה השקטה</h2><p class="muted" style="margin:0">קבוצת וואטסאפ שקטה לקבלת עדכונים על המפגשים הבאים</p><a class="btn ghost" href="' + esc(CFG.updatesGroupLink) + '" target="_blank" rel="noopener">כניסה לקבוצה השקטה</a></div>';
     app.innerHTML = h;
 
-    const rb = $('#regBtn');
-    if (rb) rb.onclick = async () => {
-      rb.disabled = true;
-      try { const r = await rpc('harpatka_me_register', Object.assign({ p_meeting: nx.id }, imp ? { p_as: asId } : {})); if (r === 'registered' || r === 'exists') load(); else { toast($('#rm'), 'אי אפשר להירשם למפגש הזה', true); rb.disabled = false; } }
-      catch (e) { toast($('#rm'), 'משהו השתבש, אפשר לנסות שוב', true); rb.disabled = false; }
-    };
-    const ub = $('#unregBtn');
-    if (ub) ub.onclick = async () => {   // שני שלבים: לחיצה ראשונה מבקשת אישור
+    app.querySelectorAll('.mthead').forEach((hd) => { hd.onclick = () => { const c = hd.parentElement, on = !c.classList.contains('open'); c.classList.toggle('open', on); hd.setAttribute('aria-expanded', String(on)); }; });
+    app.querySelectorAll('[data-reg]').forEach((rb) => { rb.onclick = async () => {
+      const id = rb.dataset.reg, msg = app.querySelector('[data-rm="' + id + '"]'); rb.disabled = true;
+      try { const r = await rpc('harpatka_me_register', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {})); if (r === 'registered' || r === 'exists') { keepOpen = id; load(); } else { toast(msg, 'אי אפשר להירשם למפגש הזה', true); rb.disabled = false; } }
+      catch (e) { toast(msg, 'משהו השתבש, אפשר לנסות שוב', true); rb.disabled = false; }
+    }; });
+    app.querySelectorAll('[data-unreg]').forEach((ub) => { ub.onclick = async () => {   // שני שלבים: לחיצה ראשונה מבקשת אישור
+      const id = ub.dataset.unreg, msg = app.querySelector('[data-um="' + id + '"]');
       if (!ub.dataset.sure) { ub.dataset.sure = '1'; ub.textContent = 'לחיצה נוספת לאישור ביטול הרישום'; return; }
       ub.disabled = true;
       try {
-        const r = await rpc('harpatka_me_unregister', Object.assign({ p_meeting: nx.id }, imp ? { p_as: asId } : {}));
-        if (r === 'cancelled' || r === 'not_registered') load();
-        else { toast($('#um'), r === 'attended' ? 'סומנה הגעה למפגש, אי אפשר לבטל' : 'אי אפשר לבטל את הרישום למפגש הזה', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול רישום'; }
-      } catch (e) { toast($('#um'), 'משהו השתבש, אפשר לנסות שוב', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול רישום'; }
-    };
+        const r = await rpc('harpatka_me_unregister', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {}));
+        if (r === 'cancelled' || r === 'not_registered') { keepOpen = id; load(); }
+        else { toast(msg, r === 'attended' ? 'סומנה הגעה למפגש, אי אפשר לבטל' : 'אי אפשר לבטל את הרישום למפגש הזה', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול רישום'; }
+      } catch (e) { toast(msg, 'משהו השתבש, אפשר לנסות שוב', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול רישום'; }
+    }; });
     PersonForm.bind(app);
     $('#detHead').onclick = () => { const f = $('#detBody'), on = !f.classList.contains('open'); f.classList.toggle('open', on); $('#detHead').setAttribute('aria-expanded', String(on)); };
     $('#saveBtn').onclick = async () => {
