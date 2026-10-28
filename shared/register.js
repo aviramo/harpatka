@@ -313,8 +313,26 @@
     document.querySelectorAll('[data-su="who"]').forEach((e) => { e.textContent = on ? meInfo.first + ' ' + meInfo.last : ''; });
     if (on) { window.__meName = meInfo.first + ' ' + meInfo.last; try { window.dispatchEvent(new Event('harpatka:me')); } catch (e) {} }
   };
+  /* התחברות עם גוגל ישר מדף הבית (בלי לעבור באזור האישי): חוזרים לאותו עמוד עם הטוקן ב-hash, שומרים אותו, ואם אין משתתף מקושר פותחים את פופאפ ההרשמה */
+  const LOGIN_KEY = 'harpatka_login_pending';   // '1': פתיחת הרשמה רק אם אין משתתף; 'reg': תמיד לפתוח את פופאפ ההרשמה אחרי ההתחברות
+  function loginGoogle(after) {
+    try { sessionStorage.setItem(LOGIN_KEY, after || '1'); } catch (e) {}
+    location.href = CONFIG.supabaseUrl + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(location.origin + location.pathname);
+  }
+  function takeLoginHash() {
+    const h = new URLSearchParams(location.hash.replace(/^#/, ''));
+    if (h.get('access_token')) {
+      try { localStorage.setItem(ME_KEY, JSON.stringify({ access_token: h.get('access_token'), refresh_token: h.get('refresh_token') })); } catch (e) {}
+      try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+      return true;
+    }
+    if (h.get('error_description')) { try { history.replaceState(null, '', location.pathname + location.search); sessionStorage.removeItem(LOGIN_KEY); } catch (e) {} }
+    return false;
+  }
   const clearMeName = () => { try { localStorage.removeItem('harpatka_me_name'); } catch (e) {} if (window.__meName) { window.__meName = null; } try { window.dispatchEvent(new Event('harpatka:me')); } catch (e) {} };
   async function loadMe() {
+    takeLoginHash();
+    let pending = null; try { pending = sessionStorage.getItem(LOGIN_KEY); sessionStorage.removeItem(LOGIN_KEY); } catch (e) {}
     try {
       if (!(await meToken())) { clearMeName(); return; }
       const d = await meRpc('harpatka_me', {});
@@ -322,7 +340,8 @@
         meInfo = { first: d.participant.first_name, last: d.participant.last_name || '', age: d.participant.age, gender: d.participant.gender, meetings: d.meetings || [] };
         applyMemberMode();
         try { localStorage.setItem('harpatka_me_name', meInfo.first + ' ' + meInfo.last); } catch (e) {}
-      } else clearMeName();   // מחובר לגוגל אבל אין משתתף מקושר: מוצג "התחברות"
+        if (pending === 'reg') setTimeout(() => window.HarpatkaRegister.open(true), 300);   // הגיעו מהקישור בפופאפ ההרשמה: חוזרים אליו, במצב מחובר
+      } else { clearMeName(); if (pending) setTimeout(() => window.HarpatkaRegister.open(true), 300); }   // מחובר לגוגל אבל אין משתתף מקושר: פותחים את פופאפ ההרשמה
     } catch (e) { /* תקלה זמנית: ממשיכים כאורח, עם הטופס הרגיל */ }
   }
   async function memberSubmit(root, btn, q, showDone) {
@@ -355,7 +374,8 @@
   }
   /* מצב מפגש של המשתתף המחובר (להצגה בכפתור של כרטיסי המפגשים בדף הבית) */
   const meGet = (mid) => (meInfo && (meInfo.meetings || []).find((x) => x.id === mid)) || null;
-  window.HarpatkaMe = { confirmLogout, get: meGet };
+  window.HarpatkaMe = { confirmLogout, get: meGet, login: loginGoogle };
+  document.querySelectorAll('[data-su="glink"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); loginGoogle('reg'); }));
   loadMe();
   const contactModal = document.getElementById('contactModal');
   window.HarpatkaRegister = { open: (auto, meeting) => { selMeeting = meeting && meeting.id ? meeting : null; showMeeting(selMeeting || nearest); applyMemberMode(); if (contactModal) openModal(contactModal, auto === true); } };   // לשימוש עמודים אחרים
