@@ -74,6 +74,7 @@ begin
     select jsonb_build_object(
       'id', mt.id, 'date', mt.meeting_date, 'time', to_char(mt.meeting_time, 'HH24:MI'), 'directions', mt.directions, 'name', mt.name, 'city', mt.city,
       'registered', a.participant_id is not null,
+      'reported', coalesce(a.status_key, '') = 'm_reported',
       'attended', coalesce(a.attended, false), 'free', coalesce(a.no_pay, false),
       'paid', coalesce((select sum(case when p.kind = 'payment' then p.amount when p.kind = 'credit' or (p.kind = 'refund' and not coalesce(p.from_credit, false)) then -p.amount else 0 end)
                          from public.harpatka_payments p where p.participant_id = pid and p.meeting_id = mt.id), 0),
