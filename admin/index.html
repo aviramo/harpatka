@@ -3620,7 +3620,6 @@
   });
   $('#depLines').addEventListener('click', async (e) => {
     const b = e.target.closest('.ddel'); if (!b) return;
-    if (!b.classList.contains('sure')) { b.classList.add('sure'); b.textContent = 'להסיר?'; setTimeout(() => { if (b.isConnected) { b.classList.remove('sure'); b.textContent = '×'; } }, 3500); return; }
     const row = state.payments.find((x) => x.id === b.closest('.dline').dataset.id); if (!row) return;
     try { await api(T.pay + '?id=eq.' + row.id, { method: 'DELETE' }); state.payments = state.payments.filter((x) => x.id !== row.id); toast(row.from_credit ? 'ההקצאה הוסרה והכסף חזר ליתרה' : 'ההקצאה הוסרה'); depLinesRefresh(); } catch (err) { fail(err); }
   });
