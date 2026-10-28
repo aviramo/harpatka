@@ -187,10 +187,10 @@
     .hsearch:not(:focus-within) input:placeholder-shown::placeholder { color: transparent; }
     .hsearch:focus-within, .listbar:has(.hsearch input:not(:placeholder-shown)) .hsearch { position: absolute; inset: 3px 0 3px 11px; margin: 0; width: auto; height: auto; z-index: 4; }
     .listbar:has(.hsearch:focus-within) .seggrp, .listbar:has(.hsearch input:not(:placeholder-shown)) .seggrp { visibility: hidden; }   /* התיבה הפתוחה צרה מהשורה: הצ'יפים לא מציצים מאחוריה */
-    .listbar:has(.hsearch:focus-within) > :not(.hsearch), .listbar:has(.hsearch input:not(:placeholder-shown)) > :not(.hsearch) { visibility: hidden; }   /* התיבה הפתוחה מכסה עד הקצה השמאלי: שום דבר לא מציץ מאחוריה */
+    .listbar:has(.hsearch:focus-within) > :not(.hsearch):not(:has(.hsearch)), .listbar:has(.hsearch input:not(:placeholder-shown)) > :not(.hsearch):not(:has(.hsearch)) { visibility: hidden; }   /* התיבה הפתוחה מכסה עד הקצה השמאלי: שום דבר לא מציץ מאחוריה */
     .hsearch:focus-within input, .hsearch input:not(:placeholder-shown) { width: 100%; height: 100%; padding: 0 40px 0 12px; cursor: text; }
     .hsearch .sclear { left: 10px; width: 20px; height: 20px; font-size: 15px; }   /* קטן, עם ריווח מהקצה */
-    .search svg { position: absolute; right: 12px; top: 12px; width: 20px; height: 20px; color: var(--muted); }
+    .search svg { position: absolute; right: 12px; top: 12px; width: 20px; height: 20px; color: var(--muted); pointer-events: none; }
 
     .chips {
       display: flex; gap: 8px; overflow-x: auto; padding: 12px 16px 4px; margin: 0 -16px;
@@ -2270,7 +2270,7 @@
   }
 
   /* ---------- רינדור ---------- */
-  function render() { attCache = null; renderChips(); renderSort(); renderList();  syncUrl(); }   // בתוך מפגש מוסיפים דרך החיפוש
+  function render() { attCache = null; renderChips(); renderSort(); renderList();  syncUrl(); requestAnimationFrame(alignFilters); }   // בתוך מפגש מוסיפים דרך החיפוש
 
   /* בורר המפגש בכותרת (במקום שורת התגיות): כל המשתתפים, מפגש אחד לסינון, או יצירת מפגש */
   function renderChips() {
@@ -4548,6 +4548,7 @@
     [['#listPay', '#list .payic'], ['#listHere', '#list .here'], ['#listSent', '#list .evc'], ['#listBal', '#list .balic'], ['#listAtt', '#list .ptag.cnt']].forEach(([box, ref]) => {
       const b = document.querySelector(box), r = document.querySelector(ref); if (!b) return;
       if (box === '#listSent') b.style.visibility = (!r && !state.sent) ? 'hidden' : '';   // אין אף עיגול שליחה ברשימה (אף משתתף לא זכאי): אין מה לסנן, והאייקון לא נערם על אייקון התשלום
+      if (!r && box !== '#listSent') b.style.left = '';   // אין שורות להתיישר מולן (למשל מפגש ריק): חוזרים למיקום הרגיל ולא נשארים במקום של המפגש הקודם
       if (r) { const rr = r.getBoundingClientRect(), bb = (b.firstElementChild || b).getBoundingClientRect(); b.style.left = Math.round(rr.left + rr.width / 2 - br.left - (bb.left - b.getBoundingClientRect().left) - bb.width / 2) + 'px'; }
       else if (box === '#listSent') {   // אין בשורות עיגולי שליחה (למשל כשהחלון נסגר והסינון "לא נשלחו" פעיל): האייקון באמצע בין אייקון התשלום להגעה, ולא נערם על אחד מהם
         const ic = (id) => { const e = document.querySelector(id + ' > *'); return e && e.getBoundingClientRect().width ? e.getBoundingClientRect() : null; }, a1 = ic('#listPay'), a2 = ic('#listHere'), bb = (b.firstElementChild || b).getBoundingClientRect();
