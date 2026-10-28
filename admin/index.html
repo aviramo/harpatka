@@ -3752,7 +3752,7 @@
       else if (x.kind === 'refund' && x.from_credit) { lab = 'החזרת כסף מהיתרה'; cls = 'down'; sign = ''; }
       else { lab = 'החזר כספי למפגש' + mlabel(x); cls = 'flat'; sign = ''; }
       const rc = x.kind === 'deposit' ? (x.reason === 'alloc_removed' ? ' tobal' : ' rcpt') : (x.kind === 'credit' || x.kind === 'refund') ? ' rfnd' : x.kind === 'payment' ? ' alloc' : '';   // קבלה בירוק, זיכוי/החזר באדום
-      const row = (lb, c, cl) => '<div class="walrow' + c + '"><div class="wl"><b>' + esc(lb) + '</b><small>' + fmtD(x.created_at) + (x.author_name ? ' · ' + esc(noteAuthor(x.author_email, x.author_name)) : '') + '</small></div><span class="wamt ' + cl + '"><bdi dir="ltr">' + sign + '₪' + nfm(a) + '</bdi></span></div>';
+      const row = (lb, c, cl) => '<div class="walrow' + c + '"><div class="wl"><b>' + esc(lb) + '</b><small>' + fmtDT(x.created_at) + (x.author_name ? ' · ' + esc(noteAuthor(x.author_email, x.author_name)) : '') + '</small></div><span class="wamt ' + cl + '"><bdi dir="ltr">' + sign + '₪' + nfm(a) + '</bdi></span></div>';
       if (x.kind === 'deposit' && x.reason === 'alloc_removed') return [row('קבלת סכום ליתרה · מחיקת הקצאה', ' tobal', 'up'), row('קבלת תשלום' + (mt ? ' · ' + mt : ''), ' rcpt', 'up')];   // הכסף שחזר ליתרה במחיקת הקצאה: שתי שורות, התשלום המקורי (ירוק, עם דרך התשלום) והעברתו ליתרה (צהוב)
       if (x.kind === 'payment' && !x.from_credit) return [row('הקצאה למפגש' + mlabel(x), ' alloc', 'flat'), row('קבלת תשלום' + (mt ? ' · ' + mt : ''), ' rcpt', 'up')];   // תשלום ישיר למפגש = שתי שורות: קבלת הכסף (ירוק) וההקצאה (כתום)
       return [row(lab, rc, cls)];
