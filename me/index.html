@@ -26,6 +26,13 @@
   .btn.pay { background: var(--green); }   /* כפתור התשלום: הירוק הכהה של הפלטה (אין להמציא צבעים) */
   .btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
   .btn[disabled] { opacity: .5; cursor: default; }
+  .balcard { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; padding: 16px 20px; border-radius: 24px; background: var(--cream); border: 1px solid var(--line); }
+  .balcard .bl { font-size: 17px; font-weight: 700; color: var(--muted); }
+  .balcard .bv { font-family: Rubik, sans-serif; font-size: 32px; font-weight: 800; line-height: 1.1; color: var(--muted); }
+  .balcard.pos { background: var(--yellow-bg); border-color: var(--yellow-bg); }
+  .balcard.pos .bl, .balcard.pos .bv { color: var(--yellow); }
+  .balcard.neg { background: var(--red-bg); border-color: var(--red-bg); }
+  .balcard.neg .bl, .balcard.neg .bv { color: var(--red); }
   .chip { display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 999px; font-size: 14px; font-weight: 700; background: var(--cream); color: var(--muted); }
   .chip.ok { background: var(--green-bg); color: var(--green); }
   .chip.no { background: var(--red-bg); color: var(--red); }
@@ -206,7 +213,7 @@
     let h = '';
     if (imp) h += '<div class="imp">מצב צפייה כמנהל: כך ' + esc(p.first_name + ' ' + p.last_name) + ' רואה את האזור האישי (אפשר לבצע פעולות בשמו, והן נרשמות בשם המנהל ביומן)</div>';
     setTitle(p.first_name + ' ' + p.last_name);   // שם המשתתף מחליף את הכותרת "האזור האישי" (בלי כרטיס ברכה)
-    h += '<div style="margin-top:12px"><span class="chip ' + (credit > 0 ? 'wait' : credit < 0 ? 'no' : '') + '">' + (credit > 0 ? 'יתרה לטובתכם ' : credit < 0 ? 'יתרת חוב ' : 'יתרה ') + ils(Math.abs(credit)) + '</span></div>';   // תמיד מוצגת: זכאות בצהוב, חוב באדום, אפס ניטרלי
+    h += '<div class="balcard ' + (credit > 0 ? 'pos' : credit < 0 ? 'neg' : 'zero') + '"><span class="bl">' + (credit > 0 ? 'יתרה לטובתכם' : credit < 0 ? 'יתרת חוב' : 'יתרה') + '</span><b class="bv">' + ils(Math.abs(credit)) + '</b></div>';   // יתרה תמיד מוצגת, בולטת: זכאות בצהוב, חוב באדום, אפס ניטרלי
     // סקשן אחד "המפגשים שלי": כל מפגש עתידי (אפשר להירשם, לשלם ולבטל) ומפגשים שהיו. כל מפגש נפתח ונסגר; הקרוב פתוח כברירת מחדל
     const ordered = ms.slice().sort((a, b) => (String(b.date) + String(b.time)).localeCompare(String(a.date) + String(a.time))), upcoming = ordered.filter((m) => m.future);   // מהחדש לישן
     const firstId = keepOpen && ordered.some((m) => m.id === keepOpen) ? keepOpen : null; keepOpen = null;   // אין מפגש פתוח כברירת מחדל; רק מפגש שהרגע נרשמו אליו או ביטלו נשאר פתוח
