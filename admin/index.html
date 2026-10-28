@@ -914,8 +914,9 @@
     .paychip[hidden] { display: none; }
     .paychip.allocchip.topay { background: var(--cream); color: var(--muted); }
     .paychip.allocchip.free { background: #fff; color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); }   /* חינם: לבן עם ₪ מחוק, כמו בכרטיס המפגש */
-    #qMenu.am2 { width: max-content; min-width: 0; display: flex; flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 6px; padding: 8px; }   /* תפריט לתשלום / חינם */
-    #qMenu.am2 .qi { height: 30px; padding: 0 16px; border: 0; border-radius: 999px; font-size: 14px; font-weight: 700; background: var(--cream); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; }
+    #qMenu.am2 { width: max-content; min-width: 0; display: flex; flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 8px; padding: 10px; }   /* תפריט לתשלום / חינם */
+    #qMenu.am2 .qi { height: 42px; padding: 0 22px; border: 0; border-radius: 999px; font-size: 16px; font-weight: 700; background: var(--cream); color: var(--muted); display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; }
+    #qMenu.am2 .qi.del { background: var(--red-bg); color: var(--red); }   /* מחיקת הקצאה: אדום בהיר */
     #qMenu.am2 .qi.free { background: #fff; box-shadow: inset 0 0 0 1px var(--line); }
     #qMenu.am2 .qi[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--ink); }
     .paychip.allocchip { background: var(--green-bg); color: var(--green); border: 0; cursor: pointer; font-family: inherit; }   /* הקצאה למפגש: צ'יפ בכותרת, בצד שמאל, כמו היתרה בכרטיס המשתתף */
@@ -3745,7 +3746,7 @@
     if (menu.parentNode !== host) host.appendChild(menu);
     const fr = sheet.modeApi.free(), alv = Math.round(allocatedOf(sheet.id, sheet.depMid) * 100) / 100;
     menu.className = 'qmenu am2';
-    menu.innerHTML = (alv > 0 ? '<button type="button" role="menuitem" class="qi" data-md="del" aria-pressed="false">מחיקת הקצאה</button>' : '<button type="button" role="menuitem" class="qi" data-md="pay" aria-pressed="false">לתשלום</button>') + '<button type="button" role="menuitem" class="qi free" data-md="free" aria-pressed="' + fr + '"><span class="nps">₪</span>חינם</button>';   // בדיוק כמו המצבים בכרטיס המפגש: לתשלום (ניטרלי), חינם (לבן עם ₪ מחוק)
+    menu.innerHTML = (alv > 0 ? '<button type="button" role="menuitem" class="qi del" data-md="del" aria-pressed="false">מחיקת הקצאה</button>' : '<button type="button" role="menuitem" class="qi" data-md="pay" aria-pressed="false">לתשלום</button>') + '<button type="button" role="menuitem" class="qi free" data-md="free" aria-pressed="' + fr + '"><span class="nps">₪</span>חינם</button>';   // בדיוק כמו המצבים בכרטיס המפגש: לתשלום (ניטרלי), חינם (לבן עם ₪ מחוק)
     menu.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth;
     menu.style.left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8) + 'px'; menu.style.top = (r.bottom + 6) + 'px';
