@@ -3742,15 +3742,20 @@
     const menu = $('#qMenu'), anchor = $('#pAllocChip'), host = anchor.closest('dialog') || document.body;
     if (!menu.hidden) { closeQ(); return; }
     if (menu.parentNode !== host) host.appendChild(menu);
-    const fr = sheet.modeApi.free();
+    const fr = sheet.modeApi.free(), alv = Math.round(allocatedOf(sheet.id, sheet.depMid) * 100) / 100;
     menu.className = 'qmenu am2';
-    menu.innerHTML = '<button type="button" role="menuitem" class="qi" data-md="pay" aria-pressed="' + !fr + '">לתשלום</button><button type="button" role="menuitem" class="qi free" data-md="free" aria-pressed="' + fr + '"><span class="nps">₪</span>חינם</button>';   // בדיוק כמו המצבים בכרטיס המפגש: לתשלום (ניטרלי), חינם (לבן עם ₪ מחוק)
+    menu.innerHTML = (alv > 0 ? '<button type="button" role="menuitem" class="qi" data-md="del" aria-pressed="false">מחיקת הקצאה</button>' : '<button type="button" role="menuitem" class="qi" data-md="pay" aria-pressed="' + !fr + '">לתשלום</button>') + '<button type="button" role="menuitem" class="qi free" data-md="free" aria-pressed="' + fr + '"><span class="nps">₪</span>חינם</button>';   // בדיוק כמו המצבים בכרטיס המפגש: לתשלום (ניטרלי), חינם (לבן עם ₪ מחוק)
     menu.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth;
     menu.style.left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8) + 'px'; menu.style.top = (r.bottom + 6) + 'px';
     menu.onclick = (e) => {
       const b = e.target.closest('[data-md]'); if (!b) return; closeQ();
       const to = b.dataset.md, api = sheet.modeApi, pid = sheet.id, mid = sheet.depMid;
+      if (to === 'del') {   // מחיקת הקצאה: אותו תהליך כמו במעבר לחינם (הכסף נשאר ביתרה של המשתתף), בלי לסמן חינם
+        const al0 = Math.round(allocatedOf(pid, mid) * 100) / 100;
+        confirmAct('למחוק את ההקצאה למפגש?', pid, mid, () => api.del(), 'מוקצים למפגש <b>' + ils(al0) + '</b>. מחיקת ההקצאה תשאיר את הכסף ביתרה של המשתתף (לא יוחזר ככסף).', 'כן, למחוק את ההקצאה');
+        return;
+      }
       if ((to === 'free') === api.free()) return;
       if (to === 'free') {
         const al = Math.round(allocatedOf(pid, mid) * 100) / 100;
@@ -3915,7 +3920,12 @@
       if (isFree()) await switchLocked('pay');   // בחירה בדרך תשלום מבטלת את החינם (בלי פופאפ אישור)
       pickChoice(b, cb);
     };
-    sheet.modeApi = { free: isFree, go: (md) => switchLocked(md) };
+    sheet.modeApi = { free: isFree, go: (md) => switchLocked(md), del: async () => {
+      sheet.depLock = Date.now() + 60000;
+      try { await reduceAlloc(pid, m.id, Math.max(0, Math.round(allocatedOf(pid, m.id) * 100) / 100)); toast('ההקצאה נמחקה והכסף נשאר ביתרה'); depLinesRefresh(); }
+      catch (err) { fail(err); }
+      finally { sheet.depLock = Date.now() + 1500; setTimeout(refreshOpenSheet, 1600); }
+    } };
     sheet.paintMeth = paintMeth; paintMeth();
     const paintPkg = () => { const n = parseInt(f.pay_pkg.value, 10), a = parseFloat(f.pay_dep.value); $('#depPkgHint').innerHTML = n >= 2 && a > 0 ? 'מחיר למפגש בחבילה: <b>₪' + nfm(Math.round(a / n)) + '</b>. ' + (m ? 'המפגש הזה ועוד עד ' + (n - 1) + ' מפגשים קרובים משויכים ייפרעו מיד, והשאר ייפרעו בשיוך' : 'כל שיוך למפגש ייקח את הסכום הזה מהיתרה, עד ' + n + ' מפגשים') : ''; };
     sheet.depTyped = false; f.pay_pkg.oninput = paintPkg; f.pay_dep.oninput = () => { sheet.depTyped = true; paintPkg(); syncDepSave(); };
