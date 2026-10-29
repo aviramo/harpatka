@@ -16,6 +16,7 @@
   h1, h2 { font-family: Rubik, Assistant, sans-serif; margin: 0; }
   .wrap { max-width: 520px; margin: 0 auto; padding: 14px 16px 48px; }
   .top { display: flex; align-items: center; gap: 10px; min-height: 44px; position: sticky; top: var(--tbtop, 0px); z-index: 20; background: var(--cream); margin: -14px -16px 0; padding: 14px 16px 8px; border-bottom: 1px solid var(--line); }   /* כותרת קבועה: השם והיציאה תמיד בראש המסך */
+  html.embed .top { top: 0; }
   .top h1 { flex: 1; font-size: 22px; }
   .link { background: none; border: 0; color: var(--muted); font: inherit; font-size: 15px; padding: 6px 4px; cursor: pointer; text-decoration: underline; }
   .lgback { position: fixed; inset: 0; background: rgba(30,25,20,.62); opacity: 0; transition: opacity .3s ease; z-index: 40; }
@@ -145,7 +146,14 @@
       const d = await r.json(); saveSession({ access_token: d.access_token, refresh_token: d.refresh_token }); return true;
     } catch (e) { return false; }
   }
-  const goGoogle = () => { try { if (asId) sessionStorage.setItem(AS_KEY, asId); } catch (e) {} location.href = DB.url + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(location.origin + location.pathname); };
+  /* מצב מוטמע (פופאפ האזור האישי בדף הבית ובדף הניהול, iframe): כניסה עם גוגל מנווטת את הדף הראשי וחוזרת אליו, והפופאפ נפתח מחדש */
+  const EMBED = window.self !== window.top && new URLSearchParams(location.search).has('embed');
+  if (EMBED) document.documentElement.classList.add('embed');
+  const goGoogle = () => {
+    try { if (asId) sessionStorage.setItem(AS_KEY, asId); } catch (e) {}
+    if (EMBED) { try { sessionStorage.setItem('harpatka_open_me', '1'); } catch (e) {} window.top.location.href = DB.url + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(window.top.location.origin + window.top.location.pathname); return; }
+    location.href = DB.url + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(location.origin + location.pathname);
+  };
   async function rpc(name, body) {
     const call = () => fetch(DB.url + '/rest/v1/rpc/' + name, { method: 'POST', headers: { apikey: DB.key, Authorization: 'Bearer ' + ((session && session.access_token) || DB.key), 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
     let res = await call();
@@ -165,6 +173,7 @@
   const toast = (el, text, bad) => { el.textContent = text; el.className = 'msg ' + (bad ? 'bad' : 'good'); };
 
   function viewLogin() {
+    if (EMBED) { app.innerHTML = '<div class="card"><h2>האזור האישי</h2><p class="muted" style="margin:0 0 14px">כאן אפשר לראות את המפגשים שלכם, את התשלומים והיתרה, להירשם למפגש הבא ולעדכן פרטים</p><button type="button" class="gbtn" id="gBtn">' + G + 'כניסה עם גוגל</button></div>'; $('#gBtn').onclick = goGoogle; return; }
     /* מסך כניסה: פופאפ שיורד מלמעלה (כמו פופאפ ההרשמה) עם כפתור ההתחברות; סגירה (לחיצה בחוץ או על הפס) חוזרת לדף הבית */
     app.innerHTML = '<div class="lgback" id="lgBack"></div><div class="lgpop" id="lgPop" role="dialog" aria-modal="true" aria-labelledby="lgT"><h2 id="lgT">האזור האישי</h2><p class="muted" style="margin:0 0 14px">כאן אפשר לראות את המפגשים שלכם, את התשלומים והיתרה, להירשם למפגש הבא ולעדכן פרטים</p><button type="button" class="gbtn" id="gBtn">' + G + 'כניסה עם גוגל</button><button type="button" class="lggrab" id="lgGrab" aria-label="סגירה"><i></i></button></div>';
     $('#gBtn').onclick = goGoogle;
@@ -377,7 +386,7 @@
     if (!session) { if (q.get('login') && !asId) { if (q.get('back')) { try { sessionStorage.setItem('harpatka_me_back', q.get('back')); } catch (e) {} } goGoogle(); return; } viewLogin(); return; }   // ?login=1 (הקישור מההרשמה): ישר להתחברות עם גוגל, בלי מסך ביניים
     load();
   }
-  $('#outBtn').onclick = () => { if (!usingAdmin) clearSession(); else { try { sessionStorage.removeItem(AS_KEY); } catch (e) {} } location.href = location.pathname; };
+  $('#outBtn').onclick = () => { if (EMBED) { if (!asId) clearSession(); try { window.parent.postMessage({ harpatka: 'me-logout' }, location.origin); } catch (e) {} return; } if (!usingAdmin) clearSession(); else { try { sessionStorage.removeItem(AS_KEY); } catch (e) {} } location.href = location.pathname; };
   /* זמן אמת: אות ריק בערוץ ציבורי "me" (בבדיקות "me-test") בכל שינוי בתשלומים, בשיוכים, במפגשים ובפרטי משתתפים (admin/realtime-all.sql); HRT.channel מטפל בחיבור מחדש, חזרה ללשונית וגיבוי כל 45 שניות.
      הרענון לא קורה בזמן הקלדה (נדחה עד עזיבת השדה), ושומר אילו מפגשים פתוחים */
   let rtT = 0, rtDirty = false;

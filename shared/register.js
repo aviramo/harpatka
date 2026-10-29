@@ -423,7 +423,45 @@
     dlg.querySelector('#otherHadar').href = wa(CONFIG.whatsappHadar); dlg.querySelector('#otherOfir').href = wa(CONFIG.whatsappOfir);
     openModal(dlg, true);
   }
-  window.HarpatkaMe = { confirmLogout, get: meGet, login: loginGoogle };
+  /* פופאפ האזור האישי: עולה מלמטה ומציג את דף האזור האישי (me/?embed=1) בתוך iframe, בלי לעבור לדף אחר. סגירה: גרירה למטה או לחיצה על הפס, לחיצה בחוץ, Esc וכפתור "חזרה" */
+  let meSheet = null, meSheetPush = false;
+  function closeMeSheet(fromPop) {
+    if (!meSheet || meSheet.hidden) return;
+    meSheet.classList.remove('open'); unlockPage();
+    if (meSheetPush && !fromPop) { meSheetPush = false; try { history.back(); } catch (e) {} } else meSheetPush = false;
+    const sh = meSheet; setTimeout(() => { sh.hidden = true; sh.querySelector('iframe').removeAttribute('src'); }, 340);
+    try { meLoader.reload(250); } catch (e) {}   // מה ששונה באזור האישי מתעדכן בדף
+  }
+  function openMeArea(search) {
+    const lm = document.getElementById('logoutModal'); if (lm && !lm.hidden) { try { closeModal(lm); } catch (e) {} }
+    if (!meSheet) {
+      meSheet = document.createElement('div'); meSheet.className = 'mesheet'; meSheet.hidden = true; meSheet.setAttribute('role', 'dialog'); meSheet.setAttribute('aria-modal', 'true'); meSheet.setAttribute('aria-label', 'האזור האישי');
+      meSheet.innerHTML = '<div class="mesb"></div><div class="mesp"><button type="button" class="mesgrab" aria-label="סגירה"><i></i></button><iframe class="mesf" title="האזור האישי"></iframe></div>';
+      document.body.appendChild(meSheet);
+      meSheet.querySelector('.mesb').addEventListener('click', () => closeMeSheet());
+      const g = meSheet.querySelector('.mesgrab'), p = meSheet.querySelector('.mesp'); let sy = 0, dy = 0, dr = false;
+      g.addEventListener('pointerdown', (e) => { dr = true; sy = e.clientY; dy = 0; p.style.transition = 'none'; try { g.setPointerCapture(e.pointerId); } catch (x) {} });
+      g.addEventListener('pointermove', (e) => { if (!dr) return; dy = Math.max(0, e.clientY - sy); p.style.transform = 'translateY(' + dy + 'px)'; });
+      const end = () => { if (!dr) return; dr = false; p.style.transition = ''; p.style.transform = ''; if (dy > 70 || dy < 4) closeMeSheet(); };
+      g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMeSheet(); });
+      window.addEventListener('popstate', () => { if (meSheetPush) { meSheetPush = false; closeMeSheet(true); } });
+      window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout') { try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {} location.reload(); } });
+    }
+    const qs = new URLSearchParams(search || ''); qs.set('embed', '1');
+    meSheet.querySelector('iframe').src = BASE + 'me/?' + qs.toString();
+    meSheet.hidden = false; lockPage();
+    requestAnimationFrame(() => requestAnimationFrame(() => meSheet.classList.add('open')));
+    if (!meSheetPush) { try { history.pushState({ meSheet: 1 }, ''); meSheetPush = true; } catch (e) {} }
+  }
+  document.addEventListener('click', (e) => {   // קישור לאזור האישי (כרטיס האזור האישי, כפתור המפגש, קישורי ההרשמה): פותחים את הפופאפ במקום לעבור לדף
+    const a = e.target.closest && e.target.closest('a[href]'); if (!a || e.defaultPrevented || e.button || e.ctrlKey || e.metaKey || e.shiftKey || a.target === '_blank') return;
+    let u; try { u = new URL(a.getAttribute('href'), location.href); } catch (x) { return; }
+    if (u.origin !== location.origin || !/\/me\/?$/.test(u.pathname) || u.searchParams.has('as') || u.searchParams.has('back')) return;
+    e.preventDefault(); e.stopPropagation(); openMeArea(u.search);
+  }, true);
+  window.HarpatkaMe = { confirmLogout, get: meGet, login: loginGoogle, openArea: (search) => openMeArea(search || '') };
+  try { if (sessionStorage.getItem('harpatka_open_me')) { sessionStorage.removeItem('harpatka_open_me'); setTimeout(() => { try { if (localStorage.getItem(ME_KEY)) openMeArea(''); } catch (e) {} }, 700); } } catch (e) {}   // חזרה מהתחברות עם גוגל שהתחילה מתוך הפופאפ: נפתח מחדש
   document.querySelectorAll('[data-su="glink"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); loginGoogle('reg'); }));
   loadMe();
   /* זמן אמת: מצב המשתתף המחובר דרך הערוץ "me" (בבדיקות "me-test"), ומפגשים והגדרות ציבוריות דרך הערוץ "meetings" (גם למבקרים לא מחוברים).

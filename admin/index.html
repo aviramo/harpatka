@@ -415,6 +415,8 @@
     .ptab[aria-selected="true"] { color: var(--ink); }
     .pind { position: absolute; z-index: 2; bottom: -1.5px; height: 3px; left: 0; width: 0; border-radius: 3px; background: var(--terra); pointer-events: none; will-change: transform, width; }
     /* גובה קבוע לפופאפ המשתתף בכל הלשוניות: הכותרת והלשוניות לא זזות, והתוכן נגלל בתוך הלשונית */
+    #meDlg { height: 100dvh; max-height: 100dvh; overflow: hidden; }   /* האזור האישי של המשתתף: פופאפ עד למעלה, כמו כרטיס המשתתף */
+    #meDlg iframe { display: block; width: 100%; height: calc(100% - 26px); border: 0; background: var(--cream); }
     #pDlg { height: 100dvh; max-height: 100dvh; overflow: visible; }   /* כרטיס המשתתף נפתח לכל גובה המסך, עד למעלה */
     #pDlg:focus { outline: none; }
     #pDlg .close, #pDlg .close:focus, #pDlg .close:focus-visible { outline: none; }   /* בלי מסגרת כהה סביב כפתור הסגירה */
@@ -1595,6 +1597,7 @@
     </div>
   </dialog>
 
+  <dialog id="meDlg" aria-label="האזור האישי של המשתתף"><iframe id="meFrame" title="האזור האישי של המשתתף"></iframe></dialog>
   <dialog id="setDlg" aria-labelledby="setTitle" style="max-width:480px">
     <div class="sheet">
       <div class="sheet-head"><button type="button" class="hbtn hback" id="setBack" aria-label="חזרה" title="חזרה" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></button><h2 id="setTitle">הגדרות</h2></div>
@@ -4217,6 +4220,10 @@
   /* לחיצה על הכותרת (השם והתגית, כל האזור) במסך הראשי פותחת את פרטי המשתתף */
   const openInfo = () => { if (pTab === 'main' && sheet && sheet.id) { viewStack = []; setPTab('info'); } };
   /* מאזינים על כל הכותרת ובודקים אם הלחיצה באזור השם והתגית (הכותרת נבנית מחדש בעדכונים, ולכן היעד של הלחיצה יכול להיות ההורה) */
+  /* האזור האישי כפי שהמשתתף רואה אותו: פופאפ שעולה מלמטה עד למעלה (iframe של me/?as=...&embed=1) במקום לשונית חדשה */
+  $('#pViewAs').addEventListener('click', (e) => { e.preventDefault(); if (!sheet || !sheet.id) return; $('#meFrame').src = '../me/?as=' + encodeURIComponent(sheet.id) + '&embed=1'; $('#meDlg').showModal(); });
+  $('#meDlg').addEventListener('close', () => { $('#meFrame').removeAttribute('src'); });
+  window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout' && $('#meDlg').open) $('#meDlg').close(); });
   $('#pDlg .sheet-head').addEventListener('click', (e) => { if (e.target.closest('#pBack, #pMsgs, #pViewAs, #pCall, #pAllocChip, .saved')) return; { const cr = $('#pPayChip').getBoundingClientRect(); if (!$('#pPayChip').hidden && $('#pPayChip').offsetParent && e.clientX >= cr.left && e.clientX <= cr.right && e.clientY >= cr.top && e.clientY <= cr.bottom) { if (!e.target.closest('#pPayChip')) $('#pPayChip').click(); return; } } const r = $('#pTitle').getBoundingClientRect(); if (e.target.closest('#pTitle') || (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom)) openInfo(); });
   $('#pTitle').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && $('#pTitle').classList.contains('tap')) { e.preventDefault(); openInfo(); } });
   $('#pBack').addEventListener('click', () => { if (pTab === 'promoter') promoFromPay = null; setPTab(viewStack.pop() || 'main'); });

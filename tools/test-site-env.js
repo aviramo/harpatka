@@ -22,6 +22,7 @@
   /* התגית בשכבה העליונה של הדפדפן (popover): מעל הכל, גם מעל פופאפים (dialog); כשנפתח dialog היא מורמת מחדש */
   function raise(el) { try { el.hidePopover(); el.showPopover(); } catch (x) {} }
   function badge() {
+    if (window.self !== window.top) return;   // בתוך iframe (פופאפ האזור האישי): בלי פס, הוא כבר בדף הראשי
     if (document.getElementById('testEnvBadge')) return;
     /* פס בדיקות לרוחב כל המסך (18px, אטום) בראש הדף, וכל המסכים מתחילים מתחתיו: הדף נדחף למטה, ופופאפים מוגבלים בגובה; הפס עצמו בשכבה העליונה כדי שיוצג תמיד */
     var st = document.createElement('style');
