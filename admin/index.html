@@ -1017,9 +1017,11 @@
     .nitem .nmw { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .28s ease, opacity .22s ease; }
     .nitem.open .nmw { grid-template-rows: 1fr; opacity: 1; }
     .nitem .nmi { overflow: hidden; min-height: 0; }
-    .nitem .nmw .nmeta { margin: 6px 0 0; }
+    .nitem .nmw .nmeta { margin: 3px 0 0; min-height: 0; }
     .nitem .nmw .nmeta { justify-content: flex-end; padding-inline-end: 0; gap: 10px; }   /* שם ומועד בהערה פתוחה: בצד שמאל, באותו קו עם הזמן שעבר */
-    .nitem .nmw .nmeta b { font-weight: 400; color: inherit; }   /* שם הכותב לא מודגש */
+    .nitem .nmw .nmeta b { font-weight: 400; color: inherit; }
+    .nitem .nmeta .ndel { width: auto; height: auto; border-radius: 0; padding: 0; font-size: 13.5px; font-weight: 400; color: var(--red); text-decoration: underline; background: none; }   /* קישור מחיקה במקום איקס */
+    .nitem .nmw .nmi { padding-bottom: 0; }   /* שם הכותב לא מודגש */
     .nrow .ntext:not(.chips) { padding-inline-start: 0; }
     .nch.nw { height: auto; min-height: 28px; max-width: 100%; box-sizing: border-box; padding: 5px 14px; border-radius: 16px; background: #fff; box-shadow: inset 0 0 0 1px var(--line); color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.35; }   /* הערה ידנית: בתוך צ'יף לבן עם גבול דק (גדל לפי הטקסט) */   /* השם והמועד בהערה פתוחה מיושרים לטקסט שבתוך הצ'יף הראשון, ולא לקצה הצ'יף */
     .nitem:not(.sys) .nrow .ntext:not(.chips) { font-size: 14px; font-weight: 700; line-height: 1.35; }   /* טיפוגרפיה כמו הטקסט בצ'יפים */
@@ -3701,7 +3703,7 @@
     if (!p) { list.innerHTML = ''; return; }
     const ns = notesOf(p.id);   // הערות וצילומי מסך יחד, מהחדש לישן
     sheet.nOpen = sheet.nOpen || new Set();
-    const meta = (n) => '<div class="nmeta"><span><b>' + esc(noteAuthor(n.author_email, n.author_name)) + '</b> · ' + esc(fmtDT(n.created_at)) + '</span>' + (n.system ? '' : '<button type="button" class="ndel" data-del="' + n.id + '" aria-label="מחיקת הערה" title="מחיקת הערה">×</button>') + '</div>';
+    const meta = (n) => '<div class="nmeta"><span><b>' + esc(noteAuthor(n.author_email, n.author_name)) + '</b> · ' + esc(fmtDT(n.created_at)) + '</span>' + (n.system ? '' : '<button type="button" class="ndel" data-del="' + n.id + '" aria-label="מחיקת הערה" title="מחיקת הערה">מחיקה</button>') + '</div>';
     list.innerHTML = ns.length ? ns.map((n) => '<div class="nitem' + (n.system ? ' sys' : '') + ' fold' + (n.has_image ? ' img' : '') + (sheet.nOpen.has(n.id) ? ' open' : '') + '" data-nid="' + n.id + '"' + (n.event_type ? ' data-ev="' + esc(n.event_type) + '"' : '') + (n.new_status ? ' data-st="' + esc(n.new_status) + '"' : '') + '>' +
       ('<div class="nrow"><div class="ntext' + (n.system && sysChips(n) ? ' chips' : '') + '">' + (n.has_image ? '<a class="nimg" data-img="' + n.id + '"><div class="nload">טוען תמונה…</div></a>' : ((n.system && sysChips(n)) || '<span class="nch nw">' + noteTextHtml(n.body) + '</span>')) + '</div><span class="nch nago" data-ts="' + esc(n.created_at) + '" title="' + esc(fmtDT(n.created_at)) + '">' + agoText(n.created_at) + '</span></div><div class="nmw"><div class="nmi">' + meta(n) + '</div></div>') + '</div>').join('')
       : '<p class="mnone">עוד אין הערות. אפשר לרשום למעלה מה דיברתם, מה הוחלט ומה צריך לזכור, או לצרף צילום מסך משיחה</p>';
