@@ -34,24 +34,22 @@
             <input type="text" name="website" data-su="hp" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
             <div class="su-fold"><div>
               <div class="su-grid">
-                <div class="su-cell su-wide">
-                  <div class="su-names">
-                    ${PersonForm.html('first', { id: 'cmFirst', cls: 'su-input', autofocus: true })}
-                    ${PersonForm.html('last', { id: 'cmLast', cls: 'su-input' })}
-                  </div>
-                  ${PersonForm.err('name', 'su-err')}
-                </div>
-                <div class="su-cell su-wide">
+                <div class="su-cell">${PersonForm.html('first', { id: 'cmFirst', cls: 'su-input', autofocus: true })}</div>
+                <div class="su-cell">${PersonForm.html('last', { id: 'cmLast', cls: 'su-input' })}</div>
+                <div class="su-cell su-wide">${PersonForm.err('name', 'su-err')}</div>
+                <div class="su-cell">
                   ${PersonForm.html('phone', { id: 'cmPhone', cls: 'su-input text-end' })}
                   ${PersonForm.err('phone', 'su-err')}
                 </div>
-                <div class="su-cell">
-                  ${PersonForm.html('age', { id: 'cmAge', cls: 'su-input' })}
-                  ${PersonForm.err('age', 'su-err')}
-                </div>
-                <div class="su-cell">
-                  ${PersonForm.html('gender', { id: 'cmGender', cls: 'su-input su-select' })}
-                  ${PersonForm.err('gender', 'su-err')}
+                <div class="su-cell su-ag">
+                  <div class="su-cell">
+                    ${PersonForm.html('age', { id: 'cmAge', cls: 'su-input' })}
+                    ${PersonForm.err('age', 'su-err')}
+                  </div>
+                  <div class="su-cell">
+                    ${PersonForm.html('gender', { id: 'cmGender', cls: 'su-input su-select' })}
+                    ${PersonForm.err('gender', 'su-err')}
+                  </div>
                 </div>
               </div>
               <div class="su-member" data-su="member"><p class="su-memberp">הפרטים שלכם כבר שמורים אצלנו</p><p class="su-who" data-su="who"></p></div>
