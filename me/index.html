@@ -111,7 +111,7 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="top"><h1>האזור האישי</h1><button type="button" class="link" id="outBtn" hidden>יציאה</button></div>
+  <div class="top"><h1>האזור האישי</h1><span class="chip" id="balChip" hidden></span><button type="button" class="link" id="outBtn" hidden>יציאה</button></div>
   <div id="app"><div class="center">טוען…</div></div>
   <dialog id="otherDlg" aria-labelledby="otherTtl">
     <h2 id="otherTtl">לשלם בדרך אחרת</h2>
@@ -190,6 +190,7 @@
   const toast = (el, text, bad) => { el.textContent = text; el.className = 'msg ' + (bad ? 'bad' : 'good'); };
 
   function viewLogin() {
+    { const bc = $('#balChip'); if (bc) bc.hidden = true; }
     if (EMBED) { app.innerHTML = '<div class="card"><h2>האזור האישי</h2><p class="muted" style="margin:0 0 14px">כאן אפשר לראות את המפגשים שלכם, את התשלומים והיתרה, להירשם למפגש הבא ולעדכן פרטים</p><button type="button" class="gbtn" id="gBtn">' + G + 'כניסה עם גוגל</button></div>'; $('#gBtn').onclick = goGoogle; return; }
     /* מסך כניסה: פופאפ שיורד מלמעלה (כמו פופאפ ההרשמה) עם כפתור ההתחברות; סגירה (לחיצה בחוץ או על הפס) חוזרת לדף הבית */
     app.innerHTML = '<div class="lgback" id="lgBack"></div><div class="lgpop" id="lgPop" role="dialog" aria-modal="true" aria-labelledby="lgT"><button type="button" class="lggrab" id="lgGrab" aria-label="סגירה"><i></i></button><h2 id="lgT">האזור האישי</h2><p class="muted" style="margin:0 0 14px">כאן אפשר לראות את המפגשים שלכם, את התשלומים והיתרה, להירשם למפגש הבא ולעדכן פרטים</p><button type="button" class="gbtn" id="gBtn">' + G + 'כניסה עם גוגל</button></div>';
@@ -199,6 +200,7 @@
     $('#lgBack').onclick = closeLg; $('#lgGrab').onclick = closeLg;
   }
   function viewClaim(note) {
+    { const bc = $('#balChip'); if (bc) bc.hidden = true; }
     if (data && data.admin) { app.innerHTML = '<div class="imp">מחוברים כמנהלים. לצפייה באזור האישי של משתתף פותחים את כרטיס המשתתף בדף הניהול ולוחצים על אייקון העין</div><a class="btn" href="../admin/">לדף הניהול</a>'; return; }
     const adm = '';
     app.innerHTML = adm + '<div class="card"><h2>חיבור לחשבון</h2><p class="muted" style="margin:0">הזינו את הטלפון שבו נרשמתם למפגש כדי לחבר אליו את חשבון הגוגל. החיבור מאושר על ידינו ואז האזור האישי נפתח</p>' + (note ? '<p class="msg bad">' + esc(note) + '</p>' : '') +
@@ -250,7 +252,7 @@
     let h = '';
     if (imp) h += '<div class="imp">מצב צפייה כמנהל: כך ' + esc(p.first_name + ' ' + p.last_name) + ' רואה את האזור האישי (אפשר לבצע פעולות בשמו, והן נרשמות בשם המנהל ביומן)</div>';
     setTitle(p.first_name + ' ' + p.last_name);   // שם המשתתף מחליף את הכותרת "האזור האישי" (בלי כרטיס ברכה)
-    h += '<div class="balcard ' + (credit > 0 ? 'pos' : credit < 0 ? 'neg' : 'zero') + '"><span class="bl">' + (credit > 0 ? 'יתרה לטובתכם' : credit < 0 ? 'יתרת חוב' : 'יתרה') + '</span><b class="bv">' + ils(Math.abs(credit)) + '</b></div>';   // יתרה תמיד מוצגת, בולטת: זכאות בצהוב, חוב באדום, אפס ניטרלי
+    { const bc = $('#balChip'); if (bc) { bc.hidden = !credit; bc.className = 'chip ' + (credit > 0 ? 'wait' : 'no'); bc.textContent = (credit > 0 ? 'קרדיט ' : 'חוב ') + ils(Math.abs(credit)); bc.title = credit > 0 ? 'יתרה לטובתכם' : 'יתרת חוב'; } }   // קרדיט (או חוב) כצ'יף ליד "יציאה", רק כשיש; בלי שורת יתרה
     // סקשן אחד "המפגשים שלי": כל מפגש עתידי (אפשר להירשם, לשלם ולבטל) ומפגשים שהיו. כל מפגש נפתח ונסגר; הקרוב פתוח כברירת מחדל
     const ordered = ms.slice().sort((a, b) => (String(b.date) + String(b.time)).localeCompare(String(a.date) + String(a.time))), upcoming = ordered.filter((m) => m.future);   // מהחדש לישן
     const firstId = keepOpen && ordered.some((m) => m.id === keepOpen) ? keepOpen : null; keepOpen = null;   // אין מפגש פתוח כברירת מחדל; רק מפגש שהרגע נרשמו אליו או ביטלו נשאר פתוח
