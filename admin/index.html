@@ -3495,7 +3495,7 @@
         const pm = /^(.+?)\s*₪\s*([\d.]+)(?:\s+ב.+)?$/.exec(m[1]);   // "שילם ₪100 בפייבוקס": הסטטוס, ואחריו צ'יף תשלום כמו בשאר ההערות
         return M + nStChip(m[2]) + NARW + nStChip(pm ? pm[1] : m[1]) + (pm ? NCH('תשלום&nbsp;' + sh(Number(pm[2])), 'ng') : '');
       }
-      case 'meeting_linked': return M + NCH('שויך', 'nn');
+      case 'meeting_linked': { const ds = state.statuses.find((x) => x.key === SYSTEM_STATUS); return M + (ds ? NCH(esc(ds.label), 'pay ' + ds.key) : NCH('שויך', 'nn')); }   // שיוך למפגש = סטטוס ברירת המחדל (בצבע ובשם הנוכחיים)
       case 'meeting_removed': return M + NCH('הוסר/ה', 'nr');
       case 'attended': return M + NCH('הגיע/ה', 'ng');
       case 'walk_in': return M + NCH('הגיע/ה ללא הרשמה', 'ng');
