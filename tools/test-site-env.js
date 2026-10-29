@@ -25,7 +25,7 @@
     if (document.getElementById('testEnvBadge')) return;
     /* פס בדיקות לרוחב כל המסך (18px, אטום) בראש הדף, וכל המסכים מתחילים מתחתיו: הדף נדחף למטה, ופופאפים מוגבלים בגובה; הפס עצמו בשכבה העליונה כדי שיוצג תמיד */
     var st = document.createElement('style');
-    st.textContent = 'html{margin-top:18px}:root{--tbtop:18px}html.modal-lock body{margin-top:18px}';   // הפופאפ נועל את הגוף ב-position:fixed; בלי זה הדף שמאחור קופץ 18px למעלה (בגלל פס הבדיקות)
+    st.textContent = 'html{margin-top:18px}:root{--tbtop:18px}html.modal-lock body{margin-top:18px}.modal{top:18px}';   // פופאפים שנפתחים מלמעלה (הרשמה, יציאה, תשלום בדרך אחרת) מתחילים מתחת לפס הבדיקות ולא מתחתיו   // הפופאפ נועל את הגוף ב-position:fixed; בלי זה הדף שמאחור קופץ 18px למעלה (בגלל פס הבדיקות)
     document.head.appendChild(st);
     var d = document.createElement('div');
     d.id = 'testEnvBadge';
