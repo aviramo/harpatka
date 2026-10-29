@@ -179,8 +179,8 @@
   }
   const goGoogle = () => {
     try { if (asId) sessionStorage.setItem(AS_KEY, asId); } catch (e) {}
-    if (EMBED) { try { if (window.parent.HarpatkaMe && window.parent.HarpatkaMe.loginPopup) { window.parent.HarpatkaMe.loginPopup(''); return; } } catch (e) {} try { sessionStorage.setItem('harpatka_open_me', '1'); } catch (e) {} window.top.location.href = DB.url + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(window.top.location.origin + window.top.location.pathname); return; }
-    location.href = DB.url + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(location.origin + location.pathname);
+    if (EMBED) { try { if (window.parent.HarpatkaMe && window.parent.HarpatkaMe.loginPopup) { window.parent.HarpatkaMe.loginPopup(''); return; } } catch (e) {} try { sessionStorage.setItem('harpatka_open_me', '1'); } catch (e) {} window.top.location.href = DB.url + '/auth/v1/authorize?provider=google&prompt=select_account&redirect_to=' + encodeURIComponent(window.top.location.origin + window.top.location.pathname); return; }
+    location.href = DB.url + '/auth/v1/authorize?provider=google&prompt=select_account&redirect_to=' + encodeURIComponent(location.origin + location.pathname);
   };
   async function rpc(name, body) {
     const call = () => fetch(DB.url + '/rest/v1/rpc/' + name, { method: 'POST', headers: { apikey: DB.key, Authorization: 'Bearer ' + ((session && session.access_token) || DB.key), 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
