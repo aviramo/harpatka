@@ -410,7 +410,7 @@
     if (h.get('error_description')) { try { history.replaceState(null, '', location.pathname + location.search); sessionStorage.removeItem(LOGIN_KEY); } catch (e) {} }
     return false;
   }
-  const clearMeName = () => { try { localStorage.removeItem('harpatka_me_name'); } catch (e) {} if (window.__meName) { window.__meName = null; } try { window.dispatchEvent(new Event('harpatka:me')); } catch (e) {} };
+  const clearMeName = () => { window.__meAdmin = false; try { localStorage.removeItem('harpatka_me_name'); } catch (e) {} if (window.__meName) { window.__meName = null; } try { window.dispatchEvent(new Event('harpatka:me')); } catch (e) {} };
   /* מצב המשתתף המחובר נטען דרך HRT.loader: טעינה אחת בכל פעם, תוצאה ישנה לא דורסת חדשה, ושינויים שלי (הרשמה, דיווח) שעוד לא נקלטו מוחלים על כל טעינה שהתחילה לפניהם */
   let mePending = null;
   const meLoader = HRT.loader(async () => {
@@ -464,7 +464,7 @@
       m.dataset.bound = '1';
       m.querySelector('[data-lg="yes"]').addEventListener('click', () => {
         try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {}
-        meInfo = null; window.__meName = null; applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {}
+        meInfo = null; window.__meName = null; window.__meAdmin = false; applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {}
         closeModal(m);
       });
     }
@@ -512,7 +512,7 @@
         if (t === 'me-drag') { p.style.transition = 'none'; p.style.transform = 'translateY(' + d + 'px)'; }
         else if (t === 'me-drag-end') { p.style.transition = ''; p.style.transform = ''; if (d > 110) closeMeSheet(); }
       });
-      window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout') { try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {} meInfo = null; window.__meName = null; applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {} closeMeSheet(); } });   // יציאה: מנתקים וסוגרים את הפופאפ, בלי לרענן את הדף
+      window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout') { try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {} meInfo = null; window.__meName = null; window.__meAdmin = false; applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {} closeMeSheet(); } });   // יציאה: מנתקים וסוגרים את הפופאפ, בלי לרענן את הדף
     }
     const qs = new URLSearchParams(search || ''); qs.set('embed', '1');
     meSheet.querySelector('iframe').src = BASE + 'me/?' + qs.toString();
