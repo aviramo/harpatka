@@ -88,3 +88,5 @@ notify pgrst, 'reload schema';
 -- "דווח" על תשלום: תשלום שנרשם למפגש מנקה את הדיווח (הפונקציה הועתקה למעלה)
 drop trigger if exists harpatka_clear_pay_reported on test.harpatka_payments;
 create trigger harpatka_clear_pay_reported after insert on test.harpatka_payments for each row execute function test.harpatka_clear_pay_reported();
+drop trigger if exists harpatka_att_reject_notify on test.harpatka_attendance;
+create trigger harpatka_att_reject_notify after update of pay_rejected_at on test.harpatka_attendance for each row execute function test.harpatka_att_reject_notify();   -- דחיית דיווח: הערת מערכת (ומייל, כבוי בבדיקות)
