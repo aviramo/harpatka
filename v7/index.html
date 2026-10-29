@@ -1139,11 +1139,10 @@
           /* משתתף מחובר שכבר רשום למפגש: הכפתור מציג את המצב (נרשמתם, שולם, דווח...) ולחיצה מובילה לאזור האישי על אותו מפגש */
           const more = mk('div', 'mt-more'), box = mk('div'), paid = Number(st.paid) > 0, free = !!st.free;
           const txt = free ? 'נרשמתם · חינם' : paid ? 'נרשמתם · שולם ₪' + Math.round(st.paid) : st.reported ? 'דיווחתם על תשלום, ממתין לאישור' : st.rejected ? 'הדיווח לא אושר · תשלום' + (st.price ? ' ₪' + st.price : '') : 'נרשמתם · תשלום' + (st.price ? ' ₪' + st.price : '');
-          const b = mk('a', 'mt-cta', txt), me = document.getElementById('meAreaCard');
-          b.href = (me ? me.getAttribute('href') : 'me/') + '?m=' + encodeURIComponent(m.id);
-          b.addEventListener('click', e => e.stopPropagation());
+          const b = mk('a', 'mt-cta', txt);
+          b.href = '#'; b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); reg(m); });   // פותח את פופאפ התשלום של המפגש (הפופאפ במצב "נרשמתם")
           box.append(b); more.append(box); inn.append(more);
-          c.style.cursor = 'pointer'; c.addEventListener('click', () => { if (window.HarpatkaMe && HarpatkaMe.openArea) HarpatkaMe.openArea(b.getAttribute('href').replace(/^[^?]*/, '')); else location.href = b.href; });
+          c.style.cursor = 'pointer'; c.addEventListener('click', () => reg(m));
         } else if (!past) {
           const more = mk('div', 'mt-more'), box = mk('div'), sp = tierSplit(m, m.tiers, today);
           const pb = fill(mkBox(), sp.past, 'done'); if (!pb.hidden) box.append(pb);
@@ -1401,7 +1400,7 @@
   el('tbPillT').parentElement.addEventListener('click', (e) => {   // מחובר: שאלה אם לצאת. לא מחובר: התחברות עם גוגל (ואם אין רשומה למייל הזה נפתח פופאפ ההרשמה)
     e.stopPropagation();
     if (window.__meName) { if (window.HarpatkaMe) HarpatkaMe.confirmLogout(); return; }
-    if (window.HarpatkaMe) HarpatkaMe.openArea('');   // לא מחובר: נפתח פופאפ האזור האישי (עם כניסה עם גוגל)
+    const mc = document.getElementById('meAreaCard'); if (mc) mc.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });   // לא מחובר: גוללים לכרטיס האזור האישי (שם נפתח האזור האישי)
   });   // לחיצה על השם: שאלה אם לצאת מהחשבון
   let cached = null;
   try { cached = JSON.parse(localStorage.getItem(typeof MEET_CACHE !== 'undefined' ? MEET_CACHE : 'harpatka_meetings_v19') || 'null'); } catch (e) {}
@@ -1424,6 +1423,6 @@
 </script>
   <script src="../shared/rt.js?v=1"></script>
   <script src="../shared/person-form.js?v=20261029i"></script>
-  <script src="../shared/register.js?v=20261030j"></script>
+  <script src="../shared/register.js?v=20261030k"></script>
 </body>
 </html>
