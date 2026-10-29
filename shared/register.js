@@ -386,16 +386,17 @@
   }
   /* כניסה עם גוגל בחלון קופץ: הדף לא מתרענן ולא עובר לשום מקום. החלון הקופץ חוזר ל-me/, שומר את החיבור ב-localStorage, מסמן harpatka_login_done וסוגר את עצמו;
      כאן מאזינים לסימון (אירוע storage), טוענים את המשתתף ומרעננים את הפופאפ הפתוח. אם החלון נחסם: ניווט רגיל כמו קודם */
-  function loginPopup(after) {
+  function loginPopup(after, thenOpen) {
     try { localStorage.setItem('harpatka_login_popup', '1'); } catch (e) {}
     const url = CONFIG.supabaseUrl + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(BASE + 'me/');
     const w = window.open(url, 'harpatka_login', 'width=480,height=680');
-    if (!w) { try { localStorage.removeItem('harpatka_login_popup'); } catch (e) {} return loginGoogle(after); }
+    if (!w) { try { localStorage.removeItem('harpatka_login_popup'); if (thenOpen) sessionStorage.setItem('harpatka_open_me', '1'); } catch (e) {} return loginGoogle(after); }
     const onDone = (ev) => {
       if (ev.key !== 'harpatka_login_done') return;
       window.removeEventListener('storage', onDone); clearInterval(iv);
-      mePending = after || null; meLoader.now();
+      mePending = after || null; const ld = meLoader.now();
       if (meSheet && !meSheet.hidden) { const f = meSheet.querySelector('iframe'), s = f.src; f.src = s; }
+      if (thenOpen) Promise.resolve(ld).then(() => openMeArea(''));   // נכנסו מ"כניסה לאזור האישי": אחרי ההתחברות נפתח האזור האישי
     };
     window.addEventListener('storage', onDone);
     const iv = setInterval(() => { if (w.closed) { clearInterval(iv); setTimeout(() => window.removeEventListener('storage', onDone), 1500); try { localStorage.removeItem('harpatka_login_popup'); } catch (e) {} } }, 800);
@@ -493,6 +494,7 @@
     try { meLoader.reload(250); } catch (e) {}   // מה ששונה באזור האישי מתעדכן בדף
   }
   function openMeArea(search) {
+    { let has = false; try { has = !!localStorage.getItem(ME_KEY); } catch (e) {} if (!has && !String(search || '').includes('embed')) { loginPopup('', true); return; } }   // לא מחובר: ישר כניסה עם גוגל (בחלון קופץ), בלי מסך כניסה; אחרי ההתחברות האזור האישי נפתח
     const lm = document.getElementById('logoutModal'); if (lm && !lm.hidden) { try { closeModal(lm); } catch (e) {} }
     if (!meSheet) {
       meSheet = document.createElement('div'); meSheet.className = 'mesheet'; meSheet.hidden = true; meSheet.setAttribute('role', 'dialog'); meSheet.setAttribute('aria-modal', 'true'); meSheet.setAttribute('aria-label', 'האזור האישי');
