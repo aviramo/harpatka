@@ -65,7 +65,6 @@
                 <div class="su-paylinks" data-su="paylinks"><button type="button" class="su-lnk" data-su="other">רוצים לשלם בדרך אחרת?</button><button type="button" class="su-lnk" data-su="report" hidden>שילמתי, לעדכן את המארגנים</button></div>
               </div></div>
               <div class="su-reported" data-su="reported" hidden>דיווחתם על תשלום, ממתין לאישור</div>
-              <a href="__BASE__me/" class="su-ame" data-su="ame">כניסה לאזור האישי</a>
             </div></div>
           </form>
         </div>
