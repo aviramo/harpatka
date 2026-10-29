@@ -1082,7 +1082,6 @@
     .mlist { display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; padding: 2px 3px 8px; scroll-padding-inline: 3px; margin: 0 0 10px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scrollbar-width: none; }
     .mlist::-webkit-scrollbar { display: none; }
     .mlist .mrow { flex: 0 0 auto; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 6px; min-height: 0; padding: 8px; scroll-snap-align: start; }
-    .pmeetn { flex: 0 0 auto; display: inline-grid; place-items: center; min-width: 36px; height: 36px; padding: 0 10px; box-sizing: border-box; border-radius: 999px; background: var(--cream); color: var(--ink); font-weight: 800; font-size: 16px; }   /* מונה המפגשים בכותרת, ליד צ'יף היתרה */
     .sheet-head:has(#pPayChip[hidden]) #pMeetN { display: none; }
     .clrow:not(:has(.addm:not([hidden]))) { display: none; }
     .pmeetn[hidden] { display: none; }
@@ -1413,7 +1412,7 @@
       <div class="sheet-head">
         <button type="button" class="hbtn hback" id="pBack" aria-label="חזרה" title="חזרה" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg></button>
         <h2 id="pTitle">משתתף חדש</h2>
-        <span class="pmeetn" id="pMeetN" title="מספר המפגשים של המשתתף" hidden></span>
+        <span class="paychip zero pmeetn" id="pMeetN" title="מספר המפגשים של המשתתף" hidden></span>
         <div class="paychip" id="pPayChip" hidden></div>
         <button type="button" class="paychip allocchip" id="pAllocChip" hidden></button>
         <div id="pMsgs"></div>
@@ -4350,7 +4349,7 @@
     /* שלושת המפגשים האחרונים (כל המפגשים, לא רק שלו) וכפתור לטעינת עוד */
     const desc = state.meetings.slice().sort((a, b) => (b.meeting_date + b.meeting_time).localeCompare(a.meeting_date + a.meeting_time)), shown = sheet.id ? desc.filter((m) => linkOf(sheet.id, m.id)) : desc;   // רק מפגשים שהמשתתף משויך אליהם (משתתף חדש: כולם, כדי לשייך)
     $('#pMore').hidden = true;
-    { const n = $('#pMeetN'); if (n) { n.textContent = sheet.id ? shown.length : ''; n.hidden = !sheet.id; } }
+    { const n = $('#pMeetN'); if (n) { n.innerHTML = sheet.id ? '<span>' + shown.length + '</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>' : ''; n.hidden = !sheet.id; } }   // מונה המפגשים: אותו צ'יף כמו היתרה, עם סמל יומן במקום ₪
     { const ab = $('#pAddMeet'); if (ab) ab.hidden = !(sheet.id && state.meetings.some((m) => !linkOf(sheet.id, m.id))); }   // שיוך למפגש מהכרטיס
     { /* מספר אחד: יתרה = חוב פחות קרדיט. חוב רק על מפגשים שביקשנו עליהם תשלום ("בטיפול") או שהמשתתף אמר שישלם ("ישלם"); רשום בלבד (חדש) הוא עוד לא חוב */
       const owed = sheet.id ? owedOf(sheet.id) : 0;
