@@ -452,7 +452,7 @@
         if (t === 'me-drag') { p.style.transition = 'none'; p.style.transform = 'translateY(' + d + 'px)'; }
         else if (t === 'me-drag-end') { p.style.transition = ''; p.style.transform = ''; if (d > 110) closeMeSheet(); }
       });
-      window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout') { try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {} location.reload(); } });
+      window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout') { try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {} meInfo = null; window.__meName = null; applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {} closeMeSheet(); } });   // יציאה: מנתקים וסוגרים את הפופאפ, בלי לרענן את הדף
     }
     const qs = new URLSearchParams(search || ''); qs.set('embed', '1');
     meSheet.querySelector('iframe').src = BASE + 'me/?' + qs.toString();
