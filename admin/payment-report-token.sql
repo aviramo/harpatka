@@ -20,10 +20,10 @@ begin
   if paid > 0 or coalesce(a.no_pay, false) then return 'already'; end if;
   if a.pay_reported_at is not null then return 'reported'; end if;
   amt := public.harpatka_meeting_price(mt.price_tiers, mt.meeting_date - today);
-  update public.harpatka_attendance set pay_reported_at = now(), pay_reported_amount = amt where participant_id = pid and meeting_id = p_meeting;
+  update public.harpatka_attendance set pay_reported_at = now(), pay_reported_amount = amt, pay_rejected_at = null where participant_id = pid and meeting_id = p_meeting;
   select * into pa from public.harpatka_participants where id = pid;
   begin
-    perform public.harpatka_sys_note(pid, 'דווח על תשלום' || coalesce(' ₪' || amt::text, '') || ' למפגש ' || public.harpatka_meeting_short(p_meeting) || ' (ממתין לאימות)', 'payment_reported', p_meeting);
+    perform public.harpatka_sys_note(pid, 'דווח על תשלום' || coalesce(' ₪' || amt::text, '') || ' למפגש ' || public.harpatka_meeting_short(p_meeting) || ' (ממתין לאימות)', 'payment_reported', p_meeting, null, null, amt);
   exception when others then null;
   end;
   begin

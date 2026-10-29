@@ -226,7 +226,7 @@
     if (q('report')) q('report').addEventListener('click', async () => {
       const m = selMeeting || nearest; if (!m || !m.id) return;
       const rb = q('report'); rb.disabled = true;
-      const ob = meInfo ? meOptimistic(m.id, { reported: true }) : null, rel = HRT.busy(rb);
+      const ob = meInfo ? meOptimistic(m.id, { reported: true, rejected: false }) : null, rel = HRT.busy(rb);
       try {
         let r;
         if (meInfo) r = await meRpc('harpatka_me_report_payment', { p_meeting: m.id });

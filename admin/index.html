@@ -927,6 +927,8 @@
     #pPayChip[data-tab]:not([data-tab="main"]) { display: none; }   /* רק במסך הראשי של הפופאפ */
     .paychip.ok { background: var(--yellow-bg); color: var(--yellow); }   /* יתרה חיובית = כסף בזיכוי: צהוב */
     .paychip[hidden] { display: none; }
+    .paychip.allocchip.rep { background: var(--yellow-bg); color: var(--yellow); }   /* דיווח ממתין: צהוב עם הסכום */
+    #qMenu.am2 .qi.rej { background: var(--red-bg); color: var(--red); }   /* דחיית דיווח: אדום */
     .paychip.allocchip.topay { background: var(--cream); color: var(--muted); }
     .paychip.allocchip.free { background: #fff; color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); }   /* חינם: לבן עם ₪ מחוק, כמו בכרטיס המפגש */
     #qMenu.am2 { width: max-content; min-width: 0; display: flex; flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 8px; padding: 10px; }   /* תפריט לתשלום / חינם */
@@ -3535,6 +3537,8 @@
       case 'attendance_cancelled': return M + NCH('ההגעה בוטלה', 'nn');
       case 'details_sent': return M + NCH('נשלחו פרטי המפגש', 'nn');
       case 'details_unsent': return M + NCH('שליחת הפרטים בוטלה', 'nn');
+      case 'payment_reported': return M + NCH('דווח&nbsp;' + sh(amt), 'ny');   // דיווח ממתין: מפגש + צ'יף צהוב עם הסכום
+      case 'payment_rejected': return M + NCH('נדחה&nbsp;' + sh(amt), 'nr');   // דחיית דיווח: מפגש + צ'יף אדום עם הסכום
       case 'alloc_added': return M + NCH('הקצאה&nbsp;' + sh(amt), 'ny');
       case 'alloc_removed': return M + NCH('הוסרה הקצאה&nbsp;' + sh(amt), 'ny');
       case 'alloc_changed': { const m = /מ-₪([\d.]+) ל-₪([\d.]+)/.exec(b); return m ? M + NCH('הקצאה&nbsp;' + sh(Number(m[1])), 'ny') + NARW + NCH(sh(Number(m[2])), 'ny') : M + NCH('הקצאה שונתה&nbsp;' + sh(amt), 'ny'); }
@@ -3867,13 +3871,21 @@
     if (menu.parentNode !== host) host.appendChild(menu);
     const fr = sheet.modeApi.free(), alv = Math.round(allocatedOf(sheet.id, sheet.depMid) * 100) / 100;
     menu.className = 'qmenu am2';
-    menu.innerHTML = (fr ? '<button type="button" role="menuitem" class="qi" data-md="pay" aria-pressed="false">לתשלום</button>' : (alv > 0 ? '<button type="button" role="menuitem" class="qi del" data-md="del" aria-pressed="false">מחיקת הקצאה</button>' : '') + '<button type="button" role="menuitem" class="qi free" data-md="free" aria-pressed="false"><span class="nps">₪</span>חינם</button>');   // בדיוק כמו המצבים בכרטיס המפגש: לתשלום (ניטרלי), חינם (לבן עם ₪ מחוק)
+    const rpt = !fr && !(alv > 0) && reportedOf(sheet.id, sheet.depMid);
+    menu.innerHTML = (rpt ? '<button type="button" role="menuitem" class="qi rej" data-md="reject" aria-pressed="false">דחיית דיווח</button>' : '') + (fr ? '<button type="button" role="menuitem" class="qi" data-md="pay" aria-pressed="false">לתשלום</button>' : (alv > 0 ? '<button type="button" role="menuitem" class="qi del" data-md="del" aria-pressed="false">מחיקת הקצאה</button>' : '') + '<button type="button" role="menuitem" class="qi free" data-md="free" aria-pressed="false"><span class="nps">₪</span>חינם</button>');   // בדיוק כמו המצבים בכרטיס המפגש: לתשלום (ניטרלי), חינם (לבן עם ₪ מחוק)
     menu.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth;
     menu.style.left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8) + 'px'; menu.style.top = (r.bottom + 6) + 'px';
     menu.onclick = (e) => {
       const b = e.target.closest('[data-md]'); if (!b) return; closeQ();
       const to = b.dataset.md, api = sheet.modeApi, pid = sheet.id, mid = sheet.depMid;
+      if (to === 'reject') {   // דחיית דיווח: מנקה את הדיווח, מסמנת דחייה (הערת מערכת, מייל למשתתף ושינוי באזור האישי ובדף הבית דרך הטריגר בבסיס הנתונים)
+        const rl = linkOf(pid, mid), ra = reportedAmt(pid, mid);
+        confirmAct('לדחות את הדיווח?', pid, mid, async () => {
+          try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body: { pay_reported_at: null, pay_reported_amount: null, pay_rejected_at: new Date().toISOString() } }); if (rl) { rl.pay_reported_at = null; rl.pay_reported_amount = null; } toast('הדיווח נדחה והמשתתף עודכן'); paintDepLines(); render(); } catch (e) { toast('לא הצלחנו לדחות את הדיווח'); }
+        }, 'המשתתף דיווח ששילם' + (ra ? ' <b>' + ra.trim() + '</b>' : '') + ' ואתם לא מצאתם תשלום. הדיווח יבוטל, המשתתף יקבל מייל (אם יש לו חשבון מחובר) וינוסח באזור האישי ובדף הבית שהדיווח לא אושר.', 'כן, לדחות את הדיווח', null, { danger: true });
+        return;
+      }
       if (to === 'del') {   // מחיקת הקצאה: אותו תהליך כמו במעבר לחינם (הכסף נשאר ביתרה של המשתתף), בלי לסמן חינם
         const al0 = Math.round(allocatedOf(pid, mid) * 100) / 100;
         confirmAct('להעביר את ההקצאה ליתרה?', pid, mid, () => api.del(), '<b>' + ils(al0) + '</b> שמוקצים למפגש יוסרו ממנו ויעברו כזיכוי ליתרה של המשתתף, ואפשר יהיה להקצות אותם למפגש אחר או להחזיר אותם ככסף. לא מוחזר כסף עכשיו.', 'כן, העברת הסכום ליתרה', null, { yellow: true });
@@ -3901,8 +3913,8 @@
     const al = Math.round(allocatedOf(pid, m.id) * 100) / 100, chip = $('#pAllocChip');
     if (chip) {   // צ'יפ מצב המפגש בכותרת: הסכום המוקצה, או "חינם", או "לתשלום"; לחיצה פותחת בחירה בין לתשלום לחינם
       const fr = !!(linkOf(pid, m.id) && noPayOf(null, linkOf(pid, m.id)));
-      chip.hidden = false; chip.disabled = false; chip.classList.toggle('free', fr && !(al > 0)); chip.classList.toggle('topay', !fr && !(al > 0));
-      chip.innerHTML = (al > 0 ? '₪' + nfm(al) : fr ? '<span class="nps">₪</span>חינם' : 'לתשלום') + '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 auto"><path d="M6 9l6 6 6-6"/></svg>'; chip.title = 'מצב המפגש: לתשלום או חינם';
+      chip.hidden = false; chip.disabled = false; const rp = !fr && !(al > 0) && reportedOf(pid, m.id); chip.classList.toggle('free', fr && !(al > 0)); chip.classList.toggle('topay', !fr && !(al > 0) && !rp); chip.classList.toggle('rep', !!rp);
+      chip.innerHTML = (al > 0 ? '₪' + nfm(al) : fr ? '<span class="nps">₪</span>חינם' : rp ? 'דיווח' + reportedAmt(pid, m.id).replace(' ', '&nbsp;') : 'לתשלום') + '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 auto"><path d="M6 9l6 6 6-6"/></svg>'; chip.title = 'מצב המפגש: לתשלום או חינם';
     }
     box.hidden = true; box.innerHTML = ''; return;   // בלי שורת הקצאה בתחתית: הסכום המוקצה מוצג רק בצ'יפ שבכותרת
     box.hidden = false;
