@@ -18,7 +18,7 @@ begin
 end $$;
 revoke all on function public.harpatka_participant_changes() from public, anon, authenticated;
 drop trigger if exists harpatka_participant_changes on public.harpatka_participants;
-create trigger harpatka_participant_changes after update of first_name, last_name, phone_norm, age, gender on public.harpatka_participants
+create trigger harpatka_participant_changes after update of first_name, last_name, phone, phone_norm, age, gender on public.harpatka_participants
   for each row execute function public.harpatka_participant_changes();
 
 -- הערות הרשמה קיימות: צילום הטלפון (הערך הנוכחי, כי הקודם לא נשמר)
