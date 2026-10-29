@@ -18,6 +18,13 @@
   .top { display: flex; align-items: center; gap: 10px; min-height: 44px; position: sticky; top: var(--tbtop, 0px); z-index: 20; background: var(--cream); margin: -14px -16px 0; padding: 14px 16px 8px; border-bottom: 1px solid var(--line); }   /* כותרת קבועה: השם והיציאה תמיד בראש המסך */
   .top h1 { flex: 1; font-size: 22px; }
   .link { background: none; border: 0; color: var(--muted); font: inherit; font-size: 15px; padding: 6px 4px; cursor: pointer; text-decoration: underline; }
+  .lgback { position: fixed; inset: 0; background: rgba(30,25,20,.62); opacity: 0; transition: opacity .3s ease; z-index: 40; }
+  .lgback.open { opacity: 1; }
+  .lgpop { position: fixed; top: var(--tbtop, 0px); left: 0; right: 0; max-width: 30rem; margin: 0 auto; z-index: 41; background: var(--paper); border-radius: 0 0 28px 28px; padding: 22px 20px 6px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,.18); transform: translateY(-110%); transition: transform .34s cubic-bezier(.2,.8,.2,1); }
+  .lgpop.open { transform: none; }
+  .lgpop h2 { font-size: 20px; margin: 0 0 8px; color: var(--terra); }
+  .lggrab { display: block; width: 100%; border: 0; background: transparent; padding: 14px 0 12px; cursor: pointer; }
+  .lggrab i { display: block; width: 44px; height: 5px; border-radius: 3px; background: var(--sand); margin: 0 auto; }
   .card { background: var(--paper); border: 1px solid var(--line); border-radius: 24px; padding: 18px; margin-top: 14px; }
   .card h2 { font-size: 18px; margin-bottom: 10px; }
   .big { font-family: Rubik, sans-serif; font-weight: 700; font-size: 22px; }
@@ -158,8 +165,12 @@
   const toast = (el, text, bad) => { el.textContent = text; el.className = 'msg ' + (bad ? 'bad' : 'good'); };
 
   function viewLogin() {
-    app.innerHTML = '<div class="card"><h2>כניסה</h2><p class="muted" style="margin:0">כאן אפשר לראות את המפגשים שלכם, את התשלומים והיתרה, להירשם למפגש הבא ולעדכן פרטים</p><button type="button" class="gbtn" id="gBtn">' + G + 'כניסה עם גוגל</button></div>';
+    /* מסך כניסה: פופאפ שיורד מלמעלה (כמו פופאפ ההרשמה) עם כפתור ההתחברות; סגירה (לחיצה בחוץ או על הפס) חוזרת לדף הבית */
+    app.innerHTML = '<div class="lgback" id="lgBack"></div><div class="lgpop" id="lgPop" role="dialog" aria-modal="true" aria-labelledby="lgT"><h2 id="lgT">האזור האישי</h2><p class="muted" style="margin:0 0 14px">כאן אפשר לראות את המפגשים שלכם, את התשלומים והיתרה, להירשם למפגש הבא ולעדכן פרטים</p><button type="button" class="gbtn" id="gBtn">' + G + 'כניסה עם גוגל</button><button type="button" class="lggrab" id="lgGrab" aria-label="סגירה"><i></i></button></div>';
     $('#gBtn').onclick = goGoogle;
+    requestAnimationFrame(() => requestAnimationFrame(() => { $('#lgPop').classList.add('open'); $('#lgBack').classList.add('open'); }));
+    const closeLg = () => { $('#lgPop').classList.remove('open'); $('#lgBack').classList.remove('open'); setTimeout(() => { location.href = '../'; }, 280); };
+    $('#lgBack').onclick = closeLg; $('#lgGrab').onclick = closeLg;
   }
   function viewClaim(note) {
     if (data && data.admin) { app.innerHTML = '<div class="imp">מחוברים כמנהלים. לצפייה באזור האישי של משתתף פותחים את כרטיס המשתתף בדף הניהול ולוחצים על אייקון העין</div><a class="btn" href="../admin/">לדף הניהול</a>'; return; }
