@@ -1139,9 +1139,9 @@
           const more = mk('div', 'mt-more'), box = mk('div'), paid = Number(st.paid) > 0, free = !!st.free;
           const txt = free ? 'נרשמתם · חינם' : paid ? 'נרשמתם · שולם ₪' + Math.round(st.paid) : st.reported ? 'דיווחתם על תשלום, ממתין לאישור' : st.rejected ? 'הדיווח לא אושר · תשלום' + (st.price ? ' ₪' + st.price : '') : 'נרשמתם · תשלום' + (st.price ? ' ₪' + st.price : '');
           const b = mk('a', 'mt-cta', txt);
-          b.href = '#'; b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); reg(m); });   // פותח את פופאפ התשלום של המפגש (הפופאפ במצב "נרשמתם")
+          b.href = '#'; b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); if (!st.reported) reg(m); });   // בהמתנה לאישור דיווח: לא נפתח פופאפ   // פותח את פופאפ התשלום של המפגש (הפופאפ במצב "נרשמתם")
           box.append(b); more.append(box); inn.append(more);
-          c.style.cursor = 'pointer'; c.addEventListener('click', () => reg(m));
+          if (!st.reported) { c.style.cursor = 'pointer'; c.addEventListener('click', () => reg(m)); }
         } else if (!past) {
           const more = mk('div', 'mt-more'), box = mk('div'), sp = tierSplit(m, m.tiers, today);
           const pb = fill(mkBox(), sp.past, 'done'); if (!pb.hidden) box.append(pb);
