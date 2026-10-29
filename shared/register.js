@@ -61,7 +61,7 @@
               <p class="su-paynote">המקום נשמר באופן זמני, והוא יישמר קבוע רק לאחר תשלום</p>
               <div class="su-payfold" data-su="payfold"><div>
                 <a href="#" target="_blank" rel="noopener" data-paybox class="btn-primary rounded-full px-8 py-4 text-[1.2rem] block text-center w-full">לתשלום <span data-price>80 ₪</span> בפייבוקס</a>
-                <div class="su-paylinks" data-su="paylinks"><button type="button" class="su-lnk" data-su="report" hidden>שילמתי, לעדכן את המארגנים</button><button type="button" class="su-lnk" data-su="other">רוצים לשלם בדרך אחרת?</button></div>
+                <div class="su-paylinks" data-su="paylinks"><button type="button" class="su-lnk" data-su="other">רוצים לשלם בדרך אחרת?</button><button type="button" class="su-lnk" data-su="report" hidden>שילמתי, לעדכן את המארגנים</button></div>
               </div></div>
               <div class="su-reported" data-su="reported" hidden>דיווחתם על תשלום, ממתין לאישור</div>
               <a href="__BASE__me/" class="su-ame" data-su="ame">כניסה לאזור האישי</a>
