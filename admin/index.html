@@ -3570,7 +3570,7 @@
       case 'alloc_changed': { const m = /מ-₪([\d.]+) ל-₪([\d.]+)/.exec(b); return m ? M + NCH('הקצאה&nbsp;' + sh(Number(m[1])), 'ny') + NARW + NCH(sh(Number(m[2])), 'ny') : M + NCH('הקצאה שונתה&nbsp;' + sh(amt), 'ny'); }
       case 'payment_received': case 'deposit': return NCH('תשלום&nbsp;' + sh(amt) + (meth ? '&nbsp;ב' + esc(meth) : ''), 'ng');
       case 'refund': return M + NCH('החזרת כסף&nbsp;' + sh(amt) + (meth ? '&nbsp;·&nbsp;' + esc(meth) : ''), 'nr');
-      case 'registered': case 'reregistered': { const tx = b.replace(/\s*ושויך\/ה למפגש.*$/, '').replace(/\s*\(כבר משויך.*\)\s*$/, ''); return M + NCH(esc(tx), 'nn'); }
+      case 'registered': case 'reregistered': { const tx = b.replace(/\s*ושויך\/ה למפגש.*$/, '').replace(/\s*\(כבר משויך.*\)\s*$/, ''); const rp = state.participants.find((x) => x.id === n.participant_id), rph = rp && rp.phone ? localPhone(rp.phone) : ''; return M + NCH(esc(tx) + (rph ? '&nbsp;·&nbsp;<bdi dir="ltr">' + esc(rph) + '</bdi>' : ''), 'nn'); }   // הרשמה: מספר הטלפון בתוך הצ'יף
       case 'deactivated': return NCH(esc(b), 'nr');
       case 'reactivated': return NCH(esc(b), 'ng');
       default: return null;
