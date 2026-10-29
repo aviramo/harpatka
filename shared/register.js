@@ -410,7 +410,7 @@
     if (h.get('error_description')) { try { history.replaceState(null, '', location.pathname + location.search); sessionStorage.removeItem(LOGIN_KEY); } catch (e) {} }
     return false;
   }
-  const clearMeName = () => { window.__meAdmin = false; try { localStorage.removeItem('harpatka_me_name'); } catch (e) {} if (window.__meName) { window.__meName = null; } try { window.dispatchEvent(new Event('harpatka:me')); } catch (e) {} };
+  const clearMeName = () => { try { localStorage.removeItem('harpatka_me_name'); } catch (e) {} if (window.__meName) { window.__meName = null; } try { window.dispatchEvent(new Event('harpatka:me')); } catch (e) {} };
   /* מצב המשתתף המחובר נטען דרך HRT.loader: טעינה אחת בכל פעם, תוצאה ישנה לא דורסת חדשה, ושינויים שלי (הרשמה, דיווח) שעוד לא נקלטו מוחלים על כל טעינה שהתחילה לפניהם */
   let mePending = null;
   const meLoader = HRT.loader(async () => {
@@ -426,7 +426,7 @@
       ensureMeChannel();
       if (!meSheet && !window.__meAdmin) setTimeout(() => { try { openMeArea('', true); } catch (e) {} }, 1500);   // טעינה מוקדמת של האזור האישי (מוסתר), כדי שהפתיחה הראשונה תהיה מיידית
       if (pending === 'reg') setTimeout(() => window.HarpatkaRegister.open(true), 300);   // הגיעו מהקישור בפופאפ ההרשמה: חוזרים אליו, במצב מחובר
-    } else if (d && d.status === 'noauth') { clearMeName(); }
+    } else if (d && d.status === 'noauth') { window.__meAdmin = false; clearMeName(); }
     else { clearMeName(); if (pending) setTimeout(() => { setPhoneMode(true); window.HarpatkaRegister.open(true); }, 300); }   // מחובר לגוגל אבל אין משתתף מקושר: פופאפ ההרשמה במצב הזנת טלפון
   });
   function loadMe() {
@@ -509,6 +509,11 @@
       g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
       document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMeSheet(); });
       window.addEventListener('popstate', () => { if (meSheetPush) { meSheetPush = false; closeMeSheet(true); } });
+      window.addEventListener('message', (e) => {   // חשבון מנהל: האזור האישי לא רלוונטי, סוגרים ופותחים את דף הניהול בלשונית חדשה
+        if (e.origin !== location.origin || !e.data || e.data.harpatka !== 'me-admin') return;
+        window.__meAdmin = true;
+        if (meSheet && !meSheet.hidden) { closeMeSheet(); window.open(BASE + 'admin/', '_blank', 'noopener'); }
+      });
       window.addEventListener('message', (e) => {   // החלקה למטה בתוך הדף (כשהוא בראשו) מזיזה את כל הפופאפ וסוגרת אותו
         if (e.origin !== location.origin || !e.data || !meSheet || meSheet.hidden) return;
         const t = e.data.harpatka, d = Math.max(0, Number(e.data.dy) || 0);
