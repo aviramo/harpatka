@@ -512,8 +512,8 @@
   }, true);
   window.HarpatkaMe = { confirmLogout, get: meGet, login: loginGoogle, loginPopup, openArea: (search) => openMeArea(search || '') };
   try { if (sessionStorage.getItem('harpatka_open_me')) { sessionStorage.removeItem('harpatka_open_me'); setTimeout(() => { try { if (localStorage.getItem(ME_KEY)) openMeArea(''); } catch (e) {} }, 700); } } catch (e) {}   // חזרה מהתחברות עם גוגל שהתחילה מתוך הפופאפ: נפתח מחדש
-  document.querySelectorAll('[data-su="ame"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); try { closeModal(contactModal); } catch (x) {} openMeArea(''); }));   // כניסה לאזור האישי (בתחתית אחרי ההרשמה): סוגרים את פופאפ ההרשמה ופותחים את האזור האישי
-  document.querySelectorAll('[data-su="glink"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); try { closeModal(contactModal); } catch (x) {} openMeArea(''); }));   // נרשמתם בעבר: נפתח פופאפ האזור האישי (שם הכניסה עם גוגל)
+  document.querySelectorAll('[data-su="ame"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); try { closeModal(contactModal); } catch (x) {} setTimeout(() => openMeArea(''), 450); }));   // כניסה לאזור האישי (בתחתית אחרי ההרשמה): סוגרים את פופאפ ההרשמה ופותחים את האזור האישי
+  document.querySelectorAll('[data-su="glink"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); try { closeModal(contactModal); } catch (x) {} setTimeout(() => openMeArea(''), 450); }));   // נרשמתם בעבר: נפתח פופאפ האזור האישי (שם הכניסה עם גוגל)
   loadMe();
   /* זמן אמת: מצב המשתתף המחובר דרך הערוץ "me" (בבדיקות "me-test"), ומפגשים והגדרות ציבוריות דרך הערוץ "meetings" (גם למבקרים לא מחוברים).
      הערוצים, חיבור מחדש, חזרה ללשונית וגיבוי כל 45 שניות מגיעים מ-HRT.channel */
