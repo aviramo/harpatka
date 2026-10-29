@@ -159,9 +159,9 @@
     let sy = 0, dy = 0, on = false;
     const top = () => (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
     const post = (t, d) => { try { window.parent.postMessage({ harpatka: t, dy: d }, location.origin); } catch (e) {} };
-    document.addEventListener('touchstart', (e) => { if (e.touches.length !== 1) return; sy = e.touches[0].clientY; dy = 0; on = top(); }, { passive: true });
+    document.addEventListener('touchstart', (e) => { if (e.touches.length !== 1) return; sy = e.touches[0].screenY; dy = 0; on = top(); }, { passive: true });
     document.addEventListener('touchmove', (e) => {
-      if (!on) return; const d = e.touches[0].clientY - sy;
+      if (!on) return; const d = e.touches[0].screenY - sy;   // screenY: לא משתנה כשהפופאפ (והדף שבתוכו) זז עם האצבע, אחרת התזוזה מצטמצמת ויוצר ריצוד
       if (d > 6 && top()) { dy = d; if (e.cancelable) e.preventDefault(); post('me-drag', dy); } else if (d <= 0 && dy === 0) { on = false; }
     }, { passive: false });
     const end = () => { if (on && dy > 0) post('me-drag-end', dy); on = false; dy = 0; };
