@@ -148,7 +148,20 @@
   }
   /* מצב מוטמע (פופאפ האזור האישי בדף הבית ובדף הניהול, iframe): כניסה עם גוגל מנווטת את הדף הראשי וחוזרת אליו, והפופאפ נפתח מחדש */
   const EMBED = window.self !== window.top && new URLSearchParams(location.search).has('embed');
-  if (EMBED) document.documentElement.classList.add('embed');
+  if (EMBED) {
+    document.documentElement.classList.add('embed');
+    /* החלקה למטה כשהדף בראשו (scrollTop = 0) סוגרת את הפופאפ: הדף הראשי מקבל את התזוזה ומזיז את הפופאפ יחד עם האצבע */
+    let sy = 0, dy = 0, on = false;
+    const top = () => (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
+    const post = (t, d) => { try { window.parent.postMessage({ harpatka: t, dy: d }, location.origin); } catch (e) {} };
+    document.addEventListener('touchstart', (e) => { if (e.touches.length !== 1) return; sy = e.touches[0].clientY; dy = 0; on = top(); }, { passive: true });
+    document.addEventListener('touchmove', (e) => {
+      if (!on) return; const d = e.touches[0].clientY - sy;
+      if (d > 6 && top()) { dy = d; if (e.cancelable) e.preventDefault(); post('me-drag', dy); } else if (d <= 0 && dy === 0) { on = false; }
+    }, { passive: false });
+    const end = () => { if (on && dy > 0) post('me-drag-end', dy); on = false; dy = 0; };
+    document.addEventListener('touchend', end); document.addEventListener('touchcancel', end);
+  }
   const goGoogle = () => {
     try { if (asId) sessionStorage.setItem(AS_KEY, asId); } catch (e) {}
     if (EMBED) { try { sessionStorage.setItem('harpatka_open_me', '1'); } catch (e) {} window.top.location.href = DB.url + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(window.top.location.origin + window.top.location.pathname); return; }

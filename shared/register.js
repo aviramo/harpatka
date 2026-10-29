@@ -446,6 +446,12 @@
       g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
       document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMeSheet(); });
       window.addEventListener('popstate', () => { if (meSheetPush) { meSheetPush = false; closeMeSheet(true); } });
+      window.addEventListener('message', (e) => {   // החלקה למטה בתוך הדף (כשהוא בראשו) מזיזה את כל הפופאפ וסוגרת אותו
+        if (e.origin !== location.origin || !e.data || !meSheet || meSheet.hidden) return;
+        const t = e.data.harpatka, d = Math.max(0, Number(e.data.dy) || 0);
+        if (t === 'me-drag') { p.style.transition = 'none'; p.style.transform = 'translateY(' + d + 'px)'; }
+        else if (t === 'me-drag-end') { p.style.transition = ''; p.style.transform = ''; if (d > 110) closeMeSheet(); }
+      });
       window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout') { try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {} location.reload(); } });
     }
     const qs = new URLSearchParams(search || ''); qs.set('embed', '1');
