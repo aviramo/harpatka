@@ -996,6 +996,14 @@
     .field { display: block; margin-bottom: 12px; }
     .field[hidden] { display: none; }
     .nitem.fold { cursor: pointer; }
+    .ntext.chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .nch { display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 999px; font-size: 14px; font-weight: 700; white-space: nowrap; }
+    .nch.pay { height: 28px; }
+    .nch.nm { background: rgba(201,111,82,.13); color: var(--terra); }   /* מפגש: תמיד כתום, ראשון */
+    .nch.ng { background: var(--green-bg); color: var(--green); }
+    .nch.nr { background: var(--red-bg); color: var(--red); }
+    .nch.nn { background: var(--line); color: var(--muted); }
+    .narw { color: var(--muted); font-weight: 800; font-size: 16px; }
     #nList .nitem, #nList .nitem.sys { background: transparent; border-radius: 0; margin: 0; padding: 12px 4px; border-bottom: 1px solid var(--line); }   /* היסטוריית הערות כרשימה: בלי רקע לכל הערה, רק קו מפריד */
     #nList .nitem:last-child { border-bottom: 0; }
     .nitem:not(.sys) .ntext { font-weight: 800; }   /* הערה שנכתבה ידנית (לא הערת מערכת): הטקסט מודגש */
@@ -3467,6 +3475,41 @@
   const noteAuthor = (email, name) => { const e = String(email || '').toLowerCase(), pr = ((state.prefs[e] || {}).sender_name || '').trim(); if (pr || SENDERS[e]) return pr || SENDERS[e]; return e ? 'מנהל' : (name || 'מערכת'); };
   /* תאריך ושעה בתוך הערה (25.10 · 20:00) מוצגים כיחידה אחת משמאל לימין, כדי שהסדר לא יתהפך בתוך משפט בעברית */
   const noteTextHtml = (s) => esc(s).replace(/(\d{1,2}\.\d{1,2}(?:\.\d{2,4})?(?:\s*·\s*\d{1,2}:\d{2})?|\d{1,2}:\d{2})/g, '<bdi dir="ltr">$1</bdi>');
+  /* הערות מערכת כצ'יפים: המפגש תמיד ראשון (כתום), ואחריו הפעולה; שינוי (סטטוס, סכום הקצאה) הוא "ישן ← חדש", הכול בצבעי המערכת */
+  const NCH = (txt, cls) => '<span class="nch ' + cls + '">' + txt + '</span>';
+  const NARW = '<span class="narw" aria-hidden="true">←</span>';
+  const nStKey = (name) => { const s = state.statuses.concat(state.astatuses).find((x) => x.label === name); return s ? s.key : null; };
+  const nStChip = (name) => { const k = nStKey(name); return NCH(esc(name), k ? 'pay ' + k : 'nn'); };
+  function sysChips(n) {
+    const b = String(n.body || ''), ev = n.event_type || '';
+    const mo = n.meeting_id && state.meetings.find((x) => x.id === n.meeting_id), md = mo ? dmShort(mo) : ((/(\d{1,2}\.\d{1,2})/.exec(b) || [])[1] || '');
+    const M = md ? NCH('<bdi dir="ltr">' + esc(md) + '</bdi>', 'nm') : '';
+    const amt = (n.amount != null && n.amount !== '') ? Number(n.amount) : Number((/₪\s*([\d.]+)/.exec(b) || [])[1] || 0);
+    const sh = (v) => '<bdi dir="ltr">₪' + nfm(v) + '</bdi>';
+    const meth = ((/ ב([^\s(][^()]*)$/.exec(b) || [])[1] || '').trim();
+    switch (ev) {
+      case 'status_changed': case 'after_status_changed': {
+        const m = /:\s*(.+?)\s*\(היה:\s*(.+)\)\s*$/.exec(b); if (!m) return null;
+        return M + nStChip(m[2]) + NARW + nStChip(m[1]);
+      }
+      case 'meeting_linked': return M + NCH('שויך', 'nn');
+      case 'meeting_removed': return M + NCH('הוסר/ה', 'nr');
+      case 'attended': return M + NCH('הגיע/ה', 'ng');
+      case 'walk_in': return M + NCH('הגיע/ה ללא הרשמה', 'ng');
+      case 'attendance_cancelled': return M + NCH('ההגעה בוטלה', 'nn');
+      case 'details_sent': return M + NCH('נשלחו פרטי המפגש', 'ng');
+      case 'details_unsent': return M + NCH('שליחת הפרטים בוטלה', 'nn');
+      case 'alloc_added': return M + NCH('הקצאה ' + sh(amt), 'nn');
+      case 'alloc_removed': return M + NCH('הוסרה הקצאה ' + sh(amt), 'nn');
+      case 'alloc_changed': { const m = /מ-₪([\d.]+) ל-₪([\d.]+)/.exec(b); return m ? M + NCH('הקצאה ' + sh(Number(m[1])), 'nn') + NARW + NCH(sh(Number(m[2])), 'nn') : M + NCH('הקצאה שונתה ' + sh(amt), 'nn'); }
+      case 'payment_received': case 'deposit': return NCH('קבלת תשלום ' + sh(amt) + (meth ? ' · ' + esc(meth) : ''), 'ng');
+      case 'refund': return M + NCH('החזרת כסף ' + sh(amt) + (meth ? ' · ' + esc(meth) : ''), 'nr');
+      case 'registered': case 'reregistered': { const tx = b.replace(/\s*ושויך\/ה למפגש.*$/, '').replace(/\s*\(כבר משויך.*\)\s*$/, ''); return M + NCH(esc(tx), 'nn'); }
+      case 'deactivated': return NCH(esc(b), 'nr');
+      case 'reactivated': return NCH(esc(b), 'ng');
+      default: return null;
+    }
+  }
   const authorName = () => SENDERS[emailOf()] || 'מנהל';
 
   /* לשונית "התקשרות": וואטסאפ וחיוג (רק פותחים שיחה/מחייגים), ומתחתיהם ההערות */
@@ -3613,7 +3656,7 @@
     sheet.nOpen = sheet.nOpen || new Set();
     const meta = (n) => '<div class="nmeta"><span><b>' + esc(noteAuthor(n.author_email, n.author_name)) + '</b> · ' + esc(fmtDT(n.created_at)) + '</span>' + (n.system ? '' : '<button type="button" class="ndel" data-del="' + n.id + '" aria-label="מחיקת הערה" title="מחיקת הערה">×</button>') + '</div>';
     list.innerHTML = ns.length ? ns.map((n) => '<div class="nitem' + (n.system ? ' sys' : '') + (n.has_image ? ' img' : ' fold' + (sheet.nOpen.has(n.id) ? ' open' : '')) + '" data-nid="' + n.id + '"' + (n.event_type ? ' data-ev="' + esc(n.event_type) + '"' : '') + (n.new_status ? ' data-st="' + esc(n.new_status) + '"' : '') + '>' +
-      (n.has_image ? meta(n) + '<a class="nimg" data-img="' + n.id + '"><div class="nload">טוען תמונה…</div></a>' : '<div class="ntext">' + noteTextHtml(n.body) + '</div><div class="nmw"><div class="nmi">' + meta(n) + '</div></div>') + '</div>').join('')
+      (n.has_image ? meta(n) + '<a class="nimg" data-img="' + n.id + '"><div class="nload">טוען תמונה…</div></a>' : '<div class="ntext' + (n.system && sysChips(n) ? ' chips' : '') + '">' + ((n.system && sysChips(n)) || noteTextHtml(n.body)) + '</div><div class="nmw"><div class="nmi">' + meta(n) + '</div></div>') + '</div>').join('')
       : '<p class="mnone">עוד אין הערות. אפשר לרשום למעלה מה דיברתם, מה הוחלט ומה צריך לזכור, או לצרף צילום מסך משיחה</p>';
     list.querySelectorAll('[data-img]').forEach(loadNoteImg);
   }
