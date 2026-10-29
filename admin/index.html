@@ -3505,7 +3505,14 @@
         const pm = /^(.+?)\s*₪\s*([\d.]+)(?:\s+ב.+)?$/.exec(m[1]);   // "שילם ₪100 בפייבוקס": הסטטוס, ואחריו צ'יף תשלום כמו בשאר ההערות
         return M + nStChip(m[2]) + NARW + nStChip(pm ? pm[1] : m[1]) + (pm ? NCH('תשלום&nbsp;' + sh(Number(pm[2])), 'ng') : '');
       }
-      case 'meeting_linked': { const ds = state.statuses.find((x) => x.key === SYSTEM_STATUS); return M + (ds ? NCH(esc(ds.label), 'pay ' + ds.key) : NCH('שויך', 'nn')); }   // שיוך למפגש = סטטוס ברירת המחדל (בצבע ובשם הנוכחיים)
+      case 'meeting_linked': {   // שיוך = מעבר מ"לא משויך" לסטטוס שבו נוצר השיוך: ה"היה" של שינוי הסטטוס הראשון אחריו, ואם אין, הסטטוס הנוכחי של השיוך (לא השתנה), ואם הוסר, סטטוס ברירת המחדל
+        const later = state.notes.filter((x) => x.participant_id === n.participant_id && x.meeting_id === n.meeting_id && x.event_type === 'status_changed' && String(x.created_at) > String(n.created_at)).sort((p1, p2) => String(p1.created_at).localeCompare(String(p2.created_at)))[0];
+        const wm = later && /\(היה:\s*(.+)\)\s*$/.exec(later.body), ds = state.statuses.find((x) => x.key === SYSTEM_STATUS);
+        let from = wm ? wm[1] : '';
+        if (!from) { const lk = linkOf(n.participant_id, n.meeting_id), st = lk && state.statuses.find((x) => x.key === linkStatus(lk)); if (st) from = st.label; }
+        if (!from && ds) from = ds.label;
+        return M + NCH('לא משויך', 'nn') + NARW + (from ? nStChip(from) : '');
+      }   // שיוך למפגש = סטטוס ברירת המחדל (בצבע ובשם הנוכחיים)
       case 'meeting_removed': {   // הסרה = מעבר מהסטטוס שהיה למפגש ל"לא משויך": הסטטוס נלקח מהערת השינוי האחרונה לפני ההסרה, ואם אין, מסטטוס ברירת המחדל
         const prev = state.notes.filter((x) => x.participant_id === n.participant_id && x.meeting_id === n.meeting_id && x.event_type === 'status_changed' && String(x.created_at) < String(n.created_at)).sort((p1, p2) => String(p2.created_at).localeCompare(String(p1.created_at)))[0];
         const pm = prev && /:\s*(.+?)\s*(?:₪\s*[\d.]+(?:\s+ב[^()]*?)?)?\s*\(היה:/.exec(prev.body), ds = state.statuses.find((x) => x.key === SYSTEM_STATUS);
