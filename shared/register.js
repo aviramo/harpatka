@@ -41,7 +41,7 @@
                   </div>
                   ${PersonForm.err('name', 'su-err')}
                 </div>
-                <div class="su-cell">
+                <div class="su-cell su-wide">
                   ${PersonForm.html('phone', { id: 'cmPhone', cls: 'su-input text-end' })}
                   ${PersonForm.err('phone', 'su-err')}
                 </div>
@@ -49,7 +49,7 @@
                   ${PersonForm.html('age', { id: 'cmAge', cls: 'su-input' })}
                   ${PersonForm.err('age', 'su-err')}
                 </div>
-                <div class="su-cell su-wide">
+                <div class="su-cell">
                   ${PersonForm.html('gender', { id: 'cmGender', cls: 'su-input su-select' })}
                   ${PersonForm.err('gender', 'su-err')}
                 </div>
