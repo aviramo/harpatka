@@ -66,6 +66,12 @@ for f in FILES:
 (OUT / 'admin').mkdir()
 (OUT / 'admin' / 'index.html').write_text(build_test_admin(), encoding='utf-8', newline='\n')
 shutil.copy2(ROOT / 'tools' / 'test-site-env.js', OUT / 'shared' / 'env.js')
+
+# כניסה עם גוגל לציבור: בפרודקשן כבויה (shared/config.js: googleLogin false). לפיתוח מחדש: קודם רק בבדיקות. True = בעותק של הבדיקות הכניסה פעילה (האמת לא משתנה)
+GOOGLE_LOGIN_IN_TEST = False
+if GOOGLE_LOGIN_IN_TEST:
+    _cfg = OUT / 'shared' / 'config.js'
+    _cfg.write_text(_cfg.read_text(encoding='utf-8').replace('googleLogin: false', 'googleLogin: true', 1), encoding='utf-8')
 (OUT / 'CNAME').write_text('test.harpatka.co.il\n', encoding='utf-8')
 (OUT / '.nojekyll').write_text('', encoding='utf-8')
 (OUT / 'robots.txt').write_text('User-agent: *\nDisallow: /\n', encoding='utf-8')
