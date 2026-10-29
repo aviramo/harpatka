@@ -1007,6 +1007,7 @@
     .nch.nm { background: rgba(201,111,82,.13); color: var(--terra); }   /* מפגש: תמיד כתום, ראשון */
     .nch.ng { background: var(--green-bg); color: var(--green); }
     .nch.nr { background: var(--red-bg); color: var(--red); }
+    .nch.nf { background: #fff; box-shadow: inset 0 0 0 1px var(--line); color: var(--muted); }   /* חינם: לבן עם גבול דק, כמו עיגול ה-₪ של חינם */
     .nch.nn { background: var(--line); color: var(--muted); }
     .narw { color: var(--muted); font-weight: 800; font-size: 16px; }
     #nList .nitem, #nList .nitem.sys { background: transparent; border-radius: 0; margin: 0; padding: 2px 4px; border-bottom: 0; }   /* היסטוריית הערות כרשימה: בלי רקע לכל הערה, רק קו מפריד */
@@ -3506,8 +3507,8 @@
       }
       case 'meeting_linked': { const ds = state.statuses.find((x) => x.key === SYSTEM_STATUS); return M + (ds ? NCH(esc(ds.label), 'pay ' + ds.key) : NCH('שויך', 'nn')); }   // שיוך למפגש = סטטוס ברירת המחדל (בצבע ובשם הנוכחיים)
       case 'meeting_removed': return M + NCH('הוסר/ה', 'nr');
-      case 'free_on': return M + NCH('חינם', 'nn');
-      case 'free_off': return M + NCH('ביטול חינם', 'nn');
+      case 'free_on': return M + NCH('תשלום', 'nn') + NARW + NCH('חינם', 'nf');   // מעבר בין מצבי התשלום של המפגש, בשורה אחת: ישן ← חדש
+      case 'free_off': return M + NCH('חינם', 'nf') + NARW + NCH('תשלום', 'nn');
       case 'attended': return M + NCH('הגיע/ה', 'ng');
       case 'walk_in': return M + NCH('הגיע/ה ללא הרשמה', 'ng');
       case 'attendance_cancelled': return M + NCH('ההגעה בוטלה', 'nn');
