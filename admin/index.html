@@ -418,7 +418,7 @@
     #pDlg { height: 100dvh; max-height: 100dvh; overflow: visible; }   /* כרטיס המשתתף נפתח לכל גובה המסך, עד למעלה */
     #pDlg:focus { outline: none; }
     #pDlg .close, #pDlg .close:focus, #pDlg .close:focus-visible { outline: none; }   /* בלי מסגרת כהה סביב כפתור הסגירה */
-    #pDlg .sheet { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; border-radius: inherit; overflow: hidden; padding: 30px 24px 24px; }
+    #pDlg .sheet { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; border-radius: inherit; overflow: hidden; padding: 30px 16px 24px; }
     /* כותרת (שם המשתתף) ממורכזת; כפתור הסגירה מרחף מעל הפופאפ במרכז, כמו בפופאפ ההרשמה באתר */
     #pDlg .sheet-head { position: relative; justify-content: flex-start; gap: 8px; text-align: right; min-height: 40px; }
     #pDlg .sheet-head h2 { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 20px; }
@@ -447,7 +447,7 @@
     #pDlg .sheet-head, #pDlg .ptabs { flex: 0 0 auto; }
     #pDlg .ppanel { flex: 1 1 auto; min-height: 0; box-sizing: border-box; overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: contain; padding: 4px 1px; }
     /* המסך הראשי של כרטיס המשתתף: רק רשימת ההערות נגללת; הכותרת, המפגשים ושורת ההערה תמיד מוצגים */
-    #pDlg .ppanel[data-panel="main"] { display: flex; flex-direction: column; overflow: hidden; margin-inline: -24px; padding-inline: 25px; }   /* הפאנל הראשי לכל רוחב המסך (יוצא מריפוד הפופאפ), כדי שרצועת המפגשים לא תיחתך בריפוד */
+    #pDlg .ppanel[data-panel="main"] { display: flex; flex-direction: column; overflow: hidden; margin-inline: -16px; padding-inline: 17px; }   /* הפאנל הראשי לכל רוחב המסך (יוצא מריפוד הפופאפ), כדי שרצועת המפגשים לא תיחתך בריפוד */
     #pDlg .ppanel[data-panel="main"][hidden] { display: none; }
     #pDlg .ppanel[data-panel="main"] > * { flex: 0 0 auto; }
     #pDlg .ppanel[data-panel="main"] > #nList { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: none; }
@@ -989,7 +989,7 @@
     .grab { position: sticky; top: 0; height: 30px; margin-bottom: -30px; display: grid; place-items: center; cursor: grab; touch-action: none; z-index: 2; }
     .grab i { width: 44px; height: 5px; border-radius: 3px; background: rgba(63,56,47,.28); }
     html.dlg-lock { overflow: hidden; overscroll-behavior: none; }   /* בלי overflow על ה-body: הוא שובר את ההדר הדביק וגורם לו לקפוץ למעלה */
-    .sheet { padding: 20px 20px calc(20px + env(safe-area-inset-bottom)); }
+    .sheet { padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); }
     .sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
     .sheet h2 { font-family: "Rubik", sans-serif; font-size: 21px; margin: 0; }
     .close { width: 40px; height: 40px; border-radius: 50%; background: var(--cream); font-size: 22px; line-height: 1; }
@@ -1341,7 +1341,7 @@
   .mlist .mrow { width: 150px; padding: 5px; column-gap: 4px; row-gap: 4px; border-radius: 14px; }
   .mlist .mrow .mlabel { height: 24px; font-size: 14px; }
   .mlist .mrow .pay, .mlist .mrow .mmoney, .mlist .mrow .here.sm { height: 24px; font-size: 12.5px; padding: 0 3px; }
-  .mlist { gap: 6px; padding: 2px 24px 4px; margin: 0 -24px 6px; scroll-padding-inline: 24px; }   /* הרצועה לכל רוחב המסך: יוצאת מריפוד הכרטיס (24px) והכרטיס הראשון עדיין מיושר לתוכן */
+  .mlist { gap: 6px; padding: 2px 16px 4px; margin: 0 -16px 6px; scroll-padding-inline: 16px; }   /* הרצועה לכל רוחב המסך: יוצאת מריפוד הכרטיס (24px) והכרטיס הראשון עדיין מיושר לתוכן */
   /* המפגש שממנו נפתח הכרטיס: בלי גבול, חץ קטן מתחתיו שמצביע כלפי מעלה על הכרטיס */
   .mlist .mrow.hl { border-color: var(--line); position: relative; overflow: visible; }
   .mlist .mrow.hl .mlabel { background: var(--meet-bg); color: var(--meet); border-radius: 999px; }   /* המפגש המסומן: התאריך בצ'יף כתום (במקום חץ מתחת לכרטיס) */
@@ -4380,7 +4380,7 @@
   function focusMeetingCard(tries) {
     if (!sheet || !sheet.hl || sheet.hlDone) return; const box = $('#pMeetings'), el = box && box.querySelector('[data-mrow="' + sheet.hl + '"]'); if (!el) return;
     const b = box.getBoundingClientRect(), r = el.getBoundingClientRect();
-    if (b.width > 0) { sheet.hlDone = true; box.scrollBy({ left: r.right - (b.right - 3), behavior: 'auto' }); }
+    if (b.width > 0) { sheet.hlDone = true; box.scrollBy({ left: r.right - (b.right - 16), behavior: 'auto' }); }
     else if ((tries || 0) < 10) setTimeout(() => focusMeetingCard((tries || 0) + 1), 60);
   }
   $('#pMeetings').addEventListener('click', (e) => {
