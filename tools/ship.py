@@ -35,6 +35,7 @@ for f in files:
 import re, tempfile, shutil
 if shutil.which('node'):
     for f in files:
+        if not f.endswith(('.js', '.html')): continue   # קבצים בינאריים (וידאו, תמונות) לא נקראים כטקסט
         src = (ROOT / f).read_text(encoding='utf-8')
         if f.endswith('.js'): blocks = [src]
         elif f.endswith('.html'): blocks = [m.group(1) for m in re.finditer(r'<script(?![^>]*src=)[^>]*>(.*?)</script>', src, re.S) if m.group(1).strip() and 'application/ld+json' not in m.group(0)[:200]]

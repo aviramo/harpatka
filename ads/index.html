@@ -72,6 +72,7 @@
       <option value="msg">מסרים</option>
       <option value="photo">תמונות</option>
       <option value="video">וידאו</option>
+      <option value="anim">אנימציה</option>
     </select>
   </div>
   <div id="grid" class="grid"></div>
@@ -142,7 +143,10 @@
     }
 
     // סרטונים שמופיעים ראשונים, לפני המודעות הממוספרות. סרטון מעודכן = שם קובץ חדש (cache)
-    const FEATURED = [{ label: 'משניים למעגל', name: 'הסרטון משניים למעגל', type: 'video', base: 'motion-group', w: 1080, h: 1350,
+    const FEATURED = [{ label: 'מרגישים שהחיים עומדים במקום?', name: 'הסרטון מכניסים תנועה לחיים', type: 'anim', base: 'adventure', w: 1080, h: 1350,
+      img: 'img/adventure-830057d8.jpg', vid: 'video/adventure-830057d8.mp4',
+      alt: 'מרגישים לפעמים שהחיים עומדים במקום? רוצים שמשהו ישתנה? אבל כל צעד מרגיש כמו מאמץ? ומה אם יש דרך אחרת? בלי להילחם בעצמכם. בלי להתאמץ כל כך. פשוט לשחק. לנוע. ליהנות. לפעמים דווקא ההנאה מניעה את השינוי. יוצאים להרפתקה, מכניסים תנועה לחיים. בואו לחוות את זה בעצמכם' },
+      { label: 'משניים למעגל', name: 'הסרטון משניים למעגל', type: 'video', base: 'motion-group', w: 1080, h: 1350,
       img: 'img/motion-group-07f01b9a.jpg', vid: 'video/motion-group-541fbd68.mp4',
       alt: 'מתי בפעם האחרונה חייכו אליכם בלי מילים? מתי רקדתם בלי לחשוב? מתי הרגשתם חיבור עם כולם? מתי יצאתם ביחד לדרך משותפת והרגשתם בבית? ביודנסה. יוצאים להרפתקה, מפגש מסוג אחר. להיות, לנוע, להיפגש' },
       { label: 'עוד סוויפ?', name: 'הסרטון עוד סוויפ', type: 'photo', base: 'sweeps', w: 1080, h: 1350,
@@ -161,7 +165,7 @@
       const f = document.createElement('figure');
       /* טקסט לחיפוש: מספר, נוסח המודעה (זהה בתמונה ובסרטון) ובמודעה עם סרטון גם הטקסטים הקבועים שבסרטון */
       f.dataset.type = c.type || 'msg';
-      f.dataset.text = [c.label, c.name, c.alt, c.vid && c.type !== 'photo' ? 'מפגש מסוג אחר לגילאי 40 עד 50 בפרק פתוח בחיים הזמנה יוצאים להרפתקה' : ''].join(' ');
+      f.dataset.text = [c.label, c.name, c.alt, c.vid && c.type !== 'photo' && c.type !== 'anim' ?'מפגש מסוג אחר לגילאי 40 עד 50 בפרק פתוח בחיים הזמנה יוצאים להרפתקה' : ''].join(' ');
       const head = document.createElement('div'); head.className = 'head';
       const n = document.createElement('span'); n.className = 'n'; n.textContent = c.label;
       head.appendChild(n);
@@ -212,7 +216,7 @@
     const qEl = document.getElementById('q'), qClr = document.getElementById('qClr'), typesEl = document.getElementById('types'), noneEl = document.getElementById('none');
     let typeSel = '';
     document.getElementById('types').addEventListener('change', e => { typeSel = e.target.value; applySearch(); });
-    const TYPE_LABELS = { '': 'הכל', msg: 'מסרים', photo: 'תמונות', video: 'וידאו' };
+    const TYPE_LABELS = { '': 'הכל', msg: 'מסרים', photo: 'תמונות', video: 'וידאו', anim: 'אנימציה' };
     function applySearch() {
       const words = norm(qEl.value).split(' ').filter(Boolean), count = { '': 0, msg: 0, photo: 0, video: 0 };
       let shown = 0;
