@@ -563,7 +563,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="shared/register.css?v=20261031b">
+  <link rel="stylesheet" href="shared/register.css?v=20261031c">
 </head>
 
 <body class="grain">
@@ -1398,7 +1398,7 @@
       el('tbMain').textContent = 'המפגש הבא כבר בדרך';   // בלי מפגש (בלי שם ברירת המחדל)
       el('tbSub').textContent = 'השאירו פרטים ונעדכן ברגע שהתאריך ייקבע';
     }
-    el('tbPillT').textContent = meName() || 'לאזור האישי';   // משתתף מחובר: השם שלו במקום הצ'יפ, כדי שידע שהוא מחובר
+    el('tbPillT').textContent = (window.HarpatkaMe && HarpatkaMe.enabled === false) ? 'המפגש הקרוב' : (meName() || 'לאזור האישי');   // משתתף מחובר: השם שלו במקום הצ'יפ, כדי שידע שהוא מחובר
     /* מעבר מונפש כשהמצב או התוכן השתנו (טעינה ← תוכן, אין מפגש ← יש מפגש); בלי אנימציה כשהתוכן זהה (למשל רענון אחרי המטמון) */
     if (wasLoading || before !== el('tbPillT').textContent + '|' + el('tbMain').textContent + '|' + el('tbSub').textContent) {
       const box = bar.querySelector('.tb-in'); box.classList.remove('tb-swap'); void box.offsetWidth; box.classList.add('tb-swap');
@@ -1407,6 +1407,7 @@
   window.addEventListener('harpatka:me', () => { if (lastD) render(lastD); });   // התחברות או יציאה: הצ'יפ מתעדכן
   el('tbPillT').parentElement.addEventListener('click', (e) => {   // מחובר: שאלה אם לצאת. לא מחובר: התחברות עם גוגל (ואם אין רשומה למייל הזה נפתח פופאפ ההרשמה)
     e.stopPropagation();
+    if (window.HarpatkaMe && HarpatkaMe.enabled === false) return;   // כניסה עם גוגל כבויה: הצ'יף רק תווית
     const mc = document.getElementById('meAreaCard'); if (mc) mc.click();   // בדיוק מה שלחיצה על "כניסה לאזור האישי" בכרטיס עושה (פופאפ האזור האישי, או דף הניהול למנהל)
   });   // לחיצה על השם: שאלה אם לצאת מהחשבון
   let cached = null;
@@ -1430,6 +1431,6 @@
 </script>
   <script src="shared/rt.js?v=1"></script>
   <script src="shared/person-form.js?v=20261029i"></script>
-  <script src="shared/register.js?v=20261031h"></script>
+  <script src="shared/register.js?v=20261031i"></script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 /* הגדרות משותפות לכל העמודים (עמוד הבית, v6, ביודנסה). עמוד יכול לדרוס ערך אחרי טעינת הקובץ, למשל CONFIG.hadarMessage */
 const CONFIG = {
+  googleLogin: false,   // מתג: כניסה עם גוגל לציבור (אזור אישי, "נרשמתם בעבר", זיהוי משתתף מחובר). כבוי זמנית (30.10.26): ההרשמה רגילה עם הפרטים המלאים. להחזרה: true (ואז הגרסה החזרה: git tag google-login-enabled)
   supabaseUrl: 'https://ezakarwqstnldqixgreb.supabase.co',     // Supabase הייעודי של הפרויקט (harpatka_meetings / harpatka_signup)
   supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6YWthcndxc3RubGRxaXhncmViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTA3MzIsImV4cCI6MjEwNjc4NjczMn0.Bg0eFBC4zKjyJc5kBw3wLgSP-PkxLFVv3o7-4YUdq4c',                  // מפתח ציבורי (anon)
   whatsappOfir: '972587078708',                   // מספר הנייד של אופיר (פורמט בינ"ל, בלי +)

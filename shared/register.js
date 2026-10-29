@@ -394,6 +394,7 @@
   /* כניסה עם גוגל בחלון קופץ: הדף לא מתרענן ולא עובר לשום מקום. החלון הקופץ חוזר ל-me/, שומר את החיבור ב-localStorage, מסמן harpatka_login_done וסוגר את עצמו;
      כאן מאזינים לסימון (אירוע storage), טוענים את המשתתף ומרעננים את הפופאפ הפתוח. אם החלון נחסם: ניווט רגיל כמו קודם */
   function loginPopup(after, thenOpen) {
+    if (!GL) return;
     try { localStorage.setItem('harpatka_login_popup', '1'); } catch (e) {}
     const url = CONFIG.supabaseUrl + '/auth/v1/authorize?provider=google&prompt=select_account&redirect_to=' + encodeURIComponent(BASE + 'me/');
     const w = window.open(url, 'harpatka_login', 'width=480,height=680');
@@ -437,7 +438,10 @@
     } else if (d && d.status === 'noauth') { window.__meAdmin = false; clearMeName(); }
     else { clearMeName(); if (pending) setTimeout(() => { setPhoneMode(true); window.HarpatkaRegister.open(true); }, 300); }   // מחובר לגוגל אבל אין משתתף מקושר: פופאפ ההרשמה במצב הזנת טלפון
   });
+  const GL = CONFIG.googleLogin !== false;   // מתג כניסה עם גוגל (shared/config.js)
+  if (!GL) document.documentElement.classList.add('no-gl');
   function loadMe() {
+    if (!GL) return Promise.resolve();
     takeLoginHash();
     try { const pd = sessionStorage.getItem(LOGIN_KEY); if (pd) { mePending = pd; sessionStorage.removeItem(LOGIN_KEY); } } catch (e) {}
     return meLoader.now();   // תקלה זמנית: ממשיכים כאורח, עם הטופס הרגיל
@@ -504,6 +508,7 @@
     try { meLoader.reload(250); } catch (e) {}   // מה ששונה באזור האישי מתעדכן בדף
   }
   function openMeArea(search, preload) {
+    if (!GL) return;
     if (window.__meAdmin) { goAdmin(); return; }   // מנהל: דף הניהול בלשונית חדשה, בלי מסך "מחוברים כמנהלים"
     { let has = false; try { has = !!localStorage.getItem(ME_KEY); } catch (e) {} if (!has && !String(search || '').includes('embed')) { loginPopup('', true); return; } }   // לא מחובר: ישר כניסה עם גוגל (בחלון קופץ), בלי מסך כניסה; אחרי ההתחברות האזור האישי נפתח
     const lm = document.getElementById('logoutModal'); if (!preload && lm && !lm.hidden) { try { closeModal(lm); } catch (e) {} }
@@ -549,7 +554,7 @@
     if (window.__meAdmin) { goAdmin(); return; }   // מנהל: דף הניהול בלשונית חדשה
     openMeArea(u.search);
   }, true);
-  window.HarpatkaMe = { confirmLogout, get: meGet, login: loginGoogle, loginPopup, openArea: (search) => openMeArea(search || '') };
+  window.HarpatkaMe = { enabled: GL, confirmLogout, get: meGet, login: loginGoogle, loginPopup, openArea: (search) => openMeArea(search || '') };
   try { if (sessionStorage.getItem('harpatka_open_me')) { sessionStorage.removeItem('harpatka_open_me'); setTimeout(() => { try { if (localStorage.getItem(ME_KEY)) openMeArea(''); } catch (e) {} }, 700); } } catch (e) {}   // חזרה מהתחברות עם גוגל שהתחילה מתוך הפופאפ: נפתח מחדש
   document.querySelectorAll('[data-su="ame"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); try { closeModal(contactModal); } catch (x) {} setTimeout(() => openMeArea(''), 450); }));   // כניסה לאזור האישי (בתחתית אחרי ההרשמה): סוגרים את פופאפ ההרשמה ופותחים את האזור האישי
   document.querySelectorAll('[data-su="glink"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); loginPopup('reg'); }));   // נרשמתם בעבר: כניסה עם גוגל בחלון קופץ; אחרי החיבור פופאפ ההרשמה עובר למצב משתתף מחובר (בלי לפתוח את האזור האישי)
@@ -559,7 +564,7 @@
   const IS_TEST = !!(window.HARPATKA_ENV && window.HARPATKA_ENV.name === 'test');
   let meChan = null;
   function ensureMeChannel() {
-    if (meChan) return;
+    if (meChan || !GL) return;
     meChan = HRT.channel({ url: CONFIG.supabaseUrl, key: CONFIG.supabaseKey }, IS_TEST ? 'me-test' : 'me', () => { try { if (!meInfo && !localStorage.getItem(ME_KEY)) return; } catch (e) { return; } meLoader.reload(250); }, { poll: 45000 });
   }
   try { if (localStorage.getItem(ME_KEY)) ensureMeChannel(); } catch (e) {}
