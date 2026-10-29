@@ -341,6 +341,22 @@
     try { sessionStorage.setItem(LOGIN_KEY, after || '1'); } catch (e) {}
     location.href = CONFIG.supabaseUrl + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(location.origin + location.pathname);
   }
+  /* כניסה עם גוגל בחלון קופץ: הדף לא מתרענן ולא עובר לשום מקום. החלון הקופץ חוזר ל-me/, שומר את החיבור ב-localStorage, מסמן harpatka_login_done וסוגר את עצמו;
+     כאן מאזינים לסימון (אירוע storage), טוענים את המשתתף ומרעננים את הפופאפ הפתוח. אם החלון נחסם: ניווט רגיל כמו קודם */
+  function loginPopup(after) {
+    try { localStorage.setItem('harpatka_login_popup', '1'); } catch (e) {}
+    const url = CONFIG.supabaseUrl + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(BASE + 'me/');
+    const w = window.open(url, 'harpatka_login', 'width=480,height=680');
+    if (!w) { try { localStorage.removeItem('harpatka_login_popup'); } catch (e) {} return loginGoogle(after); }
+    const onDone = (ev) => {
+      if (ev.key !== 'harpatka_login_done') return;
+      window.removeEventListener('storage', onDone); clearInterval(iv);
+      mePending = after || null; meLoader.now();
+      if (meSheet && !meSheet.hidden) { const f = meSheet.querySelector('iframe'), s = f.src; f.src = s; }
+    };
+    window.addEventListener('storage', onDone);
+    const iv = setInterval(() => { if (w.closed) { clearInterval(iv); setTimeout(() => window.removeEventListener('storage', onDone), 1500); try { localStorage.removeItem('harpatka_login_popup'); } catch (e) {} } }, 800);
+  }
   function takeLoginHash() {
     const h = new URLSearchParams(location.hash.replace(/^#/, ''));
     if (h.get('access_token')) {
@@ -466,9 +482,9 @@
     if (u.origin !== location.origin || !/\/me\/?$/.test(u.pathname) || u.searchParams.has('as') || u.searchParams.has('back')) return;
     e.preventDefault(); e.stopPropagation(); openMeArea(u.search);
   }, true);
-  window.HarpatkaMe = { confirmLogout, get: meGet, login: loginGoogle, openArea: (search) => openMeArea(search || '') };
+  window.HarpatkaMe = { confirmLogout, get: meGet, login: loginGoogle, loginPopup, openArea: (search) => openMeArea(search || '') };
   try { if (sessionStorage.getItem('harpatka_open_me')) { sessionStorage.removeItem('harpatka_open_me'); setTimeout(() => { try { if (localStorage.getItem(ME_KEY)) openMeArea(''); } catch (e) {} }, 700); } } catch (e) {}   // חזרה מהתחברות עם גוגל שהתחילה מתוך הפופאפ: נפתח מחדש
-  document.querySelectorAll('[data-su="glink"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); loginGoogle('reg'); }));
+  document.querySelectorAll('[data-su="glink"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); loginPopup('reg'); }));
   loadMe();
   /* זמן אמת: מצב המשתתף המחובר דרך הערוץ "me" (בבדיקות "me-test"), ומפגשים והגדרות ציבוריות דרך הערוץ "meetings" (גם למבקרים לא מחוברים).
      הערוצים, חיבור מחדש, חזרה ללשונית וגיבוי כל 45 שניות מגיעים מ-HRT.channel */

@@ -164,7 +164,7 @@
   }
   const goGoogle = () => {
     try { if (asId) sessionStorage.setItem(AS_KEY, asId); } catch (e) {}
-    if (EMBED) { try { sessionStorage.setItem('harpatka_open_me', '1'); } catch (e) {} window.top.location.href = DB.url + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(window.top.location.origin + window.top.location.pathname); return; }
+    if (EMBED) { try { if (window.parent.HarpatkaMe && window.parent.HarpatkaMe.loginPopup) { window.parent.HarpatkaMe.loginPopup(''); return; } } catch (e) {} try { sessionStorage.setItem('harpatka_open_me', '1'); } catch (e) {} window.top.location.href = DB.url + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(window.top.location.origin + window.top.location.pathname); return; }
     location.href = DB.url + '/auth/v1/authorize?provider=google&redirect_to=' + encodeURIComponent(location.origin + location.pathname);
   };
   async function rpc(name, body) {
@@ -395,6 +395,10 @@
       try { const a = JSON.parse(localStorage.getItem(AKEY) || 'null'); if (a && a.access_token) { usingAdmin = true; session = a; } } catch (e) {}
     }
     if (session && !sessionOk(session) && !(await refreshSession())) clearSession();
+    if (h.get('access_token') && window.opener && localStorage.getItem('harpatka_login_popup')) {   // חלון כניסה קופץ מדף אחר: מסמנים שהחיבור נשמר וסוגרים
+      try { localStorage.removeItem('harpatka_login_popup'); localStorage.setItem('harpatka_login_done', String(Date.now())); } catch (e) {}
+      window.close(); return;
+    }
     if (session && !asId) await useClaimToken();
     if (!session) { if (q.get('login') && !asId) { if (q.get('back')) { try { sessionStorage.setItem('harpatka_me_back', q.get('back')); } catch (e) {} } goGoogle(); return; } viewLogin(); return; }   // ?login=1 (הקישור מההרשמה): ישר להתחברות עם גוגל, בלי מסך ביניים
     load();
