@@ -572,7 +572,7 @@
   <div id="tbWrap">
     <div id="topbar" class="tb-loading" role="button" tabindex="0" aria-label="מעבר למפגשים">
       <div class="tb-in">
-        <p class="tb-pill"><span id="tbPillT">התחברות</span></p>
+        <p class="tb-pill"><span id="tbPillT">לאזור האישי</span></p>
         <p class="tb-main font-display" id="tbMain">&nbsp;</p>
         <p class="tb-sub" id="tbSub">&nbsp;</p>
       </div>
@@ -1132,7 +1132,7 @@
         const inn = mk('div', 'mt-in');
         if (m.name) inn.append(mk('div', 'mt-name font-display', m.name));
         inn.append(mk('div', 'mt-when font-display', label(m) + ' · ' + m.time));
-        { const cl = [m.city, !past && m.max ? m.max + ' משתתפים' : ''].filter(Boolean).join(' · '); if (cl) inn.append(mk('div', 'mt-city', cl)); }
+        { const cl = [m.city, !past && m.max ? m.max + ' משתתפים' : '', past ? 'הסתיים' : ''].filter(Boolean).join(' · '); if (cl) inn.append(mk('div', 'mt-city', cl)); }   // מפגש שעבר: "הרצליה · הסתיים"
         const st = !past && window.HarpatkaMe ? HarpatkaMe.get(m.id) : null;   // משתתף מחובר שכבר רשום למפגש הזה: מצב ההרשמה והתשלום במקום מדרגות המחיר
         if (st && st.registered) {
           /* משתתף מחובר שכבר רשום למפגש: הכפתור מציג את המצב (נרשמתם, שולם, דווח...) ולחיצה מובילה לאזור האישי על אותו מפגש */
@@ -1390,7 +1390,7 @@
       el('tbMain').textContent = 'המפגש הבא כבר בדרך';   // בלי מפגש (בלי שם ברירת המחדל)
       el('tbSub').textContent = 'השאירו פרטים ונעדכן ברגע שהתאריך ייקבע';
     }
-    el('tbPillT').textContent = meName() || 'התחברות';   // משתתף מחובר: השם שלו במקום הצ'יפ, כדי שידע שהוא מחובר
+    el('tbPillT').textContent = meName() || 'לאזור האישי';   // משתתף מחובר: השם שלו במקום הצ'יפ, כדי שידע שהוא מחובר
     /* מעבר מונפש כשהמצב או התוכן השתנו (טעינה ← תוכן, אין מפגש ← יש מפגש); בלי אנימציה כשהתוכן זהה (למשל רענון אחרי המטמון) */
     if (wasLoading || before !== el('tbPillT').textContent + '|' + el('tbMain').textContent + '|' + el('tbSub').textContent) {
       const box = bar.querySelector('.tb-in'); box.classList.remove('tb-swap'); void box.offsetWidth; box.classList.add('tb-swap');
@@ -1400,7 +1400,7 @@
   el('tbPillT').parentElement.addEventListener('click', (e) => {   // מחובר: שאלה אם לצאת. לא מחובר: התחברות עם גוגל (ואם אין רשומה למייל הזה נפתח פופאפ ההרשמה)
     e.stopPropagation();
     if (window.__meName) { if (window.HarpatkaMe) HarpatkaMe.confirmLogout(); return; }
-    if (window.HarpatkaMe) HarpatkaMe.login();   // התחברות עם גוגל ישר מדף הבית, בלי לעבור באזור האישי
+    if (window.HarpatkaMe) HarpatkaMe.openArea('');   // לא מחובר: נפתח פופאפ האזור האישי (עם כניסה עם גוגל)
   });   // לחיצה על השם: שאלה אם לצאת מהחשבון
   let cached = null;
   try { cached = JSON.parse(localStorage.getItem(typeof MEET_CACHE !== 'undefined' ? MEET_CACHE : 'harpatka_meetings_v19') || 'null'); } catch (e) {}
