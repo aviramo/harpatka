@@ -10,8 +10,15 @@ alter table public.harpatka_members add column if not exists wants_me boolean no
 -- מי שמבקש אזור אישי: אותה בקשת חיבור כמו בלוח (ממתינה לאישור מנהל), עם סימון שביקש אזור אישי
 create or replace function public.harpatka_me_claim(p_phone text)
 returns text language plpgsql security definer set search_path = public as $$
-declare r text;
+declare r text; norm text := public.harpatka_normalize_phone(p_phone); mm public.harpatka_members; rec record;
 begin
+  select * into mm from public.harpatka_members where user_id = auth.uid();
+  if found and mm.status = 'blocked' then return 'blocked'; end if;   -- חסומים לא יכולים לחזור
+  if coalesce(norm, '') <> '' then   -- משתתף שהוסר חוזר לפעילות דרך התהליך הזה
+    for rec in update public.harpatka_participants set active = true where phone_norm = norm and not active returning id loop
+      begin perform public.harpatka_sys_note(rec.id, 'חזר/ה לפעילות דרך האזור האישי', 'reactivated'); exception when others then null; end;
+    end loop;
+  end if;
   r := public.harpatka_board_claim(p_phone);
   update public.harpatka_members set wants_me = true where user_id = auth.uid();
   -- הטלפון הוא המפתח: חיבור לאזור האישי מאושר מיד (בלי המתנה לאישור מנהל, ובלי מייל אישור)
@@ -65,6 +72,11 @@ begin
       return jsonb_build_object('status', case when m.participant_id is null then 'none' else 'pending' end, 'admin', adm);
     end if;
     pid := m.participant_id;
+  end if;
+  -- משתתף שהוסר (לא פעיל) שחוזר וניכנס לאזור האישי (חיבור מאושר, לא חסום) חוזר לפעילות; רק חסומים לא יכולים (נחסמו למעלה)
+  if p_as is null and exists (select 1 from public.harpatka_participants where id = pid and not active) then
+    update public.harpatka_participants set active = true where id = pid;
+    begin perform public.harpatka_sys_note(pid, 'חזר/ה לפעילות דרך האזור האישי', 'reactivated'); exception when others then null; end;
   end if;
   select * into pa from public.harpatka_participants where id = pid and active;
   if not found then return jsonb_build_object('status', 'none', 'admin', adm); end if;
