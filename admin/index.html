@@ -1012,7 +1012,7 @@
     .nch.nr { background: var(--red-bg); color: var(--red); }
     .nch.nf { background: #fff; box-shadow: inset 0 0 0 1px var(--line); color: var(--muted); }   /* חינם: לבן עם גבול דק, כמו עיגול ה-₪ של חינם */
     .nch.nn { background: var(--line); color: var(--muted); }
-    .narw { color: var(--muted); font-weight: 800; font-size: 16px; }
+    .narw { display: inline-flex; align-items: center; justify-content: center; height: 28px; color: var(--muted); }
     #nList .nitem, #nList .nitem.sys { background: transparent; border-radius: 0; margin: 0; padding: 2px 4px; border-bottom: 0; }   /* היסטוריית הערות כרשימה: בלי רקע לכל הערה, רק קו מפריד */
     #nList .nitem:last-child { border-bottom: 0; }
     .nitem:not(.sys) .ntext { font-weight: 800; }   /* הערה שנכתבה ידנית (לא הערת מערכת): הטקסט מודגש */
@@ -3496,7 +3496,7 @@
   const noteTextHtml = (s) => esc(s).replace(/(\d{1,2}\.\d{1,2}(?:\.\d{2,4})?(?:\s*·\s*\d{1,2}:\d{2})?|\d{1,2}:\d{2})/g, '<bdi dir="ltr">$1</bdi>');
   /* הערות מערכת כצ'יפים: המפגש תמיד ראשון (כתום), ואחריו הפעולה; שינוי (סטטוס, סכום הקצאה) הוא "ישן ← חדש", הכול בצבעי המערכת */
   const NCH = (txt, cls) => '<span class="nch ' + cls + '">' + txt + '</span>';
-  const NARW = '<span class="narw" aria-hidden="true">←</span>';
+  const NARW = '<span class="narw" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></span>';   // חץ כ-SVG: ממורכז אנכית באמת (התו ← יושב נמוך בגופן)
   const nStKey = (name) => { const s = state.statuses.concat(state.astatuses).find((x) => x.label === name); return s ? s.key : null; };
   const NLEGACY = { 'שילם': 'paid', 'ישלם': 'willpay', 'ספונטני': 'maybe', 'אולי': 'maybe', 'בטיפול': 'requested', 'חינם': 'exempt', 'חדש': 'unpaid', 'טרם טופל': 'unpaid', 'משויך': 'unpaid' };   // שמות ישנים של סטטוסים מובנים בהערות: מוצגים בשם ובצבע הנוכחיים של אותו סטטוס
   const nStChip = (name) => { let k = nStKey(name), lb = name; if (!k && NLEGACY[name]) { const s = state.statuses.find((x) => x.key === NLEGACY[name]); if (s) { k = s.key; lb = s.label; } } return NCH(esc(lb), k ? 'pay ' + k : 'nn'); };
