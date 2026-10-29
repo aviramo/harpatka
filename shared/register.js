@@ -329,6 +329,31 @@
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return r.json();
   }
+  /* משתתף מחובר שכבר רשום למפגש שנבחר: הפופאפ במצב תשלום ולא במצב הרשמה: בלי כפתור "הרשמה"; מוצגים מצב המפגש (נרשמתם), כפתור התשלום בפייבוקס והקישורים (דיווח, תשלום בדרך אחרת),
+     או הודעה אם כבר שולם, חינם או דווח. מפגש שלא נרשם אליו: הפופאפ כרגיל */
+  let NOTE0 = null;
+  function applyRegState(m) {
+    const root = contactModal; if (!root) return;
+    const q = (k) => root.querySelector('[data-su="' + k + '"]'), btn = q('btn'), after = q('after'), note = root.querySelector('.su-paynote'), fold = q('payfold'), rep = q('reported');
+    if (!btn || !after || !note) return;
+    if (NOTE0 == null) NOTE0 = note.textContent;
+    const x = meInfo && m && m.id ? (meInfo.meetings || []).find((y) => y.id === m.id && y.registered) : null;
+    if (!x) {
+      if (root.dataset.regState) {   // חזרה למצב הרשמה רגיל
+        delete root.dataset.regState; btn.hidden = false; note.textContent = NOTE0; if (fold) fold.hidden = false; if (rep) rep.hidden = true;
+        if (!btn.classList.contains('saved')) { after.classList.add('shut'); root.querySelectorAll('.su-fold:not(.su-after)').forEach((f) => f.classList.remove('shut')); }
+      }
+      return;
+    }
+    const paid = Number(x.paid) > 0, free = !!x.free, reported = !!x.reported, rejected = !!x.rejected && !reported;
+    root.dataset.regState = '1';
+    btn.hidden = true;
+    root.querySelectorAll('.su-fold:not(.su-after)').forEach((f) => f.classList.add('shut'));
+    after.classList.remove('shut');
+    note.textContent = free ? 'נרשמתם למפגש, והוא ללא תשלום' : paid ? 'נרשמתם למפגש והתשלום התקבל. נתראה!' : reported ? 'נרשמתם למפגש. דיווחתם על תשלום, ממתין לאישור' : rejected ? 'נרשמתם למפגש, אבל לא מצאנו את התשלום שדיווחתם עליו. אפשר להשלים תשלום ולדווח מחדש' : 'נרשמתם למפגש. המקום יישמר קבוע רק לאחר תשלום';
+    if (fold) fold.hidden = paid || free || reported;
+    if (rep) rep.hidden = !reported;
+  }
   const applyMemberMode = () => {
     const on = !!meInfo;
     document.documentElement.classList.toggle('reg-member', on);
@@ -377,7 +402,7 @@
     const pending = mePending; mePending = null;
     if (d && d.status === 'ok' && d.participant && d.participant.first_name) {
       meInfo = { first: d.participant.first_name, last: d.participant.last_name || '', age: d.participant.age, gender: d.participant.gender, meetings: d.meetings || [] };
-      applyMemberMode();
+      applyMemberMode(); applyRegState(selMeeting || nearest);
       try { localStorage.setItem('harpatka_me_name', meInfo.first + ' ' + meInfo.last); } catch (e) {}
       ensureMeChannel();
       if (pending === 'reg') setTimeout(() => window.HarpatkaRegister.open(true), 300);   // הגיעו מהקישור בפופאפ ההרשמה: חוזרים אליו, במצב מחובר
@@ -497,7 +522,7 @@
   try { if (localStorage.getItem(ME_KEY)) ensureMeChannel(); } catch (e) {}
   HRT.channel({ url: CONFIG.supabaseUrl, key: CONFIG.supabaseKey }, IS_TEST ? 'meetings-test' : 'meetings', () => { setTimeout(() => { loadNearest(); try { window.dispatchEvent(new Event('harpatka:meetings')); } catch (e) {} }, 200 + Math.random() * 800); }, { poll: 90000 });   // פיזור קטן כדי שכל המבקרים לא יטענו באותו רגע
   const contactModal = document.getElementById('contactModal');
-  window.HarpatkaRegister = { open: (auto, meeting) => { selMeeting = meeting && meeting.id ? meeting : null; showMeeting(selMeeting || nearest); applyMemberMode(); if (contactModal) openModal(contactModal, auto === true); } };   // לשימוש עמודים אחרים
+  window.HarpatkaRegister = { open: (auto, meeting) => { selMeeting = meeting && meeting.id ? meeting : null; showMeeting(selMeeting || nearest); applyMemberMode(); applyRegState(selMeeting || nearest); if (contactModal) openModal(contactModal, auto === true); } };   // לשימוש עמודים אחרים
   if (new URLSearchParams(location.search).has('register')) setTimeout(() => window.HarpatkaRegister.open(true), 500);   // הגעה דרך /register/: דף הבית נטען והפופאפ נפתח עליו
   document.querySelectorAll('[data-contact]').forEach(el => {
     el.setAttribute('href', '#');
