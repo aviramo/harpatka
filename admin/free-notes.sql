@@ -22,10 +22,8 @@ begin
     if ok <> nk then
       perform __S__.harpatka_sys_note(new.participant_id,
         'סטטוס למפגש ' || __S__.harpatka_meeting_short(new.meeting_id) || ': ' || __S__.harpatka_status_label(nk)
-          || case when nk = 'paid' and new.paid_amount is not null then ' ₪' || trim(to_char(new.paid_amount, 'FM999990.##')) else '' end
-          || case when nk = 'paid' and new.pay_method is not null then ' ב' || __S__.harpatka_method_label(new.pay_method, new.pay_method_note) else '' end
           || ' (היה: ' || __S__.harpatka_status_label(ok) || ')',
-        'status_changed', new.meeting_id, ok, nk, case when nk = 'paid' then new.paid_amount end, null, case when nk = 'paid' then new.pay_method end);
+        'status_changed', new.meeting_id, ok, nk);
     end if;
     -- סטטוס אחרי המפגש
     if new.after_key is distinct from old.after_key then
