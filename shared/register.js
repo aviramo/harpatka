@@ -254,7 +254,8 @@
           if (r === 'invalid_phone') q('fail').textContent = 'מספר הטלפון לא תקין';
           else if (r === 'not_registered') { setPhoneMode(false); q('fail').textContent = 'המספר הזה עוד לא רשום אצלנו. אפשר להשלים כאן הרשמה'; }
           else {   // החיבור מאושר מיד: הפופאפ עובר למצב משתתף מחובר, וההרשמה למפגש שנבחר מתבצעת באותה לחיצה
-            setPhoneMode(false); mePending = null; await meLoader.now();
+            setPhoneMode(false); mePending = null;
+            for (let i = 0; i < 6 && !meInfo; i++) { await meLoader.now(); if (!meInfo) await new Promise((rs) => setTimeout(rs, 450)); }   // meLoader.now מסתיים מיד כשטעינה אחרת כבר רצה; מנסים עד שהמשתתף נטען
             if (!meInfo) q('fail').textContent = 'משהו השתבש, אפשר לנסות שוב';
             else {
               const mm = selMeeting || nearest, mine = mm && mm.id ? (meInfo.meetings || []).find((y) => y.id === mm.id && y.registered) : null;
