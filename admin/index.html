@@ -3903,25 +3903,25 @@
     menu.style.left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8) + 'px'; menu.style.top = (r.bottom + 6) + 'px';
     menu.onclick = (e) => {
       const b = e.target.closest('[data-md]'); if (!b) return; closeQ();
-      const to = b.dataset.md, api = sheet.modeApi, pid = sheet.id, mid = sheet.depMid;
+      const to = b.dataset.md, mapi = sheet.modeApi, pid = sheet.id, mid = sheet.depMid;
       if (to === 'reject') {   // דחיית דיווח: מנקה את הדיווח, מסמנת דחייה (הערת מערכת, מייל למשתתף ושינוי באזור האישי ובדף הבית דרך הטריגר בבסיס הנתונים)
         const rl = linkOf(pid, mid), ra = reportedAmt(pid, mid);
         confirmAct('לדחות את הדיווח?', pid, mid, async () => {
-          try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body: { pay_reported_at: null, pay_reported_amount: null, pay_rejected_at: new Date().toISOString() } }); if (rl) { rl.pay_reported_at = null; rl.pay_reported_amount = null; } toast('הדיווח נדחה והמשתתף עודכן'); paintDepLines(); render(); } catch (e) { toast('לא הצלחנו לדחות את הדיווח'); }
+          try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body: { pay_reported_at: null, pay_reported_amount: null, pay_rejected_at: new Date().toISOString() } }); if (rl) { rl.pay_reported_at = null; rl.pay_reported_amount = null; } toast('הדיווח נדחה והמשתתף עודכן'); paintDepLines(); render(); } catch (e) { fail(e); }
         }, 'המשתתף דיווח ששילם' + (ra ? ' <b>' + ra.trim() + '</b>' : '') + ' ואתם לא מצאתם תשלום. הדיווח יבוטל, המשתתף יקבל מייל (אם יש לו חשבון מחובר) וינוסח באזור האישי ובדף הבית שהדיווח לא אושר.', 'כן, לדחות את הדיווח', null, { danger: true });
         return;
       }
       if (to === 'del') {   // מחיקת הקצאה: אותו תהליך כמו במעבר לחינם (הכסף נשאר ביתרה של המשתתף), בלי לסמן חינם
         const al0 = Math.round(allocatedOf(pid, mid) * 100) / 100;
-        confirmAct('להעביר את ההקצאה ליתרה?', pid, mid, () => api.del(), '<b>' + ils(al0) + '</b> שמוקצים למפגש יוסרו ממנו ויעברו כזיכוי ליתרה של המשתתף, ואפשר יהיה להקצות אותם למפגש אחר או להחזיר אותם ככסף. לא מוחזר כסף עכשיו.', 'כן, העברת הסכום ליתרה', null, { yellow: true });
+        confirmAct('להעביר את ההקצאה ליתרה?', pid, mid, () => mapi.del(), '<b>' + ils(al0) + '</b> שמוקצים למפגש יוסרו ממנו ויעברו כזיכוי ליתרה של המשתתף, ואפשר יהיה להקצות אותם למפגש אחר או להחזיר אותם ככסף. לא מוחזר כסף עכשיו.', 'כן, העברת הסכום ליתרה', null, { yellow: true });
         return;
       }
-      if ((to === 'free') === api.free()) return;
+      if ((to === 'free') === mapi.free()) return;
       if (to === 'free') {
         const al = Math.round(allocatedOf(pid, mid) * 100) / 100;
-        if (al > 0) confirmAct('חינם: להעביר את ההקצאה ליתרה?', pid, mid, () => api.go('free'), 'המפגש יסומן כחינם. <b>' + ils(al) + '</b> שהוקצו אליו יוסרו ממנו ויעברו כזיכוי ליתרה של המשתתף, ואפשר יהיה להקצות אותם למפגש אחר או להחזיר אותם ככסף. לא מוחזר כסף עכשיו.', 'כן, העברת הסכום ליתרה', null, { yellow: true });
-        else confirmAct('לסמן את המפגש כחינם?', pid, mid, () => api.go('free'), 'המפגש יסומן כחינם והמשתתף לא ישלם עליו.', 'כן, חינם', null, { primary: true });
-      } else confirmAct('לתשלום: לבטל את החינם?', pid, mid, () => api.go('pay'), 'המפגש יחזור להיות לתשלום (כאילו לא סומן חינם), ואפשר יהיה להקצות אליו כסף.', 'כן, לתשלום', null, { primary: true });
+        if (al > 0) confirmAct('חינם: להעביר את ההקצאה ליתרה?', pid, mid, () => mapi.go('free'), 'המפגש יסומן כחינם. <b>' + ils(al) + '</b> שהוקצו אליו יוסרו ממנו ויעברו כזיכוי ליתרה של המשתתף, ואפשר יהיה להקצות אותם למפגש אחר או להחזיר אותם ככסף. לא מוחזר כסף עכשיו.', 'כן, העברת הסכום ליתרה', null, { yellow: true });
+        else confirmAct('לסמן את המפגש כחינם?', pid, mid, () => mapi.go('free'), 'המפגש יסומן כחינם והמשתתף לא ישלם עליו.', 'כן, חינם', null, { primary: true });
+      } else confirmAct('לתשלום: לבטל את החינם?', pid, mid, () => mapi.go('pay'), 'המפגש יחזור להיות לתשלום (כאילו לא סומן חינם), ואפשר יהיה להקצות אליו כסף.', 'כן, לתשלום', null, { primary: true });
     };
   });
   $('#pPayChip').addEventListener('click', () => { if (!sheet || !sheet.id) return; viewStack = []; goView('wallet'); });
