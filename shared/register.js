@@ -485,6 +485,8 @@
     openModal(dlg, true);
   }
   /* פופאפ האזור האישי: עולה מלמטה ומציג את דף האזור האישי (me/?embed=1) בתוך iframe, בלי לעבור לדף אחר. סגירה: גרירה למטה או לחיצה על הפס, לחיצה בחוץ, Esc וכפתור "חזרה" */
+  /* מנהל: דף הניהול שומר את החיבור במפתח משלו, ולכן מעתיקים אליו את החיבור של דף הבית ועוברים אליו (בלי להתחבר שוב) */
+  function goAdmin() { try { const s = localStorage.getItem(ME_KEY); if (s) localStorage.setItem('harpatka_admin_session_v2', s); } catch (e) {} location.href = BASE + 'admin/'; }
   let meSheet = null, meSheetPush = false;
   function closeMeSheet(fromPop) {
     if (!meSheet || meSheet.hidden) return;
@@ -494,7 +496,7 @@
     try { meLoader.reload(250); } catch (e) {}   // מה ששונה באזור האישי מתעדכן בדף
   }
   function openMeArea(search, preload) {
-    if (window.__meAdmin) { (location.href = BASE + 'admin/'); return; }   // מנהל: דף הניהול בלשונית חדשה, בלי מסך "מחוברים כמנהלים"
+    if (window.__meAdmin) { goAdmin(); return; }   // מנהל: דף הניהול בלשונית חדשה, בלי מסך "מחוברים כמנהלים"
     { let has = false; try { has = !!localStorage.getItem(ME_KEY); } catch (e) {} if (!has && !String(search || '').includes('embed')) { loginPopup('', true); return; } }   // לא מחובר: ישר כניסה עם גוגל (בחלון קופץ), בלי מסך כניסה; אחרי ההתחברות האזור האישי נפתח
     const lm = document.getElementById('logoutModal'); if (!preload && lm && !lm.hidden) { try { closeModal(lm); } catch (e) {} }
     if (!meSheet) {
@@ -512,7 +514,7 @@
       window.addEventListener('message', (e) => {   // חשבון מנהל: האזור האישי לא רלוונטי, סוגרים ופותחים את דף הניהול בלשונית חדשה
         if (e.origin !== location.origin || !e.data || e.data.harpatka !== 'me-admin') return;
         window.__meAdmin = true;
-        if (meSheet && !meSheet.hidden) { closeMeSheet(); (location.href = BASE + 'admin/'); }
+        if (meSheet && !meSheet.hidden) { closeMeSheet(); goAdmin(); }
       });
       window.addEventListener('message', (e) => {   // החלקה למטה בתוך הדף (כשהוא בראשו) מזיזה את כל הפופאפ וסוגרת אותו
         if (e.origin !== location.origin || !e.data || !meSheet || meSheet.hidden) return;
@@ -536,7 +538,7 @@
     let u; try { u = new URL(a.getAttribute('href'), location.href); } catch (x) { return; }
     if (!a.closest('#meAreaCard') || u.origin !== location.origin || !/\/me\/?$/.test(u.pathname) || u.searchParams.has('as') || u.searchParams.has('back')) return;   // פופאפ האזור האישי נפתח רק מהכרטיס "האזור האישי שלכם"
     e.preventDefault(); e.stopPropagation();
-    if (window.__meAdmin) { (location.href = BASE + 'admin/'); return; }   // מנהל: דף הניהול בלשונית חדשה
+    if (window.__meAdmin) { goAdmin(); return; }   // מנהל: דף הניהול בלשונית חדשה
     openMeArea(u.search);
   }, true);
   window.HarpatkaMe = { confirmLogout, get: meGet, login: loginGoogle, loginPopup, openArea: (search) => openMeArea(search || '') };
