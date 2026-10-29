@@ -4503,7 +4503,7 @@
     $('#mImgPrev').hidden = !shown; if (shown) $('#mImgPrev').src = shown; $('#mImgPrev').style.opacity = src ? '' : '.55'; $('#mImgDel').hidden = !src;
   }
   /* דחיסה בדפדפן: עד 1400px בצד הארוך, JPEG איכות 0.82 */
-  function compressImage(file) {
+  function compressMeetingImage(file) {
     return new Promise((resolve, reject) => {
       const url = URL.createObjectURL(file), im = new Image();
       im.onload = () => { const k = Math.min(1, 1400 / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(url); c.toBlob((b) => (b ? resolve(b) : reject(new Error('compress'))), 'image/jpeg', 0.82); };
@@ -4519,7 +4519,7 @@
   }
   $('#mImgFile').addEventListener('change', async (e) => {
     const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
-    try { const b = await compressImage(f); if (mImg.objUrl) URL.revokeObjectURL(mImg.objUrl); mImg.blob = b; mImg.objUrl = URL.createObjectURL(b); paintMImg(); }
+    try { const b = await compressMeetingImage(f); if (mImg.objUrl) URL.revokeObjectURL(mImg.objUrl); mImg.blob = b; mImg.objUrl = URL.createObjectURL(b); paintMImg(); }
     catch (err) { toast(err.message || 'לא ניתן לקרוא את התמונה'); }
   });
   $('#mImgDel').addEventListener('click', () => { if (mImg.objUrl) URL.revokeObjectURL(mImg.objUrl); mImg = { url: null, blob: null, objUrl: null }; paintMImg(); });
@@ -4864,7 +4864,7 @@
   }
   $('#setMImgFile').addEventListener('change', async (e) => {
     const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
-    try { const b = await compressImage(f); await saveDefImage(await uploadMeetingImage(b)); } catch (err) { toast(err.message || 'העלאת התמונה נכשלה'); }
+    try { const b = await compressMeetingImage(f); await saveDefImage(await uploadMeetingImage(b)); } catch (err) { toast(err.message || 'העלאת התמונה נכשלה'); }
   });
   $('#setMImgDel').addEventListener('click', () => saveDefImage(null));
   /* שם ברירת מחדל למפגש (הגדרה אחת לכל המערכת, בטבלת harpatka_public_settings): מוצע ביצירת מפגש חדש ומוצג בעמוד הבית למפגש בלי שם */
