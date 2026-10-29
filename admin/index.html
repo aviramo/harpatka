@@ -3525,15 +3525,15 @@
     const then = new Date(iso), s = Math.max(0, (Date.now() - then.getTime()) / 1000);
     const pl = (n, one, two, many) => n === 1 ? one : n === 2 ? two : n + ' ' + many;
     if (s < 60) return 'עכשיו';
-    if (s < 3600) return 'לפני ' + pl(Math.floor(s / 60), 'דקה', 'שתי דקות', 'דקות');
-    if (s < 86400) return 'לפני ' + pl(Math.floor(s / 3600), 'שעה', 'שעתיים', 'שעות');
+    if (s < 3600) return pl(Math.floor(s / 60), 'דקה', 'שתי דקות', 'דקות');
+    if (s < 86400) return pl(Math.floor(s / 3600), 'שעה', 'שעתיים', 'שעות');
     const dk = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(d), dd = Math.round((new Date(dk(new Date())) - new Date(dk(then))) / 86400000);   // הפרש ימי לוח (שעון ישראל)
     if (dd <= 1) return 'אתמול';
     if (dd === 2) return 'שלשום';
-    if (dd < 7) return 'לפני ' + dd + ' ימים';
-    if (dd < 30) return 'לפני ' + pl(Math.floor(dd / 7), 'שבוע', 'שבועיים', 'שבועות');
-    if (dd < 365) return 'לפני ' + pl(Math.floor(dd / 30.4), 'חודש', 'חודשיים', 'חודשים');
-    return 'לפני ' + pl(Math.floor(dd / 365), 'שנה', 'שנתיים', 'שנים');
+    if (dd < 7) return dd + ' ימים';
+    if (dd < 30) return pl(Math.floor(dd / 7), 'שבוע', 'שבועיים', 'שבועות');
+    if (dd < 365) return pl(Math.floor(dd / 30.4), 'חודש', 'חודשיים', 'חודשים');
+    return pl(Math.floor(dd / 365), 'שנה', 'שנתיים', 'שנים');
   };
   setInterval(() => { document.querySelectorAll('.nago[data-ts]').forEach((e) => { e.textContent = agoText(e.dataset.ts); }); }, 30000);
   const authorName = () => SENDERS[emailOf()] || 'מנהל';
