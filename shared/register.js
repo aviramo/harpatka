@@ -394,7 +394,7 @@
       if (ev.key !== 'harpatka_login_done') return;
       window.removeEventListener('storage', onDone); clearInterval(iv);
       mePending = after || null; const ld = meLoader.now();
-      if (meSheet && !meSheet.hidden) { const f = meSheet.querySelector('iframe'), s = f.src; f.src = s; }
+      if (meSheet) { meSheet.dataset.k = ''; if (!meSheet.hidden) { const f = meSheet.querySelector('iframe'), s = f.src; f.src = s; } }
       if (thenOpen) Promise.resolve(ld).then(() => openMeArea(''));   // נכנסו מ"כניסה לאזור האישי": אחרי ההתחברות נפתח האזור האישי
     };
     window.addEventListener('storage', onDone);
@@ -424,6 +424,7 @@
       applyMemberMode(); applyRegState(selMeeting || nearest);
       try { localStorage.setItem('harpatka_me_name', meInfo.first + ' ' + meInfo.last); } catch (e) {}
       ensureMeChannel();
+      if (!meSheet && !window.__meAdmin) setTimeout(() => { try { openMeArea('', true); } catch (e) {} }, 1500);   // טעינה מוקדמת של האזור האישי (מוסתר), כדי שהפתיחה הראשונה תהיה מיידית
       if (pending === 'reg') setTimeout(() => window.HarpatkaRegister.open(true), 300);   // הגיעו מהקישור בפופאפ ההרשמה: חוזרים אליו, במצב מחובר
     } else if (d && d.status === 'noauth') { clearMeName(); }
     else { clearMeName(); if (pending) setTimeout(() => { setPhoneMode(true); window.HarpatkaRegister.open(true); }, 300); }   // מחובר לגוגל אבל אין משתתף מקושר: פופאפ ההרשמה במצב הזנת טלפון
@@ -489,13 +490,13 @@
     if (!meSheet || meSheet.hidden) return;
     meSheet.classList.remove('open'); unlockPage();
     if (meSheetPush && !fromPop) { meSheetPush = false; try { history.back(); } catch (e) {} } else meSheetPush = false;
-    const sh = meSheet; setTimeout(() => { sh.hidden = true; sh.querySelector('iframe').removeAttribute('src'); }, 340);
+    const sh = meSheet; setTimeout(() => { sh.hidden = true; }, 340);
     try { meLoader.reload(250); } catch (e) {}   // מה ששונה באזור האישי מתעדכן בדף
   }
-  function openMeArea(search) {
+  function openMeArea(search, preload) {
     if (window.__meAdmin) { window.open(BASE + 'admin/', '_blank', 'noopener'); return; }   // מנהל: דף הניהול בלשונית חדשה, בלי מסך "מחוברים כמנהלים"
     { let has = false; try { has = !!localStorage.getItem(ME_KEY); } catch (e) {} if (!has && !String(search || '').includes('embed')) { loginPopup('', true); return; } }   // לא מחובר: ישר כניסה עם גוגל (בחלון קופץ), בלי מסך כניסה; אחרי ההתחברות האזור האישי נפתח
-    const lm = document.getElementById('logoutModal'); if (lm && !lm.hidden) { try { closeModal(lm); } catch (e) {} }
+    const lm = document.getElementById('logoutModal'); if (!preload && lm && !lm.hidden) { try { closeModal(lm); } catch (e) {} }
     if (!meSheet) {
       meSheet = document.createElement('div'); meSheet.className = 'mesheet'; meSheet.hidden = true; meSheet.setAttribute('role', 'dialog'); meSheet.setAttribute('aria-modal', 'true'); meSheet.setAttribute('aria-label', 'האזור האישי');
       meSheet.innerHTML = '<div class="mesb"></div><div class="mesp"><button type="button" class="mesgrab" aria-label="סגירה"><i></i></button><iframe class="mesf" title="האזור האישי"></iframe></div>';
@@ -514,10 +515,13 @@
         if (t === 'me-drag') { p.style.transition = 'none'; p.style.transform = 'translateY(' + d + 'px)'; }
         else if (t === 'me-drag-end') { p.style.transition = ''; p.style.transform = ''; if (d > 110) closeMeSheet(); }
       });
-      window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout') { try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {} meInfo = null; window.__meName = null; window.__meAdmin = false; applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {} closeMeSheet(); } });   // יציאה: מנתקים וסוגרים את הפופאפ, בלי לרענן את הדף
+      window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout') { try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {} meInfo = null; window.__meName = null; window.__meAdmin = false; applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {} meSheet.dataset.k = ''; closeMeSheet(); } });   // יציאה: מנתקים וסוגרים את הפופאפ, בלי לרענן את הדף
     }
     const qs = new URLSearchParams(search || ''); qs.set('embed', '1');
-    meSheet.querySelector('iframe').src = BASE + 'me/?' + qs.toString();
+    { const fr = meSheet.querySelector('iframe'); let tk = ''; try { tk = String(localStorage.getItem(ME_KEY) || '').slice(-24); } catch (e) {}
+      const key = tk + '|' + qs.toString();
+      if (meSheet.dataset.k !== key) { fr.src = BASE + 'me/?' + qs.toString(); meSheet.dataset.k = key; } }   // הדף נטען מראש ונשאר חם: פתיחה ראשונה ופתיחות הבאות מיידיות; נטען מחדש רק כשהחיבור או הפרמטרים השתנו
+    if (preload) return;
     meSheet.hidden = false; lockPage();
     requestAnimationFrame(() => requestAnimationFrame(() => meSheet.classList.add('open')));
     if (!meSheetPush) { try { history.pushState({ meSheet: 1 }, ''); meSheetPush = true; } catch (e) {} }
