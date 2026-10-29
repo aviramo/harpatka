@@ -399,6 +399,7 @@
     return meRpc('harpatka_me', {});
   }, (d) => {
     const pending = mePending; mePending = null;
+    window.__meAdmin = !!(d && d.admin);   // מנהל מחובר: "כניסה לאזור האישי" לוקחת לדף הניהול
     if (d && d.status === 'ok' && d.participant && d.participant.first_name) {
       meInfo = { first: d.participant.first_name, last: d.participant.last_name || '', age: d.participant.age, gender: d.participant.gender, meetings: d.meetings || [] };
       applyMemberMode(); applyRegState(selMeeting || nearest);
@@ -504,7 +505,9 @@
     const a = e.target.closest && e.target.closest('a[href]'); if (!a || e.defaultPrevented || e.button || e.ctrlKey || e.metaKey || e.shiftKey || a.target === '_blank') return;
     let u; try { u = new URL(a.getAttribute('href'), location.href); } catch (x) { return; }
     if (!a.closest('#meAreaCard') || u.origin !== location.origin || !/\/me\/?$/.test(u.pathname) || u.searchParams.has('as') || u.searchParams.has('back')) return;   // פופאפ האזור האישי נפתח רק מהכרטיס "האזור האישי שלכם"
-    e.preventDefault(); e.stopPropagation(); openMeArea(u.search);
+    e.preventDefault(); e.stopPropagation();
+    if (window.__meAdmin) { window.open(BASE + 'admin/', '_blank', 'noopener'); return; }   // מנהל: דף הניהול בלשונית חדשה
+    openMeArea(u.search);
   }, true);
   window.HarpatkaMe = { confirmLogout, get: meGet, login: loginGoogle, loginPopup, openArea: (search) => openMeArea(search || '') };
   try { if (sessionStorage.getItem('harpatka_open_me')) { sessionStorage.removeItem('harpatka_open_me'); setTimeout(() => { try { if (localStorage.getItem(ME_KEY)) openMeArea(''); } catch (e) {} }, 700); } } catch (e) {}   // חזרה מהתחברות עם גוגל שהתחילה מתוך הפופאפ: נפתח מחדש
