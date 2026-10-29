@@ -136,7 +136,7 @@ grant execute on function public.harpatka_me_register(uuid, uuid) to authenticat
 drop function if exists public.harpatka_me_update(text, text, int, text, text);
 create or replace function public.harpatka_me_update(p_first text, p_last text, p_age int, p_gender text, p_phone text, p_as uuid default null)
 returns text language plpgsql security definer set search_path = public as $$
-declare m public.harpatka_members; norm text := public.harpatka_normalize_phone(p_phone); target uuid; o public.harpatka_participants; n public.harpatka_participants;
+declare m public.harpatka_members; norm text := public.harpatka_normalize_phone(p_phone); target uuid;
 begin
   if p_as is not null then
     if not public.harpatka_is_admin() then raise exception 'forbidden'; end if;   -- מנהל פועל במקום המשתתף (התחזות)
@@ -151,7 +151,6 @@ begin
   if p_gender is null or p_gender not in ('male', 'female') then return 'invalid_gender'; end if;
   if norm = '' then return 'invalid_phone'; end if;
   if exists (select 1 from public.harpatka_participants where phone_norm = norm and id <> target) then return 'phone_taken'; end if;   -- גם משתתף לא פעיל: הטלפון ייחודי במערכת
-  select * into o from public.harpatka_participants where id = target;
   begin
     update public.harpatka_participants set first_name = trim(p_first), last_name = trim(p_last), age = p_age, age_set_at = current_date,
       gender = case when p_gender in ('male', 'female') then p_gender else null end, phone = trim(p_phone), phone_norm = norm
@@ -159,16 +158,6 @@ begin
   exception when unique_violation then return 'phone_taken';   -- מירוץ בין שני עדכונים
   end;
   update public.harpatka_members set phone_norm = norm where participant_id = target and p_as is null and user_id = auth.uid();
-  -- הערת מערכת נפרדת לכל ערך ששונה (ישן ← חדש), בדף הניהול כצ'יפים: שם הערך, הערך הישן, חץ והערך החדש
-  begin
-    select * into n from public.harpatka_participants where id = target;
-    if o.first_name is distinct from n.first_name then perform public.harpatka_sys_note(target, 'שם פרטי: ' || coalesce(o.first_name, '') || ' ← ' || coalesce(n.first_name, ''), 'profile_changed'); end if;
-    if o.last_name is distinct from n.last_name then perform public.harpatka_sys_note(target, 'שם משפחה: ' || coalesce(o.last_name, '') || ' ← ' || coalesce(n.last_name, ''), 'profile_changed'); end if;
-    if o.phone_norm is distinct from n.phone_norm then perform public.harpatka_sys_note(target, 'טלפון: ' || coalesce(o.phone, o.phone_norm, '') || ' ← ' || coalesce(n.phone, n.phone_norm, ''), 'profile_changed'); end if;
-    if o.age is distinct from n.age then perform public.harpatka_sys_note(target, 'גיל: ' || coalesce(o.age::text, '') || ' ← ' || coalesce(n.age::text, ''), 'profile_changed'); end if;
-    if o.gender is distinct from n.gender then perform public.harpatka_sys_note(target, 'מגדר: ' || case o.gender when 'male' then 'זכר' when 'female' then 'נקבה' else '' end || ' ← ' || case n.gender when 'male' then 'זכר' when 'female' then 'נקבה' else '' end, 'profile_changed'); end if;
-  exception when others then null;   -- כשל בהערה לא מבטל את השמירה
-  end;
   return 'ok';
 end $$;
 revoke all on function public.harpatka_me_update(text, text, int, text, text, uuid) from public;

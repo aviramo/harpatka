@@ -69,7 +69,7 @@ begin
                  else 'נרשם/ה דרך האתר' || case when p_src = 'p' then ' (ממומן)' else '' end end;
     tail := case when mid is null then ' (אין מפגש קרוב)' when linked > 0 then ' ושויך/ה למפגש ' || public.harpatka_meeting_label(mid)
                  else ' (כבר משויך/ת למפגש ' || public.harpatka_meeting_label(mid) || ')' end;
-    perform public.harpatka_sys_note(pid, base || tail, case when res = 'exists' then 'reregistered' when react then 'reactivated' else 'registered' end, mid, null, null, null, case when p_src = 'p' then 'site-ad' else 'site' end);
+    perform public.harpatka_sys_note(pid, base || tail || ' · טלפון ' || n, case when res = 'exists' then 'reregistered' when react then 'reactivated' else 'registered' end, mid, null, null, null, case when p_src = 'p' then 'site-ad' else 'site' end);
   end if;
 
   if res = 'created' then

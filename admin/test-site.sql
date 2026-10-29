@@ -90,5 +90,7 @@ drop trigger if exists harpatka_clear_pay_reported on test.harpatka_payments;
 create trigger harpatka_clear_pay_reported after insert on test.harpatka_payments for each row execute function test.harpatka_clear_pay_reported();
 drop trigger if exists harpatka_member_linked_note on test.harpatka_members;
 create trigger harpatka_member_linked_note after insert or update of participant_id on test.harpatka_members for each row execute function test.harpatka_member_linked_note();   -- הערת מערכת: חובר חשבון גוגל
+drop trigger if exists harpatka_participant_changes on test.harpatka_participants;
+create trigger harpatka_participant_changes after update of first_name, last_name, phone_norm, age, gender on test.harpatka_participants for each row execute function test.harpatka_participant_changes();   -- יומן שינויי ערכים
 drop trigger if exists harpatka_att_reject_notify on test.harpatka_attendance;
 create trigger harpatka_att_reject_notify after update of pay_rejected_at on test.harpatka_attendance for each row execute function test.harpatka_att_reject_notify();   -- דחיית דיווח: הערת מערכת (ומייל, כבוי בבדיקות)
