@@ -42,6 +42,21 @@
     .grid .has-video img:focus-visible, .grid video:focus-visible{ outline:3px solid var(--paper); outline-offset:2px; }
     .grid .playing img{ display:none; }
     .grid .playing video{ display:block; }
+    /* בקרת ניגון בזמן ניגון: סטופ (חזרה לתמונה), השהיה/המשך, מיקום בסרטון וזמן. כמו בכל נגן: משמאל לימין */
+    .grid .ctl{ display:none; position:absolute; left:0; right:0; bottom:0; z-index:5; align-items:center; gap:.4rem;
+      padding:1.8rem .55rem .5rem; background:linear-gradient(to top, rgba(0,0,0,.62), rgba(0,0,0,0)); }
+    .grid .playing .ctl{ display:flex; }
+    .grid .ctl .cb{ flex:none; width:2.5rem; height:2.5rem; display:grid; place-items:center; padding:0; border:0; border-radius:50%;
+      background:rgba(255,253,249,.92); color:#3F382F; cursor:pointer; }
+    .grid .ctl .cb svg{ width:1rem; height:1rem; display:block; fill:currentColor; }
+    .grid .ctl .seek{ --p:0%; flex:1 1 auto; min-width:0; height:2.5rem; margin:0 .15rem; background:none; cursor:pointer; -webkit-appearance:none; appearance:none; }
+    .grid .ctl .seek::-webkit-slider-runnable-track{ height:5px; border-radius:99px; background:linear-gradient(to right, var(--terra) var(--p), rgba(255,253,249,.42) var(--p)); }
+    .grid .ctl .seek::-webkit-slider-thumb{ -webkit-appearance:none; width:17px; height:17px; margin-top:-6px; border-radius:50%; background:var(--paper); box-shadow:0 1px 4px rgba(0,0,0,.45); }
+    .grid .ctl .seek::-moz-range-track{ height:5px; border-radius:99px; background:rgba(255,253,249,.42); }
+    .grid .ctl .seek::-moz-range-progress{ height:5px; border-radius:99px; background:var(--terra); }
+    .grid .ctl .seek::-moz-range-thumb{ width:17px; height:17px; border:0; border-radius:50%; background:var(--paper); box-shadow:0 1px 4px rgba(0,0,0,.45); }
+    .grid .ctl .tm{ flex:none; min-width:2.4rem; color:var(--paper); font:600 .85rem Rubik,Assistant,sans-serif; font-variant-numeric:tabular-nums; text-align:right; text-shadow:0 1px 3px rgba(0,0,0,.5); }
+    .grid .ctl .cb:focus-visible, .grid .ctl .seek:focus-visible{ outline:3px solid var(--paper); outline-offset:2px; }
     .searchbar{ position:sticky; top:0; z-index:30; display:flex; flex-wrap:nowrap; justify-content:center; align-items:center; gap:.6rem; padding:.7rem 1rem; background:rgba(36,32,28,.94); backdrop-filter:blur(6px); }
     .searchbar .box{ position:relative; flex:1 1 auto; min-width:0; max-width:28rem; }
     .searchbar input{ width:100%; height:2.7rem; padding:0 2.6rem 0 2.6rem; border-radius:999px; border:1.5px solid rgba(168,159,144,.45); background:#2E2924; color:var(--ink); font:500 1.05rem Assistant,Rubik,sans-serif; }
@@ -82,6 +97,9 @@
     const json = u => fetch(u).then(r => r.ok ? r.json() : {}).catch(() => ({}));
     const DOTS = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
     const I_DL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg>';
+    const I_STOP = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+    const I_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg>';
+    const I_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5.5" width="4" height="13" rx="1"/><rect x="13.5" y="5.5" width="4" height="13" rx="1"/></svg>';
     const I_SHARE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12"/></svg>';
 
     const toastEl = document.createElement('div'); toastEl.className = 'toast'; toastEl.setAttribute('role', 'status');
@@ -144,8 +162,8 @@
 
     // סרטונים שמופיעים ראשונים, לפני המודעות הממוספרות. סרטון מעודכן = שם קובץ חדש (cache)
     const ADV_ALT = 'מרגישים לפעמים שהחיים עומדים במקום? רוצים שמשהו ישתנה? אבל כל צעד מרגיש כמו מאמץ? ומה אם יש דרך אחרת? בלי להילחם בעצמכם. בלי להתאמץ כל כך. פשוט לשחק. לנוע. ליהנות. לפעמים דווקא ההנאה מניעה את השינוי. יוצאים להרפתקה, מכניסים תנועה לחיים. בואו לחוות את זה בעצמכם';
-    const FEATURED = [{ label: 'מרגישים שהחיים עומדים במקום? (לקריינות)', name: 'הסרטון מכניסים תנועה לחיים, גרסה לקריינות', type: 'anim', base: 'adventure-voiceover', w: 1080, h: 1350,
-      img: 'img/adventure-830057d8.jpg', vid: 'video/adventure-voice-7d658aca.mp4', alt: ADV_ALT + ' קריינות' },
+    const FEATURED = [{ label: 'מרגישים שהחיים עומדים במקום? (מוזיקה מלאה)', name: 'הסרטון מכניסים תנועה לחיים, גרסה עם מוזיקה מלאה', type: 'anim', base: 'adventure-full-music', w: 1080, h: 1350,
+      img: 'img/adventure-830057d8.jpg', vid: 'video/adventure-full-4f9efb72.mp4', alt: ADV_ALT + ' מוזיקה מלאה' },
       { label: 'מרגישים שהחיים עומדים במקום?', name: 'הסרטון מכניסים תנועה לחיים', type: 'anim', base: 'adventure', w: 1080, h: 1350,
       img: 'img/adventure-830057d8.jpg', vid: 'video/adventure-830057d8.mp4',
       alt:'מרגישים לפעמים שהחיים עומדים במקום? רוצים שמשהו ישתנה? אבל כל צעד מרגיש כמו מאמץ? ומה אם יש דרך אחרת? בלי להילחם בעצמכם. בלי להתאמץ כל כך. פשוט לשחק. לנוע. ליהנות. לפעמים דווקא ההנאה מניעה את השינוי. יוצאים להרפתקה, מכניסים תנועה לחיים. בואו לחוות את זה בעצמכם' },
@@ -182,17 +200,41 @@
         const v = document.createElement('video');
         v.playsInline = true; v.preload = 'none';
         v.width = c.w; v.height = c.h; v.poster = im.src; v.src = c.vid;
-        v.setAttribute('aria-label', 'עצירת ' + c.name + ' וחזרה לתמונה');
+        v.setAttribute('aria-label', 'השהיה או המשך של ' + c.name);
         im.setAttribute('role', 'button'); im.tabIndex = 0; v.tabIndex = 0;
         im.setAttribute('aria-label', 'ניגון ' + c.name + ': ' + c.alt);
+        // בקרת ניגון: סטופ (חזרה לתמונה), השהיה/המשך, מיקום בסרטון (גרירה) וזמן
+        const ctl = document.createElement('div'); ctl.className = 'ctl'; ctl.dir = 'ltr';
+        ctl.innerHTML = '<button type="button" class="cb stop">' + I_STOP + '</button><button type="button" class="cb pp">' + I_PAUSE + '</button>'
+          + '<input class="seek" type="range" min="0" max="1000" step="1" value="0"><span class="tm">0:00</span>';
+        const bStop = ctl.querySelector('.stop'), bPP = ctl.querySelector('.pp'), seek = ctl.querySelector('.seek'), tm = ctl.querySelector('.tm');
+        bStop.setAttribute('aria-label', 'עצירה וחזרה לתמונה'); seek.setAttribute('aria-label', 'מיקום ב' + c.name);
+        const fmt = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+        let dragging = false;
+        const paint = () => {
+          const d = v.duration || 0, k = d ? v.currentTime / d : 0;
+          if (!dragging) seek.value = Math.round(k * 1000);
+          seek.style.setProperty('--p', (seek.value / 10) + '%');
+          tm.textContent = fmt(v.currentTime || 0);
+        };
+        const ppIcon = () => { bPP.innerHTML = v.paused ? I_PLAY : I_PAUSE; bPP.setAttribute('aria-label', v.paused ? 'המשך ניגון' : 'השהיה'); };
+        const toggle = () => { if (v.paused) v.play().catch(() => {}); else v.pause(); };
         const show = on => {
           f.classList.toggle('playing', on);
-          if (on) { v.currentTime = 0; v.play().catch(() => {}); v.focus({ preventScroll: true }); } else v.pause();
+          if (on) { v.currentTime = 0; paint(); v.play().catch(() => {}); v.focus({ preventScroll: true }); } else v.pause();
         };
-        const key = on => e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(on); } };
         im.addEventListener('click', () => show(true));   // לחיצה על התמונה: ניגון
-        v.addEventListener('click', () => show(false));   // לחיצה על הסרטון: עצירה וחזרה לתמונה
-        im.addEventListener('keydown', key(true)); v.addEventListener('keydown', key(false));
+        v.addEventListener('click', toggle);              // לחיצה על הסרטון: השהיה / המשך
+        im.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(true); } });
+        v.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+        bPP.addEventListener('click', toggle);
+        bStop.addEventListener('click', () => { show(false); im.focus({ preventScroll: true }); });   // סטופ: חזרה לתמונה
+        seek.addEventListener('pointerdown', () => { dragging = true; });
+        ['pointerup', 'pointercancel', 'change'].forEach(ev => seek.addEventListener(ev, () => { dragging = false; }));
+        seek.addEventListener('input', () => { if (v.duration) v.currentTime = seek.value / 1000 * v.duration; paint(); });
+        ['timeupdate', 'seeked', 'loadedmetadata'].forEach(ev => v.addEventListener(ev, paint));
+        ['play', 'pause'].forEach(ev => v.addEventListener(ev, ppIcon));
+        media.appendChild(ctl);
         v.addEventListener('ended', () => show(false));   // בסוף הסרטון התא חוזר לתמונה
         const stop = () => { if (f.classList.contains('playing')) show(false); };
         stops.push(stop);
