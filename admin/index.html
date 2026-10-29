@@ -3490,7 +3490,8 @@
     switch (ev) {
       case 'status_changed': case 'after_status_changed': {
         const m = /:\s*(.+?)\s*\(היה:\s*(.+)\)\s*$/.exec(b); if (!m) return null;
-        return M + nStChip(m[2]) + NARW + nStChip(m[1]);
+        const pm = /^(.+?)\s*₪\s*([\d.]+)(?:\s+ב.+)?$/.exec(m[1]);   // "שילם ₪100 בפייבוקס": הסטטוס, ואחריו צ'יף תשלום כמו בשאר ההערות
+        return M + nStChip(m[2]) + NARW + nStChip(pm ? pm[1] : m[1]) + (pm ? NCH('תשלום&nbsp;' + sh(Number(pm[2])), 'ng') : '');
       }
       case 'meeting_linked': return M + NCH('שויך', 'nn');
       case 'meeting_removed': return M + NCH('הוסר/ה', 'nr');
