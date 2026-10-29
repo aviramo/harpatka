@@ -3479,7 +3479,8 @@
   const NCH = (txt, cls) => '<span class="nch ' + cls + '">' + txt + '</span>';
   const NARW = '<span class="narw" aria-hidden="true">←</span>';
   const nStKey = (name) => { const s = state.statuses.concat(state.astatuses).find((x) => x.label === name); return s ? s.key : null; };
-  const nStChip = (name) => { const k = nStKey(name); return NCH(esc(name), k ? 'pay ' + k : 'nn'); };
+  const NLEGACY = { 'שילם': 'paid', 'ישלם': 'willpay', 'ספונטני': 'maybe', 'אולי': 'maybe', 'בטיפול': 'requested', 'חינם': 'exempt', 'חדש': 'unpaid', 'טרם טופל': 'unpaid', 'משויך': 'unpaid' };   // שמות ישנים של סטטוסים מובנים בהערות: מוצגים בשם ובצבע הנוכחיים של אותו סטטוס
+  const nStChip = (name) => { let k = nStKey(name), lb = name; if (!k && NLEGACY[name]) { const s = state.statuses.find((x) => x.key === NLEGACY[name]); if (s) { k = s.key; lb = s.label; } } return NCH(esc(lb), k ? 'pay ' + k : 'nn'); };
   function sysChips(n) {
     const b = String(n.body || ''), ev = n.event_type || '';
     const mo = n.meeting_id && state.meetings.find((x) => x.id === n.meeting_id), md = mo ? dmShort(mo) : ((/(\d{1,2}\.\d{1,2})/.exec(b) || [])[1] || '');
