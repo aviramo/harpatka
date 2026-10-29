@@ -253,7 +253,15 @@
           const r = await meRpc('harpatka_me_claim', { p_phone: ph });
           if (r === 'invalid_phone') q('fail').textContent = 'מספר הטלפון לא תקין';
           else if (r === 'not_registered') { setPhoneMode(false); q('fail').textContent = 'המספר הזה עוד לא רשום אצלנו. אפשר להשלים כאן הרשמה'; }
-          else { setPhoneMode(false); mePending = null; await meLoader.now(); if (meInfo) applyRegState(selMeeting || nearest); else q('fail').textContent = 'משהו השתבש, אפשר לנסות שוב'; }   // החיבור מאושר מיד: הפופאפ עובר למצב משתתף מחובר
+          else {   // החיבור מאושר מיד: הפופאפ עובר למצב משתתף מחובר, וההרשמה למפגש שנבחר מתבצעת באותה לחיצה
+            setPhoneMode(false); mePending = null; await meLoader.now();
+            if (!meInfo) q('fail').textContent = 'משהו השתבש, אפשר לנסות שוב';
+            else {
+              const mm = selMeeting || nearest, mine = mm && mm.id ? (meInfo.meetings || []).find((y) => y.id === mm.id && y.registered) : null;
+              if (mm && mm.id && !mine) { relB(); btn.disabled = false; await memberSubmit(root, btn, q, showDone); return; }
+              applyRegState(mm);
+            }
+          }
         } catch (er) { q('fail').textContent = 'משהו השתבש, אפשר לנסות שוב'; }
         relB(); btn.disabled = false; return;
       }
@@ -369,7 +377,6 @@
   let phoneMode = false;   // מחוברים עם גוגל, אין משתתף מקושר: פופאפ ההרשמה במצב הזנת טלפון בלבד
   function setPhoneMode(on) {
     phoneMode = !!on; document.documentElement.classList.toggle('reg-phone', phoneMode);
-    document.querySelectorAll('[data-su="btn"]:not(.saved)').forEach((b) => { b.textContent = phoneMode ? 'המשך' : submitLabel; });
   }
   const applyMemberMode = () => {
     const on = !!meInfo;
