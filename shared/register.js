@@ -246,7 +246,7 @@
     form.addEventListener('submit', async (e) => {
       e.preventDefault(); q('fail').textContent = '';
       if (phoneMode) {   // התחברו עם גוגל אבל אין משתתף מקושר: מזינים את הטלפון שבו נרשמו ומחברים אליו את החשבון (החיבור מאושר על ידי מנהל)
-        const ph = (root.querySelector('input[name="phone"]') || {}).value || '';
+        const ph = (root.querySelector('input[type="tel"]') || {}).value || '';
         if (!normPhone(ph)) { q('fail').textContent = 'מספר הטלפון לא תקין'; return; }
         btn.disabled = true; const relB = HRT.busy(btn);
         try {
