@@ -470,7 +470,7 @@
     { const nm = (m && m.name) || defMeetingName || ''; document.querySelectorAll('[data-meeting-name]').forEach((e) => { e.textContent = nm; e.hidden = !nm; }); }   // כותרת: שם המפגש, ואם אין לו שם: שם ברירת המחדל
     if (!m) { document.querySelectorAll('[data-price]').forEach((e) => { e.textContent = priceFor(999, null) + ' ₪'; }); return; }
     const [, mo, d] = m.date.split('-').map(Number), wd = HE_DAYS[new Date(m.date + 'T12:00:00Z').getUTCDay()];
-    const when = 'יום ' + wd + ' ' + Number(d) + '.' + Number(mo) + (m.time ? ' · ' + m.time : '');
+    const when = 'יום ' + wd + ' ' + Number(d) + '.' + Number(mo) + (m.time ? ' · ' + m.time : '') + (m.city ? ' · ' + m.city : '');
     document.querySelectorAll('[data-meeting-when]').forEach((e) => { e.textContent = when; });
     document.querySelectorAll('[data-meeting-place]').forEach((e) => { e.textContent = CONFIG.meetingPlace || ''; });
     const left = dayN(m.date) - dayN(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()));
@@ -482,11 +482,11 @@
     const H = { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey };
     try {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
-      const r = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time,price_tiers,name&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc&limit=1', { headers: H });
+      const r = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time,price_tiers,name,city&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc&limit=1', { headers: H });
       const rows = r.ok ? await r.json() : [];
       if (r.ok && !(rows && rows[0])) nearest = null;   // אין מפגש עתידי
       try { const sr = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_public_settings?select=key,value&key=eq.default_meeting_name', { headers: H }); const sv = sr.ok ? await sr.json() : []; defMeetingName = String(((sv[0] || {}).value) || '').trim(); } catch (e) {}
-      if (rows && rows[0]) nearest = { id: rows[0].id, date: rows[0].meeting_date, time: String(rows[0].meeting_time).slice(0, 5), tiers: normT(rows[0].price_tiers), name: String(rows[0].name || '').trim() };
+      if (rows && rows[0]) nearest = { id: rows[0].id, date: rows[0].meeting_date, time: String(rows[0].meeting_time).slice(0, 5), tiers: normT(rows[0].price_tiers), name: String(rows[0].name || '').trim(), city: String(rows[0].city || '').trim() };
       showMeeting(selMeeting || nearest);
     } catch (e) {}
   };
