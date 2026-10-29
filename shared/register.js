@@ -253,7 +253,7 @@
           const r = await meRpc('harpatka_me_claim', { p_phone: ph });
           if (r === 'invalid_phone') q('fail').textContent = 'מספר הטלפון לא תקין';
           else if (r === 'not_registered') { setPhoneMode(false); q('fail').textContent = 'המספר הזה עוד לא רשום אצלנו. אפשר להשלים כאן הרשמה'; }
-          else { setPhoneMode(false); root.querySelectorAll('.su-grid').forEach((g) => { g.style.display = 'none'; }); q('fail').style.color = 'var(--ink)'; q('fail').textContent = 'תודה! בקשת החיבור נשלחה, והיא מאושרת על ידינו. אחרי האישור אפשר להירשם בלחיצה אחת'; meLoader.reload(0); }
+          else { setPhoneMode(false); mePending = null; await meLoader.now(); if (meInfo) applyRegState(selMeeting || nearest); else q('fail').textContent = 'משהו השתבש, אפשר לנסות שוב'; }   // החיבור מאושר מיד: הפופאפ עובר למצב משתתף מחובר
         } catch (er) { q('fail').textContent = 'משהו השתבש, אפשר לנסות שוב'; }
         relB(); btn.disabled = false; return;
       }

@@ -14,7 +14,11 @@ declare r text;
 begin
   r := public.harpatka_board_claim(p_phone);
   update public.harpatka_members set wants_me = true where user_id = auth.uid();
-  if r = 'pending' then perform public.harpatka_notify_member(auth.uid()); end if;
+  -- הטלפון הוא המפתח: חיבור לאזור האישי מאושר מיד (בלי המתנה לאישור מנהל, ובלי מייל אישור)
+  if r = 'pending' then
+    update public.harpatka_members set status = 'approved' where user_id = auth.uid() and participant_id is not null and status = 'pending';
+    r := 'approved';
+  end if;
   return r;
 end $$;
 revoke all on function public.harpatka_me_claim(text) from public;
