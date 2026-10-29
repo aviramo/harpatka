@@ -249,7 +249,7 @@
   function viewMain() {
     const p = data.participant, nx = data.next, imp = !!data.impersonating, ms = data.meetings || [];
     const nxM = nx ? ms.find((m) => m.id === nx.id) : null;
-    const credit = Number(data.balance) || 0;
+    const credit = Math.round(Number(data.balance) || 0);   // בשקלים שלמים: סכום זעיר (שבר או -0) לא מוצג כ"חוב 0"
     let h = '';
     if (imp) h += '<div class="imp">מצב צפייה כמנהל: כך ' + esc(p.first_name + ' ' + p.last_name) + ' רואה את האזור האישי (אפשר לבצע פעולות בשמו, והן נרשמות בשם המנהל ביומן)</div>';
     setTitle(p.first_name + ' ' + p.last_name);   // שם המשתתף מחליף את הכותרת "האזור האישי" (בלי כרטיס ברכה)
