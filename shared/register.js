@@ -52,6 +52,7 @@
                   </div>
                 </div>
               </div>
+              <p class="su-phonehint" data-su="phonehint">החשבון שלכם עוד לא מחובר למשתתף אצלנו. הזינו את הטלפון שבו נרשמתם, ונחבר אליו את החשבון</p>
               <div class="su-member" data-su="member"><p class="su-memberp">הפרטים שלכם כבר שמורים אצלנו</p><p class="su-who" data-su="who"></p></div>
               <a href="__BASE__me/?login=1&back=reg" class="su-glink" data-su="glink">נרשמתם בעבר? לחצו כאן</a>
             </div></div>
@@ -245,6 +246,18 @@
     if (q('other')) q('other').addEventListener('click', () => openOtherPay(selMeeting || nearest));
     form.addEventListener('submit', async (e) => {
       e.preventDefault(); q('fail').textContent = '';
+      if (phoneMode) {   // התחברו עם גוגל אבל אין משתתף מקושר: מזינים את הטלפון שבו נרשמו ומחברים אליו את החשבון (החיבור מאושר על ידי מנהל)
+        const ph = (root.querySelector('input[name="phone"]') || {}).value || '';
+        if (!normPhone(ph)) { q('fail').textContent = 'מספר הטלפון לא תקין'; return; }
+        btn.disabled = true; const relB = HRT.busy(btn);
+        try {
+          const r = await meRpc('harpatka_me_claim', { p_phone: ph });
+          if (r === 'invalid_phone') q('fail').textContent = 'מספר הטלפון לא תקין';
+          else if (r === 'not_registered') { setPhoneMode(false); q('fail').textContent = 'המספר הזה עוד לא רשום אצלנו. אפשר להשלים כאן הרשמה'; }
+          else { setPhoneMode(false); root.querySelectorAll('.su-grid').forEach((g) => { g.style.display = 'none'; }); q('fail').style.color = 'var(--ink)'; q('fail').textContent = 'תודה! בקשת החיבור נשלחה, והיא מאושרת על ידינו. אחרי האישור אפשר להירשם בלחיצה אחת'; meLoader.reload(0); }
+        } catch (er) { q('fail').textContent = 'משהו השתבש, אפשר לנסות שוב'; }
+        relB(); btn.disabled = false; return;
+      }
       if (meInfo) { await memberSubmit(root, btn, q, showDone); return; }   // משתתף מחובר: הפרטים כבר שמורים
       const chk = PersonForm.validate(root); if (!chk.ok) return;
       const first = chk.v.first, last = chk.v.last, norm = chk.v.phone, age = chk.v.age, gender = chk.v.gender;
@@ -354,6 +367,11 @@
     if (fold) fold.hidden = paid || free || reported;
     if (rep) rep.hidden = !reported;
   }
+  let phoneMode = false;   // מחוברים עם גוגל, אין משתתף מקושר: פופאפ ההרשמה במצב הזנת טלפון בלבד
+  function setPhoneMode(on) {
+    phoneMode = !!on; document.documentElement.classList.toggle('reg-phone', phoneMode);
+    document.querySelectorAll('[data-su="btn"]:not(.saved)').forEach((b) => { b.textContent = phoneMode ? 'המשך' : submitLabel; });
+  }
   const applyMemberMode = () => {
     const on = !!meInfo;
     document.documentElement.classList.toggle('reg-member', on);
@@ -408,7 +426,7 @@
       ensureMeChannel();
       if (pending === 'reg') setTimeout(() => window.HarpatkaRegister.open(true), 300);   // הגיעו מהקישור בפופאפ ההרשמה: חוזרים אליו, במצב מחובר
     } else if (d && d.status === 'noauth') { clearMeName(); }
-    else { clearMeName(); if (pending) setTimeout(() => window.HarpatkaRegister.open(true), 300); }   // מחובר לגוגל אבל אין משתתף מקושר: פותחים את פופאפ ההרשמה
+    else { clearMeName(); if (pending) setTimeout(() => { setPhoneMode(true); window.HarpatkaRegister.open(true); }, 300); }   // מחובר לגוגל אבל אין משתתף מקושר: פופאפ ההרשמה במצב הזנת טלפון
   });
   function loadMe() {
     takeLoginHash();
