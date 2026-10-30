@@ -355,6 +355,8 @@
   window.__meAs = AS;
   let meInfo = null;   // { first, last, age, gender, meetings }
   const hasSess = () => { try { return !!localStorage.getItem(TOK_KEY); } catch (e) { return false; } };   // יש חיבור גוגל שמור בדפדפן (גם אם עוד לא נטען המשתתף)
+  /* מחובר באמת: המשתתף נטען מהשרת, או שיש חיבור שמור שעוד לא פג. חיבור שמור שפג (ואולי הרענון שלו נכשל) לא נחשב: הכפתורים פותחים כניסה עם גוגל */
+  const loggedIn = () => { if (meInfo) return true; try { const s = JSON.parse(localStorage.getItem(TOK_KEY) || 'null'); return !!(s && s.access_token && jwtExp(s.access_token) * 1000 > Date.now() + 30000); } catch (e) { return false; } };
   const REG_MEET_KEY = 'harpatka_reg_meeting';   // המפגש שנבחר להרשמה לפני הכניסה עם גוגל (גם אם הכניסה עברה בניווט רגיל)
   const takeRegMeeting = () => { let m = null; try { m = JSON.parse(sessionStorage.getItem(REG_MEET_KEY) || 'null'); sessionStorage.removeItem(REG_MEET_KEY); } catch (e) {} return m && m.id ? m : null; };
   const jwtExp = (tok) => { try { return JSON.parse(atob(tok.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).exp || 0; } catch (e) { return 0; } };
@@ -408,7 +410,7 @@
   const applyMemberMode = () => {
     const on = !!meInfo;
     document.documentElement.classList.toggle('reg-member', on);
-    document.documentElement.classList.toggle('reg-join', !on && GL && !AS && hasSess());   // מחובר לגוגל בלי משתתף מקושר: הטופס המלא (השלמת פרטים)
+    document.documentElement.classList.toggle('reg-join', !on && GL && !AS && loggedIn());   // מחובר לגוגל בלי משתתף מקושר: הטופס המלא (השלמת פרטים)
     document.querySelectorAll('[data-su="who"]').forEach((e) => { e.textContent = on ? meInfo.first + ' ' + meInfo.last : ''; });
     if (on) { window.__meName = meInfo.first + ' ' + meInfo.last; try { window.dispatchEvent(new Event('harpatka:me')); } catch (e) {} }
   };
@@ -538,7 +540,7 @@
   function openMeArea(search, preload) {
     if (!GL) return;
     if (window.__meAdmin) { goAdmin(); return; }   // מנהל: דף הניהול בלשונית חדשה, בלי מסך "מחוברים כמנהלים"
-    { let has = !!AS; try { has = has || !!localStorage.getItem(ME_KEY); } catch (e) {} if (!has && !String(search || '').includes('embed')) { loginPopup('', true); return; } }   // לא מחובר: ישר כניסה עם גוגל (בחלון קופץ), בלי מסך כניסה; אחרי ההתחברות האזור האישי נפתח
+    if (!AS && !preload && !loggedIn()) { loginPopup('', true); return; }   // לא מחובר: ישר כניסה עם גוגל (בחלון קופץ), בלי מסך כניסה; אחרי ההתחברות האזור האישי נפתח
     const lm = document.getElementById('logoutModal'); if (!preload && lm && !lm.hidden) { try { closeModal(lm); } catch (e) {} }
     if (!meSheet) {
       meSheet = document.createElement('div'); meSheet.className = 'mesheet'; meSheet.hidden = true; meSheet.setAttribute('role', 'dialog'); meSheet.setAttribute('aria-modal', 'true'); meSheet.setAttribute('aria-label', 'האזור האישי');
@@ -553,6 +555,12 @@
       document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMeSheet(); });
       window.addEventListener('popstate', () => { if (meSheetPush) { meSheetPush = false; closeMeSheet(true); } });
       window.addEventListener('message', (e) => {   // חשבון מנהל: האזור האישי לא רלוונטי, סוגרים ופותחים את דף הניהול בלשונית חדשה
+        if (e.origin === location.origin && e.data && e.data.harpatka === 'me-login') {   // בתוך הפופאפ התברר שהחיבור לא תקף: סוגרים אותו ופותחים כניסה עם גוגל, ואחריה הפופאפ נפתח שוב
+          if (!meSheet || meSheet.hidden) { if (meSheet) meSheet.dataset.k = ''; return; }   // פופאפ מוסתר (טעינה מוקדמת ברקע): לא פותחים כניסה מעצמה, רק טוענים מחדש בפתיחה הבאה
+          closeMeSheet();
+          if (!AS) { try { localStorage.removeItem(ME_KEY); } catch (er) {} meInfo = null; applyMemberMode(); setTimeout(() => loginPopup('', true), 380); }
+          return;
+        }
         if (e.origin !== location.origin || !e.data || e.data.harpatka !== 'me-admin') return;
         window.__meAdmin = true;
         if (meSheet && !meSheet.hidden) { closeMeSheet(); goAdmin(); }
@@ -611,7 +619,7 @@
   /* הרשמה כשהכניסה עם גוגל פעילה: מי שלא מחובר עובר קודם לכניסה עם גוגל (בלי פופאפ); אחרי הכניסה נפתח פופאפ ההרשמה של המפגש שנבחר:
      משתתף מקושר: הרשמה בלחיצה; בלי משתתף מקושר: הזנת פרטים, והכפתור יוצר משתתף, מחבר את החשבון ונרשם באותו צעד (harpatka_me_join) */
   window.HarpatkaRegister = { open: (auto, meeting) => {
-    if (GL && !AS && !meInfo && !hasSess()) { try { sessionStorage.setItem(REG_MEET_KEY, JSON.stringify(meeting && meeting.id ? meeting : null)); } catch (e) {} loginPopup('reg'); return; }
+    if (GL && !AS && !loggedIn()) { try { sessionStorage.setItem(REG_MEET_KEY, JSON.stringify(meeting && meeting.id ? meeting : null)); } catch (e) {} loginPopup('reg'); return; }
     openReg(auto, meeting);
   } };   // לשימוש עמודים אחרים
   if (new URLSearchParams(location.search).has('register')) setTimeout(() => window.HarpatkaRegister.open(true), 500);   // הגעה דרך /register/: דף הבית נטען והפופאפ נפתח עליו
