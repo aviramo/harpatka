@@ -502,6 +502,7 @@
     #topbar.tb-loading .tb-main{ width:min(15rem, 70%); }
     #topbar.tb-loading .tb-sub{ width:min(11rem, 55%); }
     #topbar .tb-pill{ cursor:pointer; }
+    #topbar .tb-sub{ display:none; }
     /* מעבר בין מצבי הבאנר (טעינה, אין מפגש, יש מפגש): הטקסטים נכנסים בהחלקה קלה ובדהייה, בזה אחר זה */
     #topbar .tb-in.tb-swap > *{ animation:tbIn .5s cubic-bezier(.22,.8,.2,1) both; }
     #topbar .tb-in.tb-swap > :nth-child(2){ animation-delay:.07s; }
@@ -552,7 +553,6 @@
     @media (prefers-reduced-motion:reduce){ .mt-skel{ animation:none; } .mt-more, .mt-more > div, .mt-chev, .mt-name, .mt-when, .mt-city, .mt-card::before{ transition:none; } }
 
     /* ===== v8: שפה עיצובית זורמת ונושמת ===== */
-    #tbWrap{ display:none !important; }
     body{ padding-bottom:6rem; background:linear-gradient(180deg,#F6EFE4 0%,#F2E7D6 100%); }
     .hv8{ position:relative; overflow:hidden; padding:1.2rem 0 0; isolation:isolate;
       background:radial-gradient(120% 70% at 85% 0%,rgba(154,154,117,.30),transparent 60%),radial-gradient(90% 60% at 0% 100%,rgba(217,139,112,.22),transparent 65%),var(--cream); }
@@ -577,9 +577,9 @@
     @keyframes hv8pulse{ 0%,100%{ box-shadow:0 18px 34px -16px rgba(201,111,82,.9),0 0 0 0 rgba(201,111,82,.35); } 50%{ box-shadow:0 18px 34px -16px rgba(201,111,82,.9),0 0 0 14px rgba(201,111,82,0); } }
     .hv8-link{ color:var(--ink); font-weight:600; font-size:1.08rem; text-decoration:underline; text-decoration-color:#9A9A75; text-decoration-thickness:2px; text-underline-offset:6px; padding:.7rem .5rem; }
     .hv8-photo{ margin:0; }
-    .hv8-frame{ position:relative; aspect-ratio:4/4.4; overflow:hidden; border-radius:50% 50% 0 0/22% 22% 0 0; box-shadow:0 40px 70px -44px rgba(63,56,47,.55); animation:hv8breath 9s ease-in-out infinite; transform-origin:50% 100%; }
+    .hv8-frame{ position:relative; aspect-ratio:1/1; overflow:hidden; border-radius:50% 50% 0 0/22% 22% 0 0; box-shadow:0 40px 70px -44px rgba(63,56,47,.55); animation:hv8breath 9s ease-in-out infinite; transform-origin:50% 100%; }
     .hv8-frame::after{ content:""; position:absolute; inset:0; background:linear-gradient(180deg,transparent 60%,rgba(246,239,228,.55)); pointer-events:none; }
-    .hv8-frame img{ width:100%; height:100%; object-fit:cover; object-position:50% 28%; display:block; }
+    .hv8-frame .hv8-media{ width:100%; height:100%; object-fit:cover; object-position:50% 28%; display:block; }
     @keyframes hv8breath{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.018); } }
     @media (min-width:1024px){
       .hv8{ padding:3rem 0 0; min-height:92vh; display:flex; }
@@ -667,7 +667,7 @@
       <div class="hv8-copy">
         <p class="hv8-hand hand reveal">יוצאים להרפתקה</p>
         <h1 class="hv8-h1 reveal">להכניס <b>תנועה חדשה</b> לחיים</h1>
-        <p class="hv8-sub reveal">מפגשי תנועה חדשים לגילאי 40–50. מוזיקה, תנועה ואנשים טובים.<br>בלי לחפש מה להגיד, וההיכרות קורית מעצמה</p>
+        <p class="hv8-sub reveal"><strong>כשקשה להתחיל לזוז לבד, עושים את זה דרך מוזיקה, תנועה, משחק ואנשים.</strong><br>בלי לחץ, בלי צורך לדעת לרקוד. פשוט לבוא ולגלות.</p>
         <ul class="hv8-pills reveal" aria-label="מה מחכה במפגש">
           <li><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg><span>מוזיקה</span></li><li><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="14" cy="4.5" r="2"/><path d="M8 21l3-7 3 2v5M11 14l-1-5 4-1 3 3 3 1M10 9L7 11"/></svg><span>תנועה</span></li><li><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 14.5c3 0 6 1.5 6 5.5"/></svg><span>אנשים</span></li>
         </ul>
@@ -677,7 +677,8 @@
         </div>
       </div>
       <figure class="hv8-photo reveal">
-        <div class="hv8-frame"><img src="../images/dance-movement.webp" alt="אנשים רוקדים יחד בחלל מואר" width="896" height="1200" fetchpriority="high" decoding="async"></div>
+        <div class="hv8-frame"><!-- אזור המדיה: להחלפה בעתיד בסרטון תדמית (video autoplay muted loop playsinline עם אותה מחלקה) -->
+        <img class="hv8-media" src="../images/biodanza-hero.webp" alt="גברים ונשים נעים יחד בחופשיות בסטודיו חמים ומואר" width="1200" height="1200" fetchpriority="high" decoding="async"></div>
       </figure>
     </div>
   </section>
