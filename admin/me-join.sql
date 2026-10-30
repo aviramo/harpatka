@@ -3,8 +3,10 @@
 -- והלחיצה על "הרשמה" יוצרת משתתף, מחברת אליו את חשבון הגוגל (מאושר מיד) ורושמת למפגש באותו צעד.
 -- p_meeting: המפגש שנבחר (בלי: המפגש הקרוב, כמו harpatka_signup; בלי מפגש עתידי: השארת פרטים בלבד).
 -- p_no_meeting = true: בלי שיוך למפגש בכלל (השלמת פרטים מהאזור האישי).
--- טלפון שכבר שייך למשתתף אחר (גם לא פעיל): ההרשמה לא מתבצעת (phone_taken), ונשלח מייל למנהלים (phone_conflict) עם הפרטים שהוזנו והאימייל של החשבון.
--- מחזירה: created, או invalid_* / blocked / phone_taken.
+-- טלפון של משתתף קיים (30.10.26, מחליף את החסימה של כל טלפון קיים): אם המשתתף לא מחובר לחשבון גוגל אחר (מאושר או חסום), החשבון מתחבר אליו
+-- ונרשם בשמו למפגש (הפרטים שלו לא משתנים, כמו בכל הרשמה חוזרת; לא פעיל חוזר להיות פעיל). רק אם הוא כבר מחובר לחשבון אחר:
+-- ההרשמה לא מתבצעת (phone_taken), ונשלח מייל למנהלים (phone_conflict) עם הפרטים שהוזנו והאימייל של החשבון.
+-- מחזירה: created (משתתף חדש, או לא פעיל שחזר), exists (משתתף קיים שחובר), או invalid_* / blocked / phone_taken.
 -- נכתב ל-public; בסביבת הבדיקות מורץ אחרי החלפת public.harpatka_ ב-test.harpatka_ (וה-search_path ל-test, public), והטמפלט נכנס ל-test.harpatka_mail_templates.
 -- ==========================================================================
 
@@ -15,7 +17,7 @@ insert into public.harpatka_mail_templates (key, subject, html) values ('phone_c
 <div style="background:#C96F52;color:#ffffff;padding:20px 24px"><div style="font-size:14px;opacity:.9">יוצאים להרפתקה</div><div style="font-size:22px;font-weight:bold;margin-top:4px">התחברות עם טלפון שכבר קיים</div></div>
 <div style="padding:22px 24px 26px">
 <div style="font-size:26px;font-weight:bold;color:#3F382F;margin-bottom:6px">{{name}}</div>
-<div style="font-size:15px;color:#8A7F72;margin-bottom:14px">חשבון גוגל ניסה להירשם עם מספר טלפון ששייך למשתתף אחר. ההרשמה לא בוצעה</div>
+<div style="font-size:15px;color:#8A7F72;margin-bottom:14px">חשבון גוגל ניסה להירשם עם מספר טלפון של משתתף שכבר מחובר לחשבון גוגל אחר. ההרשמה לא בוצעה</div>
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse">
 <tr><td style="padding:10px 0;border-top:1px solid #E8D5BE;color:#8A7F72;font-size:14px">אימייל</td><td style="padding:10px 0;border-top:1px solid #E8D5BE;color:#3F382F;font-size:17px;font-weight:bold" dir="ltr" align="right">{{email}}</td></tr>
 <tr><td style="padding:10px 0;border-top:1px solid #E8D5BE;color:#8A7F72;font-size:14px">טלפון</td><td style="padding:10px 0;border-top:1px solid #E8D5BE;color:#3F382F;font-size:17px;font-weight:bold" dir="ltr" align="right">{{phone}}</td></tr>
@@ -27,7 +29,8 @@ insert into public.harpatka_mail_templates (key, subject, html) values ('phone_c
 <a href="{{wa_link}}" style="display:block;background:#25A55F;color:#ffffff;text-decoration:none;font-weight:bold;font-size:17px;text-align:center;padding:14px 20px;border-radius:999px;margin-top:12px">שליחת וואטסאפ</a>
 <a href="{{admin_link}}" style="display:block;background:#C96F52;color:#ffffff;text-decoration:none;font-weight:bold;font-size:17px;text-align:center;padding:14px 20px;border-radius:999px;margin-top:12px">המשתתף הקיים בדף הניהול</a>
 </div></div></div>')
-on conflict (key) do update set subject = excluded.subject, html = excluded.html;
+on conflict (key) do nothing;   -- לא דורסים את התבנית (העיצוב שלה עודכן ב-mail-redesign.sql)
+update public.harpatka_mail_templates set html = replace(html, 'ששייך למשתתף אחר. ההרשמה לא בוצעה', 'של משתתף שכבר מחובר לחשבון גוגל אחר. ההרשמה לא בוצעה') where key = 'phone_conflict';
 
 create or replace function public.harpatka_notify_phone_conflict(p_name text, p_phone text, p_age int, p_gender text, p_email text, p_mid uuid, p_existing uuid, p_no_meeting boolean default false)
 returns void language plpgsql security definer set search_path to 'public' as $$
@@ -55,7 +58,7 @@ declare
   norm text := public.harpatka_normalize_phone(p_phone);
   fn text := btrim(regexp_replace(coalesce(p_first, ''), '\s+', ' ', 'g'));
   ln text := btrim(regexp_replace(coalesce(p_last, ''), '\s+', ' ', 'g'));
-  m public.harpatka_members; pid uuid; res text;
+  m public.harpatka_members; pid uuid; res text; act boolean;
 begin
   if uid is null then raise exception 'auth'; end if;
   select * into m from public.harpatka_members where user_id = uid;
@@ -65,15 +68,22 @@ begin
   if p_age is null or p_age < 18 or p_age > 99 then return 'invalid_age'; end if;
   if p_gender is null or p_gender not in ('male', 'female') then return 'invalid_gender'; end if;
 
-  -- טלפון ששייך למשתתף קיים (גם לא פעיל): לא נרשמים ולא מחברים, ומודיעים למנהלים
-  select id into pid from public.harpatka_participants where phone_norm = norm order by active desc, created_at limit 1;
-  if pid is not null then
+  -- טלפון של משתתף קיים: נחסם רק אם המשתתף כבר מחובר לחשבון גוגל אחר (מאושר או חסום); אז מודיעים למנהלים
+  select id, active into pid, act from public.harpatka_participants where phone_norm = norm order by active desc, created_at limit 1;
+  if pid is not null and exists (select 1 from public.harpatka_members x where x.participant_id = pid and x.user_id <> uid and x.status in ('approved', 'blocked')) then
     perform public.harpatka_notify_phone_conflict(btrim(fn || ' ' || ln), norm, p_age, p_gender, lower(coalesce(auth.jwt() ->> 'email', '')),
       case when coalesce(p_no_meeting, false) then null else p_meeting end, pid, p_no_meeting);
     return 'phone_taken';
   end if;
 
-  if coalesce(p_no_meeting, false) then
+  if pid is not null and coalesce(p_no_meeting, false) then
+    -- משתתף קיים שלא מחובר לאף חשבון, בלי שיוך למפגש: רק חיבור החשבון (הפרטים שלו לא משתנים); לא פעיל חוזר להיות פעיל
+    if not act then
+      update public.harpatka_participants set active = true where id = pid;
+      begin perform public.harpatka_sys_note(pid, 'חזר/ה לפעילות דרך האזור האישי', 'reactivated'); exception when others then null; end;
+      res := 'created';
+    else res := 'exists'; end if;
+  elsif coalesce(p_no_meeting, false) then
     -- בלי שיוך למפגש: משתתף חדש עם הערת מערכת אחת ומייל הרשמה חדשה למנהלים
     perform set_config('harpatka.skip_note', '1', true);
     insert into public.harpatka_participants (first_name, last_name, phone, phone_norm, age, age_set_at, source, gender)
@@ -84,13 +94,14 @@ begin
     res := 'created';
   else
     -- עם מפגש: אותה הרשמה בדיוק כמו בטופס באתר (הערות מערכת, מייל למנהלים, שיוך למפגש), ואז חיבור החשבון
+    -- (גם למשתתף קיים: harpatka_signup משייך אותו למפגש בלי לשנות את פרטיו, ורושם הערת "נרשם/ה שוב")
     res := public.harpatka_signup(p_phone, p_age, p_gender, p_src, fn, ln, null, p_meeting, null);
-    if res <> 'created' then return case when res = 'exists' then 'phone_taken' else res end; end if;   -- מירוץ: הטלפון נוצר בינתיים
+    if res not in ('created', 'exists') then return res; end if;
     select id into pid from public.harpatka_participants where phone_norm = norm order by active desc, created_at limit 1;
     if pid is null then return 'error'; end if;
   end if;
 
-  -- חיבור חשבון הגוגל למשתתף החדש (מאושר מיד)
+  -- חיבור חשבון הגוגל למשתתף (חדש או קיים, מאושר מיד)
   select * into m from public.harpatka_members where user_id = uid;
   if found then
     update public.harpatka_members set participant_id = pid, phone_norm = norm, status = 'approved', wants_me = true where user_id = uid;

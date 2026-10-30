@@ -280,7 +280,7 @@
             doneJ = true; showDone(payOkJ);
             for (let i = 0; i < 6 && !meInfo; i++) { await meLoader.now(); if (!meInfo) await new Promise((rs) => setTimeout(rs, 450)); }   // המשתתף המקושר נטען: השם בבאנר והמפגשים מתעדכנים
           } else if (PersonForm.serverError(root, r)) { /* ההודעה ליד השדה */ }
-          else q('fail').textContent = r === 'phone_taken' ? 'מספר הטלפון הזה כבר נמצא בשימוש' : r === 'blocked' ? 'אי אפשר להירשם מהחשבון הזה' : 'משהו השתבש, אפשר לנסות שוב';   // טלפון של משתתף אחר: ההרשמה לא מתבצעת (והמנהלים מקבלים מייל)
+          else q('fail').textContent = r === 'phone_taken' ? 'מספר הטלפון הזה כבר מחובר לחשבון אחר' : r === 'blocked' ? 'אי אפשר להירשם מהחשבון הזה' : 'משהו השתבש, אפשר לנסות שוב';   // טלפון של משתתף אחר: ההרשמה לא מתבצעת (והמנהלים מקבלים מייל)
         } catch (er) { q('fail').textContent = 'משהו השתבש, אפשר לנסות שוב'; }
         relJ(); if (!doneJ) { btn.disabled = false; btn.textContent = submitLabel; }
         return;
