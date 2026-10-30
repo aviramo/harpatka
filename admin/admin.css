@@ -16,7 +16,7 @@
   --text: #16191D;
   --text-2: #5A626C;
   --text-3: #8A929B;
-  --orange: #E5562D;       /* הכתום של האתר: מילוי, אייקונים, הדגשה */
+  --orange: #E5562D;       /* הכתום של האתר: רק לסימון מפגשים (תגית מפגש, בורר המפגש, שיוך ומפגש חדש). כל השאר בשחור */
   --orange-ink: #C2410C;   /* כתום כהה: טקסט על לבן וכפתורים ראשיים (ניגודיות) */
   --orange-bg: #FDEBE3;
   --red: #C81E3A;          --red-bg: #FCE7EB;
@@ -56,10 +56,10 @@ html::-webkit-scrollbar { display: none; }
 body { padding-top: 0; background: var(--bg); color: var(--text); font: 400 16px/1.45 var(--font); -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
 button, input, textarea, select { font: inherit; color: inherit; }
 button { cursor: pointer; border: 0; background: none; padding: 0; }
-a { color: var(--orange-ink); }
+a { color: var(--text); }
 [hidden] { display: none !important; }
-:focus-visible { outline: 1px solid var(--orange); outline-offset: 2px; }
-::selection { background: var(--orange-bg); }
+:focus-visible { outline: 1px solid var(--text); outline-offset: 2px; }
+::selection { background: var(--surface-2); }
 bdi { unicode-bidi: isolate; }
 h1, h2, h3, h4 { font-family: var(--font); }
 dialog, dialog * { scrollbar-width: none; -ms-overflow-style: none; }
@@ -69,7 +69,7 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 /* ---------- 3. רכיבי יסוד ---------- */
 
 /* 3.1 כפתור: ראשי (כתום), משני (מסגרת), ומצבים (ירוק / אדום / צהוב) */
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: var(--ctl); padding: 0 16px; border: 1px solid transparent; background: var(--orange-ink); color: #fff; font-weight: 700; font-size: 16px; line-height: 1; text-decoration: none; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: var(--ctl); padding: 0 16px; border: 1px solid transparent; background: var(--text); color: #fff; font-weight: 700; font-size: 16px; line-height: 1; text-decoration: none; }
 .btn:disabled { opacity: .45; cursor: default; }
 .btn.ghost { height: var(--ctl); margin-top: 8px; background: var(--bg); border-color: var(--line-2); color: var(--text); font-weight: 600; }
 .btn.ghost.danger, #pDelete, #mDelete, #prDel, #finDel { background: var(--bg); border-color: var(--line-2); color: var(--red); }
@@ -97,12 +97,13 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
   flex: 0 0 auto; display: inline-grid; place-items: center; width: var(--ib); height: var(--ib); padding: 0; margin: 0;
   background: var(--bg); color: var(--text); border: 1px solid var(--line-2); text-decoration: none; font-size: 20px; font-weight: 400; line-height: 1; }
 .hicon svg, .hbtn svg, .cico svg, .nattach svg, .medit svg, #listTags .hfilt svg, .mtr .medit svg { width: 20px; height: 20px; }
-@media (hover: hover) { .hicon:hover, .hbtn:hover, .medit:hover, .stdel:hover, #listTags .hfilt:hover { background: var(--surface); } }
+@media (hover: hover) { .hicon:hover, .hbtn:hover, .medit:hover, .stdel:hover, #listTags .hfilt:not(.on):hover { background: var(--surface); } }
+#listTags .hfilt.on { background: var(--text); border-color: var(--text); color: #fff; }   /* מיון פעיל (לא ברירת המחדל): שחור, הסמל בלבן */
 /* צבעוני: מילוי בצבע, הגבול באותו צבע */
 .cico.cb-wa { background: var(--green-bg); border-color: var(--green-bg); color: var(--green); }
 .cico.off { background: var(--surface-2); border-color: var(--surface-2); color: var(--text-3); }
 #pCall { background: var(--text); border-color: var(--text); color: #fff; }
-.newbtn .plus { background: var(--orange); border-color: var(--orange); color: #fff; font-size: 20px; font-weight: 600; }   /* תגית אייקון בעמודת הוואטסאפ */
+.newbtn .plus { background: var(--text); border-color: var(--text); color: #fff; font-size: 20px; font-weight: 600; }   /* תגית אייקון בעמודת הוואטסאפ */
 .dline .ddel { background: var(--red-bg); border-color: var(--red-bg); color: var(--red); font-weight: 700; }
 /* שקט: פעולה בתוך שורה (גרירה, עריכה, מחיקה), אותו גודל בלי מילוי */
 .medit, .sthandle, .stdel, .mt2row .mtdel { background: transparent; border-color: transparent; color: var(--text-2); }
@@ -110,7 +111,7 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 @media (hover: hover) { .stdel:hover { background: var(--red-bg); color: var(--red); } }
 .close { font-size: 22px; }
 .ndel { background: none; }
-.bdbadge { position: absolute; top: -6px; left: -6px; min-width: 18px; height: 18px; padding: 0 4px; display: grid; place-items: center; background: var(--orange); color: #fff; font-size: 11px; font-weight: 800; }
+.bdbadge { position: absolute; top: -6px; left: -6px; min-width: 18px; height: 18px; padding: 0 4px; display: grid; place-items: center; background: var(--text); color: #fff; font-size: 11px; font-weight: 800; }
 .hicon { position: relative; }
 
 /* 3.3 תגית: אובייקט אחד לכל התגיות במערכת (סטטוסים, תגיות, מגדר וגיל, סכומים ותשלום, תאריכי מפגש, הערות מערכת, ספירות, סינון).
@@ -190,7 +191,7 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 .field > span, #pTagsField > span { display: block; margin-bottom: 4px; font-size: 13px; font-weight: 600; color: var(--text-2); }
 .field input, .field select, .field textarea, #finForm select, .nform textarea, .setinp, .pmname, .pmown, .mt2row input, .mt2row select, .dline input, .srccard .srcin {
   width: 100%; height: var(--ctl); padding: 0 12px; border: 1px solid var(--line-2); background: var(--bg); color: var(--text); font-size: 16px; font-family: var(--font); }
-.field input:focus, .field select:focus, .field textarea:focus, #finForm select:focus, .nform textarea:focus, .setinp:focus, .pmname:focus, .pmown:focus, .mt2row input:focus, .mt2row select:focus, .dline input:focus, .srccard .srcin:focus-within { outline: none; border-color: var(--orange); }
+.field input:focus, .field select:focus, .field textarea:focus, #finForm select:focus, .nform textarea:focus, .setinp:focus, .pmname:focus, .pmown:focus, .mt2row input:focus, .mt2row select:focus, .dline input:focus, .srccard .srcin:focus-within { outline: none; border-color: var(--text); }
 .field textarea { height: auto; min-height: var(--ctl); max-height: 260px; padding: 8px 12px; line-height: 26px; resize: none; overflow-y: auto; text-align: start; }
 .field input[type="tel"] { direction: ltr; text-align: right; }
 /* רשימה נפתחת, תאריך ושעה: חץ אחד משלנו, בצד שמאל */
@@ -224,7 +225,7 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 /* 3.7 מתג */
 .vsw { flex: 0 0 auto; position: relative; width: 40px; height: 22px; background: var(--line-2); }
 .vsw::after { content: ''; position: absolute; top: 3px; right: 3px; width: 16px; height: 16px; background: #fff; transition: transform .15s; }
-.vsw.on { background: var(--green); }
+.vsw.on { background: var(--text); }
 .vsw.on::after { transform: translateX(-18px); }
 
 /* 3.8 פאנל: קבוצת תוכן באפור בהיר, בלי מסגרת. שורות בתוכו עם קו מפריד */
@@ -240,7 +241,7 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 .sortmenu button, #finPerMenu .qi, .hmi { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0 12px; text-align: right; font-size: 15.5px; font-weight: 500; color: var(--text); background: transparent; border: 0; }
 @media (hover: hover) { .sortmenu button:hover, #finPerMenu .qi:hover, .hmi:hover, .mtr.mrow2:hover, .fopt:hover, #viewMenu .vrow:hover { background: var(--surface); } }
 .sortmenu button { justify-content: space-between; }
-.sortmenu button[aria-checked="true"], #finPerMenu .qi[aria-pressed="true"] { background: var(--orange-bg); color: var(--orange-ink); font-weight: 700; }
+.sortmenu button[aria-checked="true"], #finPerMenu .qi[aria-pressed="true"] { background: var(--surface-2); color: var(--text); font-weight: 700; }   /* נבחר: אפור */
 .sortmenu button[aria-checked="true"]::after, #finPerMenu .qi[aria-pressed="true"]::after { content: "✓"; margin-inline-start: auto; font-weight: 800; }
 .qmenu .qi { height: 40px; padding: 0 12px; font-weight: 600; font-size: 15px; border: 1px solid transparent; }
 .qmenu .qi:not([data-qk]):not([data-qa]):not([data-sf]):not([data-at]), .qmenu .qedit, .qmenu .qhd { flex: 1 1 100%; }
@@ -273,7 +274,7 @@ body.locked .wrap, body.locked #statsBtn { display: none !important; }
 .wrap { width: 100%; height: 100vh; height: 100dvh; margin-top: 0; display: flex; flex-direction: column; padding: 0; }
 .wrap > header.top { flex: 0 0 auto; position: relative; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
 .wrap > #status { flex: 0 0 auto; }
-.wrap > .listbar { flex: 0 0 52px; }
+.wrap > .listbar { flex: 0 0 var(--ctl); }
 .wrap > .list { flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior-y: auto; scrollbar-width: none; }
 .wrap > .list::-webkit-scrollbar { display: none; }
 .wrap > .list:empty { display: none; }
@@ -295,7 +296,7 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 
 /* תפריט הכותרת */
 .hmenu { position: absolute; top: calc(100% + 8px); left: 0; z-index: 30; min-width: 220px; }
-.hmi svg { width: 20px; height: 20px; color: var(--orange); flex: 0 0 auto; }
+.hmi svg { width: 20px; height: 20px; color: var(--text); flex: 0 0 auto; }
 .hmi span:not(.bdbadge) { flex: 1 1 auto; }
 .hmi .bdbadge { position: static; }
 .hmi.out { margin-top: 4px; border-top: 1px solid var(--line); color: var(--text-2); }
@@ -320,9 +321,9 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 .ststrip:empty { display: none; }
 
 /* שורת הסינונים מעל הטבלה (כמו כותרת טבלה): חיפוש, הכל / ז / נ / ⋯, ואייקוני סינון מעל העמודות */
-.listbar { position: relative; height: 52px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; padding: 0 var(--gut); background: var(--surface); border-bottom: 1px solid var(--line); }
+.listbar { position: relative; height: var(--ctl); display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; padding: 0 var(--gut); background: var(--surface); border-bottom: 1px solid var(--line); }
 .lbstart { display: flex; align-items: center; gap: 8px; justify-self: start; min-width: 0; }
-.listbar .listpay, .listbar .lbend { position: absolute; top: 50%; left: 0; z-index: 2; margin: calc(var(--ind) / -2) 0 0; }
+.listbar .listpay, .listbar .lbend { position: absolute; top: 50%; left: var(--gut); z-index: 2; margin: calc(var(--ind) / -2) 0 0; }
 .listpay { display: flex; gap: 8px; align-items: center; }
 .listcount:empty { display: none; }
 /* חיפוש: סגור הוא תגית אייקון (ריבוע בגובה התגית, גבול מתאר), ונפתח לכל רוחב השורה באותו גובה */
@@ -332,17 +333,21 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 .hsearch input { display: block; width: var(--tag); height: var(--tag); padding: 0; border: 1px solid var(--line-2); background: var(--bg); font-size: 16px; cursor: pointer; }
 .hsearch input::-webkit-search-cancel-button, .hsearch input::-webkit-search-decoration { -webkit-appearance: none; appearance: none; display: none; }
 .hsearch:not(:focus-within) input:placeholder-shown::placeholder { color: transparent; }
-.hsearch:focus-within, .listbar:has(.hsearch input:not(:placeholder-shown)) .hsearch { position: absolute; inset: calc((52px - var(--tag)) / 2) var(--gut); z-index: 4; width: auto; height: auto; }
-.hsearch:focus-within input, .hsearch input:not(:placeholder-shown) { width: 100%; height: 100%; padding: 0 32px; cursor: text; }   /* הזכוכית נשארת במקומה (מיושרת לוואטסאפ בשורות), הטקסט 8px אחריה */
-.hsearch input:focus { outline: none; border-color: var(--orange); }
+.hsearch:focus-within, .listbar:has(.hsearch input:not(:placeholder-shown)) .hsearch { position: absolute; inset: calc((var(--ctl) - var(--tag)) / 2) var(--gut); z-index: 4; width: auto; height: auto; }
+.hsearch:focus-within input, .hsearch input:not(:placeholder-shown) { width: 100%; height: 100%; padding: 0 calc(var(--tag) + 8px - 1px) 0 32px; cursor: text; }   /* הזכוכית נשארת במקומה (מיושרת לוואטסאפ בשורות), הטקסט 8px אחריה */
+.hsearch input:focus { outline: none; border-color: var(--text); }
 .listbar:has(.hsearch:focus-within) > :not(.hsearch):not(:has(.hsearch)), .listbar:has(.hsearch input:not(:placeholder-shown)) > :not(.hsearch):not(:has(.hsearch)), .listbar:has(.hsearch:focus-within) .lbstart > :not(.hsearch), .listbar:has(.hsearch input:not(:placeholder-shown)) .lbstart > :not(.hsearch) { visibility: hidden; }
 .sclear { display: none; position: absolute; left: 4px; top: 50%; width: 20px; height: 20px; margin-top: -10px; place-items: center; background: var(--surface-2); color: var(--text); font-size: 16px; line-height: 1; }
 .search input:not(:placeholder-shown) ~ .sclear, .search:focus-within .sclear { display: grid; }
-/* הכל / ז / נ / ⋯: תגיות רגילות (אותו אובייקט כמו פס הסטטוסים מעליהן), בגבול מתאר, רווח אחים 8px */
-.fchips, .fchips .genderchips { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+/* הכל / ז / נ / ⋯: קבוצה מחוברת אחת בגובה התגית (28px), מקטעים בקו מפריד דק; הנבחר מלא בשחור */
+.fchips { display: inline-flex; align-items: stretch; flex: 0 0 auto; height: var(--tag); border: 1px solid var(--line-2); background: var(--bg); }
+.fchips .genderchips { display: flex; align-items: stretch; gap: 0; }
 .fchips .genderchips:empty { display: none; }
-.stcmore { background: var(--bg); border-color: var(--line-2); color: var(--text); }
-.stcmore.on { background: var(--text); border-color: var(--text); color: #fff; }
+.fchips .genderchips .stc { height: 100%; line-height: calc(var(--tag) - 2px); border: 0; background: transparent; color: var(--text); }
+.fchips .genderchips .stc small { min-width: 0; }
+.fchips .genderchips .stc + .stc, .fchips .stcmore { border-inline-start: 1px solid var(--line-2); }
+.fchips .stcmore { height: 100%; border-top: 0; border-bottom: 0; border-inline-end: 0; background: transparent; color: var(--text); }
+.fchips .genderchips .stc[aria-pressed="true"], .fchips .stcmore.on { background: var(--text); color: #fff; }
 
 /* ---------- 4.1 טבלת המשתתפים: שורה שטוחה לכל משתתף, עמודות קבועות ---------- */
 .list { list-style: none; margin: 0; padding: 0; background: var(--bg); }
@@ -353,7 +358,7 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 .row:active { background: var(--surface-2); }
 .row.other .name { color: var(--text-2); }
 /* עמודות: גיל ומגדר | שם | (הערה, מוסתר) | תגיות | סטטוס או התמדה | מחוונים */
-.row .main { display: grid; grid-template-columns: 44px minmax(0, 1fr) 0 auto 112px; column-gap: 8px; align-items: center; min-height: 56px; padding: 8px var(--gut); padding-inline-start: calc(var(--gut) + var(--tag) + 8px); cursor: pointer; }
+.row .main { display: grid; grid-template-columns: 44px minmax(0, 1fr) 0 auto 112px; column-gap: 8px; align-items: center; min-height: var(--ctl); padding: 8px var(--gut); padding-inline-start: calc(var(--gut) + var(--tag) + 8px); cursor: pointer; }
 .row .main.att, .row .main.ev { grid-template-columns: 44px minmax(0, 1fr) 0 auto 112px var(--ind); }
 .row .main.att.ev { grid-template-columns: 44px minmax(0, 1fr) 0 auto 112px var(--ind) var(--ind); }
 .row .main.bl { grid-template-columns: 44px minmax(0, 1fr) 0 auto 82px var(--ind); }
@@ -393,8 +398,8 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 .rowwa.nophone { background: var(--red-bg); border-color: var(--red-bg); color: var(--red); cursor: default; }
 /* הוספת משתתף חדש מהחיפוש: שורה מתחת לטבלה */
 .addbox:empty { display: none; }
-.addbox .newbtn { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 56px; padding: 8px var(--gut); background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); font-size: 16px; font-weight: 600; color: var(--text); text-align: right; margin-bottom: env(safe-area-inset-bottom); }
-.newbtn b { color: var(--orange-ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.addbox .newbtn { display: flex; align-items: center; gap: 8px; width: 100%; min-height: var(--ctl); padding: 8px var(--gut); background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); font-size: 16px; font-weight: 600; color: var(--text); text-align: right; margin-bottom: env(safe-area-inset-bottom); }
+.newbtn b { color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* תפריטי הסינון: הגעה, שליחה, תשלום, יתרה, התמדה */
 #fMenu { display: grid; grid-template-columns: 1fr; width: auto; min-width: 190px; gap: 4px; }
@@ -454,7 +459,7 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 .error-box { margin: 12px var(--gut); padding: 12px; background: var(--red-bg); color: var(--text); }
 .toast { position: fixed; left: 50%; bottom: 90px; z-index: 50; max-width: calc(100% - 32px); padding: 12px 16px; background: var(--text); color: #fff; font-weight: 600; box-shadow: var(--pop); opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(16px); transition: opacity .2s, transform .2s; }
 .toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
-.link-btn { color: var(--orange-ink); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.link-btn { color: var(--text); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 
 /* ---------- 5. פופאפים: מגירה מלמטה (במובייל לכל הרוחב), חלון במרכז בדסקטופ ---------- */
 dialog { border: 0; padding: 0; width: 100%; max-width: 560px; max-height: 92vh; margin: auto auto 0; overflow-y: auto; overscroll-behavior: contain; background: var(--bg); color: var(--text); box-shadow: var(--pop); }
@@ -538,7 +543,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .mlist .mrow .mmoney.has, .mlist .mrow .here.sm[aria-pressed="true"] { background: var(--green-bg); color: var(--green); }
 .mlist .mrow .mmoney.wait { background: var(--yellow-bg); color: var(--yellow); }
 .mlist .mrow .mmoney.free { color: var(--text-2); }
-.more { display: block; width: 100%; height: var(--ctl); margin: 4px 0 8px; border: 1px dashed var(--line-2); background: transparent; color: var(--orange-ink); font-weight: 600; font-size: 15px; }
+.more { display: block; width: 100%; height: var(--ctl); margin: 4px 0 8px; border: 1px dashed var(--line-2); background: transparent; color: var(--text); font-weight: 600; font-size: 15px; }
 /* הערה חדשה: שדה וצירוף צילום מסך */
 .nform { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 12px; }
 .nform textarea { flex: 1 1 auto; min-width: 0; height: auto; min-height: var(--ib); max-height: 140px; padding: 8px 12px; resize: none; line-height: 1.4; font-size: 16px; }
@@ -589,7 +594,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .sopts { display: grid; gap: 8px; margin-bottom: 8px; }
 #sOpts { grid-template-columns: 1fr 1fr; }
 .sopts .sopt { height: var(--ctl); line-height: calc(var(--ctl) - 2px); font-size: 15.5px; }
-.prnew { width: 100%; height: var(--ctl); margin-top: 4px; border: 1px dashed var(--line-2); background: transparent; color: var(--orange-ink); font-weight: 600; }
+.prnew { width: 100%; height: var(--ctl); margin-top: 4px; border: 1px dashed var(--line-2); background: transparent; color: var(--text); font-weight: 600; }
 
 /* 6.2 תשלומים: יתרה, קבלת תשלום, הקצאה, זיכוי */
 .payact { display: flex; gap: 8px; margin-top: 4px; }
@@ -629,7 +634,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 
 /* 6.3 עריכת מפגש */
 .mimgbtns { display: flex; gap: 8px; }
-.mimgpick, .mimgbtns button { flex: 1 1 0; height: var(--ctl); display: grid; place-items: center; border: 1px solid var(--line-2); background: var(--bg); color: var(--orange-ink); font-weight: 600; font-size: 14.5px; cursor: pointer; }
+.mimgpick, .mimgbtns button { flex: 1 1 0; height: var(--ctl); display: grid; place-items: center; border: 1px solid var(--line-2); background: var(--bg); color: var(--text); font-weight: 600; font-size: 14.5px; cursor: pointer; }
 .mimgbtns button { color: var(--text-2); }
 #mImgPrev, #setMImgPrev { display: block; width: 100%; aspect-ratio: 4 / 1; object-fit: cover; margin: 0 0 12px; border: 1px solid var(--line); background: var(--surface); }
 .mt2 { padding: 0; }
@@ -642,7 +647,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .mt2row select { width: auto; min-width: 60px; height: 36px; font-size: 15px; font-weight: 600; }
 
 .mt2add { display: flex; gap: 8px; margin-top: 8px; }
-.mt2add button { flex: 1 1 0; height: var(--ctl); border: 1px dashed var(--line-2); background: transparent; color: var(--orange-ink); font-weight: 600; font-size: 14.5px; }
+.mt2add button { flex: 1 1 0; height: var(--ctl); border: 1px dashed var(--line-2); background: transparent; color: var(--text); font-weight: 600; font-size: 14.5px; }
 #mDelete.locked { opacity: .45; }
 
 /* 6.4 הגדרות */
@@ -651,7 +656,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 #setDlg .settitle { padding: 8px 0 0; margin: 0; }
 #setDlg .setrow { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 0; text-align: right; background: none; }
 #setDlg .setgrp > .setrow:last-child { border-bottom: 0; }
-#setDlg .setrow .seti { flex: 0 0 auto; width: 22px; height: 22px; color: var(--orange); }
+#setDlg .setrow .seti { flex: 0 0 auto; width: 22px; height: 22px; color: var(--text); }
 #setDlg .setlink > svg:last-child { flex: 0 0 auto; color: var(--text-3); }
 #setDlg .setl { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 #setDlg .setl b { font-size: 16px; font-weight: 600; }
@@ -699,7 +704,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .prrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; margin-bottom: 8px; padding: 12px; cursor: pointer; }
 .prrow b { font-size: 16px; }
 .prrow small { display: block; margin-top: 4px; color: var(--text-2); font-size: 13px; }
-.prearn { text-align: left; font-size: 17px; font-weight: 800; line-height: 1.1; color: var(--orange-ink); }
+.prearn { text-align: left; font-size: 17px; font-weight: 800; line-height: 1.1; color: var(--text); }
 .prearn small { display: block; margin: 0; font-size: 12px; font-weight: 600; color: var(--text-2); }
 .prok { color: var(--green); font-weight: 800; font-size: 14.5px; }
 .pmv { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto 64px; align-items: center; gap: 8px; padding: 12px 0; font-size: 14.5px; }
@@ -708,7 +713,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .pmv .w { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pmv .w small { display: block; color: var(--text-2); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; }
 .pmv .a { text-align: left; font-weight: 800; font-variant-numeric: tabular-nums; }
-.pmv .a.c { color: var(--orange-ink); }
+.pmv .a.c { color: var(--text); }
 .pmv .a.p { color: var(--green); }
 .pmv .a.r { color: var(--red); }
 .pmv .bl { text-align: left; color: var(--text-2); font-size: 13px; font-variant-numeric: tabular-nums; }
@@ -762,7 +767,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .topic { display: block; width: 100%; margin-bottom: 12px; padding: 12px; text-align: right; }
 .topic .th { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
 .topic .th b { font-size: 18px; font-weight: 800; }
-.topic .tmore { display: block; margin-top: 8px; color: var(--orange-ink); font-weight: 700; font-size: 14px; }
+.topic .tmore { display: block; margin-top: 8px; color: var(--text); font-weight: 700; font-size: 14px; }
 .trend { font-weight: 700; }
 .trend i { font-style: normal; font-size: 11px; margin-inline-end: 4px; }
 .trend.up { background: var(--green-bg); color: var(--green); }
