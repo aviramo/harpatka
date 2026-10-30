@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="he" dir="rtl">
+<html lang="he" dir="rtl" class="pg-ads">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,75 +7,17 @@
   <title>מודעות</title>
   <link rel="icon" href="../images/favicon-v5.ico" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="../images/favicon-v5-32.png" />
-  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    html { -webkit-tap-highlight-color: transparent; }   /* בלי הבהוב הכחול של הדפדפן בלחיצה, בכל העמודים */
-    :root{ --bg:#24201C; --ink:#EDE6DA; --terra:#C96F52; --paper:#FFFDF9; }
-    *{ box-sizing:border-box; margin:0; }
-    body{ background:var(--bg); color:var(--ink); }
-    .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(16rem,1fr)); gap:1rem; padding:1rem; }
-    .grid figure{ display:block; }
-    .grid .head{ display:flex; align-items:center; gap:.5rem; padding:0 .15rem .4rem; }
-    .grid .n{ font-family:Rubik,Assistant,sans-serif; font-weight:600; font-size:.95rem; line-height:1; color:#A89F90; }
-    /* ⋯ בצד שמאל, באותה שורה עם המספר: תפריט הורדה ושיתוף של התמונה והסרטון (אם יש) */
-    .grid .more{ position:relative; margin-inline-start:auto; }
-    .grid .dots{ width:2.4rem; height:2rem; display:grid; place-items:center; padding:0; cursor:pointer;
-      border:1px solid rgba(168,159,144,.35); border-radius:999px; background:none; color:#A89F90; }
-    .grid .dots svg{ width:1.25rem; height:1.25rem; display:block; fill:currentColor; }
-    .grid .menu{ display:none; position:absolute; top:calc(100% + .35rem); left:0; z-index:20; min-width:11.5rem; padding:.35rem;
-      background:var(--paper); color:#3F382F; border-radius:14px; box-shadow:0 10px 28px rgba(0,0,0,.38); }
-    .grid .more.open .menu{ display:block; }
-    .grid .menu a, .grid .menu button{ display:flex; align-items:center; gap:.6rem; width:100%; padding:.6rem .7rem; border:0; border-radius:10px;
-      background:none; color:inherit; font:600 1rem Assistant,Rubik,sans-serif; text-decoration:none; text-align:start; cursor:pointer; }
-    .grid .menu a:hover, .grid .menu button:hover{ background:#F4ECE0; }
-    .grid .menu svg{ width:1.15rem; height:1.15rem; flex:none; fill:none; stroke:var(--terra); stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
-    .grid .menu hr{ border:0; border-top:1px solid #EDE3D3; margin:.3rem .5rem; }
-    .grid .dots:focus-visible, .grid .menu :focus-visible{ outline:3px solid var(--terra); outline-offset:1px; }
-    .toast{ position:fixed; left:50%; bottom:1.4rem; transform:translateX(-50%); z-index:50; padding:.65rem 1.1rem; border-radius:999px;
-      background:var(--paper); color:#3F382F; font:600 1rem Assistant,Rubik,sans-serif; box-shadow:0 6px 20px rgba(0,0,0,.35); opacity:0; transition:opacity .2s; pointer-events:none; }
-    .toast.on{ opacity:1; }
-    .grid .media{ position:relative; }
-    .grid img, .grid video{ width:100%; height:auto; aspect-ratio:4/5; display:block; }
-    .grid video{ display:none; background:#000; cursor:pointer; }
-    /* מודעה עם סרטון: בלי כפתור. לחיצה על התמונה מנגנת את הסרטון באותו תא, לחיצה על הסרטון עוצרת וחוזרת לתמונה */
-    .grid .has-video img{ cursor:pointer; }
-    .grid .has-video img:focus-visible, .grid video:focus-visible{ outline:3px solid var(--paper); outline-offset:2px; }
-    .grid .playing img{ display:none; }
-    .grid .playing video{ display:block; }
-    /* בקרת ניגון בזמן ניגון: סטופ (חזרה לתמונה), השהיה/המשך, מיקום בסרטון וזמן. כמו בכל נגן: משמאל לימין */
-    .grid .ctl{ display:none; position:absolute; left:0; right:0; bottom:0; z-index:5; align-items:center; gap:.4rem;
-      padding:1.8rem .55rem .5rem; background:linear-gradient(to top, rgba(0,0,0,.62), rgba(0,0,0,0)); }
-    .grid .playing .ctl{ display:flex; }
-    .grid .ctl .cb{ flex:none; width:2.5rem; height:2.5rem; display:grid; place-items:center; padding:0; border:0; border-radius:50%;
-      background:rgba(255,253,249,.92); color:#3F382F; cursor:pointer; }
-    .grid .ctl .cb svg{ width:1rem; height:1rem; display:block; fill:currentColor; }
-    .grid .ctl .seek{ --p:0%; flex:1 1 auto; min-width:0; height:2.5rem; margin:0 .15rem; background:none; cursor:pointer; -webkit-appearance:none; appearance:none; }
-    .grid .ctl .seek::-webkit-slider-runnable-track{ height:5px; border-radius:99px; background:linear-gradient(to right, var(--terra) var(--p), rgba(255,253,249,.42) var(--p)); }
-    .grid .ctl .seek::-webkit-slider-thumb{ -webkit-appearance:none; width:17px; height:17px; margin-top:-6px; border-radius:50%; background:var(--paper); box-shadow:0 1px 4px rgba(0,0,0,.45); }
-    .grid .ctl .seek::-moz-range-track{ height:5px; border-radius:99px; background:rgba(255,253,249,.42); }
-    .grid .ctl .seek::-moz-range-progress{ height:5px; border-radius:99px; background:var(--terra); }
-    .grid .ctl .seek::-moz-range-thumb{ width:17px; height:17px; border:0; border-radius:50%; background:var(--paper); box-shadow:0 1px 4px rgba(0,0,0,.45); }
-    .grid .ctl .tm{ flex:none; min-width:2.4rem; color:var(--paper); font:600 .85rem Rubik,Assistant,sans-serif; font-variant-numeric:tabular-nums; text-align:right; text-shadow:0 1px 3px rgba(0,0,0,.5); }
-    .grid .ctl .cb:focus-visible, .grid .ctl .seek:focus-visible{ outline:3px solid var(--paper); outline-offset:2px; }
-    .searchbar{ position:sticky; top:0; z-index:30; display:flex; flex-wrap:nowrap; justify-content:center; align-items:center; gap:.6rem; padding:.7rem 1rem; background:rgba(36,32,28,.94); backdrop-filter:blur(6px); }
-    .searchbar .box{ position:relative; flex:1 1 auto; min-width:0; max-width:28rem; }
-    .searchbar input{ width:100%; height:2.7rem; padding:0 2.6rem 0 2.6rem; border-radius:999px; border:1.5px solid rgba(168,159,144,.45); background:#2E2924; color:var(--ink); font:500 1.05rem Assistant,Rubik,sans-serif; }
-    .searchbar input::-webkit-search-cancel-button{ display:none; }
-    .searchbar input::placeholder{ color:#8C8374; }
-    .searchbar input:focus-visible{ outline:3px solid var(--terra); outline-offset:1px; }
-    .searchbar .mag{ position:absolute; top:50%; right:.9rem; transform:translateY(-50%); width:1.2rem; height:1.2rem; color:#A89F90; pointer-events:none; }
-    .searchbar .clr{ position:absolute; top:50%; left:.5rem; transform:translateY(-50%); width:2rem; height:2rem; border-radius:50%; border:0; background:none; color:#A89F90; font-size:1.4rem; line-height:1; cursor:pointer; }
-    .searchbar .clr[hidden]{ display:none; }
-    @media (max-width:560px){ .typesel{ width:8rem; } }
-    .none{ padding:2.5rem 1rem; text-align:center; color:#A89F90; font:600 1.1rem Assistant,Rubik,sans-serif; }
-    .grid figure[hidden]{ display:none; }
-    /* כל הכרטיסים באותו גודל (4:5), גם סרטוני "תמונות" (FEATURED): גריד אחיד */
-    .typesel{ flex:none; width:8.6rem; height:2.7rem; padding:0 1rem 0 2rem; border-radius:999px; border:1.5px solid rgba(168,159,144,.45); color:var(--ink); font:600 1rem Assistant,Rubik,sans-serif; cursor:pointer; appearance:none; -webkit-appearance:none; background:#2E2924 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A89F90' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat .6rem center/1.1rem; }
-    .typesel:focus-visible{ outline:3px solid var(--terra); outline-offset:1px; }
-    .typesel option{ background:#2E2924; color:var(--ink); }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Assistant:wght@400;500;600;700&display=block" rel="stylesheet">
+  <link rel="stylesheet" href="../shared/site.css?v=20261030b">
 </head>
 <body>
+  <div class="ads-sticky">
+  <div class="site-top">
+    <div class="site-top-in">
+      <a href="../" class="site-brand" aria-label="יוצאים להרפתקה, לדף הבית">יוצאים להרפתקה</a>
+      <a href="../" class="site-back">חזרה לדף הבית</a>
+    </div>
+  </div>
   <div class="searchbar">
     <div class="box">
       <svg class="mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/></svg>
@@ -89,6 +31,7 @@
       <option value="video">וידאו</option>
       <option value="anim">אנימציה</option>
     </select>
+  </div>
   </div>
   <div id="grid" class="grid"></div>
   <div id="none" class="none" hidden>לא נמצאו מודעות עם הטקסט הזה</div>
