@@ -165,7 +165,7 @@
     }
   </script>
 
-  <link rel="stylesheet" href="../shared/site.css?v=20261030g">
+  <link rel="stylesheet" href="../shared/site.css?v=20261030i">
   <script>
     /* סרטון פתיחה: אם הדפדפן מאפשר, מסתירים את ההזמנה (בלי להזיז את הדף) עד שהסרטון נגמר; רשת ביטחון אחרי 9 שניות */
     (function(){
@@ -179,7 +179,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="../shared/register.css?v=20261031f">
+  <link rel="stylesheet" href="../shared/register.css?v=20261031g">
 </head>
 
 <body class="grain">
@@ -740,7 +740,7 @@
       try {
         const [fu, pa, st] = await Promise.all([
           fetch(base + '&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc', { headers: H }),
-          fetch(base + '&meeting_date=lt.' + today + '&order=meeting_date.desc,meeting_time.desc&limit=2', { headers: H }),
+          fetch(base + '&meeting_date=lt.' + today + '&order=meeting_date.desc,meeting_time.desc&limit=3', { headers: H }),   // עד 3 מפגשים אחרונים שהסתיימו
           fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_public_settings?select=key,value&key=in.(default_meeting_name,default_meeting_image)', { headers: H })
         ]);
         if (fu.ok && pa.ok) {
@@ -844,7 +844,17 @@
         const todayIso = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()), today = dayN(todayIso);
         const future = (d.future || []).filter(m => m.date >= todayIso);
         const frag = document.createDocumentFragment();
-        (d.past || []).forEach(m => frag.append(meetingCard(m, today, true, false)));
+        /* מפגשים שהסתיימו (עד 3 אחרונים): רשימה אחת בתוך מלבן אחד, שורה לכל מפגש */
+        if (d.past && d.past.length) {
+          const pl = document.createElement('div'); pl.className = 'mt-pastlist';
+          d.past.forEach(m => {
+            const r = document.createElement('div'), w = document.createElement('span'), ci = document.createElement('span');
+            r.className = 'mt-prow'; w.className = 'mt-when font-display'; w.textContent = label(m) + ' · ' + m.time;
+            ci.className = 'mt-city'; ci.textContent = [m.city, 'הסתיים'].filter(Boolean).join(' · ');
+            r.append(w, ci); pl.append(r);
+          });
+          frag.append(pl);
+        }
         if (future.length) future.forEach((m, i) => frag.append(meetingCard(m, today, false, i === 0)));
         else frag.append(emptyCard(d.defName, d.defImg));
         list.replaceChildren(frag);
@@ -1097,6 +1107,6 @@
 </script>
   <script src="../shared/rt.js?v=1"></script>
   <script src="../shared/person-form.js?v=20261029i"></script>
-  <script src="../shared/register.js?v=20261031p"></script>
+  <script src="../shared/register.js?v=20261031q"></script>
 </body>
 </html>

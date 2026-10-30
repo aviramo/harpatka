@@ -55,7 +55,6 @@
                   </div>
                 </div>
               </div>
-              <p class="su-joinhint" data-su="joinhint">משלימים את הפרטים פעם אחת, ומהפעם הבאה נרשמים בלחיצה</p>
               <p class="su-phonehint" data-su="phonehint">החשבון שלכם עוד לא מחובר למשתתף אצלנו. הזינו את הטלפון שבו נרשמתם, ונחבר אליו את החשבון</p>
               <div class="su-member" data-su="member"><p class="su-memberp">הפרטים שלכם כבר שמורים אצלנו</p><p class="su-who" data-su="who"></p></div>
               <a href="__BASE__me/?login=1&back=reg" class="su-glink" data-su="glink">נרשמתם בעבר? לחצו כאן</a>
