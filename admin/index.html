@@ -245,7 +245,7 @@
     </div>
   </dialog>
 
-  <dialog id="meDlg" aria-label="האזור האישי של המשתתף"><iframe id="meFrame" title="האזור האישי של המשתתף"></iframe></dialog>
+  <dialog id="meDlg" aria-label="דף הבית כפי שהמשתתף רואה אותו"><iframe id="meFrame" title="דף הבית כפי שהמשתתף רואה אותו"></iframe></dialog>
   <dialog id="setDlg" aria-labelledby="setTitle" style="max-width:480px">
     <div class="sheet">
       <div class="sheet-head"><button type="button" class="hbtn hback" id="setBack" aria-label="חזרה" title="חזרה" hidden><svg data-i="back"></svg></button><h2 id="setTitle">הגדרות</h2></div>
@@ -2211,7 +2211,9 @@
       noteText.set(n.participant_id, ((noteText.get(n.participant_id) || '') + ' ' + (n.body || '')).toLowerCase());
     });
   }
-  const notesOf = (pid) => state.notes.filter((n) => n.participant_id === pid).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+  /* באותו רגע (תשלום ישיר למפגש רושם את שתי ההערות באותה טרנזקציה): סדר התהליך, קודם התשלום ואחריו ההקצאה (ברשימה מהחדש לישן ההקצאה מעל) */
+  const NSTEP = { payment_received: 0, alloc_added: 1, alloc_changed: 1 };
+  const notesOf = (pid) => state.notes.filter((n) => n.participant_id === pid).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)) || (NSTEP[b.event_type] ?? 0.5) - (NSTEP[a.event_type] ?? 0.5));
   const hasNote = (p, q) => (noteText.get(p.id) || '').includes(q);
   function fmtDT(iso) {
     const d = new Date(iso); if (isNaN(d)) return '';
@@ -2927,7 +2929,8 @@
   /* לחיצה על הכותרת (השם והתגית, כל האזור) במסך הראשי פותחת את פרטי המשתתף */
   const openInfo = () => { if (pTab === 'main' && sheet && sheet.id) { viewStack = []; setPTab('info'); } };
   /* מאזינים על כל הכותרת ובודקים אם הלחיצה באזור השם והתגית (הכותרת נבנית מחדש בעדכונים, ולכן היעד של הלחיצה יכול להיות ההורה) */
-  /* האזור האישי כפי שהמשתתף רואה אותו: פופאפ שעולה מלמטה עד למעלה (iframe של me/?as=...&embed=1) במקום לשונית חדשה */
+  /* דף הבית כפי שהמשתתף רואה אותו (כאילו מחובר): פופאפ שעולה מלמטה עד למעלה, iframe של /?as=<מזהה> (בלי האזור האישי me/) */
+  $('#pViewAs').addEventListener('click', (e) => { e.preventDefault(); if (!sheet || !sheet.id) return; $('#meFrame').src = '../?as=' + encodeURIComponent(sheet.id); $('#meDlg').showModal(); });
   $('#meDlg').addEventListener('close', () => { $('#meFrame').removeAttribute('src'); $('#meDlg').style.transform = ''; });
   window.addEventListener('message', (e) => {   // החלקה למטה בתוך האזור האישי (כשהוא בראשו) מזיזה וסוגרת את הפופאפ
     const d0 = $('#meDlg'); if (e.origin !== location.origin || !e.data || !d0.open) return;
