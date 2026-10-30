@@ -164,7 +164,7 @@
     }
   </script>
 
-  <link rel="stylesheet" href="shared/site.css?v=20261030i">
+  <link rel="stylesheet" href="shared/site.css?v=20261030j">
   <script>
     /* סרטון פתיחה: אם הדפדפן מאפשר, מסתירים את ההזמנה (בלי להזיז את הדף) עד שהסרטון נגמר; רשת ביטחון אחרי 9 שניות */
     (function(){
@@ -846,11 +846,11 @@
         /* מפגשים שהסתיימו (עד 3 אחרונים): רשימה אחת בתוך מלבן אחד, שורה לכל מפגש */
         if (d.past && d.past.length) {
           const pl = document.createElement('div'); pl.className = 'mt-pastlist';
+          const ttl = document.createElement('div'); ttl.className = 'mt-ptitle'; ttl.textContent = 'מפגשים שהסתיימו'; pl.append(ttl);   // כותרת אחת במקום "הסתיים" בכל שורה
           d.past.forEach(m => {
-            const r = document.createElement('div'), w = document.createElement('span'), ci = document.createElement('span');
-            r.className = 'mt-prow'; w.className = 'mt-when font-display'; w.textContent = label(m) + ' · ' + m.time;
-            ci.className = 'mt-city'; ci.textContent = [m.city, 'הסתיים'].filter(Boolean).join(' · ');
-            r.append(w, ci); pl.append(r);
+            const r = document.createElement('div');
+            r.className = 'mt-prow font-display'; r.textContent = [label(m), m.time, m.city].filter(Boolean).join(' · ');   // שורה אחת ממורכזת: יום, תאריך, שעה ועיר
+            pl.append(r);
           });
           frag.append(pl);
         }
