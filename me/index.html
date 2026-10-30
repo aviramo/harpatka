@@ -7,7 +7,7 @@
 <title>האזור האישי | יוצאים להרפתקה</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&family=Rubik:wght@500;700;800&display=block" rel="stylesheet" />
-<link rel="stylesheet" href="../shared/site.css?v=20261030f" />
+<link rel="stylesheet" href="../shared/site.css?v=20261030g" />
 <script>try { if (window.self !== window.top && /[?&]embed=/.test(location.search)) document.documentElement.classList.add('embed'); } catch (e) {}</script>   <!-- בפופאפ: הרקע הטורקיז כבר בציור הראשון -->
 </head>
 <body>
@@ -157,30 +157,23 @@
     // סקשן אחד "המפגשים שלי": כל מפגש עתידי (אפשר להירשם, לשלם ולבטל) ומפגשים שהיו. כל מפגש נפתח ונסגר; הקרוב פתוח כברירת מחדל
     const ordered = ms.slice().sort((a, b) => (String(b.date) + String(b.time)).localeCompare(String(a.date) + String(a.time))), upcoming = ordered.filter((m) => m.future);   // מהחדש לישן
     const firstId = keepOpen && ordered.some((m) => m.id === keepOpen) ? keepOpen : null; keepOpen = null;   // אין מפגש פתוח כברירת מחדל; רק מפגש שהרגע נרשמו אליו או ביטלו נשאר פתוח
-    const chev = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
-    const meetingBody = (m) => {
-      const paid = Number(m.paid) > 0, free = !!m.free; let b = '';
-      if (m.directions) b += '<div class="muted dirs">' + esc(m.directions) + '</div>';
-      if (m.future) {
-        if (!m.registered) b += '<button type="button" class="btn" data-reg="' + m.id + '">שמירת מקום</button><div class="msg" data-rm="' + m.id + '"></div>';
-        else {
-          b += '<div style="margin-top:10px"><span class="chip ok">נרשמתם ✓</span>' + (paid && !free ? ' <span class="chip ok">שולם ' + ils(m.paid) + '</span>' : '') + '</div>';   // מצב התשלום כבר מוצג בכותרת המפגש; כאן רק הסכום ששולם
-          if (m.rejected && !m.reported && !paid && !free) b += '<p class="msg bad" style="margin:10px 0 0;text-align:center">לא מצאנו את התשלום, ולכן המקום עדיין לא שמור. אפשר להשלים את התשלום, או לפנות אלינו ונסדר את זה</p>';
-          if (!paid && !free && !m.reported && CFG.payboxLink) b += '<div class="payfold" data-pf="' + m.id + '"><div><a class="btn pay" data-paynow="' + m.id + '" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">תשלום ' + (m.price ? ils(m.price) : '') + ' בפייבוקס</a><p class="muted" style="margin:8px 0 0;text-align:center">המקום נשמר אחרי התשלום</p><div class="paylinks"><button type="button" class="lnk" data-other="' + m.id + '">רוצים לשלם בדרך אחרת?</button></div><div class="msg" data-pm="' + m.id + '"></div></div></div>';
-          if (m.reported && !paid && !free) b += '<p class="muted" style="margin:10px 0 0;text-align:center">נוודא שהתשלום התקבל ונעדכן כאן</p>';
-          if (!m.attended) b += '<button type="button" class="btn ghost" data-unreg="' + m.id + '">ביטול רישום</button><div class="msg" data-um="' + m.id + '"></div>';
-        }
-      } else b += '<div style="margin-top:10px">' + (free ? '<span class="chip">חינם</span>' : paid ? '<span class="chip ok">שולם ' + ils(m.paid) + '</span>' : '<span class="chip no">לא שולם</span>') + '</div>';   // ההגעה כבר מוצגת בכותרת המפגש; כאן רק התשלום
-      return b;
-    };
+    /* שורת מפגש קבועה (בלי פתיחה וסגירה): מימין יום, תאריך ושעה ומתחתיהם עיר ושם המפגש; משמאל מצב ההגעה ומתחתיו התשלום (עם הסכום);
+       כשצריך לשלם: כפתור תשלום גדול בפייבוקס כמו בפופאפ ההרשמה (הלחיצה מדווחת על תשלום) ו"רוצים לשלם בדרך אחרת?"; בלי הוראות הגעה */
     const rowHtml = (m) => {
-      const open = m.id === firstId || keepOpenSet.has(m.id);
-      const badge = m.future ? (m.registered ? (Number(m.paid) > 0 ? '<span class="chip ok">שולם</span>' : m.free ? '<span class="chip">חינם</span>' : m.reported ? '<span class="chip wait">ממתין לאישור</span>' : m.rejected ? '<span class="chip no">התשלום לא אושר</span>' : '<span class="chip no">טרם שולם</span>') : '<span class="chip">פתוח להרשמה</span>') : (m.attended ? '<span class="chip ok">הגעתם</span>' : '<span class="chip">לא הגעתם</span>');
-      return '<div class="mtg' + (open ? ' open' : '') + '" data-mid="' + m.id + '"><button type="button" class="mthead" aria-expanded="' + open + '"><span class="c1">' + esc(dayParts(m.date).day) + '</span><span class="c2"><bdi dir="ltr">' + esc(m.time) + ' · ' + esc(dayParts(m.date).date) + '</bdi></span><span class="c4">' + badge + '</span>' + chev + '<span class="c5">' + esc([m.city, m.name].filter(Boolean).join(' · ')) + '</span></button><div class="mtfold"><div>' + meetingBody(m) + '</div></div></div>';
+      const paid = Number(m.paid) > 0, free = !!m.free;
+      const att = m.future ? '' : (m.attended ? '<span class="chip ok">הגעתם</span>' : '<span class="chip">לא הגעתם</span>');
+      const pay = free ? '<span class="chip">חינם</span>' : paid ? '<span class="chip ok">שולם ' + ils(m.paid) + '</span>'
+        : !m.future ? '<span class="chip no">לא שולם</span>'
+        : m.reported ? '<span class="chip wait">ממתין לאישור</span>'
+        : m.rejected ? '<span class="chip no">התשלום לא אושר</span>' : '<span class="chip no">טרם שולם</span>';
+      let foot = '';
+      if (m.future && !paid && !free && !m.reported && CFG.payboxLink) foot += '<div class="payfold" data-pf="' + m.id + '"><div><a class="btn pay" data-paynow="' + m.id + '" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">לתשלום ' + (m.price ? m.price + ' ₪ ' : '') + 'בפייבוקס</a><div class="paylinks"><button type="button" class="lnk" data-other="' + m.id + '">רוצים לשלם בדרך אחרת?</button></div><div class="msg" data-pm="' + m.id + '"></div></div></div>';
+      if (m.future && !m.attended) foot += '<button type="button" class="lnk sm" data-unreg="' + m.id + '">ביטול רישום</button><div class="msg" data-um="' + m.id + '"></div>';
+      return '<div class="mtg" data-mid="' + m.id + '"><div class="mtrow"><div class="mtw"><div class="mtd"><span class="c1">' + esc(dayParts(m.date).day) + '</span><bdi dir="ltr">' + esc(m.time) + ' · ' + esc(dayParts(m.date).date) + '</bdi></div><div class="c5">' + esc([m.city, m.name].filter(Boolean).join(' · ')) + '</div></div><div class="mts">' + att + pay + '</div></div>' + (foot ? '<div class="mtfoot">' + foot + '</div>' : '') + '</div>';
     };
     // רק המפגשים שנרשמתי אליהם (מהחדש לישן); הרשמה למפגש חדש נעשית מדף הבית
     const mine = ordered.filter((m) => m.registered);
-    h += '<h2 class="sect">המפגשים שלי</h2><div class="card mlist">' + (mine.length ? mine.map(rowHtml).join('') : '<p class="muted" style="margin:14px 0">עוד לא נרשמתם לאף מפגש</p>') + '</div>';   // הכותרת מחוץ לכרטיס, והכרטיס הוא רשימת המפגשים בלבד
+    const meetHtml = '<div class="card mlist">' + (mine.length ? mine.map(rowHtml).join('') : '<p class="muted" style="margin:14px 0">עוד לא נרשמתם לאף מפגש</p>') + '</div>';   // בלי כותרת: הכרטיס הוא רשימת המפגשים בלבד
 
     const gv = p.gender || '';
     const missing = !p.gender || p.age == null || keepDetOpen;   // חסר פרט חובה: הכרטיס נפתח מעצמו
@@ -188,11 +181,11 @@
       PersonForm.html('phone', { id: 'ph2', label: true, value: String(p.phone || '').replace(/^\+972/, '0'), attr: 'style="text-align:right"' }) + PersonForm.err('phone') +
       '<div class="two"><div>' + PersonForm.html('age', { id: 'ag', label: true, value: p.age }) + PersonForm.err('age') + '</div><div>' + PersonForm.html('gender', { id: 'gn', label: true, value: gv }) + PersonForm.err('gender') + '</div></div>' +
       '<button type="button" class="btn" id="saveBtn">שמירה</button><div class="msg" id="sm"></div></div></div></div>';
+    h += meetHtml;   // "הפרטים שלי" ראשון, ומתחתיו רשימת המפגשים
     keepOpenSet = new Set(); keepDetOpen = false;
     app.innerHTML = h;
     if (scrollTo) { const row = app.querySelector('.mtg[data-mid="' + scrollTo + '"]'); scrollTo = null; if (row) setTimeout(() => row.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }), 120); }
 
-    app.querySelectorAll('.mthead').forEach((hd) => { hd.onclick = () => { const c = hd.parentElement, on = !c.classList.contains('open'); c.classList.toggle('open', on); hd.setAttribute('aria-expanded', String(on)); }; });
     app.querySelectorAll('[data-reg]').forEach((rb) => { rb.onclick = async () => {
       const id = rb.dataset.reg, msg = app.querySelector('[data-rm="' + id + '"]'); rb.disabled = true;
       const ob = meOpt(id, { registered: true }), rel = HRT.busy(rb);
