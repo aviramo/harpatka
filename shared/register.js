@@ -456,7 +456,7 @@
     return meRpc('harpatka_me', {});
   }, (d) => {
     const pending = mePending; mePending = null;
-    window.__meAdmin = !AS && !!(d && d.admin);   // בצפייה כמשתתף: לא מנהל (רואים בדיוק מה שהמשתתף רואה)   // מנהל מחובר: "כניסה לאזור האישי" לוקחת לדף הניהול
+    window.__meAdmin = false;   // מנהל הוא גם משתתף: בדף הבית מתנהג בדיוק כמו כל משתתף (אזור אישי והרשמה), בלי מעבר לדף הניהול
     if (d && d.status === 'ok' && d.participant && d.participant.first_name) {
       meInfo = { first: d.participant.first_name, last: d.participant.last_name || '', age: d.participant.age, gender: d.participant.gender, meetings: d.meetings || [] };
       applyMemberMode(); applyRegState(selMeeting || nearest);
@@ -539,7 +539,6 @@
   }
   function openMeArea(search, preload) {
     if (!GL) return;
-    if (window.__meAdmin) { goAdmin(); return; }   // מנהל: דף הניהול בלשונית חדשה, בלי מסך "מחוברים כמנהלים"
     if (!AS && !preload && !loggedIn()) { loginPopup('', true); return; }   // לא מחובר: ישר כניסה עם גוגל (בחלון קופץ), בלי מסך כניסה; אחרי ההתחברות האזור האישי נפתח
     const lm = document.getElementById('logoutModal'); if (!preload && lm && !lm.hidden) { try { closeModal(lm); } catch (e) {} }
     if (!meSheet) {
@@ -554,16 +553,13 @@
       g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
       document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMeSheet(); });
       window.addEventListener('popstate', () => { if (meSheetPush) { meSheetPush = false; closeMeSheet(true); } });
-      window.addEventListener('message', (e) => {   // חשבון מנהל: האזור האישי לא רלוונטי, סוגרים ופותחים את דף הניהול בלשונית חדשה
+      window.addEventListener('message', (e) => {
         if (e.origin === location.origin && e.data && e.data.harpatka === 'me-login') {   // בתוך הפופאפ התברר שהחיבור לא תקף: סוגרים אותו ופותחים כניסה עם גוגל, ואחריה הפופאפ נפתח שוב
           if (!meSheet || meSheet.hidden) { if (meSheet) meSheet.dataset.k = ''; return; }   // פופאפ מוסתר (טעינה מוקדמת ברקע): לא פותחים כניסה מעצמה, רק טוענים מחדש בפתיחה הבאה
           closeMeSheet();
           if (!AS) { try { localStorage.removeItem(ME_KEY); } catch (er) {} meInfo = null; applyMemberMode(); setTimeout(() => loginPopup('', true), 380); }
           return;
         }
-        if (e.origin !== location.origin || !e.data || e.data.harpatka !== 'me-admin') return;
-        window.__meAdmin = true;
-        if (meSheet && !meSheet.hidden) { closeMeSheet(); goAdmin(); }
       });
       window.addEventListener('message', (e) => {   // החלקה למטה בתוך הדף (כשהוא בראשו) מזיזה את כל הפופאפ וסוגרת אותו
         if (e.origin !== location.origin || !e.data || !meSheet || meSheet.hidden) return;
@@ -588,7 +584,6 @@
     if (!a.closest('#meAreaCard') || u.origin !== location.origin || !/\/me\/?$/.test(u.pathname) || u.searchParams.has('as') || u.searchParams.has('back')) return;   // פופאפ האזור האישי נפתח רק מהכרטיס "האזור האישי שלכם"
     e.preventDefault(); e.stopPropagation();
     if (!GL) return;   // כניסה עם גוגל כבויה: הכרטיס מוצג, והלחיצה לא עושה כלום (בינתיים)
-    if (window.__meAdmin) { goAdmin(); return; }   // מנהל: דף הניהול בלשונית חדשה
     openMeArea(u.search);   // מחובר: הפופאפ נפתח מיד; לא מחובר: קודם כניסה עם גוגל, ואחריה הפופאפ נפתח (openMeArea → loginPopup)
   }, true);
   window.HarpatkaMe = { enabled: GL, confirmLogout, get: meGet, login: loginGoogle, loginPopup, openArea: (search) => openMeArea(search || '') };

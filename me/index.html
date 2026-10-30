@@ -103,8 +103,6 @@
   }
   function viewClaim(note) {
     { const bc = $('#balChip'); if (bc) bc.hidden = true; }
-    if (data && data.admin && EMBED && !asId) { try { window.parent.postMessage({ harpatka: 'me-admin' }, location.origin); } catch (e) {} }   // בפופאפ: הדף הראשי סוגר ופותח את דף הניהול
-    if (data && data.admin) { app.innerHTML = '<div class="imp">מחוברים כמנהלים. לצפייה באזור האישי של משתתף פותחים את כרטיס המשתתף בדף הניהול ולוחצים על אייקון העין</div><a class="btn" href="../admin/">לדף הניהול</a>'; return; }
     if (!note) { viewSignup(''); return; }   // חשבון גוגל בלי משתתף מקושר: ישר לטופס הפרטים (יוצר משתתף, או מחבר משתתף קיים לפי הטלפון)
     const adm = '';
     app.innerHTML = adm + '<div class="card"><h2>חיבור לחשבון</h2><p class="muted" style="margin:0">הזינו את הטלפון שבו נרשמתם למפגש כדי לחבר אליו את חשבון הגוגל. החיבור מאושר על ידינו ואז האזור האישי נפתח</p>' + (note ? '<p class="msg bad">' + esc(note) + '</p>' : '') +
@@ -165,7 +163,7 @@
       const att = m.future ? '' : (m.attended ? '<span class="chip ok">הגעתם</span>' : '<span class="chip">לא הגעתם</span>');
       const pay = free ? '<span class="chip">חינם</span>' : paid ? '<span class="chip ok">שולם ' + ils(m.paid) + '</span>'
         : !m.future ? '<span class="chip no">לא שולם</span>'
-        : m.reported ? '<span class="chip wait">ממתין לאישור</span>'
+        : m.reported ? '<span class="chip wait">ממתין לאישור תשלום</span>'
         : m.rejected ? '<span class="chip no">התשלום לא אושר</span>' : '<span class="chip no">טרם שולם</span>';
       let foot = '';
       if (m.future && !paid && !free && !m.reported && CFG.payboxLink) foot += '<div class="payfold" data-pf="' + m.id + '"><div><a class="btn pay" data-paynow="' + m.id + '" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">לתשלום ' + (m.price ? m.price + ' ₪ ' : '') + 'בפייבוקס</a><div class="paylinks"><button type="button" class="lnk" data-other="' + m.id + '">רוצים לשלם בדרך אחרת?</button></div><div class="msg" data-pm="' + m.id + '"></div></div></div>';
