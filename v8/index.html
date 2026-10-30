@@ -135,7 +135,7 @@
   <!-- Fonts — Rubik לכותרות (עגול ורך), Assistant לגוף (קריא מאוד), Amatic SC לנגיעות בכתב יד -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@700&family=Assistant:wght@400;500;600;700&family=Rubik:wght@400;500;600;700&family=Fredoka:wght@600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@700&family=Assistant:wght@400;500;600;700&family=Rubik:wght@400;500;600;700&family=Fredoka:wght@600&display=block" rel="stylesheet">
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -689,6 +689,14 @@
     /* רווח מתחת לכפתור "להכיר לעומק את שיטת הביודנסה", לפני רצועת המנחים (30.10.26) */
     #method{ padding-bottom:2.8rem !important; }
     #topbar .tb-pill{ border-radius:0 !important; }   /* הצ'יף "המפגש הקרוב" בבאנר בלי פינות מעוגלות */
+    /* גבהים קבועים בפתיחה, כדי שהחלפת הגופנים בטעינה לא תזיז את הטקסט (30.10.26) */
+    .h8-hand{ height:calc(2.6rem + 10px + .2rem); line-height:2.6rem; display:block !important; width:fit-content; margin-inline:auto; }   /* בלוק ולא inline-block: בלי יישור לקו הבסיס של הגופן, שמשתנה בהחלפת הגופנים */
+    .h8-copy > .h8-hwrap{ line-height:0; }
+    @media (min-width:1024px){ .h8-hand{ height:calc(3.4rem + 10px + .2rem); line-height:3.4rem; margin-inline:0; } }
+    /* שלד הטעינה של המפגשים בגודל של מפגש שעבר ועוד כרטיס מפגש מלא, כדי שבביקור הראשון הקפיצה תהיה מינימלית */
+    #mList{ container-type:inline-size; }
+    .mt-skel{ height:calc(4.4rem + 1.4rem + 50cqw + 13.6rem); }
+    @media (min-width:1024px){ .mt-skel{ height:calc(4.4rem + 1.1rem + 43.75cqw + 12.9rem); } }
     /* ===== צבעים אחידים (30.10.26): צבעים שמוגדרים קבוע בקוד המשותף (shared/register.css) מותאמים כאן לפלטה של v8 ===== */
     html .btn-green{ background:var(--olive) !important; color:var(--paper) !important; }
     html .modal .su-err{ color:#C8411B; }
@@ -759,6 +767,8 @@
       </div>
     </div>
   </div>
+  <script>/* שומר מראש את הגובה של הבאנר הקבוע (מיד אחרי ה-HTML שלו, לפני שהדף מצויר), כדי שהדף לא יקפוץ למטה בטעינה */
+  (function(){ var w=document.getElementById('tbWrap'), b=document.getElementById('topbar'); if (w && b && b.offsetHeight) w.style.height=b.offsetHeight+'px'; })();</script>
 
   <!-- ====================== 1. HERO — מכתב הזמנה (מעטפת דואר בפסים): חוויה אנושית בלי מילים + מי מגיע + CTA ====================== -->
   <header id="hero" class="relative">
@@ -964,6 +974,8 @@
       <div class="mt-list" id="mList" aria-live="polite">
         <div class="mt-skel" aria-hidden="true"></div>
       </div>
+      <script>/* גובה רשימת המפגשים נשמר מהביקור הקודם ונקבע לפני הציור, כדי שהדף לא יקפוץ כשהמפגשים נטענים */
+      (function(){ try { var h = localStorage.getItem('v8_mlist_h_' + (innerWidth >= 1024 ? 'd' : 'm')); if (h) { var l = document.getElementById('mList'), s = l.querySelector('.mt-skel'); l.style.minHeight = h + 'px'; if (s) s.style.height = h + 'px'; } } catch (e) {} })();</script>
 
       <a href="../me/" id="meAreaCard" class="block mt-6 rounded-[28px] px-6 py-8 text-center" style="background:linear-gradient(120deg,#064452 0%,#0A6170 55%,#0F8A93 100%)">
         <span class="block font-display font-bold" style="font-size:clamp(1.5rem,6vw,2rem);color:#FFFDF9">האזור האישי שלכם</span>
@@ -1375,6 +1387,7 @@
         if (future.length) future.forEach((m, i) => frag.append(meetingCard(m, today, false, i === 0)));
         else frag.append(emptyCard(d.defName, d.defImg));
         list.replaceChildren(frag);
+        try { list.style.minHeight = ''; const hk = 'v8_mlist_h_' + (innerWidth >= 1024 ? 'd' : 'm'); localStorage.setItem(hk, String(list.offsetHeight)); } catch (e) {}   // שומר את הגובה לביקור הבא (בלי קפיצה בטעינה)
         /* יותר ממפגש עתידי אחד: הכפתור הקבוע גולל לראשון (במקום לפתוח פופאפ) ונעלם כשהמפגשים העתידיים בתצוגה */
         window.__mtMulti = future.length > 1;
         { const sr = el('stickyReg'); if (window.__mtIO) window.__mtIO.disconnect();
