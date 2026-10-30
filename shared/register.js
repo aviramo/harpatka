@@ -422,7 +422,7 @@
   }
   /* כניסה עם גוגל בחלון קופץ: הדף לא מתרענן ולא עובר לשום מקום. החלון הקופץ חוזר ל-me/, שומר את החיבור ב-localStorage, מסמן harpatka_login_done וסוגר את עצמו;
      כאן מאזינים לסימון (אירוע storage), טוענים את המשתתף ומרעננים את הפופאפ הפתוח. אם החלון נחסם: ניווט רגיל כמו קודם */
-  function loginPopup(after, thenOpen) {
+  function loginWindow(after, thenOpen) {
     if (!GL) return;
     try { localStorage.setItem('harpatka_login_popup', '1'); } catch (e) {}
     const url = CONFIG.supabaseUrl + '/auth/v1/authorize?provider=google&prompt=select_account&redirect_to=' + encodeURIComponent(BASE + 'me/');
@@ -431,12 +431,73 @@
     const onDone = (ev) => {
       if (ev.key !== 'harpatka_login_done') return;
       window.removeEventListener('storage', onDone); clearInterval(iv);
-      mePending = after || null; const ld = meLoader.now();
-      if (meSheet) { meSheet.dataset.k = ''; if (!meSheet.hidden) { const f = meSheet.querySelector('iframe'), s = f.src; f.src = s; } }
-      if (thenOpen) Promise.resolve(ld).then(() => openMeArea(''));   // נכנסו מ"כניסה לאזור האישי": אחרי ההתחברות נפתח האזור האישי
+      afterLogin(after, thenOpen);
     };
     window.addEventListener('storage', onDone);
     const iv = setInterval(() => { if (w.closed) { clearInterval(iv); setTimeout(() => window.removeEventListener('storage', onDone), 1500); try { localStorage.removeItem('harpatka_login_popup'); } catch (e) {} } }, 800);
+  }
+  /* אחרי כניסה (מהשכבה של גוגל או מהחלון הקופץ): טוענים את המשתתף, מרעננים את האזור האישי שנטען מראש, ואם נכנסו מ"כניסה לאזור האישי" הוא נפתח */
+  function afterLogin(after, thenOpen) {
+    mePending = after || null; const ld = meLoader.now();
+    if (meSheet) { meSheet.dataset.k = ''; if (!meSheet.hidden) { const f = meSheet.querySelector('iframe'), s = f.src; f.src = s; } }
+    if (thenOpen) Promise.resolve(ld).then(() => openMeArea(''));
+  }
+  /* ===== כניסה עם גוגל בשכבה קטנה של גוגל מעל הדף (Google One Tap, בכרום דרך FedCM), בלי חלון ובלי כרטיסייה חדשה =====
+     גוגל מחזיר לדף אישור חתום (ID token), ו-Supabase מחליף אותו בחיבור רגיל (grant_type=id_token), אותו חיבור כמו בכניסה בחלון.
+     כשהשכבה לא יכולה להופיע (אין חשבון גוגל מחובר בדפדפן, גוגל השהה אותה אחרי שנסגרה, דפדפן שלא תומך, הכתובת לא מורשית אצל גוגל): החלון הקופץ (loginWindow).
+     דורש ב-Google Cloud Console, ב-OAuth client של Supabase: Authorized JavaScript origins = https://harpatka.co.il ו-https://test.harpatka.co.il */
+  const GCID = CONFIG.googleClientId || '';
+  let gsiState = 0, gsiNonce = '', tapCtx = null;   // gsiState: 0 לא נטען, 1 נטען, 2 מוכן, -1 נכשל
+  function gsiLoad() {
+    if (gsiState || !GL || AS || !GCID || !window.crypto || !crypto.subtle) return;
+    gsiState = 1;
+    const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true;
+    s.onerror = () => { gsiState = -1; };
+    s.onload = async () => {
+      try {
+        const raw = Array.from(crypto.getRandomValues(new Uint8Array(24)), (b) => b.toString(16).padStart(2, '0')).join('');
+        const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw))), (b) => b.toString(16).padStart(2, '0')).join('');
+        gsiNonce = raw;   // לגוגל עובר הגיבוב, ול-Supabase הערך המקורי (הוא בודק שהגיבוב שלו תואם לאישור)
+        google.accounts.id.initialize({ client_id: GCID, callback: onGoogleCredential, nonce: hash, auto_select: false, cancel_on_tap_outside: true, itp_support: true, use_fedcm_for_prompt: true, context: 'signin' });
+        gsiState = 2;
+      } catch (e) { gsiState = -1; }
+    };
+    document.head.appendChild(s);
+  }
+  async function onGoogleCredential(resp) {
+    const c = tapCtx || { after: null, thenOpen: false }; tapCtx = null;
+    try {
+      const r = await fetch(CONFIG.supabaseUrl + '/auth/v1/token?grant_type=id_token', { method: 'POST', headers: { apikey: CONFIG.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ provider: 'google', id_token: resp && resp.credential, nonce: gsiNonce }) });
+      const d = r.ok ? await r.json() : null;
+      if (!d || !d.access_token) throw new Error('token ' + r.status);
+      localStorage.setItem(ME_KEY, JSON.stringify({ access_token: d.access_token, refresh_token: d.refresh_token }));
+    } catch (e) {   // החלפת האישור נכשלה: הכניסה הרגילה (ניווט, כי כבר אין לחיצה ישירה שמאפשרת חלון קופץ)
+      if (c.thenOpen) try { sessionStorage.setItem('harpatka_open_me', '1'); } catch (x) {}
+      return loginGoogle(c.after);
+    }
+    afterLogin(c.after, c.thenOpen);
+  }
+  /* כניסה עם גוגל: קודם השכבה של גוגל מעל הדף; אם היא לא מוכנה או לא מופיעה, החלון הקופץ */
+  function loginPopup(after, thenOpen) {
+    if (!GL) return;
+    if (gsiState !== 2 || !window.google || !google.accounts || !google.accounts.id) { gsiLoad(); return loginWindow(after, thenOpen); }
+    const ctx = { after, thenOpen }; tapCtx = ctx;
+    try { google.accounts.id.cancel(); } catch (e) {}
+    try {
+      google.accounts.id.prompt((n) => {
+        if (tapCtx !== ctx) return;
+        let fail = false;
+        try {
+          if (n.isNotDisplayed && n.isNotDisplayed()) fail = true;   // לא הופיעה (אין חשבון גוגל מחובר, הושהתה, לא נתמך)
+          else if (n.isSkippedMoment && n.isSkippedMoment()) {
+            const why = n.getSkippedReason && n.getSkippedReason();
+            if (why === 'user_cancel' || why === 'tap_outside') tapCtx = null;   // המשתתף סגר אותה בעצמו: לא פותחים שום דבר אחר
+            else fail = true;
+          }
+        } catch (e) { fail = true; }
+        if (fail) { tapCtx = null; loginWindow(after, thenOpen); }
+      });
+    } catch (e) { tapCtx = null; loginWindow(after, thenOpen); }
   }
   function takeLoginHash() {
     const h = new URLSearchParams(location.hash.replace(/^#/, ''));
@@ -467,8 +528,10 @@
     } else if (d && d.status === 'noauth') { window.__meAdmin = false; clearMeName(); }
     else { clearMeName(); if (pending === 'reg' && !AS) setTimeout(() => openReg(true, takeRegMeeting()), 300); }   // מחובר לגוגל אבל אין משתתף מקושר: פופאפ ההרשמה עם הזנת הפרטים (יוצר משתתף, מחבר את החשבון ונרשם באותו צעד)
   });
-  const GL = CONFIG.googleLogin !== false || !!AS;   // מתג כניסה עם גוגל (shared/config.js); בצפייה כמשתתף הדף מתנהג כמחובר גם כשהכניסה לציבור כבויה
-  if (CONFIG.googleLogin === false && !AS) document.documentElement.classList.add('no-gl');   // כניסה עם גוגל כבויה: בלי כרטיס האזור האישי ובלי קישורי הכניסה. בצפייה כמשתתף הכרטיס מוצג ופותח את האזור האישי שלו
+  /* דפדפן פנימי של אפליקציה (פייסבוק, אינסטגרם ועוד, לשם מגיעים מהמודעות): גוגל חוסם שם כל כניסה עם גוגל, ולכן שם האתר מתנהג כאילו הכניסה כבויה: ההרשמה בטופס הרגיל */
+  const INAPP = /FBAN|FBAV|FB_IAB|FBIOS|Instagram|Line\/|MicroMessenger|TikTok|musical_ly|BytedanceWebview|Snapchat|LinkedInApp|; wv\)/i.test(navigator.userAgent || '');
+  const GL = (CONFIG.googleLogin !== false && !INAPP) || !!AS;   // מתג כניסה עם גוגל (shared/config.js); בצפייה כמשתתף הדף מתנהג כמחובר גם כשהכניסה לציבור כבויה
+  if (!GL) document.documentElement.classList.add('no-gl');   // כניסה עם גוגל כבויה (או דפדפן של אפליקציה): בלי קישורי הכניסה. בצפייה כמשתתף הכרטיס פותח את האזור האישי שלו
   function loadMe() {
     if (!GL) return Promise.resolve();
     takeLoginHash();
@@ -567,7 +630,7 @@
         if (t === 'me-drag') { p.style.transition = 'none'; p.style.transform = 'translateY(' + d + 'px)'; }
         else if (t === 'me-drag-end') { p.style.transition = ''; p.style.transform = ''; if (d > 110) closeMeSheet(); }
       });
-      window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout' && AS) { closeMeSheet(); if (window.top !== window) { try { parent.postMessage({ harpatka: 'me-logout' }, location.origin); } catch (er) {} } else location.href = location.pathname; return; } if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout') { try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {} meInfo = null; window.__meName = null; window.__meAdmin = false; applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {} meSheet.dataset.k = ''; closeMeSheet(); } });   // יציאה: מנתקים וסוגרים את הפופאפ, בלי לרענן את הדף
+      window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout' && AS) { closeMeSheet(); if (window.top !== window) { try { parent.postMessage({ harpatka: 'me-logout' }, location.origin); } catch (er) {} } else location.href = location.pathname; return; } if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout') { try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {} meInfo = null; window.__meName = null; window.__meAdmin = false; applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {} meSheet.dataset.k = ''; closeMeSheet(); gsiLoad(); } });   // יציאה: מנתקים וסוגרים את הפופאפ, בלי לרענן את הדף
     }
     const qs = new URLSearchParams(search || ''); qs.set('embed', '1'); if (AS) qs.set('as', AS);   // צפייה כמשתתף: האזור האישי של אותו משתתף, עם החיבור של דף הניהול
     { const fr = meSheet.querySelector('iframe'); let tk = ''; try { tk = String(localStorage.getItem(TOK_KEY) || '').slice(-24); } catch (e) {}
@@ -591,6 +654,7 @@
   document.querySelectorAll('[data-su="ame"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); try { closeModal(contactModal); } catch (x) {} setTimeout(() => openMeArea(''), 450); }));   // כניסה לאזור האישי (בתחתית אחרי ההרשמה): סוגרים את פופאפ ההרשמה ופותחים את האזור האישי
   document.querySelectorAll('[data-su="glink"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); loginPopup('reg'); }));   // נרשמתם בעבר: כניסה עם גוגל בחלון קופץ; אחרי החיבור פופאפ ההרשמה עובר למצב משתתף מחובר (בלי לפתוח את האזור האישי)
   loadMe();
+  if (GL && !AS && !loggedIn()) setTimeout(gsiLoad, 1500);   // השכבה של גוגל נטענת מראש למי שלא מחובר, כדי שתופיע מיד בלחיצה
   /* זמן אמת: מצב המשתתף המחובר דרך הערוץ "me" (בבדיקות "me-test"), ומפגשים והגדרות ציבוריות דרך הערוץ "meetings" (גם למבקרים לא מחוברים).
      הערוצים, חיבור מחדש, חזרה ללשונית וגיבוי כל 45 שניות מגיעים מ-HRT.channel */
   const IS_TEST = !!(window.HARPATKA_ENV && window.HARPATKA_ENV.name === 'test');
