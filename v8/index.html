@@ -498,9 +498,11 @@
     #topbar .tb-main{ margin:0; font-weight:700; font-size:clamp(1.05rem,4.6vw,1.45rem); line-height:calc(1.8rem - .3rem * var(--p)); height:calc(1.8rem - .3rem * var(--p)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
     #topbar .tb-sub{ margin:0; font-size:.92rem; line-height:1.3; height:1.2rem; opacity:.92; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; max-height:calc(1.2rem * (1 - var(--p))); opacity:max(0, calc(.92 - var(--p) * 1.7)); }
     /* טעינה: שלד מהבהב + "בודקים" עם נקודות, באותו גובה בדיוק */
-    #topbar.tb-loading .tb-main, #topbar.tb-loading .tb-sub{ color:transparent; border-radius:10px; background:linear-gradient(90deg, rgba(255,253,249,.16) 25%, rgba(255,253,249,.34) 50%, rgba(255,253,249,.16) 75%); background-size:200% 100%; animation:tbShim 1.3s linear infinite; }
-    #topbar.tb-loading .tb-main{ width:min(15rem, 70%); }
-    #topbar.tb-loading .tb-sub{ width:min(11rem, 55%); }
+    /* טעינה שקטה (30.10.26): הצ'יף קבוע מההתחלה, ושורת התאריך מופיעה פעם אחת בדהייה כשהנתונים מגיעים (בלי שלד מהבהב ובלי החלקה) */
+    #topbar .tb-main{ transition:opacity .4s ease; }
+    #topbar.tb-loading .tb-main, #topbar.tb-loading .tb-sub{ opacity:0; }
+
+
     #topbar .tb-pill{ cursor:pointer; }
     #topbar .tb-sub{ display:none; }
     /* מעבר בין מצבי הבאנר (טעינה, אין מפגש, יש מפגש): הטקסטים נכנסים בהחלקה קלה ובדהייה, בזה אחר זה */
@@ -616,7 +618,37 @@
       section > .max-w-2xl, section > .max-w-3xl, section > .max-w-4xl, section > .max-w-5xl, section > .max-w-6xl{ max-width:min(1500px,92vw) !important; }
     }
     /* כפתורים בפינות ישרות (30.10.26) */
-    .btn-primary, .btn-light, .btn-ghost, .btn-wa-sm, .h8-btn, .mt-cta, [data-updates], #stickyRegBtn{ border-radius:8px !important; }
+    /* כל הכפתורים והשדות בלי פינות מעוגלות (30.10.26): גם בפופאפ ההרשמה (המעטפת המשותפת לא שונתה, הדריסה כאן) */
+    .btn-primary, .btn-light, .btn-ghost, .btn-green, .btn-wa-sm, .h8-btn, .mt-cta, [data-updates], [data-wa], #stickyRegBtn, #methodBtn,
+    a[data-contact], button[data-contact],
+    .modal input, .modal select, .modal textarea, .modal button:not(.grab), .modal .wacard, .modal a.su-pay, .modal [data-paybox]{ border-radius:0 !important; }
+    /* ===== כרטיסי המפגשים (30.10.26): תמונה למעלה, פס מידע בהיר מתחתיה, כפתור מלא בפינות ישרות ===== */
+    .mt-list{ gap:1.1rem; }
+    .mt-skel{ border-radius:0; }
+    .mt-card{ border-radius:0; color:var(--ink); background:var(--paper); text-align:center; box-shadow:0 22px 44px -28px rgba(44,35,29,.55); border-bottom:5px solid var(--terra); }
+    .mt-card::before{ display:none; }
+    .mt-bg{ position:relative; inset:auto; z-index:0; display:block; width:100%; height:auto; aspect-ratio:16/8; object-fit:cover; filter:saturate(1.28) contrast(1.05); }
+    .mt-in{ min-height:0; padding:1.05rem 1.2rem 1.25rem; gap:.15rem; text-shadow:none; }
+    .mt-card.open .mt-in{ padding:1.1rem 1.2rem 1.35rem; gap:.3rem; }
+    .mt-name, .mt-card.open .mt-name{ font-size:.95rem; font-weight:800; color:var(--terra); opacity:1; letter-spacing:.01em; }
+    .mt-when, .mt-card.open .mt-when{ font-size:clamp(1.45rem,7cqw,2rem); font-weight:800; color:var(--ink); }
+    .mt-city, .mt-card.open .mt-city{ font-size:1.02rem; font-weight:600; color:var(--muted); opacity:1; display:inline-flex; align-items:center; gap:.45rem; }
+    .mt-city::before{ content:""; width:.55rem; height:.55rem; background:#0F8A93; flex:0 0 auto; }
+    .mt-more > div{ gap:.7rem; width:100%; }
+    .mt-cta{ width:100%; max-width:22rem; background:var(--terra); color:var(--paper); font-size:1.2rem; font-weight:800; min-height:56px; padding:.8rem 1.4rem; box-shadow:0 14px 26px -16px rgba(229,86,45,.95); text-shadow:none; }
+    .mt-tier{ color:var(--muted); opacity:1; text-shadow:none; font-size:.98rem; }
+    .mt-tier.done{ opacity:.65; }
+    .mt-tier b{ color:var(--ink); }
+    .mt-note{ color:var(--muted); text-shadow:none; }
+    /* מפגש שעבר: שורה קומפקטית, בלי תמונה */
+    .mt-card.is-past{ opacity:1; background:transparent; box-shadow:none; border:1.5px dashed rgba(44,35,29,.22); border-bottom-width:1.5px; }
+    .mt-card.is-past .mt-bg{ display:none; }
+    .mt-card.is-past .mt-in{ padding:.75rem 1rem; flex-direction:row; flex-wrap:wrap; justify-content:center; gap:.2rem .7rem; }
+    .mt-card.is-past .mt-name{ display:none; }
+    .mt-card.is-past .mt-when{ font-size:1.05rem; color:var(--muted); }
+    .mt-card.is-past .mt-city{ font-size:.95rem; }
+    .mt-card.is-past .mt-city::before{ background:var(--sand); }
+    @media (min-width:1024px){ .mt-bg{ aspect-ratio:16/7; } }
     .card-soft{ border-radius:40px !important; box-shadow:0 34px 70px -46px rgba(44,35,29,.4) !important; }
     @media (prefers-reduced-motion:reduce){ .h8-leaves-tr,.h8-leaves-bl,.h8-spark{ animation:none; } }
   </style>
@@ -643,7 +675,7 @@
   <div id="tbWrap">
     <div id="topbar" class="tb-loading" role="button" tabindex="0" aria-label="מעבר למפגשים">
       <div class="tb-in">
-        <p class="tb-pill"><span id="tbPillT">לאזור האישי</span></p>
+        <p class="tb-pill"><span id="tbPillT">המפגש הקרוב</span></p>
         <p class="tb-main font-display" id="tbMain">&nbsp;</p>
         <p class="tb-sub" id="tbSub">&nbsp;</p>
       </div>
@@ -698,7 +730,7 @@
       </div>
       <figure class="h8-photo reveal">
         <!-- אזור המדיה: להחלפה בעתיד בסרטון תדמית: להחליף את ה-img ב-<video class="h8-media" autoplay muted loop playsinline poster="..."> -->
-        <div class="h8-frame"><img class="h8-media" src="../images/hero-v8-temp.webp" alt="גברים ונשים בגילי 40 עד 50 נעים וצוחקים יחד בסטודיו חמים ומואר" width="864" height="406" fetchpriority="high" decoding="async"></div>
+        <div class="h8-frame"><img class="h8-media" src="../images/v8/hero-v8-temp.webp" alt="גברים ונשים בגילי 40 עד 50 נעים וצוחקים יחד בסטודיו חמים ומואר" width="864" height="406" fetchpriority="high" decoding="async"></div>
       </figure>
       <div class="h8-cta reveal"><a href="#session" class="h8-link">איך נראה המפגש?</a></div>
     </div>
@@ -709,7 +741,7 @@
     <div class="mx-auto px-6 reveal" style="max-width:25rem">
       <div class="relative" style="clip-path:inset(-300px 0 0 0 round 0 0 36px 36px)">
         <div class="absolute left-0 right-0 bottom-0" style="top:34%;background:linear-gradient(180deg,#FFDDB8 0%,#FFCF9E 100%);border-radius:36px 36px 0 0" aria-hidden="true"></div>
-        <img src="../images/gaze-card.webp" alt="אישה וגבר מסתכלים זה על זו בחיוך" width="941" height="490" loading="lazy" decoding="async" class="relative block w-full h-auto">
+        <img src="../images/v8/gaze-card.webp" alt="אישה וגבר מסתכלים זה על זו בחיוך" width="941" height="490" loading="lazy" decoding="async" class="relative block w-full h-auto">
       </div>
     </div>
   </section>
@@ -782,7 +814,7 @@
               <p class="muted text-[1.05rem]">מוזיקה מיוחדת ותרגילים פשוטים שמוציאים מהראש ומכניסים לגוף. נכנסים לחוויה שהיא בעצם הרפתקה קטנה<br><span class="font-semibold text-terra">כל רגע במפגש מונחה, אנחנו מסבירים כל תרגיל ומדגימים אותו</span></p>
             </div>
             <div class="relative col-start-2 row-start-2 mt-5 md:mt-0 md:row-start-1 md:col-start-1 mx-auto w-[72%] md:w-[68%] max-w-[18rem]">
-              <div class="shape shape-blob t1 aspect-square"><img src="../images/dance-foot.webp" width="600" height="600" loading="lazy" alt="חצאית מתנופפת ורגליים יחפות באמצע ריקוד"></div>
+              <div class="shape shape-blob t1 aspect-square"><img src="../images/v8/dance-foot.webp" width="600" height="600" loading="lazy" alt="חצאית מתנופפת ורגליים יחפות באמצע ריקוד"></div>
             </div>
           </li>
           <li class="relative grid grid-cols-[3.5rem_1fr] gap-x-5 md:grid-cols-[1fr_3.5rem_1fr] md:gap-x-10 md:items-center reveal" style="transition-delay:0.12s">
@@ -792,7 +824,7 @@
               <p class="muted text-[1.05rem]">שובבות וכיף, הרבה תנועה, והדופק עולה</p>
             </div>
             <div class="relative col-start-2 row-start-2 mt-5 md:mt-0 md:row-start-1 md:col-start-3 mx-auto w-[72%] md:w-[68%] max-w-[18rem]">
-              <div class="shape shape-blob t2 aspect-square"><img src="../images/dance-energy-3.webp" width="700" height="700" loading="lazy" alt="רקדנית בחצאית מתנופפת, וסביבה עוד רוקדים בחיוך"></div>
+              <div class="shape shape-blob t2 aspect-square"><img src="../images/v8/dance-energy-3.webp" width="700" height="700" loading="lazy" alt="רקדנית בחצאית מתנופפת, וסביבה עוד רוקדים בחיוך"></div>
             </div>
           </li>
           <li class="relative grid grid-cols-[3.5rem_1fr] gap-x-5 md:grid-cols-[1fr_3.5rem_1fr] md:gap-x-10 md:items-center reveal" style="transition-delay:0.18s">
@@ -803,11 +835,11 @@
             </div>
             <div class="relative col-start-2 row-start-2 mt-5 md:mt-0 md:row-start-1 md:col-start-1 mx-auto w-full md:w-[88%] max-w-[22rem] flex gap-3 md:gap-4">
               <div class="relative flex-1 min-w-0">
-                <div class="shape shape-blob t2 aspect-square"><img src="../images/fingertips.webp" width="600" height="750" loading="lazy" alt="שתי ידיים נפגשות בקצות האצבעות באור חם"></div>
+                <div class="shape shape-blob t2 aspect-square"><img src="../images/v8/fingertips.webp" width="600" height="750" loading="lazy" alt="שתי ידיים נפגשות בקצות האצבעות באור חם"></div>
                 <span class="sticker hand text-[1.5rem] md:text-[1.7rem] leading-none !px-3 !py-1.5 bottom-1 right-0" aria-hidden="true">נפגשים</span>
               </div>
               <div class="relative flex-1 min-w-0">
-                <div class="shape shape-blob t3 aspect-square"><img src="../images/hands-heart-wide.webp" width="700" height="700" loading="lazy" alt="שתי ידיים מונחות על הלב"></div>
+                <div class="shape shape-blob t3 aspect-square"><img src="../images/v8/hands-heart-wide.webp" width="700" height="700" loading="lazy" alt="שתי ידיים מונחות על הלב"></div>
                 <span class="sticker hand text-[1.5rem] md:text-[1.7rem] leading-none !px-3 !py-1.5 bottom-1 left-0" aria-hidden="true">מגלים</span>
               </div>
             </div>
@@ -834,7 +866,7 @@
     <section id="guided" hidden class="relative pt-8 md:pt-10 pb-2 md:pb-4">
       <div class="max-w-3xl mx-auto px-5">
         <div class="card-soft overflow-hidden text-center reveal">
-          <img src="../images/guided-walk.webp" alt="זוג הולך יד ביד בחלל מואר, אחד מהם בעיניים עצומות ויש מי שמוביל אותו" width="1200" height="675" loading="lazy" decoding="async" class="w-full h-auto block">
+          <img src="../images/v8/guided-walk.webp" alt="זוג הולך יד ביד בחלל מואר, אחד מהם בעיניים עצומות ויש מי שמוביל אותו" width="1200" height="675" loading="lazy" decoding="async" class="w-full h-auto block">
           <div class="px-6 pt-8 pb-9 md:px-14 md:pt-10 md:pb-12">
             <h2 class="font-display font-bold leading-[1.12] mb-4" style="font-size:clamp(1.75rem,6.2vw,3.6rem)">אפשר לעצום עיניים<br><span class="text-terra">יש מי שהולך איתך</span></h2>
             <p class="lead text-ink/80 max-w-xl mx-auto" style="font-size:clamp(.98rem,3.7vw,1.12rem);line-height:1.6">במפגש הזה לומדים להתחבר מתוך אמון וביטחון. לדוגמה, אפשר לעצום עיניים ולהרגיש שיש על מי לסמוך, ואת התחושה הזו לוקחים איתנו הלאה, אל החיים</p>
@@ -865,7 +897,7 @@
     <section id="listen" class="relative pt-2 md:pt-4 pb-9 md:pb-12">
       <div class="max-w-3xl mx-auto px-5">
         <div class="card-soft overflow-hidden text-center reveal">
-          <img src="../images/connect-listen.webp" alt="שני אנשים יושבים זה מול זה וקצות האצבעות שלהם כמעט נוגעות, ומאחוריהם עוד זוגות בחיבור" width="1200" height="669" loading="lazy" decoding="async" class="w-full h-auto block">
+          <img src="../images/v8/connect-listen.webp" alt="שני אנשים יושבים זה מול זה וקצות האצבעות שלהם כמעט נוגעות, ומאחוריהם עוד זוגות בחיבור" width="1200" height="669" loading="lazy" decoding="async" class="w-full h-auto block">
           <div class="px-6 pt-8 pb-9 md:px-14 md:pt-10 md:pb-12">
             <h2 class="font-display font-bold leading-[1.12] mb-4" style="font-size:clamp(1.75rem,6.2vw,3.6rem)">התנועה <span class="text-terra">שנולדת בינינו</span></h2>
             <p class="lead text-ink/80 max-w-xl mx-auto" style="font-size:clamp(.98rem,3.7vw,1.12rem);line-height:1.6">בלי מילים ובלי מוביל, רק הקשבה שהופכת לריקוד</p>
@@ -889,8 +921,8 @@
         <svg class="sway slow absolute -bottom-6 -left-1 md:-left-6 w-20 md:w-28 text-sage/45" viewBox="0 0 120 160" aria-hidden="true"><path d="M0 160V60a60 60 0 0 1 120 0v100z" fill="currentColor"/></svg>
         <div class="relative">
           <div id="heroPic" class="hero-img">
-            <img src="../images/biodanza-hero.webp"
-                 srcset="../images/biodanza-hero-720.webp 720w, ../images/biodanza-hero.webp 1200w"
+            <img src="../images/v8/biodanza-hero.webp"
+                 srcset="../images/v8/biodanza-hero-720.webp 720w, ../images/v8/biodanza-hero.webp 1200w"
                  sizes="(min-width:768px) 48rem, 92vw"
                  width="1200" height="1200" loading="lazy"
                  alt="קבוצת אנשים רוקדים יחפים באולם מואר באור חם, בין עצי זית וקשתות">
@@ -912,7 +944,7 @@
         <div class="grid md:grid-cols-2 gap-5 md:gap-6">
           <!-- הדר לוריא -->
           <article class="card-soft px-5 py-8 md:p-10 text-center reveal">
-            <img src="../images/hadar.jpg" width="400" height="400" loading="lazy" alt="הדר לוריא"
+            <img src="../images/v8/hadar.webp" width="400" height="400" loading="lazy" alt="הדר לוריא"
                  class="w-32 h-32 md:w-36 md:h-36 rounded-full object-cover mx-auto mb-5 ring-[6px] ring-cream">
             <h3 class="h-card mb-3">הדר לוריא</h3>
             <p class="muted text-[1.05rem]">חוקרת את החיבור בין גוף, רגשות ותקשורת. מנחה תנועה, תקשורת מקרבת, יוגה ומדיטציה, ומביאה לקבוצה רגישות ועומק</p>
@@ -920,7 +952,7 @@
           </article>
           <!-- אופיר אבירם -->
           <article class="card-soft px-5 py-8 md:p-10 text-center reveal" style="transition-delay:.08s">
-            <img src="../images/ofir-v3.jpg" width="400" height="400" loading="lazy" alt="אופיר אבירם"
+            <img src="../images/v8/ofir-v3.webp" width="400" height="400" loading="lazy" alt="אופיר אבירם"
                  class="w-32 h-32 md:w-36 md:h-36 rounded-full object-cover mx-auto mb-5 ring-[6px] ring-cream">
             <h3 class="h-card mb-3">אופיר אבירם</h3>
             <p class="muted text-[1.05rem]">יוצר ומנחה מפגשי מוזיקה, תנועה ושירה. לומד ומעמיק בדרך שבה מוזיקה ותנועה מקרבות בין אנשים, ומביא לקבוצה חום, משחקיות וגובה עיניים</p>
@@ -950,7 +982,7 @@
     <section id="boardEntry" class="relative pt-2 md:pt-4 pb-10 md:pb-14" hidden>
       <div class="max-w-md mx-auto px-5 reveal">
         <a href="../board/" class="block card-soft overflow-hidden text-center" aria-label="כניסה ללוח השיתופים">
-          <img src="../images/board-entry.webp" alt="אנשים מדביקים פתקים על לוח שיתופים: טרמפים ושיתופים כלליים" width="1000" height="1000" loading="lazy" decoding="async" class="w-full h-auto block">
+          <img src="../images/v8/board-entry.webp" alt="אנשים מדביקים פתקים על לוח שיתופים: טרמפים ושיתופים כלליים" width="1000" height="1000" loading="lazy" decoding="async" class="w-full h-auto block">
           <span class="flex items-center justify-center gap-2 px-6 py-5 font-display font-bold text-[1.25rem]" style="color:#C8411B">כניסה ללוח השיתופים<svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></span>
         </a>
       </div>
@@ -1473,10 +1505,10 @@
       el('tbMain').textContent = 'המפגש הבא כבר בדרך';   // בלי מפגש (בלי שם ברירת המחדל)
       el('tbSub').textContent = 'השאירו פרטים ונעדכן ברגע שהתאריך ייקבע';
     }
-    el('tbPillT').textContent = (window.HarpatkaMe && HarpatkaMe.enabled === false) ? 'המפגש הקרוב' : (meName() || 'לאזור האישי');   // משתתף מחובר: השם שלו במקום הצ'יפ, כדי שידע שהוא מחובר
+    el('tbPillT').textContent = (typeof CONFIG !== 'undefined' && CONFIG.googleLogin === false) ? 'המפגש הקרוב' : (meName() || 'לאזור האישי');   /* לפי CONFIG (נטען בראש הדף) ולא לפי HarpatkaMe שנטען בסוף, כדי שהצ'יפ לא יתחלף אחרי הטעינה */   // משתתף מחובר: השם שלו במקום הצ'יפ, כדי שידע שהוא מחובר
     /* מעבר מונפש כשהמצב או התוכן השתנו (טעינה ← תוכן, אין מפגש ← יש מפגש); בלי אנימציה כשהתוכן זהה (למשל רענון אחרי המטמון) */
     if (wasLoading || before !== el('tbPillT').textContent + '|' + el('tbMain').textContent + '|' + el('tbSub').textContent) {
-      const box = bar.querySelector('.tb-in'); box.classList.remove('tb-swap'); void box.offsetWidth; box.classList.add('tb-swap');
+      /* בלי אנימציית החלקה: רק הדהייה של שורת התאריך בטעינה הראשונה (CSS) */
     }
   };
   window.addEventListener('harpatka:me', () => { if (lastD) render(lastD); });   // התחברות או יציאה: הצ'יפ מתעדכן
