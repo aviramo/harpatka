@@ -21,12 +21,8 @@ def run(*a, cwd=None):
 
 
 def build_test_admin():
-    """דף הניהול של הבדיקות, נגזר מ-admin/index.html: סכמת test בבקשות וב-realtime, פס "סביבת בדיקות", כותרת וקיזוז גובה."""
-    # עבודה על עיצוב חדש לדף הניהול (30.10.26): אם קיים admin-next/index.html (לא ב-git), הבדיקות נבנות ממנו, והאמת נשארת על admin/index.html.
-    # בגרסה החדשה העיצוב בקובץ נפרד admin-next/admin.css (מועתק ל-admin/admin.css בבדיקות)
-    src = ROOT / 'admin-next' / 'index.html'
-    if not src.exists():
-        src = ROOT / 'admin' / 'index.html'
+    """דף הניהול של הבדיקות, נגזר מ-admin/index.html ו-admin/admin.css: סכמת test בבקשות וב-realtime, פס "סביבת בדיקות", כותרת וקיזוז גובה."""
+    src = ROOT / 'admin' / 'index.html'
     t = src.read_text(encoding='utf-8').replace('\r\n', '\n')
     css_src = src.parent / 'admin.css'
     css = css_src.read_text(encoding='utf-8').replace('\r\n', '\n') if css_src.exists() else None

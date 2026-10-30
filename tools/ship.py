@@ -1,4 +1,4 @@
-"""פרסום בסדר קבוע: קודם סביבת הבדיקות, ורק אחריה סביבת האמת.
+"""(מ-30.10.26 לא בשימוש בעבודה רגילה: tools/stage.py לבדיקות, tools/promote.py לאמת.) פרסום בסדר קבוע: קודם סביבת הבדיקות, ורק אחריה סביבת האמת.
 
 שימוש:  python tools/ship.py "הודעת קומיט" קובץ1 קובץ2 ...
   1. בונה ודוחף את סביבת הבדיקות (tools/deploy-test.py, נבנה מהקבצים שבתיקייה, לפני קומיט).
@@ -14,7 +14,7 @@ except Exception:
     pass
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-TRAILER = 'Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>'
+TRAILER = 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'
 
 
 def run(*a, check=True):
@@ -27,6 +27,10 @@ def run(*a, check=True):
 if len(sys.argv) < 3:
     sys.exit('שימוש: python tools/ship.py "הודעת קומיט" קובץ [קובץ ...]')
 msg, files = sys.argv[1], sys.argv[2:]
+# מ-30.10.26 כל בקשה עובדת רק על סביבת הבדיקות (ענף staging, tools/stage.py); האמת מתעדכנת רק ב-tools/promote.py
+_br = subprocess.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=ROOT, capture_output=True, text=True).stdout.strip()
+if _br != 'main':
+    sys.exit(f'הענף הנוכחי הוא {_br}: משתמשים ב-tools/stage.py (בדיקות בלבד). האמת מתעדכנת רק ב-tools/promote.py, בבקשה מפורשת')
 for f in files:
     if f in ('-A', '.', '--all') or not (ROOT / f).exists():
         sys.exit('קובץ לא תקין (מוסיפים רק קבצים בשמם): ' + f)
