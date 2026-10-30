@@ -55,6 +55,7 @@
                   </div>
                 </div>
               </div>
+              <p class="su-joinhint" data-su="joinhint">משלימים את הפרטים פעם אחת, ומהפעם הבאה נרשמים בלחיצה</p>
               <p class="su-phonehint" data-su="phonehint">החשבון שלכם עוד לא מחובר למשתתף אצלנו. הזינו את הטלפון שבו נרשמתם, ונחבר אליו את החשבון</p>
               <div class="su-member" data-su="member"><p class="su-memberp">הפרטים שלכם כבר שמורים אצלנו</p><p class="su-who" data-su="who"></p></div>
               <a href="__BASE__me/?login=1&back=reg" class="su-glink" data-su="glink">נרשמתם בעבר? לחצו כאן</a>
@@ -269,6 +270,22 @@
         relB(); btn.disabled = false; return;
       }
       if (meInfo) { await memberSubmit(root, btn, q, showDone); return; }   // משתתף מחובר: הפרטים כבר שמורים
+      if (GL && !AS && hasSess()) {   // מחובר לגוגל בלי משתתף מקושר: יוצרים משתתף (או מוצאים לפי הטלפון), מחברים את החשבון ונרשמים למפגש באותו צעד
+        const ck = PersonForm.validate(root); if (!ck.ok) return;
+        const mm = selMeeting || nearest, payOkJ = ageOk(ck.v.age) && !!mm;
+        btn.disabled = true; btn.textContent = 'שולחים...'; const relJ = HRT.busy(btn); let doneJ = false;
+        try {
+          const r = await meRpc('harpatka_me_join', Object.assign({ p_first: ck.v.first, p_last: ck.v.last, p_age: ck.v.age, p_gender: ck.v.gender, p_phone: ck.v.phoneRaw }, mm && mm.id ? { p_meeting: mm.id } : {}, PAID ? { p_src: 'p' } : {}));
+          if (r === 'created' || r === 'exists') {
+            if (r === 'created') { leadOnce(); try { if (window.fbq) fbq('trackCustom', 'RegistrationValue', { value: ageOk(ck.v.age) ? 3 : 1, currency: 'ILS' }); } catch (e) {} }
+            doneJ = true; showDone(payOkJ);
+            for (let i = 0; i < 6 && !meInfo; i++) { await meLoader.now(); if (!meInfo) await new Promise((rs) => setTimeout(rs, 450)); }   // המשתתף המקושר נטען: השם בבאנר והמפגשים מתעדכנים
+          } else if (PersonForm.serverError(root, r)) { /* ההודעה ליד השדה */ }
+          else q('fail').textContent = r === 'phone_taken' ? 'מספר הטלפון הזה כבר נמצא בשימוש' : r === 'blocked' ? 'אי אפשר להירשם מהחשבון הזה' : 'משהו השתבש, אפשר לנסות שוב';   // טלפון של משתתף אחר: ההרשמה לא מתבצעת (והמנהלים מקבלים מייל)
+        } catch (er) { q('fail').textContent = 'משהו השתבש, אפשר לנסות שוב'; }
+        relJ(); if (!doneJ) { btn.disabled = false; btn.textContent = submitLabel; }
+        return;
+      }
       const chk = PersonForm.validate(root); if (!chk.ok) return;
       const first = chk.v.first, last = chk.v.last, norm = chk.v.phone, age = chk.v.age, gender = chk.v.gender;
       /* אפשרות תשלום רק בטווח הגילאים של קהל היעד (AGE_MIN עד AGE_MAX ב-shared/age.js; ההרשמה עצמה נשמרת תמיד) */
@@ -338,6 +355,9 @@
   const TOK_KEY = AS ? 'harpatka_admin_session_v2' : ME_KEY;
   window.__meAs = AS;
   let meInfo = null;   // { first, last, age, gender, meetings }
+  const hasSess = () => { try { return !!localStorage.getItem(TOK_KEY); } catch (e) { return false; } };   // יש חיבור גוגל שמור בדפדפן (גם אם עוד לא נטען המשתתף)
+  const REG_MEET_KEY = 'harpatka_reg_meeting';   // המפגש שנבחר להרשמה לפני הכניסה עם גוגל (גם אם הכניסה עברה בניווט רגיל)
+  const takeRegMeeting = () => { let m = null; try { m = JSON.parse(sessionStorage.getItem(REG_MEET_KEY) || 'null'); sessionStorage.removeItem(REG_MEET_KEY); } catch (e) {} return m && m.id ? m : null; };
   const jwtExp = (tok) => { try { return JSON.parse(atob(tok.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).exp || 0; } catch (e) { return 0; } };
   async function meToken() {
     let s = null; try { s = JSON.parse(localStorage.getItem(TOK_KEY) || 'null'); } catch (e) {}
@@ -389,6 +409,7 @@
   const applyMemberMode = () => {
     const on = !!meInfo;
     document.documentElement.classList.toggle('reg-member', on);
+    document.documentElement.classList.toggle('reg-join', !on && GL && !AS && hasSess());   // מחובר לגוגל בלי משתתף מקושר: הטופס המלא (השלמת פרטים)
     document.querySelectorAll('[data-su="who"]').forEach((e) => { e.textContent = on ? meInfo.first + ' ' + meInfo.last : ''; });
     if (on) { window.__meName = meInfo.first + ' ' + meInfo.last; try { window.dispatchEvent(new Event('harpatka:me')); } catch (e) {} }
   };
@@ -441,9 +462,9 @@
       if (!AS) try { localStorage.setItem('harpatka_me_name', meInfo.first + ' ' + meInfo.last); } catch (e) {}
       ensureMeChannel();
       if (!meSheet && !window.__meAdmin) setTimeout(() => { try { openMeArea('', true); } catch (e) {} }, 1500);   // טעינה מוקדמת של האזור האישי (מוסתר), כדי שהפתיחה הראשונה תהיה מיידית
-      if (pending === 'reg') setTimeout(() => window.HarpatkaRegister.open(true), 300);   // הגיעו מהקישור בפופאפ ההרשמה: חוזרים אליו, במצב מחובר
+      if (pending === 'reg') setTimeout(() => openReg(true, takeRegMeeting()), 300);   // נכנסו עם גוגל מתוך הרשמה: פופאפ ההרשמה של המפגש שנבחר, במצב מחובר
     } else if (d && d.status === 'noauth') { window.__meAdmin = false; clearMeName(); }
-    else { clearMeName(); if (pending && !AS) setTimeout(() => { setPhoneMode(true); window.HarpatkaRegister.open(true); }, 300); }   // מחובר לגוגל אבל אין משתתף מקושר: פופאפ ההרשמה במצב הזנת טלפון
+    else { clearMeName(); if (pending === 'reg' && !AS) setTimeout(() => openReg(true, takeRegMeeting()), 300); }   // מחובר לגוגל אבל אין משתתף מקושר: פופאפ ההרשמה עם הזנת הפרטים (יוצר משתתף, מחבר את החשבון ונרשם באותו צעד)
   });
   const GL = CONFIG.googleLogin !== false || !!AS;   // מתג כניסה עם גוגל (shared/config.js); בצפייה כמשתתף הדף מתנהג כמחובר גם כשהכניסה לציבור כבויה
   if (CONFIG.googleLogin === false && !AS) document.documentElement.classList.add('no-gl');   // כניסה עם גוגל כבויה: בלי כרטיס האזור האישי ובלי קישורי הכניסה. בצפייה כמשתתף הכרטיס מוצג ופותח את האזור האישי שלו
@@ -561,8 +582,7 @@
     e.preventDefault(); e.stopPropagation();
     if (!GL) return;   // כניסה עם גוגל כבויה: הכרטיס מוצג, והלחיצה לא עושה כלום (בינתיים)
     if (window.__meAdmin) { goAdmin(); return; }   // מנהל: דף הניהול בלשונית חדשה
-    if (!meInfo) return;   // פופאפ האזור האישי רק למשתתף מחובר; מי שלא מחובר: הלחיצה לא עושה כלום (בינתיים)
-    openMeArea(u.search);
+    openMeArea(u.search);   // מחובר: הפופאפ נפתח מיד; לא מחובר: קודם כניסה עם גוגל, ואחריה הפופאפ נפתח (openMeArea → loginPopup)
   }, true);
   window.HarpatkaMe = { enabled: GL, confirmLogout, get: meGet, login: loginGoogle, loginPopup, openArea: (search) => openMeArea(search || '') };
   try { if (sessionStorage.getItem('harpatka_open_me')) { sessionStorage.removeItem('harpatka_open_me'); setTimeout(() => { try { if (localStorage.getItem(ME_KEY)) openMeArea(''); } catch (e) {} }, 700); } } catch (e) {}   // חזרה מהתחברות עם גוגל שהתחילה מתוך הפופאפ: נפתח מחדש
@@ -580,7 +600,21 @@
   try { if (localStorage.getItem(TOK_KEY)) ensureMeChannel(); } catch (e) {}
   HRT.channel({ url: CONFIG.supabaseUrl, key: CONFIG.supabaseKey }, IS_TEST ? 'meetings-test' : 'meetings', () => { setTimeout(() => { loadNearest(); try { window.dispatchEvent(new Event('harpatka:meetings')); } catch (e) {} }, 200 + Math.random() * 800); }, { poll: 90000 });   // פיזור קטן כדי שכל המבקרים לא יטענו באותו רגע
   const contactModal = document.getElementById('contactModal');
-  window.HarpatkaRegister = { open: (auto, meeting) => { selMeeting = meeting && meeting.id ? meeting : null; showMeeting(selMeeting || nearest); applyMemberMode(); applyRegState(selMeeting || nearest); if (contactModal) openModal(contactModal, auto === true); } };   // לשימוש עמודים אחרים
+  /* השלמת פרטים אחרי כניסה עם גוגל: שם פרטי ושם משפחה מהחשבון (רק בשדות ריקים) */
+  function prefillGoogleName() {
+    if (!document.documentElement.classList.contains('reg-join')) return;
+    let md = {}; try { const s = JSON.parse(localStorage.getItem(TOK_KEY) || 'null'); md = JSON.parse(decodeURIComponent(escape(atob(s.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))))).user_metadata || {}; } catch (e) {}
+    const full = String(md.full_name || md.name || '').trim(), first = md.given_name || full.split(' ')[0] || '', last = md.family_name || full.split(' ').slice(1).join(' ');
+    const f = document.getElementById('cmFirst'), l = document.getElementById('cmLast');
+    if (f && !f.value && first) f.value = first; if (l && !l.value && last) l.value = last;
+  }
+  function openReg(auto, meeting) { selMeeting = meeting && meeting.id ? meeting : null; showMeeting(selMeeting || nearest); applyMemberMode(); prefillGoogleName(); applyRegState(selMeeting || nearest); if (contactModal) openModal(contactModal, auto === true); }
+  /* הרשמה כשהכניסה עם גוגל פעילה: מי שלא מחובר עובר קודם לכניסה עם גוגל (בלי פופאפ); אחרי הכניסה נפתח פופאפ ההרשמה של המפגש שנבחר:
+     משתתף מקושר: הרשמה בלחיצה; בלי משתתף מקושר: הזנת פרטים, והכפתור יוצר משתתף, מחבר את החשבון ונרשם באותו צעד (harpatka_me_join) */
+  window.HarpatkaRegister = { open: (auto, meeting) => {
+    if (GL && !AS && !meInfo && !hasSess()) { try { sessionStorage.setItem(REG_MEET_KEY, JSON.stringify(meeting && meeting.id ? meeting : null)); } catch (e) {} loginPopup('reg'); return; }
+    openReg(auto, meeting);
+  } };   // לשימוש עמודים אחרים
   if (new URLSearchParams(location.search).has('register')) setTimeout(() => window.HarpatkaRegister.open(true), 500);   // הגעה דרך /register/: דף הבית נטען והפופאפ נפתח עליו
   document.querySelectorAll('[data-contact]').forEach(el => {
     el.setAttribute('href', '#');

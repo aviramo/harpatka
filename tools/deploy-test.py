@@ -80,7 +80,7 @@ if _admin_css is not None:
 shutil.copy2(ROOT / 'tools' / 'test-site-env.js', OUT / 'shared' / 'env.js')
 
 # כניסה עם גוגל לציבור: בפרודקשן כבויה (shared/config.js: googleLogin false). לפיתוח מחדש: קודם רק בבדיקות. True = בעותק של הבדיקות הכניסה פעילה (האמת לא משתנה)
-GOOGLE_LOGIN_IN_TEST = False
+GOOGLE_LOGIN_IN_TEST = True   # 30.10.26: הכניסה עם גוגל חוזרת, קודם בבדיקות בלבד
 if GOOGLE_LOGIN_IN_TEST:
     _cfg = OUT / 'shared' / 'config.js'
     _cfg.write_text(_cfg.read_text(encoding='utf-8').replace('googleLogin: false', 'googleLogin: true', 1), encoding='utf-8')

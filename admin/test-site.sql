@@ -15,9 +15,30 @@ alter table test.harpatka_likes enable row level security;
 alter table test.harpatka_anon_likes enable row level security;
 alter table test.harpatka_settings enable row level security;
 
--- מיילים: פונקציה ריקה (אותה חתימה כמו של public)
-create or replace function test.harpatka_send_mail(p_key text, p_vars jsonb, p_to text default null, p_extra jsonb default null)
-returns void language sql as $$ select $$;
+-- מיילים בבדיקות (30.10.26): נשלחים דרך Resend רק לאופיר (ofir.aviram@gmail.com), לעולם לא להדר ולא למשתתפים (הנמען שהתבקש נדרס),
+-- עם "[בדיקות]" בנושא, וכל קישור ל-harpatka.co.il מוחלף ב-test.harpatka.co.il. הטמפלטים מ-test.harpatka_mail_templates (עותק של public, וטמפלטים חדשים שנבדקים קודם כאן), ואחרת מ-public.
+create table if not exists test.harpatka_mail_templates (like public.harpatka_mail_templates including all);
+insert into test.harpatka_mail_templates select * from public.harpatka_mail_templates on conflict do nothing;
+create or replace function test.harpatka_send_mail(p_key text, p_vars jsonb default '{}'::jsonb, p_to text default null, p_extra jsonb default '{}'::jsonb)
+returns void language plpgsql security definer set search_path to 'test', 'public' as $$
+declare t record; rk text; fr text; v jsonb;
+begin
+  select subject, html into t from test.harpatka_mail_templates where key = p_key;
+  if not found then select subject, html into t from public.harpatka_mail_templates where key = p_key; end if;
+  if not found then return; end if;
+  select value into rk from public.harpatka_settings where key = 'resend_key';
+  select value into fr from public.harpatka_settings where key = 'mail_from';
+  if coalesce(rk, '') = '' or coalesce(fr, '') = '' then return; end if;
+  v := replace(coalesce(p_vars, '{}'::jsonb)::text, 'https://harpatka.co.il/', 'https://test.harpatka.co.il/')::jsonb;
+  perform net.http_post(
+    url := 'https://api.resend.com/emails',
+    body := jsonb_build_object('from', fr, 'to', jsonb_build_array('ofir.aviram@gmail.com'),
+              'subject', '[בדיקות] ' || public.harpatka_render(t.subject, v, false),
+              'html', replace(public.harpatka_render(t.html, v, true), 'https://harpatka.co.il/', 'https://test.harpatka.co.il/')),
+    headers := jsonb_build_object('Content-Type', 'application/json', 'Authorization', 'Bearer ' || rk),
+    timeout_milliseconds := 30000);
+exception when others then null;
+end $$;
 
 -- עמודות שנוספו ל-public אחרי שהסכמה הועתקה (אזור אישי)
 alter table test.harpatka_members add column if not exists wants_me boolean not null default false;

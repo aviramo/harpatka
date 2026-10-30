@@ -104,6 +104,7 @@
     { const bc = $('#balChip'); if (bc) bc.hidden = true; }
     if (data && data.admin && EMBED && !asId) { try { window.parent.postMessage({ harpatka: 'me-admin' }, location.origin); } catch (e) {} }   // בפופאפ: הדף הראשי סוגר ופותח את דף הניהול
     if (data && data.admin) { app.innerHTML = '<div class="imp">מחוברים כמנהלים. לצפייה באזור האישי של משתתף פותחים את כרטיס המשתתף בדף הניהול ולוחצים על אייקון העין</div><a class="btn" href="../admin/">לדף הניהול</a>'; return; }
+    if (!note) { viewSignup(''); return; }   // חשבון גוגל בלי משתתף מקושר: ישר לטופס הפרטים (יוצר משתתף, או מחבר משתתף קיים לפי הטלפון)
     const adm = '';
     app.innerHTML = adm + '<div class="card"><h2>חיבור לחשבון</h2><p class="muted" style="margin:0">הזינו את הטלפון שבו נרשמתם למפגש כדי לחבר אליו את חשבון הגוגל. החיבור מאושר על ידינו ואז האזור האישי נפתח</p>' + (note ? '<p class="msg bad">' + esc(note) + '</p>' : '') +
       '<label for="ph">טלפון</label><input id="ph" type="tel" inputmode="tel" autocomplete="tel" placeholder="05XXXXXXXX" dir="ltr" style="text-align:right" /><button type="button" class="btn" id="claimBtn">שליחה</button><div class="msg" id="cm"></div></div>';
@@ -123,20 +124,19 @@
   }
   function viewSignup(phone) {
     const gn = googleName();
-    app.innerHTML = '<div class="card"><h2>הרשמה</h2><p class="muted" style="margin:0">המספר הזה עוד לא רשום אצלנו. אפשר להשלים הרשמה כאן (בלי שיוך למפגש) ואז להירשם למפגש מתוך האזור האישי</p>' +
+    app.innerHTML = '<div class="card"><h2>הפרטים שלי</h2><p class="muted" style="margin:0">משלימים את הפרטים פעם אחת, ומהפעם הבאה נרשמים למפגשים בלחיצה</p>' +
       '<div class="two"><div>' + PersonForm.html('first', { id: 'sfn', label: true, value: gn.first }) + '</div><div>' + PersonForm.html('last', { id: 'sln', label: true, value: gn.last }) + '</div></div>' + PersonForm.err('name') +
       PersonForm.html('phone', { id: 'sph', label: true, value: phone || '', attr: 'style="text-align:right"' }) + PersonForm.err('phone') +
       '<div class="two"><div>' + PersonForm.html('age', { id: 'sag', label: true }) + PersonForm.err('age') + '</div><div>' + PersonForm.html('gender', { id: 'sgn', label: true }) + PersonForm.err('gender') + '</div></div>' +
-      '<button type="button" class="btn" id="sgBtn">הרשמה</button><div class="msg" id="sgm"></div><button type="button" class="link" id="sgBack">חזרה</button></div>';
-    $('#sgBack').onclick = () => viewClaim('');
+      '<button type="button" class="btn" id="sgBtn">שמירה</button><div class="msg" id="sgm"></div></div>';
     PersonForm.bind(app);
     $('#sgBtn').onclick = async () => {
       const chk = PersonForm.validate(app); if (!chk.ok) return;
       const b = $('#sgBtn'); b.disabled = true;
       try {
-        const r = await rpc('harpatka_me_signup', { p_first: chk.v.first, p_last: chk.v.last, p_age: chk.v.age, p_gender: chk.v.gender, p_phone: chk.v.phoneRaw });
+        const r = await rpc('harpatka_me_join', { p_first: chk.v.first, p_last: chk.v.last, p_age: chk.v.age, p_gender: chk.v.gender, p_phone: chk.v.phoneRaw, p_no_meeting: true });   // יוצר משתתף (או מחבר קיים לפי הטלפון) ומחבר את החשבון, בלי שיוך למפגש
         if (PersonForm.serverError(app, r)) { b.disabled = false; return; }
-        const bad = { exists: 'המספר הזה כבר רשום אצלנו. אפשר לחזור ולחבר אותו לחשבון, ואם זה לא עובד נשמח שתפנו אלינו', blocked: 'אי אפשר להשלים הרשמה מהחשבון הזה' }[r];
+        const bad = { phone_taken: 'מספר הטלפון הזה כבר נמצא בשימוש', blocked: 'אי אפשר להשלים הרשמה מהחשבון הזה' }[r];   // טלפון של משתתף אחר: לא נשמר (והמנהלים מקבלים מייל)
         if (bad) { toast($('#sgm'), bad, true); b.disabled = false; return; }
         load();
       } catch (e) { toast($('#sgm'), 'משהו השתבש, אפשר לנסות שוב', true); b.disabled = false; }
