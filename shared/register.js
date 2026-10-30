@@ -333,23 +333,28 @@
   });
   /* ===== משתתף מחובר (חשבון גוגל מהאזור האישי, אותו מפתח session של me/): הרשמה למפגש בלחיצה אחת, בלי הזנת פרטים ===== */
   const ME_KEY = 'harpatka_me_session';
+  /* צפייה כמשתתף (מנהל, מהעין בפרטי המשתתף בדף הניהול): /?as=<מזהה המשתתף>. הדף מתנהג כאילו המשתתף מחובר עם גוגל (השם בבאנר, המפגשים, הרשמה ותשלום, האזור האישי),
+     בלי חיבור אמיתי: הבקשות יוצאות עם החיבור של דף הניהול ועם p_as (השרת בודק שהמבקש מנהל). החיבור והשם השמורים של הדפדפן לא משתנים */
+  const AS = (() => { try { const v = new URLSearchParams(location.search).get('as'); return v && /^[0-9a-f-]{36}$/i.test(v) ? v : null; } catch (e) { return null; } })();
+  const TOK_KEY = AS ? 'harpatka_admin_session_v2' : ME_KEY;
+  window.__meAs = AS;
   let meInfo = null;   // { first, last, age, gender, meetings }
   const jwtExp = (tok) => { try { return JSON.parse(atob(tok.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).exp || 0; } catch (e) { return 0; } };
   async function meToken() {
-    let s = null; try { s = JSON.parse(localStorage.getItem(ME_KEY) || 'null'); } catch (e) {}
+    let s = null; try { s = JSON.parse(localStorage.getItem(TOK_KEY) || 'null'); } catch (e) {}
     if (!s || !s.access_token) return null;
     if (jwtExp(s.access_token) * 1000 > Date.now() + 30000) return s.access_token;
     if (!s.refresh_token) return null;
     try {
       const r = await fetch(CONFIG.supabaseUrl + '/auth/v1/token?grant_type=refresh_token', { method: 'POST', headers: { apikey: CONFIG.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh_token: s.refresh_token }) });
       if (!r.ok) return null;
-      const d = await r.json(); try { localStorage.setItem(ME_KEY, JSON.stringify({ access_token: d.access_token, refresh_token: d.refresh_token })); } catch (e) {}
+      const d = await r.json(); try { localStorage.setItem(TOK_KEY, JSON.stringify({ access_token: d.access_token, refresh_token: d.refresh_token })); } catch (e) {}
       return d.access_token;
     } catch (e) { return null; }
   }
   async function meRpc(name, body) {
     const tok = await meToken(); if (!tok) throw new Error('auth');
-    const r = await fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/' + name, { method: 'POST', headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+    const r = await fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/' + name, { method: 'POST', headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({}, body || {}, AS ? { p_as: AS } : {})) });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return r.json();
   }
@@ -422,7 +427,7 @@
     if (h.get('error_description')) { try { history.replaceState(null, '', location.pathname + location.search); sessionStorage.removeItem(LOGIN_KEY); } catch (e) {} }
     return false;
   }
-  const clearMeName = () => { try { localStorage.removeItem('harpatka_me_name'); } catch (e) {} if (window.__meName) { window.__meName = null; } try { window.dispatchEvent(new Event('harpatka:me')); } catch (e) {} };
+  const clearMeName = () => { if (!AS) try { localStorage.removeItem('harpatka_me_name'); } catch (e) {} if (window.__meName) { window.__meName = null; } try { window.dispatchEvent(new Event('harpatka:me')); } catch (e) {} };
   /* מצב המשתתף המחובר נטען דרך HRT.loader: טעינה אחת בכל פעם, תוצאה ישנה לא דורסת חדשה, ושינויים שלי (הרשמה, דיווח) שעוד לא נקלטו מוחלים על כל טעינה שהתחילה לפניהם */
   let mePending = null;
   const meLoader = HRT.loader(async () => {
@@ -430,18 +435,18 @@
     return meRpc('harpatka_me', {});
   }, (d) => {
     const pending = mePending; mePending = null;
-    window.__meAdmin = !!(d && d.admin);   // מנהל מחובר: "כניסה לאזור האישי" לוקחת לדף הניהול
+    window.__meAdmin = !AS && !!(d && d.admin);   // בצפייה כמשתתף: לא מנהל (רואים בדיוק מה שהמשתתף רואה)   // מנהל מחובר: "כניסה לאזור האישי" לוקחת לדף הניהול
     if (d && d.status === 'ok' && d.participant && d.participant.first_name) {
       meInfo = { first: d.participant.first_name, last: d.participant.last_name || '', age: d.participant.age, gender: d.participant.gender, meetings: d.meetings || [] };
       applyMemberMode(); applyRegState(selMeeting || nearest);
-      try { localStorage.setItem('harpatka_me_name', meInfo.first + ' ' + meInfo.last); } catch (e) {}
+      if (!AS) try { localStorage.setItem('harpatka_me_name', meInfo.first + ' ' + meInfo.last); } catch (e) {}
       ensureMeChannel();
       if (!meSheet && !window.__meAdmin) setTimeout(() => { try { openMeArea('', true); } catch (e) {} }, 1500);   // טעינה מוקדמת של האזור האישי (מוסתר), כדי שהפתיחה הראשונה תהיה מיידית
       if (pending === 'reg') setTimeout(() => window.HarpatkaRegister.open(true), 300);   // הגיעו מהקישור בפופאפ ההרשמה: חוזרים אליו, במצב מחובר
     } else if (d && d.status === 'noauth') { window.__meAdmin = false; clearMeName(); }
-    else { clearMeName(); if (pending) setTimeout(() => { setPhoneMode(true); window.HarpatkaRegister.open(true); }, 300); }   // מחובר לגוגל אבל אין משתתף מקושר: פופאפ ההרשמה במצב הזנת טלפון
+    else { clearMeName(); if (pending && !AS) setTimeout(() => { setPhoneMode(true); window.HarpatkaRegister.open(true); }, 300); }   // מחובר לגוגל אבל אין משתתף מקושר: פופאפ ההרשמה במצב הזנת טלפון
   });
-  const GL = CONFIG.googleLogin !== false;   // מתג כניסה עם גוגל (shared/config.js)
+  const GL = CONFIG.googleLogin !== false || !!AS;   // מתג כניסה עם גוגל (shared/config.js); בצפייה כמשתתף הדף מתנהג כמחובר גם כשהכניסה לציבור כבויה
   if (!GL) document.documentElement.classList.add('no-gl');
   function loadMe() {
     if (!GL) return Promise.resolve();
@@ -479,6 +484,7 @@
     if (!m.dataset.bound) {
       m.dataset.bound = '1';
       m.querySelector('[data-lg="yes"]').addEventListener('click', () => {
+        if (AS) { location.href = location.pathname; return; }   // צפייה כמשתתף: "יציאה" = סיום הצפייה, בלי לנתק את החיבור של הדפדפן
         try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {}
         meInfo = null; window.__meName = null; window.__meAdmin = false; applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {}
         closeModal(m);
@@ -513,7 +519,7 @@
   function openMeArea(search, preload) {
     if (!GL) return;
     if (window.__meAdmin) { goAdmin(); return; }   // מנהל: דף הניהול בלשונית חדשה, בלי מסך "מחוברים כמנהלים"
-    { let has = false; try { has = !!localStorage.getItem(ME_KEY); } catch (e) {} if (!has && !String(search || '').includes('embed')) { loginPopup('', true); return; } }   // לא מחובר: ישר כניסה עם גוגל (בחלון קופץ), בלי מסך כניסה; אחרי ההתחברות האזור האישי נפתח
+    { let has = !!AS; try { has = has || !!localStorage.getItem(ME_KEY); } catch (e) {} if (!has && !String(search || '').includes('embed')) { loginPopup('', true); return; } }   // לא מחובר: ישר כניסה עם גוגל (בחלון קופץ), בלי מסך כניסה; אחרי ההתחברות האזור האישי נפתח
     const lm = document.getElementById('logoutModal'); if (!preload && lm && !lm.hidden) { try { closeModal(lm); } catch (e) {} }
     if (!meSheet) {
       meSheet = document.createElement('div'); meSheet.className = 'mesheet'; meSheet.hidden = true; meSheet.setAttribute('role', 'dialog'); meSheet.setAttribute('aria-modal', 'true'); meSheet.setAttribute('aria-label', 'האזור האישי');
@@ -538,10 +544,10 @@
         if (t === 'me-drag') { p.style.transition = 'none'; p.style.transform = 'translateY(' + d + 'px)'; }
         else if (t === 'me-drag-end') { p.style.transition = ''; p.style.transform = ''; if (d > 110) closeMeSheet(); }
       });
-      window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout') { try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {} meInfo = null; window.__meName = null; window.__meAdmin = false; applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {} meSheet.dataset.k = ''; closeMeSheet(); } });   // יציאה: מנתקים וסוגרים את הפופאפ, בלי לרענן את הדף
+      window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout' && AS) { location.href = location.pathname; return; } if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout') { try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {} meInfo = null; window.__meName = null; window.__meAdmin = false; applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {} meSheet.dataset.k = ''; closeMeSheet(); } });   // יציאה: מנתקים וסוגרים את הפופאפ, בלי לרענן את הדף
     }
-    const qs = new URLSearchParams(search || ''); qs.set('embed', '1');
-    { const fr = meSheet.querySelector('iframe'); let tk = ''; try { tk = String(localStorage.getItem(ME_KEY) || '').slice(-24); } catch (e) {}
+    const qs = new URLSearchParams(search || ''); qs.set('embed', '1'); if (AS) qs.set('as', AS);   // צפייה כמשתתף: האזור האישי של אותו משתתף
+    { const fr = meSheet.querySelector('iframe'); let tk = ''; try { tk = String(localStorage.getItem(TOK_KEY) || '').slice(-24); } catch (e) {}
       const key = tk + '|' + qs.toString();
       if (meSheet.dataset.k !== key) { fr.src = BASE + 'me/?' + qs.toString(); meSheet.dataset.k = key; } }   // הדף נטען מראש ונשאר חם: פתיחה ראשונה ופתיחות הבאות מיידיות; נטען מחדש רק כשהחיבור או הפרמטרים השתנו
     if (preload) return;
@@ -568,9 +574,9 @@
   let meChan = null;
   function ensureMeChannel() {
     if (meChan || !GL) return;
-    meChan = HRT.channel({ url: CONFIG.supabaseUrl, key: CONFIG.supabaseKey }, IS_TEST ? 'me-test' : 'me', () => { try { if (!meInfo && !localStorage.getItem(ME_KEY)) return; } catch (e) { return; } meLoader.reload(250); }, { poll: 45000 });
+    meChan = HRT.channel({ url: CONFIG.supabaseUrl, key: CONFIG.supabaseKey }, IS_TEST ? 'me-test' : 'me', () => { try { if (!meInfo && !localStorage.getItem(TOK_KEY)) return; } catch (e) { return; } meLoader.reload(250); }, { poll: 45000 });
   }
-  try { if (localStorage.getItem(ME_KEY)) ensureMeChannel(); } catch (e) {}
+  try { if (localStorage.getItem(TOK_KEY)) ensureMeChannel(); } catch (e) {}
   HRT.channel({ url: CONFIG.supabaseUrl, key: CONFIG.supabaseKey }, IS_TEST ? 'meetings-test' : 'meetings', () => { setTimeout(() => { loadNearest(); try { window.dispatchEvent(new Event('harpatka:meetings')); } catch (e) {} }, 200 + Math.random() * 800); }, { poll: 90000 });   // פיזור קטן כדי שכל המבקרים לא יטענו באותו רגע
   const contactModal = document.getElementById('contactModal');
   window.HarpatkaRegister = { open: (auto, meeting) => { selMeeting = meeting && meeting.id ? meeting : null; showMeeting(selMeeting || nearest); applyMemberMode(); applyRegState(selMeeting || nearest); if (contactModal) openModal(contactModal, auto === true); } };   // לשימוש עמודים אחרים

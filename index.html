@@ -1045,7 +1045,8 @@
   const dayName = (iso) => ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'][new Date(iso + 'T12:00:00Z').getUTCDay()];
   const todayIso = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
   let lastD = null;
-  const meName = () => { if (window.__meName) return window.__meName; try { return localStorage.getItem('harpatka_me_name') || ''; } catch (e) { return ''; } };   // השם מהמטמון מיד בטעינה, עד שהחשבון נבדק
+  const AS_VIEW = /[?&]as=[0-9a-f-]{36}/i.test(location.search);   // צפייה כמשתתף (מנהל, מהעין בדף הניהול): הצ'יפ מציג את שם המשתתף שצופים דרכו
+  const meName = () => { if (window.__meName) return window.__meName; if (AS_VIEW) return ''; try { return localStorage.getItem('harpatka_me_name') || ''; } catch (e) { return ''; } };   // השם מהמטמון מיד בטעינה, עד שהחשבון נבדק
   const render = (d) => {
     lastD = d;
     const nx = ((d && d.future) || []).filter((m) => m.date >= todayIso())[0] || null;
@@ -1061,7 +1062,7 @@
       el('tbMain').textContent = 'המפגש הבא כבר בדרך';   // בלי מפגש (בלי שם ברירת המחדל)
       el('tbSub').textContent = 'השאירו פרטים ונעדכן ברגע שהתאריך ייקבע';
     }
-    el('tbPillT').textContent = (typeof CONFIG !== 'undefined' && CONFIG.googleLogin === false) ? 'המפגש הקרוב' : (meName() || 'לאזור האישי');   /* לפי CONFIG (נטען בראש הדף) ולא לפי HarpatkaMe שנטען בסוף, כדי שהצ'יפ לא יתחלף אחרי הטעינה */   // משתתף מחובר: השם שלו במקום הצ'יפ, כדי שידע שהוא מחובר
+    el('tbPillT').textContent = AS_VIEW ? (meName() || 'צפייה כמשתתף') : (typeof CONFIG !== 'undefined' && CONFIG.googleLogin === false) ? 'המפגש הקרוב' : (meName() || 'לאזור האישי');   /* לפי CONFIG (נטען בראש הדף) ולא לפי HarpatkaMe שנטען בסוף, כדי שהצ'יפ לא יתחלף אחרי הטעינה */   // משתתף מחובר: השם שלו במקום הצ'יפ, כדי שידע שהוא מחובר
     /* מעבר מונפש כשהמצב או התוכן השתנו (טעינה ← תוכן, אין מפגש ← יש מפגש); בלי אנימציה כשהתוכן זהה (למשל רענון אחרי המטמון) */
     if (wasLoading || before !== el('tbPillT').textContent + '|' + el('tbMain').textContent + '|' + el('tbSub').textContent) {
       /* בלי אנימציית החלקה: רק הדהייה של שורת התאריך בטעינה הראשונה (CSS) */
@@ -1069,7 +1070,7 @@
   };
   window.addEventListener('harpatka:me', () => { if (lastD) render(lastD); });   // התחברות או יציאה: הצ'יפ מתעדכן
   el('tbPillT').parentElement.addEventListener('click', (e) => {   // מחובר: שאלה אם לצאת. לא מחובר: התחברות עם גוגל (ואם אין רשומה למייל הזה נפתח פופאפ ההרשמה)
-    if ((typeof CONFIG !== 'undefined' && CONFIG.googleLogin === false) || (window.HarpatkaMe && HarpatkaMe.enabled === false)) return;   // כניסה עם גוגל כבויה: הצ'יף חלק מההדר, והלחיצה עליו גוללת למפגשים כמו בכל ההדר
+    if (!AS_VIEW && ((typeof CONFIG !== 'undefined' && CONFIG.googleLogin === false) || (window.HarpatkaMe && HarpatkaMe.enabled === false))) return;   // כניסה עם גוגל כבויה: הצ'יף חלק מההדר, והלחיצה עליו גוללת למפגשים כמו בכל ההדר
     e.stopPropagation();
     const mc = document.getElementById('meAreaCard'); if (mc) mc.click();   // בדיוק מה שלחיצה על "כניסה לאזור האישי" בכרטיס עושה (פופאפ האזור האישי, או דף הניהול למנהל)
   });   // לחיצה על השם: שאלה אם לצאת מהחשבון
@@ -1095,6 +1096,6 @@
 </script>
   <script src="shared/rt.js?v=1"></script>
   <script src="shared/person-form.js?v=20261029i"></script>
-  <script src="shared/register.js?v=20261031j"></script>
+  <script src="shared/register.js?v=20261031k"></script>
 </body>
 </html>
