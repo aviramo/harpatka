@@ -22,11 +22,14 @@ def run(*a, cwd=None):
 
 def build_test_admin():
     """דף הניהול של הבדיקות, נגזר מ-admin/index.html: סכמת test בבקשות וב-realtime, פס "סביבת בדיקות", כותרת וקיזוז גובה."""
-    # עבודה על עיצוב חדש לדף הניהול (30.10.26): אם קיים admin-next/index.html (לא ב-git), הבדיקות נבנות ממנו, והאמת נשארת על admin/index.html
+    # עבודה על עיצוב חדש לדף הניהול (30.10.26): אם קיים admin-next/index.html (לא ב-git), הבדיקות נבנות ממנו, והאמת נשארת על admin/index.html.
+    # בגרסה החדשה העיצוב בקובץ נפרד admin-next/admin.css (מועתק ל-admin/admin.css בבדיקות)
     src = ROOT / 'admin-next' / 'index.html'
     if not src.exists():
         src = ROOT / 'admin' / 'index.html'
     t = src.read_text(encoding='utf-8').replace('\r\n', '\n')
+    css_src = src.parent / 'admin.css'
+    css = css_src.read_text(encoding='utf-8').replace('\r\n', '\n') if css_src.exists() else None
     testbar_css = ("    #testBadge { inset: auto; margin: 0; border: 0; position: fixed; top: 0; left: 0; right: 0; width: auto; height: 18px; padding: 0; overflow: hidden; background: #3F382F; color: #fff; font: 700 11px/18px Arial, sans-serif; text-align: center; pointer-events: none; }\n")
     testbar_div = '  <div id="testBadge" popover="manual">סביבת בדיקות · נתונים נפרדים מהאמיתיים</div>\n'
 
@@ -37,9 +40,15 @@ def build_test_admin():
         t = t.replace(old, new)
 
     rep('<title>משתתפים · יוצאים להרפתקה</title>', '<title>בדיקות · משתתפים</title>')
-    rep('height: 100vh; height: 100dvh; margin-top: 0;',
-        'height: calc(100vh - 18px); height: calc(100dvh - 18px); margin-top: 18px;')
-    rep('  <style>\n', '  <style>\n' + testbar_css)
+    H_OLD, H_NEW = 'height: 100vh; height: 100dvh; margin-top: 0;', 'height: calc(100vh - 18px); height: calc(100dvh - 18px); margin-top: 18px;'
+    if css is not None:
+        if css.count(H_OLD) != 1:
+            sys.exit('לא נמצא (או נמצא יותר מפעם אחת) ב-admin.css: ' + H_OLD)
+        css = css.replace(H_OLD, H_NEW)
+        rep('</head>', '  <style>\n' + testbar_css + '  </style>\n</head>')
+    else:
+        rep(H_OLD, H_NEW)
+        rep('  <style>\n', '  <style>\n' + testbar_css)
     body_start = t.index('<body')
     end = t.index('>\n', body_start) + 2
     t = t[:end] + testbar_div + t[end:]
@@ -49,7 +58,7 @@ def build_test_admin():
           'function up(){els.forEach(function(e){try{e.hidePopover();e.showPopover();}catch(x){}});}up();'
           'new MutationObserver(function(m){if(m.some(function(r){return r.target.nodeName==="DIALOG";}))up();}).observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:["open"]});})();</script>')
     t = t.replace('</body>', js + '</body>', 1)
-    return t
+    return t, css
 
 
 # 1. תיקיית עבודה (clone / init)
@@ -68,7 +77,10 @@ for d in DIRS:
 for f in FILES:
     shutil.copy2(ROOT / f, OUT / f)
 (OUT / 'admin').mkdir()
-(OUT / 'admin' / 'index.html').write_text(build_test_admin(), encoding='utf-8', newline='\n')
+_admin_html, _admin_css = build_test_admin()
+(OUT / 'admin' / 'index.html').write_text(_admin_html, encoding='utf-8', newline='\n')
+if _admin_css is not None:
+    (OUT / 'admin' / 'admin.css').write_text(_admin_css, encoding='utf-8', newline='\n')
 shutil.copy2(ROOT / 'tools' / 'test-site-env.js', OUT / 'shared' / 'env.js')
 
 # כניסה עם גוגל לציבור: בפרודקשן כבויה (shared/config.js: googleLogin false). לפיתוח מחדש: קודם רק בבדיקות. True = בעותק של הבדיקות הכניסה פעילה (האמת לא משתנה)
