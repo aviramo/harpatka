@@ -12,7 +12,7 @@ OUT = pathlib.Path.home() / 'harpatka-test-deploy'
 REMOTE = 'https://github.com/aviramo/harpatka-test.git'
 PUSH = '--no-push' not in sys.argv
 
-DIRS = ['images', 'ads', 'biodanza', 'board', 'me', 'shared', 'register', 'privacy', 'v7', 'v8']
+DIRS = ['images', 'ads', 'biodanza', 'board', 'me', 'shared', 'register', 'privacy', 'v7', 'v8', 'v9']
 FILES = ['index.html', 'sw.js', 'favicon.ico']
 
 

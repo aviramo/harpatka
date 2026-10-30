@@ -10,7 +10,7 @@
  *
  * החלף את CACHE_VERSION בכל deploy משמעותי (או השאר — network-first ממילא מביא HTML טרי).
  */
-const CACHE_VERSION = 'harpatka-home-2026-10-13a';
+const CACHE_VERSION = 'harpatka-home-2026-10-30a';
 const RUNTIME_CACHE = `runtime-${CACHE_VERSION}`;
 
 self.addEventListener('install', (event) => {
