@@ -559,7 +559,9 @@
     let u; try { u = new URL(a.getAttribute('href'), location.href); } catch (x) { return; }
     if (!a.closest('#meAreaCard') || u.origin !== location.origin || !/\/me\/?$/.test(u.pathname) || u.searchParams.has('as') || u.searchParams.has('back')) return;   // פופאפ האזור האישי נפתח רק מהכרטיס "האזור האישי שלכם"
     e.preventDefault(); e.stopPropagation();
+    if (!GL) return;   // כניסה עם גוגל כבויה: הכרטיס מוצג, והלחיצה לא עושה כלום (בינתיים)
     if (window.__meAdmin) { goAdmin(); return; }   // מנהל: דף הניהול בלשונית חדשה
+    if (!meInfo) return;   // פופאפ האזור האישי רק למשתתף מחובר; מי שלא מחובר: הלחיצה לא עושה כלום (בינתיים)
     openMeArea(u.search);
   }, true);
   window.HarpatkaMe = { enabled: GL, confirmLogout, get: meGet, login: loginGoogle, loginPopup, openArea: (search) => openMeArea(search || '') };
