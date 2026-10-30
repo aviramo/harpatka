@@ -4,6 +4,9 @@
  * הכפתור בעמוד רק צריך data-contact. אין להעתיק את הקוד הזה לעמודים. */
 (function () {
   const BASE = document.currentScript.src.replace(/shared\/register\.js.*$/, '');   // כתובת השורש של האתר (גם מתוך תיקיות משנה)
+  /* טווח הגילאים: מ-shared/age.js (AGE_MIN, AGE_MAX). עמוד שלא טען אותו מקבל אותו כאן */
+  if (window.AGE_MIN == null) { const s = document.createElement('script'); s.src = BASE + 'shared/age.js?v=20261031a'; document.head.appendChild(s); }
+  const ageOk = (a) => window.AGE_MIN != null && Number(a) >= window.AGE_MIN && Number(a) <= window.AGE_MAX;
   const MODAL_HTML = `<div id="contactModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="contactTitle">
     <div class="modal-box">
       <button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button>
@@ -269,9 +272,9 @@
       if (meInfo) { await memberSubmit(root, btn, q, showDone); return; }   // משתתף מחובר: הפרטים כבר שמורים
       const chk = PersonForm.validate(root); if (!chk.ok) return;
       const first = chk.v.first, last = chk.v.last, norm = chk.v.phone, age = chk.v.age, gender = chk.v.gender;
-      /* אפשרות תשלום רק בטווח הגילאים שמתאים למפגש: גברים 40 עד 55, נשים 35 עד 50 (ההרשמה עצמה נשמרת תמיד) */
+      /* אפשרות תשלום רק בטווח הגילאים של קהל היעד (AGE_MIN עד AGE_MAX ב-shared/age.js; ההרשמה עצמה נשמרת תמיד) */
       /* תשלום רק אחרי הרשמה למפגש: בלי מפגש (השארת פרטים בלבד) אין כפתור תשלום */
-      const payOk = (gender === 'male' ? (age >= 40 && age <= 55) : (age >= 35 && age <= 50)) && !!(selMeeting || nearest);
+      const payOk = ageOk(age) && !!(selMeeting || nearest);
       const allDone = () => { suRoots.forEach(f => f(payOk)); };   // בלי שמירה בדפדפן: בכל טעינה של הדף הטופס מוצג מחדש
       if (q('hp').value || Date.now() - t0 < 1500) { allDone(); return; }   // בוט: מציגים הצלחה בלי לשמור
       btn.disabled = true; btn.textContent = 'שולחים...';
@@ -291,8 +294,8 @@
           if (out === 'created') {   // Lead רק על מספר חדש (חד ערכי), לא על כפילות
             try { if (claimToken) localStorage.setItem('harpatka_claim_token', claimToken); } catch (e) {}   // האזור האישי יחבר את המשתתף לחשבון גוגל בלי טלפון
             leadOnce();
-            /* RegistrationValue: ערך 3 למי שבטווח (נשים 35 עד 50, גברים 40 עד 55, זהה ל-payOk), 1 למי שמחוץ לטווח */
-            const inRange = gender === 'male' ? (age >= 40 && age <= 55) : (age >= 35 && age <= 50);
+            /* RegistrationValue: ערך 3 למי שבטווח הגילאים (זהה ל-payOk), 1 למי שמחוץ לטווח */
+            const inRange = ageOk(age);
             try { if (window.fbq) fbq('trackCustom', 'RegistrationValue', { value: inRange ? 3 : 1, currency: 'ILS' }); } catch (e) {}
           }
           finished = true; allDone();
@@ -463,7 +466,7 @@
       if (r !== 'registered' && r !== 'exists') throw new Error('register failed');
       ob.done(); rel();
       const mine = meInfo.meetings.find((x) => x.id === m.id);
-      const payOk = (meInfo.gender === 'male' ? (meInfo.age >= 40 && meInfo.age <= 55) : (meInfo.age >= 35 && meInfo.age <= 50)) && !(mine && (Number(mine.paid) > 0 || mine.free));
+      const payOk = ageOk(meInfo.age) && !(mine && (Number(mine.paid) > 0 || mine.free));
       showDone(payOk); meLoader.reload(0); return;   // טעינה מחדש של המצב (השינוי שלי כבר מוצג ונשמר מול טעינות ישנות)
     } catch (e) { ob.fail(); rel(); fail.textContent = 'משהו השתבש, אפשר לנסות שוב'; }
     btn.disabled = false; btn.textContent = submitLabel;

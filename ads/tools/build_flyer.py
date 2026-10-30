@@ -7,6 +7,11 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 CHROME = next(p for p in [r"C:\Program Files\Google\Chrome\Application\chrome.exe", r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"] if os.path.exists(p))
 OUT = ROOT / "ads" / "social"; OUT.mkdir(parents=True, exist_ok=True)
 W, H = 1080, 1350
+# טווח הגילאים: מהמקור היחיד shared/age.js (AGE_MIN, AGE_MAX)
+import re
+_AGE = (ROOT / "shared" / "age.js").read_text(encoding="utf-8")
+AGE_MIN, AGE_MAX = (int(re.search(k + r"\s*=\s*(\d+)", _AGE).group(1)) for k in ("AGE_MIN", "AGE_MAX"))
+AGE_RANGE = f"{AGE_MIN}–{AGE_MAX}"
 
 EVENT = {"file": "2026-10-25-v4", "day": "ראשון 25.10", "time": "20:00", "place": "הרצליה", "seats": "עד 30"}
 
@@ -48,7 +53,7 @@ h1{{font-family:Rubik,sans-serif;font-weight:600;font-size:112px;line-height:1.0
   <p class="lead2">תנועות פשוטות בקבוצה, בהנחיה ולצלילי מוזיקה מיוחדת<br><b>הגוף משתחרר, המבוכה נעלמת וההיכרות קורית מעצמה</b></p>
   <p class="hand note">לא ערב הכרויות,<br>אבל כן ערב שאפשר להכיר בו אנשים חדשים</p>
   <div class="dots"></div>
-  <p class="who">נשים וגברים בגילאי <bdi>40–50</bdi> בפרק פתוח בחיים</p>
+  <p class="who">נשים וגברים בגילאי <bdi>{AGE_RANGE}</bdi> בפרק פתוח בחיים</p>
   <div class="grid">{cell("יום", e["day"])}{cell("שעה", e["time"])}{cell("מקום", e["place"])}{cell("משתתפים", e["seats"])}</div>
   <p class="by">הדר ואופיר · <b>יוצאים להרפתקה</b></p>
 </div></div></body></html>'''
