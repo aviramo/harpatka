@@ -65,9 +65,9 @@
               <p class="su-paynote">המקום נשמר באופן זמני, והוא יישמר קבוע רק לאחר תשלום</p>
               <div class="su-payfold" data-su="payfold"><div>
                 <a href="#" target="_blank" rel="noopener" data-paybox class="btn-primary rounded-full px-8 py-4 text-[1.2rem] block text-center w-full">לתשלום <span data-price>80 ₪</span> בפייבוקס</a>
-                <div class="su-paylinks" data-su="paylinks"><button type="button" class="su-lnk" data-su="other">רוצים לשלם בדרך אחרת?</button><button type="button" class="su-lnk" data-su="report" hidden>שילמתי, לעדכן את המארגנים</button></div>
+                <div class="su-paylinks" data-su="paylinks"><button type="button" class="su-lnk" data-su="other">רוצים לשלם בדרך אחרת?</button></div>
               </div></div>
-              <div class="su-reported" data-su="reported" hidden>דיווחתם על תשלום, ממתין לאישור</div>
+              <div class="su-reported" data-su="reported" hidden>התשלום ממתין לאישור שלנו</div>
             </div></div>
           </form>
         </div>
@@ -219,32 +219,31 @@
       if (payOk) setTimeout(() => { const a = q('after'); if (a) a.classList.remove('shut'); }, 700);
     };
     suRoots.push(showDone);
-    /* אחרי לחיצה על התשלום בפייבוקס: מתחת לכפתור מופיעים "שילמתי, לעדכן את המארגנים" ו"רוצים לשלם בדרך אחרת?" (אותו נוסח כמו באזור האישי) */
+    /* לחיצה על התשלום בפייבוקס = דיווח על תשלום, אוטומטית (בלי קישור "שילמתי"): פייבוקס נפתח בלשונית חדשה, ובמערכת המפגש מסומן "דווח" ומחכה לאימות שלנו */
     const payA = root.querySelector('[data-paybox]');
-    if (payA) payA.addEventListener('click', () => {   // "רוצים לשלם בדרך אחרת?" מופיע מיד אחרי ההרשמה; "שילמתי" רק אחרי הלחיצה על התשלום
-      const rb = q('report'); if (!rb) return;
+    let reporting = false;
+    const reportPay = async () => {
+      const m = selMeeting || nearest; if (!m || !m.id || reporting) return;
       let tk = null; try { tk = localStorage.getItem('harpatka_claim_token'); } catch (e) {}
-      rb.hidden = !(meInfo || tk);   // דיווח דורש חשבון מחובר או אסימון מהרשמה שהרגע נעשתה
-    });
-    if (q('report')) q('report').addEventListener('click', async () => {
-      const m = selMeeting || nearest; if (!m || !m.id) return;
-      const rb = q('report'); rb.disabled = true;
-      const ob = meInfo ? meOptimistic(m.id, { reported: true, rejected: false }) : null, rel = HRT.busy(rb);
+      if (!meInfo && !tk) return;   // דיווח דורש חשבון מחובר (או צפייה כמשתתף) או אסימון מהרשמה שהרגע נעשתה
+      reporting = true;
+      const ob = meInfo ? meOptimistic(m.id, { reported: true, rejected: false }) : null;
       try {
         let r;
         if (meInfo) r = await meRpc('harpatka_me_report_payment', { p_meeting: m.id });
         else {
-          let tk = null; try { tk = localStorage.getItem('harpatka_claim_token'); } catch (e) {}
-          const res = await fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_report_payment_token', { method: 'POST', headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_token: tk, p_meeting: m.id }) });
+          const res = await fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_report_payment_token', { method: 'POST', keepalive: true, headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_token: tk, p_meeting: m.id }) });
           if (!res.ok) throw new Error('HTTP ' + res.status); r = await res.json();
         }
         if (r !== 'ok' && r !== 'reported' && r !== 'already') throw new Error('report failed');
-        if (ob) ob.done(); rel();
+        if (ob) ob.done();
         const fold = q('payfold'), done = q('reported');
-        if (fold) { fold.classList.add('closing'); setTimeout(() => { fold.hidden = true; done.hidden = false; }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 420); } else done.hidden = false;
+        if (fold) { fold.classList.add('closing'); setTimeout(() => { fold.hidden = true; if (done) done.hidden = false; }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 420); } else if (done) done.hidden = false;
         if (meInfo) meLoader.reload(0);
-      } catch (e) { if (ob) ob.fail(); rel(); rb.disabled = false; rb.textContent = 'משהו השתבש, אפשר לנסות שוב'; }
-    });
+      } catch (e) { if (ob) ob.fail(); }   // הדיווח נכשל: הכפתור נשאר, ולחיצה נוספת מנסה שוב
+      reporting = false;
+    };
+    if (payA) payA.addEventListener('click', () => { reportPay(); });
     if (q('other')) q('other').addEventListener('click', () => openOtherPay(selMeeting || nearest));
     form.addEventListener('submit', async (e) => {
       e.preventDefault(); q('fail').textContent = '';
@@ -365,11 +364,11 @@
     const root = contactModal; if (!root) return;
     const q = (k) => root.querySelector('[data-su="' + k + '"]'), btn = q('btn'), after = q('after'), note = root.querySelector('.su-paynote'), fold = q('payfold'), rep = q('reported');
     if (!btn || !after || !note) return;
-    if (NOTE0 == null) NOTE0 = note.textContent;
+    if (NOTE0 == null) NOTE0 = note.innerHTML;
     const x = meInfo && m && m.id ? (meInfo.meetings || []).find((y) => y.id === m.id && y.registered) : null;
     if (!x) {
       if (root.dataset.regState) {   // חזרה למצב הרשמה רגיל
-        delete root.dataset.regState; btn.hidden = false; note.textContent = NOTE0; if (fold) fold.hidden = false; if (rep) rep.hidden = true;
+        delete root.dataset.regState; btn.hidden = false; note.innerHTML = NOTE0; if (fold) fold.hidden = false; if (rep) rep.hidden = true;
         if (!btn.classList.contains('saved')) { after.classList.add('shut'); root.querySelectorAll('.su-fold:not(.su-after)').forEach((f) => f.classList.remove('shut')); }
       }
       return;
@@ -379,7 +378,7 @@
     btn.hidden = true;
     root.querySelectorAll('.su-fold:not(.su-after)').forEach((f) => f.classList.add('shut'));
     after.classList.remove('shut');
-    note.textContent = free ? 'נרשמתם למפגש, והוא ללא תשלום' : paid ? 'נרשמתם למפגש והתשלום התקבל. נתראה!' : reported ? 'נרשמתם למפגש. דיווחתם על תשלום, ממתין לאישור' : rejected ? 'נרשמתם למפגש, אבל לא מצאנו את התשלום שדיווחתם עליו. אפשר להשלים תשלום ולדווח מחדש' : 'נרשמתם למפגש. המקום יישמר קבוע רק לאחר תשלום';
+    note.innerHTML = '<span class="su-regd">נרשמתם למפגש</span>' + (free ? 'המפגש בשבילכם ללא תשלום' : paid ? 'התשלום התקבל. נתראה!' : reported ? 'התשלום ממתין לאישור שלנו' : rejected ? 'לא מצאנו את התשלום. אפשר להשלים אותו כאן' : 'המקום יישמר קבוע רק לאחר תשלום');   // "נרשמתם למפגש" בשורה משלו בכתום, והמצב מתחתיו
     if (fold) fold.hidden = paid || free || reported;
     if (rep) rep.hidden = !reported;
   }
@@ -447,7 +446,7 @@
     else { clearMeName(); if (pending && !AS) setTimeout(() => { setPhoneMode(true); window.HarpatkaRegister.open(true); }, 300); }   // מחובר לגוגל אבל אין משתתף מקושר: פופאפ ההרשמה במצב הזנת טלפון
   });
   const GL = CONFIG.googleLogin !== false || !!AS;   // מתג כניסה עם גוגל (shared/config.js); בצפייה כמשתתף הדף מתנהג כמחובר גם כשהכניסה לציבור כבויה
-  if (CONFIG.googleLogin === false || AS) document.documentElement.classList.add('no-gl');   // בצפייה כמשתתף אין אזור אישי (me/): בלי הכרטיס ובלי קישורי הכניסה
+  if (CONFIG.googleLogin === false && !AS) document.documentElement.classList.add('no-gl');   // כניסה עם גוגל כבויה: בלי כרטיס האזור האישי ובלי קישורי הכניסה. בצפייה כמשתתף הכרטיס מוצג ופותח את האזור האישי שלו
   function loadMe() {
     if (!GL) return Promise.resolve();
     takeLoginHash();
@@ -517,7 +516,7 @@
     try { meLoader.reload(250); } catch (e) {}   // מה ששונה באזור האישי מתעדכן בדף
   }
   function openMeArea(search, preload) {
-    if (!GL || AS) return;   // בצפייה כמשתתף אין אזור אישי
+    if (!GL) return;
     if (window.__meAdmin) { goAdmin(); return; }   // מנהל: דף הניהול בלשונית חדשה, בלי מסך "מחוברים כמנהלים"
     { let has = !!AS; try { has = has || !!localStorage.getItem(ME_KEY); } catch (e) {} if (!has && !String(search || '').includes('embed')) { loginPopup('', true); return; } }   // לא מחובר: ישר כניסה עם גוגל (בחלון קופץ), בלי מסך כניסה; אחרי ההתחברות האזור האישי נפתח
     const lm = document.getElementById('logoutModal'); if (!preload && lm && !lm.hidden) { try { closeModal(lm); } catch (e) {} }
@@ -544,9 +543,9 @@
         if (t === 'me-drag') { p.style.transition = 'none'; p.style.transform = 'translateY(' + d + 'px)'; }
         else if (t === 'me-drag-end') { p.style.transition = ''; p.style.transform = ''; if (d > 110) closeMeSheet(); }
       });
-      window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout' && AS) { location.href = location.pathname; return; } if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout') { try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {} meInfo = null; window.__meName = null; window.__meAdmin = false; applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {} meSheet.dataset.k = ''; closeMeSheet(); } });   // יציאה: מנתקים וסוגרים את הפופאפ, בלי לרענן את הדף
+      window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout' && AS) { closeMeSheet(); if (window.top !== window) { try { parent.postMessage({ harpatka: 'me-logout' }, location.origin); } catch (er) {} } else location.href = location.pathname; return; } if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout') { try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {} meInfo = null; window.__meName = null; window.__meAdmin = false; applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {} meSheet.dataset.k = ''; closeMeSheet(); } });   // יציאה: מנתקים וסוגרים את הפופאפ, בלי לרענן את הדף
     }
-    const qs = new URLSearchParams(search || ''); qs.set('embed', '1');
+    const qs = new URLSearchParams(search || ''); qs.set('embed', '1'); if (AS) qs.set('as', AS);   // צפייה כמשתתף: האזור האישי של אותו משתתף, עם החיבור של דף הניהול
     { const fr = meSheet.querySelector('iframe'); let tk = ''; try { tk = String(localStorage.getItem(TOK_KEY) || '').slice(-24); } catch (e) {}
       const key = tk + '|' + qs.toString();
       if (meSheet.dataset.k !== key) { fr.src = BASE + 'me/?' + qs.toString(); meSheet.dataset.k = key; } }   // הדף נטען מראש ונשאר חם: פתיחה ראשונה ופתיחות הבאות מיידיות; נטען מחדש רק כשהחיבור או הפרמטרים השתנו

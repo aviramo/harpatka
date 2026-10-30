@@ -1,124 +1,14 @@
 <!doctype html>
-<html lang="he" dir="rtl">
+<html lang="he" dir="rtl" class="pg-me">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex" />
 <title>האזור האישי | יוצאים להרפתקה</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Rubik:wght@500;700&display=swap" rel="stylesheet" />
-<style>
-    html { -webkit-tap-highlight-color: transparent; }   /* בלי הבהוב הכחול של הדפדפן בלחיצה, בכל העמודים */
-  :root { --cream:#F6EFE4; --sand:#E8D5BE; --terra:#C96F52; --ink:#3F382F; --paper:#FFFDF9; --muted:#8A7F72; --line:#E8D5BE; --green:#2F7D4F; --green-bg:#E3F1E8; --red:#B5483A; --red-bg:#F6E0DA; --sky:#1F5C6B; --sky-bg:#E3EEF3; --yellow:#8A5A00; --yellow-bg:#FBEBC8; }
-  * { box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; }
-  body { margin: 0; background: var(--cream); color: var(--ink); font-family: Assistant, system-ui, sans-serif; font-size: 17px; line-height: 1.5; }
-  h1, h2 { font-family: Rubik, Assistant, sans-serif; margin: 0; }
-  .wrap { max-width: 520px; margin: 0 auto; padding: 14px 16px 48px; }
-  .top { display: flex; align-items: center; gap: 10px; min-height: 44px; position: sticky; top: var(--tbtop, 0px); z-index: 20; background: var(--cream); margin: -14px -16px 0; padding: 14px 16px 8px; border-bottom: 1px solid var(--line); }   /* כותרת קבועה: השם והיציאה תמיד בראש המסך */
-  html.embed .top { top: 0; }
-  /* פופאפ האזור האישי בדף הבית ובדף הניהול: רקע כחול כמו כרטיס "האזור האישי שלכם" בדף הבית (אותו גרדיאנט) */
-  html.embed, html.embed body { background: linear-gradient(120deg, #0A2236 0%, #0F3A4D 55%, #1B6170 100%) fixed; }
-  html.embed .top { background: transparent; border-bottom: 0; }   /* בלי הקו האופקי מתחת לכותרת */
-  html.embed .top h1, html.embed .top .link { color: #FFFDF9; }
-  html.embed .center { color: #FFFDF9; }   /* "טוען…" בזמן שהפופאפ עולה: בלבן על הרקע הכחול */
-  .top h1 { flex: 1; font-size: 22px; }
-  .link { background: none; border: 0; color: var(--muted); font: inherit; font-size: 15px; padding: 6px 4px; cursor: pointer; text-decoration: underline; }
-  .lgback { position: fixed; inset: 0; background: rgba(30,25,20,.62); opacity: 0; transition: opacity .3s ease; z-index: 40; }
-  .lgback.open { opacity: 1; }
-  .lgpop { position: fixed; bottom: 0; left: 0; right: 0; max-width: 30rem; margin: 0 auto; z-index: 41; background: var(--paper); border-radius: 0; padding: 0 20px 24px; text-align: center; box-shadow: 0 -10px 30px rgba(0,0,0,.18); transform: translateY(110%); transition: transform .34s cubic-bezier(.2,.8,.2,1); }
-  .lgpop.open { transform: none; }
-  .lgpop h2 { font-size: 20px; margin: 0 0 8px; color: var(--terra); }
-  .lggrab { display: block; width: 100%; border: 0; background: transparent; padding: 14px 0 10px; cursor: pointer; }
-  .lggrab i { display: block; width: 44px; height: 5px; border-radius: 3px; background: var(--sand); margin: 0 auto; }
-  .card { background: var(--paper); border: 1px solid var(--line); border-radius: 24px; padding: 18px; margin-top: 14px; }
-  .card h2 { font-size: 18px; margin-bottom: 10px; }
-  .big { font-family: Rubik, sans-serif; font-weight: 700; font-size: 22px; }
-  .muted { color: var(--muted); font-size: 15px; }
-  .btn { display: block; width: 100%; border: 0; border-radius: 999px; padding: 14px 18px; font: inherit; font-weight: 700; font-size: 18px; text-align: center; text-decoration: none; cursor: pointer; background: var(--terra); color: #fff; margin-top: 12px; }
-  .btn.pay { background: var(--green); }   /* כפתור התשלום: הירוק הכהה של הפלטה (אין להמציא צבעים) */
-  .btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
-  .btn[disabled] { opacity: .5; cursor: default; }
-  .balcard { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; padding: 16px 20px; border-radius: 24px; background: var(--cream); border: 1px solid var(--line); }
-  .balcard .bl { font-size: 17px; font-weight: 700; color: var(--muted); }
-  .balcard .bv { font-family: Rubik, sans-serif; font-size: 32px; font-weight: 800; line-height: 1.1; color: var(--muted); }
-  .balcard.pos { background: var(--yellow-bg); border-color: var(--yellow-bg); }
-  .balcard.pos .bl, .balcard.pos .bv { color: var(--yellow); }
-  .balcard.neg { background: var(--red-bg); border-color: var(--red-bg); }
-  .balcard.neg .bl, .balcard.neg .bv { color: var(--red); }
-  .chip[hidden] { display: none; }   /* כמו בשאר הדפים: display של הצ'יף דרס את hidden והצ'יף הריק הוצג */
-  .chip { display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 999px; font-size: 14px; font-weight: 700; background: var(--cream); color: var(--muted); }
-  .chip.ok { background: var(--green-bg); color: var(--green); }
-  .chip.no { background: var(--red-bg); color: var(--red); }
-  .chip.wait { background: var(--yellow-bg); color: var(--yellow); }
-  .chip.sky { background: var(--sky-bg); color: var(--sky); }
-  .row { display: flex; align-items: center; gap: 8px; padding: 12px 0; border-top: 1px solid var(--line); }
-  .row:first-of-type { border-top: 0; }
-  .row .d { flex: 1; font-weight: 700; }
-  label { display: block; font-size: 14px; color: var(--muted); margin: 12px 0 4px; }
-  input, select { width: 100%; font: inherit; font-size: 17px; padding: 11px 14px; border: 1px solid var(--line); border-radius: 14px; background: #fff; color: var(--ink); }
-  select { height: 48px; padding: 0 14px 0 34px; appearance: none; -webkit-appearance: none; cursor: pointer; text-align: start; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.4l5 5.2 5-5.2z' fill='%23686A48'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: left 15px center; background-size: 12px 8px; }   /* אותו חץ וריווח כמו הרשימות הנפתחות בדף הניהול */
-  select:focus { outline: none; border-color: var(--terra); }
-  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .gbtn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 13px; font: inherit; font-weight: 700; font-size: 17px; cursor: pointer; margin-top: 14px; }
-  .gbtn svg { width: 22px; height: 22px; }
-  .imp { background: var(--sky-bg); color: var(--sky); border-radius: 16px; padding: 10px 14px; margin-top: 12px; font-size: 15px; font-weight: 700; }
-  .msg { margin-top: 10px; font-size: 15px; min-height: 20px; }
-  .msg.bad { color: var(--red); }
-  .msg.good { color: var(--green); }
-  .dirs { white-space: pre-wrap; margin-top: 2px; }   /* כתובת והוראות הגעה: אותו עיצוב כמו השעה, כמה שורות */
-  .dethead { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 0; margin: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; text-align: start; }
-  .dethead h2 { margin: 0; }
-  .dethead svg { width: 24px; height: 24px; color: var(--muted); transition: transform .35s ease; }
-  .dethead[aria-expanded="true"] svg { transform: rotate(180deg); }
-  .detfold { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .35s ease; }
-  .detfold.open { grid-template-rows: 1fr; }
-  .detfold > div { overflow: hidden; min-height: 0; }
-  .msg:empty { display: none; }   /* הודעות ריקות (תשלום, ביטול רישום, שמירה) לא תופסות מקום */
-  .mtfold .btn.ghost { margin-top: 10px; margin-bottom: 0; }   /* סימטרי: הרווח מעל (עם ריפוד הקישור) כמו הרווח מתחת (ריפוד הכרטיס), כמו כפתור השמירה */
-  #sm:empty { display: none; }   /* בלי הודעה: אין רווח ריק מתחת לכפתור השמירה (ריפוד סימטרי) */
-  .detfold:not(.open) > div { visibility: hidden; }
-  .detfold > div > :first-child { margin-top: 10px; }
-  @media (prefers-reduced-motion: reduce) { .detfold, .dethead svg { transition: none; } }
-  button, a { -webkit-tap-highlight-color: transparent; }   /* בלי הבהוב הכחול של הדפדפן בלחיצה */
-  .dethead:focus, .mthead:focus { outline: none; }
-  .mtg { border-top: 1px solid var(--line); scroll-margin-top: 80px; }   /* בגלילה למפגש נשאר רווח מעליו */
-  .mtg:first-of-type { border-top: 0; }
-  .mthead { display: grid; grid-template-columns: 2.5em 7.2em minmax(0, 1fr) 22px; align-items: center; column-gap: 2px; row-gap: 4px; font-size: 15px; width: 100%; padding: 14px 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; text-align: start; }
-  .mthead .c1, .mthead .c2 { font-weight: 700; white-space: nowrap; }   /* שם היום, תאריך ושעה מחוברים, ועיר: עמודות קבועות, כמו טבלה */
-  .mthead .c4 { justify-self: end; margin-inline-end: 10px; }   /* רווח בין צ'יף המצב לחץ */   /* תג המצב: באותה שורה עם היום והתאריך והחץ */
-  .mthead svg { grid-column: 4; grid-row: 1; }
-  .mthead .c5 { grid-column: 1 / -1; grid-row: 2; justify-self: stretch; color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; direction: rtl; }   /* עיר · שם המפגש, באותו גודל כתב, מתחת ליום */
-  .mthead .chip { white-space: nowrap; font-size: 13px; padding: 0 10px; }
-  .mthead svg { width: 22px; height: 22px; color: var(--muted); transition: transform .35s ease; flex: 0 0 auto; }
-  .mtg.open .mthead svg { transform: rotate(180deg); }
-  .mtfold { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .35s ease; }
-  .mtg.open .mtfold { grid-template-rows: 1fr; }
-  .mtfold > div { overflow: hidden; min-height: 0; text-align: center; }   /* תוכן המפגש הפתוח ממורכז: הוראות הגעה, תגי נרשמתם ותשלום */
-  .mtg:not(.open) .mtfold > div { visibility: hidden; }
-  .mtfold > div > :last-child { margin-bottom: 14px; }
-  @media (prefers-reduced-motion: reduce) { .mtfold, .mthead svg { transition: none; } }
-  .payfold { display: grid; grid-template-rows: 1fr; transition: grid-template-rows .4s ease, opacity .4s ease; }
-  .payfold > div { overflow: hidden; min-height: 0; }
-  .payfold.closing { grid-template-rows: 0fr; opacity: 0; }
-  @media (prefers-reduced-motion: reduce) { .payfold { transition: none; } }
-  .paylinks { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 6px; }
-  .lnk { border: 0; background: none; padding: 8px 6px; font: inherit; font-size: 16px; font-weight: 700; color: var(--green); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }   /* קישורי התשלום בירוק כמו כפתור התשלום */
-  #otherDlg { width: min(92vw, 420px); border: 1px solid var(--line); border-radius: 24px; background: var(--paper); color: var(--ink); padding: 22px 20px; }
-  #otherDlg::backdrop { background: rgba(63, 56, 47, .45); }
-  .wacard { display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 8px 14px 8px 16px; border-radius: 999px; background: var(--terra); color: #fff; text-decoration: none; }
-  .wacard img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,.85); flex: 0 0 auto; }
-  .wacard .wat { flex: 1; display: flex; flex-direction: column; line-height: 1.25; text-align: start; }
-  .wacard .wat b { font-size: 18px; font-weight: 800; }
-  .wacard .wat small { font-size: 14px; font-weight: 600; opacity: .92; }
-  .wacard svg { width: 30px; height: 30px; flex: 0 0 auto; }
-  #otherDlg h2 { font-size: 20px; }
-  #otherDlg .otherinfo { margin: 10px 0 4px; padding: 10px 12px; border-radius: 14px; background: var(--cream); font-weight: 700; }
-  .pf-err { color: var(--red); font-size: 13.5px; font-weight: 600; margin-top: 4px; }
-  .pf-err:empty { display: none; }
-  input.bad, select.bad { border-color: var(--red); }
-  .center { text-align: center; padding: 40px 0; color: var(--muted); }
-</style>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&family=Rubik:wght@500;700;800&display=block" rel="stylesheet" />
+<link rel="stylesheet" href="../shared/site.css?v=20261030d" />
+<script>try { if (window.self !== window.top && /[?&]embed=/.test(location.search)) document.documentElement.classList.add('embed'); } catch (e) {}</script>   <!-- בפופאפ: הרקע הטורקיז כבר בציור הראשון -->
 </head>
 <body>
 <div class="wrap">
@@ -262,7 +152,6 @@
     const nxM = nx ? ms.find((m) => m.id === nx.id) : null;
     const credit = Math.round(Number(data.balance) || 0);   // בשקלים שלמים: סכום זעיר (שבר או -0) לא מוצג כ"חוב 0"
     let h = '';
-    if (imp) h += '<div class="imp">מצב צפייה כמנהל: כך ' + esc(p.first_name + ' ' + p.last_name) + ' רואה את האזור האישי (אפשר לבצע פעולות בשמו, והן נרשמות בשם המנהל ביומן)</div>';
     setTitle(p.first_name + ' ' + p.last_name);   // שם המשתתף מחליף את הכותרת "האזור האישי" (בלי כרטיס ברכה)
     { const bc = $('#balChip'); if (bc) { bc.hidden = !credit; bc.className = 'chip ' + (credit > 0 ? 'wait' : 'no'); bc.textContent = (credit > 0 ? 'קרדיט ' : 'חוב ') + ils(Math.abs(credit)); bc.title = credit > 0 ? 'יתרה לטובתכם' : 'יתרת חוב'; } }   // קרדיט (או חוב) כצ'יף ליד "יציאה", רק כשיש; בלי שורת יתרה
     // סקשן אחד "המפגשים שלי": כל מפגש עתידי (אפשר להירשם, לשלם ולבטל) ומפגשים שהיו. כל מפגש נפתח ונסגר; הקרוב פתוח כברירת מחדל
@@ -276,9 +165,9 @@
         if (!m.registered) b += '<button type="button" class="btn" data-reg="' + m.id + '">שמירת מקום</button><div class="msg" data-rm="' + m.id + '"></div>';
         else {
           b += '<div style="margin-top:10px"><span class="chip ok">נרשמתם ✓</span>' + (paid && !free ? ' <span class="chip ok">שולם ' + ils(m.paid) + '</span>' : '') + '</div>';   // מצב התשלום כבר מוצג בכותרת המפגש; כאן רק הסכום ששולם
-          if (m.rejected && !m.reported && !paid && !free) b += '<p class="msg bad" style="margin:10px 0 0;text-align:center">לא מצאנו את התשלום שדיווחתם עליו, ולכן המקום עדיין לא שמור. אפשר להשלים את התשלום ולדווח מחדש, או לפנות אלינו ונסדר את זה</p>';
-          if (!paid && !free && !m.reported && CFG.payboxLink) b += '<div class="payfold" data-pf="' + m.id + '"><div><a class="btn pay" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">תשלום ' + (m.price ? ils(m.price) : '') + ' בפייבוקס</a><p class="muted" style="margin:8px 0 0;text-align:center">המקום נשמר אחרי התשלום</p><div class="paylinks"><button type="button" class="lnk" data-other="' + m.id + '">רוצים לשלם בדרך אחרת?</button><button type="button" class="lnk" data-report="' + m.id + '">שילמתי, לעדכן את המארגנים</button></div><div class="msg" data-pm="' + m.id + '"></div></div></div>';
-          if (m.reported && !paid && !free) b += '<p class="muted" style="margin:10px 0 0;text-align:center">קיבלנו את הדיווח. נוודא שהתשלום התקבל ונעדכן כאן</p>';
+          if (m.rejected && !m.reported && !paid && !free) b += '<p class="msg bad" style="margin:10px 0 0;text-align:center">לא מצאנו את התשלום, ולכן המקום עדיין לא שמור. אפשר להשלים את התשלום, או לפנות אלינו ונסדר את זה</p>';
+          if (!paid && !free && !m.reported && CFG.payboxLink) b += '<div class="payfold" data-pf="' + m.id + '"><div><a class="btn pay" data-paynow="' + m.id + '" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">תשלום ' + (m.price ? ils(m.price) : '') + ' בפייבוקס</a><p class="muted" style="margin:8px 0 0;text-align:center">המקום נשמר אחרי התשלום</p><div class="paylinks"><button type="button" class="lnk" data-other="' + m.id + '">רוצים לשלם בדרך אחרת?</button></div><div class="msg" data-pm="' + m.id + '"></div></div></div>';
+          if (m.reported && !paid && !free) b += '<p class="muted" style="margin:10px 0 0;text-align:center">נוודא שהתשלום התקבל ונעדכן כאן</p>';
           if (!m.attended) b += '<button type="button" class="btn ghost" data-unreg="' + m.id + '">ביטול רישום</button><div class="msg" data-um="' + m.id + '"></div>';
         }
       } else b += '<div style="margin-top:10px">' + (free ? '<span class="chip">חינם</span>' : paid ? '<span class="chip ok">שולם ' + ils(m.paid) + '</span>' : '<span class="chip no">לא שולם</span>') + '</div>';   // ההגעה כבר מוצגת בכותרת המפגש; כאן רק התשלום
@@ -286,14 +175,12 @@
     };
     const rowHtml = (m) => {
       const open = m.id === firstId || keepOpenSet.has(m.id);
-      const badge = m.future ? (m.registered ? (Number(m.paid) > 0 ? '<span class="chip ok">שולם</span>' : m.free ? '<span class="chip">חינם</span>' : m.reported ? '<span class="chip wait">ממתין לאישור</span>' : m.rejected ? '<span class="chip no">הדיווח לא אושר</span>' : '<span class="chip no">טרם שולם</span>') : '<span class="chip">פתוח להרשמה</span>') : (m.attended ? '<span class="chip ok">הגעתם</span>' : '<span class="chip">לא הגעתם</span>');
+      const badge = m.future ? (m.registered ? (Number(m.paid) > 0 ? '<span class="chip ok">שולם</span>' : m.free ? '<span class="chip">חינם</span>' : m.reported ? '<span class="chip wait">ממתין לאישור</span>' : m.rejected ? '<span class="chip no">התשלום לא אושר</span>' : '<span class="chip no">טרם שולם</span>') : '<span class="chip">פתוח להרשמה</span>') : (m.attended ? '<span class="chip ok">הגעתם</span>' : '<span class="chip">לא הגעתם</span>');
       return '<div class="mtg' + (open ? ' open' : '') + '" data-mid="' + m.id + '"><button type="button" class="mthead" aria-expanded="' + open + '"><span class="c1">' + esc(dayParts(m.date).day) + '</span><span class="c2"><bdi dir="ltr">' + esc(m.time) + ' · ' + esc(dayParts(m.date).date) + '</bdi></span><span class="c4">' + badge + '</span>' + chev + '<span class="c5">' + esc([m.city, m.name].filter(Boolean).join(' · ')) + '</span></button><div class="mtfold"><div>' + meetingBody(m) + '</div></div></div>';
     };
-    // שתי רשימות: מפגשים שנרשמתי אליהם, ומפגשים עתידיים שעוד לא נרשמתי אליהם ואפשר להצטרף (מהחדש לישן)
-    const mine = ordered.filter((m) => m.registered), joinable = ordered.filter((m) => m.future && !m.registered);
+    // רק המפגשים שנרשמתי אליהם (מהחדש לישן); הרשמה למפגש חדש נעשית מדף הבית
+    const mine = ordered.filter((m) => m.registered);
     h += '<div class="card"><h2>המפגשים שלי</h2>' + (mine.length ? mine.map(rowHtml).join('') : '<p class="muted" style="margin:0">עוד לא נרשמתם לאף מפגש</p>') + '</div>';
-    if (joinable.length) h += '<div class="card"><h2>מפגשים שאפשר להצטרף אליהם</h2>' + joinable.map(rowHtml).join('') + '</div>';
-    else if (!mine.some((m) => m.future)) h += '<div class="card"><h2>מפגשים שאפשר להצטרף אליהם</h2><p class="muted" style="margin:0">עוד לא נקבע מפגש קרוב. נעדכן בקבוצת העדכונים</p></div>';
 
     const gv = p.gender || '';
     const missing = !p.gender || p.age == null || keepDetOpen;   // חסר פרט חובה: הכרטיס נפתח מעצמו
@@ -324,18 +211,19 @@
         else { ob.fail(); toast(msg, r === 'attended' ? 'סומנה הגעה למפגש, אי אפשר לבטל' : 'אי אפשר לבטל את הרישום למפגש הזה', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול רישום'; }
       } catch (e) { rel(); ob.fail(); toast(msg, 'משהו השתבש, אפשר לנסות שוב', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול רישום'; }
     }; });
-    app.querySelectorAll('[data-report]').forEach((rb) => { rb.onclick = async () => {
-      const id = rb.dataset.report, msg = app.querySelector('[data-pm="' + id + '"]'), fold = app.querySelector('[data-pf="' + id + '"]'); rb.disabled = true;
-      const ob = meOpt(id, { reported: true, rejected: false }, true), rel = HRT.busy(rb);
+    /* לחיצה על התשלום בפייבוקס = דיווח על תשלום, אוטומטית (בלי קישור "שילמתי"): פייבוקס נפתח בלשונית חדשה והמפגש מסומן "ממתין לאישור" */
+    app.querySelectorAll('[data-paynow]').forEach((pa) => { pa.addEventListener('click', async () => {
+      const id = pa.dataset.paynow, fold = app.querySelector('[data-pf="' + id + '"]');
+      if (pa.dataset.rep) return; pa.dataset.rep = '1';
+      const ob = meOpt(id, { reported: true, rejected: false }, true);
       try {
         const r = await rpc('harpatka_me_report_payment', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {}));
-        rel();
         if (r === 'ok' || r === 'reported' || r === 'already') {
           ob.done(); keepOpen = id;
           if (fold && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) { fold.classList.add('closing'); setTimeout(load, 450); } else load();   // הכפתור והקישורים נסגרים באנימציה, ואז הסטטוס מתחלף
-        } else { ob.fail(); toast(msg, 'אי אפשר לדווח על התשלום למפגש הזה', true); rb.disabled = false; }
-      } catch (e) { rel(); ob.fail(); toast(msg, 'משהו השתבש, אפשר לנסות שוב', true); rb.disabled = false; }
-    }; });
+        } else { ob.fail(); delete pa.dataset.rep; }
+      } catch (e) { ob.fail(); delete pa.dataset.rep; }   // הדיווח נכשל: הכפתור נשאר, ולחיצה נוספת מנסה שוב
+    }); });
     app.querySelectorAll('[data-other]').forEach((ob) => { ob.onclick = () => {
       const m = ms.find((x) => x.id === ob.dataset.other); if (!m) return;
       const info = fmtDate(m.date) + ' בשעה ' + m.time + (m.city ? ' (' + m.city + ')' : '') + (m.name ? ', ' + m.name : '');
@@ -408,7 +296,7 @@
     if (h.get('access_token')) { saveSession({ access_token: h.get('access_token'), refresh_token: h.get('refresh_token') }); history.replaceState(null, '', location.pathname + (asId ? '?as=' + encodeURIComponent(asId) : '')); }
     else if (h.get('error_description')) { history.replaceState(null, '', location.pathname); }
     else { try { session = JSON.parse(localStorage.getItem(SKEY) || 'null'); } catch (e) { session = null; } }
-    if (asId && !sessionOk(session)) {   // התחזות: מנהל שכבר מחובר לדף הניהול נכנס בלי כניסה נוספת
+    if (asId) {   // התחזות: החיבור של דף הניהול קודם (גם כשבדפדפן יש חיבור של משתתף), כך שמנהל שכבר מחובר לדף הניהול נכנס בלי כניסה נוספת
       try { const a = JSON.parse(localStorage.getItem(AKEY) || 'null'); if (a && a.access_token) { usingAdmin = true; session = a; } } catch (e) {}
     }
     if (session && !sessionOk(session) && !(await refreshSession())) clearSession();

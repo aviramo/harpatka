@@ -164,7 +164,7 @@
     }
   </script>
 
-  <link rel="stylesheet" href="shared/site.css?v=20261030c">
+  <link rel="stylesheet" href="shared/site.css?v=20261030d">
   <script>
     /* סרטון פתיחה: אם הדפדפן מאפשר, מסתירים את ההזמנה (בלי להזיז את הדף) עד שהסרטון נגמר; רשת ביטחון אחרי 9 שניות */
     (function(){
@@ -178,7 +178,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="shared/register.css?v=20261031c">
+  <link rel="stylesheet" href="shared/register.css?v=20261031d">
 </head>
 
 <body class="grain">
@@ -801,7 +801,7 @@
         if (st && st.registered) {
           /* משתתף מחובר שכבר רשום למפגש: הכפתור מציג את המצב (נרשמתם, שולם, דווח...) ולחיצה מובילה לאזור האישי על אותו מפגש */
           const more = mk('div', 'mt-more'), box = mk('div'), paid = Number(st.paid) > 0, free = !!st.free;
-          const txt = free ? 'נרשמתם · חינם' : paid ? 'נרשמתם · שולם ₪' + Math.round(st.paid) : st.reported ? 'דיווחתם על תשלום, ממתין לאישור' : st.rejected ? 'הדיווח לא אושר · תשלום' + (st.price ? ' ₪' + st.price : '') : 'נרשמתם · תשלום' + (st.price ? ' ₪' + st.price : '');
+          const txt = free ? 'נרשמתם · חינם' : paid ? 'נרשמתם · שולם ₪' + Math.round(st.paid) : st.reported ? 'נרשמתם · התשלום ממתין לאישור' : st.rejected ? 'התשלום לא אושר · תשלום' + (st.price ? ' ₪' + st.price : '') : 'נרשמתם · תשלום' + (st.price ? ' ₪' + st.price : '');
           const b = mk('a', 'mt-cta', txt);
           b.href = '#'; b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); if (!st.reported) reg(m); });   // בהמתנה לאישור דיווח: לא נפתח פופאפ   // פותח את פופאפ התשלום של המפגש (הפופאפ במצב "נרשמתם")
           box.append(b);
@@ -1070,7 +1070,7 @@
   };
   window.addEventListener('harpatka:me', () => { if (lastD) render(lastD); });   // התחברות או יציאה: הצ'יפ מתעדכן
   el('tbPillT').parentElement.addEventListener('click', (e) => {   // מחובר: שאלה אם לצאת. לא מחובר: התחברות עם גוגל (ואם אין רשומה למייל הזה נפתח פופאפ ההרשמה)
-    if (AS_VIEW || (typeof CONFIG !== 'undefined' && CONFIG.googleLogin === false) || (window.HarpatkaMe && HarpatkaMe.enabled === false)) return;   // צפייה כמשתתף: אין אזור אישי, הצ'יף (שם המשתתף) גולל למפגשים כמו שאר ההדר   // כניסה עם גוגל כבויה: הצ'יף חלק מההדר, והלחיצה עליו גוללת למפגשים כמו בכל ההדר
+    if (!AS_VIEW && ((typeof CONFIG !== 'undefined' && CONFIG.googleLogin === false) || (window.HarpatkaMe && HarpatkaMe.enabled === false))) return;   // כניסה עם גוגל כבויה: הצ'יף חלק מההדר, והלחיצה עליו גוללת למפגשים כמו בכל ההדר. בצפייה כמשתתף הצ'יף (שם המשתתף) פותח את האזור האישי שלו, כמו הכרטיס
     e.stopPropagation();
     const mc = document.getElementById('meAreaCard'); if (mc) mc.click();   // בדיוק מה שלחיצה על "כניסה לאזור האישי" בכרטיס עושה (פופאפ האזור האישי, או דף הניהול למנהל)
   });   // לחיצה על השם: שאלה אם לצאת מהחשבון
@@ -1096,6 +1096,6 @@
 </script>
   <script src="shared/rt.js?v=1"></script>
   <script src="shared/person-form.js?v=20261029i"></script>
-  <script src="shared/register.js?v=20261031l"></script>
+  <script src="shared/register.js?v=20261031m"></script>
 </body>
 </html>
