@@ -446,7 +446,9 @@
     details summary{ cursor:pointer; list-style:none; }
     details summary::-webkit-details-marker{ display:none; }
     details summary .chev{ transition:transform .3s ease; }
-    details[open] summary .chev{ transform:rotate(45deg); }
+    details[open] summary .chev, details.is-open summary .chev{ transform:rotate(45deg); }
+    #faq details.is-anim:not(.is-open) summary .chev{ transform:none; }   /* בסגירה ה-+ חוזר מיד, לא בסוף האנימציה */
+    #faq .ans{ will-change:height; }
     details .ans{ overflow:hidden; max-height:0; transition:max-height .4s ease; }
     details[open] .ans{ max-height:40rem; }
 
@@ -1183,6 +1185,32 @@
       window.addEventListener('resize', updatePx);
       updatePx();
     }
+
+
+    /* שאלות נפוצות: פתיחה וסגירה באנימציה (גובה ושקיפות), אפשר להפוך באמצע; בלי אנימציה למי שביקש פחות תנועה */
+    document.querySelectorAll('#faq details').forEach(d => {
+      const s = d.querySelector('summary'), a = d.querySelector('.ans');
+      if (!s || !a) return;
+      let anim = null;
+      const done = () => { anim = null; d.classList.remove('is-anim'); a.style.height = a.style.opacity = a.style.overflow = ''; };
+      s.addEventListener('click', e => {
+        if (reduceMotion) { d.classList.toggle('is-open', !d.open); return; }
+        e.preventDefault();
+        const opening = !d.classList.contains('is-open');
+        const from = anim ? a.getBoundingClientRect().height : (opening ? 0 : a.scrollHeight);
+        const fromO = anim ? +getComputedStyle(a).opacity : (opening ? 0 : 1);
+        if (anim) anim.cancel();
+        d.classList.toggle('is-open', opening);
+        d.classList.add('is-anim');
+        if (opening) d.open = true;
+        a.style.overflow = 'hidden';
+        const to = opening ? a.scrollHeight : 0;
+        anim = a.animate([{ height: from + 'px', opacity: fromO }, { height: to + 'px', opacity: opening ? 1 : 0 }],
+          { duration: opening ? 380 : 300, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'forwards' });
+        const me = anim;
+        me.onfinish = () => { if (anim !== me) return; if (!opening) d.open = false; me.cancel(); done(); };
+      });
+    });
 
     /* תנועה מופשטת — עצירה למי שביקש פחות תנועה */
     if (reduceMotion) document.querySelectorAll('svg.flow').forEach(f => { try { f.pauseAnimations(); } catch(e){} });
