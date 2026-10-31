@@ -998,6 +998,7 @@
       if (sts && sts.length) { state.astatuses = sts.filter((x) => x.scope !== 'participant' && x.phase === 'after').map((x) => Object.assign({}, x)); const extra = sts.filter((x) => x.scope !== 'participant' && x.phase !== 'after' && !BUILTIN.includes(x.key)).map((x) => Object.assign({}, x)); state.statuses = DEFAULT_STATUSES.filter((d) => d.key === SYSTEM_STATUS || sts.some((x) => x.key === d.key && x.scope !== 'participant')).map((d) => Object.assign({}, d, sts.find((x) => x.key === d.key && x.scope !== 'participant') || {}, d.key === SYSTEM_STATUS ? { sort: d.sort } : {})).concat(extra); applyStatuses(); }
       boardBadge();
       /* משתתף שהוסר (active = false) מוסתר רק מרשימת כל המשתתפים (כשלא נבחר מפגש); במסך מפגש הוא מופיע כל עוד הוא משויך אליו, וכל הנתונים וההיסטוריה נשארים. יחזור אם יירשם שוב עם אותו טלפון */
+      for (const x of p) if (!String(x.name || '').trim()) { x.name = localPhone(x.phone_norm || x.phone) || 'ללא שם'; x.noName = true; }   // נרשם עם גוגל ועוד לא השלים פרטים: במקום השם מוצג הטלפון (רק בתצוגה; השם נשמר בשדות שם פרטי ומשפחה)
       state.inactiveNames = new Map(p.filter((x) => x.active === false).map((x) => [x.id, x.name]));
       state.participants = p; state.meetings = m; state.att = a; applyAttPending(); state.notes = nn;   // "הסרת משתתף" רק מסתירה אותו ברשימת כל המשתתפים; השיוכים, ההערות וההיסטוריה נשארים
       state.promoters = prs; state.promoPays = pps; state.payments = pays.filter((x) => !((payTomb.get(x.id) || 0) > Date.now())); rebuildNotes();

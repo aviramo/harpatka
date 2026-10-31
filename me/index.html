@@ -121,22 +121,24 @@
   function googleName() {
     try { const m = (JSON.parse(atob(session.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).user_metadata) || {}, full = String(m.full_name || m.name || '').trim(); return { first: m.given_name || full.split(' ')[0] || '', last: m.family_name || full.split(' ').slice(1).join(' ') }; } catch (e) { return { first: '', last: '' }; }
   }
+  /* חשבון גוגל בלי משתתף מקושר: קודם רק טלפון (harpatka_me_phone, בלי שיוך למפגש). השרת מחבר את החשבון למשתתף עם הטלפון הזה, או יוצר משתתף עם הטלפון בלבד;
+     אחר כך האזור האישי נטען, וכשחסרים פרטים כרטיס "הפרטים שלי" נפתח מעצמו להשלמה. טלפון של משתתף שכבר מחובר לחשבון אחר: לא נשמר (והמנהלים מקבלים מייל) */
   function viewSignup(phone) {
-    const gn = googleName();
-    app.innerHTML = '<div class="card"><h2>הפרטים שלי</h2><p class="muted" style="margin:0">משלימים את הפרטים פעם אחת, ומהפעם הבאה נרשמים למפגשים בלחיצה</p>' +
-      '<div class="two"><div>' + PersonForm.html('first', { id: 'sfn', label: true, value: gn.first }) + '</div><div>' + PersonForm.html('last', { id: 'sln', label: true, value: gn.last }) + '</div></div>' + PersonForm.err('name') +
+    app.innerHTML = '<div class="card"><h2>מה מספר הטלפון שלכם?</h2><p class="muted" style="margin:0">אם כבר נרשמתם אצלנו בעבר, נמצא אתכם לפי המספר</p>' +
       PersonForm.html('phone', { id: 'sph', label: true, value: phone || '', attr: 'style="text-align:right"' }) + PersonForm.err('phone') +
-      '<div class="two"><div>' + PersonForm.html('age', { id: 'sag', label: true }) + PersonForm.err('age') + '</div><div>' + PersonForm.html('gender', { id: 'sgn', label: true }) + PersonForm.err('gender') + '</div></div>' +
-      '<button type="button" class="btn" id="sgBtn">שמירה</button><div class="msg" id="sgm"></div></div>';
+      '<button type="button" class="btn" id="sgBtn">המשך</button><div class="msg" id="sgm"></div></div>';
     PersonForm.bind(app);
     $('#sgBtn').onclick = async () => {
-      const chk = PersonForm.validate(app); if (!chk.ok) return;
+      const raw = ($('#sph') || {}).value || '';
+      if (!PersonForm.normPhone(raw)) { PersonForm.setErr(app, 'phone', PersonForm.MSG.phone); return; }
       const b = $('#sgBtn'); b.disabled = true;
       try {
-        const r = await rpc('harpatka_me_join', { p_first: chk.v.first, p_last: chk.v.last, p_age: chk.v.age, p_gender: chk.v.gender, p_phone: chk.v.phoneRaw, p_no_meeting: true });   // יוצר משתתף (או מחבר קיים לפי הטלפון) ומחבר את החשבון, בלי שיוך למפגש
-        if (PersonForm.serverError(app, r)) { b.disabled = false; return; }
-        const bad = { phone_taken: 'מספר הטלפון הזה כבר מחובר לחשבון אחר', blocked: 'אי אפשר להשלים הרשמה מהחשבון הזה' }[r];   // טלפון של משתתף אחר: לא נשמר (והמנהלים מקבלים מייל)
+        const r = await rpc('harpatka_me_phone', { p_phone: raw, p_no_meeting: true });
+        const st = r && r.status;
+        if (st === 'invalid_phone') { PersonForm.setErr(app, 'phone', PersonForm.MSG.phone); b.disabled = false; return; }
+        const bad = { phone_taken: 'מספר הטלפון הזה כבר מחובר לחשבון אחר', blocked: 'אי אפשר להשלים הרשמה מהחשבון הזה' }[st];
         if (bad) { toast($('#sgm'), bad, true); b.disabled = false; return; }
+        if (!st) throw new Error('no status');
         load();
       } catch (e) { toast($('#sgm'), 'משהו השתבש, אפשר לנסות שוב', true); b.disabled = false; }
     };
@@ -151,7 +153,7 @@
     const nxM = nx ? ms.find((m) => m.id === nx.id) : null;
     const credit = Math.round(Number(data.balance) || 0);   // בשקלים שלמים: סכום זעיר (שבר או -0) לא מוצג כ"חוב 0"
     let h = '';
-    setTitle(p.first_name + ' ' + p.last_name);   // שם המשתתף מחליף את הכותרת "האזור האישי" (בלי כרטיס ברכה)
+    setTitle(((p.first_name || '') + ' ' + (p.last_name || '')).trim() || String(p.phone || '').replace(/^\+972/, '0'));   // שם המשתתף מחליף את הכותרת "האזור האישי"; עוד בלי פרטים: הטלפון
     { const bc = $('#balChip'); if (bc) { bc.hidden = !credit; bc.className = 'chip ' + (credit > 0 ? 'wait' : 'no'); bc.textContent = (credit > 0 ? 'קרדיט ' : 'חוב ') + ils(Math.abs(credit)); bc.title = credit > 0 ? 'יתרה לטובתכם' : 'יתרת חוב'; } }   // קרדיט (או חוב) כצ'יף ליד "יציאה", רק כשיש; בלי שורת יתרה
     // סקשן אחד "המפגשים שלי": כל מפגש עתידי (אפשר להירשם, לשלם ולבטל) ומפגשים שהיו. כל מפגש נפתח ונסגר; הקרוב פתוח כברירת מחדל
     const ordered = ms.slice().sort((a, b) => (String(b.date) + String(b.time)).localeCompare(String(a.date) + String(a.time))), upcoming = ordered.filter((m) => m.future);   // מהחדש לישן
@@ -175,12 +177,14 @@
     const meetHtml = '<div class="card mlist">' + (mine.length ? mine.map(rowHtml).join('') : '<p class="muted" style="margin:14px 0">עוד לא נרשמתם לאף מפגש</p>') + '</div>';   // בלי כותרת: הכרטיס הוא רשימת המפגשים בלבד
 
     const gv = p.gender || '';
-    const missing = !p.gender || p.age == null || keepDetOpen;   // חסר פרט חובה: הכרטיס נפתח מעצמו
-    h += '<div class="card" id="detCard"><button type="button" class="dethead" id="detHead" aria-expanded="' + missing + '" aria-controls="detBody"><h2>הפרטים שלי</h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="detfold' + (missing ? ' open' : '') + '" id="detBody"><div><div class="two"><div>' + PersonForm.html('first', { id: 'fn', label: true, value: p.first_name }) + '</div><div>' + PersonForm.html('last', { id: 'ln', label: true, value: p.last_name }) + '</div></div>' + PersonForm.err('name') +
+    const noName = !String(p.first_name || '').trim() || !String(p.last_name || '').trim(), gnm = noName ? googleName() : {};   // עוד בלי פרטים (נוצר מטלפון בלבד): השם מחשבון הגוגל כהצעה
+    const req = !p.gender || p.age == null || noName;   // חסרים פרטים: מבחינת המשתתף הוא עוד לא רשום; רואים רק את השלמת הפרטים (בלי המפגשים) עד שממלאים
+    const missing = req || keepDetOpen;   // חסר פרט חובה: הכרטיס נפתח מעצמו
+    h += '<div class="card" id="detCard"><button type="button" class="dethead" id="detHead" aria-expanded="' + missing + '" aria-controls="detBody"><h2>' + (req ? 'השלמת פרטים' : 'הפרטים שלי') + '</h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="detfold' + (missing ? ' open' : '') + '" id="detBody"><div><div class="two"><div>' + PersonForm.html('first', { id: 'fn', label: true, value: p.first_name || gnm.first }) + '</div><div>' + PersonForm.html('last', { id: 'ln', label: true, value: p.last_name || gnm.last }) + '</div></div>' + PersonForm.err('name') +
       PersonForm.html('phone', { id: 'ph2', label: true, value: String(p.phone || '').replace(/^\+972/, '0'), attr: 'style="text-align:right"' }) + PersonForm.err('phone') +
       '<div class="two"><div>' + PersonForm.html('age', { id: 'ag', label: true, value: p.age }) + PersonForm.err('age') + '</div><div>' + PersonForm.html('gender', { id: 'gn', label: true, value: gv }) + PersonForm.err('gender') + '</div></div>' +
       '<button type="button" class="btn" id="saveBtn">שמירה</button><div class="msg" id="sm"></div></div></div></div>';
-    h += meetHtml;   // "הפרטים שלי" ראשון, ומתחתיו רשימת המפגשים
+    if (!req) h += meetHtml;   // "הפרטים שלי" ראשון, ומתחתיו רשימת המפגשים (רק אחרי שהפרטים הושלמו)
     keepOpenSet = new Set(); keepDetOpen = false;
     app.innerHTML = h;
     if (scrollTo) { const row = app.querySelector('.mtg[data-mid="' + scrollTo + '"]'); scrollTo = null; if (row) setTimeout(() => row.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }), 120); }

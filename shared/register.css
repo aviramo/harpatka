@@ -126,8 +126,12 @@ html.reg-min .modal-box{ padding:calc(.9rem + env(safe-area-inset-top)) 1.1rem 1
 [data-su="btn"]{ padding-top:.6rem !important; padding-bottom:.6rem !important; font-size:1.1rem !important; margin-top:.7rem !important; }
 .su-after > div{ padding-top:.6rem; }
 
-/* טופס ההרשמה: עמודות 40% / 60%. שורה 1: שם פרטי (40) ושם משפחה (60); שורה 2: טלפון (40) וגיל + מגדר יחד (60) */
-.su-grid{ grid-template-columns:minmax(0,2fr) minmax(0,3fr); }
+/* טופס ההרשמה (31.10.26): שורה 1: שם פרטי ושם משפחה ברוחב שווה (50 / 50); שורה 2: טלפון (40) וגיל + מגדר יחד (60). רשת של 10 עמודות */
+.su-grid{ grid-template-columns:repeat(10, minmax(0,1fr)); }
+.su-grid > .su-cell{ grid-column:span 5; }
+.su-grid > .su-wide{ grid-column:1 / -1; }
+.su-grid > .su-cell:has(input[type="tel"]){ grid-column:span 4; }
+.su-grid > .su-ag{ grid-column:span 6; }
 .su-ag{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:.45rem; }
 .su-ag .su-input{ padding-inline:.7rem; }
 
@@ -161,7 +165,14 @@ html.reg-phone .su-phonehint{ display:block; }
 html.reg-join .su-glink{ display:none; }
 html.reg-phone .su-grid > .su-cell:not(:has(input[type="tel"])){ display:none; }
 html.reg-phone .su-grid{ grid-template-columns:1fr; }
+html.reg-phone .su-grid > .su-cell:has(input[type="tel"]){ grid-column:1 / -1; }
 html.reg-phone .su-glink{ display:none; }
+/* השלמת פרטים אחרי חיבור הטלפון (31.10.26): הטלפון כבר ידוע ולכן מוסתר, הגיל והמגדר בשורה מלאה */
+.su-dethint{ display:none; margin:.2rem 0 .7rem; text-align:center; font-size:1rem; line-height:1.45; color:var(--ink); }
+html.reg-details .su-dethint{ display:block; }
+html.reg-details .su-grid > .su-cell:has(input[type="tel"]){ display:none; }
+html.reg-details .su-grid > .su-ag{ grid-column:1 / -1; }
+html.reg-details .su-glink{ display:none; }
 
 /* כניסה עם גוגל כבויה (CONFIG.googleLogin = false): בלי קישור "נרשמתם בעבר", בלי כרטיס האזור האישי */
 html.no-gl .su-glink, html.no-gl .su-ame{ display:none !important; }   /* כרטיס "האזור האישי שלכם" מוצג תמיד; כשהכניסה עם גוגל כבויה הלחיצה עליו לא עושה כלום (register.js) */
