@@ -959,6 +959,10 @@ html.is-loading .vbar { display: none; }
 #viewMenu .fsh { display: flex; align-items: center; gap: 8px; min-height: 28px; }
 #viewMenu .fsh b { flex: 1 1 auto; font-size: 14px; font-weight: 700; color: var(--text); }
 #viewMenu .mgc { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+#viewMenu .fsh .mgc { flex: 1 1 auto; margin: 0; }   /* שורת הטוגל והמונה בראש התפריט, בלי כותרת */
+#waMenu .wcap { padding: 8px 12px 4px; font-size: 13px; font-weight: 700; color: var(--text-2); }
+#viewMenu .mc[data-sc] { background: var(--sbg); color: var(--sfg); }   /* דרך הגעה בצבע שלה; נבחרת: מתמלאת בגוון הכהה */
+#viewMenu .mc[data-sc][aria-pressed="true"] { background: var(--sfg); color: var(--bg); }
 #viewMenu .mc.zero { opacity: .45; }
 #viewMenu .fclear { display: block; width: 100%; height: var(--ctl); margin-top: 4px; background: var(--surface-2); color: var(--text); font-weight: 700; }
 
@@ -978,8 +982,10 @@ html.is-loading .vbar { display: none; }
 /* שטח הלחיצה של כפתור המיון גדול מהסמל, בעיקר ימינה (31.10.26): פספוס קטן לא פותח את החיפוש והמקלדת; ::before כי ::after תפוס לנקודת המיון הפעיל */
 #sortBtnH { position: relative; }
 #sortBtnH::before { content: ''; position: absolute; top: -4px; bottom: -4px; left: -12px; right: -24px; }
+.listbar .hsearch { margin-left: var(--srch-end, calc(var(--ind) + 8px)); }   /* השדה נגמר איפה שנגמרת עמודת השמות (JS: alignFilters); האיקס בקצה שלו */
+.listbar::after { content: ''; position: absolute; bottom: 0; inset-inline: var(--gut) calc(var(--gut) + var(--srch-end, calc(var(--ind) + 8px))); border-bottom: 1px solid var(--line); pointer-events: none; }   /* קו מתחת לשדה החיפוש */
+.listbar:has(.search:focus-within)::after { border-bottom-color: var(--text); }
 .listbar .lbsort { position: absolute; left: var(--gut); top: 50%; margin-top: calc(var(--ind) / -2); display: flex; }
-.listbar:has(.search input:not(:placeholder-shown)) .lbsort, .listbar:has(.search:focus-within) .lbsort { visibility: hidden; }
 
 /* ---------- דסקטופ רחב (מ-1024px, 31.10.26): הרשימה בעמודה בצד ימין, וכרטיס המשתתף בצד שמאל במקום פופאפ ---------- */
 #splitEmpty { display: none; }

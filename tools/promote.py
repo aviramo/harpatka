@@ -8,6 +8,7 @@
   2. main <- staging (merge), דחיפה ל-origin main: האתר האמיתי (harpatka.co.il) מתעדכן.
   3. מסנכרן את staging עם main וחוזר אליו, כך ששתי הסביבות זהות.
   4. מדפיס את קבצי ה-SQL שהשתנו בדרך: הם הורצו רק על סכמת test, וצריך להריץ אותם גם על public.
+  רולבק של נתונים לא מוחק מה שנכנס אחרי ההעלאה (ראו tools/restore-prod.py): אחרי הרצת ה-SQL על public מצלמים python tools/backup-prod.py --after.
 """
 import os, pathlib, subprocess, sys
 
@@ -69,6 +70,9 @@ if backup:
     m['promoted_at'] = datetime.datetime.now().astimezone().isoformat(timespec='seconds')
     mf.write_text(json.dumps(m, ensure_ascii=False, indent=1), encoding='utf-8')
     print('לחזרה אחורה: ' + str(backup / 'ROLLBACK.md'))
+    afters = [d for d in (ROOT.parent / 'harpatka-backups').glob('*-prod-after') if d.name > backup.name]
+    if not afters:
+        print('שימו לב: לא צולם צילום "אחרי" (python tools/backup-prod.py --after, מיד אחרי הרצת ה-SQL על public). בלעדיו רולבק של נתונים לא יכול להבדיל בין שינוי של ההעלאה לעריכות של משתמשים, ולכן לא ייגע בשורות קיימות.')
 else:
     print('לחזרה אחורה (קוד בלבד): git revert של הקומיט בענף main')
 if sql:

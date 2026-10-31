@@ -2,6 +2,10 @@
 
 שימוש:  python tools/backup-prod.py            (גיבוי של public, סביבת האמת)
         python tools/backup-prod.py --schema test   (לבדיקה של הכלי עצמו)
+        python tools/backup-prod.py --after         (צילום נתונים אחרי הרצת ה-SQL על public ולפני/מיד אחרי ההעלאה; ראו למטה)
+
+צילום "אחרי" (--after): רק הנתונים (בלי פונקציות וטריגרים), בתיקייה <תאריך>-prod-after. הוא מאפשר לרולבק של נתונים להבדיל בין מה ששינתה ההעלאה
+לבין מה שמשתמשים ומנהלים שינו מאז, ולהחזיר רק את הראשון (tools/restore-prod.py --after). בלעדיו רולבק לא נוגע בשום שורה קיימת.
 
 מה נשמר, בתיקייה מחוץ ל-repo (Desktop/harpatka-backups/<תאריך-שעה>-<schema>/), כי יש בה מידע אישי:
   <טבלה>.json      כל השורות של כל טבלאות harpatka_* (ערכים סודיים ב-harpatka_settings מוחלפים ב-***)
@@ -54,6 +58,7 @@ def main():
     if schema not in ('public', 'test'):
         sys.exit('schema: public או test')
     lit = "'" + schema + "'"
+    after = '--after' in sys.argv
 
     tables = [r['table_name'] for r in sql(
         "select table_name from information_schema.tables where table_schema = " + lit +
@@ -62,7 +67,7 @@ def main():
         sys.exit('לא נמצאו טבלאות')
 
     stamp = datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S')
-    out = BACKUP_ROOT / (stamp + '-' + ('prod' if schema == 'public' else schema))
+    out = BACKUP_ROOT / (stamp + '-' + ('prod' if schema == 'public' else schema) + ('-after' if after else ''))
     out.mkdir(parents=True, exist_ok=False)
 
     counts = {}
@@ -75,6 +80,15 @@ def main():
         (out / (t + '.json')).write_text(json.dumps(rows, ensure_ascii=False, indent=1), encoding='utf-8')
         counts[t] = len(rows)
         print(f'  {t}: {len(rows)}')
+
+    if after:   # צילום "אחרי": רק הנתונים, בלי מבנה, לשימוש tools/restore-prod.py --after
+        before = sorted(BACKUP_ROOT.glob('*-' + ('prod' if schema == 'public' else schema)), reverse=True)
+        (out / '_manifest.json').write_text(json.dumps({
+            'created_at': datetime.datetime.now().astimezone().isoformat(timespec='seconds'), 'schema': schema, 'kind': 'after-sql',
+            'latest_before_backup': before[0].name if before else None, 'counts': counts}, ensure_ascii=False, indent=1), encoding='utf-8')
+        print(f'\nצילום "אחרי" נשמר: {out}')
+        print('לרולבק של נתונים: python tools/restore-prod.py "<תיקיית הגיבוי לפני>" --schema ' + schema + ' --after "' + str(out) + '" --dry')
+        return
 
     cols = {}
     for r in sql("select table_name, column_name, data_type, is_nullable, column_default, is_generated from information_schema.columns "
@@ -150,14 +164,17 @@ git checkout staging
 ```
 סביבת הבדיקות לא משתנה. כדי להחזיר אחר כך את מה שבוטל: `git revert <קומיט הרולבק>` על main ודחיפה.
 
-## 2. נתונים: החזרת הטבלאות למצב של הגיבוי
-קודם בדיקה יבשה (רצה בטרנזקציה שמתבטלת, לא משנה כלום) ואחר כך באמת:
+## 2. נתונים: להחזיר רק מה שההעלאה שינתה, בלי לאבד מה שנכנס מאז
+**כלל: רולבק לא מוחק ולא דורס הרשמות, תשלומים, הערות ועריכות שנעשו אחרי ההעלאה.** אחרי שההעלאה בחיים, נכנסות רשומות חדשות והמסד מתעדכן, ולכן אסור להחזיר טבלאות שלמות מהגיבוי.
+כדי שהחזרה תוכל להבדיל בין שינוי של ההעלאה לשינוי של משתמש, צריך צילום נתונים שנעשה מיד אחרי הרצת ה-SQL על public (`python tools/backup-prod.py --after`, נשמר ב-`<תאריך>-prod-after`).
+קודם בדיקה יבשה (טרנזקציה שמתבטלת, לא משנה כלום), ואז באמת:
 ```
-python tools/restore-prod.py "{out}" --schema public --dry
-python tools/restore-prod.py "{out}" --schema public --yes
+python tools/restore-prod.py "{out}" --schema public --after "<תיקיית ה-prod-after>" --dry
+python tools/restore-prod.py "{out}" --schema public --after "<תיקיית ה-prod-after>" --yes
 ```
-אפשר להחזיר רק חלק מהטבלאות: `--tables harpatka_attendance,harpatka_payments`.
-שימו לב: החזרה מוחקת כל שינוי שנעשה אחרי הגיבוי (הרשמות, תשלומים, הערות). הרשמות חדשות שנכנסו אחרי הגיבוי נשמרות לפני כן ב-JSON של גיבוי חדש (`python tools/backup-prod.py`).
+מה זה עושה: שורות שנוצרו אחרי ההעלאה לא נוגעים בהן. עמודה שההעלאה שינתה ועוד לא שונתה מאז חוזרת לערך הגיבוי. עמודה ששונתה מאז נשארת כפי שהיא. שורה שההעלאה מחקה מוחזרת, ושורה שנמחקה אחרי ההעלאה נשארת מחוקה. ההדפסה מראה בכל טבלה כמה עמודות הוחזרו, כמה שינויים מאוחרים נשמרו וכמה שורות חדשות נשארו.
+בלי `--after` הכלי לא נוגע בשורות קיימות (רק מדווח), כי אי אפשר לדעת מי שינה אותן. אפשר להחזיר רק חלק מהטבלאות: `--tables harpatka_attendance,harpatka_payments`.
+**אסור** `--mode replace --wipe-new-data` (מחיקה והחלפה של הטבלאות) אלא באסון, אחרי גיבוי חדש ובבקשה מפורשת: הוא מוחק כל מה שנכנס אחרי הגיבוי.
 `harpatka_settings` לא מוחזרת (המפתחות הסודיים לא נשמרו בגיבוי).
 
 ## 3. מבנה המסד (פונקציות, טריגרים, עמודות)

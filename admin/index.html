@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261102w" />
+  <link rel="stylesheet" href="admin.css?v=20261102x" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1241,7 +1241,8 @@
   const viewKey = () => state.filter || (state.mtype ? 'type:' + state.mtype : 'all');
   const viewDef = () => state.filter ? MEETING_DEF : VIEW_DEF;   // הקשר התצוגה: מפגש, סוג מפגש (31.10.26) או כל המשתתפים
   const viewCtx = () => { const k = viewKey(); return state.viewScopes[k] || (state.viewScopes[k] = Object.assign({}, viewDef())); };
-  [['showPay', 'pay'], ['showSent', 'sent'], ['showAtt', 'att'], ['showGender', 'gender']].forEach(([prop, key]) => Object.defineProperty(state, prop, { get() { const c = state.viewScopes[viewKey()]; return c && c[key] !== undefined && c[key] !== null ? c[key] : viewDef()[key]; }, set(v) { viewCtx()[key] = v; }, enumerable: true }));
+  ['showPay', 'showGender'].forEach((prop) => Object.defineProperty(state, prop, { get: () => true, set() {}, enumerable: true }));   // תשלום ומגדר מוצגים תמיד (31.10.26)
+  [['showSent', 'sent'], ['showAtt', 'att']].forEach(([prop, key]) => Object.defineProperty(state, prop, { get() { const c = state.viewScopes[viewKey()]; return c && c[key] !== undefined && c[key] !== null ? c[key] : viewDef()[key]; }, set(v) { viewCtx()[key] = v; }, enumerable: true }));
   /* כפתור התגיות (31.10.26): הגדרה אחת לכל התצוגות (כל המשתתפים, סוגי מפגשים ומפגשים), לכל מנהל בנפרד; נשמר ב-view_scopes._g */
   Object.defineProperty(state, 'showTags', { get() { const c = state.viewScopes._g; return c && c.tags !== undefined ? c.tags : VIEW_DEF.tags; }, set(v) { (state.viewScopes._g || (state.viewScopes._g = {})).tags = v; }, enumerable: true });
   function applyViewPrefs() { const pr = state.prefs[emailOf()] || {}; state.viewScopes = (pr.view_scopes && typeof pr.view_scopes === 'object') ? JSON.parse(JSON.stringify(pr.view_scopes)) : {}; }
@@ -1397,7 +1398,7 @@
     $('#listHere').innerHTML = attOn ? fbtn('here', eh, hereN('1'), hereN('0')) : '';
     $('#listPay').innerHTML = state.filter && state.showPay ? fbtn('pay', (state.paidF === '1' || state.paidF === '0' || state.paidF === 'n' || state.paidF === 'w' || /^[am][A-Za-z0-9_]+$/.test(state.paidF || '')) ? state.paidF : null, paidN('1'), paidN('0')) : '';
     { const ws = waSelected();   // כפתור הוואטסאפ בעמודה האחרונה: בחירת תבנית הודעה לקישורי הוואטסאפ ברשימה
-      $('#listWa').innerHTML = '<button type="button" class="hfilt yes wabtn' + (ws ? ' wasel' : '') + '" id="waBtn" aria-haspopup="menu" aria-expanded="false" aria-label="בחירת הודעה לוואטסאפ' + (ws ? ': ' + esc(ws.name) : '') + '" title="' + (ws ? 'הודעה: ' + esc(ws.name) : 'הודעה לוואטסאפ: ריקה') + '">' + WA_ICON + '</button>'; }
+      $('#listWa').innerHTML = !(state.filter || state.mtype) ? '' : '<button type="button" class="hfilt yes wabtn' + (ws ? ' wasel' : '') + '" id="waBtn" aria-haspopup="menu" aria-expanded="false" aria-label="בחירת הודעה לוואטסאפ' + (ws ? ': ' + esc(ws.name) : '') + '" title="' + (ws ? 'הודעה: ' + esc(ws.name) : 'הודעה לוואטסאפ: ריקה') + '">' + WA_ICON + '</button>'; }
     $('#listSent').innerHTML = evOn ? fbtn('sent', effSent(), sentN('1'), sentN('0')) : '';
     $('#listBal').innerHTML = !state.filter && state.showPay ? fbtn('bal', effBal(), '', '') : '';
     $('#listAtt').innerHTML = !state.filter && state.showAtt !== false ? '<button type="button" class="hfilt ' + (() => { const k = effAttF(), o = k && ATT_OPTS_F.find((x) => x[0] === k); return !o ? 'all' : attCls(o[2]); })() + '" data-fk="att" aria-haspopup="menu" aria-label="סינון לפי התמדה" title="סינון לפי התמדה והגעה (לחיצה לפתיחת תפריט)">' + (() => { const k = effAttF(), o = k && ATT_OPTS_F.find((x) => x[0] === k); return o ? ATT_GLYPH[o[3]]() : PERSIST_ICON; })() + '</button>' : '';
@@ -1531,7 +1532,7 @@
       const hl = state.filter ? linkOf(p.id, state.filter) : null;
       const tgm = attTarget(), tgl = tgm ? linkOf(p.id, tgm.id) : null, showHere = !!(tgm && (state.filter ? attVisible(tgm) : state.showAtt !== false && attendOpen(tgm))), attOk = !!tgl, evc = evCircle(p);   // עיגול ההגעה לכל מי שמשויך למפגש, בכל סטטוס (גם "משויך")
       return '<li class="row' + (hl && hl.attended && attendOpen(state.meetings.find((x) => x.id === state.filter)) ? ' arrived' : '') + '">' +
-        (wa ? UI.tag(WA_ICON, 'ico rowwa' + (wsent ? ' sent' : ''), Object.assign({ href: wa }, /^https?:/.test(wa) ? { target: '_blank', rel: 'noopener' } : {}, wsel ? { 'data-wsend': p.id } : {}, { 'aria-label': 'וואטסאפ ל' + esc(p.name) + (wsent ? ', ההודעה נשלחה' : ''), title: wsel ? esc(wsent ? 'נשלחה ההודעה "' + wsel.name + '" · ' + fmtDT(wsent.sent_at) : 'וואטסאפ עם ההודעה: ' + wsel.name) : 'וואטסאפ' }), 'a') : UI.tag(WA_ICON, 'ico rowwa nophone', { role: 'img', 'aria-label': 'אין טלפון', title: 'אין טלפון' })) +
+        (wa ? UI.tag(WA_ICON, 'ico rowwa' + (wsent ? ' sent' : ''), Object.assign({ href: wa }, /^https?:/.test(wa) ? { target: '_blank', rel: 'noopener' } : {}, wsel ? { 'data-wsend': p.id } : {}, { 'aria-label': 'וואטסאפ ל' + esc(p.name) + (wsent ? ', ההודעה נשלחה' : ''), title: wsel ? esc(wsent ? 'נשלחה ההודעה "' + wsel.name + '" · ' + fmtDT(wsent.sent_at) + ' · לחיצה לביטול הסימון' : 'וואטסאפ עם ההודעה: ' + wsel.name) : 'וואטסאפ' }), 'a') : UI.tag(WA_ICON, 'ico rowwa nophone', { role: 'img', 'aria-label': 'אין טלפון', title: 'אין טלפון' })) +
         '<div class="main' + ' hasw' + (hereColOn ? ' att' : '') + (anyEv ? ' ev' : '') + (!state.filter && state.showPay ? ' bl' + (state.showAtt === false ? ' nosum' : '') : '') + '" role="button" tabindex="0" data-edit="' + p.id + '">' +
           '<div class="nm"><span class="name' + nameCls(p) + '" dir="rtl">' + nameMark(p) + '</span>' + '</div>' +   // רק השם מבודד (שם באנגלית לא הופך את השורה), וסמל החשבון תמיד משמאל לשם
           (true ? '<div class="meta">' + (true ? '<span class="age' + (originOf(p) ? ' ' + originOf(p).kind : '') + '"' + originAttr(p) + ' title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? '<b class="gl">' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : (p.gender ? '' : '—')) + '</bdi></span>' : '') + '<span class="sidewrap">' + side + tags + payIc + '</span>' + '</div>' : '') +
@@ -2567,22 +2568,16 @@
     const key = (m) => m.meeting_date + m.meeting_time, ms = state.meetings.filter((m) => typeIdOf(m) === tid);
     return ms.filter((m) => !isPast(m)).sort((a, b) => key(a).localeCompare(key(b)))[0] || ms.slice().sort((a, b) => key(b).localeCompare(key(a)))[0] || null;
   };
-  /* תבניות הבחירה בעמודת הוואטסאפ, לפי התצוגה: מפגש נבחר = "הוראות הגעה" (כשיש), תבניות הסוג ואחריהן תבניות המפגש; סוג נבחר או הכל = תבניות הסוג (או כל הסוגים) */
+  /* תבניות הבחירה בעמודת הוואטסאפ, לפי התצוגה: מפגש נבחר = תבניות הסוג ואחריהן תבניות המפגש; סוג נבחר = תבניות הסוג; כל המשתתפים = אין תבניות (רק וואטסאפ ריק) */
   function waList() {
     const out = [], add = (id, name, body, m, extra) => out.push(Object.assign({ id, name, body, m }, extra));
-    const dirOk = (m) => !!(m && String(m.directions || '').trim());
     if (state.filter) {
       const m = state.meetings.find((x) => x.id === state.filter); if (!m) return out;
-      if (dirOk(m)) add('dir', 'הוראות הגעה', '{הוראות הגעה}', m);
       tplsOfType(typeIdOf(m)).forEach((x) => add(x.id, x.name, x.body, m, { own: 'type' }));
       tplsOfMeeting(m.id).forEach((x) => add(x.id, x.name, x.body, m, { own: 'meeting' }));
-    } else {
-      const types = state.mtype ? [typeById(state.mtype)].filter(Boolean) : state.mtypes, many = types.length > 1;
-      types.forEach((ty) => {
-        const cm = tplCtxMeeting(ty.id); if (!cm) return;
-        if (dirOk(cm)) add('dir:' + ty.id, 'הוראות הגעה', '{הוראות הגעה}', cm, { tag: many ? ty.name : '' });
-        tplsOfType(ty.id).forEach((x) => add(x.id, x.name, x.body, cm, { own: 'type', tag: many ? ty.name : '' }));
-      });
+    } else if (state.mtype) {   // סוג מפגש נבחר: רק תבניות הסוג. בתצוגת כל המשתתפים (בלי סוג ובלי מפגש) אין תבניות, רק וואטסאפ ריק
+      const ty = typeById(state.mtype), cm = ty && tplCtxMeeting(ty.id);
+      if (cm) tplsOfType(ty.id).forEach((x) => add(x.id, x.name, x.body, cm, { own: 'type' }));
     }
     return out;
   }
@@ -3951,8 +3946,8 @@
   function moreSecs() {
     const scope = state.participants.filter((p) => (state.filter ? linkOf(p.id, state.filter) : p.active !== false) && mtypeOk(p));
     const cnt = (f) => scope.filter(f).length;
-    const chip = (kind, val, label, n) => { const on = state[FK[kind]] === val; return '<button type="button" class="mc' + (n || on ? '' : ' zero') + '" data-mk="' + kind + '" data-mv="' + esc(val) + '" aria-pressed="' + on + '">' + esc(label) + ' <small>' + n + '</small></button>'; };
-    return fsec('דרך הגעה', state.promoters.map((x) => chip('src', x.id, x.name, cnt((p) => (channelOf(p) || {}).id === x.id))).join('') + chip('src', '__none', 'ללא דרך הגעה', cnt((p) => !channelOf(p)))) +
+    const chip = (kind, val, label, n, col) => { const on = state[FK[kind]] === val, pc = col && PALETTE[col]; return '<button type="button" class="mc' + (n || on ? '' : ' zero') + '"' + (pc ? ' data-sc="1" style="--sbg:' + pc[0] + ';--sfg:' + pc[1] + '"' : '') + ' data-mk="' + kind + '" data-mv="' + esc(val) + '" aria-pressed="' + on + '">' + esc(label) + ' <small>' + n + '</small></button>'; };
+    return fsec('דרך הגעה', state.promoters.map((x) => chip('src', x.id, x.name, cnt((p) => (channelOf(p) || {}).id === x.id), x.color || 'red')).join('') + chip('src', '__none', 'ללא דרך הגעה', cnt((p) => !channelOf(p)))) +
       fsec('גיל', AGE_B.map((b) => chip('age', b[0], b[1], cnt((p) => { const a = shownAge(p); return a != null && a >= b[2] && a <= b[3]; }))).join('')) +
       fsec('אזור אישי', [['yes', 'רשומים'], ['no', 'לא רשומים'], ['blocked', 'חסומים']].map((o) => chip('login', o[0], o[1], cnt((p) => loginOf(p) === o[0]))).join(''));
   }
@@ -3962,10 +3957,9 @@
   function renderViewMenu() {
     const m = curMeeting(), sentOn = !!(m && sentView(m)), attOnM = state.filter ? !!(m && attVisible(m)) : state.showAtt !== false;
     /* "תצוגה": מגדר, תשלום / יתרה, שליחת פרטי המפגש, הגעה / התמדה כתגיות (כמו "דרך הגעה"); תגית מסומנת = מוצג ברשימה או בשורת הסינון */
-    let h = fsec('תצוגה', ftgl('gender', 'מגדר', state.showGender, 'הצגת זכר ונקבה בשורת הסינון') +
-      (state.filter ? ftgl('pay', 'תשלום', state.showPay, 'הצגת התשלום ברשימה') + (SENT_COL_ON ? ftgl('sent', 'שליחת פרטי המפגש', sentOn, 'הצגת שליחת פרטי המפגש ברשימה') : '') + ftgl('here', 'הגעה למפגש', attOnM, 'הצגת סימון ההגעה ברשימה')
-                    : ftgl('pay', 'יתרה', state.showPay, 'הצגת היתרה ברשימה') + ftgl('here', 'התמדה', attOnM, 'הצגת ההתמדה וסימון ההגעה למפגש הקרוב ברשימה')),
-      '<span class="listcount" id="menuCount" title="מספר הרשומות המוצגות">' + (state.listCnt == null ? '' : state.listCnt) + '</span>');   // מונה הרשומות (כמו בשורת הסינון) בשורת הכותרת "תצוגה", בקצה השמאלי: התפריט מכסה את המונה שבשורה
+    /* שורה אחת בראש התפריט, בלי כותרת (31.10.26): טוגל סימון ההגעה (במפגש) או ההתמדה (בתצוגה הכללית) ומונה הרשומות בקצה השמאלי. מגדר ותשלום מוצגים תמיד */
+    let h = '<div class="fsec"><div class="fsh"><div class="mgc">' + (state.filter ? ftgl('here', 'הגעה למפגש', attOnM, 'הצגת סימון ההגעה ברשימה') : ftgl('here', 'התמדה', attOnM, 'הצגת ההתמדה וסימון ההגעה למפגש הקרוב ברשימה')) + '</div>' +
+      '<span class="listcount" id="menuCount" title="מספר הרשומות המוצגות">' + (state.listCnt == null ? '' : state.listCnt) + '</span></div></div>';
     h += moreSecs();
     if (panelOn() || state.gender) h += '<button type="button" class="fclear" data-fclear="1">ניקוי סינונים</button>';
     $('#viewMenu').innerHTML = h;
@@ -4009,6 +4003,9 @@
   /* אייקוני הסינון מיושרים מעל העמודות שלהם ברשימה (₪, שליחה, הגעה, יתרה, התמדה) */
   function alignFilters() {
     const bar = $('#listTags'); if (!bar) return; const br = bar.getBoundingClientRect();
+    { const lb = document.querySelector('.listbar'), nm = document.querySelector('#list .row .name');   // שדה החיפוש (והקו מתחתיו) מסתיים איפה שנגמרת עמודת השמות, והאיקס בקצה שלו
+      const typing = !!(lb && (lb.querySelector('.search:focus-within') || ($('#q') && $('#q').value)) && lb.style.getPropertyValue('--srch-end'));   // בזמן הקלדה הרוחב נשאר קבוע (העמודות זזות כשהרשימה מסתננת)
+      if (lb && !typing) { if (nm) lb.style.setProperty('--srch-end', Math.max(0, Math.round(nm.getBoundingClientRect().left - lb.getBoundingClientRect().left - (parseFloat(getComputedStyle(lb).paddingLeft) || 0))) + 'px'); else lb.style.removeProperty('--srch-end'); } }
     if (!document.querySelector('#list .row')) {   // רשימה ריקה: אין עמודות להתיישר מולן, האייקונים בשורה מהשוליים השמאליים
       let x = (parseFloat(getComputedStyle(bar).paddingLeft) || 0) + ((document.querySelector('#listWa') || {}).offsetWidth || 0) + 8;   // עמודת הוואטסאפ בקצה השמאלי
       ['#listHere', '#listSent', '#listPay', '#listBal', '#listAtt'].forEach((s) => { const b = document.querySelector(s); if (!b) return; const w = b.offsetWidth; if (!w) return; b.style.left = x + 'px'; x += w + 8; });
@@ -4053,11 +4050,18 @@
   /* בחירת הודעה לוואטסאפ (עמודת הוואטסאפ בשורת הסינון): "הודעה ריקה" (סמל וואטסאפ), "הוראות הגעה", תבניות הסוג ואחריהן תבניות המפגש, והוספת תבנית.
      הבחירה נשמרת לכל תצוגה, וקישור הוואטסאפ של כל משתתף ברשימה נפתח עם ההודעה המוכנה */
   document.body.appendChild($('#waMenu'));
-  const closeWa = () => { $('#waMenu').hidden = true; const b = $('#waBtn'); if (b) b.setAttribute('aria-expanded', 'false'); };
+  let waAddAsk = false;   // במפגש נבחר: לחיצה על "הוספת תבנית הודעה" שואלת אם להוסיף למפגש או לסוג המפגש
+  const closeWa = () => { waAddAsk = false; $('#waMenu').hidden = true; const b = $('#waBtn'); if (b) b.setAttribute('aria-expanded', 'false'); };
   function renderWaMenu() {
     const sel = waSelected(), item = (id, ic, name, tag, on) => '<button type="button" role="menuitemradio" data-wt="' + esc(id) + '" aria-checked="' + on + '"><span class="wmi">' + ic + '<span class="wmn">' + esc(name) + '</span>' + (tag ? '<small>' + esc(tag) + '</small>' : '') + '</span></button>';
     $('#waMenu').innerHTML = item('', WA_ICON, 'הודעה ריקה', '', !sel) + waList().map((x) => { const n = sentCount(x.m.id, x.id); return item(x.id, PIN_ICON, x.name || 'ללא שם', [x.tag, n ? n + ' נשלחו' : ''].filter(Boolean).join(' · '), !!sel && sel.id === x.id); }).join('') +
-      '<button type="button" class="wadd" data-wadd="1"><span class="wmi">' + icon('plus') + '<span class="wmn">הוספת תבנית הודעה</span></span></button>';
+      addRows();
+    function addRows() {
+      const inM = !!(state.filter && curMeeting()), ty = typeById(inM ? typeIdOf(curMeeting()) : state.mtype), row = (k, label) => '<button type="button" class="wadd" data-wadd="' + k + '"><span class="wmi">' + icon('plus') + '<span class="wmn">' + esc(label) + '</span></span></button>';
+      if (!inM && !state.mtype) return '';
+      if (inM && waAddAsk) return '<div class="wcap">להוסיף את התבנית:</div>' + row('meeting', 'למפגש הזה') + row('type', 'לסוג המפגש' + (ty && ty.name ? ' · ' + ty.name : ''));
+      return row(inM ? 'ask' : 'type', 'הוספת תבנית הודעה');
+    }
   }
   function toggleWa(btn) {
     const m = $('#waMenu'); if (!m.hidden) { closeWa(); return; }
@@ -4067,15 +4071,17 @@
     m.style.maxHeight = Math.max(200, window.innerHeight - r.bottom - 20) + 'px';
   }
   /* הוספת תבנית: במפגש נבחר נפתחת עריכת המפגש (תבנית של המפגש), אחרת עריכת סוג המפגש (תבנית של הסוג), עם שורה חדשה מוכנה לכתיבה */
-  function waAddTemplate() {
+  function waAddTemplate(kind) {
+    const m = state.filter && state.meetings.find((x) => x.id === state.filter);
     closeWa();
-    if (state.filter && state.meetings.some((x) => x.id === state.filter)) { openMeeting(state.filter); mf.tpl.add(); return; }
-    const tid = state.mtype || typeIdOf(attTarget()) || firstTypeId();
+    if (m && kind === 'meeting') { openMeeting(m.id); mf.tpl.add(); return; }
+    const tid = m ? typeIdOf(m) : state.mtype;
     if (!tid || !typeById(tid)) { toast('אין סוג מפגש להוספת תבנית'); return; }
     openTypeEditor(tid); tyFormFor = null; showSetView('tydet'); tyF.tpl.add();
   }
   $('#waMenu').addEventListener('click', (e) => {
-    if (e.target.closest('[data-wadd]')) { waAddTemplate(); return; }
+    const wa = e.target.closest('[data-wadd]');
+    if (wa) { if (wa.dataset.wadd === 'ask') { waAddAsk = true; renderWaMenu(); return; } waAddTemplate(wa.dataset.wadd); return; }
     const b = e.target.closest('[data-wt]'); if (!b) return;
     waSetSel(b.dataset.wt); closeWa(); render();
   });
@@ -4085,10 +4091,8 @@
     if (mk) { const f = FK[mk.dataset.mk], v = mk.dataset.mv; if (f) state[f] = state[f] === v ? null : v; syncUrl(); return after(); }
     if (e.target.closest('[data-fclear]')) { state.gender = null; state.here = null; state.paidF = null; state.sent = null; state.bal = null; state.srcF = null; state.ageF = null; state.loginF = null; state.attF = null; return after(); }
     const b = e.target.closest('[data-vt]'); if (!b) return;
-    if (b.dataset.vt === 'gender') state.showGender = !state.showGender;
-    else if (b.dataset.vt === 'here' && !state.filter) { state.showAtt = state.showAtt === false ? null : false; if (state.showAtt === false) state.attF = null; }   // תמונת מצב כללית: התמדה וסימון ההגעה למפגש הקרוב
+    if (b.dataset.vt === 'here' && !state.filter) { state.showAtt = state.showAtt === false ? null : false; if (state.showAtt === false) state.attF = null; }   // תמונת מצב כללית: התמדה וסימון ההגעה למפגש הקרוב
     else if (b.dataset.vt === 'here') { const cur = attVisible(curMeeting()); state.showAtt = !cur; if (cur) state.here = null; }   // סימון ההגעה במפגש: הפעלה וכיבוי ידניים, נשמרים לכל מפגש
-    else if (b.dataset.vt === 'pay') { state.showPay = !state.showPay; if (!state.showPay) { state.paidF = null; state.bal = null; } }
     else { const m0 = curMeeting() || eventMeeting(), cur = !!(m0 && sentView(m0)), auto = !!(m0 && (evOnFor(m0) || hasSent(m0))); state.showSent = !cur === auto ? null : !cur; if (cur) state.sent = null; }
     after(true);
   });
@@ -4161,7 +4165,7 @@
     if (e.target.closest('.evc.inert')) { e.stopPropagation(); e.preventDefault(); return; }   // אחרי תחילת המפגש: עיגול שליחת הפרטים לא עושה כלום (לא וואטסאפ, לא שינוי נתונים, ולא פותח את הכרטיס)
     const cn = e.target.closest('.ptag.cnt');
     if (cn) { e.stopPropagation(); openCnt(cn); return; }   // צ'יף "הגיע X/Y": תפריט הסבר ופירוט
-    { const rw = e.target.closest('.rowwa'); if (rw) { e.stopPropagation(); const ws = rw.dataset.wsend && waSelected(); if (ws) waAwait = { pid: rw.dataset.wsend, mid: ws.m.id, key: ws.id, name: ws.name }; return; } }   // וואטסאפ מהרשימה: רק פותח את השיחה, לא את כרטיס המשתתף; עם תבנית: בחזרה מאשרים שנשלחה
+    { const rw = e.target.closest('.rowwa'); if (rw) { e.stopPropagation(); const ws = rw.dataset.wsend && waSelected(); if (ws) { waAwait = { pid: rw.dataset.wsend, mid: ws.m.id, key: ws.id, name: ws.name }; if (rw.classList.contains('sent')) { e.preventDefault(); askMsgSent(); } } return; } }   // וואטסאפ מהרשימה: רק פותח את השיחה, לא את כרטיס המשתתף; עם תבנית: בחזרה מאשרים שנשלחה. הודעה שכבר סומנה כנשלחה: לא פותח וואטסאפ, רק פופאפ אישור לביטול הסימון
     const qs = e.target.closest('[data-qs]');
     if (qs) { e.stopPropagation(); if (!$('#qMenu').hidden) { closeQ(); return; } openQuickMenu(qs.dataset.qs, qs, state.filter || undefined); return; }
     const eu = e.target.closest('[data-evun]');
