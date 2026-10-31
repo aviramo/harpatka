@@ -2357,7 +2357,8 @@
   /* אחרי שליחת הודעת הוואטסאפ: כשחוזרים לדשבורד שואלים את המנהל אם להעביר את הסטטוס ל"בטיפול" (לא אוטומטי) */
   let markAwait = null;
   /* שאלת אישור אחרי חזרה מוואטסאפ: אם פופאפ המשתתף פתוח, השאלה היא מסך בתוכו (חץ חזרה בכותרת, כמו פרטי המשתתף); אחרת חלון אישור */
-  function askConfirm(p, title, textHtml, yesLabel, onYes) {
+  function askConfirm(p, title, textHtml, yesLabel, onYes, danger) {   // danger: כפתור האישור באדום (מחיקה)
+    $('#cvYes').classList.toggle('danger', !!danger);
     if ($('#pDlg').open && sheet && sheet.id === p.id) {
       cvTitle = title; $('#cvText').innerHTML = textHtml; $('#cvYes').textContent = yesLabel;
       $('#cvYes').onclick = () => { onYes(); setPTab(viewStack.pop() || 'main'); };
@@ -3317,25 +3318,28 @@
       try { await api('harpatka_members?user_id=eq.' + uid, { method: 'PATCH', body: { status: to } }); toast('עודכן'); loadMemberMap(); loadGoogleAcc(state.participants.find((x) => x.id === pid)); } catch (err) { fail(err); }
     }, MSG[1], MSG[2], null, to === 'approved' ? { primary: true } : undefined);
   });
-  $('#pDelete').addEventListener('click', async () => {
-    const p = state.participants.find((x) => x.id === sheet.id);
-    if (!p || !confirm('להסיר את ' + p.name + ' מרשימת כל המשתתפים? הוא יוסתר רק משם. השיוך שלו למפגשים, התשלומים, ההערות וההיסטוריה נשארים, והוא יחזור לרשימה אם יירשם שוב עם אותו טלפון')) return;
+  /* מחיקת משתתף: אישור כמסך בתוך הכרטיס (לא חלון confirm של הדפדפן, שבטלפון עלול להיחסם בשקט ואז לא קורה כלום) */
+  $('#pDelete').addEventListener('click', () => {
+    const p = state.participants.find((x) => x.id === sheet.id); if (!p) return;
+    askConfirm(p, 'מחיקת משתתף', '<b>' + esc(p.name) + '</b> יוסר מרשימת כל המשתתפים ויופיע רק בחיפוש. השיוך שלו למפגשים, התשלומים, ההערות וההיסטוריה נשארים, ואפשר להחזיר אותו לפעילות בכל רגע.', 'כן, למחוק', () => deleteParticipant(p), true);
+  });
+  async function deleteParticipant(p) {
     try {
       await api(T.p + '?id=eq.' + p.id, { method: 'PATCH', body: { active: false } });
       p.active = false;   // נשאר ב-state (מפגשים, הערות, היסטוריה); מוסתר רק ברשימת כל המשתתפים
       if (state.inactiveNames) state.inactiveNames.set(p.id, p.name);
       pDlg.close(); render(); toast('הוסר');
     } catch (err) { fail(err); }
-  });
+  }
   $('#pRestore').addEventListener('click', () => {   // משתתף מחוק חוזר להיות פעיל: חוזר לרשימת כל המשתתפים ולסינונים (הערת מערכת נרשמת בטריגר)
     const p = state.participants.find((x) => x.id === sheet.id); if (!p) return;
-    confirmAct('להחזיר את ' + p.name + ' לפעילות?', p.id, null, async () => {
+    askConfirm(p, 'החזרה לפעילות', '<b>' + esc(p.name) + '</b> יחזור לרשימת כל המשתתפים ולסינונים, עם כל ההיסטוריה שלו.', 'כן, להחזיר', async () => {
       try {
         await api(T.p + '?id=eq.' + p.id, { method: 'PATCH', body: { active: true } });
         p.active = true; if (state.inactiveNames) state.inactiveNames.delete(p.id);
         $('#pRestore').hidden = true; $('#pDelete').hidden = false; setTitle(p); render(); toast('הוחזר לפעילות');
       } catch (err) { fail(err); }
-    }, 'המשתתף יחזור לרשימת כל המשתתפים ולסינונים, עם כל ההיסטוריה שלו.', 'כן, להחזיר', null, { primary: true });
+    });
   });
 
   /* ---------- חלון מפגש ---------- */

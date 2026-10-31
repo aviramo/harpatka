@@ -79,7 +79,12 @@
   /* שאלת יציאה מהחשבון: אותה מעטפת פופאפ של ההרשמה (נפתח מלמעלה, פס סגירה בתחתית) */
   const LOGOUT_HTML = `<div id="logoutModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="logoutTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="logoutTtl"></p><a class="su-lgyes" href="__BASE__me/">כניסה לאזור האישי</a><button type="button" class="su-lgno" data-lg="yes">יציאה מהחשבון</button></div></div>`.replace(/__BASE__/g, BASE);
   const OTHER_HTML = `<div id="otherModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="otherTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="otherTtl">לשלם בדרך אחרת</p><p class="su-lgq">נפתחת שיחת וואטסאפ עם אחד המנהלים, וההודעה כבר מוכנה:</p><p class="su-lginfo" id="otherInfo"></p><a class="wacard" id="otherHadar" target="_blank" rel="noopener"><img src="__BASE__images/hadar.jpg" width="52" height="52" alt=""><span class="wat"><b>הדר לוריא</b><small>שיחה בוואטסאפ</small></span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.5c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.6.9 1-3.5-.2-.4C3.2 15.6 2.7 13.8 2.7 12c0-5.1 4.2-9.3 9.3-9.3 2.5 0 4.8 1 6.6 2.7 1.8 1.8 2.7 4.1 2.7 6.6 0 5.2-4.2 9.5-9.3 9.5zM20 4C17.9 1.8 15 .7 12 .7 5.8.7.7 5.8.7 12c0 2 .5 3.9 1.5 5.6L.6 23.4l6-1.6c1.6.9 3.5 1.4 5.4 1.4 6.2 0 11.3-5.1 11.3-11.3 0-3-1.2-5.8-3.3-7.9z"/></svg></a><a class="wacard" id="otherOfir" target="_blank" rel="noopener"><img src="__BASE__images/ofir-v3.jpg" width="52" height="52" alt=""><span class="wat"><b>אופיר אבירם</b><small>שיחה בוואטסאפ</small></span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.5c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.6.9 1-3.5-.2-.4C3.2 15.6 2.7 13.8 2.7 12c0-5.1 4.2-9.3 9.3-9.3 2.5 0 4.8 1 6.6 2.7 1.8 1.8 2.7 4.1 2.7 6.6 0 5.2-4.2 9.5-9.3 9.5zM20 4C17.9 1.8 15 .7 12 .7 5.8.7.7 5.8.7 12c0 2 .5 3.9 1.5 5.6L.6 23.4l6-1.6c1.6.9 3.5 1.4 5.4 1.4 6.2 0 11.3-5.1 11.3-11.3 0-3-1.2-5.8-3.3-7.9z"/></svg></a></div></div>`.replace(/__BASE__/g, BASE);
-  document.body.insertAdjacentHTML('beforeend', MODAL_HTML + LOGOUT_HTML + OTHER_HTML);
+  /* חשבון חסום או מנותק: פופאפ מלמעלה (אותה מעטפת) שמסביר שאי אפשר להתחבר דרך החשבון הזה, עם וואטסאפ להדר ולאופיר */
+  const BLOCKED_HTML = OTHER_HTML.replace('id="otherModal"', 'id="blockedModal"').replace('aria-labelledby="otherTtl"', 'aria-labelledby="blockedTtl"')
+    .replace('<p class="su-lgwho" id="otherTtl">לשלם בדרך אחרת</p><p class="su-lgq">נפתחת שיחת וואטסאפ עם אחד המנהלים, וההודעה כבר מוכנה:</p><p class="su-lginfo" id="otherInfo"></p>',
+      '<p class="su-lgwho" id="blockedTtl">לא ניתן להתחבר דרך החשבון הזה</p><p class="su-lgq">החשבון הזה לא מאושר לכניסה לאתר. לשאלות אפשר לפנות אלינו בוואטסאפ:</p>')
+    .replace('id="otherHadar"', 'id="blockedHadar"').replace('id="otherOfir"', 'id="blockedOfir"');
+  document.body.insertAdjacentHTML('beforeend', MODAL_HTML + LOGOUT_HTML + OTHER_HTML + BLOCKED_HTML);
 
   /* ===== מנגנון פופאפ כללי (משותף לכל ה-.modal) ===== */
   let modalLastFocus = null, urlBeforeReg = null;
@@ -515,7 +520,7 @@
         const raw = Array.from(crypto.getRandomValues(new Uint8Array(24)), (b) => b.toString(16).padStart(2, '0')).join('');
         const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw))), (b) => b.toString(16).padStart(2, '0')).join('');
         gsiNonce = raw;   // לגוגל עובר הגיבוב, ול-Supabase הערך המקורי (הוא בודק שהגיבוב שלו תואם לאישור)
-        google.accounts.id.initialize({ client_id: GCID, callback: onGoogleCredential, nonce: hash, auto_select: false, cancel_on_tap_outside: true, itp_support: true, use_fedcm_for_prompt: true, context: 'signin' });
+        google.accounts.id.initialize({ client_id: GCID, callback: onGoogleCredential, nonce: hash, auto_select: true, cancel_on_tap_outside: true, itp_support: true, use_fedcm_for_prompt: true, context: 'signin' });
         gsiState = 2;
       } catch (e) { gsiState = -1; }
     };
@@ -585,11 +590,7 @@
       if (!meSheet && !window.__meAdmin) setTimeout(() => { try { openMeArea('', true); } catch (e) {} }, 1500);   // טעינה מוקדמת של האזור האישי (מוסתר), כדי שהפתיחה הראשונה תהיה מיידית
       if (pending === 'reg') setTimeout(() => openReg(true, takeRegMeeting()), 300);   // נכנסו עם גוגל מתוך הרשמה: פופאפ ההרשמה של המפגש שנבחר, במצב מחובר
     } else if (d && d.status === 'noauth') { window.__meAdmin = false; clearMeName(); }
-    else if (d && d.status === 'blocked' && !AS) {   // החשבון נחסם או נותק (גם בזמן אמת): מנתקים אותו מהדפדפן, סוגרים את האזור האישי, והדף חוזר למצב אורח
-      try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (e) {}
-      meInfo = null; window.__meAdmin = false; clearMeName(); applyMemberMode();
-      try { if (meSheet) { meSheet.dataset.k = ''; closeMeSheet(); } } catch (e) {}
-    }
+    else if (d && d.status === 'blocked' && !AS) showBlocked();   // החשבון נחסם או נותק (גם בזמן אמת, וגם מיד אחרי כניסה): ניתוק ופופאפ הסבר
     else { clearMeName(); applyMemberMode(); if (pending === 'reg' && !AS) setTimeout(() => openReg(true, takeRegMeeting()), 300); }   // מחובר לגוגל אבל אין משתתף מקושר: פופאפ ההרשמה עם הטלפון בלבד (מחבר או יוצר משתתף ונרשם באותו צעד)
   });
   /* דפדפן פנימי של אפליקציה (פייסבוק, אינסטגרם ועוד, לשם מגיעים מהמודעות): גוגל חוסם שם כל כניסה עם גוגל, ולכן שם האתר מתנהג כאילו הכניסה כבויה: ההרשמה בטופס הרגיל */
@@ -635,13 +636,30 @@
         if (AS) { if (window.top !== window) { try { parent.postMessage({ harpatka: 'me-logout' }, location.origin); } catch (er) {} } else location.href = location.pathname; return; }   // צפייה כמשתתף: "יציאה" = סיום הצפייה (בפופאפ של דף הניהול: סגירתו), בלי לנתק את החיבור של הדפדפן
         try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {}
         meInfo = null; window.__meName = null; window.__meAdmin = false; applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {}
-        closeModal(m);
+        gsiNoAuto(); closeModal(m);
       });
     }
     openModal(m, true);
   }
   /* מצב מפגש של המשתתף המחובר (להצגה בכפתור של כרטיסי המפגשים בדף הבית) */
   const meGet = (mid) => (meInfo && meInfo.complete && (meInfo.meetings || []).find((x) => x.id === mid)) || null;   // בלי פרטים: הכרטיסים בדף הבית לא מציגים "נרשמתם", והלחיצה פותחת את השלמת הפרטים
+  /* חשבון חסום או מנותק (מיד אחרי כניסה עם גוגל, או בזמן אמת כשמנהל חסם): החיבור נמחק מהדפדפן, הדף חוזר למצב אורח, פופאפים פתוחים נסגרים,
+     ונפתח מלמעלה פופאפ שמסביר שאי אפשר להתחבר דרך החשבון הזה (במקום שהאזור האישי ייפתח וייסגר מיד). פעם אחת גם כשגם הדף וגם האזור האישי מדווחים */
+  /* אחרי יציאה מהחשבון (או חסימה) גוגל לא מחבר שוב לבד: הכניסה הבאה דורשת לחיצה (כך גוגל מבקש מאתרים עם כניסה אוטומטית) */
+  function gsiNoAuto() { try { if (window.google && google.accounts && google.accounts.id) google.accounts.id.disableAutoSelect(); } catch (e) {} }
+  let blockedAt = 0;
+  function showBlocked() {
+    if (AS || Date.now() - blockedAt < 4000) return; blockedAt = Date.now();
+    try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (e) {}
+    meInfo = null; mePending = null; window.__meAdmin = false; clearMeName(); applyMemberMode(); gsiNoAuto();
+    const dlg = document.getElementById('blockedModal'); if (!dlg) return;
+    dlg.querySelector('#blockedHadar').href = 'https://wa.me/' + CONFIG.whatsappHadar; dlg.querySelector('#blockedOfir').href = 'https://wa.me/' + CONFIG.whatsappOfir;
+    let wait = 0;
+    try { if (meSheet) { meSheet.dataset.k = ''; if (!meSheet.hidden) { closeMeSheet(); wait = 450; } } } catch (e) {}
+    document.querySelectorAll('.modal:not([hidden])').forEach((m) => { if (m !== dlg) { try { closeModal(m); wait = 450; } catch (e) {} } });
+    setTimeout(() => openModal(dlg, true), wait);   // אחרי שהפופאפים הקודמים נסגרו (הם חוזרים אחורה בהיסטוריה)
+  }
+  window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-blocked') showBlocked(); });   // האזור האישי (בפופאפ) גילה שהחשבון חסום
   /* תשלום בדרך אחרת: פופאפ (אותה מעטפת) עם שיחת וואטסאפ מוכנה להדר או לאופיר, עם פרטי המפגש */
   function openOtherPay(m) {
     const dlg = document.getElementById('otherModal'); if (!dlg) return;
@@ -694,7 +712,7 @@
         if (t === 'me-drag') { p.style.transition = 'none'; p.style.transform = 'translateY(' + d + 'px)'; }
         else if (t === 'me-drag-end') { p.style.transition = ''; p.style.transform = ''; if (d > 110) closeMeSheet(); }
       });
-      window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout' && AS) { closeMeSheet(); if (window.top !== window) { try { parent.postMessage({ harpatka: 'me-logout' }, location.origin); } catch (er) {} } else location.href = location.pathname; return; } if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout') { try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {} meInfo = null; window.__meName = null; window.__meAdmin = false; applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {} meSheet.dataset.k = ''; closeMeSheet(); gsiLoad(); } });   // יציאה: מנתקים וסוגרים את הפופאפ, בלי לרענן את הדף
+      window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout' && AS) { closeMeSheet(); if (window.top !== window) { try { parent.postMessage({ harpatka: 'me-logout' }, location.origin); } catch (er) {} } else location.href = location.pathname; return; } if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout') { try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {} meInfo = null; window.__meName = null; window.__meAdmin = false; applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {} meSheet.dataset.k = ''; closeMeSheet(); gsiNoAuto(); gsiLoad(); } });   // יציאה: מנתקים וסוגרים את הפופאפ, בלי לרענן את הדף
     }
     const qs = new URLSearchParams(search || ''); qs.set('embed', '1'); if (AS) qs.set('as', AS);   // צפייה כמשתתף: האזור האישי של אותו משתתף, עם החיבור של דף הניהול
     { const fr = meSheet.querySelector('iframe'); let tk = ''; try { tk = String(localStorage.getItem(TOK_KEY) || '').slice(-24); } catch (e) {}
