@@ -967,13 +967,16 @@
   let loadSeq = 0, loadApplied = 0;
   /* מצב חשבון הגוגל (אזור אישי) לכל משתתף: 'yes' = מחובר ומאושר, 'blocked' = חסום, אחרת (ניתוק, ממתין, בלי חשבון) = 'no'. נטען מ-harpatka_members ומשמש את סינון "אזור אישי" */
   state.memMap = new Map();
-  async function loadMemberMap() {
-    try {
-      const rows = await api('harpatka_members?select=participant_id,status,email&participant_id=not.is.null', { ui: false }), mp = new Map(), em = new Map();
-      rows.forEach((r) => { const cur = mp.get(r.participant_id); const v = r.status === 'blocked' ? 'blocked' : r.status === 'approved' ? 'yes' : 'no'; if (!cur || cur === 'no' || (v === 'blocked')) mp.set(r.participant_id, v); if (r.email) em.set(r.participant_id, ((em.get(r.participant_id) || '') + ' ' + String(r.email).toLowerCase()).trim()); });
-      const sig = (m) => [...m].map((x) => x.join(':')).sort().join(','); const changed = sig(mp) !== sig(state.memMap) || sig(em) !== sig(state.memEmails); state.memMap = mp; state.memEmails = em;
-      if (changed) { render(); paintInfoBtn(); }   // סמל החשבון ליד השם ובכותרת הכרטיס, סינון "אזור אישי" והחיפוש לפי אימייל
-    } catch (e) { /* בלי הרשאה או טבלה: הסינון פשוט לא מסנן */ }
+  const MEM_Q = 'harpatka_members?select=participant_id,status,email&participant_id=not.is.null';
+  function applyMembers(rows) {   // מחזיר האם משהו השתנה
+    const mp = new Map(), em = new Map();
+    rows.forEach((r) => { const cur = mp.get(r.participant_id); const v = r.status === 'blocked' ? 'blocked' : r.status === 'approved' ? 'yes' : 'no'; if (!cur || cur === 'no' || (v === 'blocked')) mp.set(r.participant_id, v); if (r.email) em.set(r.participant_id, ((em.get(r.participant_id) || '') + ' ' + String(r.email).toLowerCase()).trim()); });
+    const sig = (m) => [...m].map((x) => x.join(':')).sort().join(','); const changed = sig(mp) !== sig(state.memMap) || sig(em) !== sig(state.memEmails); state.memMap = mp; state.memEmails = em;
+    return changed;
+  }
+  async function loadMemberMap() {   // אחרי שינוי בחשבון (ניתוק, חסימה): טעינה של מצבי החשבונות בלבד
+    try { if (applyMembers(await api(MEM_Q, { ui: false }))) { render(); paintInfoBtn(); } }   // סמל החשבון ליד השם ובכותרת הכרטיס, סינון "אזור אישי" והחיפוש לפי אימייל
+    catch (e) { /* בלי הרשאה או טבלה: הסינון פשוט לא מסנן */ }
   }
   const loginOf = (p) => state.memMap.get(p.id) || 'no';
   state.memEmails = new Map();   // אימייל של חשבון הגוגל המחובר לכל משתתף (מ-harpatka_members), לחיפוש
@@ -1001,7 +1004,7 @@
     if (!silent) $('#status').innerHTML = '<div class="empty">טוען…</div>';
     const myLoad = ++loadSeq;
     try {
-      const [p, m, a, nn, prs, pps, pays, sts, pfs, pms, pubs, fin0, finr0, fintr0] = await Promise.all([
+      const [p, m, a, nn, prs, pps, pays, sts, pfs, pms, pubs, fin0, finr0, fintr0, mem0] = await Promise.all([
         api(T.p + '?select=*'),
         api(T.m + '?select=*'),
         api(T.a + '?select=after_key,participant_id,meeting_id,paid,pay_requested_at,status_key,created_at,exempt,attended,paid_amount,promoter_id,commission,paid_at,details_sent_at,will_pay,maybe,no_pay,pay_reported_at,pay_reported_amount'),
@@ -1016,6 +1019,7 @@
         api(T.fin + '?select=*&order=entry_date.desc,created_at.desc').catch(() => null),
         api(T.finr + '?select=*&order=created_at.desc').catch(() => null),
         api(T.fintr + '?select=*&order=transfer_date.desc,created_at.desc').catch(() => null),
+        api(MEM_Q, { ui: false }).catch(() => null),   // מצבי חשבון הגוגל באותה טעינה, כדי שהרשימה תוצג פעם אחת עם כל הסמלים (בלי קפיצה כשהם מגיעים אחר כך)
       ]);
       if (myLoad < loadApplied) return;   // טעינה ישנה שהסתיימה אחרי טעינה חדשה יותר: לא דורסת אותה
       loadApplied = myLoad;
@@ -1032,7 +1036,7 @@
       state.participants = p; state.meetings = m; state.att = a; applyAttPending(); state.notes = nn;   // "הסרת משתתף" רק מסתירה אותו ברשימת כל המשתתפים; השיוכים, ההערות וההיסטוריה נשארים
       state.promoters = prs; state.promoPays = pps; state.payments = pays.filter((x) => !((payTomb.get(x.id) || 0) > Date.now())); rebuildNotes();
       sortMeetings();
-      loadMemberMap();   // מצב חשבון הגוגל של כל משתתף (לסינון "אזור אישי")
+      if (mem0) applyMembers(mem0);   // מצב חשבון הגוגל של כל משתתף (סמל ליד השם, סינון "אזור אישי"), לפני הציור
       if (!silent) $('#status').innerHTML = '';
       setTimeout(prefetchNoteImages, 1500);   // טעינה מוקדמת של צילומי ההערות למטמון
       if (deep) {
