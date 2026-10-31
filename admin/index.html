@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261101i" />
+  <link rel="stylesheet" href="admin.css?v=20261101k" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -3680,31 +3680,25 @@
   });
   /* פאנל הסינון והתצוגה (31.10.26): כל הסינונים והטוגלים במקום אחד, נפתח מתגית הסינון שבשורת "סינון ומיון".
      לכל נושא כותרת עם טוגל תצוגה ("בשורה" / "ברשימה") ומתחתיה האפשרויות כתגיות עם הכמות; לחיצה נוספת על תגית נבחרת מבטלת אותה */
-  const fsec = (title, sw, body) => '<div class="fsec"><div class="fsh"><b>' + title + '</b>' + (sw || '') + '</div>' + (body ? '<div class="mgc">' + body + '</div>' : '') + '</div>';
-  const fsw = (k, on, label, aria) => '<button type="button" class="fsw" data-vt="' + k + '" role="switch" aria-checked="' + !!on + '" aria-label="' + aria + '" title="' + aria + '"><small>' + label + '</small><span class="vsw' + (on ? ' on' : '') + '" aria-hidden="true"></span></button>';
+  const fsec = (title, body) => '<div class="fsec"><div class="fsh"><b>' + title + '</b></div>' + (body ? '<div class="mgc">' + body + '</div>' : '') + '</div>';
+  const ftgl = (k, title, on, aria) => '<button type="button" class="fswc" data-vt="' + k + '" role="switch" aria-checked="' + !!on + '" aria-label="' + aria + '" title="' + aria + '"><b>' + title + '</b><span class="vsw' + (on ? ' on' : '') + '" aria-hidden="true"></span></button>';   // תא טוגל: שם הנושא והמתג, בלי טקסט ליד המתג
   function moreSecs() {
     const scope = state.participants.filter((p) => (state.filter ? linkOf(p.id, state.filter) : p.active !== false) && mtypeOk(p));
     const cnt = (f) => scope.filter(f).length;
     const chip = (kind, val, label, n) => { const on = (kind === 'src' ? state.srcF : kind === 'login' ? state.loginF : state.ageF) === val; return '<button type="button" class="mc' + (n || on ? '' : ' zero') + '" data-mk="' + kind + '" data-mv="' + esc(val) + '" aria-pressed="' + on + '">' + esc(label) + ' <small>' + n + '</small></button>'; };
-    return fsec('דרך הגעה', '', state.promoters.map((x) => chip('src', x.id, x.name, cnt((p) => (channelOf(p) || {}).id === x.id))).join('') + chip('src', '__none', 'ללא דרך הגעה', cnt((p) => !channelOf(p)))) +
-      fsec('גיל', '', AGE_B.map((b) => chip('age', b[0], b[1], cnt((p) => { const a = shownAge(p); return a != null && a >= b[2] && a <= b[3]; }))).join('')) +
-      fsec('אזור אישי', '', [['yes', 'רשומים'], ['no', 'לא רשומים'], ['blocked', 'חסומים']].map((o) => chip('login', o[0], o[1], cnt((p) => loginOf(p) === o[0]))).join(''));
+    return fsec('דרך הגעה', state.promoters.map((x) => chip('src', x.id, x.name, cnt((p) => (channelOf(p) || {}).id === x.id))).join('') + chip('src', '__none', 'ללא דרך הגעה', cnt((p) => !channelOf(p)))) +
+      fsec('גיל', AGE_B.map((b) => chip('age', b[0], b[1], cnt((p) => { const a = shownAge(p); return a != null && a >= b[2] && a <= b[3]; }))).join('')) +
+      fsec('אזור אישי', [['yes', 'רשומים'], ['no', 'לא רשומים'], ['blocked', 'חסומים']].map((o) => chip('login', o[0], o[1], cnt((p) => loginOf(p) === o[0]))).join(''));
   }
   const curMeeting = () => state.meetings.find((x) => x.id === state.filter) || null;
   /* יש סינון פעיל שלא רואים בשורת הסינון (כל מה שבפאנל חוץ ממגדר שמוצג בשורה): נקודה בתגית הסינון */
   const panelOn = () => { const m = curMeeting(); return !!((state.filter ? ((state.showPay && state.paidF) || (m && attVisible(m) && state.here) || (m && sentView(m) && state.sent)) : ((state.showPay && state.bal) || (state.showAtt !== false && state.attF))) || state.srcF || state.ageF || state.loginF || (state.gender && !state.showGender)); };
   function renderViewMenu() {
     const m = curMeeting(), sentOn = !!(m && sentView(m)), attOnM = state.filter ? !!(m && attVisible(m)) : state.showAtt !== false;
-    /* מגדר, תשלום / יתרה, שליחת פרטי המפגש והגעה / התמדה: רק הטוגל, בלי תגיות האפשרויות (מגדר נבחר בשורת הסינון) */
-    let h = fsec('מגדר', fsw('gender', state.showGender, 'בשורה', 'הצגת זכר ונקבה בשורת הסינון'), '');
-    if (state.filter) {
-      h += fsec('תשלום', fsw('pay', state.showPay, 'ברשימה', 'הצגת התשלום ברשימה'), '');
-      h += fsec('שליחת פרטי המפגש', fsw('sent', sentOn, 'ברשימה', 'הצגת שליחת פרטי המפגש ברשימה'), '');
-      h += fsec('הגעה למפגש', fsw('here', attOnM, 'ברשימה', 'הצגת סימון ההגעה ברשימה'), '');
-    } else {
-      h += fsec('יתרה', fsw('pay', state.showPay, 'ברשימה', 'הצגת היתרה ברשימה'), '');
-      h += fsec('התמדה', fsw('here', attOnM, 'ברשימה', 'הצגת ההתמדה וסימון ההגעה למפגש הקרוב ברשימה'), '');
-    }
+    /* הטוגלים (מגדר, תשלום / יתרה, שליחת פרטי המפגש, הגעה / התמדה): גריד של שניים בשורה, רק שם ומתג */
+    let h = '<div class="fsws">' + ftgl('gender', 'מגדר', state.showGender, 'הצגת זכר ונקבה בשורת הסינון') +
+      (state.filter ? ftgl('pay', 'תשלום', state.showPay, 'הצגת התשלום ברשימה') + ftgl('sent', 'שליחת פרטי המפגש', sentOn, 'הצגת שליחת פרטי המפגש ברשימה') + ftgl('here', 'הגעה למפגש', attOnM, 'הצגת סימון ההגעה ברשימה')
+                    : ftgl('pay', 'יתרה', state.showPay, 'הצגת היתרה ברשימה') + ftgl('here', 'התמדה', attOnM, 'הצגת ההתמדה וסימון ההגעה למפגש הקרוב ברשימה')) + '</div>';
     h += moreSecs();
     if (panelOn() || state.gender) h += '<button type="button" class="fclear" data-fclear="1">ניקוי סינונים</button>';
     $('#viewMenu').innerHTML = h;
