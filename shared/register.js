@@ -238,8 +238,7 @@
         }
         if (r !== 'ok' && r !== 'reported' && r !== 'already') throw new Error('report failed');
         if (ob) ob.done();
-        const fold = q('payfold'), done = q('reported');
-        if (fold) { fold.classList.add('closing'); setTimeout(() => { fold.hidden = true; if (done) done.hidden = false; }, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 420); } else if (done) done.hidden = false;
+        const done = q('reported'); if (done) done.hidden = false;   // כפתור התשלום נשאר (אם לחצו ולא שילמו בפועל, אפשר לחזור וללחוץ שוב); מתחתיו "התשלום ממתין לאישור שלנו"
         if (meInfo) meLoader.reload(0);
       } catch (e) { if (ob) ob.fail(); }   // הדיווח נכשל: הכפתור נשאר, ולחיצה נוספת מנסה שוב
       reporting = false;
@@ -423,8 +422,8 @@
     root.querySelectorAll('.su-fold:not(.su-after)').forEach((f) => f.classList.add('shut'));
     after.classList.remove('shut');
     note.innerHTML = '<span class="su-regd">נרשמתם למפגש</span>' + (free ? 'המפגש בשבילכם ללא תשלום' : paid ? 'התשלום התקבל. נתראה!' : reported ? 'התשלום ממתין לאישור שלנו' : rejected ? 'לא מצאנו את התשלום. אפשר להשלים אותו כאן' : 'המקום יישמר קבוע רק לאחר תשלום');   // "נרשמתם למפגש" בשורה משלו בכתום, והמצב מתחתיו
-    if (fold) fold.hidden = paid || free || reported;
-    if (rep) rep.hidden = !reported;
+    if (fold) fold.hidden = paid || free;   // כפתור התשלום נשאר עד שהתשלום באמת התקבל, גם אחרי דיווח (אולי לחצו ולא שילמו בפועל)
+    if (rep) rep.hidden = true;   // "ממתין לאישור" כבר כתוב בהודעה שמעל
   }
   let phoneMode = false;   // מחוברים עם גוגל, אין משתתף מקושר: פופאפ ההרשמה במצב הזנת טלפון בלבד
   let createdHere = false;   // המשתתף נוצר בהרשמה הזו (בשלב הטלפון): RegistrationValue נשלח כשהגיל ידוע, בהשלמת הפרטים

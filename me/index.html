@@ -168,7 +168,7 @@
         : m.reported ? '<span class="chip wait">ממתין לאישור תשלום</span>'
         : m.rejected ? '<span class="chip no">התשלום לא אושר</span>' : '<span class="chip no">טרם שולם</span>';
       let foot = '';
-      if (m.future && !paid && !free && !m.reported && CFG.payboxLink) foot += '<div class="payfold" data-pf="' + m.id + '"><div><a class="btn pay" data-paynow="' + m.id + '" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">לתשלום ' + (m.price ? m.price + ' ₪ ' : '') + 'בפייבוקס</a><div class="paylinks"><button type="button" class="lnk" data-other="' + m.id + '">רוצים לשלם בדרך אחרת?</button></div><div class="msg" data-pm="' + m.id + '"></div></div></div>';
+      if (m.future && !paid && !free && CFG.payboxLink) foot += '<div class="payfold" data-pf="' + m.id + '"><div><a class="btn pay" data-paynow="' + m.id + '" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">לתשלום ' + (m.price ? m.price + ' ₪ ' : '') + 'בפייבוקס</a><div class="paylinks"><button type="button" class="lnk" data-other="' + m.id + '">רוצים לשלם בדרך אחרת?</button></div><div class="msg" data-pm="' + m.id + '"></div></div></div>';
       if (m.future && !m.attended) foot += '<button type="button" class="lnk sm" data-unreg="' + m.id + '">ביטול רישום</button><div class="msg" data-um="' + m.id + '"></div>';
       return '<div class="mtg" data-mid="' + m.id + '"><div class="mtrow"><div class="mtw"><div class="mtd"><span class="c1">' + esc(dayParts(m.date).day) + '</span><bdi dir="ltr">' + esc(m.time) + ' · ' + esc(dayParts(m.date).date) + '</bdi></div><div class="c5">' + esc([m.city, m.name].filter(Boolean).join(' · ')) + '</div></div><div class="mts">' + att + pay + '</div></div>' + (foot ? '<div class="mtfoot">' + foot + '</div>' : '') + '</div>';
     };
@@ -216,7 +216,7 @@
         const r = await rpc('harpatka_me_report_payment', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {}));
         if (r === 'ok' || r === 'reported' || r === 'already') {
           ob.done(); keepOpen = id;
-          if (fold && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) { fold.classList.add('closing'); setTimeout(load, 450); } else load();   // הכפתור והקישורים נסגרים באנימציה, ואז הסטטוס מתחלף
+          load();   // הסטטוס מתחלף ל"ממתין לאישור תשלום"; כפתור התשלום נשאר עד שהתשלום באמת התקבל
         } else { ob.fail(); delete pa.dataset.rep; }
       } catch (e) { ob.fail(); delete pa.dataset.rep; }   // הדיווח נכשל: הכפתור נשאר, ולחיצה נוספת מנסה שוב
     }); });

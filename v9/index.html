@@ -804,11 +804,11 @@
           const more = mk('div', 'mt-more'), box = mk('div'), paid = Number(st.paid) > 0, free = !!st.free;
           const txt = free ? 'נרשמתם · חינם' : paid ? 'נרשמתם · שולם ₪' + Math.round(st.paid) : st.reported ? 'נרשמתם · התשלום ממתין לאישור' : st.rejected ? 'התשלום לא אושר · תשלום' + (st.price ? ' ₪' + st.price : '') : 'נרשמתם · תשלום' + (st.price ? ' ₪' + st.price : '');
           const b = mk('a', 'mt-cta', txt);
-          b.href = '#'; b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); if (!st.reported) reg(m); });   // בהמתנה לאישור דיווח: לא נפתח פופאפ   // פותח את פופאפ התשלום של המפגש (הפופאפ במצב "נרשמתם")
+          b.href = '#'; b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); reg(m); });   // גם אחרי דיווח: הפופאפ עם כפתור התשלום (נשאר עד שהתשלום באמת התקבל)   // בהמתנה לאישור דיווח: לא נפתח פופאפ   // פותח את פופאפ התשלום של המפגש (הפופאפ במצב "נרשמתם")
           box.append(b);
           if (!paid && !free && !st.reported) box.append(mk('div', 'mt-note', 'כדי שנוכל לשמור לכם את המקום, צריך להשלים את התשלום. עד אז המקום עוד לא סגור'));   // נרשם ולא שילם ולא דיווח: המקום נשמר רק עם תשלום
           more.append(box); inn.append(more);
-          if (!st.reported) { c.style.cursor = 'pointer'; c.addEventListener('click', () => reg(m)); }
+          c.style.cursor = 'pointer'; c.addEventListener('click', () => reg(m));
         } else if (!past) {
           const more = mk('div', 'mt-more'), box = mk('div'), sp = tierSplit(m, m.tiers, today);
           const pb = fill(mkBox(), sp.past, 'done'); if (!pb.hidden) box.append(pb);
@@ -1107,6 +1107,6 @@
 </script>
   <script src="../shared/rt.js?v=1"></script>
   <script src="../shared/person-form.js?v=20261029i"></script>
-  <script src="../shared/register.js?v=20261031w"></script>
+  <script src="../shared/register.js?v=20261031x"></script>
 </body>
 </html>
