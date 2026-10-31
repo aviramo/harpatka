@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261101a" />
+  <link rel="stylesheet" href="admin.css?v=20261101b" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -3496,7 +3496,9 @@
   function meetingFields(p, isType, typOf) {
     const q = (s) => $('#' + p + s), I = (s) => p + s;
     q('MF').innerHTML =
+      (isType ? '' : '<div class="mfrow mfname">') +
       '<label class="field"><span>' + (isType ? 'שם סוג המפגש' : 'שם המפגש') + '</span><input id="' + I('Name') + '" type="text" maxlength="80" autocomplete="off" /></label>' +
+      (isType ? '' : '<span id="' + I('TypeSlot') + '"></span></div>') +
       '<div class="mfsec">מתי</div><div class="mfrow">' +
         (isType ? '' : '<label class="field"><span>תאריך</span><input id="' + I('Date') + '" name="date" type="date" required /></label>') +
         '<label class="field"><span>שעה</span><input id="' + I('Time') + '" name="time" type="time" /></label></div>' +
@@ -3515,6 +3517,7 @@
           '<span class="mfimg-tag" id="' + I('ImgTag') + '"></span></label>' +
         '<button type="button" class="mfimg-del" id="' + I('ImgDel') + '" hidden>×</button>' +
         '<input type="file" id="' + I('ImgFile') + '" accept="image/jpeg,image/png,image/webp" hidden /></div>';
+    { const tf = !isType && $('#' + p + 'TypeF'), slot = q('TypeSlot'); if (slot) { if (tf) slot.replaceWith(tf); else slot.remove(); } }   // סוג המפגש באותה שורה עם שם המפגש
     const F = { te: tierEditor('#' + I('TierList'), '#' + I('TierAdd')), img: { url: null, blob: null, objUrl: null, inh: false }, tiersInh: false };
     const ty = () => (typOf ? typOf() : null);
     dtField(q('Time')); if (!isType) dtField(q('Date'));   // תאריך ושעה: הרכיב האחיד (מיושר לימין, פלייסהולדר של הסוג)
@@ -3609,7 +3612,7 @@
   function fillTypeSel(tid) {
     const sel = $('#mType');
     sel.innerHTML = state.mtypes.map((t) => '<option value="' + t.id + '"' + (t.id === tid ? ' selected' : '') + '>' + esc(t.name || 'ללא שם') + '</option>').join('');
-    $('#mTypeF').hidden = state.mtypes.length < 2;   // סוג אחד: אין מה לבחור
+    $('#mTypeF').hidden = !state.mtypes.length;   // תמיד מוצג כשיש סוגים (גם סוג אחד), כדי שיהיה ברור לאיזה סוג המפגש שייך
   }
   $('#mType').addEventListener('change', () => mf.paint());   // החלפת סוג: השדות שנשארו ריקים מציגים את ברירות המחדל של הסוג החדש
   function openMeeting(id) {
