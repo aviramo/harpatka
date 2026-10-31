@@ -7,7 +7,7 @@
    ===================================================================== */
 
 /* ---------- 1. טוקנים ---------- */
-:root {
+:root { --safe-b: max(env(safe-area-inset-bottom, 0px), 28px);   /* אזור בטוח בתחתית: פס המחוות / הבית של המכשיר, ולפחות 28px */
   --scrim: rgba(16, 20, 26, .55);   /* הכהיה מאחורי פופאפים */
   --bg: #FFFFFF;
   --surface: #F5F6F8;      /* אפור 50: פאנלים, ריחוף */
@@ -292,7 +292,8 @@ body.locked .wrap, body.locked #statsBtn { display: none !important; }
 .wrap > header.top { flex: 0 0 auto; position: relative; z-index: 5; background: var(--bg); }   /* בלי קו מעל שורת החיפוש (31.10.26) */
 .wrap > #status { flex: 0 0 auto; }
 .wrap > .listbar { flex: 0 0 36px; }
-.wrap > .list { flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior-y: auto; scrollbar-width: none; }
+.wrap > .list { flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior-y: auto; scrollbar-width: none; padding-bottom: var(--safe-b); }   /* הרשימה מסתיימת מעל פס המחוות של המכשיר (31.10.26): השורה האחרונה נגללת עד אזור בטוח */
+.wrap > .list:has(~ .addbox:not(:empty)) { padding-bottom: 0; }   /* כשכרטיס "הוספת משתתף חדש" מתחתיה, האזור הבטוח נשאר מתחתיו */
 .wrap > .list::-webkit-scrollbar { display: none; }
 .wrap > .list:empty { display: none; }
 .wrap > .addbox { flex: 0 0 auto; }
@@ -402,7 +403,7 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 .addbox:empty { display: none; }
 .addbox .newbtn > .tg { order: 9; margin-inline-start: auto; }
 .addbox .newbtn > .tg + span { margin-inline-start: 9.5px; }   /* הטקסט מתחיל בקו של טקסט המגדר והגיל בשורות (עמודה של 44px, הטקסט ממורכז בה) */
-.addbox .newbtn { display: flex; align-items: center; gap: 8px; width: 100%; min-height: var(--ctl); padding: 8px var(--gut); background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); font-size: 16px; font-weight: 600; color: var(--text); text-align: right; margin-bottom: env(safe-area-inset-bottom); }
+.addbox .newbtn { display: flex; align-items: center; gap: 8px; width: 100%; min-height: var(--ctl); padding: 8px var(--gut); background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); font-size: 16px; font-weight: 600; color: var(--text); text-align: right; margin-bottom: var(--safe-b); }
 .newbtn b { color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* תפריטי הסינון: הגעה, שליחה, תשלום, יתרה, התמדה */
