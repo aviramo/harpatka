@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261101r" />
+  <link rel="stylesheet" href="admin.css?v=20261101z" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -381,8 +381,10 @@
   </dialog>
 
   <div class="qmenu" id="qMenu" role="menu" hidden></div>
+  <div id="menuShade" aria-hidden="true"></div>
   <div class="qmenu" id="viewMenu" role="menu" hidden></div>
   <div class="qmenu" id="fMenu" role="menu" hidden></div>
+  <div id="splitEmpty" aria-hidden="true"><svg data-i="user"></svg><p>בחרו משתתף מהרשימה כדי לראות את הכרטיס שלו</p></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="../shared/age.js?v=20261031a"></script>
@@ -443,6 +445,7 @@
     shield: ['s', '<path d="M12 3l8 3v6c0 4.8-3.4 8.4-8 9-4.6-.6-8-4.2-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-4.5"/>'],   // מחובר לחשבון גוגל
     trash: ['s', '<path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v6M14 11v6"/>'],   // משתתף מחוק
     user: ['s', '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>'],
+    close: ['s', '<path d="M6 6l12 12M18 6L6 18"/>'],
     wa: ['f', '<path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.5c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.6.9 1-3.5-.2-.4C3.2 15.6 2.7 13.8 2.7 12c0-5.1 4.2-9.3 9.3-9.3 2.5 0 4.8 1 6.6 2.7 1.8 1.8 2.7 4.1 2.7 6.6 0 5.2-4.2 9.5-9.3 9.5zM20 4C17.9 1.8 15 .7 12 .7 5.8.7.7 5.8.7 12c0 2 .5 3.9 1.5 5.6L.6 23.4l6-1.6c1.6.9 3.5 1.4 5.4 1.4 6.2 0 11.3-5.1 11.3-11.3 0-3-1.2-5.8-3.3-7.9z"/>'],
   };
   const icon = (n, cls) => { const x = ICONS[n] || ICONS.dots; return '<svg class="ic' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" ' + (x[0] === 'f' ? 'fill="currentColor"' : 'fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"') + ' aria-hidden="true">' + x[1] + '</svg>'; };
@@ -1529,6 +1532,7 @@
     const rowsHtml = rows.map(rowHtml).join('');
     const othersHtml = others.length ? '<li class="group">לא משויכים למפגש הזה</li>' + others.map(rowHtml).join('') : '';
     $('#list').innerHTML = rowsHtml + othersHtml + newBtn;
+    markSel();
   }
 
 
@@ -3053,9 +3057,29 @@
     const offset = (d) => Math.max(120, window.innerHeight - d.getBoundingClientRect().top);
     const desk = () => !!(window.matchMedia && window.matchMedia('(min-width: 760px)').matches);   // דסקטופ: פופאפ במרכז, נפתח ונסגר בדהייה (לא עולה מלמטה)
     const backdrop = (d, from, to, ms) => { try { d.animate([{ opacity: from }, { opacity: to }], { duration: ms, easing: 'ease', fill: 'both', pseudoElement: '::backdrop' }); } catch (e) {} };
-    const unlock = () => { if (!document.querySelector('dialog[open]')) root.classList.remove('dlg-lock'); };
+    const unlock = () => { if (!document.querySelector('dialog[open]:not(.side)')) root.classList.remove('dlg-lock'); };   // הכרטיס שבצד הרשימה לא נועל את הדף
+    /* דסקטופ רחב (מ-1024px, 31.10.26): כרטיס המשתתף נפתח בצד הרשימה ולא כפופאפ: דיאלוג לא מודלי, הרשימה נשארת פעילה (גלילה, חיפוש ומעבר למשתתף אחר) */
+    const sideMQ = window.matchMedia ? window.matchMedia('(min-width: 1024px)') : null;
+    const side = (d) => d.id === 'pDlg' && !!(sideMQ && sideMQ.matches);
+    const rawShowNM = proto.show;
+    /* דסקטופ (31.10.26): הגדרות, סטטיסטיקות וכספים (וההתחשבנות שנפתחת מההגדרות) נפתחים כפאנל מצד שמאל שמחליק ימינה, ולא כחלון במרכז; נסגרים בכפתור X, בלחיצה בחוץ או ב-Escape */
+    const DRAWERS = ['setDlg', 'stDlg', 'finDlg', 'prDlg'];
+    const drawer = (d) => DRAWERS.includes(d.id) && desk();
     proto.showModal = function () {
       if (this.open) return;
+      if (side(this)) {
+        this._side = true; this.classList.add('side');
+        rawShowNM.call(this);
+        navOpen(this);
+        try { syncUrl(); } catch (e) {}
+        root.classList.add('split-open');
+        this._closing = false;
+        this.getAnimations().forEach((a) => a.cancel());
+        if (!reduced()) this.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160, easing: 'ease-out' });
+        try { markSel(); } catch (e) {}
+        return;
+      }
+      this.classList.toggle('drawer', drawer(this));
       rawShow.call(this);
       navOpen(this);
       try { syncUrl(); } catch (e) {}
@@ -3063,6 +3087,7 @@
       this._closing = false;
       this.getAnimations().forEach((a) => a.cancel());
       if (reduced()) return;
+      if (this.classList.contains('drawer')) { this.animate([{ transform: 'translateX(-100%)' }, { transform: 'none' }], { duration: 300, easing: 'cubic-bezier(.22,.8,.2,1)' }); backdrop(this, 0, 1, 300); return; }
       if (desk()) { this.animate([{ opacity: 0, transform: 'scale(.97)' }, { opacity: 1, transform: 'none' }], { duration: 200, easing: 'ease-out' }); backdrop(this, 0, 1, 200); return; }
       const y = offset(this);
       this.animate([{ transform: 'translateY(' + y + 'px)' }, { transform: 'none' }], { duration: 340, easing: 'cubic-bezier(.22,.8,.2,1)' });
@@ -3071,13 +3096,21 @@
     proto.close = function (rv, from) {
       if (!this.open || this._closing) return;
       navClose(this);
+      if (this._side) {   // כרטיס בצד הרשימה: נסגר מיד, והאזור חוזר להודעה "בחרו משתתף"
+        this._side = false; this.classList.remove('side'); this.getAnimations().forEach((a) => a.cancel());
+        rawClose.call(this, rv); root.classList.remove('split-open');
+        setTimeout(() => { try { syncUrl(); } catch (e) {} }, 0);
+        try { markSel(); } catch (e) {}
+        return;
+      }
       setTimeout(() => { try { syncUrl(); } catch (e) {} }, 420);   // אחרי שהדיאלוג נסגר (אנימציה)
       if (reduced()) { rawClose.call(this, rv); unlock(); return; }
       this._closing = true;
       const d = this, cur = from == null ? 0 : from, y = offset(d);
       d.getAnimations().forEach((a) => a.cancel());
       backdrop(d, 1, 0, 240);
-      const a = desk() ? d.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.97)' }], { duration: 160, easing: 'ease-in', fill: 'both' })
+      const a = d.classList.contains('drawer') ? d.animate([{ transform: 'none' }, { transform: 'translateX(-100%)' }], { duration: 240, easing: 'cubic-bezier(.4,0,.8,.6)', fill: 'both' })
+        : desk() ? d.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.97)' }], { duration: 160, easing: 'ease-in', fill: 'both' })
         : d.animate([{ transform: 'translateY(' + cur + 'px)' }, { transform: 'translateY(' + y + 'px)' }], { duration: 240, easing: 'cubic-bezier(.4,0,.8,.6)', fill: 'both' });
       const fin = () => { d._closing = false; d.getAnimations().forEach((x) => x.cancel()); rawClose.call(d, rv); unlock(); };
       a.onfinish = fin; a.oncancel = () => { if (d._closing) fin(); };
@@ -3099,7 +3132,16 @@
       window.addEventListener('resize', fit); document.addEventListener('focusout', () => setTimeout(fit, 250)); document.addEventListener('focusin', () => setTimeout(fit, 250));
       new MutationObserver(() => fit()).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['open'] });   // פתיחת פופאפ: מחשבים מחדש
     }
+    /* Escape בכרטיס שבצד הרשימה (דיאלוג לא מודלי לא מקבל cancel): כמו בפופאפ, במסך משנה חוזרים צעד ובמסך הראשי סוגרים */
+    document.addEventListener('keydown', (e) => {
+      const d = document.getElementById('pDlg');
+      if (e.key !== 'Escape' || !d || !d.open || !d._side || root.classList.contains('menu-open') || document.querySelector('dialog[open]:modal')) return;
+      const bk = navDepthOf(d) > 0 && NAV_BACK[d.id] ? $(NAV_BACK[d.id]) : null;
+      if (bk && !bk.hidden) bk.click(); else d.close();
+    });
+    if (sideMQ) sideMQ.addEventListener('change', () => { const d = document.getElementById('pDlg'); if (d && d.open) d.close(); });   // מעבר בין מובייל לדסקטופ רחב עם כרטיס פתוח: סוגרים
     document.querySelectorAll('dialog').forEach((d) => {
+      if (DRAWERS.includes(d.id)) { const h = d.querySelector('.sheet-head'); if (h) { const x = document.createElement('button'); x.type = 'button'; x.className = 'hbtn dclose'; x.setAttribute('aria-label', 'סגירה'); x.title = 'סגירה'; x.innerHTML = icon('close'); x.addEventListener('click', () => d.close()); h.appendChild(x); } }   // כפתור סגירה לפאנל מצד שמאל (מוצג רק בדסקטופ)
       const g = document.createElement('div'); g.className = 'grab'; g.innerHTML = '<i></i>'; g.setAttribute('aria-hidden', 'true');
       d.insertBefore(g, d.firstChild);
       d.addEventListener('cancel', (e) => {   // Escape או כפתור "חזרה" של הדפדפן/אנדרואיד (Chrome סוגר דיאלוג מודלי לפני ההיסטוריה): בתוך מסך משנה חוזרים צעד אחד כמו בחץ שבפופאפ, ורק במסך הראשי סוגרים
@@ -3107,7 +3149,7 @@
         const top = NAV.stack.find((x) => x.d === d), bk = top && navDepthOf(d) > 0 && NAV_BACK[d.id] ? $(NAV_BACK[d.id]) : null;
         if (bk && !bk.hidden) bk.click(); else d.close();
       });
-      d.addEventListener('click', (e) => { if (e.target === d) d.close(); });    // לחיצה בחוץ
+      d.addEventListener('click', (e) => { if (e.target === d && !d._side) d.close(); });    // לחיצה בחוץ (לא בכרטיס שבצד הרשימה)
       let sy = 0, dy = 0, t0 = 0, drag = false, moved = false, tapOK = true;
       const down = (e) => {
         if (e.button > 0 || d._closing || e.target.closest('button, a, input, select, textarea')) return;
@@ -3199,6 +3241,8 @@
     const o = state.promoters.find((x) => x.id === sel.value), c = o && o.color ? (PALETTE[o.color] || null) : null;
     sel.style.backgroundColor = c ? c[0] : ''; sel.style.borderColor = c ? c[1] : ''; sel.style.color = c ? c[1] : ''; sel.style.fontWeight = c ? '700' : '';   // מסגרת כמו בשאר השדות, בגוון הכהה של אותו צבע
   }
+  /* דסקטופ רחב (31.10.26): השורה של המשתתף שהכרטיס שלו פתוח בצד מסומנת ברשימה */
+  function markSel() { const on = pDlg && pDlg.open && pDlg._side; document.querySelectorAll('#list li.row').forEach((r) => { const e = r.querySelector('[data-edit]'); r.classList.toggle('sel', !!(on && e && e.dataset.edit === openPid)); }); }
   function openParticipant(id, tab, fromEl) {
     const p = id ? state.participants.find((x) => x.id === id) : null;
     sheet = p ? { id: p.id, hl: state.filter || null, hlDone: false } : { id: null, links: new Map(state.filter ? [[state.filter, false]] : []) };
@@ -3219,6 +3263,7 @@
     refreshSheetMeetings();
     openPid = p ? p.id : null;
     pDlg.showModal();
+    if (pDlg._side) { try { syncUrl(); } catch (e) {} markSel(); }   // בצד הרשימה: מעבר ממשתתף למשתתף בלי לסגור את הכרטיס
     pDlg.setAttribute('tabindex', '-1'); pDlg.focus({ preventScroll: true });   // בלי טבעת פוקוס על כפתור הסגירה
     viewStack = []; payCtx = null; promoFromPay = null;
     setPTab(p ? (tab === 'info' ? 'info' : 'main') : 'info', true);
@@ -3793,13 +3838,24 @@
     });
   }
   window.addEventListener('resize', alignFilters);
-  const closeView = () => { const m = $('#viewMenu'); m.hidden = true; const b = $('#filtBtn'); if (b) b.setAttribute('aria-expanded', 'false'); };
+  /* פאנל הסינון נפתח ונסגר באנימציה, ומאחוריו הדף כהה למחצה (#menuShade, בדהייה) */
+  const noMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const closeView = () => {
+    const m = $('#viewMenu'), b = $('#filtBtn'); $('#menuShade').classList.remove('on'); if (b) b.setAttribute('aria-expanded', 'false');
+    if (m.hidden || m._closing) return;
+    if (noMotion()) { m.hidden = true; return; }
+    m._closing = true;
+    const a = m.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-8px)' }], { duration: 160, easing: 'ease-in', fill: 'forwards' });
+    a.onfinish = () => { m._closing = false; m.hidden = true; a.cancel(); };
+  };
   $('#listTags').addEventListener('click', (e) => {
     const gb = e.target.closest('[data-stg]'); if (gb) { state.gender = state.gender === gb.dataset.stg ? null : gb.dataset.stg; render(); syncUrl(); return; }   // זכר / נקבה בשורת הסינון
     const fk = e.target.closest('[data-fk]'); if (fk) { openF(fk.dataset.fk, fk); return; }   // אייקון סינון מעל עמודה
     const fb = e.target.closest('#filtBtn'); if (!fb) return;
     const m = $('#viewMenu'); if (!m.hidden) { closeView(); return; }
-    renderViewMenu(); m.hidden = false; fb.setAttribute('aria-expanded', 'true');
+    m.getAnimations().forEach((x) => x.cancel()); m._closing = false;
+    renderViewMenu(); m.hidden = false; fb.setAttribute('aria-expanded', 'true'); $('#menuShade').classList.add('on');
+    if (!noMotion()) m.animate([{ opacity: 0, transform: 'translateY(-8px)' }, { opacity: 1, transform: 'none' }], { duration: 200, easing: 'ease-out' });
     const r = fb.getBoundingClientRect(), top = Math.round(r.bottom + 8);
     if (window.innerWidth < 700) { m.style.left = '0px'; m.style.right = '0px'; }   // במובייל מקצה לקצה
     else { m.style.right = 'auto'; m.style.left = Math.max(8, Math.min(Math.round(r.right - m.offsetWidth), window.innerWidth - m.offsetWidth - 8)) + 'px'; }   // בדסקטופ מיושר לקצה הימני של התגית

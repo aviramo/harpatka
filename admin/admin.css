@@ -8,6 +8,7 @@
 
 /* ---------- 1. טוקנים ---------- */
 :root {
+  --scrim: rgba(16, 20, 26, .55);   /* הכהיה מאחורי פופאפים ומאחורי פאנל הסינון */
   --bg: #FFFFFF;
   --surface: #F5F6F8;      /* אפור 50: פאנלים, ריחוף */
   --surface-2: #ECEEF1;    /* אפור 100: צ'יפ ניטרלי, לחיצה */
@@ -462,7 +463,7 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 /* ---------- 5. פופאפים: מגירה מלמטה (במובייל לכל הרוחב), חלון במרכז בדסקטופ ---------- */
 dialog { border: 0; padding: 0; width: 100%; max-width: 560px; max-height: 92vh; margin: auto auto 0; overflow-y: auto; overscroll-behavior: contain; background: var(--bg); color: var(--text); box-shadow: var(--pop); }
 @media (min-width: 560px) { dialog { margin: auto; } }
-dialog::backdrop { background: rgba(16, 20, 26, .55); }
+dialog::backdrop { background: var(--scrim); }
 html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .grab { position: sticky; top: 0; z-index: 2; height: 28px; margin-bottom: -28px; display: grid; place-items: center; cursor: grab; touch-action: none; }
 .grab i { width: 40px; height: 4px; background: var(--line-2); }
@@ -885,8 +886,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .iprev { right: 8px; }
 .inext { left: 8px; }
 #meDlg { overflow: hidden; background: var(--bg); height: calc(100dvh - var(--envtop, 0px)); max-height: calc(100dvh - var(--envtop, 0px)); }   /* דף הבית כפי שהמשתתף רואה אותו: עד ראש המסך, ההדר של הדף צמוד למעלה (בבדיקות צמוד לפס הבדיקות, --envtop) */
-#meDlg .grab { position: absolute; top: 0; left: 0; right: 0; height: 12px; margin: 0; background: none; pointer-events: none; }   /* רק סימן על ההדר; ההחלקה למטה עוברת מהדף שבפנים */
-#meDlg .grab i { background: rgba(255, 255, 255, .55); }
+#meDlg .grab { display: none; }   /* צפייה כמשתתף (31.10.26): בלי פס גרירה למעלה; הסגירה בהחלקה למטה מראש הדף שבפנים נשארת */
 #meDlg iframe { display: block; width: 100%; height: 100%; border: 0; background: var(--bg); }
 
 /* מצב טעינה (31.10.26): בכותרת רק "טוען" ושלוש נקודות, בלי הקו של הכותרת ובלי שום דבר מתחתיה */
@@ -964,3 +964,51 @@ html.is-loading .vbar { display: none; }
 /* כפתור המיון בשורת החיפוש, בעמודת ריבועי ההגעה (כמו כפתור ניקוי החיפוש); כשיש טקסט בחיפוש או שהוא בפוקוס, כפתור הניקוי מכסה אותו */
 .listbar .lbsort { position: absolute; left: var(--gut); top: 50%; margin-top: calc(var(--ind) / -2); display: flex; }
 .listbar:has(.search input:not(:placeholder-shown)) .lbsort, .listbar:has(.search:focus-within) .lbsort { visibility: hidden; }
+
+/* ---------- דסקטופ רחב (מ-1024px, 31.10.26): הרשימה בעמודה בצד ימין, וכרטיס המשתתף בצד שמאל במקום פופאפ ---------- */
+#splitEmpty { display: none; }
+@media (min-width: 1024px) {
+  :root { --listw: clamp(440px, 45vw, 600px); }   /* ב-1024 בערך 460, מ-1334 ומעלה 600 */
+  .wrap { max-width: var(--listw); margin-inline: 0 auto; border-inline-end: 1px solid var(--line); }
+  #pDlg.side { position: fixed; inset: var(--envtop, 0px) var(--listw) 0 0; z-index: 20; width: auto; max-width: none; height: auto; max-height: none; margin: 0; box-shadow: none; overflow: hidden; }
+  #pDlg.side .sheet { height: 100%; max-height: none; padding: 24px 32px 20px; }
+  #splitEmpty { position: fixed; inset: var(--envtop, 0px) var(--listw) 0 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; margin: 0; color: var(--text-2); font-size: 15px; pointer-events: none; }
+  #splitEmpty svg { width: 40px; height: 40px; color: var(--line-2); }
+  #splitEmpty p { margin: 0; }
+  html.split-open #splitEmpty, html.is-loading #splitEmpty { display: none; }
+  .row.sel, .row.sel:hover { background: var(--surface-2); }   /* המשתתף שהכרטיס שלו פתוח */
+}
+
+/* ---------- דסקטופ (31.10.26): הגדרות, סטטיסטיקות וכספים כפאנל מצד שמאל שמחליק ימינה (בדסקטופ רחב: כל האזור שמשמאל לרשימה) ---------- */
+dialog .dclose { display: none; }
+@media (min-width: 760px) {
+  :is(#setDlg, #stDlg, #finDlg, #prDlg).drawer { inset: var(--envtop, 0px) auto 0 0; width: min(600px, 92vw); max-width: none !important; height: auto; max-height: none; margin: 0; box-shadow: var(--pop); }
+  :is(#setDlg, #stDlg, #finDlg, #prDlg).drawer .sheet { min-height: 100%; }
+  #finDlg.drawer .sheet { height: 100%; max-height: none; }
+  dialog.drawer .sheet-head .dclose { display: inline-grid; flex: 0 0 auto; }
+}
+@media (min-width: 1024px) {
+  :is(#setDlg, #stDlg, #finDlg, #prDlg).drawer { width: calc(100vw - var(--listw)); }
+}
+
+/* ---------- מאחורי פאנל הסינון: הדף כהה למחצה, בדהייה (31.10.26) ---------- */
+#menuShade { position: fixed; inset: 0; z-index: 299; background: var(--scrim); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .22s ease, visibility 0s linear .22s; }
+#menuShade.on { opacity: 1; visibility: visible; transition: opacity .22s ease, visibility 0s; }
+@media (prefers-reduced-motion: reduce) { #menuShade, #menuShade.on { transition: none; } }
+
+/* ---------- סטטיסטיקות וכספים בפאנל רחב (31.10.26): מנצלים את הרוחב, לפי הרוחב של הפאנל עצמו (container query) ---------- */
+@media (min-width: 760px) { :is(#stDlg, #finDlg).drawer .sheet { container-type: inline-size; } }
+@container (min-width: 680px) {
+  .finsum { grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.5fr); }   /* כל כרטיסי הסיכום בשורה אחת, והנטו (האחרון) רחב יותר */
+  .finsum .metric.wide { grid-column: auto; }
+  .fincmds .btn { flex: 0 0 200px; }
+  .stkpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  #stBody .ppanel[data-sp="main"]:not([hidden]) { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: stretch; }   /* שלושת הנושאים זה לצד זה */
+  #stBody .ppanel[data-sp="main"] > :not(.topic) { grid-column: 1 / -1; }
+  #stBody .ppanel[data-sp="main"] .stbottom { margin-bottom: 0; }
+  #stBody .topic { margin-bottom: 0; display: flex; flex-direction: column; }
+  #stBody .topic .tnums { grid-template-columns: minmax(0, 1fr); }
+  #stBody .topic .tmore { margin-top: auto; padding-top: 8px; }
+  #stBody .ppanel[data-sp]:not([data-sp="main"]):not([hidden]) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; align-items: start; }   /* פירוט: שני טורים */
+  #stBody .ppanel[data-sp]:not([data-sp="main"]) > :not(.stp), #stBody .stp:has(.tr > span:nth-child(5)), #stBody .stp:has(.stkpis) { grid-column: 1 / -1; }   /* כרטיסי סיכום, הסברים וטבלאות רחבות לכל הרוחב */
+}
