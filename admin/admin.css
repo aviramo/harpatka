@@ -253,7 +253,7 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
   background: var(--bg); color: var(--text); border: 1px solid var(--line); box-shadow: var(--pop); padding: 8px; }
 .qmenu { position: fixed; z-index: 300; display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-start; gap: 8px; width: min(330px, calc(100vw - 16px)); }
 .sortmenu { position: absolute; top: calc(100% + 8px); left: 0; z-index: 20; min-width: 190px; }
-#sortMenu { position: fixed; top: 0; left: 0; z-index: 300; }
+#sortMenu, #waMenu { position: fixed; top: 0; left: 0; z-index: 300; }
 /* פריט תפריט בשורה: אותו מבנה בכל התפריטים (מיון, מפגשים, תקופה, תפריט הכותרת) */
 .sortmenu button, #finPerMenu .qi, .hmi { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0 12px; text-align: right; font-size: 15.5px; font-weight: 500; color: var(--text); background: transparent; border: 0; }
 @media (hover: hover) { .sortmenu button:hover, #finPerMenu .qi:hover, .hmi:hover, .mtr.mrow2:hover, .fopt:hover, #viewMenu .vrow:hover { background: var(--surface); } }
@@ -358,7 +358,7 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 .row:active { background: var(--surface-2); }
 .row.other .name { color: var(--text-2); }
 /* עמודות: גיל ומגדר | שם | (הערה, מוסתר) | תגיות | סטטוס או התמדה | מחוונים */
-.row .main { display: grid; grid-template-columns: 44px minmax(0, 1fr) 0 auto auto; column-gap: 8px; align-items: center; min-height: var(--ctl); padding: 8px var(--gut); padding-inline-start: calc(var(--gut) + var(--tag) + 8px); cursor: pointer; }
+.row .main { display: grid; grid-template-columns: 44px minmax(0, 1fr) 0 auto auto; column-gap: 8px; align-items: center; min-height: var(--ctl); padding: 8px var(--gut); padding-inline-end: calc(var(--gut) + var(--tag) + 8px); cursor: pointer; }   /* עמודת הוואטסאפ (.rowwa) בקצה השמאלי, אחרי כל העמודות */
 .row .main.att, .row .main.ev { grid-template-columns: 44px minmax(0, 1fr) 0 auto auto var(--ind); }   /* עמודת הסטטוס ברוחב התגית (לא 112px קבוע): התגיות עדיין מיושרות בקצה השמאלי, והשם מקבל את כל השאר */
 .row .main.att.ev { grid-template-columns: 44px minmax(0, 1fr) 0 auto auto var(--ind) var(--ind); }
 .row .main.bl { grid-template-columns: 44px minmax(0, 1fr) 0 auto 82px var(--ind); }
@@ -397,10 +397,11 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 .row .main.bl.nosum .balic { grid-column: 5; }
 .row .main .here:active, .row .evc:active { transform: scale(.94); }
 /* וואטסאפ: תגית אייקון בתחילת השורה, בגובה התגיות שבשורה */
-.rowwa { position: absolute; inset-inline-start: var(--gut); top: 50%; z-index: 1; margin-top: calc(var(--tag) / -2); background: var(--green-bg); border-color: var(--green-bg); color: var(--green); }
+.rowwa { position: absolute; inset-inline-end: var(--gut); top: 50%; z-index: 1; margin-top: calc(var(--tag) / -2); background: var(--green-bg); border-color: var(--green-bg); color: var(--green); }
 .rowwa.nophone { background: var(--red-bg); border-color: var(--red-bg); color: var(--red); cursor: default; }
 /* הוספת משתתף חדש מהחיפוש: שורה מתחת לטבלה */
 .addbox:empty { display: none; }
+.addbox .newbtn > .tg { order: 9; margin-inline-start: auto; }
 .addbox .newbtn > .tg + span { margin-inline-start: 9.5px; }   /* הטקסט מתחיל בקו של טקסט המגדר והגיל בשורות (עמודה של 44px, הטקסט ממורכז בה) */
 .addbox .newbtn { display: flex; align-items: center; gap: 8px; width: 100%; min-height: var(--ctl); padding: 8px var(--gut); background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); font-size: 16px; font-weight: 600; color: var(--text); text-align: right; margin-bottom: env(safe-area-inset-bottom); }
 .newbtn b { color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -667,7 +668,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 
 /* 6.3 עריכת מפגש */
 /* פרטי מפגש: אותו אלמנט בעריכת מפגש ובפרטי סוג המפגש (31.10.26): סעיפים (מתי, איפה, הרשמה, תמונה) עם קו מפריד, שדות בשתי עמודות */
-.mf .mfsec { margin: 4px 0 12px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 12.5px; font-weight: 700; color: var(--text-2); letter-spacing: .02em; }
+.mf .mfsec { margin: 4px 0 12px; padding-top: 16px; font-size: 12.5px; font-weight: 700; color: var(--text-2); letter-spacing: .02em; }
 .mf .mfrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .mf .mfrow:has(> [hidden]) { grid-template-columns: 1fr; }   /* שורה שאחד השדות בה מוסתר (למשל סוג מפגש כשאין סוגים): השדה הנותר לכל הרוחב */
 .mf textarea { min-height: calc(26px * 3 + 18px); }
@@ -1043,3 +1044,32 @@ dialog .dclose { display: none; }
   #pForm .ppanel[data-panel="wallet"] > .payact { grid-column: 1; grid-row: 2; flex-direction: column; margin: 12px 0 0 !important; }
   #pForm .ppanel[data-panel="wallet"] > #walHist { grid-column: 2; grid-row: 1 / span 2; }
 }
+
+
+/* ---------- תבניות הודעה לוואטסאפ (31.10.26) ---------- */
+.setrow[hidden] { display: none; }
+.vbar #listWa { left: var(--gut); }   /* עמודת הוואטסאפ בקצה השמאלי, מעל כפתורי הוואטסאפ שבשורות */
+.hfilt.wabtn.wasel::after { content: ''; position: absolute; top: 3px; inset-inline-start: 3px; width: 7px; height: 7px; background: var(--green); }   /* נבחרה תבנית (לא הודעה ריקה) */
+#waMenu { max-width: min(320px, calc(100vw - 16px)); overflow-y: auto; overscroll-behavior: contain; }
+#waMenu button { min-width: 0; }
+#waMenu .wmi { display: flex; align-items: center; gap: 12px; min-width: 0; }
+#waMenu .wmi svg { width: 18px; height: 18px; flex: none; }
+#waMenu .wmn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#waMenu .wmi small { color: var(--text-2); font-size: 12px; font-weight: 600; white-space: nowrap; }
+#waMenu .wadd { margin-top: 4px; border-top: 1px solid var(--line); font-weight: 700; }
+.mtlist { display: grid; gap: 8px; margin-bottom: 8px; }
+.mtitem { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-height: var(--ctl); padding: 0 12px; background: var(--surface); color: var(--text); font-weight: 600; font-size: 15.5px; text-align: start; }
+.mtitem svg { flex: none; color: var(--text-2); }
+.mtitem span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mf.editing > :not(.mtedit) { display: none; }   /* מסך עריכת תבנית: כל שאר הטופס מוסתר */
+.mtedit { display: grid; gap: 8px; }
+.mtedit .field { margin: 0; }
+.mtedit .emvars { margin: 0; }
+.mthead { display: flex; align-items: center; gap: 8px; min-height: var(--ib); font-size: 18px; }
+.mtdel { height: var(--ctl); padding: 0 16px; background: var(--red-bg); color: var(--red); font-weight: 700; font-size: 15px; }
+.mtpladd { display: block; width: 100%; height: var(--ctl); margin-bottom: 8px; border: 1px solid transparent; background: var(--surface-2); color: var(--text); font-weight: 600; font-size: 14.5px; }
+.mtinh2 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
+.mtinh2 small { flex: 1 0 100%; color: var(--text-2); font-size: 13px; font-weight: 600; }
+.mtinh2 span { display: inline-flex; align-items: center; height: var(--tag); padding: 0 12px; background: var(--surface-2); color: var(--text); font-size: 14px; font-weight: 600; }
+.rowwa.sent { background: var(--green); border-color: var(--green); color: #fff; }   /* התבנית שנבחרה כבר נשלחה למשתתף הזה */
+.rowwa.sent::after { content: '✓'; position: absolute; top: 1px; inset-inline-start: 3px; font-size: 10px; font-weight: 800; line-height: 1; color: #fff; }

@@ -2,7 +2,7 @@
 -- לא מועתקים: harpatka_settings (מפתחות סודיים), טבלאות הלוח (members, posts, likes, anon_likes), harpatka_admin_blocked. הטריגרים מושבתים בזמן ההעתקה (בלי הערות מערכת / יומן כפולים).
 do $$
 declare
-  copy_order text[] := array['harpatka_meeting_types','harpatka_meetings','harpatka_promoters','harpatka_participants','harpatka_statuses','harpatka_pay_methods','harpatka_public_settings','harpatka_admin_prefs','harpatka_sources','harpatka_attendance','harpatka_payments','harpatka_promoter_payments','harpatka_notes','harpatka_finance','harpatka_finance_recurring','harpatka_finance_transfers','harpatka_finance_log'];
+  copy_order text[] := array['harpatka_meeting_types','harpatka_meetings','harpatka_msg_templates','harpatka_promoters','harpatka_participants','harpatka_statuses','harpatka_pay_methods','harpatka_public_settings','harpatka_admin_prefs','harpatka_sources','harpatka_attendance','harpatka_msg_sent','harpatka_payments','harpatka_promoter_payments','harpatka_notes','harpatka_finance','harpatka_finance_recurring','harpatka_finance_transfers','harpatka_finance_log'];
   clear_tbls text[] := array['harpatka_posts','harpatka_likes','harpatka_anon_likes','harpatka_members','harpatka_audit'];
   t text; cols text; n bigint;
 begin
