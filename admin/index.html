@@ -2157,10 +2157,12 @@
       if (!mm || !meetingStarted(mm)) return '';
       return ['during', 'after'].map((ph) => { const list = phaseList(ph, qTid); if (!list.length || (ph === 'after' && !ll)) return ''; return '<div class="qhd">' + PHASES[ph].title + '</div>' + list.slice().reverse().map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-qp="' + ph + ':' + s.key + '" aria-pressed="' + (phaseOf(ll, ph) === s.key) + '">' + esc(s.label) + '</button>').join(''); }).join('');
     };
+    const phSecs = phaseSecs();   // כשיש קטעי "במפגש" / "אחרי המפגש" גם הסטטוסים של לפני המפגש מקבלים כותרת, לעקביות
     menu.innerHTML =
+      (phSecs ? '<div class="qhd">לפני המפגש</div>' : '') +
       (noneOk ? '<button type="button" role="menuitem" class="qi tone-red" data-qk="__none" aria-pressed="false">הסרה מהמפגש</button>' : '') +
       (inMeeting ? statusList(qTid) : pstatusList().slice().reverse()).map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-qk="' + s.key + '" aria-pressed="' + (inMeeting ? s.key === cur : tagSet.has(s.key)) + '">' + esc(s.label) + '</button>').join('') +
-      phaseSecs();
+      phSecs;
     menu.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
     let left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8), top = r.bottom + 8;
