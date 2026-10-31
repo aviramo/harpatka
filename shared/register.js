@@ -585,6 +585,11 @@
       if (!meSheet && !window.__meAdmin) setTimeout(() => { try { openMeArea('', true); } catch (e) {} }, 1500);   // טעינה מוקדמת של האזור האישי (מוסתר), כדי שהפתיחה הראשונה תהיה מיידית
       if (pending === 'reg') setTimeout(() => openReg(true, takeRegMeeting()), 300);   // נכנסו עם גוגל מתוך הרשמה: פופאפ ההרשמה של המפגש שנבחר, במצב מחובר
     } else if (d && d.status === 'noauth') { window.__meAdmin = false; clearMeName(); }
+    else if (d && d.status === 'blocked' && !AS) {   // החשבון נחסם או נותק (גם בזמן אמת): מנתקים אותו מהדפדפן, סוגרים את האזור האישי, והדף חוזר למצב אורח
+      try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (e) {}
+      meInfo = null; window.__meAdmin = false; clearMeName(); applyMemberMode();
+      try { if (meSheet) { meSheet.dataset.k = ''; closeMeSheet(); } } catch (e) {}
+    }
     else { clearMeName(); applyMemberMode(); if (pending === 'reg' && !AS) setTimeout(() => openReg(true, takeRegMeeting()), 300); }   // מחובר לגוגל אבל אין משתתף מקושר: פופאפ ההרשמה עם הטלפון בלבד (מחבר או יוצר משתתף ונרשם באותו צעד)
   });
   /* דפדפן פנימי של אפליקציה (פייסבוק, אינסטגרם ועוד, לשם מגיעים מהמודעות): גוגל חוסם שם כל כניסה עם גוגל, ולכן שם האתר מתנהג כאילו הכניסה כבויה: ההרשמה בטופס הרגיל */

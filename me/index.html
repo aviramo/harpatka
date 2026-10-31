@@ -273,7 +273,10 @@
     try { const bk = sessionStorage.getItem('harpatka_me_back'); if (bk && data && !asId) { sessionStorage.removeItem('harpatka_me_back'); const home = location.pathname.replace(/me\/?$/, ''); if (data.status === 'ok' && !data.impersonating) location.replace(home + (bk === 'reg' ? '?register=1' : '')); else if (data.status !== 'ok') location.replace(home + '?register=1'); else return; return; } } catch (e) {}   // חוזרים לדף הבית: מחוברים (עם השם בצ'יפ), או בלי רשומה לחשבון הזה: נפתח פופאפ ההרשמה   // הגיעו מהקישור "התחברות עם גוגל" בפופאפ ההרשמה: חוזרים לדף הבית והפופאפ נפתח במצב מחובר
     if (data.status === 'ok') { const keep = keepMsg ? $('#sm') && $('#sm').textContent : ''; viewMain(); if (keep) toast($('#sm'), keep); }
     else if (data.status === 'pending') viewPending();
-    else if (data.status === 'blocked') viewBlocked();
+    else if (data.status === 'blocked') {   // החשבון נחסם או נותק (גם בזמן אמת, כשהדף פתוח): מנתקים את החשבון מהדפדפן, בלי שם ויתרה; בפופאפ של דף הבית הוא נסגר והדף חוזר למצב אורח
+      if (!asId) { clearSession(); if (EMBED) { try { window.parent.postMessage({ harpatka: 'me-logout' }, location.origin); } catch (e) {} } }
+      setTitle(''); { const bc = $('#balChip'); if (bc) bc.hidden = true; } $('#outBtn').hidden = true; viewBlocked();
+    }
     else if (afterClaim) viewSignup(lastPhone);
     else viewClaim('');
   }
