@@ -347,6 +347,9 @@ html:not(.vid-pending):where(.pg-home) .hv:not(.closing){ display:none; }
 :where(.pg-home) #stickyReg{ transition:transform .45s cubic-bezier(.22,.8,.2,1), opacity .35s ease; }
 :where(.pg-home) #stickyReg.cta-away{ transform:translateY(130%); opacity:0; }
 :where(.pg-home) #stickyReg.cta-away [data-contact]{ pointer-events:none !important; }
+:where(.pg-home) #stickyReg.cta-off{ transform:translateY(130%); opacity:0; }   /* בטעינה: מוסתר עד שברור שיש מפגש להירשם אליו, ואז עולה */
+:where(.pg-home) #stickyReg.cta-off [data-contact]{ pointer-events:none !important; }
+@media (prefers-reduced-motion:reduce){ :where(.pg-home) #stickyReg{ transition:none; } }
 :where(.pg-home) .mt-list{ display:flex; flex-direction:column; gap:.9rem; }
 :where(.pg-home) .mt-skel{ height:15rem; border-radius:26px; background:linear-gradient(90deg, rgba(229,86,45,.10) 25%, rgba(229,86,45,.22) 50%, rgba(229,86,45,.10) 75%); background-size:200% 100%; animation:mtShim 1.3s linear infinite; }
 @keyframes mtShim{ from{ background-position:200% 0; } to{ background-position:-200% 0; } }
@@ -497,7 +500,12 @@ html:not(.vid-pending):where(.pg-home) .hv:not(.closing){ display:none; }
 /* ===== דסקטופ (31.10.26): המפגשים כקוביות בשורה אופקית ממורכזת, והאזור האישי הוא הקובייה האחרונה בשורה ===== */
 :where(.pg-home) #mList > #meAreaCard{ margin-top:.4rem; }
 :where(.pg-home) #tbCta, :where(.pg-home) #tbCta[hidden]{ display:none; }
-:where(.pg-home) .mt-pcity::before{ content:" · "; }
+:where(.pg-home) .mt-prow > div{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }   /* מפגש שהסתיים: שורה למועד ושורה לעיר · מיקום */
+:where(.pg-home) .mt-pwhere{ margin-top:.15rem; font-size:.9rem; font-weight:600; }
+:where(.pg-home) .mt-ppl{ display:inline-flex; align-items:center; gap:.25rem; margin-inline-start:-.2rem; }   /* כמות המשתתפים: המספר וסמל של אדם במקום המילה; הנקודה באותו מרווח כמו "עיר · מיקום" */
+:where(.pg-home) .mt-ppl i{ font-style:normal; }
+:where(.pg-home) .mt-ppl b{ font-weight:inherit; }
+:where(.pg-home) .mt-ppl svg{ width:1em; height:1em; flex:0 0 auto; }
 @media (min-width:1024px){
   :where(.pg-home) #mList{ flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:stretch; gap:1.5rem; }
   :where(.pg-home) #mList > .mt-card, :where(.pg-home) #mList > #meAreaCard, :where(.pg-home) #mList > .mt-skel{ flex:1 1 15rem; max-width:19rem; min-width:0; }
@@ -831,7 +839,7 @@ html.embed:where(.pg-me) .sect{ color:var(--paper); }
 /* שורת מפגש קבועה (30.10.26): מימין יום, תאריך ושעה ומתחתיהם עיר ושם; משמאל ההגעה ומתחתיה התשלום; מתחת כפתור תשלום גדול כשצריך */
 :where(.pg-me) .mtrow{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:14px 0; }
 :where(.pg-me) .mtw{ flex:1; min-width:0; }
-:where(.pg-me) .mtd{ font-size:15px; font-weight:700; white-space:nowrap; }
+:where(.pg-me) .mtd{ font-size:15px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 :where(.pg-me) .mtd .c1{ margin-inline-end:6px; }
 :where(.pg-me) .mtrow .c5{ margin-top:4px; font-size:15px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 :where(.pg-me) .mts{ display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex:0 0 auto; }

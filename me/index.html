@@ -7,7 +7,7 @@
 <title>האזור האישי | יוצאים להרפתקה</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&family=Rubik:wght@500;700;800&display=block" rel="stylesheet" />
-<link rel="stylesheet" href="../shared/site.css?v=20261030p" />
+<link rel="stylesheet" href="../shared/site.css?v=20261030q" />
 <script>try { if (window.self !== window.top && /[?&]embed=/.test(location.search)) document.documentElement.classList.add('embed'); } catch (e) {}</script>   <!-- בפופאפ: הרקע הטורקיז כבר בציור הראשון -->
 </head>
 <body>
@@ -23,7 +23,7 @@
     <button type="button" class="btn ghost" id="otherClose">סגירה</button>
   </dialog>
 </div>
-<script src="../shared/config.js?v=20261030f"></script>
+<script src="../shared/config.js?v=20261030g"></script>
 <script src="../shared/rt.js?v=1"></script>
 <script src="../shared/person-form.js?v=20261029d"></script>
 <script>
@@ -172,7 +172,8 @@
       let foot = '';
       if (m.future && !paid && !free && CFG.payboxLink) foot += '<div class="payfold" data-pf="' + m.id + '"><div><a class="btn pay" data-paynow="' + m.id + '" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">לתשלום ' + (m.price ? m.price + ' ₪ ' : '') + 'בפייבוקס</a><div class="paylinks"><button type="button" class="lnk" data-other="' + m.id + '">רוצים לשלם בדרך אחרת?</button></div><div class="msg" data-pm="' + m.id + '"></div></div></div>';
       if (m.future && !m.attended) { const sure = unregSure === m.id; foot += '<button type="button" class="lnk sm" data-unreg="' + m.id + '"' + (sure ? ' data-sure="1"' : '') + '>' + (sure ? UNREG_SURE : 'ביטול רישום') + '</button><div class="msg" data-um="' + m.id + '"></div>'; }
-      return '<div class="mtg" data-mid="' + m.id + '"><div class="mtrow"><div class="mtw"><div class="mtd"><span class="c1">' + esc(dayParts(m.date).day) + '</span><bdi dir="ltr">' + esc(m.time) + ' · ' + esc(dayParts(m.date).date) + '</bdi></div><div class="c5">' + esc([m.city, m.name].filter(Boolean).join(' · ')) + '</div></div><div class="mts">' + att + pay + '</div></div>' + (foot ? '<div class="mtfoot">' + foot + '</div>' : '') + '</div>';
+      /* שורה ראשונה: המועד · העיר; שורה שנייה: שם המפגש · המיקום (31.10.26) */
+      return '<div class="mtg" data-mid="' + m.id + '"><div class="mtrow"><div class="mtw"><div class="mtd"><span class="c1">' + esc(dayParts(m.date).day) + '</span><bdi dir="ltr">' + esc(m.time) + ' · ' + esc(dayParts(m.date).date) + '</bdi>' + (m.city ? ' · ' + esc(m.city) : '') + '</div>' + ((m.name || m.place) ? '<div class="c5">' + esc([m.name, m.place].filter(Boolean).join(' · ')) + '</div>' : '') + '</div><div class="mts">' + att + pay + '</div></div>' + (foot ? '<div class="mtfoot">' + foot + '</div>' : '') + '</div>';
     };
     // רק המפגשים שנרשמתי אליהם (מהחדש לישן); הרשמה למפגש חדש נעשית מדף הבית
     const mine = ordered.filter((m) => m.registered);

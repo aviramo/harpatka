@@ -1,7 +1,8 @@
 /* סביבת בדיקות (test.harpatka.co.il). הקובץ נוצר ומוזרק רק לבניית הבדיקות (tools/deploy-test.py), לא קיים באתר האמיתי.
    1. כל בקשה לבסיס הנתונים הולכת לסכמת test (נתונים נפרדים מהאמיתיים).
    2. מעקב (Pixel / Google Analytics) הוסר בבנייה; כאן רק מגנים שקריאות מהקוד לא ייכשלו.
-   3. תגית קטנה "סביבת בדיקות" בפינה. */
+   3. פס "סביבת בדיקות" בראש הדף. נטען בראש ה-<head> (סקריפט חוסם), ולכן המקום של הפס שמור כבר לפני שהדף מצויר;
+      הפס עצמו כתוב ב-HTML מיד אחרי <body> (deploy-test.py), כך שהוא מופיע יחד עם הדף, בלי קפיצה (31.10.26). */
 (function () {
   window.HARPATKA_ENV = { name: 'test', schema: 'test' };
   window.dataLayer = window.dataLayer || [];
@@ -19,23 +20,30 @@
     } catch (e) {}
     return origFetch.call(this, input, init);
   };
-  /* התגית בשכבה העליונה של הדפדפן (popover): מעל הכל, גם מעל פופאפים (dialog); כשנפתח dialog היא מורמת מחדש */
+  var TOP = window.self === window.top;   // בתוך iframe (פופאפ האזור האישי, צפייה כמשתתף): בלי פס, הוא כבר בדף הראשי
+  /* המקום של הפס (18px) שמור מראש: הדף מתחיל מתחתיו, ופופאפים שנפתחים מלמעלה מתחילים מתחתיו.
+     הפופאפ נועל את הגוף ב-position:fixed; בלי margin-top על הגוף הדף שמאחור קופץ 18px למעלה */
+  if (TOP) document.documentElement.classList.add('env-test');
+  var st = document.createElement('style');
+  st.textContent = 'html.env-test{margin-top:18px;--tbtop:18px}html.env-test.modal-lock body{margin-top:18px}html.env-test .modal{top:18px}' +
+    '#testEnvBadge{inset:auto;margin:0;border:0;position:fixed;top:0;left:0;right:0;z-index:2147483647;width:auto;height:18px;padding:0;overflow:hidden;background:#3F382F;color:#fff;font:700 11px/18px Arial,sans-serif;text-align:center;pointer-events:none}' +
+    'html:not(.env-test) #testEnvBadge{display:none!important}';
+  (document.head || document.documentElement).appendChild(st);
+  /* הפס בשכבה העליונה של הדפדפן (popover): מעל הכל, גם מעל פופאפים (dialog); כשנפתח dialog הוא מורם מחדש */
   function raise(el) { try { el.hidePopover(); el.showPopover(); } catch (x) {} }
-  function badge() {
-    if (window.self !== window.top) return;   // בתוך iframe (פופאפ האזור האישי): בלי פס, הוא כבר בדף הראשי
-    if (document.getElementById('testEnvBadge')) return;
-    /* פס בדיקות לרוחב כל המסך (18px, אטום) בראש הדף, וכל המסכים מתחילים מתחתיו: הדף נדחף למטה, ופופאפים מוגבלים בגובה; הפס עצמו בשכבה העליונה כדי שיוצג תמיד */
-    var st = document.createElement('style');
-    st.textContent = 'html{margin-top:18px}:root{--tbtop:18px}html.modal-lock body{margin-top:18px}.modal{top:18px}';   // פופאפים שנפתחים מלמעלה (הרשמה, יציאה, תשלום בדרך אחרת) מתחילים מתחת לפס הבדיקות ולא מתחתיו   // הפופאפ נועל את הגוף ב-position:fixed; בלי זה הדף שמאחור קופץ 18px למעלה (בגלל פס הבדיקות)
-    document.head.appendChild(st);
-    var d = document.createElement('div');
-    d.id = 'testEnvBadge';
+  window.__envBadge = function () {
+    if (!TOP) return;
+    var d = document.getElementById('testEnvBadge');
+    if (!d) {   // עמוד בלי הפס בתוך ה-HTML: יוצרים אותו (גיבוי)
+      if (!document.body) return;
+      d = document.createElement('div'); d.id = 'testEnvBadge'; d.textContent = 'סביבת בדיקות · נתונים נפרדים מהאמיתיים';
+      document.body.insertBefore(d, document.body.firstChild);
+    }
+    if (d.getAttribute('data-on')) return;
+    d.setAttribute('data-on', '1');
     d.setAttribute('popover', 'manual');
-    d.textContent = 'סביבת בדיקות · נתונים נפרדים מהאמיתיים';
-    d.setAttribute('style', 'inset:auto;margin:0;border:0;position:fixed;top:0;left:0;right:0;width:auto;height:18px;padding:0;overflow:hidden;background:#3F382F;color:#fff;font:700 11px/18px Arial,sans-serif;text-align:center;pointer-events:none');
-    document.body.appendChild(d);
     raise(d);
     new MutationObserver(function (m) { if (m.some(function (r) { return r.target.nodeName === 'DIALOG'; })) raise(d); }).observe(document.documentElement, { subtree: true, attributes: true, attributeFilter: ['open'] });
-  }
-  if (document.body) badge(); else document.addEventListener('DOMContentLoaded', badge);
+  };
+  if (document.body) window.__envBadge(); else document.addEventListener('DOMContentLoaded', window.__envBadge);
 })();

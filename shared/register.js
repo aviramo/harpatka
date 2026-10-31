@@ -785,11 +785,11 @@
     if (!GL) return;   // כניסה עם גוגל כבויה: הכרטיס מוצג, והלחיצה לא עושה כלום (בינתיים)
     openMeArea(u.search);   // מחובר: הפופאפ נפתח מיד; לא מחובר: קודם כניסה עם גוגל, ואחריה הפופאפ נפתח (openMeArea → loginPopup)
   }, true);
-  window.HarpatkaMe = { enabled: GL, confirmLogout, get: meGet, login: loginGoogle, loginPopup, openArea: (search) => openMeArea(search || '') };
+  window.HarpatkaMe = { enabled: GL, ready: false, confirmLogout, get: meGet, login: loginGoogle, loginPopup, openArea: (search) => openMeArea(search || '') };   // ready: הטעינה הראשונה של מצב המשתתף הסתיימה (הכפתור הקבוע בדף הבית מחכה לה)
   try { if (sessionStorage.getItem('harpatka_open_me')) { sessionStorage.removeItem('harpatka_open_me'); setTimeout(() => { try { if (localStorage.getItem(ME_KEY)) openMeArea(''); } catch (e) {} }, 700); } } catch (e) {}   // חזרה מהתחברות עם גוגל שהתחילה מתוך הפופאפ: נפתח מחדש
   document.querySelectorAll('[data-su="ame"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); try { closeModal(contactModal); } catch (x) {} setTimeout(() => openMeArea(''), 450); }));   // כניסה לאזור האישי (בתחתית אחרי ההרשמה): סוגרים את פופאפ ההרשמה ופותחים את האזור האישי
   document.querySelectorAll('[data-su="glink"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); loginPopup('reg'); }));   // נרשמתם בעבר: כניסה עם גוגל בחלון קופץ; אחרי החיבור פופאפ ההרשמה עובר למצב משתתף מחובר (בלי לפתוח את האזור האישי)
-  loadMe();
+  { const done = () => { window.HarpatkaMe.ready = true; try { window.dispatchEvent(new Event('harpatka:me')); } catch (e) {} }; Promise.resolve(loadMe()).then(done, done); }
   if (GL && !AS && !loggedIn()) setTimeout(gsiLoad, 1500);   // השכבה של גוגל נטענת מראש למי שלא מחובר, כדי שתופיע מיד בלחיצה
   /* זמן אמת: מצב המשתתף המחובר דרך הערוץ "me" (בבדיקות "me-test"), ומפגשים והגדרות ציבוריות דרך הערוץ "meetings" (גם למבקרים לא מחוברים).
      הערוצים, חיבור מחדש, חזרה ללשונית וגיבוי כל 45 שניות מגיעים מ-HRT.channel */
@@ -861,11 +861,16 @@
     const H = { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey };
     try {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
-      const r = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time,price_tiers,name,city&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc&limit=1', { headers: H });
+      const r = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time,price_tiers,name,city,type_id&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc&limit=1', { headers: H });
       const rows = r.ok ? await r.json() : [];
       if (r.ok && !(rows && rows[0])) nearest = null;   // אין מפגש עתידי
-      try { const sr = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_public_settings?select=key,value&key=eq.default_meeting_name', { headers: H }); const sv = sr.ok ? await sr.json() : []; defMeetingName = String(((sv[0] || {}).value) || '').trim(); } catch (e) {}
-      if (rows && rows[0]) nearest = { id: rows[0].id, date: rows[0].meeting_date, time: String(rows[0].meeting_time).slice(0, 5), tiers: normT(rows[0].price_tiers), name: String(rows[0].name || '').trim(), city: String(rows[0].city || '').trim() };
+      /* שדה ריק במפגש: הערך של סוג המפגש שלו (31.10.26); מפגש בלי סוג: שם ברירת המחדל הגלובלי, כמו קודם */
+      let ty = null;
+      if (rows && rows[0] && rows[0].type_id) { try { const tr = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meeting_types?select=name,city,price_tiers&id=eq.' + rows[0].type_id, { headers: H }); ty = tr.ok ? ((await tr.json())[0] || null) : null; } catch (e) {} }
+      if (!ty) try { const sr = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_public_settings?select=key,value&key=eq.default_meeting_name', { headers: H }); const sv = sr.ok ? await sr.json() : []; defMeetingName = String(((sv[0] || {}).value) || '').trim(); } catch (e) {}
+      else defMeetingName = String(ty.name || '').trim();
+      const tx = (v) => String(v == null ? '' : v).trim();
+      if (rows && rows[0]) nearest = { id: rows[0].id, date: rows[0].meeting_date, time: String(rows[0].meeting_time).slice(0, 5), tiers: normT(rows[0].price_tiers) || (ty && normT(ty.price_tiers)), name: tx(rows[0].name) || tx(ty && ty.name), city: tx(rows[0].city) || tx(ty && ty.city) };
       showMeeting(selMeeting || nearest);
     } catch (e) {}
   };

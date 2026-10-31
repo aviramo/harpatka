@@ -97,8 +97,11 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
   flex: 0 0 auto; display: inline-grid; place-items: center; width: var(--ib); height: var(--ib); padding: 0; margin: 0;
   background: var(--bg); color: var(--text); border: 1px solid transparent; text-decoration: none; font-size: 20px; font-weight: 400; line-height: 1; }
 .hicon svg, .hbtn svg, .cico svg, .nattach svg, .medit svg, #listTags .hfilt svg, .mtr .medit svg { width: 20px; height: 20px; }
-@media (hover: hover) { .hicon:hover, .hbtn:hover, .medit:hover, .stdel:hover, #listTags .hfilt:not(.on):hover { background: var(--surface); } }
-#listTags .hfilt.on { background: var(--text); border-color: var(--text); color: #fff; }   /* מיון פעיל (לא ברירת המחדל): שחור, הסמל בלבן */
+@media (hover: hover) { .hicon:hover, .hbtn:hover, .medit:hover, .stdel:hover, #listTags .hfilt:hover { background: var(--surface); } }
+/* מיון פעיל (לא ברירת המחדל, 31.10.26): הכפתור בצבע הרגיל, ונקודה שחורה קטנה בפינה הימנית התחתונה של הסמל */
+#listTags .hfilt.on { position: relative; border-color: transparent; color: var(--text); }
+#listTags .hfilt.on:not(:hover) { background: var(--bg); }
+#listTags .hfilt.on::after { content: ''; position: absolute; right: 8px; bottom: 8px; width: 7px; height: 7px; background: var(--text); box-shadow: 0 0 0 2px var(--bg); }   /* ריבוע קטן: בדף הניהול אין פינות מעוגלות */
 /* כפתורי הכותרת של הדף (תצוגה, מיון, תפריט) וכפתור החיפוש הסגור בלי מסגרת (31.10.26), כמו ריבועי המצב; מיון פעיל נשאר שחור, וחיפוש פתוח הוא שדה עם מסגרת */
 .hsearch:not(:focus-within) input:placeholder-shown { border-color: transparent; }
 /* צבעוני: מילוי בצבע, הגבול באותו צבע */
@@ -206,7 +209,9 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
   background-repeat: no-repeat; background-position: left 12px center; background-size: 11px 7px; }
 .field input[type="date"], .field input[type="time"] { position: relative; }
 .field input[type="date"]::-webkit-calendar-picker-indicator, .field input[type="time"]::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; opacity: 0; cursor: pointer; }
-.field input[type="date"]::-webkit-date-and-time-value, .field input[type="time"]::-webkit-date-and-time-value { text-align: start; margin: 0; }   /* בכרום באנדרואיד לערך יש שוליים צדדיים משלו (מקום לסמל), והטקסט לא היה מיושר כמו בשאר השדות */
+/* תאריך ושעה: הטקסט מיושר לימין כמו בכל השדות (31.10.26). הערך עצמו נכתב משמאל לימין (25/10/2026, 20:00), והחץ שלנו נשאר משמאל */
+.field input[type="date"], .field input[type="time"] { direction: ltr; text-align: right; padding: 0 12px 0 32px; }
+.field input[type="date"]::-webkit-date-and-time-value, .field input[type="time"]::-webkit-date-and-time-value { text-align: right; margin: 0; }   /* בכרום באנדרואיד לערך יש שוליים צדדיים משלו (מקום לסמל), והטקסט לא היה מיושר כמו בשאר השדות */
 .two { display: grid; grid-template-columns: 1fr 110px; gap: 8px; }
 #ppForm .two, #finForm .two { grid-template-columns: 1fr 1fr; }
 .three { display: grid; grid-template-columns: minmax(0, 1.5fr) 64px minmax(0, 1.05fr); gap: 8px; }
@@ -317,6 +322,10 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 .mtr.mrow2.past { color: var(--text-2); }
 .mtr.mrow2.next, .mtr.mrow2.next .mc { font-weight: 800; }
 .mtr .mc { text-align: center; font-weight: 600; font-size: 15px; font-variant-numeric: tabular-nums; }
+.mtr .mc { display: inline-flex; align-items: center; justify-content: flex-start; gap: 4px; padding-inline-start: 8px; }   /* הסמל צמוד לימין התא: כל הסמלים בעמודה על אותו קו אנכי, והמספר משמאלו */
+.mtr .mc .mci { display: inline-grid; place-items: center; width: 14px; height: 14px; font-style: normal; color: var(--text-3); flex: 0 0 auto; }   /* הסמל שאומר מה המספר סופר */
+.mtr .mc .mcs { font-size: 13px; font-weight: 700; line-height: 1; }
+.mtr.mrow2[aria-checked="true"] .mc .mci { color: inherit; opacity: .7; }
 .mtr .mc.dim { color: var(--text-2); }
 .mmenu button.addm2 { display: block; width: 100%; min-height: 46px; margin-top: 4px; padding: 0 12px; border-top: 1px solid var(--line); color: var(--orange-ink); font-weight: 700; text-align: right; }
 
@@ -487,14 +496,14 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 @keyframes pviewL { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: none; } }
 @keyframes pviewR { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
 /* פופאפים בגובה מלא */
-#pDlg, #setDlg, #stDlg, #prDlg, #finDlg, #meDlg { height: 100dvh; max-height: 100dvh; }
-#setDlg .sheet, #stDlg .sheet, #prDlg .sheet { min-height: 100%; }
+#pDlg, #setDlg, #stDlg, #prDlg, #finDlg, #meDlg, #mDlg { height: 100dvh; max-height: 100dvh; }
+#setDlg .sheet, #stDlg .sheet, #prDlg .sheet, #mDlg .sheet { min-height: 100%; }
 /* דסקטופ (31.10.26): כל הפופאפים במרכז המסך בגודל התוכן (עד 90% מהגובה, ואז גלילה בתוכם), בלי פס גרירה; נפתחים ונסגרים בדהייה */
 @media (min-width: 760px) {
   dialog { margin: auto; max-height: min(90vh, 920px); }
-  #pDlg, #setDlg, #stDlg, #prDlg, #finDlg { height: auto; max-height: min(90vh, 920px); }
+  #pDlg, #setDlg, #stDlg, #prDlg, #finDlg, #mDlg { height: auto; max-height: min(90vh, 920px); }
   #pDlg .sheet, #finDlg .sheet { height: auto; max-height: min(90vh, 920px); }
-  #setDlg .sheet, #stDlg .sheet, #prDlg .sheet { min-height: 0; }
+  #setDlg .sheet, #stDlg .sheet, #prDlg .sheet, #mDlg .sheet { min-height: 0; }
   #meDlg { width: min(1100px, 94vw); max-width: none; height: min(90vh, 900px); max-height: min(90vh, 900px); }
   #meDlg iframe { height: 100%; }
   .grab { display: none; }
@@ -660,6 +669,28 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .dline.ret .dsrc small { color: var(--yellow); }
 
 /* 6.3 עריכת מפגש */
+/* פרטי מפגש: אותו אלמנט בעריכת מפגש ובפרטי סוג המפגש (31.10.26): סעיפים (מתי, איפה, הרשמה, תמונה) עם קו מפריד, שדות בשתי עמודות */
+.mf .mfsec { margin: 4px 0 12px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 12.5px; font-weight: 700; color: var(--text-2); letter-spacing: .02em; }
+.mf .mfrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mf textarea { min-height: calc(26px * 3 + 18px); }
+.mf .mfted[hidden] { display: none; }
+/* תמונה: אריח אחד ביחס 4:1 (כמו בעמוד הבית). ריק: מסגרת מקווקוות ו"הוספת תמונה"; עם תמונה: התמונה, תגית "החלפת תמונה" ו-× להסרה על התמונה עצמה */
+.mfimg { position: relative; margin-bottom: 12px; }
+.mfimg-pick { position: relative; display: grid; place-items: center; aspect-ratio: 4 / 1; min-height: 88px; overflow: hidden; border: 1px dashed var(--line-2); background: var(--surface); color: var(--text-2); cursor: pointer; }
+.mfimg-pick img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.mfimg-pick img[hidden] { display: none; }
+.mfimg.has .mfimg-pick { border: 1px solid var(--line); }
+.mfimg-empty { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; text-align: center; }
+.mfimg-empty b { font-size: 15px; font-weight: 700; color: var(--text); }
+.mfimg-empty small { font-size: 12.5px; }
+.mfimg.has .mfimg-empty { display: none; }
+.mfimg-tag { position: absolute; inset-inline-start: 8px; bottom: 8px; display: none; align-items: center; gap: 4px; height: 28px; padding: 0 8px; background: var(--bg); color: var(--text); font-size: 13px; font-weight: 700; }
+.mfimg.has .mfimg-tag { display: inline-flex; }
+.mfimg.inh .mfimg-pick img { opacity: .55; }   /* התמונה של סוג המפגש: עמומה עד שבוחרים תמונה משלו */
+.mfimg-del { position: absolute; top: 8px; inset-inline-end: 8px; display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; background: var(--bg); color: var(--text); font-size: 18px; line-height: 1; cursor: pointer; }
+.mfimg-del[hidden] { display: none; }
+@media (hover: hover) { .mfimg-pick:hover { background: var(--surface-2); } .mfimg-del:hover { background: var(--surface-2); } }
+.mfimg-pick:focus-visible { outline: 1px solid var(--text); outline-offset: -1px; }
 .mimgbtns { display: flex; gap: 8px; }
 .mimgpick, .mimgbtns button { flex: 1 1 0; height: var(--ctl); display: grid; place-items: center; border: 1px solid transparent; background: var(--surface-2); color: var(--text); font-weight: 600; font-size: 14.5px; cursor: pointer; }
 .mimgbtns button { color: var(--text-2); }
@@ -676,13 +707,23 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .mt2add { display: flex; gap: 8px; margin-top: 8px; }
 .mt2add button { flex: 1 1 0; height: var(--ctl); border: 1px solid transparent; background: var(--surface-2); color: var(--text); font-weight: 600; font-size: 14.5px; }
 #mDelete.locked, #tyDelete.locked { opacity: .45; }
+/* מפגש: שדה ריק = "כמו בסוג המפגש", הערך של הסוג מוצג כפלייסהולדר */
+.field input::placeholder, .field textarea::placeholder { color: var(--text-3); opacity: 1; }
+.phbox, .field > .phbox { position: relative; display: block; margin: 0; font-size: 16px; font-weight: 400; color: var(--text); }   /* לא לרשת את עיצוב התווית (.field > span) */
+.phbox .phv { position: absolute; inset-block: 0; inset-inline-start: 12px; display: flex; align-items: center; color: var(--text-3); font-size: 16px; font-style: normal; pointer-events: none; }
+.phbox .phv[hidden] { display: none; }
+.phbox.phempty input, .phbox.phempty input::-webkit-datetime-edit { color: transparent; }   /* phempty ולא empty: .empty תפוס למצבי "טוען" */   /* שעה ריקה: רק הפלייסהולדר (בלי "--:--") */
+.mtinh { display: flex; align-items: center; gap: 8px; min-height: var(--ctl); padding: 4px 12px; background: var(--surface); color: var(--text-3); font-size: 15px; }
+.mtinh span { flex: 1 1 auto; min-width: 0; }
+.mtinh[hidden], #mTierEd[hidden] { display: none; }
+.mtinh button { flex: 0 0 auto; height: 36px; padding: 0 12px; background: var(--surface-2); color: var(--text); font-weight: 600; font-size: 14.5px; }
 /* סוג מפגש (מסך בתוך ההגדרות, נפתח מתפריט המפגשים) */
 #setDlg .tyform { margin: 8px 0 16px; }
 #tyDelete { width: 100%; background: var(--surface-2); border-color: var(--surface-2); color: var(--red); }
 #mTypeF select { font-weight: 700; }
 /* סוגי מפגשים בראש תפריט המפגשים: אותן שורות, ושורת ההוספה מפרידה מרשימת המפגשים */
 .mmenu button.addm2.addt { margin: 0 0 8px; border-bottom: 1px solid var(--line); }
-.mtr.mrow2.mall { margin-bottom: 8px; }   /* "כל המשתתפים" בראש התפריט, מעל סוגי המפגשים */
+.mmenu .mtop { position: sticky; top: 0; z-index: 1; margin: -8px -8px 8px; padding: 8px 8px 4px; background: var(--bg); border-bottom: 1px solid var(--line); }   /* "כל המשתתפים" בראש התפריט, מעל סוגי המפגשים, וקבוע בזמן גלילה */
 
 /* 6.4 הגדרות */
 #setDlg .sheet-head { position: relative; }

@@ -46,15 +46,14 @@ def build_test_admin():
     else:
         rep(H_OLD, H_NEW)
         rep('  <style>\n', '  <style>\n' + testbar_css)
-    body_start = t.index('<body')
-    end = t.index('>\n', body_start) + 2
-    t = t[:end] + testbar_div + t[end:]
-    rep("schema: 'public'", "schema: 'test'")
-    rep("DB.key) };", "DB.key), 'Accept-Profile': 'test', 'Content-Profile': 'test' };   // סביבת בדיקות: סכמה test")
     js = ('<script>(function(){var els=[document.getElementById("testBadge")];'
           'function up(){els.forEach(function(e){try{e.hidePopover();e.showPopover();}catch(x){}});}up();'
           'new MutationObserver(function(m){if(m.some(function(r){return r.target.nodeName==="DIALOG";}))up();}).observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:["open"]});})();</script>')
-    t = t.replace('</body>', js + '</body>', 1)
+    body_start = t.index('<body')
+    end = t.index('>\n', body_start) + 2
+    t = t[:end] + testbar_div + '  ' + js + '\n' + t[end:]   # הפס והסקריפט שמציג אותו מיד אחרי <body>: מופיע יחד עם הדף, לא אחרי שכל הדף נטען
+    rep("schema: 'public'", "schema: 'test'")
+    rep("DB.key) };", "DB.key), 'Accept-Profile': 'test', 'Content-Profile': 'test' };   // סביבת בדיקות: סכמה test")
     return t, css
 
 
@@ -108,6 +107,9 @@ def adapt(path, inject_env):
     t, n = re.subn(r'(<head[^>]*>)', lambda m: m.group(1) + add, t, count=1)
     if not n:
         sys.exit('אין <head> ב-' + str(path))
+    if inject_env:   # פס הבדיקות כתוב ב-HTML מיד אחרי <body>, כך שהוא מצויר יחד עם הדף (המקום שלו שמור כבר מה-<head>, env.js)
+        badge = '<div id="testEnvBadge">סביבת בדיקות · נתונים נפרדים מהאמיתיים</div><script>window.__envBadge&&window.__envBadge()</script>'
+        t = re.sub(r'(<body[^>]*>)', lambda m: m.group(1) + badge, t, count=1)
     path.write_text(t, encoding='utf-8', newline='\n')
 
 

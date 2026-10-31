@@ -165,7 +165,7 @@
     }
   </script>
 
-  <link rel="stylesheet" href="../shared/site.css?v=20261030p">
+  <link rel="stylesheet" href="../shared/site.css?v=20261030q">
   <script>
     /* סרטון פתיחה: אם הדפדפן מאפשר, מסתירים את ההזמנה (בלי להזיז את הדף) עד שהסרטון נגמר; רשת ביטחון אחרי 9 שניות */
     (function(){
@@ -193,7 +193,7 @@
         <p class="tb-main font-display" id="tbMain">&nbsp;</p>
         <p class="tb-sub" id="tbSub">&nbsp;</p>
       </div>
-      <a href="#" class="tb-cta" id="tbCta">הרשמה למפגש</a><!-- דסקטופ: כפתור ההרשמה בבאנר הקבוע (במקום הכפתור הקבוע בתחתית, שמתאים למובייל); אותה פעולה בדיוק -->
+      <a href="#" class="tb-cta" id="tbCta" hidden>הרשמה למפגש</a><!-- דסקטופ: כפתור ההרשמה בבאנר הקבוע (במקום הכפתור הקבוע בתחתית, שמתאים למובייל); אותה פעולה בדיוק -->
     </div>
   </div>
   <script>/* שומר מראש את הגובה של הבאנר הקבוע (מיד אחרי ה-HTML שלו, לפני שהדף מצויר), כדי שהדף לא יקפוץ למטה בטעינה */
@@ -559,13 +559,13 @@
   </footer>
 
   <!-- כפתור הרשמה קבוע בתחתית המסך (לבקשת המשתמש 20.10.26; מחליף את כפתורי ההרשמה שהיו בתוך הדף) -->
-  <div id="stickyReg" class="fixed inset-x-0 bottom-0 z-40 px-5 pt-5 pointer-events-none" style="padding-bottom:calc(.9rem + env(safe-area-inset-bottom));background:linear-gradient(to top, rgba(255,245,232,.97) 55%, rgba(255,245,232,0))">
+  <div id="stickyReg" class="cta-off fixed inset-x-0 bottom-0 z-40 px-5 pt-5 pointer-events-none" style="padding-bottom:calc(.9rem + env(safe-area-inset-bottom));background:linear-gradient(to top, rgba(255,245,232,.97) 55%, rgba(255,245,232,0))">
     <a href="#" target="_blank" rel="noopener" data-contact class="btn-primary rounded-full pointer-events-auto block mx-auto w-full max-w-[24rem] text-center py-4 text-[1.2rem] font-bold" id="stickyRegBtn" style="box-shadow:0 10px 24px -8px rgba(200,65,27,.55)">הרשמה למפגש</a>
   </div>
 
 
   <script src="../shared/age.js?v=20261031a"></script>
-  <script src="../shared/config.js?v=20261030f"></script>
+  <script src="../shared/config.js?v=20261030g"></script>
   <script>
     /* ====== CONFIG — החליפו בערכים האמיתיים ====== */
 
@@ -733,21 +733,26 @@
 
     /* ===== המפגשים: הקודם (אחד), הקרוב והעתידיים. אפשר להירשם לכל מפגש שעוד לא עבר. מקור: harpatka_meetings ומדרגות המחיר (harpatka_price_tiers); הצגה מיידית מהמטמון המקומי של הביקור הקודם ואז רענון ===== */
     const normT = t => (t && !Array.isArray(t) && Number.isFinite(Number(t.base))) ? { base: Number(t.base), steps: (Array.isArray(t.steps) ? t.steps : []).map(x => ({ days: Number(x.days), price: Number(x.price) })).filter(x => x.days >= 1 && Number.isFinite(x.price)) } : null;
-    const MEET_CACHE = 'harpatka_meetings_v19';
+    const MEET_CACHE = 'harpatka_meetings_v20';
     const fetchMeetings = async () => {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
       const H = { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey };
-      const base = CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time,name,max_participants,directions,price_tiers,image_url,city';
+      const base = CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time,name,max_participants,directions,price_tiers,image_url,city,place,type_id';
       try {
-        const [fu, pa, st] = await Promise.all([
+        const [fu, pa, st, ty] = await Promise.all([
           fetch(base + '&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc', { headers: H }),
           fetch(base + '&meeting_date=lt.' + today + '&order=meeting_date.desc,meeting_time.desc&limit=3', { headers: H }),   // עד 3 מפגשים אחרונים שהסתיימו
-          fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_public_settings?select=key,value&key=in.(default_meeting_name,default_meeting_image)', { headers: H })
+          fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_public_settings?select=key,value&key=in.(default_meeting_name,default_meeting_image)', { headers: H }),
+          fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meeting_types?select=id,name,meeting_time,city,place,max_participants,directions,price_tiers,image_url&order=sort.asc,created_at.asc', { headers: H }).catch(() => null)   // ברירות המחדל של סוגי המפגשים
         ]);
         if (fu.ok && pa.ok) {
           const f = await fu.json(), p = await pa.json(), sv = st.ok ? await st.json() : [], sget = k => String(((sv.find(x => x.key === k) || {}).value) || '').trim(), defName = sget('default_meeting_name'), defImg = /^https:\/\//i.test(sget('default_meeting_image')) ? sget('default_meeting_image') : '';   // שם ברירת מחדל: למפגש בלי שם
-          const mk = r => ({ id: r.id, date: r.meeting_date, time: String(r.meeting_time).slice(0, 5), name: String(r.name || '').trim() || defName, city: String(r.city || '').trim(), img: (/^https:\/\//i.test(r.image_url || '') ? r.image_url : '') || defImg, max: r.max_participants, tiers: normT(r.price_tiers), dir: String(r.directions || '').trim() });
-          return { past: p.map(mk).reverse(), future: f.map(mk), defName, defImg };
+          /* כל שדה: הערך של המפגש, ואם הוא ריק הערך של סוג המפגש שלו (31.10.26). מפגש בלי סוג: שם ותמונת ברירת המחדל הגלובליים, כמו קודם */
+          const tys = ty && ty.ok ? await ty.json() : [], tyOf = r => tys.find(t => t.id === r.type_id) || null;
+          const txt = v => String(v == null ? '' : v).trim(), url = v => /^https:\/\//i.test(v || '') ? v : '';
+          const mk = r => { const t = tyOf(r); return { id: r.id, date: r.meeting_date, time: String(r.meeting_time || (t && t.meeting_time) || '').slice(0, 5), name: txt(r.name) || (t ? txt(t.name) : defName), city: txt(r.city) || txt(t && t.city), place: txt(r.place) || txt(t && t.place), img: url(r.image_url) || (t ? url(t.image_url) : defImg), max: r.max_participants != null ? r.max_participants : (t ? t.max_participants : null), tiers: normT(r.price_tiers) || (t && normT(t.price_tiers)), dir: txt(r.directions) || txt(t && t.directions) }; };
+          const emptyImg = (tys.length ? url(tys[0].image_url) : '') || defImg;   // אין מפגש עתידי: התמונה של סוג המפגש הראשון
+          return { past: p.map(mk).reverse(), future: f.map(mk), defName, defImg: emptyImg };
         }
       } catch (e) {}
       return null;
@@ -789,6 +794,7 @@
       /* מפגש עתידי (אחרי הקרוב): אותו כרטיס בדיוק כמו המפגש הקרוב, רק דהוי */
       /* כרטיס מפגש אחד לכל המפגשים: אותם אלמנטים בשני המצבים (ממוזער / מורחב), בלי שכפול. התמונה ממלאת את הכרטיס והטקסטים מעליה;
          במעבר הכרטיס גדל (התמונה "זומית" פנימה), התאריך גדל ומופיעים הכפתור והמדרגות. מפגש שעבר: אותו כרטיס בלי כפתור ומדרגות ובלי הרחבה. */
+      const PPL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>';
       const CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
       const toggleCard = (c, on) => { c.classList.toggle('open', on); c.setAttribute('aria-expanded', String(on)); };
       const meetingCard = (m, today, past, open) => {
@@ -798,7 +804,14 @@
         const inn = mk('div', 'mt-in');
         if (m.name) inn.append(mk('div', 'mt-name font-display', m.name));
         inn.append(mk('div', 'mt-when font-display', label(m) + ' · ' + m.time));
-        { const cl = [m.city, !past && m.max ? m.max + ' משתתפים' : '', past ? 'הסתיים' : ''].filter(Boolean).join(' · '); if (cl) inn.append(mk('div', 'mt-city', cl)); }   // מפגש שעבר: "הרצליה · הסתיים"
+        { /* עיר · מיקום · כמות משתתפים (סמל במקום המילה "משתתפים") */
+          const cl = [m.city, m.place, past ? 'הסתיים' : ''].filter(Boolean).join(' · '), n = !past && m.max ? m.max : 0;
+          if (cl || n) {
+            const row = mk('div', 'mt-city', cl);
+            if (n) { const pp = mk('span', 'mt-ppl'); pp.setAttribute('aria-label', n + ' משתתפים'); pp.title = n + ' משתתפים'; pp.innerHTML = (cl ? '<i aria-hidden="true">·</i>' : '') + '<b aria-hidden="true">' + n + '</b>' + PPL_ICON; row.append(pp); }
+            inn.append(row);
+          }
+        }
         const st = !past && window.HarpatkaMe ? HarpatkaMe.get(m.id) : null;   // משתתף מחובר שכבר רשום למפגש הזה: מצב ההרשמה והתשלום במקום מדרגות המחיר
         if (st && st.registered) {
           /* משתתף מחובר שכבר רשום למפגש: הכפתור מציג את המצב (נרשמתם, שולם, דווח...) ולחיצה מובילה לאזור האישי על אותו מפגש */
@@ -827,7 +840,7 @@
       const emptyCard = (defName, defImg) => {
         const mk = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
         const c = mk('div', 'mt-card still open'), inn = mk('div', 'mt-in');
-        if (defImg) { const im = mk('img', 'mt-bg'); im.src = defImg; im.alt = ''; im.decoding = 'async'; c.append(im); }   // בלי מפגש: תמונת ברירת המחדל מההגדרות
+        if (defImg) { const im = mk('img', 'mt-bg'); im.src = defImg; im.alt = ''; im.decoding = 'async'; c.append(im); }   // בלי מפגש: התמונה של סוג המפגש הראשון (ואם אין סוגים, תמונת ברירת המחדל מההגדרות)
         inn.append(mk('div', 'mt-when font-display', 'המפגש הבא כבר בדרך'));   // בלי שם ברירת המחדל
         if (window.__meName) {   // משתתף מחובר (הפרטים שמורים): בלי "השאירו פרטים" ובלי כפתור
           inn.append(mk('div', 'mt-city', 'התאריך עוד לא נקבע, אבל המקומות מוגבלים. הפרטים שלכם שמורים אצלנו, ונעדכן אתכם ברגע שייקבע מפגש'));
@@ -851,8 +864,10 @@
           const ttl = document.createElement('div'); ttl.className = 'mt-ptitle'; ttl.textContent = 'מפגשים שהסתיימו'; pl.append(ttl);   // כותרת אחת במקום "הסתיים" בכל שורה
           d.past.forEach(m => {
             const r = document.createElement('div');
-            r.className = 'mt-prow font-display'; r.textContent = [label(m), m.time].filter(Boolean).join(' · ');   // שורה אחת ממורכזת: יום, תאריך, שעה ועיר (בדסקטופ העיר בשורה משלה)
-            if (m.city) { const c = document.createElement('span'); c.className = 'mt-pcity'; c.textContent = m.city; r.append(c); }
+            r.className = 'mt-prow';   // שתי שורות: המועד, ומתחתיו עיר · מיקום
+            const dt = document.createElement('div'); dt.className = 'mt-pdate font-display'; dt.textContent = [label(m), m.time].filter(Boolean).join(' · '); r.append(dt);
+            const wh = [m.city, m.place].filter(Boolean).join(' · ');
+            if (wh) { const c = document.createElement('div'); c.className = 'mt-pwhere'; c.textContent = wh; r.append(c); }
             pl.append(r);
           });
           frag.append(pl);
@@ -876,7 +891,13 @@
           } }
         const sb = el('stickyRegBtn'), tc = el('tbCta'), stxt = future.length ? 'הרשמה למפגש ' + short(dayN(future[0].date)) : 'השארת פרטים';   // עם התאריך: ברור לאיזה מפגש נרשמים
         if (sb) sb.textContent = stxt; if (tc) tc.textContent = stxt;
-        { const sr2 = el('stickyReg'); const need = !window.__meName || future.some(m => { const st = window.HarpatkaMe ? HarpatkaMe.get(m.id) : null; return !(st && st.registered); }); if (sr2) sr2.style.display = need ? '' : 'none'; if (tc) tc.hidden = !need; }   // משתתף מחובר שכבר רשום לכל המפגשים (או שאין מפגש): אין מה להירשם אליו, ולכן בלי הכפתור הקבוע
+        /* הכפתור הקבוע מוסתר בטעינה ועולה (באנימציה) רק כשברור שיש למה להירשם: אורח מיד, ומשתתף מחובר רק אחרי שמצב ההרשמות שלו נטען.
+           משתתף מחובר שכבר רשום לכל המפגשים (או שאין מפגש): אין מה להירשם אליו, ולכן בלי הכפתור הקבוע */
+        { const sr2 = el('stickyReg');
+          let sess = false; try { sess = !!localStorage.getItem('harpatka_me_session') || /[?&]as=/.test(location.search); } catch (e) {}
+          const known = !sess || !!(window.HarpatkaMe && HarpatkaMe.ready);
+          const need = known && (!window.__meName || future.some(m => { const st = window.HarpatkaMe ? HarpatkaMe.get(m.id) : null; return !(st && st.registered); }));
+          if (sr2) sr2.classList.toggle('cta-off', !need); if (tc) tc.hidden = !need; }
       };
       { const sb = document.getElementById('stickyRegBtn');
         if (sb) sb.addEventListener('click', (e) => {
@@ -1094,7 +1115,7 @@
     const mc = document.getElementById('meAreaCard'); if (mc) mc.click();   // בדיוק מה שלחיצה על "כניסה לאזור האישי" בכרטיס עושה (פופאפ האזור האישי, או דף הניהול למנהל)
   });   // לחיצה על השם: שאלה אם לצאת מהחשבון
   let cached = null;
-  try { cached = JSON.parse(localStorage.getItem(typeof MEET_CACHE !== 'undefined' ? MEET_CACHE : 'harpatka_meetings_v19') || 'null'); } catch (e) {}
+  try { cached = JSON.parse(localStorage.getItem(typeof MEET_CACHE !== 'undefined' ? MEET_CACHE : 'harpatka_meetings_v20') || 'null'); } catch (e) {}
   if (cached && cached.future) render(cached);
   if (typeof meetingsReady !== 'undefined') meetingsReady.then((d) => { if (d) render(d); else if (!cached) render(null); });
   else if (!cached) render(null);
@@ -1117,6 +1138,6 @@
 </script>
   <script src="../shared/rt.js?v=1"></script>
   <script src="../shared/person-form.js?v=20261029i"></script>
-  <script src="../shared/register.js?v=20261032f"></script>
+  <script src="../shared/register.js?v=20261032h"></script>
 </body>
 </html>
