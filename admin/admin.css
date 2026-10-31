@@ -743,16 +743,24 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .emvars { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 12px; }
 .emvars button { background: var(--surface-2); color: var(--text); border-color: transparent; }
 /* שורת סטטוס / תגית / דרך תשלום: ידית, שם, צבע, מחיקה */
-.strow, .pmrow { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding: 8px; }
-.strow.locked { flex-wrap: wrap; }
+.pmrow { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding: 8px; }
+/* שורת סטטוס / תגית: עמודות קבועות בכל השורות (ידית או מנעול, שם, צבע, ציון התמדה, מחיקה), כך שהצבע, הציון והמחיקה מיושרים אנכית גם בשורות שאין בהן ציון או מחיקה */
+.strow { display: grid; grid-template-columns: var(--ib) minmax(0, 1fr) var(--ib) 60px var(--ib); align-items: center; gap: 8px; margin-bottom: 8px; padding: 8px; }
+.strow .sthandle, .strow .stlockic { grid-column: 1; }
+.strow .stname { grid-column: 2; }
+.strow:not(:has(.swcur)) .stname { grid-column: 2 / 5; }   /* תגיות משתתף: בלי צבע וציון, השם תופס את העמודות שביניהם */
+.strow .swcur { grid-column: 3; }
+.strow .stpts { grid-column: 4; }
+.strow .stdel { grid-column: 5; }
+.strow .stspacer { display: none; }
 .strow.dragging, .pmrow.dragging { position: relative; z-index: 5; background: var(--bg); box-shadow: var(--pop); }
 .strow.dragging .sthandle, .pmrow.dragging .sthandle { cursor: grabbing; }
-.strow .stname, .srccard .stname { flex: 1 1 0; min-width: 0; height: 36px; padding: 0 12px; border: 0; font-size: 15.5px; font-weight: 600; text-align: right; }
+.strow .stname, .srccard .stname { flex: 1 1 0; min-width: 0; height: 36px; padding: 0 8px; border: 0; font-size: 15.5px; font-weight: 600; text-align: right; }
 .strow .stname:focus, .srccard .stname:focus { outline: 1px solid var(--text); outline-offset: 1px; }
 .strow .stspacer { flex: 0 0 var(--ib); }
 .strow .stlockic { flex: 0 0 auto; width: var(--ib); height: var(--ib); display: grid; place-items: center; color: var(--text-2); }
-.strow .stpts { flex: 0 0 64px; width: 64px; height: 36px; padding: 0 4px; border: 0; background: var(--bg); color: var(--text); font: inherit; font-size: 15px; font-weight: 700; direction: ltr; text-align: center; text-align-last: center; }   /* ציון התמדה: בחירה בין 5- ל-5 */
-.strow .stcap { flex: 1 1 100%; padding: 0 4px; font-size: 12.5px; font-weight: 600; color: var(--text-2); }
+.strow .stpts { flex: 0 0 60px; width: 100%; height: 36px; padding: 0 4px; border: 0; background: var(--bg); color: var(--text); font: inherit; font-size: 15px; font-weight: 700; direction: ltr; text-align: center; text-align-last: center; }   /* ציון התמדה: בחירה בין 5- ל-5 */
+.strow .stcap { grid-column: 1 / -1; padding: 0 4px; font-size: 12.5px; font-weight: 600; color: var(--text-2); }
 .strow .swcur, .srccard .swcur { box-shadow: none; }   /* ריבוע צבע מלא, בלי טבעת ובלי מסגרת */
 .pmrow .pmname { flex: 1 1 auto; min-width: 0; height: 40px; font-weight: 600; }
 .pmrow .pmown { flex: 0 0 124px; width: 124px; height: 40px; font-size: 14px; }
