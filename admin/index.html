@@ -1512,7 +1512,7 @@
       let side = '';
       if (state.filter) {
         const l = linkOf(p.id, state.filter);
-        if (!l) side = UI.tag('לא משויך', 'ptag unpaid', { 'data-qs': p.id, role: 'button', tabindex: 0, title: 'לא משויך למפגש (לחיצה לבחירת סטטוס ושיוך)' });
+        if (!l) side = UI.tag('שיוך למפגש', 'ptag unpaid', { 'data-qs': p.id, role: 'button', tabindex: 0, title: 'לא משויך למפגש (לחיצה לבחירת סטטוס ושיוך)' });
         else { const st = dispStatus(l); side = UI.tag(STATUS_LABEL[st], 'ptag ' + st, { 'data-qs': p.id, role: 'button', tabindex: 0, title: 'סטטוס (לחיצה לשינוי)' }); }   // תצוגה בלבד: לחיצה על הכרטיס פותחת את פרטי המשתתף, ושם משנים סטטוס
       }
       let tags = '', payIc = '';
@@ -2106,7 +2106,7 @@
     const up = ls.filter((l) => { const m = state.meetings.find((x) => x.id === l.meeting_id); return m && !isPast(m); }).sort((a, b) => key(a).localeCompare(key(b)))[0];
     return up || ls.slice().sort((a, b) => key(b).localeCompare(key(a)))[0] || null;
   };
-  const closeQ = () => { $('#qMenu').hidden = true; $('#qMenu').className = 'qmenu'; };
+  const closeQ = () => { const q = $('#qMenu'); q.hidden = true; q.className = 'qmenu'; q.style.width = ''; };
   /* קישור קטן "עריכה" בכל מקום שבוחרים סטטוס: פותח את ניהול הסטטוסים בהגדרות על הסוג המתאים */
   const editBtn = () => '';   // עריכת סטטוסים ותוויות רק דרך ההגדרות
   function openStatusSettings(scope) {
@@ -2129,6 +2129,15 @@
     const h = pendBegin(pid, mid, body); Object.assign(l, body); refresh();
     try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body }); pendDone(h); toast(next ? 'הסטטוס עודכן: ' + STATUS_LABEL[next] : 'הסטטוס הוסר'); }
     catch (err) { pendFail(h); const l2 = linkOf(pid, mid); if (l2) Object.assign(l2, { meeting_key: prevKey }); refresh(); fail(err); }
+  }
+  /* רוחב תפריט הסטטוס המהיר לפי התוכן: השורה הרחבה ביותר של הצ'יפים (עד הרוחב המרבי), בלי שוליים ריקים בצדדים; אותה חלוקה לשורות כמו ברוחב המלא */
+  function fitQMenu(menu) {
+    menu.style.width = '';
+    const cs = getComputedStyle(menu), padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 2, max = menu.getBoundingClientRect().width;
+    const rows = new Map();
+    menu.querySelectorAll('button.qi').forEach((b) => { const r = b.getBoundingClientRect(), k = Math.round(r.top), o = rows.get(k) || { l: Infinity, r: -Infinity }; o.l = Math.min(o.l, r.left); o.r = Math.max(o.r, r.right); rows.set(k, o); });
+    let w = 0; rows.forEach((o) => { w = Math.max(w, o.r - o.l); });
+    if (w > 0) menu.style.width = Math.min(max, Math.ceil(w + padX)) + 'px';
   }
   function openQuickMenu(pid, anchor, mid) {
     const menu = $('#qMenu'), inMeeting = !!(mid || state.filter);
@@ -2155,13 +2164,13 @@
       const held = meetingKeyOf(ll);
       return '<div class="qhd">סטטוס מפגש</div>' + list.map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-qm="' + s.key + '" aria-pressed="' + (held === s.key) + '">' + esc(s.label) + '</button>').join('');
     };
-    const phSecs = phaseSecs();   // כשיש גם סטטוס מפגש, סטטוסי ההרשמה מקבלים כותרת, לעקביות
+    const phSecs = phaseSecs();   // מקטע סטטוס מפגש (רק מ-שעה לפני תחילת המפגש); סטטוסי ההרשמה תמיד עם כותרת
     menu.innerHTML =
       (noneOk ? '<div class="qtop"><button type="button" role="menuitem" class="qi tone-red" data-qk="__none" aria-pressed="false">הסרה מהמפגש</button></div>' : '') +   // "הסרה מהמפגש" בשורה משלה בראש התפריט, מעל סטטוס הרשמה
-      (phSecs ? '<div class="qhd">סטטוס הרשמה</div>' : '') +
+      (inMeeting ? '<div class="qhd">סטטוס הרשמה</div>' : '') +   // הכותרת תמיד בתוך מפגש, גם כשעוד אין מקטע "סטטוס מפגש" (לפני שעה מתחילת המפגש)
       (inMeeting ? statusList(qTid) : pstatusList().slice().reverse()).map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-qk="' + s.key + '" aria-pressed="' + (inMeeting ? s.key === cur : tagSet.has(s.key)) + '">' + esc(s.label) + '</button>').join('') +
       phSecs;
-    menu.hidden = false;
+    menu.hidden = false; fitQMenu(menu);   // רוחב התפריט לפי התוכן (השורה הרחבה ביותר של הצ'יפים), לא קבוע
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
     let left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8), top = r.bottom + 8;
     if (top + mh > window.innerHeight - 8) top = Math.max(8, r.top - mh - 8);
@@ -2184,7 +2193,7 @@
     const free = state.meetings.filter((m) => !linkOf(pid, m.id)).sort((a, b) => (b.meeting_date + b.meeting_time).localeCompare(a.meeting_date + a.meeting_time));
     if (!free.length) return;
     const host = anchor.closest('dialog') || document.body; if (menu.parentNode !== host) host.appendChild(menu);
-    menu.className = 'qmenu am';
+    menu.className = 'qmenu am'; menu.style.width = '';
     menu.innerHTML = free.map((m) => '<button type="button" role="menuitem" class="qi" data-am="' + m.id + '">' + esc(dmShort(m)) + ' · ' + esc(String(m.meeting_time).slice(0, 5)) + '</button>').join('');
     menu.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
@@ -2801,7 +2810,7 @@
     if (!menu.hidden) { closeQ(); return; }
     if (menu.parentNode !== host) host.appendChild(menu);
     const fr = sheet.modeApi.free(), alv = Math.round(allocatedOf(sheet.id, sheet.depMid) * 100) / 100;
-    menu.className = 'qmenu am2';
+    menu.className = 'qmenu am2'; menu.style.width = '';
     const rpt = !fr && !(alv > 0) && reportedOf(sheet.id, sheet.depMid);
     menu.innerHTML = (rpt ? '<button type="button" role="menuitem" class="qi rej" data-md="reject" aria-pressed="false">דחיית דיווח</button>' : '') + (fr ? '<button type="button" role="menuitem" class="qi" data-md="pay" aria-pressed="false">לתשלום</button>' : (alv > 0 ? '<button type="button" role="menuitem" class="qi del" data-md="del" aria-pressed="false">מחיקת הקצאה</button>' : '') + '<button type="button" role="menuitem" class="qi free" data-md="free" aria-pressed="false"><span class="nps">₪</span>חינם</button>');   // בדיוק כמו המצבים בכרטיס המפגש: לתשלום (ניטרלי), חינם (לבן עם ₪ מחוק)
     menu.hidden = false;
@@ -3406,7 +3415,7 @@
       const freeL = !!(sheet.id && on && noPayOf(state.participants.find((x) => x.id === sheet.id), linkOf(sheet.id, m.id)));   // לא משלם על המפגש: מוצג "חינם" ולא "תשלום"
       return '<div class="mrow' + (on ? ' on' : '') + (sheet.hl === m.id ? ' hl' : '') + '" data-mrow="' + m.id + '">' +
         UI.tag(dmShort(m), 'mlabel') +
-        '<button type="button" class="pay ' + (on ? st : 'none') + '" data-mp="' + m.id + '" title="' + (on ? 'שינוי סטטוס' : 'לא משויך למפגש') + '">' + (on ? esc(STATUS_LABEL[st]) : 'לא משויך') + '</button>' +
+        '<button type="button" class="pay ' + (on ? st : 'none') + '" data-mp="' + m.id + '" title="' + (on ? 'שינוי סטטוס' : 'לא משויך למפגש') + '">' + (on ? esc(STATUS_LABEL[st]) : 'שיוך למפגש') + '</button>' +
         '<div class="mline">' + (sheet.id ? '<button type="button" class="mmoney' + (allocatedOf(sheet.id, m.id) > 0 ? ' has' : freeL ? ' free' : reportedOf(sheet.id, m.id) ? ' wait' : '') + '" data-mm="' + m.id + '"' + (on ? '' : ' hidden') + ' title="תשלום למפגש">' + (allocatedOf(sheet.id, m.id) > 0 ? '₪' + nfm(allocatedOf(sheet.id, m.id)) : freeL ? '<span class="nps">₪</span>חינם' : reportedOf(sheet.id, m.id) ? 'דווח' + reportedAmt(sheet.id, m.id) : 'תשלום') + '</button>' : '') +
         '</div>' +
       '</div>';
