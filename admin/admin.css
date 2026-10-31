@@ -93,15 +93,15 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 
 /* 3.2 כפתור אייקון: אובייקט אחד לכל המערכת. ריבוע 40px (--ib), אייקון 20px, בלי מסגרת (31.10.26; ריחוף אפור; בכפתורים הצבעוניים מילוי),
    כך שכל הכפתורים זהים בגודל: בכותרת הדף, בכותרות הפופאפים, בשורות הרשימה ובשורות ההגדרות */
-.hicon, .hbtn, .close, .cico, .nattach, .medit, .sthandle, .stdel, .inav, .mt2row .mtdel, .dline .ddel, .strow .swcur, .srccard .swcur, .colmenu .sw, :is(#listTags, #lbSort) .hfilt {
+.hicon, .hbtn, .close, .cico, .nattach, .medit, .sthandle, .stdel, .inav, .mt2row .mtdel, .dline .ddel, .strow .swcur, .srccard .swcur, .colmenu .sw, :is(#filtBtn, #sortBtnH) {
   flex: 0 0 auto; display: inline-grid; place-items: center; width: var(--ib); height: var(--ib); padding: 0; margin: 0;
   background: var(--bg); color: var(--text); border: 1px solid transparent; text-decoration: none; font-size: 20px; font-weight: 400; line-height: 1; }
-.hicon svg, .hbtn svg, .cico svg, .nattach svg, .medit svg, :is(#listTags, #lbSort) .hfilt svg, .mtr .medit svg { width: 20px; height: 20px; }
-@media (hover: hover) { .hicon:hover, .hbtn:hover, .medit:hover, .stdel:hover, :is(#listTags, #lbSort) .hfilt:hover { background: var(--surface); } }
+.hicon svg, .hbtn svg, .cico svg, .nattach svg, .medit svg, :is(#filtBtn, #sortBtnH) svg, .mtr .medit svg { width: 20px; height: 20px; }
+@media (hover: hover) { .hicon:hover, .hbtn:hover, .medit:hover, .stdel:hover, :is(#filtBtn, #sortBtnH):hover { background: var(--surface); } }
 /* מיון פעיל (לא ברירת המחדל, 31.10.26): הכפתור בצבע הרגיל, ונקודה שחורה קטנה בפינה הימנית התחתונה של הסמל */
-:is(#listTags, #lbSort) .hfilt.on { position: relative; border-color: transparent; color: var(--text); }
-:is(#listTags, #lbSort) .hfilt.on:not(:hover) { background: var(--bg); }
-:is(#listTags, #lbSort) .hfilt.on::after { content: ''; position: absolute; right: 8px; bottom: 8px; width: 7px; height: 7px; background: var(--text); box-shadow: 0 0 0 2px var(--bg); }   /* ריבוע קטן: בדף הניהול אין פינות מעוגלות */
+:is(#filtBtn, #sortBtnH).on { position: relative; border-color: transparent; color: var(--text); }
+:is(#filtBtn, #sortBtnH).on:not(:hover) { background: var(--bg); }
+:is(#filtBtn, #sortBtnH).on::after { content: ''; position: absolute; right: 8px; bottom: 8px; width: 7px; height: 7px; background: var(--text); box-shadow: 0 0 0 2px var(--bg); }   /* ריבוע קטן: בדף הניהול אין פינות מעוגלות */
 /* כפתורי הכותרת של הדף (תצוגה, מיון, תפריט) וכפתור החיפוש הסגור בלי מסגרת (31.10.26), כמו ריבועי המצב; מיון פעיל נשאר שחור, וחיפוש פתוח הוא שדה עם מסגרת */
 .hsearch:not(:focus-within) input:placeholder-shown { border-color: transparent; }
 /* צבעוני: מילוי בצבע, הגבול באותו צבע */
@@ -930,13 +930,14 @@ html.is-loading .hgrp { visibility: hidden; }
 .listbar .hsearch input::placeholder { color: var(--text-3); }
 
 /* ---------- שורת הסינון והמיון: שתי תגיות (סינון, מיון); נקודה = יש סינון שלא רואים בשורה / מיון שאינו ברירת המחדל ---------- */
-.vbar { display: flex; align-items: center; gap: 8px; padding: 0 var(--gut); }
+.vbar { position: relative; display: flex; align-items: center; gap: 8px; padding: 0 var(--gut); }
+.vbar .lbend { position: absolute; top: 50%; left: var(--gut); z-index: 2; margin-top: calc(var(--ind) / -2); line-height: 0; }   /* אייקוני הסינון של העמודות, מיושרים ב-JS מעל העמודות (alignFilters) */
 .wrap > .vbar { flex: 0 0 var(--ctl); height: var(--ctl); background: var(--bg); border-bottom: 1px solid var(--line); }   /* מתחת לשורת החיפוש, באותו גובה, ומעל הרשימה */
-:is(#listTags.vbar, #lbSort) .hfilt { width: var(--tag); min-width: var(--tag); height: var(--tag); padding: 0; border: 0; background: transparent; color: var(--text); }   /* סינון ומיון: סמל בלבד, בלי רקע אפור */
+:is(#filtBtn, #sortBtnH) { width: var(--tag); min-width: var(--tag); height: var(--tag); padding: 0; border: 0; background: transparent; color: var(--text); }   /* סינון ומיון: סמל בלבד, בלי רקע אפור */
 #listTags.vbar .stc:not([aria-pressed="true"]) { background: transparent; }   /* זכר / נקבה בשורת הסינון: בלי רקע אפור; נבחר נשאר מלא בשחור */
-:is(#listTags.vbar, #lbSort) .hfilt svg { width: 16px; height: 16px; }
-:is(#listTags.vbar, #lbSort) .hfilt.on:not(:hover) { background: transparent; }
-:is(#listTags.vbar, #lbSort) .hfilt.on::after { right: 3px; bottom: 3px; width: 6px; height: 6px; box-shadow: 0 0 0 1px var(--bg); }
+:is(#filtBtn, #sortBtnH) svg { width: 16px; height: 16px; }
+:is(#filtBtn, #sortBtnH).on:not(:hover) { background: transparent; }
+:is(#filtBtn, #sortBtnH).on::after { right: 3px; bottom: 3px; width: 6px; height: 6px; box-shadow: 0 0 0 1px var(--bg); }
 html.is-loading .vbar { display: none; }
 
 /* ---------- פאנל הסינון והתצוגה: כותרת לכל נושא עם טוגל תצוגה, ומתחתיה האפשרויות כתגיות ---------- */
