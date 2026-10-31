@@ -261,6 +261,7 @@
     if (q('other')) q('other').addEventListener('click', () => openOtherPay(selMeeting || nearest));
     form.addEventListener('submit', async (e) => {
       e.preventDefault(); q('fail').textContent = '';
+      if (!selMeeting && !nearestOk) { btn.disabled = true; try { await ensureNearest(); } catch (er) {} btn.disabled = false; }   // הטעינה של המפגש הקרוב נכשלה בעמוד: מנסים שוב לפני השליחה, כדי שהפופאפ והשרת יתייחסו לאותו מפגש
       if (phoneMode) {   // מחוברים עם גוגל, אין משתתף מקושר: רק טלפון. השרת מחבר את החשבון למשתתף עם הטלפון הזה (או יוצר משתתף עם הטלפון בלבד) ורושם למפגש שנבחר
         const ph = (root.querySelector('input[type="tel"]') || {}).value || '';
         if (!normPhone(ph)) { PersonForm.setErr(root, 'phone', PersonForm.MSG.phone); return; }
@@ -810,7 +811,7 @@
     const f = document.getElementById('cmFirst'), l = document.getElementById('cmLast');
     if (f && !f.value && first) f.value = first; if (l && !l.value && last) l.value = last;
   }
-  function openReg(auto, meeting) { selMeeting = meeting && meeting.id ? meeting : null; showMeeting(selMeeting || nearest); applyMemberMode(); prefillGoogleName(); applyRegState(selMeeting || nearest); if (contactModal) openModal(contactModal, auto === true); }
+  function openReg(auto, meeting) { if (!nearestOk) ensureNearest(); selMeeting = meeting && meeting.id ? meeting : null; showMeeting(selMeeting || nearest); applyMemberMode(); prefillGoogleName(); applyRegState(selMeeting || nearest); if (contactModal) openModal(contactModal, auto === true); }
   /* הרשמה כשהכניסה עם גוגל פעילה: מי שלא מחובר עובר קודם לכניסה עם גוגל (בלי פופאפ); אחרי הכניסה נפתח פופאפ ההרשמה של המפגש שנבחר:
      משתתף מקושר: הרשמה בלחיצה; בלי משתתף מקושר: הזנת פרטים, והכפתור יוצר משתתף, מחבר את החשבון ונרשם באותו צעד (harpatka_me_join) */
   window.HarpatkaRegister = { open: (auto, meeting) => {
@@ -857,12 +858,14 @@
     document.querySelectorAll('[data-price]').forEach((e) => { e.textContent = price + ' ₪'; });
   };
   showMeeting(nearest);   // מיד, בלי להמתין לרשת
-  const loadNearest = async () => {
+  let nearestOk = false;   // הטעינה מבסיס הנתונים הצליחה (גם כשאין מפגש עתידי). אם נכשלה (רשת, בקשה שבוטלה) מנסים שוב, ולא נשארים בלי מפגש: אחרת הפופאפ כותב "השארת פרטים" והשרת עדיין רושם לקרוב (31.10.26)
+  const loadNearestOnce = async () => {
     const H = { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey };
     try {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
       const r = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time,price_tiers,name,city,type_id&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc&limit=1', { headers: H });
       const rows = r.ok ? await r.json() : [];
+      if (r.ok) nearestOk = true;
       if (r.ok && !(rows && rows[0])) nearest = null;   // אין מפגש עתידי
       /* שדה ריק במפגש: הערך של סוג המפגש שלו (31.10.26); מפגש בלי סוג: שם ברירת המחדל הגלובלי, כמו קודם */
       let ty = null;
@@ -874,5 +877,6 @@
       showMeeting(selMeeting || nearest);
     } catch (e) {}
   };
-  loadNearest();
+  const ensureNearest = async () => { if (!nearestOk) await loadNearestOnce(); };
+  (async () => { for (let i = 0; i < 5 && !nearestOk; i++) { if (i) await new Promise((rs) => setTimeout(rs, [0, 1500, 3500, 7000, 12000][i])); await loadNearestOnce(); } })();
 })();
