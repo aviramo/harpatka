@@ -319,7 +319,7 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 
 /* תפריט בחירת המפגש: טבלה (מפגש, נרשמו, שילמו, עריכה) */
 .mmenu { left: auto; right: 0; width: min(400px, calc(100vw - 16px)); max-height: 72vh; overflow-y: auto; }
-.mtr { display: grid; grid-template-columns: minmax(0, 1fr) 64px var(--ib); align-items: center; column-gap: 4px; padding: 0 8px; }   /* שם, מספר (משתתפים / נרשמו / מפגשים), עיפרון; בלי עמודת התשלום */
+.mtr { display: grid; grid-template-columns: minmax(0, 1fr) 60px 60px var(--ib); align-items: center; column-gap: 4px; padding: 0 8px; }   /* שם, מפגשים (בכל המשתתפים ובסוגים), משתתפים / נרשמו, עיפרון; בלי עמודת התשלום */
 .mtr.mhead { min-height: 30px; font-size: 12px; font-weight: 700; color: var(--text-2); border-bottom: 1px solid var(--line); margin-bottom: 4px; }
 .mtr.mhead span { text-align: center; }
 .mtr.mhead span:first-child { text-align: right; }
@@ -375,16 +375,19 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 .row:active { background: var(--surface-2); }
 .row.other .name { color: var(--text-2); }
 /* עמודות: גיל ומגדר | שם | (הערה, מוסתר) | תגיות | סטטוס או התמדה | מחוונים */
-.row .main { display: grid; grid-template-columns: 44px minmax(0, 1fr) 0 auto 112px; column-gap: 8px; align-items: center; min-height: var(--ctl); padding: 8px var(--gut); padding-inline-start: calc(var(--gut) + var(--tag) + 8px); cursor: pointer; }
-.row .main.att, .row .main.ev { grid-template-columns: 44px minmax(0, 1fr) 0 auto 112px var(--ind); }
-.row .main.att.ev { grid-template-columns: 44px minmax(0, 1fr) 0 auto 112px var(--ind) var(--ind); }
+.row .main { display: grid; grid-template-columns: 44px minmax(0, 1fr) 0 auto auto; column-gap: 8px; align-items: center; min-height: var(--ctl); padding: 8px var(--gut); padding-inline-start: calc(var(--gut) + var(--tag) + 8px); cursor: pointer; }
+.row .main.att, .row .main.ev { grid-template-columns: 44px minmax(0, 1fr) 0 auto auto var(--ind); }   /* עמודת הסטטוס ברוחב התגית (לא 112px קבוע): התגיות עדיין מיושרות בקצה השמאלי, והשם מקבל את כל השאר */
+.row .main.att.ev { grid-template-columns: 44px minmax(0, 1fr) 0 auto auto var(--ind) var(--ind); }
 .row .main.bl { grid-template-columns: 44px minmax(0, 1fr) 0 auto 82px var(--ind); }
 .row .main.bl.nosum { grid-template-columns: 44px minmax(0, 1fr) 0 auto var(--ind); }
 .row .nm, .row .meta { display: contents; }
 .row .meta > * { grid-row: 1; text-align: center; }
 .row .nm .name { grid-column: 2; grid-row: 1; min-width: 0; text-align: right; font-size: 15.5px; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
 .row .nm .ptags { grid-column: 4; grid-row: 1; display: inline-flex; gap: 4px; }
-.row .nm .name .glk { display: inline-flex; vertical-align: -2px; margin-inline-start: 4px; color: var(--text-2); }   /* מחובר לחשבון גוגל */
+.row .nm .name .glk { display: inline-flex; flex: none; color: var(--text-2); }   /* סמל המצב (מחובר, חסום, מחוק) */
+/* השם וסמל המצב בשורה אחת (31.10.26): הסמל תמיד משמאל לשם ולא יורד לבד לשורה; שם ארוך שובר שורה בתוך עצמו */
+.row .nm .name:has(.glk) { display: flex; align-items: center; gap: 4px; }
+.row .nm .name:has(.glk) > bdi { min-width: 0; }
 .row .nm .name .glk.red, .tname .glk.red { color: var(--red); }
 .row .nm .name.warn { color: var(--red); }   /* משתתף מחוק או חשבון גוגל חסום */
 .row .note { grid-column: 3; grid-row: 1; display: none; }
@@ -810,14 +813,14 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 #finDlg .sheet { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 #finDlg .sheet > * { flex: 0 0 auto; }
 #finDlg .sheet > #finLog, #finDlg .sheet > #finSettle, #finDlg .sheet > #finForm { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
-#finDlg .sheet > #finMain { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+#finDlg .sheet > #finMain { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow-y: auto; overscroll-behavior-y: contain; }   /* כל מה שמתחת להדר נגלל יחד (31.10.26): סיכום, כפתורים ותנועות */
 #finMain > * { flex: 0 0 auto; }
-#finMain > #finScroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; padding-bottom: 12px; }
+#finMain > #finScroll { padding-bottom: 12px; }
 .finlogbtn { margin-inline-start: auto; }
 .finperbtn { display: inline-flex; align-items: center; gap: 8px; height: var(--ib); padding: 0 12px; border: 1px solid transparent; background: var(--bg); color: var(--text); font-size: 15px; font-weight: 600; }
 .finperbtn svg { width: 14px; height: 14px; }
 .finowed { grid-column: 1 / -1; padding: 0; font-size: 13px; }
-.fincmds { display: flex; gap: 8px; margin-bottom: 8px; }
+.fincmds { display: flex; gap: 8px; margin-bottom: 8px; position: sticky; top: 0; z-index: 2; padding: 8px 0; margin-top: -8px; background: var(--bg); }   /* + הכנסה / + הוצאה נשארים זמינים בראש האזור הנגלל */
 .fincmds .btn { flex: 1 1 0; font-size: 15.5px; }
 .finrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 12px 0; background: transparent; text-align: right; }
 .finrow .ft { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
