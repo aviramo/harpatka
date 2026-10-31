@@ -57,7 +57,7 @@
               </div>
               <p class="su-phonehint" data-su="phonehint">הזינו את מספר הטלפון שלכם. אם כבר נרשמתם אצלנו בעבר, נמצא אתכם לפי המספר</p>
               <p class="su-dethint" data-su="dethint">כמעט סיימנו. נשאר רק להשלים כמה פרטים</p>
-              <div class="su-member" data-su="member"><p class="su-memberp">הפרטים שלכם כבר שמורים אצלנו</p><p class="su-who" data-su="who"></p></div>
+              <div class="su-member" data-su="member"><p class="su-memberp">הפרטים שלכם כבר שמורים אצלנו</p><p class="su-who" data-su="who"></p><p class="su-membernm" data-su="nomeet" hidden>עוד אין מפגש להירשם אליו. נעדכן אתכם ברגע שייקבע מפגש</p></div>
               <a href="__BASE__me/?login=1&back=reg" class="su-glink" data-su="glink">נרשמתם בעבר? לחצו כאן</a>
             </div></div>
             <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-3.5 text-[1.2rem] whitespace-nowrap w-full mt-4">הרשמה</button>
@@ -437,12 +437,20 @@
     const q = (k) => root.querySelector('[data-su="' + k + '"]'), btn = q('btn'), after = q('after'), note = root.querySelector('.su-paynote'), fold = q('payfold'), rep = q('reported');
     if (!btn || !after || !note) return;
     if (NOTE0 == null) NOTE0 = note.innerHTML;
+    /* משתתף מחובר עם פרטים והדף לא מכיר מפגש (הטעינה נכשלה) אבל השרת כבר רשם אותו למפגש: מציגים את המפגש שנרשם אליו (מצב נרשמתם והתשלום), ולא "השארת פרטים" */
+    if (meInfo && meInfo.complete && !(m && m.id)) {
+      const reg = (meInfo.meetings || []).filter((y) => y.registered && y.future).sort((a, b) => String(a.date + a.time).localeCompare(String(b.date + b.time)))[0];
+      if (reg) { selMeeting = { id: reg.id, date: reg.date, time: reg.time, name: reg.name || '', city: reg.city || '', tiers: { base: Number(reg.price) || 80, steps: [] } }; showMeeting(selMeeting); m = selMeeting; }
+    }
+    const noMeet = !!(meInfo && meInfo.complete && !(m && m.id));   // פרטים שמורים ואין שום מפגש: אין מה להשאיר ואין שדות, אז גם אין כפתור
+    const nmEl = q('nomeet'); if (nmEl) nmEl.hidden = !noMeet;
     const x = meInfo && meInfo.complete && m && m.id ? (meInfo.meetings || []).find((y) => y.id === m.id && y.registered) : null;   // מבחינת המשתתף ההרשמה נחשבת רק אחרי שמילא את הפרטים
     if (!x) {
       if (root.dataset.regState) {   // חזרה למצב הרשמה רגיל
         delete root.dataset.regState; btn.hidden = false; note.innerHTML = NOTE0; if (fold) fold.hidden = false; if (rep) rep.hidden = true;
         if (!btn.classList.contains('saved')) { after.classList.add('shut'); root.querySelectorAll('.su-fold:not(.su-after)').forEach((f) => f.classList.remove('shut')); }
       }
+      btn.hidden = noMeet;
       return;
     }
     const paid = Number(x.paid) > 0, free = !!x.free, reported = !!x.reported, rejected = !!x.rejected && !reported;
