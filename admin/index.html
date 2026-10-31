@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261031g" />
+  <link rel="stylesheet" href="admin.css?v=20261031h" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -965,7 +965,7 @@
       const rows = await api('harpatka_members?select=participant_id,status,email&participant_id=not.is.null', { ui: false }), mp = new Map(), em = new Map();
       rows.forEach((r) => { const cur = mp.get(r.participant_id); const v = r.status === 'blocked' ? 'blocked' : r.status === 'approved' ? 'yes' : 'no'; if (!cur || cur === 'no' || (v === 'blocked')) mp.set(r.participant_id, v); if (r.email) em.set(r.participant_id, ((em.get(r.participant_id) || '') + ' ' + String(r.email).toLowerCase()).trim()); });
       const sig = (m) => [...m].map((x) => x.join(':')).sort().join(','); const changed = sig(mp) !== sig(state.memMap) || sig(em) !== sig(state.memEmails); state.memMap = mp; state.memEmails = em;
-      if (changed) render();   // סמל החשבון ליד השם, סינון "אזור אישי" והחיפוש לפי אימייל
+      if (changed) { render(); paintInfoBtn(); }   // סמל החשבון ליד השם ובכותרת הכרטיס, סינון "אזור אישי" והחיפוש לפי אימייל
     } catch (e) { /* בלי הרשאה או טבלה: הסינון פשוט לא מסנן */ }
   }
   const loginOf = (p) => state.memMap.get(p.id) || 'no';
@@ -973,6 +973,17 @@
   const emailHay = (p) => state.memEmails.get(p.id) || '';
   /* סמל אחרי השם ברשימה: המשתתף מחובר לחשבון גוגל (אזור אישי); חסום באדום. ב-title האימייל של החשבון */
   const glMark = (p) => { const st = loginOf(p); if (st === 'no') return ''; const em = emailHay(p); return '<span class="glk' + (st === 'blocked' ? ' blocked' : '') + '" title="' + esc((st === 'blocked' ? 'חשבון גוגל חסום' : 'מחובר לחשבון גוגל') + (em ? ': ' + em : '')) + '" aria-label="' + (st === 'blocked' ? 'חשבון גוגל חסום' : 'מחובר לחשבון גוגל') + '">' + icon('usercheck', 'i16') + '</span>'; };
+  /* אייקון פרטי המשתתף בכותרת הכרטיס: אותו סמל של הרשימה (אדם עם ✓) כשהמשתתף מחובר לחשבון גוגל; חסום באדום */
+  function paintInfoBtn() {
+    const b = document.getElementById('pInfoBtn'); if (!b) return;
+    let sh = null; try { sh = sheet; } catch (e) { return; }   // לפני שהכרטיס הוגדר
+    const p = sh && sh.id ? state.participants.find((x) => x.id === sh.id) : null, st = p ? loginOf(p) : 'no', em = p ? emailHay(p) : '';
+    const k = st === 'no' ? 'user' : 'usercheck';
+    if (b.dataset.ic !== k) { b.innerHTML = icon(k); b.dataset.ic = k; }
+    b.classList.toggle('glk-b', st === 'blocked');
+    const t = 'פרטי המשתתף' + (st === 'yes' ? ' · מחובר לחשבון גוגל' : st === 'blocked' ? ' · חשבון גוגל חסום' : '') + (st !== 'no' && em ? ': ' + em : '');
+    b.title = t; b.setAttribute('aria-label', t);
+  }
   /* התאמה לחיפוש, אחת לכל המקומות: שם, טלפון (05... או 972...), אימייל של חשבון הגוגל המחובר, וטקסט ההערות */
   const qMatch = (p, q, qd) => p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd)) || (q.length >= 2 && emailHay(p).includes(q)) || hasNote(p, q);
   async function load(silent) {
@@ -2570,7 +2581,7 @@
     });
     const ex = !!(sheet && sheet.id);
     { const va = $('#pViewAs'); va.hidden = !(ex && tab === 'info'); if (ex) va.href = '../?as=' + encodeURIComponent(sheet.id); const pp0 = ex && state.participants.find((x) => x.id === sheet.id), tl = pp0 && telLink(pp0.phone), ca = $('#pCall'); ca.hidden = !(tab === 'info' && tl); if (tl) ca.href = tl; }   // כניסה לאזור האישי כפי שהמשתתף רואה: בפרטי המשתתף, בשמאל למעלה
-    $('#pBack').hidden = !(ex && tab !== 'main'); $('#pPayChip').dataset.tab = tab; if (tab !== 'deposit') { const c1 = $('#pAllocChip'); if (c1) c1.hidden = true; } $('#pInfoBtn').hidden = !(ex && tab === 'main'); $('#pTitle').classList.remove('tap'); $('#pTitle').tabIndex = -1; $('#pTitle').setAttribute('role', 'heading'); $('#pMsgs').hidden = tab !== 'main';
+    $('#pBack').hidden = !(ex && tab !== 'main'); $('#pPayChip').dataset.tab = tab; if (tab !== 'deposit') { const c1 = $('#pAllocChip'); if (c1) c1.hidden = true; } $('#pInfoBtn').hidden = !(ex && tab === 'main'); paintInfoBtn(); $('#pTitle').classList.remove('tap'); $('#pTitle').tabIndex = -1; $('#pTitle').setAttribute('role', 'heading'); $('#pMsgs').hidden = tab !== 'main';
     { const sub = tab === 'confirm' ? cvTitle : (tab === 'deposit' && sheet && sheet.depMid) ? 'הקצאה' : SUBVIEW[tab], pp0 = ex ? state.participants.find((x) => x.id === sheet.id) : null;
       const pm = sub && payCtx && state.meetings.find((x) => x.id === payCtx.mid);
       $('#pViewSub').hidden = !(sub && pm);
