@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261103k" />
+  <link rel="stylesheet" href="admin.css?v=20261103l" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -55,7 +55,7 @@
         <div class="facets" id="facets" role="group" aria-label="סינון לפי מגדר ותשלום"></div>
         <div class="sortwrap">
           <button type="button" class="sortbtn" id="sortBtn" aria-haspopup="menu" aria-expanded="false" aria-label="מיון" title="מיון"><svg data-i="sort"></svg></button>
-          <div class="sortmenu cntmenu" id="cntMenu" role="dialog" aria-label="התמדה בהגעה" hidden></div>
+          <div class="sortmenu cntmenu" id="cntMenu" role="dialog" aria-label="התמדה" hidden></div>
           <div class="sortmenu" id="sortMenu" role="menu" hidden></div>
           <div class="sortmenu" id="waMenu" role="menu" hidden></div>
         </div>
@@ -1170,6 +1170,9 @@
   const REQ_ICON = icon('hourglass', 'i16');   // בבדיקה: שעון חול
   const NEW_ICON = icon('spark', 'i16');   // חדש: ניצוץ
   const dispStatus = (l) => afterOf(l) || duringOf(l) || linkStatus(l);   // הסטטוס שמוצג ברשימה: אחרי המפגש אם יש, אחרת במפגש ("הגיע"), אחרת לפני המפגש
+  /* סטטוסי "במפגש" ו"אחרי המפגש" זמינים מ-שעה לפני תחילת המפגש (31.10.26); ההתמדה נמדדת רק על מפגשים שהתחילו בפועל (meetingStarted) */
+  const PHASE_LEAD_MS = 3600000;
+  const phaseOpen = (m) => { const [y, mo, da] = m.meeting_date.split('-').map(Number), [h, mi] = String(m.meeting_time).split(':').map(Number); return nowIL() >= Date.UTC(y, mo - 1, da, h, mi) - PHASE_LEAD_MS; };
   const meetingStarted = (m) => { const [y, mo, da] = m.meeting_date.split('-').map(Number), [h, mi] = String(m.meeting_time).split(':').map(Number); return nowIL() >= Date.UTC(y, mo - 1, da, h, mi); };
   const linkStatus = (l) => (l.status_key && state.statuses.some((s) => s.key === l.status_key)) ? l.status_key : l.exempt ? 'exempt' : l.paid ? 'paid' : l.will_pay ? 'willpay' : l.maybe ? 'maybe' : (l.pay_requested_at ? 'requested' : 'unpaid');   // לא משלם (בחינם ביודעין) / שילם / נשלחה בקשת תשלום / טרם שילם
   const STATUS_LABEL = { paid: 'שילם', willpay: 'ישלם', maybe: 'ספונטני', requested: 'בטיפול', unpaid: 'משויך', exempt: 'חינם' };
@@ -1187,17 +1190,17 @@
   const PNONE = '__pnone';   // סינון "בלי סטטוס"
   const isPKey = (k) => String(k).startsWith('p_') || k === PNONE;
   const BUILTIN = DEFAULT_STATUSES.map((s) => s.key);   // סטטוסי מפגש מובנים (מותאמים נוספים: מפתח m_...)
-  const ARRIVED = 'arrived';   // הסטטוס "הגיע" (במפגש): סטטוס מערכת משותף לכל הסוגים; מחליף את שדה הגיע / לא הגיע (העמודה attended נשארת כמראה מחושבת בבסיס הנתונים)
+  /* "הגיע" (מפתח arrived) הוא סטטוס רגיל של שלב "במפגש": אין לו שום משמעות מעבר לשם, צבע, סדר וציון התמדה; שום פעולה לא נחסמת בגללו (31.10.26) */
   const SYSTEM_STATUS = 'unpaid';   // סטטוס מערכת: ברירת המחדל לכל הרשמה חדשה; נעול ותמיד ראשון
   state.statuses = DEFAULT_STATUSES.map((s) => Object.assign({}, s));
   /* סטטוסים לפי סוג מפגש: לכל סוג רשימה משלו (type_id; ריק = הסוג הראשון), וסטטוס המערכת "משויך" משותף לכולם. בלי סוג (undefined): לפי המפגש שנבחר ברשימה; null = כל הסטטוסים */
   const curTid = () => state.filter ? typeIdOf(state.meetings.find((x) => x.id === state.filter)) : null;
-  const isSysKey = (k) => k === SYSTEM_STATUS || k === ARRIVED;   // סטטוסי מערכת: משותפים לכל הסוגים ונעולים בראש הרשימה
+  const isSysKey = (k) => k === SYSTEM_STATUS;   // סטטוסי מערכת: משותפים לכל הסוגים ונעולים בראש הרשימה
   const ofType = (s, tid) => !tid || isSysKey(s.key) || (s.type_id || firstTypeId()) === tid;
   const astatusList = (tid) => { const t = tid === undefined ? curTid() : tid; return state.astatuses.filter((s) => ofType(s, t)).sort((a, b) => a.sort - b.sort); };
   const afterOf = (l) => (l && l.after_key && state.astatuses.some((s) => s.key === l.after_key)) ? l.after_key : null;
   const isAfterKey = (k) => state.astatuses.some((s) => s.key === k);
-  const dstatusList = (tid) => { const t = tid === undefined ? curTid() : tid; return state.dstatuses.filter((s) => ofType(s, t)).sort((a, b) => ((b.key === ARRIVED) - (a.key === ARRIVED)) || (a.sort - b.sort)); };   // "הגיע" תמיד ראשון
+  const dstatusList = (tid) => { const t = tid === undefined ? curTid() : tid; return state.dstatuses.filter((s) => ofType(s, t)).sort((a, b) => a.sort - b.sort); };
   const duringOf = (l) => (l && l.during_key && state.dstatuses.some((s) => s.key === l.during_key)) ? l.during_key : null;
   const isDuringKey = (k) => state.dstatuses.some((s) => s.key === k);
   /* שלבי הסטטוס המאוחרים: העמודה בשיוך, הרשימה בזיכרון, והכותרת (אחרי המפגש דורס את במפגש, שדורס את לפני המפגש) */
@@ -1297,7 +1300,7 @@
   const balOk = (p) => { const b = effBal(); return (!b || balMatch(p, b)) && attSumOk(p); };   // סינון ההתמדה נכלל גם בספירות הצ'יפים (הכל / ז / נ) ובשאר הסינונים
   /* סינון חכם לפי דפוס הגעה (תמונת מצב כללית): התמדה (ירוק/צהוב/אדום לפי הממוצע, כמו צבע הצ'יפ "הגיע X/Y"), הגיעו לכל המפגשים, אף פעם לא הגיעו, רשומים למפגש עתידי */
   /* [מפתח, תווית, צבע (g ירוק / y צהוב / r אדום / n ניטרלי), צורה]: רמות ההתמדה בצורת עמודות בצבע שלהן; "הגיעו לכל" ✓ ירוק; "נרשמו ולא הגיעו" ✕ אדום; מפגש עתידי ויומן; לא משויכים ∅ (ניטרלי) */
-  const ATT_OPTS_F = [['g', 'התמדה טובה', 'g', 'bars'], ['y', 'התמדה בינונית', 'y', 'bars'], ['r', 'התמדה נמוכה', 'r', 'bars'], ['n', 'עוד אין מידע', 'n', 'bars'], ['all', 'הגיעו לכל המפגשים', 'g', 'ok'], ['never', 'נרשמו ולא הגיעו אף פעם', 'r', 'no'], ['fut', 'רשומים למפגש עתידי', 'n', 'cal'], ['nolink', 'לא משויכים לאף מפגש', 'n', 'none']];
+  const ATT_OPTS_F = [['g', 'התמדה טובה', 'g', 'bars'], ['y', 'התמדה בינונית', 'y', 'bars'], ['r', 'התמדה נמוכה', 'r', 'bars'], ['n', 'עוד אין מידע', 'n', 'bars'], ['all', 'ציון חיובי בכל המפגשים', 'g', 'ok'], ['never', 'בלי ציון חיובי באף מפגש', 'r', 'no'], ['fut', 'רשומים למפגש עתידי', 'n', 'cal'], ['nolink', 'לא משויכים לאף מפגש', 'n', 'none']];
   const ATT_GLYPH = { bars: () => PERSIST_ICON, ok: () => '✓', no: () => '✕', cal: () => icon('cal'), none: () => '∅' };
   const attCls = (c) => c === 'g' ? 'yes' : c === 'r' ? 'no' : c === 'y' ? 'mid' : 'neu';
   let attCache = null;
@@ -1307,8 +1310,8 @@
     if (attCache) return attCache;
     const started = (m) => { const [y, mo, da] = m.meeting_date.split('-').map(Number), [h, mi] = String(m.meeting_time).split(':').map(Number); return nowIL() >= Date.UTC(y, mo - 1, da, h, mi); };
     const startedMs = state.meetings.filter(started).sort((a, b) => (a.meeting_date + a.meeting_time).localeCompare(b.meeting_date + b.meeting_time));
-    /* התמדה: כל המפגשים שהתחילו מאז המפגש הראשון של המשתתף (גם מפגש שלא נרשם אליו נחשב החמצה). came = בכמה הגיע, score = סכום ציוני ההתמדה שלו במפגשים האלה */
-    const persist = (p) => { const mine = linksOf(p.id).map((l) => state.meetings.find((x) => x.id === l.meeting_id)).filter((m) => m && started(m)).map((m) => m.meeting_date + m.meeting_time).sort(); if (!mine.length) return { came: 0, score: 0, total: 0 }; const opp = startedMs.filter((m) => (m.meeting_date + m.meeting_time) >= mine[0]); return { came: opp.filter((m) => (linkOf(p.id, m.id) || {}).attended).length, score: opp.reduce((a, m) => a + ptsOf(linkOf(p.id, m.id)), 0), total: opp.length }; };
+    /* התמדה: כל המפגשים שהתחילו מאז המפגש הראשון של המשתתף (מפגש שלא נרשם אליו נחשב מפגש בלי ציון). came = בכמה מפגשים הציון חיובי, score = סכום ציוני ההתמדה שלו במפגשים האלה; הכול מהסטטוסים ומהציונים שלהם, בלי שום סטטוס מיוחד */
+    const persist = (p) => { const mine = linksOf(p.id).map((l) => state.meetings.find((x) => x.id === l.meeting_id)).filter((m) => m && started(m)).map((m) => m.meeting_date + m.meeting_time).sort(); if (!mine.length) return { came: 0, score: 0, total: 0 }; const opp = startedMs.filter((m) => (m.meeting_date + m.meeting_time) >= mine[0]); return { came: opp.filter((m) => ptsOf(linkOf(p.id, m.id)) > 0).length, score: opp.reduce((a, m) => a + ptsOf(linkOf(p.id, m.id)), 0), total: opp.length }; };
     const per = {}; const visP = state.participants.filter((p) => p.active !== false); visP.forEach((p) => { per[p.id] = persist(p); });
     /* צבע ההתמדה לפי דירוג: המשתתפים עם נתוני הגעה מדורגים לפי ציון ההתמדה (הציון חלקי מספר המפגשים), והם מתחלקים לשלישים שווים: שליש עליון ירוק, אמצעי צהוב, תחתון אדום; אפור = עוד אין מפגש שהתחיל */
     const ranked = visP.filter((p) => per[p.id].total > 0).sort((a, b) => { const x = per[a.id], y = per[b.id]; return (y.score / y.total) - (x.score / x.total) || y.score - x.score || y.came - x.came || x.total - y.total || a.name.localeCompare(b.name, 'he'); });
@@ -1410,7 +1413,7 @@
     $('#listBal').innerHTML = !state.filter && state.showPay ? fbtn('bal', effBal(), '', '') : '';
     $('#listAtt').innerHTML = !state.filter && state.showAtt !== false ? '<button type="button" class="hfilt ' + (() => { const k = effAttF(), o = k && ATT_OPTS_F.find((x) => x[0] === k); return !o ? 'all' : attCls(o[2]); })() + '" data-fk="att" aria-haspopup="menu" aria-label="סינון לפי התמדה" title="סינון לפי התמדה והגעה (לחיצה לפתיחת תפריט)">' + (() => { const k = effAttF(), o = k && ATT_OPTS_F.find((x) => x[0] === k); return o ? ATT_GLYPH[o[3]]() : PERSIST_ICON; })() + '</button>' : '';
     $('#lbSort').innerHTML = '<button type="button" class="hfilt all' + (state.sort !== 'new' ? ' on' : '') + '" id="sortBtnH" aria-haspopup="menu" aria-expanded="' + !$('#sortMenu').hidden + '" aria-label="מיון הרשימה" title="מיון: ' + (SORTS.find((s) => s[0] === state.sort) || SORTS[0])[1] + '">' + icon('sort') + '</button>';   // נקודה בתגית = יש סינון שלא רואים בשורת הסינון / מיון שאינו ברירת המחדל
-    const stItems = (state.filter ? ((state.showTags && state.pstatuses.length) ? [{ key: PNONE, label: 'ללא תגית' }].concat(pstatusList().slice().reverse()) : []).concat(statusList()).concat(((m0) => (m0 && meetingStarted(m0)) ? dstatusList().concat(astatusList()) : [])(state.meetings.find((x) => x.id === state.filter))) : ((state.showTags && state.pstatuses.length) ? [{ key: PNONE, label: 'ללא תגית' }].concat(pstatusList().slice().reverse()) : [])).filter((s) => isPKey(s.key) || epk.includes(s.key) || epk.includes(NEG + s.key) || state.participants.some((p) => (!state.filter || linkOf(p.id, state.filter)) && stMatch(p, s.key)));   // תגיות על משתתפים: כשכפתור התגיות מסומן הן מוצגות תמיד, גם בלי משתתפים (31.10.26); סטטוסים רק כשיש בהם משתתפים
+    const stItems = (state.filter ? ((state.showTags && state.pstatuses.length) ? [{ key: PNONE, label: 'ללא תגית' }].concat(pstatusList().slice().reverse()) : []).concat(statusList()).concat(((m0) => (m0 && phaseOpen(m0)) ? dstatusList().concat(astatusList()) : [])(state.meetings.find((x) => x.id === state.filter))) : ((state.showTags && state.pstatuses.length) ? [{ key: PNONE, label: 'ללא תגית' }].concat(pstatusList().slice().reverse()) : [])).filter((s) => isPKey(s.key) || epk.includes(s.key) || epk.includes(NEG + s.key) || state.participants.some((p) => (!state.filter || linkOf(p.id, state.filter)) && stMatch(p, s.key)));   // תגיות על משתתפים: כשכפתור התגיות מסומן הן מוצגות תמיד, גם בלי משתתפים (31.10.26); סטטוסים רק כשיש בהם משתתפים
     $('#stStrip').innerHTML = stItems.map((s) => { const n = nP(s.key), on = epk.includes(s.key), neg = epk.includes(NEG + s.key); return '<button type="button" class="stc ' + (isPKey(s.key) ? 'tagc' : s.key) + (n || on || neg ? '' : ' zero') + '" data-stc="' + s.key + '" aria-pressed="' + on + '"' + (neg ? ' data-neg="1" title="בלי ' + esc(s.label) + '" aria-label="בלי ' + esc(s.label) + '"' : '') + '>' + esc(s.label) + ' <small>' + n + '</small></button>'; }).join('');   // לחיצה ראשונה: מי שיש לו; שנייה (data-neg): מי שאין לו, הטקסט עם קו חוצה; שלישית: ביטול   // "חינם" (לא משלם) נמצא בפאנל הסינון, לא כצ'יפ נפרד
   }
 
@@ -1525,7 +1528,7 @@
       if (!state.filter) {
         const pr = persist(p), rate = pr.total ? pr.score / pr.total : 0, st = attCtx().by[p.id] || { cls: 'n', rank: 0, n: 0 }, cls = st.cls;
         const fut = linksOf(p.id).filter((l) => { const m = state.meetings.find((x) => x.id === l.meeting_id); return m && !started(m); }).length;   // מפגשים עתידיים שהמשתתף רשום אליהם נספרים במכנה; הצבע נקבע רק לפי מפגשים שהתחילו
-        if (state.showAtt !== false) tags = UI.tag('הגיע <bdi dir="ltr">' + pr.came + '/' + (pr.total + fut) + '</bdi>', 'ptag cnt ' + cls, { title: 'הגיע ל-' + pr.came + ' מתוך ' + (pr.total + fut) + ' מפגשים' + (fut ? ' (' + fut + ' עתידיים)' : '') + (pr.total ? '. ציון התמדה ' + pr.score + ' מתוך ' + pr.total + ' (' + Math.round(rate * 100) + '%), דירוג ' + st.rank + ' מתוך ' + st.n : '') });
+        if (state.showAtt !== false) tags = UI.tag('ציון <bdi dir="ltr">' + (pr.score > 0 ? '+' : '') + pr.score + '</bdi>', 'ptag cnt ' + cls, { title: 'ציון התמדה ' + pr.score + (pr.total ? ' ב-' + pr.total + ' מפגשים (ממוצע ' + (Math.round(rate * 10) / 10) + ' למפגש), דירוג ' + st.rank + ' מתוך ' + st.n : '') + (fut ? '. ' + fut + ' מפגשים עתידיים' : '') });
       }
       const evc = evCircle(p);
       return '<li class="row">' +
@@ -1878,7 +1881,7 @@
     const l = linkOf(pid, mid), cur = l ? linkStatus(l) : '__none';
     payCtx = { pid, mid }; viewStack = ['main'];
     $('#sOpts').innerHTML = statusList(typeIdOf(state.meetings.find((x) => x.id === mid))).map((x) => x.key).map((s) => '<button type="button" class="sopt ' + s + '" data-st="' + s + '" aria-pressed="' + (s === cur) + '">' + esc(STATUS_LABEL[s]) + '</button>').join('') +
-      (!l || l.attended ? '' : '<button type="button" class="sopt psnone" data-st="__none" aria-pressed="false">הסרה מהמפגש</button>');
+      (!l ? '' : '<button type="button" class="sopt psnone" data-st="__none" aria-pressed="false">הסרה מהמפגש</button>');
     $('#sOpts').querySelectorAll('[data-st]').forEach((b) => b.onclick = () => {
       const st = b.dataset.st; toMain();
       if (st === cur) return;
@@ -1931,9 +1934,8 @@
   function confirmRefund(pid, mid, fn) { confirmAct('החזרת תשלום', pid, mid, fn, refundNote(pid, mid), 'כן, להחזיר תשלום'); }
   $('#cDlg').addEventListener('close', () => { $('#cYes').textContent = 'אישור'; $('#cYes').classList.remove('danger', 'ok', 'yel'); $('#cAlt').hidden = true; });
   /* משתתף שהגיע למפגש (סומנה הגעה) אי אפשר להסיר מהמפגש */
-  const keepAttended = (pid, mid) => { const l = linkOf(pid, mid); if (l && l.attended) { toast('לא ניתן להסיר שיוך של משתתף שהגיע למפגש'); return true; } return false; };
   /* הסרה ממפגש לא יוצרת זיכוי ליתרה: למי ששולם אפשר רק להחזיר את התשלום */
-  const confirmLink = (pid, mid, on, after) => (!on && keepAttended(pid, mid)) ? null : (!on && allocatedOf(pid, mid) > 0) ? confirmAct('הסרה מהמפגש', pid, mid, async () => { try { await reduceAlloc(pid, mid, Math.max(0, allocatedOf(pid, mid))); } catch (err) { fail(err); return; } setLinked(pid, mid, false); if (after) after(); }, 'ההקצאה למפגש (<b>' + ils(Math.round(allocatedOf(pid, mid) * 100) / 100) + '</b>) תוסר, והסכום יחזור ליתרה של המשתתף. לא מוחזר כסף.', 'הסר והחזר את הסכום ליתרה', null, { yellow: true }) : confirmAct(on ? 'להוסיף למפגש?' : 'להסיר מהמפגש?', pid, mid, () => { setLinked(pid, mid, on); if (after) after(); });
+  const confirmLink = (pid, mid, on, after) => (!on && allocatedOf(pid, mid) > 0) ? confirmAct('הסרה מהמפגש', pid, mid, async () => { try { await reduceAlloc(pid, mid, Math.max(0, allocatedOf(pid, mid))); } catch (err) { fail(err); return; } setLinked(pid, mid, false); if (after) after(); }, 'ההקצאה למפגש (<b>' + ils(Math.round(allocatedOf(pid, mid) * 100) / 100) + '</b>) תוסר, והסכום יחזור ליתרה של המשתתף. לא מוחזר כסף.', 'הסר והחזר את הסכום ליתרה', null, { yellow: true }) : confirmAct(on ? 'להוסיף למפגש?' : 'להסיר מהמפגש?', pid, mid, () => { setLinked(pid, mid, on); if (after) after(); });
 
   /* סימון הגעה למפגש (זמן אמת: מעדכן מיד, נשמר ומתעדכן אצל כולם) */
   /* דרכי הגעה: רשימה עם יתרה, דף התחשבנות לכל דרך הגעה (עמלות שנצברו מול תשלומים לדרך הגעה), הוספה, עריכה ומחיקה */
@@ -2117,22 +2119,21 @@
     closeQ(); stScope = scope; if (scope !== 'meeting') setRoot = 'st'; renderSettings(); $('#setDlg').showModal(); if (scope === 'meeting') { tyId = stType = curTid() || firstTypeId(); showSetView('type'); } showSetView('st');
     const ae = document.activeElement; if (ae && ae.closest && ae.closest('#setDlg')) ae.blur();
   }
-  /* סטטוס במפגש ("הגיע") או אחרי המפגש: נשמרים בנפרד מהסטטוס שלפני המפגש (during_key, after_key). "הגיע" מעדכן גם את attended המחושב.
-     בלי שיוך למפגש (הגיע בלי הרשמה): נוצר שיוך עם הסטטוס */
+  /* סטטוס במפגש או אחרי המפגש: נשמרים בנפרד מהסטטוס שלפני המפגש (during_key, after_key), בלי שום השפעה אחרת מעבר לנראות ולציון ההתמדה.
+     בלי שיוך למפגש: נוצר שיוך עם הסטטוס */
   async function setPhaseStatus(pid, mid, ph, key) {
-    const col = PHASES[ph].col, now = new Date().toISOString();
-    const mirror = (k) => ph === 'during' ? { attended: k === ARRIVED, attended_at: k === ARRIVED ? now : null } : {};
-    const body = Object.assign({ [col]: key || null }, mirror(key)), refresh = () => { render(); if (sheet && sheet.id) { refreshSheetMeetings(); renderContact(); } };
+    const col = PHASES[ph].col;
+    const body = { [col]: key || null }, refresh = () => { render(); if (sheet && sheet.id) { refreshSheetMeetings(); renderContact(); } };
     let l = linkOf(pid, mid);
     if (!l) {
       if (!key) return;
       const row = Object.assign({ participant_id: pid, meeting_id: mid, paid: false }, body), h = pendBegin(pid, mid, body, row);
       state.att.push(row); refresh();
-      try { await api(T.a, { method: 'POST', body: { participant_id: pid, meeting_id: mid, paid: false, [col]: key }, prefer: 'resolution=ignore-duplicates' }); pendDone(h); toast(key === ARRIVED ? 'סומן שהגיע (לא היה רשום למפגש)' : 'הסטטוס עודכן: ' + STATUS_LABEL[key]); }
+      try { await api(T.a, { method: 'POST', body: { participant_id: pid, meeting_id: mid, paid: false, [col]: key }, prefer: 'resolution=ignore-duplicates' }); pendDone(h); toast('הסטטוס עודכן: ' + STATUS_LABEL[key] + ' (לא היה משויך למפגש)'); }
       catch (err) { pendFail(h); state.att = state.att.filter((x) => x !== row); refresh(); fail(err); }
       return;
     }
-    const prev = { [col]: l[col] || null }; if (ph === 'during') { prev.attended = l.attended; prev.attended_at = l.attended_at; }
+    const prev = { [col]: l[col] || null };
     const h = pendBegin(pid, mid, body); Object.assign(l, body); refresh();
     try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body: { [col]: key || null } }); pendDone(h); toast(key ? 'הסטטוס עודכן: ' + STATUS_LABEL[key] : 'הסטטוס הוסר'); }
     catch (err) { pendFail(h); const l2 = linkOf(pid, mid); if (l2) Object.assign(l2, prev); refresh(); fail(err); }
@@ -2151,13 +2152,13 @@
       const p = state.participants.find((x) => x.id === pid); if (!p) return;
       cur = '__multi'; head = 'תגיות'; apply = () => {};
     }
-    const noneOk = inMeeting && cur !== '__none' && !(() => { const ll = mid ? linkOf(pid, mid) : quickLink(pid); return !!(ll && ll.attended); })();   // "הסרה מהמפגש": רק למי שמשויך ועוד לא סומנה לו הגעה
+    const noneOk = inMeeting && cur !== '__none';   // "הסרה מהמפגש": רק למי שמשויך ועוד לא סומנה לו הגעה
     const tagSet = new Set(inMeeting ? [] : ptagsOf(state.participants.find((x) => x.id === pid)));
-    /* מקטעי "במפגש" (הגיע) ו"אחרי המפגש": רק אחרי שהמפגש התחיל; "אחרי המפגש" רק למשויכים, "הגיע" גם למי שלא משויך (הגיע בלי הרשמה) */
+    /* מקטעי "במפגש" (הגיע) ו"אחרי המפגש": רק מ-שעה לפני תחילת המפגש; "אחרי המפגש" רק למשויכים, "הגיע" גם למי שלא משויך (הגיע בלי הרשמה) */
     const phaseSecs = () => {
       if (!inMeeting) return '';
       const ll = mid ? linkOf(pid, mid) : quickLink(pid), mm = state.meetings.find((x) => x.id === (mid || (ll && ll.meeting_id)));
-      if (!mm || !meetingStarted(mm)) return '';
+      if (!mm || !phaseOpen(mm)) return '';
       return ['during', 'after'].map((ph) => { const list = phaseList(ph, qTid); if (!list.length || (ph === 'after' && !ll)) return ''; return '<div class="qhd">' + PHASES[ph].title + '</div>' + list.slice().reverse().map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-qp="' + ph + ':' + s.key + '" aria-pressed="' + (phaseOf(ll, ph) === s.key) + '">' + esc(s.label) + '</button>').join(''); }).join('');
     };
     const phSecs = phaseSecs();   // כשיש קטעי "במפגש" / "אחרי המפגש" גם הסטטוסים של לפני המפגש מקבלים כותרת, לעקביות
@@ -2272,7 +2273,6 @@
   }
 
   async function setLinked(pid, mid, on, mode) {
-    if (!on && keepAttended(pid, mid)) return;
     if (on) {
       const row = { participant_id: pid, meeting_id: mid, paid: false };
       state.att.push(row); render(); refreshSheetMeetings();
@@ -2424,6 +2424,9 @@
     if (dd < 365) return pl(Math.floor(dd / 30.4), 'חודש', 'חודשיים', 'חודשים');
     return pl(Math.floor(dd / 365), 'שנה', 'שנתיים', 'שנים');
   };
+  /* בחציית הרגע של שעה לפני המפגש, פס הסטטוסים והתפריט מתעדכנים בלי לחכות לפעולה */
+  let phaseSig = null;
+  setInterval(() => { if (!state.meetings.length) return; const sg = state.meetings.filter(phaseOpen).map((m) => m.id).join(','); if (phaseSig !== null && sg !== phaseSig && !document.documentElement.classList.contains('is-loading')) render(); phaseSig = sg; }, 30000);
   setInterval(() => { document.querySelectorAll('.nago[data-ts]').forEach((e) => { e.textContent = agoText(e.dataset.ts); }); }, 30000);
   const authorName = () => SENDERS[emailOf()] || 'מנהל';
 
@@ -4157,9 +4160,9 @@
     const p = state.participants.find((x) => x.id === pid); if (!p) return;
     const { persist, started } = cntCtx, pr = persist(p), rate = pr.total ? pr.score / pr.total : 0;
     const sx = attCtx().by[pid] || { cls: 'n', rank: 0, n: 0 }, cls = sx.cls;
-    const pc = (x) => Math.round(x * 100) + '%';
-    const pos = ' (דירוג ' + sx.rank + ' מתוך ' + sx.n + ' משתתפים עם נתוני הגעה). המשתתפים מחולקים לשלישים שווים: ירוק, צהוב ואדום.';
-    const why = { g: 'ירוק: התמדה טובה, ציון התמדה ' + pc(rate) + ', בשליש העליון' + pos, y: 'צהוב: התמדה בינונית, ציון התמדה ' + pc(rate) + ', בשליש האמצעי' + pos, r: 'אדום: התמדה נמוכה, ציון התמדה ' + pc(rate) + ', בשליש התחתון' + pos, n: 'אפור: עוד לא התקיים אף מפגש מאז השיוך הראשון, ולכן אין עדיין מידע על התמדה.' }[cls];
+    const avg = Math.round(rate * 10) / 10;
+    const pos = ' (דירוג ' + sx.rank + ' מתוך ' + sx.n + ' משתתפים עם נתוני התמדה). המשתתפים מחולקים לשלישים שווים: ירוק, צהוב ואדום.';
+    const why = { g: 'ירוק: התמדה טובה, ציון התמדה ממוצע ' + avg + ' למפגש, בשליש העליון' + pos, y: 'צהוב: התמדה בינונית, ציון התמדה ממוצע ' + avg + ' למפגש, בשליש האמצעי' + pos, r: 'אדום: התמדה נמוכה, ציון התמדה ממוצע ' + avg + ' למפגש, בשליש התחתון' + pos, n: 'אפור: עוד לא התקיים אף מפגש מאז השיוך הראשון, ולכן אין עדיין מידע על התמדה.' }[cls];
     const key = (x) => x.meeting_date + x.meeting_time, mine = linksOf(pid).map((l) => state.meetings.find((x) => x.id === l.meeting_id)).filter((x) => x && started(x)).map(key).sort(), first = mine[0];
     const usedTypes = new Set();
     const rows = state.meetings.slice().sort((a, b) => key(b).localeCompare(key(a))).map((mt) => {
@@ -4168,16 +4171,16 @@
       if (!st && !l) return '';
       usedTypes.add(typeIdOf(mt));
       const lab = dmShort(mt) + ' <small>' + (l ? 'רשום' : 'לא רשום') + '</small>';
-      const sc = ptsOf(l), sg = (n) => '<bdi dir="ltr">' + (n > 0 ? '+' : '') + n + '</bdi>', chipH = !st ? UI.tag('עתידי', 'cst f') : (l && l.attended) ? UI.tag('הגיע ✓ · ' + sg(sc), 'cst ' + (sc > 0 ? 'y' : sc < 0 ? 'n' : 'f')) : UI.tag('לא הגיע ✕' + (sc ? ' · ' + sg(sc) : ''), 'cst n');   // לכל מפגש: ציון ההתמדה שלו (סכום הציונים של הסטטוס במפגש ואחרי המפגש)
+      const sc = ptsOf(l), sg = (n) => '<bdi dir="ltr">' + (n > 0 ? '+' : '') + n + '</bdi>', snames = l ? [duringOf(l), afterOf(l)].filter(Boolean).map((k) => STATUS_LABEL[k]).filter(Boolean).join(' · ') : '', chipH = !st ? UI.tag('עתידי', 'cst f') : UI.tag((snames ? esc(snames) + ' · ' : '') + sg(sc), 'cst ' + (sc > 0 ? 'y' : sc < 0 ? 'n' : 'f'));   // לכל מפגש: ציון ההתמדה שלו (סכום הציונים של הסטטוס במפגש ואחרי המפגש)
       return '<div class="cnr"><span>' + lab + '</span>' + chipH + '</div>';
     }).join('');
     /* הציונים שהוגדרו בפועל לסטטוסים של סוג המפגש (לא דוגמה קבועה: השמות והציונים נקבעים בהגדרות) */
     const tset = usedTypes.size ? [...usedTypes] : [curTid()], scoredSeen = new Set(), scoredList = [];
     tset.forEach((t) => [...dstatusList(t), ...astatusList(t)].forEach((x) => { if (scoredSeen.has(x.key)) return; scoredSeen.add(x.key); const n = Number(x.points) || 0; if (n) scoredList.push('<b>' + esc(x.label) + '</b>' + (tset.length > 1 && x.type_id && typeById(x.type_id) ? ' (' + esc(typeById(x.type_id).name) + ')' : '') + ' <bdi dir="ltr">' + (n > 0 ? '+' : '') + n + '</bdi>'); }));
     const scoreNote = scoredList.length ? ' הציונים שהוגדרו: ' + scoredList.join(' · ') + '.' : ' עוד לא הוגדרו ציונים לסטטוסים.';
-    m.innerHTML = '<h4>' + esc(p.name) + ': הגיע ' + pr.came + ' מתוך ' + pr.total + (pr.total ? ', ציון התמדה ' + pr.score + ' (' + pc(rate) + ')' : '') + '</h4>' +
+    m.innerHTML = '<h4>' + esc(p.name) + ': ציון התמדה ' + pr.score + (pr.total ? ' ב-' + pr.total + ' מפגשים' : '') + '</h4>' +
       '<div class="cwhy ' + cls + '">' + why + '</div>' +
-      '<div class="cnote">נספרים כל המפגשים שהתחילו מאז המפגש הראשון שהמשתתף שויך אליו. מפגש שלא נרשם אליו ולא הגיע נחשב החמצה, ומפגש שעוד לא התקיים לא משפיע על הצבע. הציון של כל מפגש הוא סכום ציוני ההתמדה של הסטטוס במפגש והסטטוס אחרי המפגש.' + scoreNote + ' הציונים נקבעים בהגדרות הסטטוסים של סוג המפגש.</div>' + rows;
+      '<div class="cnote">נספרים כל המפגשים שהתחילו מאז המפגש הראשון שהמשתתף שויך אליו. מפגש שלא נרשם אליו נחשב מפגש בלי ציון, ומפגש שעוד לא התקיים לא משפיע על הצבע. הציון של כל מפגש הוא סכום ציוני ההתמדה של הסטטוס במפגש והסטטוס אחרי המפגש.' + scoreNote + ' הציונים נקבעים בהגדרות הסטטוסים של סוג המפגש.</div>' + rows;
     m.dataset.pid = pid; m.hidden = false;
     const r = chip.getBoundingClientRect(), w = m.offsetWidth, h = m.offsetHeight;
     m.style.left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), window.innerWidth - w - 8) + 'px';
@@ -4366,18 +4369,18 @@
   function renderStSettings() {
     const list = curSt(), sys = curSys();
     document.querySelectorAll('#setSt [data-sc]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.sc === stScope)));
-    $('#stHint').textContent = stScope === 'meeting' ? 'סטטוס של משתתף בתוך מפגש' + ((typeById(stType) || {}).name ? ' מסוג "' + typeById(stType).name + '"' : '') + '. שם, צבע וסדר, ואפשר ליצור סטטוס חדש. "' + (STATUS_LABEL[SYSTEM_STATUS] || 'משויך') + '" ו"' + (STATUS_LABEL[ARRIVED] || 'הגיע') + '" משותפים לכל סוגי המפגשים. הסטטוס המוצג ברשימה: אחרי המפגש, ואם אין, במפגש, ואם אין, לפני המפגש. לסטטוס במפגש ואחרי המפגש יש ציון התמדה (מ-5- עד 5), וסכום הציונים של המשתתף במפגש נכנס לחישוב ההתמדה' : 'תגיות של המשתתף (ברשימה כשלא בוחרים מפגש). אפשר לסמן כמה תגיות לכל משתתף. תגית בלבד, בלי לוגיקה מאחוריה. שם וסדר, ואפשר ליצור תגית חדשה';
+    $('#stHint').textContent = stScope === 'meeting' ? 'סטטוס של משתתף בתוך מפגש' + ((typeById(stType) || {}).name ? ' מסוג "' + typeById(stType).name + '"' : '') + '. שם, צבע וסדר, ואפשר ליצור סטטוס חדש. "' + (STATUS_LABEL[SYSTEM_STATUS] || 'משויך') + '" משותף לכל סוגי המפגשים. הסטטוס המוצג ברשימה: אחרי המפגש, ואם אין, במפגש, ואם אין, לפני המפגש. לסטטוס במפגש ואחרי המפגש יש ציון התמדה (מ-5- עד 5), וסכום הציונים של המשתתף במפגש נכנס לחישוב ההתמדה' : 'תגיות של המשתתף (ברשימה כשלא בוחרים מפגש). אפשר לסמן כמה תגיות לכל משתתף. תגית בלבד, בלי לוגיקה מאחוריה. שם וסדר, ואפשר ליצור תגית חדשה';
     $('#stAdd').hidden = false; $('#stAdd').textContent = stScope === 'meeting' ? '+ סטטוס מפגש חדש' : '+ תגית חדשה';
     const noCol = stScope === 'participant';   // תוויות משתתף בלי צבעים
     /* ציון התמדה: בחירה פשוטה בין מינוס 5 ל-5 (רק לסטטוס במפגש ואחרי המפגש) */
     const ptsSel = (s) => '<select class="stpts" data-pts="' + s.key + '" aria-label="ציון התמדה" title="ציון התמדה">' + [5, 4, 3, 2, 1, 0, -1, -2, -3, -4, -5].map((n) => '<option value="' + n + '"' + (Number(s.points || 0) === n ? ' selected' : '') + '>' + (n > 0 ? '+' + n : n) + '</option>').join('') + '</select>';
-    const mkRows = (arr, pts) => arr.map((s) => (s.key === sys || s.key === ARRIVED)
+    const mkRows = (arr, pts) => arr.map((s) => (s.key === sys)
       ? '<div class="strow locked" data-k="' + s.key + '">' +
       '<span class="stlockic" title="המיקום קבוע: תמיד ראשון">' + icon('lock', 'i18') + '</span>' +
       '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם סטטוס המערכת" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1] + '" />' +
       '<button type="button" class="swcur" data-c="' + s.color + '" aria-haspopup="menu" aria-label="צבע: ' + (PALETTE[s.color] || PALETTE.sky)[2] + ' (לחיצה לשינוי)" title="שינוי צבע" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + '"></button>' +
       (pts ? ptsSel(s) : '<span class="stspacer" style="flex-basis:30px" aria-hidden="true"></span>') +
-      '<small class="stcap">' + (s.key === ARRIVED ? 'סטטוס מערכת: מי שהגיע למפגש' : 'סטטוס מערכת: ברירת המחדל בשיוך משתתף למפגש') + '</small></div>'
+      '<small class="stcap">סטטוס מערכת: ברירת המחדל בשיוך משתתף למפגש</small></div>'
       : '<div class="strow" data-k="' + s.key + '">' +
       '<button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר">' + icon('grip', 'i18') + '</button>' +
       '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם הסטטוס" style="' + (noCol ? 'background:#fff;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)' : 'background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1]) + '" />' +
@@ -4561,7 +4564,7 @@
   $('#stAddAfter').addEventListener('click', () => addPhase('after'));
   async function removePhase(ph, k, to, used) {
     const col = PHASES[ph].col;
-    used.forEach((l) => { l[col] = to || null; if (ph === 'during') { l.attended = to === ARRIVED; l.attended_at = l.attended ? (l.attended_at || new Date().toISOString()) : null; } });
+    used.forEach((l) => { l[col] = to || null; });
     state[PHASES[ph].arr] = state[PHASES[ph].arr].filter((x) => x.key !== k);
     applyStatuses(); showSetView('st'); render(); if (sheet && sheet.id) { refreshSheetMeetings(); renderContact(); }
     try {
@@ -4629,7 +4632,7 @@
   async function commitOrder(keys) {
     const before = allSt().map((s) => ({ key: s.key, sort: s.sort }));
     const changed = [];
-    keys.filter((k) => k !== SYSTEM_STATUS && k !== PSYSTEM && k !== ARRIVED).forEach((k, i) => { const s = allSt().find((x) => x.key === k); if (s && s.sort !== i + 1) { s.sort = i + 1; changed.push(s); } });
+    keys.filter((k) => k !== SYSTEM_STATUS && k !== PSYSTEM).forEach((k, i) => { const s = allSt().find((x) => x.key === k); if (s && s.sort !== i + 1) { s.sort = i + 1; changed.push(s); } });
     applyStatuses(); renderStSettings(); render(); if (sheet && sheet.id) { refreshSheetMeetings(); renderContact(); }
     if (!changed.length) return;
     try { await Promise.all(changed.map((s) => api(T.st + '?key=eq.' + s.key, { method: 'PATCH', body: { sort: s.sort } }))); }
@@ -4668,7 +4671,7 @@
   $('#stBoth').addEventListener('keydown', (e) => {
     const h = e.target.closest('.sthandle'); if (!h || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
     e.preventDefault();
-    const keys = [...h.closest('.strow').parentElement.querySelectorAll('.strow')].map((r) => r.dataset.k).filter((k0) => k0 !== SYSTEM_STATUS && k0 !== PSYSTEM && k0 !== ARRIVED), k = h.closest('.strow').dataset.k, i = keys.indexOf(k), j = e.key === 'ArrowUp' ? i - 1 : i + 1;
+    const keys = [...h.closest('.strow').parentElement.querySelectorAll('.strow')].map((r) => r.dataset.k).filter((k0) => k0 !== SYSTEM_STATUS && k0 !== PSYSTEM), k = h.closest('.strow').dataset.k, i = keys.indexOf(k), j = e.key === 'ArrowUp' ? i - 1 : i + 1;
     if (j < 0 || j >= keys.length) return;
     keys.splice(i, 1); keys.splice(j, 0, k);
     commitOrder(keys).then(() => { const nh = document.querySelector('#stBoth .strow[data-k="' + k + '"] .sthandle'); if (nh) nh.focus(); });

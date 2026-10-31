@@ -164,14 +164,14 @@
        כשצריך לשלם: כפתור תשלום גדול בפייבוקס כמו בפופאפ ההרשמה (הלחיצה מדווחת על תשלום) ו"רוצים לשלם בדרך אחרת?"; בלי הוראות הגעה */
     const rowHtml = (m) => {
       const paid = Number(m.paid) > 0, free = !!m.free;
-      const att = m.future ? '' : (m.attended ? '<span class="chip ok">הגעתם</span>' : '<span class="chip">לא הגעתם</span>');
+      const att = '';   // אין יותר סימון הגעה (הסטטוס במפגש הוא תווית וציון בלבד, ולא מוצג למשתתף)
       const pay = free ? '<span class="chip">חינם</span>' : paid ? '<span class="chip ok">שולם ' + ils(m.paid) + '</span>'
         : !m.future ? '<span class="chip no">לא שולם</span>'
         : m.reported ? '<span class="chip wait">ממתין לאישור תשלום</span>'
         : m.rejected ? '<span class="chip no">התשלום לא אושר</span>' : '<span class="chip no">טרם שולם</span>';
       let foot = '';
       if (m.future && !paid && !free && CFG.payboxLink) foot += '<div class="payfold" data-pf="' + m.id + '"><div><a class="btn pay" data-paynow="' + m.id + '" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">לתשלום ' + (m.price ? m.price + ' ₪ ' : '') + 'בפייבוקס</a><div class="paylinks"><button type="button" class="lnk" data-other="' + m.id + '">רוצים לשלם בדרך אחרת?</button></div><div class="msg" data-pm="' + m.id + '"></div></div></div>';
-      if (m.future && !m.attended) { const sure = unregSure === m.id; foot += '<button type="button" class="lnk sm" data-unreg="' + m.id + '"' + (sure ? ' data-sure="1"' : '') + '>' + (sure ? UNREG_SURE : 'ביטול רישום') + '</button><div class="msg" data-um="' + m.id + '"></div>'; }
+      if (m.future) { const sure = unregSure === m.id; foot += '<button type="button" class="lnk sm" data-unreg="' + m.id + '"' + (sure ? ' data-sure="1"' : '') + '>' + (sure ? UNREG_SURE : 'ביטול רישום') + '</button><div class="msg" data-um="' + m.id + '"></div>'; }
       /* שורה ראשונה: המועד · העיר; שורה שנייה: שם המפגש · המיקום (31.10.26) */
       return '<div class="mtg" data-mid="' + m.id + '"><div class="mtrow"><div class="mtw"><div class="mtd"><span class="c1">' + esc(dayParts(m.date).day) + '</span><bdi dir="ltr">' + esc(m.time) + ' · ' + esc(dayParts(m.date).date) + '</bdi>' + (m.city ? ' · ' + esc(m.city) : '') + '</div>' + ((m.name || m.place) ? '<div class="c5">' + esc([m.name, m.place].filter(Boolean).join(' · ')) + '</div>' : '') + '</div><div class="mts">' + att + pay + '</div></div>' + (foot ? '<div class="mtfoot">' + foot + '</div>' : '') + '</div>';
     };
@@ -212,7 +212,7 @@
         const r = await rpc('harpatka_me_unregister', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {}));
         rel();
         if (r === 'cancelled' || r === 'not_registered') { ob.done(); keepOpen = id; load(); }
-        else { ob.fail(); toast(msg, r === 'attended' ? 'סומנה הגעה למפגש, אי אפשר לבטל' : 'אי אפשר לבטל את הרישום למפגש הזה', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול רישום'; }
+        else { ob.fail(); toast(msg, 'אי אפשר לבטל את הרישום למפגש הזה', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול רישום'; }
       } catch (e) { rel(); ob.fail(); toast(msg, 'משהו השתבש, אפשר לנסות שוב', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול רישום'; }
     }; });
     /* לחיצה על התשלום בפייבוקס = דיווח על תשלום, אוטומטית (בלי קישור "שילמתי"): פייבוקס נפתח בלשונית חדשה והמפגש מסומן "ממתין לאישור" */
