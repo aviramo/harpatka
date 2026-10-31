@@ -139,8 +139,15 @@
   /* כפתור "חזרה" של הדפדפן (ובאנדרואיד) כשפופאפ ההרשמה פתוח סוגר את הפופאפ ולא עוזב את העמוד: בפתיחה נוספת רשומת היסטוריה אחת,
      חזרה בדפדפן (popstate) סוגרת את הפופאפ, וסגירה אחרת (X, רקע, Esc, החלקה) חוזרת אחורה ברשומה שהוספנו */
   let modalHist = false, skipPop = false;
+  /* בתוך iframe (צפייה כמשתתף בפופאפ של דף הניהול) לא מוסיפים רשומות היסטוריה: היסטוריה של iframe משותפת עם הדף הראשי, ורשומות כאלה גרמו ל"חזרה" לחזור בתוך ה-iframe ולהשאיר רשומות מיותרות */
+  const EMB = (() => { try { return window.parent !== window; } catch (e) { return true; } })();
+  /* ניווט של iframe שכבר טעון בדף מוסיף רשומת היסטוריה לדף הראשי; location.replace מחליף בלי רשומה. iframe שעוד לא נטען (about:blank) מקבל src כרגיל (בלי רשומה) */
+  function frameGo(fr, url) {
+    try { const w = fr.contentWindow; if (w && w.location.href && w.location.href !== 'about:blank') { w.location.replace(url); fr.dataset.url = url; return; } } catch (e) {}
+    fr.src = url; fr.dataset.url = url;
+  }
   function modalHistPush() {
-    if (modalHist) return;
+    if (modalHist || EMB) return;
     try { history.pushState({ harpatkaModal: 1 }, '', location.href); modalHist = true; } catch (e) {}
   }
   window.addEventListener('popstate', () => {
@@ -489,7 +496,7 @@
   /* אחרי כניסה (מהשכבה של גוגל או מהחלון הקופץ): טוענים את המשתתף, מרעננים את האזור האישי שנטען מראש, ואם נכנסו מ"כניסה לאזור האישי" הוא נפתח */
   function afterLogin(after, thenOpen) {
     mePending = after || null; const ld = meLoader.now();
-    if (meSheet) { meSheet.dataset.k = ''; if (!meSheet.hidden) { const f = meSheet.querySelector('iframe'), s = f.src; f.src = s; } }
+    if (meSheet) { meSheet.dataset.k = ''; if (!meSheet.hidden) { const f = meSheet.querySelector('iframe'); try { f.contentWindow.location.reload(); } catch (e) { frameGo(f, f.dataset.url || f.src); } } }   // טעינה מחדש בלי רשומת היסטוריה
     if (thenOpen) Promise.resolve(ld).then(() => openMeArea(''));
   }
   /* ===== כניסה עם גוגל בשכבה קטנה של גוגל מעל הדף (Google One Tap, בכרום דרך FedCM), בלי חלון ובלי כרטיסייה חדשה =====
@@ -687,11 +694,11 @@
     const qs = new URLSearchParams(search || ''); qs.set('embed', '1'); if (AS) qs.set('as', AS);   // צפייה כמשתתף: האזור האישי של אותו משתתף, עם החיבור של דף הניהול
     { const fr = meSheet.querySelector('iframe'); let tk = ''; try { tk = String(localStorage.getItem(TOK_KEY) || '').slice(-24); } catch (e) {}
       const key = tk + '|' + qs.toString();
-      if (meSheet.dataset.k !== key) { fr.src = BASE + 'me/?' + qs.toString(); meSheet.dataset.k = key; } }   // הדף נטען מראש ונשאר חם: פתיחה ראשונה ופתיחות הבאות מיידיות; נטען מחדש רק כשהחיבור או הפרמטרים השתנו
+      if (meSheet.dataset.k !== key) { frameGo(fr, BASE + 'me/?' + qs.toString()); meSheet.dataset.k = key; } }   // הדף נטען מראש ונשאר חם: פתיחה ראשונה ופתיחות הבאות מיידיות; נטען מחדש רק כשהחיבור או הפרמטרים השתנו
     if (preload) return;
     meSheet.hidden = false; lockPage();
     requestAnimationFrame(() => requestAnimationFrame(() => meSheet.classList.add('open')));
-    if (!meSheetPush) { try { history.pushState({ meSheet: 1 }, ''); meSheetPush = true; } catch (e) {} }
+    if (!meSheetPush && !EMB) { try { history.pushState({ meSheet: 1 }, ''); meSheetPush = true; } catch (e) {} }
   }
   document.addEventListener('click', (e) => {   // קישור לאזור האישי (כרטיס האזור האישי, כפתור המפגש, קישורי ההרשמה): פותחים את הפופאפ במקום לעבור לדף
     const a = e.target.closest && e.target.closest('a[href]'); if (!a || e.defaultPrevented || e.button || e.ctrlKey || e.metaKey || e.shiftKey || a.target === '_blank') return;
