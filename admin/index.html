@@ -1495,7 +1495,7 @@
     $('#addBox').innerHTML = q ? '<button type="button" class="newbtn" id="addNew"><span class="tg ico plus" aria-hidden="true">+</span><span>הוספת משתתף חדש</span><b>' + esc(state.q.trim()) + '</b></button>' : '';   // מנותק מהרשימה, מתחתיה
     const hasNew = !!q;
 
-    state.listCnt = String(rows.length + others.length); ['#listCount', '#menuCount'].forEach((s) => { const lc = $(s); if (lc) lc.textContent = state.listCnt; });   // מספר הרשומות המוצגות כרגע (בשורת הסינון, מימין, ובתפריט הסינון בשורת "תצוגה")
+    state.listCnt = String(rows.length + others.length); { const lc = $('#listCount'); if (lc) lc.textContent = state.listCnt; const mc = $('#menuCount'); if (mc) mc.textContent = cntLabel(state.listCnt); }   // מספר הרשומות המוצגות כרגע (בשורת הסינון, מימין, ובתפריט הסינון בשורת "תצוגה")
     if (!rows.length && !others.length) {
       $('#list').innerHTML = '';   // רשימה ריקה: בלי הודעות (נשאר רק "הוספת משתתף חדש" בחיפוש)
       requestAnimationFrame(alignFilters);
@@ -3955,6 +3955,8 @@
       fsec('גיל', AGE_B.map((b) => chip('age', b[0], b[1], cnt((p) => { const a = shownAge(p); return a != null && a >= b[2] && a <= b[3]; }))).join('')) +
       fsec('אזור אישי', [['yes', 'רשומים'], ['no', 'לא רשומים'], ['blocked', 'חסומים']].map((o) => chip('login', o[0], o[1], cnt((p) => loginOf(p) === o[0]))).join(''));
   }
+  /* מונה הרשומות בתפריט הסינון: "33 משתתפים" (בשורת הסינון נשאר המספר בלבד) */
+  const cntLabel = (n) => n == null || n === '' ? '' : Number(n) === 1 ? 'משתתף אחד' : n + ' משתתפים';
   const curMeeting = () => state.meetings.find((x) => x.id === state.filter) || null;
   /* יש סינון פעיל שלא רואים בשורת הסינון (כל מה שבפאנל חוץ ממגדר שמוצג בשורה): נקודה בתגית הסינון */
   const panelOn = () => !!(state.srcF || state.ageF || state.loginF || (state.gender && !state.showGender));   // סינוני העמודות (תשלום, שליחה, הגעה, יתרה, התמדה) נראים באייקונים שמעל העמודות ולא נספרים כאן
@@ -3963,7 +3965,7 @@
     /* "תצוגה": מגדר, תשלום / יתרה, שליחת פרטי המפגש, הגעה / התמדה כתגיות (כמו "דרך הגעה"); תגית מסומנת = מוצג ברשימה או בשורת הסינון */
     /* שורה אחת בראש התפריט, בלי כותרת (31.10.26): טוגל סימון ההגעה (במפגש) או ההתמדה (בתצוגה הכללית) ומונה הרשומות בקצה השמאלי. מגדר ותשלום מוצגים תמיד */
     let h = '<div class="fsec"><div class="fsh"><div class="mgc"></div>' +
-      '<span class="listcount" id="menuCount" title="מספר הרשומות המוצגות">' + (state.listCnt == null ? '' : state.listCnt) + '</span></div></div>';
+      '<span class="listcount" id="menuCount" title="מספר הרשומות המוצגות">' + cntLabel(state.listCnt) + '</span></div></div>';
     h += moreSecs();
     if (panelOn() || state.gender) h += '<button type="button" class="fclear" data-fclear="1">ניקוי סינונים</button>';
     $('#viewMenu').innerHTML = h;
