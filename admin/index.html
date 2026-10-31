@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261031o" />
+  <link rel="stylesheet" href="admin.css?v=20261031p" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -3127,7 +3127,14 @@
     const o = originOf(p), cls = o ? ' ' + o.kind : '';   // צבע התגית לפי דרך ההגעה (צבע שנבחר בהגדרות)
     const src = o ? (o.kind === 'pr' ? ' · דרך הגעה: ' : ' · פרסום: ') + o.name : '';
     h.title = 'פרטי המשתתף' + src;
-    h.innerHTML = (age != null || p.gender ? '<span class="tchip' + cls + '"' + originAttr(p) + '><bdi>' + (p.gender ? '<b>' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : '') + '</bdi></span>' : '') + '<span class="tname' + nameCls(p) + '" dir="rtl"><bdi>' + esc(p.name) + '</bdi>' + glMark(p, 'i18') + '</span>';   // אותו סמל מצב כמו ברשימה, ליד השם
+    h.innerHTML = (age != null || p.gender ? '<span class="tchip' + cls + '"' + originAttr(p) + '><bdi>' + (p.gender ? '<b>' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : '') + '</bdi></span>' : '') + '<span class="tname' + nameCls(p) + '" dir="rtl"><bdi>' + esc(p.name) + '</bdi></span>';
+    /* סמל המצב (מחובר לחשבון, חסום, מחוק) כאייקון קטן בפינה הימנית התחתונה של כפתור פרטי המשתתף, ולא ליד השם */
+    const ib = $('#pInfoBtn'), mk = stMark(p);
+    if (ib) {
+      let bd = ib.querySelector('.ibadge');
+      if (!mk) { if (bd) bd.remove(); ib.title = 'פרטי המשתתף'; }
+      else { if (!bd) { bd = document.createElement('span'); ib.appendChild(bd); } bd.className = 'ibadge' + (mk.red ? ' red' : ''); bd.innerHTML = icon(mk.k, 'i14'); ib.title = 'פרטי המשתתף · ' + mk.t; }
+    }
   }
   /* בחירת דרך הגעה במשתתף (לשונית הפרטים): ללא / פרסום בפייסבוק (בלי עמלה) / דרכי הגעה / דרך הגעה חדשה */
   function fillPromoSel(p) {
@@ -3140,7 +3147,7 @@
   function tintPromoSel() {
     const sel = $('#pPromoSel'); if (!sel) return;
     const o = state.promoters.find((x) => x.id === sel.value), c = o && o.color ? (PALETTE[o.color] || null) : null;
-    sel.style.backgroundColor = c ? c[0] : ''; sel.style.borderColor = c ? c[0] : ''; sel.style.color = c ? c[1] : ''; sel.style.fontWeight = c ? '700' : '';
+    sel.style.backgroundColor = c ? c[0] : ''; sel.style.borderColor = c ? c[1] : ''; sel.style.color = c ? c[1] : ''; sel.style.fontWeight = c ? '700' : '';   // מסגרת כמו בשאר השדות, בגוון הכהה של אותו צבע
   }
   function openParticipant(id, tab, fromEl) {
     const p = id ? state.participants.find((x) => x.id === id) : null;

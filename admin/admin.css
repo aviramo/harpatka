@@ -519,6 +519,10 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 #pDlg .tname.warn { color: var(--red); }   /* משתתף מחוק או חסום */
 #pDlg .tname .glk { display: inline-flex; vertical-align: -2px; margin-inline-start: 6px; color: var(--text-2); }   /* סמל המצב ליד השם, כמו ברשימה */
 #pDlg .tname .glk.red { color: var(--red); }
+/* סמל המצב (מחובר לחשבון, חסום, מחוק) כאייקון קטן בפינה הימנית התחתונה של כפתור פרטי המשתתף */
+#pInfoBtn { position: relative; }
+#pInfoBtn .ibadge { position: absolute; right: 2px; bottom: 2px; display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; background: var(--bg); color: var(--text-2); pointer-events: none; }
+#pInfoBtn .ibadge.red { color: var(--red); }
 #pMsgs { display: contents; }
 #pDlg .sheet-head #pBack { order: -2; }
 #pDlg .sheet-head #pMsgs .ctop { order: -1; display: flex; margin: 0; }
@@ -845,6 +849,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .inav { position: absolute; top: 50%; margin-top: -20px; background: rgba(255, 255, 255, .92); border-color: transparent; }
 .iprev { right: 8px; }
 .inext { left: 8px; }
-#meDlg { overflow: hidden; background: var(--bg); height: calc(100dvh - 48px); max-height: calc(100dvh - 48px); }   /* דף הבית כפי שהמשתתף רואה אותו: פופאפ שנעצר 48px מתחת לראש המסך (רואים מאחוריו את דף הניהול המעומעם ואת פס הגרירה, גם מתחת לפס הבדיקות) */
-#meDlg .grab { margin-bottom: 0; background: var(--bg); }   /* פס הגרירה מעל הדף ולא עליו */
-#meDlg iframe { display: block; width: 100%; height: calc(100% - 28px); border: 0; background: var(--bg); }
+#meDlg { overflow: hidden; background: var(--bg); height: calc(100dvh - var(--envtop, 0px)); max-height: calc(100dvh - var(--envtop, 0px)); }   /* דף הבית כפי שהמשתתף רואה אותו: עד ראש המסך, ההדר של הדף צמוד למעלה (בבדיקות צמוד לפס הבדיקות, --envtop) */
+#meDlg .grab { position: absolute; top: 0; left: 0; right: 0; height: 12px; margin: 0; background: none; pointer-events: none; }   /* רק סימן על ההדר; ההחלקה למטה עוברת מהדף שבפנים */
+#meDlg .grab i { background: rgba(255, 255, 255, .55); }
+#meDlg iframe { display: block; width: 100%; height: 100%; border: 0; background: var(--bg); }
