@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261103d" />
+  <link rel="stylesheet" href="admin.css?v=20261103f" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -4072,7 +4072,7 @@
   function renderWaMenu() {
     const sel = waSelected(), f = waFilter(), item = (id, ic, name, tag, on) => '<button type="button" role="menuitemradio" data-wt="' + esc(id) + '" aria-checked="' + on + '"><span class="wmi">' + ic + '<span class="wmn">' + esc(name) + '</span>' + (tag ? '<small>' + esc(tag) + '</small>' : '') + '</span></button>';
     /* מתחת לקו: סינון לפי שליחה (רק כשנבחרה תבנית, לא בהודעה ריקה) ואחריו הוספת תבנית */
-    const cn = sel ? waCounts() : null, seg = sel ? '<div class="wseg" role="group" aria-label="סינון הרשימה לפי שליחה של התבנית שנבחרה" title="מציג ברשימה את כולם, רק מי שנשלחה לו התבנית שנבחרה, או רק מי שלא">' + [['', 'הכל'], ['1', 'נשלח'], ['0', 'לא נשלח']].map((o) => '<button type="button" data-wsf="' + o[0] + '" aria-pressed="' + (f === o[0]) + '" aria-label="' + o[1] + ' ' + cn[o[0]] + '">' + o[1] + '<small>' + cn[o[0]] + '</small></button>').join('') + '</div>' : '', bot = seg + addRows();
+    const cn = sel ? waCounts() : null, seg = sel ? '<div class="wseg" role="group" aria-label="סינון הרשימה לפי שליחה של התבנית שנבחרה" title="מציג ברשימה את כולם, רק מי שנשלחה לו התבנית שנבחרה, או רק מי שלא">' + [['', 'הכל'], ['1', 'נשלח'], ['0', 'לא נשלח']].map((o) => '<button type="button" class="stc tagc' + (cn[o[0]] || f === o[0] ? '' : ' zero') + '" data-wsf="' + o[0] + '" aria-pressed="' + (f === o[0]) + '">' + o[1] + ' <small>' + cn[o[0]] + '</small></button>').join('') + '</div>' : '', bot = seg + addRows();
     $('#waMenu').innerHTML = item('', WA_ICON, 'הודעה ריקה', '', !sel) +
       waList().map((x) => item(x.id, PIN_ICON, x.name || 'ללא שם', x.tag || '', !!sel && sel.id === x.id)).join('') +
       (bot ? '<div class="wbot">' + bot + '</div>' : '');
