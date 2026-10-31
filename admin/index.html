@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261102v" />
+  <link rel="stylesheet" href="admin.css?v=20261102w" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -3649,7 +3649,7 @@
   document.querySelectorAll('.field input[type="date"], .field input[type="time"]').forEach(dtField);   // השדות שכבר בדף (טופס הכספים, תשלום לדרך הגעה)
 
   /* ---------- פרטי מפגש: אלמנט אחד לעריכת מפגש ולפרטי ברירת המחדל של סוג מפגש (31.10.26) ----------
-     סדר: שם, מתי (תאריך במפגש, שעה), איפה (עיר, מיקום, הוראות הגעה מרובות שורות), הרשמה (כמות משתתפים, מחירים), תמונה.
+     סדר (בלי כותרות סעיפים): שם, תאריך ושעה, עיר ומיקום, הוראות הגעה מרובות שורות, תבניות הודעה, כמות משתתפים, מחירים, תמונה.
      התמונה היא אריח אחד: לחיצה עליו בוחרת או מחליפה תמונה, ו-× על התמונה עצמה מסיר אותה (במפגש עם סוג: חוזר לתמונה של הסוג).
      במפגש עם סוג: שדה ריק = "כמו בסוג", והערך של הסוג מוצג כפלייסהולדר (בשעה: טקסט אפור בתוך השדה, במחירים שורת סיכום, בתמונה התמונה של הסוג עמומה).
      typOf: הסוג שממנו יורשים (במפגש), או null (בסוג עצמו, ובמפגש כשאין סוגים) */
@@ -3661,21 +3661,21 @@
       (isType ? '' : '<div class="mfrow mfname">') +
       '<label class="field"><span>' + (isType ? 'שם סוג המפגש' : 'שם המפגש') + '</span><input id="' + I('Name') + '" type="text" maxlength="80" autocomplete="off" /></label>' +
       (isType ? '' : '<span id="' + I('TypeSlot') + '"></span></div>') +
-      '<div class="mfsec">מתי</div><div class="mfrow">' +
+      '<div class="mfrow">' +
         (isType ? '' : '<label class="field"><span>תאריך</span><input id="' + I('Date') + '" name="date" type="date" required /></label>') +
         '<label class="field"><span>שעה</span><input id="' + I('Time') + '" name="time" type="time" /></label></div>' +
-      '<div class="mfsec">איפה</div><div class="mfrow">' +
+      '<div class="mfrow">' +
         '<label class="field"><span>עיר</span><input id="' + I('City') + '" name="city" type="text" maxlength="40" autocomplete="off" /></label>' +
         '<label class="field"><span>מיקום</span><input id="' + I('Place') + '" name="place" type="text" maxlength="60" autocomplete="off" /></label></div>' +
       '<label class="field"><span>הוראות הגעה</span><textarea id="' + I('Dirs') + '" name="directions" rows="3" maxlength="800"></textarea></label>' +
-      '<div class="mfsec tplsec">תבניות הודעה</div>' + (isType ? '' : '<div class="mtinh2" id="' + I('TplInh') + '" hidden></div>') + '<div class="mtlist" id="' + I('Tpl') + '"></div>' +
+      (isType ? '' : '<div class="mtinh2" id="' + I('TplInh') + '" hidden></div>') + '<div class="mtlist" id="' + I('Tpl') + '"></div>' +
       '<button type="button" class="mtpladd" id="' + I('TplAdd') + '">+ תבנית הודעה</button>' +
-      '<div class="mfsec">הרשמה</div><div class="mfrow"><label class="field"><span>כמות משתתפים</span><input id="' + I('Max') + '" name="max" type="number" inputmode="numeric" min="1" max="500" step="1" /></label></div>' +
+      '<div class="mfrow"><label class="field"><span>כמות משתתפים</span><input id="' + I('Max') + '" name="max" type="number" inputmode="numeric" min="1" max="500" step="1" /></label></div>' +
       '<div class="field"><span>מחירים</span>' +
         (isType ? '' : '<div class="mtinh" id="' + I('TierInh') + '" hidden><span id="' + I('TierInhTxt') + '"></span><button type="button" id="' + I('TierOwn') + '">שינוי למפגש הזה</button></div>') +
         '<div class="mfted" id="' + I('TierEd') + '"><div class="mt2" id="' + I('TierList') + '"></div><div class="mt2add"><button type="button" id="' + I('TierAdd') + '">+ מדרגה</button>' +
         (isType ? '' : '<button type="button" id="' + I('TierReset') + '" hidden>כמו בסוג המפגש</button>') + '</div></div></div>' +
-      '<div class="mfsec">תמונה</div><div class="mfimg" id="' + I('ImgBox') + '">' +
+      '<div class="mfimg" id="' + I('ImgBox') + '">' +
         '<label class="mfimg-pick" for="' + I('ImgFile') + '" tabindex="0" role="button" id="' + I('ImgPick') + '"><img id="' + I('ImgPrev') + '" alt="" hidden />' +
           '<span class="mfimg-empty">' + icon('img', 'i22') + '<b>הוספת תמונה</b><small>הרקע של כרטיס המפגש בעמוד הבית</small></span>' +
           '<span class="mfimg-tag" id="' + I('ImgTag') + '"></span></label>' +
@@ -3708,7 +3708,7 @@
     };
     F.tpl.close = () => {
       F.tpl.cur = null; mfBox.classList.remove('editing'); ed('Ed').hidden = true; F.tpl.render();
-      const sec = mfBox.querySelector('.mfsec.tplsec'); if (sec) sec.scrollIntoView({ block: 'start' });
+      tplBox.scrollIntoView({ block: 'start' });
     };
     F.tpl.add = () => {   // תבנית חדשה ישר במסך העריכה, מוכנה לכתיבה
       F.tpl.rows.push({ id: null, name: '', body: '' }); F.tpl.render(); F.tpl.open(F.tpl.rows.length - 1);
