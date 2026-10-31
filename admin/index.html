@@ -1251,7 +1251,9 @@
   const viewDef = () => state.filter ? MEETING_DEF : VIEW_DEF;   // הקשר התצוגה: מפגש, סוג מפגש (31.10.26) או כל המשתתפים
   const viewCtx = () => { const k = viewKey(); return state.viewScopes[k] || (state.viewScopes[k] = Object.assign({}, viewDef())); };
   ['showPay', 'showGender'].forEach((prop) => Object.defineProperty(state, prop, { get: () => true, set() {}, enumerable: true }));   // תשלום ומגדר מוצגים תמיד (31.10.26)
-  [['showSent', 'sent'], ['showAtt', 'att']].forEach(([prop, key]) => Object.defineProperty(state, prop, { get() { const c = state.viewScopes[viewKey()]; return c && c[key] !== undefined && c[key] !== null ? c[key] : viewDef()[key]; }, set(v) { viewCtx()[key] = v; }, enumerable: true }));
+  /* ההתמדה (צ'יף "ציון" ברשימה ואייקון הסינון שלה) מוצגת תמיד בתצוגת "הכל" ובסוג: אין טוגל (31.10.26) */
+  Object.defineProperty(state, 'showAtt', { get() { return true; }, set() {}, enumerable: true });
+  [['showSent', 'sent']].forEach(([prop, key]) => Object.defineProperty(state, prop, { get() { const c = state.viewScopes[viewKey()]; return c && c[key] !== undefined && c[key] !== null ? c[key] : viewDef()[key]; }, set(v) { viewCtx()[key] = v; }, enumerable: true }));
   /* כפתור התגיות (31.10.26): הגדרה אחת לכל התצוגות (כל המשתתפים, סוגי מפגשים ומפגשים), לכל מנהל בנפרד; נשמר ב-view_scopes._g */
   Object.defineProperty(state, 'showTags', { get() { const c = state.viewScopes._g; return c && c.tags !== undefined ? c.tags : VIEW_DEF.tags; }, set(v) { (state.viewScopes._g || (state.viewScopes._g = {})).tags = v; }, enumerable: true });
   function applyViewPrefs() { const pr = state.prefs[emailOf()] || {}; state.viewScopes = (pr.view_scopes && typeof pr.view_scopes === 'object') ? JSON.parse(JSON.stringify(pr.view_scopes)) : {}; }
@@ -3944,7 +3946,6 @@
   /* פאנל הסינון והתצוגה (31.10.26): כל הסינונים והטוגלים במקום אחד, נפתח מתגית הסינון שבשורת "סינון ומיון".
      לכל נושא כותרת עם טוגל תצוגה ("בשורה" / "ברשימה") ומתחתיה האפשרויות כתגיות עם הכמות; לחיצה נוספת על תגית נבחרת מבטלת אותה */
   const fsec = (title, body, extra) => '<div class="fsec"><div class="fsh"><b>' + title + '</b>' + (extra || '') + '</div>' + (body ? '<div class="mgc">' + body + '</div>' : '') + '</div>';
-  const ftgl = (k, title, on, aria) => '<button type="button" class="mc" data-vt="' + k + '" aria-pressed="' + !!on + '" aria-label="' + aria + '" title="' + aria + '">' + title + '</button>';   // תגית תצוגה: מסומנת = מוצג, לחיצה מחליפה (כמו תגיות הסינון)
   const FK = { src: 'srcF', login: 'loginF', age: 'ageF' };   // סוג הסינון בפאנל ← השדה ב-state
   function moreSecs() {
     const scope = state.participants.filter((p) => (state.filter ? linkOf(p.id, state.filter) : p.active !== false) && mtypeOk(p));
@@ -3958,10 +3959,10 @@
   /* יש סינון פעיל שלא רואים בשורת הסינון (כל מה שבפאנל חוץ ממגדר שמוצג בשורה): נקודה בתגית הסינון */
   const panelOn = () => !!(state.srcF || state.ageF || state.loginF || (state.gender && !state.showGender));   // סינוני העמודות (תשלום, שליחה, הגעה, יתרה, התמדה) נראים באייקונים שמעל העמודות ולא נספרים כאן
   function renderViewMenu() {
-    const m = curMeeting(), sentOn = !!(m && sentView(m)), attOnM = state.showAtt !== false;
+    const m = curMeeting();
     /* "תצוגה": מגדר, תשלום / יתרה, שליחת פרטי המפגש, הגעה / התמדה כתגיות (כמו "דרך הגעה"); תגית מסומנת = מוצג ברשימה או בשורת הסינון */
     /* שורה אחת בראש התפריט, בלי כותרת (31.10.26): טוגל סימון ההגעה (במפגש) או ההתמדה (בתצוגה הכללית) ומונה הרשומות בקצה השמאלי. מגדר ותשלום מוצגים תמיד */
-    let h = '<div class="fsec"><div class="fsh"><div class="mgc">' + (state.filter ? '' : ftgl('here', 'התמדה', attOnM, 'הצגת ההתמדה ברשימה')) + '</div>' +
+    let h = '<div class="fsec"><div class="fsh"><div class="mgc"></div>' +
       '<span class="listcount" id="menuCount" title="מספר הרשומות המוצגות">' + (state.listCnt == null ? '' : state.listCnt) + '</span></div></div>';
     h += moreSecs();
     if (panelOn() || state.gender) h += '<button type="button" class="fclear" data-fclear="1">ניקוי סינונים</button>';
@@ -4107,10 +4108,6 @@
     const mk = e.target.closest('[data-mk]');
     if (mk) { const f = FK[mk.dataset.mk], v = mk.dataset.mv; if (f) state[f] = state[f] === v ? null : v; syncUrl(); return after(); }
     if (e.target.closest('[data-fclear]')) { state.gender = null; state.paidF = null; state.sent = null; state.bal = null; state.srcF = null; state.ageF = null; state.loginF = null; state.attF = null; return after(); }
-    const b = e.target.closest('[data-vt]'); if (!b) return;
-    if (b.dataset.vt === 'here') { state.showAtt = state.showAtt === false ? null : false; if (state.showAtt === false) state.attF = null; }   // תמונת מצב כללית: התמדה וסימון ההגעה למפגש הקרוב
-    else { const m0 = curMeeting() || eventMeeting(), cur = !!(m0 && sentView(m0)), auto = !!(m0 && (evOnFor(m0) || hasSent(m0))); state.showSent = !cur === auto ? null : !cur; if (cur) state.sent = null; }
-    after(true);
   });
   /* חזרה בדפדפן במצב חיפוש פתוח (בפוקוס או עם טקסט) סוגרת את החיפוש ומנקה אותו */
   const searchNav = { id: 'search', close() { const i = NAV.stack.findIndex((x) => x.d === searchNav); if (i >= 0) NAV.stack.splice(i, 1); const q = $('#q'); q.value = ''; state.q = ''; q.blur(); renderList(); syncUrl(); } };
