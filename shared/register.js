@@ -375,6 +375,20 @@
   const AS = (() => { try { const v = new URLSearchParams(location.search).get('as'); return v && /^[0-9a-f-]{36}$/i.test(v) ? v : null; } catch (e) { return null; } })();
   const TOK_KEY = AS ? 'harpatka_admin_session_v2' : ME_KEY;
   window.__meAs = AS;
+  /* צפייה כמשתתף בתוך הפופאפ של דף הניהול (iframe): החלקה למטה כשהדף בראשו מורידה את הפופאפ יחד עם האצבע וסוגרת אותו (כמו האזור האישי).
+     לא כשפופאפ פנימי פתוח (הרשמה, אזור אישי), כי שם הגלילה של הדף נעולה */
+  if (AS && window.parent !== window) {
+    let sy = 0, dy = 0, on = false;
+    const top = () => !document.documentElement.classList.contains('modal-lock') && (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
+    const post = (t, d) => { try { window.parent.postMessage({ harpatka: t, dy: d }, location.origin); } catch (e) {} };
+    document.addEventListener('touchstart', (e) => { if (e.touches.length !== 1) return; sy = e.touches[0].screenY; dy = 0; on = top(); }, { passive: true });
+    document.addEventListener('touchmove', (e) => {
+      if (!on) return; const d = e.touches[0].screenY - sy;   // screenY: לא משתנה כשהפופאפ (והדף שבתוכו) זז עם האצבע
+      if (d > 6 && top()) { dy = d; if (e.cancelable) e.preventDefault(); post('me-drag', dy); } else if (d <= 0 && dy === 0) { on = false; }
+    }, { passive: false });
+    const end = () => { if (on && dy > 0) post('me-drag-end', dy); on = false; dy = 0; };
+    document.addEventListener('touchend', end); document.addEventListener('touchcancel', end);
+  }
   let meInfo = null;   // { first, last, age, gender, meetings }
   const hasSess = () => { try { return !!localStorage.getItem(TOK_KEY); } catch (e) { return false; } };   // יש חיבור גוגל שמור בדפדפן (גם אם עוד לא נטען המשתתף)
   /* מחובר באמת: המשתתף נטען מהשרת, או שיש חיבור שמור שעוד לא פג. חיבור שמור שפג (ואולי הרענון שלו נכשל) לא נחשב: הכפתורים פותחים כניסה עם גוגל */
