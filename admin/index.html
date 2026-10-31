@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261102k" />
+  <link rel="stylesheet" href="admin.css?v=20261102l" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -3319,7 +3319,11 @@
       chip.hidden = !sheet.id;
       chip.className = 'paychip' + (net > 0 ? '' : net < 0 ? ' ok' : ' zero');
       { const chipHtml = '<bdi dir="ltr">₪' + nfm(Math.abs(net)) + '</bdi>'; if (chip.innerHTML !== chipHtml) chip.innerHTML = chipHtml; } chip.title = (net < 0 ? 'יתרה לטובת המשתתף' : 'אין יתרה') + ' (לחיצה לתשלומים ויתרה)'; }
-    box.innerHTML = shown.map((m) => {
+    /* נפתח מתוך מפגש (sheet.hl) משתתף שעוד לא משויך אליו: מפגש דמה במקום המתאים ברצועה, בגודל מפגש רגיל, "שיוך למפגש" עם המועד; לחיצה פותחת את תפריט הסטטוסים ובחירת סטטוס יוצרת את השיוך */
+    const dm = (sheet.id && sheet.hl && !linkOf(sheet.id, sheet.hl)) ? state.meetings.find((x) => x.id === sheet.hl) : null;
+    const cards = dm ? shown.concat(dm).sort((a, b) => (b.meeting_date + b.meeting_time).localeCompare(a.meeting_date + a.meeting_time)) : shown;
+    box.innerHTML = cards.map((m) => {
+      if (dm && m.id === dm.id) return '<div class="mrow dummy hl" data-mrow="' + m.id + '"><button type="button" class="mdummy" data-mp="' + m.id + '" title="שיוך למפגש: בחירת סטטוס יוצרת את השיוך"><span class="mdl">שיוך למפגש</span><span class="mdd">' + esc(dmShort(m)) + '</span></button></div>';
       let on, st;
       if (sheet.id) { const l = linkOf(sheet.id, m.id); on = !!l; st = l ? dispStatus(l) : 'unpaid'; }
       else { on = sheet.links.has(m.id); st = sheet.links.get(m.id) ? 'paid' : 'unpaid'; }
@@ -3333,7 +3337,7 @@
       '</div>';
     }).join('');
     focusMeetingCard();
-    if (sheet.id && !shown.length) box.innerHTML = '<p class="mnone">עוד לא משויך לאף מפגש</p>';
+    if (sheet.id && !cards.length) box.innerHTML = '<p class="mnone">עוד לא משויך לאף מפגש</p>';
   }
 
   $('#pMore').addEventListener('click', () => { mLimit += 3; refreshSheetMeetings(); });
