@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261103b" />
+  <link rel="stylesheet" href="admin.css?v=20261103d" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1398,8 +1398,8 @@
     const sentN = (v) => base.filter((p) => { if (!genOk(p) || !paidOk(p) || !hereOkNoSent(p) || !matchPay(p, epk)) return false; return sentMatch(p.id, linkOf(p.id, state.filter), v); }).length;
     $('#listHere').innerHTML = attOn ? fbtn('here', eh, hereN('1'), hereN('0')) : '';
     $('#listPay').innerHTML = state.filter && state.showPay ? fbtn('pay', (state.paidF === '1' || state.paidF === '0' || state.paidF === 'n' || state.paidF === 'w' || /^[am][A-Za-z0-9_]+$/.test(state.paidF || '')) ? state.paidF : null, paidN('1'), paidN('0')) : '';
-    { const ws = waSelected();   // כפתור הוואטסאפ בעמודה האחרונה: בחירת תבנית הודעה לקישורי הוואטסאפ ברשימה
-      $('#listWa').innerHTML = !(state.filter || state.mtype) ? '' : '<button type="button" class="hfilt wabtn' + (ws && state.waSent ? ' un' : '') + '" id="waBtn" aria-haspopup="menu" aria-expanded="false" aria-label="בחירת הודעה לוואטסאפ' + (ws ? ': ' + esc(ws.name) : '') + '" title="' + (ws ? 'הודעה: ' + esc(ws.name) : 'הודעה לוואטסאפ: ריקה') + '">' + (ws ? PIN_ICON : WA_ICON) + '</button>'; }
+    { const ws = waSelected(); if (state.waSent && !waFilter() && !document.documentElement.classList.contains('is-loading')) waSetFilter('');   // כפתור הוואטסאפ בעמודה האחרונה: בחירת תבנית הודעה לקישורי הוואטסאפ ברשימה
+      $('#listWa').innerHTML = !(state.filter || state.mtype) ? '' : '<button type="button" class="hfilt wabtn' + (waFilter() ? ' un' : '') + '" id="waBtn" aria-haspopup="menu" aria-expanded="false" aria-label="בחירת הודעה לוואטסאפ' + (ws ? ': ' + esc(ws.name) : '') + '" title="' + (ws ? 'הודעה: ' + esc(ws.name) : 'הודעה לוואטסאפ: ריקה') + '">' + (ws ? PIN_ICON : WA_ICON) + '</button>'; }
     $('#listSent').innerHTML = evOn ? fbtn('sent', effSent(), sentN('1'), sentN('0')) : '';
     $('#listBal').innerHTML = !state.filter && state.showPay ? fbtn('bal', effBal(), '', '') : '';
     $('#listAtt').innerHTML = !state.filter && state.showAtt !== false ? '<button type="button" class="hfilt ' + (() => { const k = effAttF(), o = k && ATT_OPTS_F.find((x) => x[0] === k); return !o ? 'all' : attCls(o[2]); })() + '" data-fk="att" aria-haspopup="menu" aria-label="סינון לפי התמדה" title="סינון לפי התמדה והגעה (לחיצה לפתיחת תפריט)">' + (() => { const k = effAttF(), o = k && ATT_OPTS_F.find((x) => x[0] === k); return o ? ATT_GLYPH[o[3]]() : PERSIST_ICON; })() + '</button>' : '';
@@ -2588,12 +2588,24 @@
   const waScope = () => state.filter ? 'm:' + state.filter : state.mtype ? 't:' + state.mtype : 'all';
   const waMap = () => { try { return JSON.parse(localStorage.getItem(WA_LS) || '{}') || {}; } catch (e) { return {}; } };
   const WA_SF = 'harpatka_admin_wasent';
-  try { state.waSent = localStorage.getItem(WA_SF) || (localStorage.getItem('harpatka_admin_waunsent') === '1' ? '0' : ''); } catch (e) { state.waSent = ''; }   // סינון לפי שליחה של התבנית שנבחרה: '' הכל, '1' נשלח, '0' לא נשלח
-  const waSentOk = (p) => { const ws = waSelected(); if (!ws || !state.waSent) return true; const sent = !!sentRow(p.id, ws.m.id, ws.id); return state.waSent === '1' ? sent : !sent; };
+  /* סינון לפי שליחה של התבנית שנבחרה: '' הכל, '1' נשלח, '0' לא נשלח. הוא קשור לתבנית ולתצוגה שבהן נבחר (waSentKey), ולכן מעבר לתבנית אחרת, לתצוגה אחרת או להודעה ריקה מחזיר ל"הכל" */
+  try { const o = JSON.parse(localStorage.getItem(WA_SF) || 'null'), ok = o && typeof o === 'object'; state.waSent = ok ? String(o.v || '') : ''; state.waSentKey = ok ? String(o.k || '') : ''; } catch (e) { state.waSent = ''; state.waSentKey = ''; }
+  const waKey = () => { const ws = waSelected(); return ws ? waScope() + '|' + ws.id : ''; };
+  const waFilter = () => (state.waSent && state.waSentKey && state.waSentKey === waKey()) ? state.waSent : '';
+  const waSetFilter = (v) => { state.waSent = v || ''; state.waSentKey = v ? waKey() : ''; try { localStorage.setItem(WA_SF, JSON.stringify({ k: state.waSentKey, v: state.waSent })); } catch (e) {} };
+  const waSentOk = (p) => { const f = waFilter(); if (!f) return true; const ws = waSelected(), sent = !!sentRow(p.id, ws.m.id, ws.id); return f === '1' ? sent : !sent; };
   const waSelected = () => { const id = waMap()[waScope()]; return id ? (waList().find((x) => x.id === id) || null) : null; };
   /* מעקב שליחה: אחרי שליחת תבנית מסוימת (וחזרה מוואטסאפ) מאשרים שנשלחה, והשורה מסומנת; כך רואים למי נשלחה כל הודעה ולמי לא */
   const sentRow = (pid, mid, key) => state.msgSent.find((x) => x.participant_id === pid && x.meeting_id === mid && x.tpl_key === key) || null;
-  const sentCount = (mid, key) => state.msgSent.filter((x) => x.meeting_id === mid && x.tpl_key === key).length;
+  /* ספירות לתגיות הסינון בתפריט הוואטסאפ, לפי התבנית שנבחרה: מי שמוצג ברשימה לפי שאר הסינונים והחיפוש (בלי סינון השליחה עצמו), וכמה מהם נשלחה להם התבנית */
+  const waCounts = () => {
+    const ws = waSelected(); if (!ws) return null;
+    const keep = state.waSent; state.waSent = '';
+    const q = state.q.trim().toLowerCase(), qd = digits(q), pool = state.participants.filter((p) => rowPass(p, q, qd));
+    state.waSent = keep;
+    const n1 = pool.filter((p) => sentRow(p.id, ws.m.id, ws.id)).length;
+    return { '': pool.length, '1': n1, '0': pool.length - n1 };
+  };
   async function setMsgSent(pid, mid, key, on) {
     const prev = state.msgSent.slice(), same = (x) => x.participant_id === pid && x.meeting_id === mid && x.tpl_key === key, now = new Date().toISOString();
     state.msgSent = state.msgSent.filter((x) => !same(x)).concat(on ? [{ participant_id: pid, meeting_id: mid, tpl_key: key, sent_at: now }] : []);
@@ -4058,11 +4070,12 @@
   let waAddAsk = false;   // במפגש נבחר: לחיצה על "הוספת תבנית הודעה" שואלת אם להוסיף למפגש או לסוג המפגש
   const closeWa = () => { waAddAsk = false; $('#waMenu').hidden = true; const b = $('#waBtn'); if (b) b.setAttribute('aria-expanded', 'false'); };
   function renderWaMenu() {
-    const sel = waSelected(), item = (id, ic, name, tag, on) => '<button type="button" role="menuitemradio" data-wt="' + esc(id) + '" aria-checked="' + on + '"><span class="wmi">' + ic + '<span class="wmn">' + esc(name) + '</span>' + (tag ? '<small>' + esc(tag) + '</small>' : '') + '</span></button>';
+    const sel = waSelected(), f = waFilter(), item = (id, ic, name, tag, on) => '<button type="button" role="menuitemradio" data-wt="' + esc(id) + '" aria-checked="' + on + '"><span class="wmi">' + ic + '<span class="wmn">' + esc(name) + '</span>' + (tag ? '<small>' + esc(tag) + '</small>' : '') + '</span></button>';
+    /* מתחת לקו: סינון לפי שליחה (רק כשנבחרה תבנית, לא בהודעה ריקה) ואחריו הוספת תבנית */
+    const cn = sel ? waCounts() : null, seg = sel ? '<div class="wseg" role="group" aria-label="סינון הרשימה לפי שליחה של התבנית שנבחרה" title="מציג ברשימה את כולם, רק מי שנשלחה לו התבנית שנבחרה, או רק מי שלא">' + [['', 'הכל'], ['1', 'נשלח'], ['0', 'לא נשלח']].map((o) => '<button type="button" data-wsf="' + o[0] + '" aria-pressed="' + (f === o[0]) + '" aria-label="' + o[1] + ' ' + cn[o[0]] + '">' + o[1] + '<small>' + cn[o[0]] + '</small></button>').join('') + '</div>' : '', bot = seg + addRows();
     $('#waMenu').innerHTML = item('', WA_ICON, 'הודעה ריקה', '', !sel) +
-      '<div class="wseg" role="group" aria-label="סינון הרשימה לפי שליחה של התבנית שנבחרה" title="מציג ברשימה את כולם, רק מי שנשלחה לו התבנית שנבחרה, או רק מי שלא">' + [['', 'הכל'], ['1', 'נשלח'], ['0', 'לא נשלח']].map((o) => '<button type="button" data-wsf="' + o[0] + '" aria-pressed="' + (state.waSent === o[0]) + '">' + o[1] + '</button>').join('') + '</div>' +
-      waList().map((x) => { const n = sentCount(x.m.id, x.id); return item(x.id, PIN_ICON, x.name || 'ללא שם', [x.tag, n ? n + ' נשלחו' : ''].filter(Boolean).join(' · '), !!sel && sel.id === x.id); }).join('') +
-      addRows();
+      waList().map((x) => item(x.id, PIN_ICON, x.name || 'ללא שם', x.tag || '', !!sel && sel.id === x.id)).join('') +
+      (bot ? '<div class="wbot">' + bot + '</div>' : '');
     function addRows() {
       const inM = !!(state.filter && curMeeting()), ty = typeById(inM ? typeIdOf(curMeeting()) : state.mtype), row = (k, label) => '<button type="button" class="wadd" data-wadd="' + k + '"><span class="wmi">' + icon('plus') + '<span class="wmn">' + esc(label) + '</span></span></button>';
       if (!inM && !state.mtype) return '';
@@ -4070,12 +4083,18 @@
       return row(inM ? 'ask' : 'type', 'הוספת תבנית הודעה');
     }
   }
-  function toggleWa(btn) {
-    const m = $('#waMenu'); if (!m.hidden) { closeWa(); return; }
-    renderWaMenu(); m.hidden = false; btn.setAttribute('aria-expanded', 'true');
-    const r = btn.getBoundingClientRect(), mw = m.offsetWidth;
+  function placeWa(btn) {
+    const m = $('#waMenu'), r = btn.getBoundingClientRect(), mw = m.offsetWidth;
     m.style.left = Math.max(8, Math.min(Math.round(r.left), window.innerWidth - mw - 8)) + 'px'; m.style.top = (r.bottom + 8) + 'px';   // מיושר לקצה השמאלי של הכפתור
     m.style.maxHeight = Math.max(200, window.innerHeight - r.bottom - 20) + 'px';
+  }
+  function toggleWa(btn) {
+    const m = $('#waMenu'); if (!m.hidden) { closeWa(); return; }
+    renderWaMenu(); m.hidden = false; btn.setAttribute('aria-expanded', 'true'); placeWa(btn);
+  }
+  /* שינוי בחירה בתוך התפריט (תבנית, סינון): התפריט נשאר פתוח, הכפתור נבנה מחדש עם הרשימה ולכן מסמנים אותו פתוח ומציבים את התפריט שוב (הרוחב משתנה כשהסינון מופיע) */
+  function refreshWa() {
+    renderWaMenu(); render(); const nb = $('#waBtn'); if (nb) { nb.setAttribute('aria-expanded', 'true'); placeWa(nb); }
   }
   /* הוספת תבנית: במפגש נבחר נפתחת עריכת המפגש (תבנית של המפגש), אחרת עריכת סוג המפגש (תבנית של הסוג), עם שורה חדשה מוכנה לכתיבה */
   function waAddTemplate(kind) {
@@ -4088,11 +4107,14 @@
   }
   $('#waMenu').addEventListener('click', (e) => {
     const sf = e.target.closest('[data-wsf]');
-    if (sf) { state.waSent = sf.dataset.wsf; try { localStorage.setItem(WA_SF, state.waSent); } catch (err) {} renderWaMenu(); render(); return; }
+    if (sf) { waSetFilter(sf.dataset.wsf); refreshWa(); return; }
     const wa = e.target.closest('[data-wadd]');
     if (wa) { if (wa.dataset.wadd === 'ask') { waAddAsk = true; renderWaMenu(); return; } waAddTemplate(wa.dataset.wadd); return; }
     const b = e.target.closest('[data-wt]'); if (!b) return;
-    waSetSel(b.dataset.wt); closeWa(); render();
+    const id = b.dataset.wt, cur = waSelected();
+    if (!id) { waSetSel(''); waSetFilter(''); closeWa(); render(); return; }   // הודעה ריקה: הסינון מתאפס והתפריט נסגר
+    if (!cur || cur.id !== id) { waSetSel(id); waSetFilter(''); }   // מעבר לתבנית אחרת: הסינון חוזר ל"הכל"
+    waAddAsk = false; refreshWa();   // תבנית: התפריט נשאר פתוח כדי שאפשר יהיה לבחור סינון
   });
   $('#viewMenu').addEventListener('click', (e) => {
     const after = (prefs) => { render(); renderViewMenu(); if (sheet && sheet.id && pDlg.open) refreshSheetMeetings(); if (prefs) saveViewPrefs(); };
