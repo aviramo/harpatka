@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261101z" />
+  <link rel="stylesheet" href="admin.css?v=20261102a" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -384,6 +384,7 @@
   <div id="menuShade" aria-hidden="true"></div>
   <div class="qmenu" id="viewMenu" role="menu" hidden></div>
   <div class="qmenu" id="fMenu" role="menu" hidden></div>
+  <div id="splitHandle" role="separator" aria-orientation="vertical" aria-label="רוחב הרשימה (גרירה, חצים במקלדת, לחיצה כפולה לברירת המחדל)" title="גרירה לשינוי הרוחב · לחיצה כפולה: ברירת מחדל" tabindex="0"></div>
   <div id="splitEmpty" aria-hidden="true"><svg data-i="user"></svg><p>בחרו משתתף מהרשימה כדי לראות את הכרטיס שלו</p></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -3245,6 +3246,27 @@
     const o = state.promoters.find((x) => x.id === sel.value), c = o && o.color ? (PALETTE[o.color] || null) : null;
     sel.style.backgroundColor = c ? c[0] : ''; sel.style.borderColor = c ? c[1] : ''; sel.style.color = c ? c[1] : ''; sel.style.fontWeight = c ? '700' : '';   // מסגרת כמו בשאר השדות, בגוון הכהה של אותו צבע
   }
+  /* דסקטופ רחב (31.10.26): רוחב הרשימה ניתן לשינוי בגרירת הקו שבינה לבין הכרטיס (#splitHandle), בחצים במקלדת, ולחיצה כפולה מחזירה לברירת המחדל; נשמר בדפדפן הזה */
+  (function () {
+    const KEY = 'harpatka_admin_listw', root = document.documentElement, h = document.getElementById('splitHandle');
+    const wide = () => !!(window.matchMedia && window.matchMedia('(min-width: 1024px)').matches);
+    const clampW = (w) => Math.round(Math.max(360, Math.min(w, window.innerWidth - 420)));   // לפחות 360 לרשימה ו-420 לכרטיס
+    const curW = () => document.querySelector('.wrap').getBoundingClientRect().width;
+    const setW = (w) => { root.style.setProperty('--listw', clampW(w) + 'px'); requestAnimationFrame(alignFilters); };
+    const save = () => { try { localStorage.setItem(KEY, String(Math.round(curW()))); } catch (e) {} };
+    const reset = () => { root.style.removeProperty('--listw'); try { localStorage.removeItem(KEY); } catch (e) {} requestAnimationFrame(alignFilters); };
+    let saved = null; try { saved = Number(localStorage.getItem(KEY)) || null; } catch (e) {}
+    if (saved) setW(saved);
+    window.addEventListener('resize', () => { if (saved || root.style.getPropertyValue('--listw')) { const w = parseFloat(root.style.getPropertyValue('--listw')); if (w) setW(w); } });
+    if (!h) return;
+    let drag = false;
+    h.addEventListener('pointerdown', (e) => { if (!wide() || e.button > 0) return; drag = true; h.setPointerCapture(e.pointerId); root.classList.add('split-drag'); e.preventDefault(); });
+    h.addEventListener('pointermove', (e) => { if (drag) setW(window.innerWidth - e.clientX); });   // הרשימה בצד ימין: הרוחב שלה = מקצה המסך הימני ועד העכבר
+    const end = () => { if (!drag) return; drag = false; root.classList.remove('split-drag'); saved = curW(); save(); };
+    h.addEventListener('pointerup', end); h.addEventListener('pointercancel', end);
+    h.addEventListener('dblclick', () => { saved = null; reset(); });
+    h.addEventListener('keydown', (e) => { if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return; e.preventDefault(); setW(curW() + (e.key === 'ArrowLeft' ? 24 : -24)); saved = curW(); save(); });   // חץ שמאלה מרחיב את הרשימה
+  })();
   /* דסקטופ רחב (31.10.26): השורה של המשתתף שהכרטיס שלו פתוח בצד מסומנת ברשימה */
   function markSel() { const on = pDlg && pDlg.open && pDlg._side; document.querySelectorAll('#list li.row').forEach((r) => { const e = r.querySelector('[data-edit]'); r.classList.toggle('sel', !!(on && e && e.dataset.edit === openPid)); }); }
   function openParticipant(id, tab, fromEl) {

@@ -1012,3 +1012,13 @@ dialog .dclose { display: none; }
   #stBody .ppanel[data-sp]:not([data-sp="main"]):not([hidden]) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; align-items: start; }   /* פירוט: שני טורים */
   #stBody .ppanel[data-sp]:not([data-sp="main"]) > :not(.stp), #stBody .stp:has(.tr > span:nth-child(5)), #stBody .stp:has(.stkpis) { grid-column: 1 / -1; }   /* כרטיסי סיכום, הסברים וטבלאות רחבות לכל הרוחב */
 }
+
+/* ---------- דסקטופ רחב: הקו שבין הרשימה לכרטיס ניתן לגרירה (31.10.26) ---------- */
+#splitHandle { display: none; }
+@media (min-width: 1024px) {
+  #splitHandle { display: block; position: fixed; top: var(--envtop, 0px); bottom: 0; right: var(--listw); z-index: 25; width: 10px; margin-right: -5px; cursor: col-resize; touch-action: none; }
+  #splitHandle::after { content: ''; position: absolute; top: 0; bottom: 0; right: 4px; width: 2px; background: transparent; transition: background .15s; }
+  #splitHandle:hover::after, #splitHandle:focus-visible::after, html.split-drag #splitHandle::after { background: var(--line-2); }
+  #splitHandle:focus-visible { outline: none; }
+  html.split-drag, html.split-drag * { cursor: col-resize !important; user-select: none !important; }
+}
