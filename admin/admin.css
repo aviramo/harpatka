@@ -997,7 +997,7 @@ dialog .dclose { display: none; }
 @media (prefers-reduced-motion: reduce) { #menuShade, #menuShade.on { transition: none; } }
 
 /* ---------- סטטיסטיקות וכספים בפאנל רחב (31.10.26): מנצלים את הרוחב, לפי הרוחב של הפאנל עצמו (container query) ---------- */
-@media (min-width: 760px) { :is(#stDlg, #finDlg).drawer .sheet { container-type: inline-size; } }
+@media (min-width: 760px) { #stDlg.drawer #stBody, #finDlg.drawer #finMain { container-type: inline-size; } }   /* המכיל הוא אזור התוכן ולא ה-sheet: container יוצר מסגרת לאלמנטים fixed, ותפריט התקופה של הכספים נמצא ב-sheet */
 @container (min-width: 680px) {
   .finsum { grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.5fr); }   /* כל כרטיסי הסיכום בשורה אחת, והנטו (האחרון) רחב יותר */
   .finsum .metric.wide { grid-column: auto; }
@@ -1023,3 +1023,12 @@ dialog .dclose { display: none; }
   html.split-drag, html.split-drag * { cursor: col-resize !important; user-select: none !important; }
 }
 @media (min-width: 1024px) { html.is-loading .wrap { border-inline-end-color: transparent; } html.is-loading #splitHandle { display: none; } }   /* בטעינה: בלי הקו האנכי שבין הרשימה לכרטיס */
+
+/* ---------- יתרה ותשלומים בכרטיס רחב (31.10.26): הסיכום והכפתורים בטור צר מימין, וההיסטוריה בטור משמאל ---------- */
+@media (min-width: 1024px) { #pDlg.side #pForm { container-type: inline-size; } }   /* התפריטים הצפים של הכרטיס מחוברים לדיאלוג ולא לטופס, ולכן לא מושפעים */
+@container (min-width: 720px) {
+  #pForm .ppanel[data-panel="wallet"]:not([hidden]) { display: grid; grid-template-columns: 300px minmax(0, 720px); grid-template-rows: auto 1fr; column-gap: 32px; align-content: start; align-items: start; }
+  #pForm .ppanel[data-panel="wallet"] > #walSum { grid-column: 1; grid-row: 1; grid-template-columns: minmax(0, 1fr); margin: 0; }
+  #pForm .ppanel[data-panel="wallet"] > .payact { grid-column: 1; grid-row: 2; flex-direction: column; margin: 12px 0 0 !important; }
+  #pForm .ppanel[data-panel="wallet"] > #walHist { grid-column: 2; grid-row: 1 / span 2; }
+}
