@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261031z" />
+  <link rel="stylesheet" href="admin.css?v=20261101a" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -937,6 +937,22 @@
     }, true);
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') FLOAT_MENUS.forEach((m) => { const x = m.el(); if (x && !x.hidden) m.close(); }); });
+  /* גם סימון טקסט (לחיצה ארוכה במובייל, גרירה בעכבר) לא אפשרי מאחורי תפריט פתוח (31.10.26): html.menu-open מבטל בחירת טקסט בכל הדף,
+     selectstart מחוץ לתפריט מבוטל, וסימון שכבר קיים נמחק ברגע שתפריט נפתח. המצב מתעדכן לבד כשתפריט נפתח או נסגר (שינוי hidden בכל מקום בדף) */
+  const anyMenuOpen = () => FLOAT_MENUS.some((m) => { const x = m.el(); return x && !x.hidden; });
+  let menuLock = false;
+  const syncMenuLock = () => {
+    const on = anyMenuOpen(); if (on === menuLock) return; menuLock = on;
+    document.documentElement.classList.toggle('menu-open', on);
+    if (on) try { const sel = window.getSelection(); if (sel && sel.rangeCount) sel.removeAllRanges(); } catch (e) {}
+  };
+  new MutationObserver(syncMenuLock).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden'] });
+  document.addEventListener('selectstart', (e) => {
+    const open = FLOAT_MENUS.filter((m) => { const x = m.el(); return x && !x.hidden; }); if (!open.length) return;
+    const t = e.target && e.target.nodeType === 3 ? e.target.parentElement : e.target;
+    if (t && t.closest && open.some((m) => t.closest(m.keep))) return;
+    e.preventDefault();
+  }, true);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeHMenu(); });
   $('#bdBtn').addEventListener('click', boardOpen);
   $('#bdBody').addEventListener('click', async (e) => {
