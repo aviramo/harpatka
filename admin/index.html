@@ -4158,17 +4158,23 @@
     const pos = ' (דירוג ' + sx.rank + ' מתוך ' + sx.n + ' משתתפים עם נתוני הגעה). המשתתפים מחולקים לשלישים שווים: ירוק, צהוב ואדום.';
     const why = { g: 'ירוק: התמדה טובה, ציון התמדה ' + pc(rate) + ', בשליש העליון' + pos, y: 'צהוב: התמדה בינונית, ציון התמדה ' + pc(rate) + ', בשליש האמצעי' + pos, r: 'אדום: התמדה נמוכה, ציון התמדה ' + pc(rate) + ', בשליש התחתון' + pos, n: 'אפור: עוד לא התקיים אף מפגש מאז השיוך הראשון, ולכן אין עדיין מידע על התמדה.' }[cls];
     const key = (x) => x.meeting_date + x.meeting_time, mine = linksOf(pid).map((l) => state.meetings.find((x) => x.id === l.meeting_id)).filter((x) => x && started(x)).map(key).sort(), first = mine[0];
+    const usedTypes = new Set();
     const rows = state.meetings.slice().sort((a, b) => key(b).localeCompare(key(a))).map((mt) => {
       const l = linkOf(pid, mt.id), st = started(mt);
       if (st && (!first || key(mt) < first)) return '';
       if (!st && !l) return '';
+      usedTypes.add(typeIdOf(mt));
       const lab = dmShort(mt) + ' <small>' + (l ? 'רשום' : 'לא רשום') + '</small>';
       const sc = ptsOf(l), sg = (n) => '<bdi dir="ltr">' + (n > 0 ? '+' : '') + n + '</bdi>', chipH = !st ? UI.tag('עתידי', 'cst f') : (l && l.attended) ? UI.tag('הגיע ✓ · ' + sg(sc), 'cst ' + (sc > 0 ? 'y' : sc < 0 ? 'n' : 'f')) : UI.tag('לא הגיע ✕' + (sc ? ' · ' + sg(sc) : ''), 'cst n');   // לכל מפגש: ציון ההתמדה שלו (סכום הציונים של הסטטוס במפגש ואחרי המפגש)
       return '<div class="cnr"><span>' + lab + '</span>' + chipH + '</div>';
     }).join('');
+    /* הציונים שהוגדרו בפועל לסטטוסים של סוג המפגש (לא דוגמה קבועה: השמות והציונים נקבעים בהגדרות) */
+    const tset = usedTypes.size ? [...usedTypes] : [curTid()], scoredSeen = new Set(), scoredList = [];
+    tset.forEach((t) => [...dstatusList(t), ...astatusList(t)].forEach((x) => { if (scoredSeen.has(x.key)) return; scoredSeen.add(x.key); const n = Number(x.points) || 0; if (n) scoredList.push('<b>' + esc(x.label) + '</b>' + (tset.length > 1 && x.type_id && typeById(x.type_id) ? ' (' + esc(typeById(x.type_id).name) + ')' : '') + ' <bdi dir="ltr">' + (n > 0 ? '+' : '') + n + '</bdi>'); }));
+    const scoreNote = scoredList.length ? ' הציונים שהוגדרו: ' + scoredList.join(' · ') + '.' : ' עוד לא הוגדרו ציונים לסטטוסים.';
     m.innerHTML = '<h4>' + esc(p.name) + ': הגיע ' + pr.came + ' מתוך ' + pr.total + (pr.total ? ', ציון התמדה ' + pr.score + ' (' + pc(rate) + ')' : '') + '</h4>' +
       '<div class="cwhy ' + cls + '">' + why + '</div>' +
-      '<div class="cnote">נספרים כל המפגשים שהתחילו מאז המפגש הראשון שהמשתתף שויך אליו. מפגש שלא נרשם אליו ולא הגיע נחשב החמצה, ומפגש שעוד לא התקיים לא משפיע על הצבע. הציון של כל מפגש הוא סכום ציוני ההתמדה של הסטטוס במפגש והסטטוס אחרי המפגש (למשל הגיע +1 ויצא -1 = 0); הציונים נקבעים בהגדרות הסטטוסים.</div>' + rows;
+      '<div class="cnote">נספרים כל המפגשים שהתחילו מאז המפגש הראשון שהמשתתף שויך אליו. מפגש שלא נרשם אליו ולא הגיע נחשב החמצה, ומפגש שעוד לא התקיים לא משפיע על הצבע. הציון של כל מפגש הוא סכום ציוני ההתמדה של הסטטוס במפגש והסטטוס אחרי המפגש.' + scoreNote + ' הציונים נקבעים בהגדרות הסטטוסים של סוג המפגש.</div>' + rows;
     m.dataset.pid = pid; m.hidden = false;
     const r = chip.getBoundingClientRect(), w = m.offsetWidth, h = m.offsetHeight;
     m.style.left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), window.innerWidth - w - 8) + 'px';
