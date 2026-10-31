@@ -2,7 +2,8 @@
 
 שימוש:  python tools/backup-prod.py   (קודם: גיבוי נתוני האמת ותוכנית רולבק, כלל קבוע מ-31.10.26)
         python tools/promote.py
-  0. מסרב להעלות בלי גיבוי של public שנעשה ב-6 השעות האחרונות, על אותו קומיט שרץ עכשיו באמת.
+  0. שינויי בסיס נתונים (קבצי SQL שהשתנו): מסרב להעלות בלי גיבוי של public שנעשה ב-6 השעות האחרונות, על אותו קומיט שרץ עכשיו באמת.
+     שינויי תצוגה בלבד (בלי SQL): בלי גיבוי ובלי תוכנית רולבק, מעלים ישר אחרי האישור (כלל מ-31.10.26).
   1. בודק שאין שינויים לא שמורים בענף staging, ושסביבת הבדיקות פורסמה (tools/stage.py).
   2. main <- staging (merge), דחיפה ל-origin main: האתר האמיתי (harpatka.co.il) מתעדכן.
   3. מסנכרן את staging עם main וחוזר אליו, כך ששתי הסביבות זהות.
@@ -31,24 +32,28 @@ if run('git', 'status', '--porcelain', '--untracked-files=no', out=True):
     sys.exit('יש שינויים שלא נשמרו בענף staging: קודם tools/stage.py')
 run('git', 'fetch', '-q', 'origin')
 
-# כלל קבוע (31.10.26): אין העלאה לאמת בלי גיבוי נתוני האמת ותוכנית רולבק על המצב הנוכחי של האמת
+# כלל קבוע (31.10.26): שינוי שנוגע בבסיס הנתונים (קבצי SQL) לא עולה בלי גיבוי נתוני האמת ותוכנית רולבק על המצב הנוכחי של האמת.
+# שינויי תצוגה בלבד (בלי SQL) עולים ישר אחרי האישור, בלי גיבוי (לבקשת בעל האתר: "לא צריך להחמיר יותר מדי").
 import datetime, json
+sql = run('git', 'diff', '--name-only', 'origin/main...staging', '--', '*.sql', out=True)
 prod = run('git', 'rev-parse', 'origin/main', out=True)
 backup = None
-for d in sorted((ROOT.parent / 'harpatka-backups').glob('*-prod'), reverse=True):
-    try:
-        m = json.loads((d / '_manifest.json').read_text(encoding='utf-8'))
-    except Exception:
-        continue
-    age = datetime.datetime.now().astimezone() - datetime.datetime.fromisoformat(m['created_at'])
-    if m.get('schema') == 'public' and m.get('prod_commit') == prod and age < datetime.timedelta(hours=6) and (d / 'ROLLBACK.md').exists():
-        backup = d
-        break
-if not backup:
-    sys.exit('אין גיבוי עדכני של האמת על הקומיט ' + prod[:7] + ': קודם python tools/backup-prod.py')
-print('גיבוי ותוכנית רולבק: ' + str(backup))
+if sql:
+    for d in sorted((ROOT.parent / 'harpatka-backups').glob('*-prod'), reverse=True):
+        try:
+            m = json.loads((d / '_manifest.json').read_text(encoding='utf-8'))
+        except Exception:
+            continue
+        age = datetime.datetime.now().astimezone() - datetime.datetime.fromisoformat(m['created_at'])
+        if m.get('schema') == 'public' and m.get('prod_commit') == prod and age < datetime.timedelta(hours=6) and (d / 'ROLLBACK.md').exists():
+            backup = d
+            break
+    if not backup:
+        sys.exit('יש שינויי SQL ואין גיבוי עדכני של האמת על הקומיט ' + prod[:7] + ': קודם python tools/backup-prod.py')
+    print('גיבוי ותוכנית רולבק: ' + str(backup))
+else:
+    print('שינויי תצוגה בלבד (בלי SQL): בלי גיבוי')
 
-sql = run('git', 'diff', '--name-only', 'origin/main...staging', '--', '*.sql', out=True)
 run('git', 'checkout', '-q', 'main')
 run('git', 'pull', '-q', '--ff-only', 'origin', 'main')
 run('git', 'merge', '-q', '--no-edit', 'staging')
@@ -57,11 +62,14 @@ run('git', 'checkout', '-q', 'staging')
 run('git', 'merge', '-q', '--ff-only', 'main')
 run('git', 'push', '-q', 'origin', 'staging')
 print('האמת עודכנה מהבדיקות (main = staging)')
-mf = backup / '_manifest.json'
-m = json.loads(mf.read_text(encoding='utf-8'))
-m['promoted_to'] = run('git', 'rev-parse', 'main', out=True)
-m['promoted_at'] = datetime.datetime.now().astimezone().isoformat(timespec='seconds')
-mf.write_text(json.dumps(m, ensure_ascii=False, indent=1), encoding='utf-8')
-print('לחזרה אחורה: ' + str(backup / 'ROLLBACK.md'))
+if backup:
+    mf = backup / '_manifest.json'
+    m = json.loads(mf.read_text(encoding='utf-8'))
+    m['promoted_to'] = run('git', 'rev-parse', 'main', out=True)
+    m['promoted_at'] = datetime.datetime.now().astimezone().isoformat(timespec='seconds')
+    mf.write_text(json.dumps(m, ensure_ascii=False, indent=1), encoding='utf-8')
+    print('לחזרה אחורה: ' + str(backup / 'ROLLBACK.md'))
+else:
+    print('לחזרה אחורה (קוד בלבד): git revert של הקומיט בענף main')
 if sql:
     print('קבצי SQL שהורצו רק על test וצריך להריץ גם על public:\n  ' + sql.replace('\n', '\n  '))
