@@ -2934,7 +2934,7 @@
     const needNow = () => { const al = Math.max(0, allocatedOf(pid, m.id)); return Math.max(0, suggestPrice(pid, m) - al) || suggestPrice(pid, m); };
     /* "חינם" הוא האפשרות הראשונה (מימין) בשורת דרכי התשלום: נבחרת = המפגש חינם ולמטה אין שדות; בחירה בדרך תשלום מבטלת אותה */
     /* כפתור "תשלום" כבוי כשבוחרים "מהיתרה" והסכום גדול מהיתרה הזמינה */
-    const syncDepSave = () => { const b = $('#depSave'); if (!b) return; b.classList.toggle('fromcr', !!(sheet && sheet.depCr && sheet.depMid)); const a = parseFloat(f.pay_dep.value); b.disabled = !!(sheet && sheet.depCr && sheet.depMid && a > Math.max(0, creditOf(pid)) + 0.001); };
+    const syncDepSave = () => { const b = $('#depSave'); if (!b) return; const fc = !!(sheet && sheet.depCr && sheet.depMid); b.classList.toggle('fromcr', fc); b.textContent = fc ? 'הקצאה' : 'תשלום';   /* מהיתרה אין תשלום חדש: הכפתור כתוב הקצאה */ const a = parseFloat(f.pay_dep.value); b.disabled = !!(sheet && sheet.depCr && sheet.depMid && a > Math.max(0, creditOf(pid)) + 0.001); };
     const paintMeth = () => {
       queueMicrotask(syncDepSave);
       paintDepLines();
@@ -3060,7 +3060,7 @@
     const mid = sheet.depMid || null, mt = f.pay_depm.value, pm = state.payMethods.find((x) => x.key === mt);
     const src = sheet.depCr && mid ? 'מהיתרה' : (mt === 'other' ? (f.pay_depn.value.trim() || 'אחר') : (pm ? pm.name : mt));
     const html = 'סכום: <b>' + ils(amt) + '</b><br>' + (sheet.depCr && mid ? 'ירד מהיתרה של המשתתף' : 'דרך: <b>' + esc(src) + '</b>') + (mid ? '' : '<br>התשלום ייכנס ליתרה של המשתתף');
-    confirmAct(mid ? 'אישור תשלום למפגש' : 'אישור קבלת תשלום', pid, mid, depSaveRun, html, 'אישור תשלום', null, (sheet.depCr && mid) ? { yellow: true } : { green: true });   // מהיתרה: צהוב כהה, אחרת ירוק
+    confirmAct(mid ? (sheet.depCr ? 'אישור הקצאה למפגש' : 'אישור תשלום למפגש') : 'אישור קבלת תשלום', pid, mid, depSaveRun, html, (sheet.depCr && mid) ? 'אישור הקצאה' : 'אישור תשלום', null, (sheet.depCr && mid) ? { yellow: true } : { green: true });   // מהיתרה: צהוב כהה, אחרת ירוק
   });
   /* זיכוי: מחזיר חלק מתשלום שהוקצה למפגש. ליתרה (kind credit) או כסף למשתתף (kind refund) */
   $('#walZikuy').addEventListener('click', () => {
