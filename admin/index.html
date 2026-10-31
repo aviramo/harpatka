@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261101p" />
+  <link rel="stylesheet" href="admin.css?v=20261101q" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1234,7 +1234,9 @@
   const VIEW_DEF = { tags: true, pay: true, sent: null, att: null, gender: true };   // gender: זכר / נקבה בשורת הסינון, מסומן כברירת מחדל
   const viewKey = () => state.filter || (state.mtype ? 'type:' + state.mtype : 'all');   // הקשר התצוגה: מפגש, סוג מפגש (31.10.26) או כל המשתתפים
   const viewCtx = () => { const k = viewKey(); return state.viewScopes[k] || (state.viewScopes[k] = Object.assign({}, VIEW_DEF)); };
-  [['showTags', 'tags'], ['showPay', 'pay'], ['showSent', 'sent'], ['showAtt', 'att'], ['showGender', 'gender']].forEach(([prop, key]) => Object.defineProperty(state, prop, { get() { const c = state.viewScopes[viewKey()]; return c && c[key] !== undefined ? c[key] : VIEW_DEF[key]; }, set(v) { viewCtx()[key] = v; }, enumerable: true }));
+  [['showPay', 'pay'], ['showSent', 'sent'], ['showAtt', 'att'], ['showGender', 'gender']].forEach(([prop, key]) => Object.defineProperty(state, prop, { get() { const c = state.viewScopes[viewKey()]; return c && c[key] !== undefined ? c[key] : VIEW_DEF[key]; }, set(v) { viewCtx()[key] = v; }, enumerable: true }));
+  /* כפתור התגיות (31.10.26): הגדרה אחת לכל התצוגות (כל המשתתפים, סוגי מפגשים ומפגשים), לכל מנהל בנפרד; נשמר ב-view_scopes._g */
+  Object.defineProperty(state, 'showTags', { get() { const c = state.viewScopes._g; return c && c.tags !== undefined ? c.tags : VIEW_DEF.tags; }, set(v) { (state.viewScopes._g || (state.viewScopes._g = {})).tags = v; }, enumerable: true });
   function applyViewPrefs() { const pr = state.prefs[emailOf()] || {}; state.viewScopes = (pr.view_scopes && typeof pr.view_scopes === 'object') ? JSON.parse(JSON.stringify(pr.view_scopes)) : {}; }
   async function saveViewPrefs() {
     const em = emailOf(), body = { email: em, view_scopes: state.viewScopes };
@@ -3683,11 +3685,29 @@
      לכל נושא כותרת עם טוגל תצוגה ("בשורה" / "ברשימה") ומתחתיה האפשרויות כתגיות עם הכמות; לחיצה נוספת על תגית נבחרת מבטלת אותה */
   const fsec = (title, body) => '<div class="fsec"><div class="fsh"><b>' + title + '</b></div>' + (body ? '<div class="mgc">' + body + '</div>' : '') + '</div>';
   const ftgl = (k, title, on, aria) => '<button type="button" class="mc" data-vt="' + k + '" aria-pressed="' + !!on + '" aria-label="' + aria + '" title="' + aria + '">' + title + '</button>';   // תגית תצוגה: מסומנת = מוצג, לחיצה מחליפה (כמו תגיות הסינון)
+  const FK = { src: 'srcF', login: 'loginF', age: 'ageF', bal: 'bal', att: 'attF', pay: 'paidF', sent: 'sent', here: 'here' };   // סוג הסינון בפאנל ← השדה ב-state
   function moreSecs() {
     const scope = state.participants.filter((p) => (state.filter ? linkOf(p.id, state.filter) : p.active !== false) && mtypeOk(p));
     const cnt = (f) => scope.filter(f).length;
-    const chip = (kind, val, label, n) => { const on = (kind === 'src' ? state.srcF : kind === 'login' ? state.loginF : state.ageF) === val; return '<button type="button" class="mc' + (n || on ? '' : ' zero') + '" data-mk="' + kind + '" data-mv="' + esc(val) + '" aria-pressed="' + on + '">' + esc(label) + ' <small>' + n + '</small></button>'; };
-    return fsec('דרך הגעה', state.promoters.map((x) => chip('src', x.id, x.name, cnt((p) => (channelOf(p) || {}).id === x.id))).join('') + chip('src', '__none', 'ללא דרך הגעה', cnt((p) => !channelOf(p)))) +
+    const chip = (kind, val, label, n) => { const on = state[FK[kind]] === val; return '<button type="button" class="mc' + (n || on ? '' : ' zero') + '" data-mk="' + kind + '" data-mv="' + esc(val) + '" aria-pressed="' + on + '">' + esc(label) + ' <small>' + n + '</small></button>'; };
+    const opts = (kind, list, test) => list.map((o) => chip(kind, o[0], o[1], cnt((p) => test(p, o[0])))).join('');
+    /* סינונים לפי מה שמוצג (כשהתגית שלהם ב"תצוגה" מסומנת): בתוך מפגש תשלום, שליחת פרטי המפגש והגעה; בתצוגה הכללית יתרה והתמדה */
+    let h = '';
+    if (state.filter) {
+      const m = curMeeting(), mid = state.filter;
+      if (state.showPay) {
+        const meth = state.payMethods.map((x) => [x.key, x.name, cnt((p) => !noPayOf(p, linkOf(p.id, mid)) && paidVia(p.id, mid, x.key))]).filter((x) => x[2] > 0 || state.paidF === 'm' + x[0]);
+        const amts = [...new Set(scope.map((p) => noPayOf(p, linkOf(p.id, mid)) ? 0 : Math.round(allocatedOf(p.id, mid))).filter((a) => a > 0))].sort((a, b) => b - a);
+        h += fsec('תשלום', opts('pay', [['w', 'דווח'], ['1', 'שולם'], ['0', 'לא שולם'], ['n', 'חינם']], (p, v) => payStateOf(p) === v) +
+          meth.map((x) => chip('pay', 'm' + x[0], x[1], x[2])).join('') + amts.map((a) => chip('pay', 'a' + a, '₪' + a, cnt((p) => payF(p, 'a' + a)))).join(''));
+      }
+      if (m && sentView(m)) h += fsec('שליחת פרטי המפגש', opts('sent', [['1', 'נשלחו'], ['0', 'לא נשלחו']], (p, v) => sentMatch(p.id, linkOf(p.id, mid), v)));
+      if (m && attVisible(m)) h += fsec('הגעה למפגש', opts('here', [['1', 'הגיעו'], ['0', 'לא הגיעו']], (p, v) => (((linkOf(p.id, mid) || {}).attended) ? '1' : '0') === v));
+    } else {
+      if (state.showPay) h += fsec('יתרה', opts('bal', [['w', 'דווח'], ['1', 'זכאי'], ['0', 'חייב'], ['n', 'מאוזן'], ['f', 'חינם']], balMatch));
+      if (state.showAtt !== false) h += fsec('התמדה', opts('att', ATT_OPTS_F, attMatch));
+    }
+    return h + fsec('דרך הגעה', state.promoters.map((x) => chip('src', x.id, x.name, cnt((p) => (channelOf(p) || {}).id === x.id))).join('') + chip('src', '__none', 'ללא דרך הגעה', cnt((p) => !channelOf(p)))) +
       fsec('גיל', AGE_B.map((b) => chip('age', b[0], b[1], cnt((p) => { const a = shownAge(p); return a != null && a >= b[2] && a <= b[3]; }))).join('')) +
       fsec('אזור אישי', [['yes', 'רשומים'], ['no', 'לא רשומים'], ['blocked', 'חסומים']].map((o) => chip('login', o[0], o[1], cnt((p) => loginOf(p) === o[0]))).join(''));
   }
@@ -3724,7 +3744,7 @@
   $('#viewMenu').addEventListener('click', (e) => {
     const after = (prefs) => { render(); renderViewMenu(); if (prefs) saveViewPrefs(); };
     const mk = e.target.closest('[data-mk]');
-    if (mk) { const k = mk.dataset.mk, v = mk.dataset.mv; if (k === 'src') state.srcF = state.srcF === v ? null : v; else if (k === 'login') state.loginF = state.loginF === v ? null : v; else state.ageF = state.ageF === v ? null : v; return after(); }
+    if (mk) { const f = FK[mk.dataset.mk], v = mk.dataset.mv; if (f) state[f] = state[f] === v ? null : v; syncUrl(); return after(); }
     if (e.target.closest('[data-fclear]')) { state.gender = null; state.here = null; state.paidF = null; state.sent = null; state.bal = null; state.srcF = null; state.ageF = null; state.loginF = null; state.attF = null; return after(); }
     const b = e.target.closest('[data-vt]'); if (!b) return;
     if (b.dataset.vt === 'gender') state.showGender = !state.showGender;
