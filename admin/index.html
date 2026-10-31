@@ -38,7 +38,7 @@
         <div class="hicons">
           <button type="button" class="hicon" id="menuBtn" aria-label="תפריט" title="תפריט" aria-haspopup="menu" aria-expanded="false"><svg data-i="grid"></svg><span class="bdbadge" id="menuBadge" hidden></span></button>
           <div class="hmenu" id="hMenu" role="menu" hidden>
-            <button type="button" role="menuitem" class="hmi" id="bdBtn"><svg data-i="chat"></svg><span>התחברויות ללוח</span><span class="bdbadge" id="bdBadge" hidden></span></button>
+            <button type="button" role="menuitem" class="hmi" id="bdBtn" hidden><svg data-i="chat"></svg><span>התחברויות ללוח</span><span class="bdbadge" id="bdBadge" hidden></span></button>
             <button type="button" role="menuitem" class="hmi" id="statsBtn"><svg data-i="stats"></svg><span>סטטיסטיקות</span></button>
             <button type="button" role="menuitem" class="hmi" id="moneyBtn"><svg data-i="money"></svg><span>כספים</span></button>
             <button type="button" role="menuitem" class="hmi" id="setBtn"><svg data-i="gear"></svg><span>הגדרות</span></button>
@@ -864,7 +864,9 @@
   }
 
   /* ---------- לוח שיתופים (board/): אישור חיבור גוגל לטלפון ומחיקת פוסטים ---------- */
+  const BOARD_ON = false;   // הלוח הוסר מהאתר (31.10.26): בלי "התחברויות ללוח" בתפריט, בלי מונה ממתינים ובלי קישור bd=1. להחזרה: true והסרת hidden מ-#bdBtn
   async function boardBadge() {
+    if (!BOARD_ON) { ['#bdBadge', '#menuBadge'].forEach((s) => { const b = $(s); if (b) b.hidden = true; }); return; }
     try {
       const [pm, pp] = await Promise.all([api('harpatka_members?select=user_id,wants_me&status=eq.pending'), api('harpatka_posts?select=user_id&approved_at=is.null&deleted_at=is.null')]), withPosts = new Set(pp.map((x) => x.user_id)), n = pm.filter((m) => withPosts.has(m.user_id) || m.wants_me).length;   // רק מי שכתב משהו וממתין לאישור
       ['#bdBadge', '#menuBadge'].forEach((s) => { const b = $(s); b.textContent = n; b.hidden = !n; });
@@ -1069,7 +1071,7 @@
         }
         else if (d.fin) { openFinance(d.fin); }
         else if (d.st) { renderStats(); $('#stDlg').showModal(); if (d.stv && ST_TITLES[d.stv] && d.stv !== 'main') stView(d.stv, true); if (document.activeElement && document.activeElement.closest('#stDlg')) document.activeElement.blur(); syncUrl(); }
-        else if (d.bd) boardOpen();
+        else if (d.bd && BOARD_ON) boardOpen();
         return;
       }
       urlReady = true;
