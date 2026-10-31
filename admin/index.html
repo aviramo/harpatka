@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261102y" />
+  <link rel="stylesheet" href="admin.css?v=20261102z" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1399,7 +1399,7 @@
     $('#listHere').innerHTML = attOn ? fbtn('here', eh, hereN('1'), hereN('0')) : '';
     $('#listPay').innerHTML = state.filter && state.showPay ? fbtn('pay', (state.paidF === '1' || state.paidF === '0' || state.paidF === 'n' || state.paidF === 'w' || /^[am][A-Za-z0-9_]+$/.test(state.paidF || '')) ? state.paidF : null, paidN('1'), paidN('0')) : '';
     { const ws = waSelected();   // כפתור הוואטסאפ בעמודה האחרונה: בחירת תבנית הודעה לקישורי הוואטסאפ ברשימה
-      $('#listWa').innerHTML = !(state.filter || state.mtype) ? '' : '<button type="button" class="hfilt wabtn" id="waBtn" aria-haspopup="menu" aria-expanded="false" aria-label="בחירת הודעה לוואטסאפ' + (ws ? ': ' + esc(ws.name) : '') + '" title="' + (ws ? 'הודעה: ' + esc(ws.name) : 'הודעה לוואטסאפ: ריקה') + '">' + (ws ? PIN_ICON : WA_ICON) + '</button>'; }
+      $('#listWa').innerHTML = !(state.filter || state.mtype) ? '' : '<button type="button" class="hfilt wabtn' + (ws && state.waUnsent ? ' un' : '') + '" id="waBtn" aria-haspopup="menu" aria-expanded="false" aria-label="בחירת הודעה לוואטסאפ' + (ws ? ': ' + esc(ws.name) : '') + '" title="' + (ws ? 'הודעה: ' + esc(ws.name) : 'הודעה לוואטסאפ: ריקה') + '">' + (ws ? PIN_ICON : WA_ICON) + '</button>'; }
     $('#listSent').innerHTML = evOn ? fbtn('sent', effSent(), sentN('1'), sentN('0')) : '';
     $('#listBal').innerHTML = !state.filter && state.showPay ? fbtn('bal', effBal(), '', '') : '';
     $('#listAtt').innerHTML = !state.filter && state.showAtt !== false ? '<button type="button" class="hfilt ' + (() => { const k = effAttF(), o = k && ATT_OPTS_F.find((x) => x[0] === k); return !o ? 'all' : attCls(o[2]); })() + '" data-fk="att" aria-haspopup="menu" aria-label="סינון לפי התמדה" title="סינון לפי התמדה והגעה (לחיצה לפתיחת תפריט)">' + (() => { const k = effAttF(), o = k && ATT_OPTS_F.find((x) => x[0] === k); return o ? ATT_GLYPH[o[3]]() : PERSIST_ICON; })() + '</button>' : '';
@@ -1466,6 +1466,7 @@
     if (!moreOk(p)) return false;
     if (effPay() && !matchPay(p, payKeys(effPay()))) return false;
     if (!hereOk(p) || !paidOk(p) || !attSumOk(p)) return false;
+    if (state.waUnsent && !q && !waUnsentOk(p)) return false;   // רק למי שלא נשלחה התבנית שנבחרה (מושהה בזמן חיפוש)
     if (effGender() === 'none' ? p.gender : (effGender() && p.gender !== effGender())) return false;
     if (!q) return true;
     return qMatch(p, q, qd);
@@ -2586,6 +2587,9 @@
   const WA_LS = 'harpatka_admin_watpl';
   const waScope = () => state.filter ? 'm:' + state.filter : state.mtype ? 't:' + state.mtype : 'all';
   const waMap = () => { try { return JSON.parse(localStorage.getItem(WA_LS) || '{}') || {}; } catch (e) { return {}; } };
+  const WA_UN = 'harpatka_admin_waunsent';
+  try { state.waUnsent = localStorage.getItem(WA_UN) === '1'; } catch (e) { state.waUnsent = false; }   // "רק למי שלא נשלח": מציג ברשימה רק משתתפים שעוד לא נשלחה להם התבנית שנבחרה
+  const waUnsentOk = (p) => { const ws = waSelected(); return !ws || !sentRow(p.id, ws.m.id, ws.id); };
   const waSelected = () => { const id = waMap()[waScope()]; return id ? (waList().find((x) => x.id === id) || null) : null; };
   /* מעקב שליחה: אחרי שליחת תבנית מסוימת (וחזרה מוואטסאפ) מאשרים שנשלחה, והשורה מסומנת; כך רואים למי נשלחה כל הודעה ולמי לא */
   const sentRow = (pid, mid, key) => state.msgSent.find((x) => x.participant_id === pid && x.meeting_id === mid && x.tpl_key === key) || null;
@@ -4055,7 +4059,9 @@
   const closeWa = () => { waAddAsk = false; $('#waMenu').hidden = true; const b = $('#waBtn'); if (b) b.setAttribute('aria-expanded', 'false'); };
   function renderWaMenu() {
     const sel = waSelected(), item = (id, ic, name, tag, on) => '<button type="button" role="menuitemradio" data-wt="' + esc(id) + '" aria-checked="' + on + '"><span class="wmi">' + ic + '<span class="wmn">' + esc(name) + '</span>' + (tag ? '<small>' + esc(tag) + '</small>' : '') + '</span></button>';
-    $('#waMenu').innerHTML = item('', WA_ICON, 'הודעה ריקה', '', !sel) + waList().map((x) => { const n = sentCount(x.m.id, x.id); return item(x.id, PIN_ICON, x.name || 'ללא שם', [x.tag, n ? n + ' נשלחו' : ''].filter(Boolean).join(' · '), !!sel && sel.id === x.id); }).join('') +
+    $('#waMenu').innerHTML = item('', WA_ICON, 'הודעה ריקה', '', !sel) +
+      '<button type="button" class="wun" role="switch" data-wun="1" aria-checked="' + !!state.waUnsent + '" title="מציג ברשימה רק משתתפים שעוד לא נשלחה להם התבנית שנבחרה"><span class="wmn">רק למי שלא נשלח</span><span class="wsw" aria-hidden="true"></span></button>' +
+      waList().map((x) => { const n = sentCount(x.m.id, x.id); return item(x.id, PIN_ICON, x.name || 'ללא שם', [x.tag, n ? n + ' נשלחו' : ''].filter(Boolean).join(' · '), !!sel && sel.id === x.id); }).join('') +
       addRows();
     function addRows() {
       const inM = !!(state.filter && curMeeting()), ty = typeById(inM ? typeIdOf(curMeeting()) : state.mtype), row = (k, label) => '<button type="button" class="wadd" data-wadd="' + k + '"><span class="wmi">' + icon('plus') + '<span class="wmn">' + esc(label) + '</span></span></button>';
@@ -4081,6 +4087,7 @@
     openTypeEditor(tid); tyFormFor = null; showSetView('tydet'); tyF.tpl.add();
   }
   $('#waMenu').addEventListener('click', (e) => {
+    if (e.target.closest('[data-wun]')) { state.waUnsent = !state.waUnsent; try { localStorage.setItem(WA_UN, state.waUnsent ? '1' : '0'); } catch (err) {} renderWaMenu(); render(); return; }
     const wa = e.target.closest('[data-wadd]');
     if (wa) { if (wa.dataset.wadd === 'ask') { waAddAsk = true; renderWaMenu(); return; } waAddTemplate(wa.dataset.wadd); return; }
     const b = e.target.closest('[data-wt]'); if (!b) return;
