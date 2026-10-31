@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261103m" />
+  <link rel="stylesheet" href="admin.css?v=20261103n" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -801,6 +801,10 @@
     return (withDay ? 'יום ' + day + ' ' : '') + d + '.' + mo + ' · ' + String(m.meeting_time).slice(0, 5);
   }
   const isPast = (m) => m.meeting_date < todayISO();
+  /* המפגש הקרוב: הראשון שעוד לא עבר (לפי תאריך ושעה). בטעינה הראשונה של הדף נפתחים עליו, אלא אם הגיעו בקישור עמוק או שבחרו במפורש "כל המשתתפים" (נשמר בלשונית, ולכן גם רענון משאיר את הבחירה) */
+  const nextMeetingOf = () => state.meetings.filter((m) => !isPast(m)).sort((a, b) => (a.meeting_date + a.meeting_time).localeCompare(b.meeting_date + b.meeting_time))[0] || null;
+  let autoMeetDone = false;
+  const allChosen = (v) => { try { if (v === undefined) return sessionStorage.getItem('harpatka_all_chosen') === '1'; if (v) sessionStorage.setItem('harpatka_all_chosen', '1'); else sessionStorage.removeItem('harpatka_all_chosen'); } catch (e) {} return false; };
   /* המפגש שעליו מסמנים הגעה ברשימה הראשית: המפגש שנבחר בכותרת, אחרת הקרוב ביותר (או של היום) */
   /* מחיר ברירת מחדל לפי מועד התשלום: 80 ₪ עד יומיים לפני ההתייקרות, ומשלושה ימים לפני המפגש 100 ₪ */
   /* מדרגות מחיר לכל מפגש (העמודה price_tiers, מועתקת למפגש חדש מהמפגש הקודם): { base, steps: [{ days, price }], final }.
@@ -1067,6 +1071,7 @@
       if (mem0) applyMembers(mem0);   // מצב חשבון הגוגל של כל משתתף (סמל ליד השם, סינון "אזור אישי"), לפני הציור
       if (!silent) { $('#status').innerHTML = ''; document.documentElement.classList.remove('is-loading'); }   // הנתונים הגיעו: יוצאים ממצב הטעינה (הציור באותו רגע, גם בקישור עמוק)
       setTimeout(prefetchNoteImages, 1500);   // טעינה מוקדמת של צילומי ההערות למטמון
+      if (!silent && !autoMeetDone) { autoMeetDone = true; if (!deep && !allChosen()) { const nm = nextMeetingOf(); if (nm) state.filter = nm.id; } }   // בטעינה הראשונה נפתחים על המפגש הקרוב
       if (deep) {
         const d = deep; deep = null;
         try { sessionStorage.removeItem('harpatka_deep'); } catch (e) {}
@@ -3925,13 +3930,14 @@
     const et = e.target.closest('[data-edit-t]');
     if (et) { closeMSel(); return openTypeEditor(et.dataset.editT); }
     const ty = e.target.closest('[data-mt]');
-    if (ty) { closeMSel(); state.mtype = ty.dataset.mt; state.filter = null; render(); return; }   // בחירת סוג: תצוגה כמו "כל המשתתפים" מסוננת לסוג, והתפריט מציג רק את המפגשים שלו
+    if (ty) { closeMSel(); allChosen(false); state.mtype = ty.dataset.mt; state.filter = null; render(); return; }   // בחירת סוג: תצוגה כמו "כל המשתתפים" מסוננת לסוג, והתפריט מציג רק את המפגשים שלו
     const ed = e.target.closest('[data-edit-m]');
     if (ed) { closeMSel(); return openMeeting(ed.dataset.editM); }
     const c = e.target.closest('[data-filter]');
     if (!c) return;
     closeMSel();
     state.filter = c.dataset.filter || null;
+    allChosen(!state.filter);   // "כל המשתתפים" שנבחר במפורש נשמר בלשונית (רענון לא קופץ למפגש הקרוב)
     state.mtype = null;   // בחירה אחת בלבד בתפריט: כל המשתתפים, סוג מפגש או מפגש (בחירת מפגש מבטלת את בחירת הסוג)
     render();
   });
