@@ -930,10 +930,12 @@ html.is-loading .hgrp { visibility: hidden; }
 
 /* ---------- שורת הסינון והמיון: שתי תגיות (סינון, מיון); נקודה = יש סינון שלא רואים בשורה / מיון שאינו ברירת המחדל ---------- */
 .vbar { display: flex; align-items: center; gap: 8px; padding: 0 var(--gut) 12px; }
-#listTags.vbar .hfilt { width: var(--tag); min-width: var(--tag); height: var(--tag); padding: 0; border: 0; background: var(--surface-2); color: var(--text); }
+#listTags.vbar .hfilt { width: var(--tag); min-width: var(--tag); height: var(--tag); padding: 0; border: 0; background: transparent; color: var(--text); }   /* סינון ומיון: סמל בלבד, בלי רקע אפור */
+#listTags.vbar .sortend { margin-inline-start: auto; }   /* המיון בקצה השמאלי של השורה */
+#listTags.vbar .stc:not([aria-pressed="true"]) { background: transparent; }   /* זכר / נקבה בשורת הסינון: בלי רקע אפור; נבחר נשאר מלא בשחור */
 #listTags.vbar .hfilt svg { width: 16px; height: 16px; }
-#listTags.vbar .hfilt.on:not(:hover) { background: var(--surface-2); }
-#listTags.vbar .hfilt.on::after { right: 3px; bottom: 3px; width: 6px; height: 6px; box-shadow: 0 0 0 1px var(--surface-2); }
+#listTags.vbar .hfilt.on:not(:hover) { background: transparent; }
+#listTags.vbar .hfilt.on::after { right: 3px; bottom: 3px; width: 6px; height: 6px; box-shadow: 0 0 0 1px var(--bg); }
 html.is-loading .vbar { display: none; }
 
 /* ---------- פאנל הסינון והתצוגה: כותרת לכל נושא עם טוגל תצוגה, ומתחתיה האפשרויות כתגיות ---------- */
@@ -952,3 +954,7 @@ html.is-loading .vbar { display: none; }
 .row .nm .name .nwrap { white-space: nowrap; }
 .row .nm .name .glk { display: inline-block; vertical-align: -0.12em; margin-inline-start: 4px; line-height: 0; color: var(--text-2); }
 .row .nm .name .glk svg { width: 0.9em; height: 0.9em; }
+
+/* כפתור התגיות בכותרת (משמאל לכפתור התפריט): דולק = נקודה קטנה בפינה הימנית התחתונה, כמו המיון והסינון */
+.hgrp .tagbtn { position: relative; }
+.hgrp .tagbtn[aria-pressed="true"]::after { content: ''; position: absolute; right: 8px; bottom: 8px; width: 7px; height: 7px; background: var(--text); box-shadow: 0 0 0 2px var(--bg); }
