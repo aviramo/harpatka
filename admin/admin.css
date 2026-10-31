@@ -211,7 +211,13 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 .field input[type="date"]::-webkit-calendar-picker-indicator, .field input[type="time"]::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; opacity: 0; cursor: pointer; }
 /* תאריך ושעה: הטקסט מיושר לימין כמו בכל השדות (31.10.26). הערך עצמו נכתב משמאל לימין (25/10/2026, 20:00), והחץ שלנו נשאר משמאל */
 .field input[type="date"], .field input[type="time"] { direction: ltr; text-align: right; padding: 0 12px 0 32px; }
-.field input[type="date"]::-webkit-date-and-time-value, .field input[type="time"]::-webkit-date-and-time-value { text-align: right; margin: 0; }   /* בכרום באנדרואיד לערך יש שוליים צדדיים משלו (מקום לסמל), והטקסט לא היה מיושר כמו בשאר השדות */
+.field input[type="date"]::-webkit-date-and-time-value, .field input[type="time"]::-webkit-date-and-time-value { text-align: right; margin: 0; }
+/* שדה תאריך / שעה אחיד (dtField): הערך כטקסט שלנו מעל השדה, מיושר לימין (12px מהקצה) עד החץ שמשמאל; הטקסט של הדפדפן שקוף */
+.dtbox, .field > .dtbox { position: relative; display: block; margin: 0; font-size: 16px; font-weight: 400; color: var(--text); }   /* לא לרשת את עיצוב התווית (.field > span) */
+.field .dtbox input[type="date"], .field .dtbox input[type="time"] { color: transparent; }
+.dtbox input::-webkit-datetime-edit, .dtbox input::-webkit-date-and-time-value { color: transparent; }
+.dtbox .dtv { position: absolute; inset-block: 0; right: 12px; left: 32px; display: flex; align-items: center; justify-content: flex-start; direction: rtl; overflow: hidden; white-space: nowrap; font-size: 16px; font-style: normal; color: var(--text); pointer-events: none; }
+.dtbox .dtv.ph { color: var(--text-3); }   /* בכרום באנדרואיד לערך יש שוליים צדדיים משלו (מקום לסמל), והטקסט לא היה מיושר כמו בשאר השדות */
 .two { display: grid; grid-template-columns: 1fr 110px; gap: 8px; }
 #ppForm .two, #finForm .two { grid-template-columns: 1fr 1fr; }
 .three { display: grid; grid-template-columns: minmax(0, 1.5fr) 64px minmax(0, 1.05fr); gap: 8px; }
@@ -313,7 +319,7 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 
 /* תפריט בחירת המפגש: טבלה (מפגש, נרשמו, שילמו, עריכה) */
 .mmenu { left: auto; right: 0; width: min(400px, calc(100vw - 16px)); max-height: 72vh; overflow-y: auto; }
-.mtr { display: grid; grid-template-columns: minmax(0, 1fr) 54px 54px var(--ib); align-items: center; column-gap: 4px; padding: 0 8px; }
+.mtr { display: grid; grid-template-columns: minmax(0, 1fr) 64px var(--ib); align-items: center; column-gap: 4px; padding: 0 8px; }   /* שם, מספר (משתתפים / נרשמו / מפגשים), עיפרון; בלי עמודת התשלום */
 .mtr.mhead { min-height: 30px; font-size: 12px; font-weight: 700; color: var(--text-2); border-bottom: 1px solid var(--line); margin-bottom: 4px; }
 .mtr.mhead span { text-align: center; }
 .mtr.mhead span:first-child { text-align: right; }
@@ -324,7 +330,6 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 .mtr .mc { text-align: center; font-weight: 600; font-size: 15px; font-variant-numeric: tabular-nums; }
 .mtr .mc { display: inline-flex; align-items: center; justify-content: flex-start; gap: 4px; padding-inline-start: 8px; }   /* הסמל צמוד לימין התא: כל הסמלים בעמודה על אותו קו אנכי, והמספר משמאלו */
 .mtr .mc .mci { display: inline-grid; place-items: center; width: 14px; height: 14px; font-style: normal; color: var(--text-3); flex: 0 0 auto; }   /* הסמל שאומר מה המספר סופר */
-.mtr .mc .mcs { font-size: 13px; font-weight: 700; line-height: 1; }
 .mtr.mrow2[aria-checked="true"] .mc .mci { color: inherit; opacity: .7; }
 .mtr .mc.dim { color: var(--text-2); }
 .mmenu button.addm2 { display: block; width: 100%; min-height: 46px; margin-top: 4px; padding: 0 12px; border-top: 1px solid var(--line); color: var(--orange-ink); font-weight: 700; text-align: right; }
@@ -709,10 +714,6 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 #mDelete.locked, #tyDelete.locked { opacity: .45; }
 /* מפגש: שדה ריק = "כמו בסוג המפגש", הערך של הסוג מוצג כפלייסהולדר */
 .field input::placeholder, .field textarea::placeholder { color: var(--text-3); opacity: 1; }
-.phbox, .field > .phbox { position: relative; display: block; margin: 0; font-size: 16px; font-weight: 400; color: var(--text); }   /* לא לרשת את עיצוב התווית (.field > span) */
-.phbox .phv { position: absolute; inset-block: 0; inset-inline-start: 12px; display: flex; align-items: center; color: var(--text-3); font-size: 16px; font-style: normal; pointer-events: none; }
-.phbox .phv[hidden] { display: none; }
-.phbox.phempty input, .phbox.phempty input::-webkit-datetime-edit { color: transparent; }   /* phempty ולא empty: .empty תפוס למצבי "טוען" */   /* שעה ריקה: רק הפלייסהולדר (בלי "--:--") */
 .mtinh { display: flex; align-items: center; gap: 8px; min-height: var(--ctl); padding: 4px 12px; background: var(--surface); color: var(--text-3); font-size: 15px; }
 .mtinh span { flex: 1 1 auto; min-width: 0; }
 .mtinh[hidden], #mTierEd[hidden] { display: none; }
@@ -723,6 +724,12 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 #mTypeF select { font-weight: 700; }
 /* סוגי מפגשים בראש תפריט המפגשים: אותן שורות, ושורת ההוספה מפרידה מרשימת המפגשים */
 .mmenu button.addm2.addt { margin: 0 0 8px; border-bottom: 1px solid var(--line); }
+/* הוספת סוג מפגש / מפגש בתפריט המפגשים (31.10.26): רק כפתור פלוס, בעמודת העיפרון (אותו כפתור אייקון), בכתום של המפגשים */
+.mmenu .maddrow { min-height: 46px; }
+.mmenu .maddrow.addt { margin-bottom: 8px; border-bottom: 1px solid var(--line); }
+.mmenu .maddrow:not(.addt) { margin-top: 4px; border-top: 1px solid var(--line); }
+.mmenu .medit.madd { color: var(--orange-ink); }
+.mmenu .medit.madd svg { stroke-width: 2.4; }
 .mmenu .mtop { position: sticky; top: 0; z-index: 1; margin: -8px -8px 8px; padding: 8px 8px 4px; background: var(--bg); border-bottom: 1px solid var(--line); }   /* "כל המשתתפים" בראש התפריט, מעל סוגי המפגשים, וקבוע בזמן גלילה */
 
 /* 6.4 הגדרות */

@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261031s" />
+  <link rel="stylesheet" href="admin.css?v=20261031v" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -412,6 +412,7 @@
     copy: ['s', '<rect x="8" y="8" width="12" height="12" rx="3"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>'],
     dots: ['f', '<circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>'],
     edit: ['s', '<path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"/><path d="M14 7l3 3"/>'],
+    plus: ['s', '<path d="M12 5v14"/><path d="M5 12h14"/>'],
     enter: ['s', '<path d="M4 12h11M11 7l5 5-5 5M20 5v14"/>'],
     eye: ['s', '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'],
     flag: ['s', '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>'],
@@ -1109,25 +1110,24 @@
     const dayTime = (m) => esc(meetingLabel(m).split(' · ')[0]) + ' · ' + esc(meetingLabel(m, true).split(' ').slice(0, 2).join(' ')) + ' · ' + esc(String(m.meeting_time).slice(0, 5));
     const EDIT_ICON = icon('edit');
     const nextM = state.meetings.filter((m) => !isPast(m)).sort((a, b) => (a.meeting_date + a.meeting_time).localeCompare(b.meeting_date + b.meeting_time))[0] || null;   // המפגש הקרוב: מודגש בתפריט
-    const paidAll = state.participants.filter((x) => x.active !== false).filter((x) => { const ls = linksOf(x.id).filter((l) => !l.exempt); return ls.length && ls.every((l) => l.paid); }).length;
     /* סוגי מפגשים מעל רשימת המפגשים, באותה צורה: בחירת סוג מציגה רק את המפגשים שלו (לחיצה נוספת מבטלת), עיפרון לעריכת הסוג, והוספת סוג */
-    /* בלי שורות כותרת (31.10.26): ליד כל מספר סמל קטן שאומר מה הוא סופר (מפגשים, משתתפים או נרשמו, שילמו) */
-    const MCI = { cal: [icon('cal', 'i14'), 'מפגשים'], user: [icon('user', 'i14'), 'משתתפים'], reg: [icon('user', 'i14'), 'נרשמו'], paid: ['<b class="mcs">₪</b>', 'שילמו'] };
+    /* בלי שורות כותרת ובלי עמודת התשלום (31.10.26): ליד כל מספר סמל קטן שאומר מה הוא סופר (מפגשים, משתתפים או נרשמו) */
+    const MCI = { cal: [icon('cal', 'i14'), 'מפגשים'], user: [icon('user', 'i14'), 'משתתפים'], reg: [icon('user', 'i14'), 'נרשמו'] };
     const mcell = (n, k, dim) => '<span class="mc' + (dim ? ' dim' : '') + '" title="' + MCI[k][1] + '" aria-label="' + MCI[k][1] + ' ' + n + '"><i class="mci" aria-hidden="true">' + MCI[k][0] + '</i>' + n + '</span>';   // הסמל מימין למספר, כל הסמלים בעמודה על אותו קו אנכי
-    const types = state.mtypes.length ? state.mtypes.map((t) => '<div class="mtr mrow2 mtyrow" role="menuitemradio" tabindex="0" data-mt="' + t.id + '" aria-checked="' + (state.mtype === t.id && !state.filter) + '"><span>' + esc(t.name || 'ללא שם') + '</span>' + mcell(state.meetings.filter((m) => typeIdOf(m) === t.id).length, 'cal') + '<span></span>' +
+    const types = state.mtypes.length ? state.mtypes.map((t) => '<div class="mtr mrow2 mtyrow" role="menuitemradio" tabindex="0" data-mt="' + t.id + '" aria-checked="' + (state.mtype === t.id && !state.filter) + '"><span>' + esc(t.name || 'ללא שם') + '</span>' + mcell(state.meetings.filter((m) => typeIdOf(m) === t.id).length, 'cal') +
         '<button type="button" class="medit" data-edit-t="' + t.id + '" aria-label="עריכת סוג המפגש" title="עריכת סוג המפגש">' + EDIT_ICON + '</button></div>').join('') +
-      '<button type="button" role="menuitem" class="addm2 addt" id="addType">+ סוג מפגש חדש</button>' : '';
+      '<div class="mtr maddrow addt"><span></span><span></span><button type="button" role="menuitem" class="medit madd" id="addType" aria-label="סוג מפגש חדש" title="סוג מפגש חדש">' + icon('plus') + '</button></div>' : '';   // רק סימן פלוס, בעמודת העיפרון
     const shownM = state.meetings.filter((m) => !state.mtype || typeIdOf(m) === state.mtype);
     /* "כל המשתתפים" ראשון: רמה מעל סוגי המפגשים והמפגשים */
     $('#mMenu').innerHTML = '<div class="mtop">' +
-      '<div class="mtr mrow2 mall" role="menuitemradio" tabindex="0" data-filter="" aria-checked="' + (state.filter === null && !state.mtype) + '"><span>כל המשתתפים</span>' + mcell(state.participants.length, 'user') + mcell(paidAll, 'paid', true) + '<span></span></div></div>' +   // קבוע בראש התפריט בזמן גלילה
+      '<div class="mtr mrow2 mall" role="menuitemradio" tabindex="0" data-filter="" aria-checked="' + (state.filter === null && !state.mtype) + '"><span>כל המשתתפים</span>' + mcell(state.participants.length, 'user') + '<span></span></div></div>' +   // קבוע בראש התפריט בזמן גלילה
       types +
       shownM.map((m) => {
         const ls = state.att.filter((a) => a.meeting_id === m.id), isNext = nextM === m;
-        return '<div class="mtr mrow2' + (isPast(m) ? ' past' : '') + (isNext ? ' next' : '') + '" role="menuitemradio" tabindex="0" data-filter="' + m.id + '" aria-checked="' + (state.filter === m.id) + '"><span>' + dayTime(m) + '</span>' + mcell(ls.length, 'reg') + mcell(ls.filter((a) => a.paid).length, 'paid', true) +
+        return '<div class="mtr mrow2' + (isPast(m) ? ' past' : '') + (isNext ? ' next' : '') + '" role="menuitemradio" tabindex="0" data-filter="' + m.id + '" aria-checked="' + (state.filter === m.id) + '"><span>' + dayTime(m) + '</span>' + mcell(ls.length, 'reg') +
           '<button type="button" class="medit" data-edit-m="' + m.id + '" aria-label="עריכת מפגש" title="עריכת מפגש">' + EDIT_ICON + '</button></div>';
       }).join('') +
-      '<button type="button" role="menuitem" class="addm2" id="addMeeting">+ מפגש חדש</button>';
+      '<div class="mtr maddrow"><span></span><span></span><button type="button" role="menuitem" class="medit madd" id="addMeeting" aria-label="מפגש חדש" title="מפגש חדש">' + icon('plus') + '</button></div>';
   }
   const closeMSel = () => { $('#mMenu').hidden = true; $('#mSel').setAttribute('aria-expanded', 'false'); };
   $('#mSel').addEventListener('click', (e) => { e.stopPropagation(); const m = $('#mMenu'); m.hidden = !m.hidden; $('#mSel').setAttribute('aria-expanded', String(!m.hidden)); if (!m.hidden) { const host = m.offsetParent || m.parentElement, hr = host.getBoundingClientRect(); m.style.right = 'auto'; { const br = $('#mSel').getBoundingClientRect(); const x = window.innerWidth >= 700 ? Math.max(8, Math.min(Math.round(br.right - m.offsetWidth), window.innerWidth - m.offsetWidth - 8)) : Math.round((window.innerWidth - m.offsetWidth) / 2); m.style.left = Math.round(x - hr.left) + 'px'; } m.style.maxHeight = Math.max(240, Math.floor(window.innerHeight - m.getBoundingClientRect().top - 12)) + 'px'; } });   // התפריט עד תחתית המסך, ונגלל בתוכו   // דסקטופ: הקצה הימני של התפריט בקו ישר עם הקצה הימני של הכותרת; במובייל ממורכז
@@ -3440,6 +3440,28 @@
     });
     return ed;
   }
+  /* ---------- שדה תאריך / שעה אחיד (31.10.26): רכיב אחד לכל שדות התאריך והשעה בדף ----------
+     הערך מוצג כטקסט שלנו, מיושר לימין כמו כל השדות (הטקסט של הדפדפן שקוף; באנדרואיד הוא לא מתיישר לימין).
+     inp.dataset.ph = פלייסהולדר (למשל השעה של סוג המפגש), ואחרי שינוי שלו קוראים ל-inp.dtPaint(); בלי ערך ובלי פלייסהולדר: "בחירת תאריך" / "בחירת שעה" באפור.
+     גם השמה ישירה ל-value (מהקוד) מעדכנת את התצוגה */
+  const DT_VAL = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+  function dtField(inp) {
+    if (!inp || inp.dtPaint) return inp;
+    const box = document.createElement('span'); box.className = 'dtbox';
+    inp.parentNode.insertBefore(box, inp); box.append(inp);
+    const v = document.createElement('i'); v.className = 'dtv'; v.setAttribute('aria-hidden', 'true'); box.append(v);
+    const paint = () => {
+      const raw = DT_VAL.get.call(inp), isD = inp.type === 'date';
+      v.textContent = raw ? (isD ? raw.split('-').reverse().join('.') : raw.slice(0, 5)) : (inp.dataset.ph || (isD ? 'בחירת תאריך' : 'בחירת שעה'));
+      v.classList.toggle('ph', !raw);
+    };
+    Object.defineProperty(inp, 'value', { configurable: true, get() { return DT_VAL.get.call(this); }, set(x) { DT_VAL.set.call(this, x); paint(); } });
+    inp.addEventListener('input', paint); inp.addEventListener('change', paint);
+    inp.dtPaint = paint; paint();
+    return inp;
+  }
+  document.querySelectorAll('.field input[type="date"], .field input[type="time"]').forEach(dtField);   // השדות שכבר בדף (טופס הכספים, תשלום לדרך הגעה)
+
   /* ---------- פרטי מפגש: אלמנט אחד לעריכת מפגש ולפרטי ברירת המחדל של סוג מפגש (31.10.26) ----------
      סדר: שם, מתי (תאריך במפגש, שעה), איפה (עיר, מיקום, הוראות הגעה מרובות שורות), הרשמה (כמות משתתפים, מחירים), תמונה.
      התמונה היא אריח אחד: לחיצה עליו בוחרת או מחליפה תמונה, ו-× על התמונה עצמה מסיר אותה (במפגש עם סוג: חוזר לתמונה של הסוג).
@@ -3453,7 +3475,7 @@
       '<label class="field"><span>' + (isType ? 'שם סוג המפגש' : 'שם המפגש') + '</span><input id="' + I('Name') + '" type="text" maxlength="80" autocomplete="off" /></label>' +
       '<div class="mfsec">מתי</div><div class="mfrow">' +
         (isType ? '' : '<label class="field"><span>תאריך</span><input id="' + I('Date') + '" name="date" type="date" required /></label>') +
-        '<label class="field"><span>שעה</span><span class="phbox" id="' + I('TimeBox') + '"><input id="' + I('Time') + '" name="time" type="time" /><i class="phv" id="' + I('TimePh') + '" aria-hidden="true"></i></span></label></div>' +
+        '<label class="field"><span>שעה</span><input id="' + I('Time') + '" name="time" type="time" /></label></div>' +
       '<div class="mfsec">איפה</div><div class="mfrow">' +
         '<label class="field"><span>עיר</span><input id="' + I('City') + '" name="city" type="text" maxlength="40" autocomplete="off" /></label>' +
         '<label class="field"><span>מיקום</span><input id="' + I('Place') + '" name="place" type="text" maxlength="60" autocomplete="off" /></label></div>' +
@@ -3471,7 +3493,7 @@
         '<input type="file" id="' + I('ImgFile') + '" accept="image/jpeg,image/png,image/webp" hidden /></div>';
     const F = { te: tierEditor('#' + I('TierList'), '#' + I('TierAdd')), img: { url: null, blob: null, objUrl: null, inh: false }, tiersInh: false };
     const ty = () => (typOf ? typOf() : null);
-    const timeEmpty = () => { const e = !q('Time').value && !!q('TimePh').textContent; q('TimeBox').classList.toggle('phempty', e); q('TimePh').hidden = !e; };
+    dtField(q('Time')); if (!isType) dtField(q('Date'));   // תאריך ושעה: הרכיב האחיד (מיושר לימין, פלייסהולדר של הסוג)
     F.q = q;
     F.grow = () => autoGrow(q('Dirs'));
     F.paintImg = () => {
@@ -3499,8 +3521,8 @@
       q('City').placeholder = (t && t.city) || 'למשל: הרצליה';
       q('Max').placeholder = t && t.max_participants != null ? String(t.max_participants) : 'ללא הגבלה';
       q('Dirs').placeholder = (t && t.directions) || 'כתובת, קומה, חנייה, ואיך מגיעים בתחבורה ציבורית';
-      q('TimePh').textContent = t && t.meeting_time ? String(t.meeting_time).slice(0, 5) : '';
-      timeEmpty(); F.paintTiers(); F.paintImg(); F.grow();
+      q('Time').dataset.ph = t && t.meeting_time ? String(t.meeting_time).slice(0, 5) : ''; q('Time').dtPaint();
+      F.paintTiers(); F.paintImg(); F.grow();
     };
     /* מילוי: src = מפגש או סוג; inh = השדות שנלקחים מהסוג (מוצגים ריקים) */
     F.fill = (src, inh) => {
@@ -3536,7 +3558,6 @@
       if (t && F.img.inh) return { url: t.image_url || null, inh: true };
       return { url: F.img.blob ? await uploadMeetingImage(F.img.blob) : (F.img.url || null), inh: false };
     };
-    q('Time').addEventListener('input', timeEmpty); q('Time').addEventListener('change', timeEmpty);
     q('Dirs').addEventListener('input', F.grow);
     q('ImgPick').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); q('ImgFile').click(); } });
     q('ImgFile').addEventListener('change', async (e) => {
