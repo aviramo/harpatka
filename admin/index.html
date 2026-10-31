@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261031q" />
+  <link rel="stylesheet" href="admin.css?v=20261031r" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1159,8 +1159,10 @@
         '<button type="button" class="medit" data-edit-t="' + t.id + '" aria-label="עריכת סוג המפגש" title="עריכת סוג המפגש">' + EDIT_ICON + '</button></div>').join('') +
       '<button type="button" role="menuitem" class="addm2 addt" id="addType">+ סוג מפגש חדש</button>' : '';
     const shownM = state.meetings.filter((m) => !state.mtype || typeIdOf(m) === state.mtype);
-    $('#mMenu').innerHTML = types + '<div class="mtr mhead" aria-hidden="true"><span>מפגש</span><span>נרשמו</span><span>שילמו</span><span></span></div>' +
-      '<div class="mtr mrow2" role="menuitemradio" tabindex="0" data-filter="" aria-checked="' + (state.filter === null) + '"><span>כל המשתתפים</span><span class="mc">' + state.participants.length + '</span><span class="mc dim">' + paidAll + '</span><span></span></div>' +
+    /* "כל המשתתפים" ראשון: רמה מעל סוגי המפגשים והמפגשים */
+    $('#mMenu').innerHTML = '<div class="mtr mhead" aria-hidden="true"><span></span><span>משתתפים</span><span>שילמו</span><span></span></div>' +
+      '<div class="mtr mrow2 mall" role="menuitemradio" tabindex="0" data-filter="" aria-checked="' + (state.filter === null) + '"><span>כל המשתתפים</span><span class="mc">' + state.participants.length + '</span><span class="mc dim">' + paidAll + '</span><span></span></div>' +
+      types + '<div class="mtr mhead" aria-hidden="true"><span>מפגש</span><span>נרשמו</span><span>שילמו</span><span></span></div>' +
       shownM.map((m) => {
         const ls = state.att.filter((a) => a.meeting_id === m.id), isNext = nextM === m;
         return '<div class="mtr mrow2' + (isPast(m) ? ' past' : '') + (isNext ? ' next' : '') + '" role="menuitemradio" tabindex="0" data-filter="' + m.id + '" aria-checked="' + (state.filter === m.id) + '"><span>' + dayTime(m) + '</span><span class="mc">' + ls.length + '</span><span class="mc dim">' + ls.filter((a) => a.paid).length + '</span>' +
@@ -1258,7 +1260,7 @@
   const effHere = () => (state.q.trim() || !state.filter || !attVisible(state.meetings.find((x) => x.id === state.filter))) ? null : state.here;   // הגיע / לא הגיע, רק בתוך מפגש
   const effPaidF = () => (state.q.trim() || !state.filter || !state.showPay) ? null : state.paidF;   // שולם / לא שולם (לפי רשומות התשלום), רק בתוך מפגש
   /* זכאי להודעה לפני המפגש: כל משתתף שהסטטוס שלו במפגש אינו סטטוס ברירת המחדל ("משויך"), לפני או אחרי המפגש */
-  const evElig = (pid, l) => !!l && dispStatus(l) !== SYSTEM_STATUS;   // שליחת פרטי המפגש (וסימון הגעה): רק מי שהסטטוס שלו במפגש שונה מסטטוס ברירת המחדל
+  const evElig = (pid, l) => !!l && dispStatus(l) !== SYSTEM_STATUS;   // שליחת פרטי המפגש: רק מי שהסטטוס שלו במפגש שונה מסטטוס ברירת המחדל (סימון ההגעה זמין לכל מי שמשויך)
   const noPayOf = (p, l) => !!(l && l.no_pay);   // "לא משלם" הוא עניין של מפגש בלבד (מתג במסך התשלום של המפגש)
   const reportedOf = (pid, mid) => { const l = linkOf(pid, mid), p = state.participants.find((x) => x.id === pid); return !!(l && l.pay_reported_at && allocatedOf(pid, mid) <= 0 && !(p && noPayOf(p, l))); };   // המשתתף דיווח (מהאזור האישי) ששילם ועוד לא הוזן תשלום
   const reportedAmt = (pid, mid) => { const l = linkOf(pid, mid); return l && l.pay_reported_amount ? ' ₪' + nfm(l.pay_reported_amount) : ''; };   // הסכום שדווח (המחיר ברגע הדיווח)
@@ -1274,7 +1276,7 @@
   const sentView = (m) => !!(m && state.showSent !== false && (state.showSent === true || evOnFor(m) || hasSent(m) || evRecent(m)));
   /* עמודת ההגעה ועמודת השליחה בשורות (ואייקון הסינון שלהן) קיימות רק כשיש בהן מה להציג: לפחות משתתף אחד עם עיגול, או סינון פעיל;
      בלי זה לא נשמרת עמודה ריקה שמצמצמת את השמות ודוחפת את התשלום הצידה */
-  const colHere = (ids) => { const m = state.meetings.find((x) => x.id === state.filter); return !!(state.filter && m && attVisible(m) && (state.here || state.att.some((a) => a.meeting_id === m.id && (!ids || ids.has(a.participant_id)) && (dispStatus(a) !== SYSTEM_STATUS || a.attended)))); };
+  const colHere = (ids) => { const m = state.meetings.find((x) => x.id === state.filter); return !!(state.filter && m && attVisible(m) && (state.here || state.att.some((a) => a.meeting_id === m.id && (!ids || ids.has(a.participant_id))))); };   // עמודת ההגעה כשיש בשורות המוצגות מישהו שמשויך למפגש
   const colSent = (ids) => { const m = state.meetings.find((x) => x.id === state.filter); return !!(state.filter && m && sentView(m) && (state.sent || state.att.some((a) => a.meeting_id === m.id && (!ids || ids.has(a.participant_id))))); };   // הטוגל דולק: העמודה קיימת (עם עיגול לא פעיל למי שעוד לא זכאי)
   const sentMatch = (pid, l, v) => !!l && (v === '1' ? !!l.details_sent_at : (!l.details_sent_at && evElig(pid, l)));
   const effSent = () => (state.q.trim() || !state.filter || !sentView(state.meetings.find((x) => x.id === state.filter))) ? null : state.sent;
@@ -1513,7 +1515,7 @@
         if (state.showAtt !== false) tags = UI.tag('הגיע <bdi dir="ltr">' + pr.came + '/' + (pr.total + fut) + '</bdi>', 'ptag cnt ' + cls, { title: 'הגיע ל-' + pr.came + ' מתוך ' + (pr.total + fut) + ' מפגשים' + (fut ? ' (' + fut + ' עתידיים)' : '') + (pr.total ? '. התמדה בפועל: ' + Math.round(rate * 100) + '%, דירוג ' + st.rank + ' מתוך ' + st.n : '') });
       }
       const hl = state.filter ? linkOf(p.id, state.filter) : null;
-      const tgm = attTarget(), tgl = tgm ? linkOf(p.id, tgm.id) : null, showHere = !!(tgm && (state.filter ? attVisible(tgm) : attendOpen(tgm))), attOk = !!(tgl && (dispStatus(tgl) !== SYSTEM_STATUS || tgl.attended)), evc = evCircle(p);   // עיגול ההגעה רק למי שלא בסטטוס ברירת המחדל (או שכבר סומנה לו הגעה, כדי שאפשר יהיה לבטל)
+      const tgm = attTarget(), tgl = tgm ? linkOf(p.id, tgm.id) : null, showHere = !!(tgm && (state.filter ? attVisible(tgm) : attendOpen(tgm))), attOk = !!tgl, evc = evCircle(p);   // עיגול ההגעה לכל מי שמשויך למפגש, בכל סטטוס (גם "משויך")
       return '<li class="row' + (hl && hl.attended && attendOpen(state.meetings.find((x) => x.id === state.filter)) ? ' arrived' : '') + '">' +
         (wa ? UI.tag(WA_ICON, 'ico rowwa', { href: wa, target: '_blank', rel: 'noopener', 'aria-label': 'וואטסאפ ל' + esc(p.name), title: 'וואטסאפ' }, 'a') : UI.tag(WA_ICON, 'ico rowwa nophone', { role: 'img', 'aria-label': 'אין טלפון', title: 'אין טלפון' })) +
         '<div class="main' + ' hasw' + ((state.filter ? hereColOn : showHere) ? ' att' : '') + (anyEv ? ' ev' : '') + (!state.filter && state.showPay ? ' bl' + (state.showAtt === false ? ' nosum' : '') : '') + '" role="button" tabindex="0" data-edit="' + p.id + '">' +
@@ -2173,7 +2175,8 @@
     menu.innerHTML = free.map((m) => '<button type="button" role="menuitem" class="qi" data-am="' + m.id + '">' + esc(dmShort(m)) + ' · ' + esc(String(m.meeting_time).slice(0, 5)) + '</button>').join('');
     menu.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
-    menu.style.left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8) + 'px'; menu.style.top = (r.bottom + 8 + mh > window.innerHeight - 8 ? Math.max(8, r.top - mh - 8) : r.bottom + 8) + 'px';
+    const lefts = [anchor, $('#pMeetN')].filter((x) => x && !x.hidden && x.offsetWidth).map((x) => x.getBoundingClientRect().left);   // הקצה השמאלי של התגית כולה (המונה ו"+ שיוך למפגש" צמודים)
+    menu.style.left = Math.min(Math.max(8, Math.min(...lefts)), window.innerWidth - mw - 8) + 'px'; menu.style.top = (r.bottom + 8 + mh > window.innerHeight - 8 ? Math.max(8, r.top - mh - 8) : r.bottom + 8) + 'px';
     menu.onclick = (e) => { const b = e.target.closest('[data-am]'); if (!b) return; closeQ(); setLinkedWithStatus(pid, b.dataset.am, 'unpaid'); const m = state.meetings.find((x) => x.id === b.dataset.am); toast('שויך למפגש' + (m ? ' ' + dmShort(m) : '')); };
   });
   /* סטטוס משתתף (כללי): נפרד מסטטוס המפגש */
@@ -3596,6 +3599,7 @@
     if (!c) return;
     closeMSel();
     state.filter = c.dataset.filter || null;
+    if (!state.filter) state.mtype = null;   // "כל המשתתפים" הוא רמה מעל הסוגים: מבטל גם את בחירת הסוג
     render();
   });
   function renderMoreMenu() {
