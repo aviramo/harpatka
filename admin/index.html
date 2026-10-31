@@ -992,7 +992,7 @@
   let loadSeq = 0, loadApplied = 0;
   /* מצב חשבון הגוגל (אזור אישי) לכל משתתף: 'yes' = מחובר ומאושר, 'blocked' = חסום, אחרת (ניתוק, ממתין, בלי חשבון) = 'no'. נטען מ-harpatka_members ומשמש את סינון "אזור אישי" */
   state.memMap = new Map();
-  const MEM_Q = 'harpatka_members?select=participant_id,status,email&participant_id=not.is.null';
+  const MEM_Q = 'harpatka_members?select=participant_id,status,email&participant_id=not.is.null&status=neq.removed';
   function applyMembers(rows) {   // מחזיר האם משהו השתנה
     const mp = new Map(), em = new Map();
     rows.forEach((r) => { const cur = mp.get(r.participant_id); const v = r.status === 'blocked' ? 'blocked' : r.status === 'approved' ? 'yes' : 'no'; if (!cur || cur === 'no' || (v === 'blocked')) mp.set(r.participant_id, v); if (r.email) em.set(r.participant_id, ((em.get(r.participant_id) || '') + ' ' + String(r.email).toLowerCase()).trim()); });
@@ -3531,11 +3531,11 @@
     btn.disabled = false;
   });
 
-  /* חשבון גוגל מחובר למשתתף (harpatka_members): מייל, סטטוס, ניתוק (removed) וחסימה (blocked). ניתוק וחסימה מבטלים כניסה לאזור האישי ולהרשמה בלי טלפון; פוסטים בלוח נשארים */
+  /* חשבון גוגל מחובר למשתתף (harpatka_members): מייל, סטטוס, ניתוק וחסימה (blocked). ניתוק מסיר את הקישור למשתתף (participant_id = null) והחשבון נעלם מהכרטיס; חסימה משאירה אותו משויך ומונעת כניסה */
   async function loadGoogleAcc(p) {
     const box = $('#pGoogle'); if (!box) return; box.hidden = true; box.innerHTML = '';
     if (!p || !p.id) return;
-    let rows = []; try { rows = await api('harpatka_members?select=user_id,email,status&participant_id=eq.' + p.id + '&order=created_at.desc', { ui: false }); } catch (e) { return; }
+    let rows = []; try { rows = await api('harpatka_members?select=user_id,email,status&participant_id=eq.' + p.id + '&status=neq.removed&order=created_at.desc', { ui: false }); } catch (e) { return; }
     if (!sheet || sheet.id !== p.id || !rows.length) return;
     box.innerHTML = '<div class="glab">חשבון גוגל מחובר</div>' + rows.map((m) => {
       const st = m.status === 'approved' ? ['מחובר', ''] : m.status === 'blocked' ? ['חסום', 'blk'] : m.status === 'removed' ? ['מנותק', 'off'] : ['ממתין לאישור', 'off'];
@@ -3548,9 +3548,9 @@
   $('#pGoogle').addEventListener('click', (e) => {
     const b = e.target.closest('[data-ga]'); if (!b || !sheet || !sheet.id) return;
     const uid = b.closest('[data-uid]').dataset.uid, to = b.dataset.ga, pid = sheet.id;
-    const MSG = { removed: ['לנתק את החשבון?', 'המשתתף ינותק מהחשבון: לא יוכל להיכנס לאזור האישי ולהירשם בלי להתחבר מחדש, והפוסטים שלו בלוח נשארים. אפשר לחבר מחדש בכל רגע.', 'כן, ניתוק'], blocked: ['לחסום את החשבון?', 'החשבון ייחסם: אין כניסה לאזור האישי ולוח השיתופים, ולא ניתן לחבר אותו מחדש עד שתבטלו את החסימה.', 'כן, חסימה'], approved: ['לחבר מחדש את החשבון?', 'החשבון יחזור להיות מחובר ומאושר: כניסה לאזור האישי ולוח השיתופים.', 'כן, חיבור'] }[to];
+    const MSG = { removed: ['לנתק את החשבון?', 'החשבון יוסר מהמשתתף ולא יופיע אצלו יותר. אפשר להתחבר שוב עם גוגל ולחבר אותו מחדש בטלפון (לאותו משתתף או לאחר).', 'כן, ניתוק'], blocked: ['לחסום את החשבון?', 'החשבון ייחסם: אין כניסה לאזור האישי ולוח השיתופים, ולא ניתן לחבר אותו מחדש עד שתבטלו את החסימה.', 'כן, חסימה'], approved: ['לחבר מחדש את החשבון?', 'החשבון יחזור להיות מחובר ומאושר: כניסה לאזור האישי ולוח השיתופים.', 'כן, חיבור'] }[to];
     confirmAct(MSG[0], pid, null, async () => {
-      try { await api('harpatka_members?user_id=eq.' + uid, { method: 'PATCH', body: { status: to } }); toast('עודכן'); loadMemberMap(); loadGoogleAcc(state.participants.find((x) => x.id === pid)); } catch (err) { fail(err); }
+      try { await api('harpatka_members?user_id=eq.' + uid, { method: 'PATCH', body: to === 'removed' ? { participant_id: null, status: 'pending' } : { status: to } }); /* ניתוק: הקישור למשתתף נמחק (החשבון יכול להתחבר שוב בטלפון); חסימה וביטול חסימה משאירים אותו משויך */ toast('עודכן'); loadMemberMap(); loadGoogleAcc(state.participants.find((x) => x.id === pid)); } catch (err) { fail(err); }
     }, MSG[1], MSG[2], null, to === 'approved' ? { primary: true } : undefined);
   });
   /* מחיקת משתתף: אישור כמסך בתוך הכרטיס (לא חלון confirm של הדפדפן, שבטלפון עלול להיחסם בשקט ואז לא קורה כלום) */
@@ -4352,7 +4352,7 @@
   const curSys = () => stScope === 'meeting' ? SYSTEM_STATUS : PSYSTEM;
   const allSt = () => state.statuses.concat(state.mstatuses, state.pstatuses);
   function showSetView(v) {
-    setView = v;
+    setView = v; if (v !== 'st') stDraft = null;
     $('#setMain').hidden = v !== 'main'; $('#setType').hidden = v !== 'type'; $('#setTyDet').hidden = v !== 'tydet'; $('#setSt').hidden = v !== 'st'; $('#setDel').hidden = v !== 'del'; $('#setSrc').hidden = v !== 'src'; $('#setPm').hidden = v !== 'pm'; $('#setEm').hidden = v !== 'em'; $('#setBack').hidden = setIsRoot(v);   // המסך שהפופאפ נפתח עליו, וסוג חדש (מסך הפרטים הוא הראשי): אין לאן לחזור
     const tyN = (typeById(stType) || {}).name || '';
     $('#setTitle').textContent = v === 'type' ? (tyN || 'סוג מפגש') : v === 'tydet' ? (tyId ? 'פרטי ברירת מחדל' : 'סוג מפגש חדש') : v === 'st' ? (stScope === 'meeting' ? 'סטטוסים על מפגשים' : 'תגיות על משתתפים') : v === 'del' ? 'מחיקת סטטוס' : v === 'src' ? 'דרכי הגעה' : v === 'pm' ? 'דרכי תשלום' : v === 'em' ? 'הודעה לפני המפגש' : 'החשבון שלי';
@@ -4365,7 +4365,18 @@
     navSync($('#setDlg')); syncUrl();
   }
   $('#setSt').addEventListener('click', (e) => { const b = e.target.closest('[data-sc]'); if (!b) return; stScope = b.dataset.sc; renderStSettings(); });
+  let stDraft = null;   // פריט חדש שעוד לא נשמר ועוד אין לו שם: { kind: 'reg' | 'meeting' | 'tag', key }. נשמר רק אחרי שמקלידים שם (בלי שם אוטומטי)
+  const normName = (v) => String(v == null ? '' : v).trim().replace(/\s+/g, ' ').toLowerCase();
+  /* שם כבר קיים באותה רשימה (תגיות, סטטוסי הרשמה של הסוג, או סטטוסי מפגש של הסוג); לא כולל את הפריט עצמו */
+  const stNameTaken = (label, key, kind) => {
+    const tid = stType || firstTypeId(), arr = kind === 'tag' ? state.pstatuses : kind === 'meeting' ? mstatusList(tid) : statusList(tid), n = normName(label);
+    return arr.some((x) => x.key !== key && normName(x.label) === n);
+  };
+  const stKindOf = (k) => isPKey(k) ? 'tag' : isMeetingKey(k) ? 'meeting' : 'reg';
+  const stDupMsg = (kind) => kind === 'tag' ? 'כבר יש תגית בשם הזה' : 'כבר יש סטטוס בשם הזה';
   function renderStSettings() {
+    const dv0 = document.querySelector('#stBoth .strow.draft .stname'), dVal = dv0 ? dv0.value : '', dFoc = !!dv0 && document.activeElement === dv0;   // ציור מחדש (למשל מזמן אמת) לא מוחק שם שמוקלד
+    if (stDraft && ((stDraft.kind === 'tag') !== (stScope === 'participant'))) stDraft = null;
     const list = curSt(), sys = curSys();
     document.querySelectorAll('#setSt [data-sc]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.sc === stScope)));
     $('#stHint').textContent = stScope === 'meeting' ? 'סטטוס של משתתף בתוך מפגש' + ((typeById(stType) || {}).name ? ' מסוג "' + typeById(stType).name + '"' : '') + '. לכל משתתף במפגש סטטוס הרשמה אחד וסטטוס מפגש אחד (שם, צבע וסדר, ואפשר ליצור חדשים; "' + (STATUS_LABEL[SYSTEM_STATUS] || 'משויך') + '" משותף לכל סוגי המפגשים). לכל סטטוס מפגש ציון התמדה (מ-5- עד 5), שנכנס לציון ההתמדה של המשתתף. הסטטוס המוצג ברשימה הוא סטטוס המפגש, ואם אין, סטטוס ההרשמה' : 'תגיות של המשתתף (ברשימה כשלא בוחרים מפגש). אפשר לסמן כמה תגיות לכל משתתף. תגית בלבד, בלי לוגיקה מאחוריה. שם וסדר, ואפשר ליצור תגית חדשה';
@@ -4380,14 +4391,16 @@
       '<button type="button" class="swcur" data-c="' + s.color + '" aria-haspopup="menu" aria-label="צבע: ' + (PALETTE[s.color] || PALETTE.sky)[2] + ' (לחיצה לשינוי)" title="שינוי צבע" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + '"></button>' +
       (pts ? ptsSel(s) : '<span class="stspacer" style="flex-basis:30px" aria-hidden="true"></span>') +
       '<small class="stcap">סטטוס מערכת: ברירת המחדל בשיוך משתתף למפגש</small></div>'
-      : '<div class="strow" data-k="' + s.key + '">' +
-      '<button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר">' + icon('grip', 'i18') + '</button>' +
-      '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם הסטטוס" style="' + (noCol ? 'background:#fff;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)' : 'background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1]) + '" />' +
+      : '<div class="strow' + (s._d ? ' draft' : '') + '" data-k="' + s.key + '"' + (s._d ? ' data-draft="1"' : '') + '>' +
+      '<button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר"' + (s._d ? ' disabled' : '') + '>' + icon('grip', 'i18') + '</button>' +
+      '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם הסטטוס"' + (s._d ? ' placeholder="' + (noCol ? 'שם התגית' : 'שם הסטטוס') + '" autocomplete="off" enterkeyhint="done"' : '') + ' style="' + (noCol ? 'background:#fff;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)' : 'background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1]) + '" />' +
       (noCol ? '' : '<button type="button" class="swcur" data-c="' + s.color + '" aria-haspopup="menu" aria-label="צבע: ' + (PALETTE[s.color] || PALETTE.sky)[2] + ' (לחיצה לשינוי)" title="שינוי צבע" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + '"></button>') +
- (pts ? ptsSel(s) : '') + (s.key !== SYSTEM_STATUS ? '<button type="button" class="stdel" data-del="' + s.key + '" aria-label="מחיקת הסטטוס" title="מחיקת הסטטוס">×</button>' : '') + '</div>').join('');
-    $('#stList').innerHTML = mkRows(list);
+ (pts ? ptsSel(s) : '') + (s._d ? '<button type="button" class="stdel" data-dcancel="1" aria-label="ביטול" title="ביטול">×</button>' : s.key !== SYSTEM_STATUS ? '<button type="button" class="stdel" data-del="' + s.key + '" aria-label="מחיקת הסטטוס" title="מחיקת הסטטוס">×</button>' : '') + '</div>').join('');
+    const dRow = { key: stDraft ? stDraft.key : '', label: '', color: 'neutral', points: 0, _d: true };
+    $('#stList').innerHTML = mkRows(stDraft && stDraft.kind !== 'meeting' ? list.concat([dRow]) : list);
     const two = stScope === 'meeting';
-    $('#stSecBefore').hidden = !two; $('#stSecMeeting').hidden = !two; $('#stAddMeeting').hidden = !two; $('#stListMeeting').innerHTML = two ? mkRows(mstatusList(stType || firstTypeId()), true) : '';
+    $('#stSecBefore').hidden = !two; $('#stSecMeeting').hidden = !two; $('#stAddMeeting').hidden = !two; $('#stListMeeting').innerHTML = two ? mkRows(stDraft && stDraft.kind === 'meeting' ? mstatusList(stType || firstTypeId()).concat([dRow]) : mstatusList(stType || firstTypeId()), true) : '';
+    if (stDraft) { const dv = document.querySelector('#stBoth .strow.draft .stname'); if (dv) { if (dVal) dv.value = dVal; if (dFoc) dv.focus(); } }
   }
   async function saveStatus(key, patch) {
     const s = allSt().find((x) => x.key === key); if (!s) return;
@@ -4536,28 +4549,41 @@
     const ps = e.target.closest('.stpts'); if (ps) { saveStatus(ps.dataset.pts, { points: Math.max(-5, Math.min(5, Math.round(Number(ps.value) || 0))) }); return; }   // ציון התמדה
     const inp = e.target.closest('.stname'); if (!inp) return;
     const k = inp.closest('.strow').dataset.k, v = inp.value.trim().slice(0, 14);
+    if (inp.closest('.strow').dataset.draft) { commitDraft(inp); return; }
     if (!v) { renderStSettings(); return; }
+    if (stNameTaken(v, k, stKindOf(k))) { toast(stDupMsg(stKindOf(k))); renderStSettings(); return; }
     saveStatus(k, { label: v });
   });
-  $('#stAdd').addEventListener('click', async () => {
-    const isM = stScope === 'meeting', arr = isM ? state.statuses : state.pstatuses, sys = isM ? SYSTEM_STATUS : PSYSTEM;
-    const mx = Math.max(0, ...arr.filter((x) => x.key !== sys).map((x) => x.sort));
-    const row = { key: (isM ? 'm_' : 'p_') + Math.random().toString(36).slice(2, 7), label: isM ? 'סטטוס חדש' : 'תגית חדשה', color: 'neutral', sort: mx + 1, scope: isM ? 'meeting' : 'participant' };
-    if (isM && state.mtypes.length) row.type_id = stType || firstTypeId();   // סטטוס חדש שייך לסוג המפגש שנערך
-    arr.push(row); applyStatuses(); renderStSettings();
-    try { await api(T.st, { method: 'POST', body: row, prefer: 'return=minimal' }); }
-    catch (err) { const k = arr.indexOf(row); if (k >= 0) arr.splice(k, 1); applyStatuses(); renderStSettings(); fail(err); return; }
-    const inp = document.querySelector('#stBoth .strow[data-k="' + row.key + '"] .stname'); if (inp) { inp.focus(); inp.select(); }
-  });
-  async function addMeetingStatus() {
-    const arr = state.mstatuses, mx = Math.max(0, ...arr.map((x) => x.sort));
-    const row = { key: 'm_' + Math.random().toString(36).slice(2, 7), label: 'סטטוס חדש', color: 'neutral', sort: mx + 1, scope: 'meeting', phase: 'meeting', points: 0 };
-    if (state.mtypes.length) row.type_id = stType || firstTypeId();
-    arr.push(row); applyStatuses(); renderStSettings();
-    try { await api(T.st, { method: 'POST', body: row, prefer: 'return=minimal' }); }
-    catch (err) { const k = arr.indexOf(row); if (k >= 0) arr.splice(k, 1); applyStatuses(); renderStSettings(); fail(err); return; }
-    const inp = document.querySelector('#stBoth .strow[data-k="' + row.key + '"] .stname'); if (inp) { inp.focus(); inp.select(); }
+  /* "+ חדש": שורה ריקה עם סמן (בלי שם אוטומטי); הפריט נשמר רק כשמקלידים שם שלא קיים באותה רשימה, ובלי שם השורה נעלמת */
+  function startDraft(kind) {
+    if (stDraft && stDraft.kind === kind) { const i = document.querySelector('#stBoth .strow.draft .stname'); if (i) { i.focus(); return; } }
+    stDraft = { kind, key: (kind === 'tag' ? 'p_' : 'm_') + Math.random().toString(36).slice(2, 7) };
+    renderStSettings();
+    const inp = document.querySelector('#stBoth .strow.draft .stname'); if (inp) { inp.focus(); try { inp.scrollIntoView({ block: 'center' }); } catch (e) {} }
   }
+  async function commitDraft(inp) {
+    const d = stDraft; if (!d) return;
+    const v = inp.value.trim().replace(/\s+/g, ' ').slice(0, 14);
+    if (!v) { stDraft = null; renderStSettings(); return; }
+    if (stNameTaken(v, d.key, d.kind)) { toast(stDupMsg(d.kind)); setTimeout(() => { try { inp.focus(); inp.select(); } catch (e) {} }, 30); return; }
+    const isTag = d.kind === 'tag', isMt = d.kind === 'meeting', arr = isTag ? state.pstatuses : isMt ? state.mstatuses : state.statuses, sys = isTag ? PSYSTEM : SYSTEM_STATUS;
+    const mx = Math.max(0, ...arr.filter((x) => x.key !== sys).map((x) => x.sort));
+    const row = { key: d.key, label: v, color: 'neutral', sort: mx + 1, scope: isTag ? 'participant' : 'meeting' };
+    if (isMt) { row.phase = 'meeting'; const ps = inp.closest('.strow').querySelector('.stpts'); row.points = ps ? Math.max(-5, Math.min(5, Math.round(Number(ps.value) || 0))) : 0; }
+    if (!isTag && state.mtypes.length) row.type_id = stType || firstTypeId();   // שייך לסוג המפגש שנערך
+    arr.push(row); stDraft = null; applyStatuses(); renderStSettings();
+    try { await api(T.st, { method: 'POST', body: row, prefer: 'return=minimal' }); }
+    catch (err) { const k = arr.indexOf(row); if (k >= 0) arr.splice(k, 1); applyStatuses(); renderStSettings(); fail(err); }
+  }
+  $('#stAdd').addEventListener('click', () => startDraft(stScope === 'meeting' ? 'reg' : 'tag'));
+  function addMeetingStatus() { startDraft('meeting'); }
+  $('#stBoth').addEventListener('focusout', (e) => {   // יצאו משורה ריקה בלי להקליד שם: היא נעלמת
+    const inp = e.target; if (!inp || !inp.classList || !inp.classList.contains('stname') || !inp.closest('.strow.draft')) return;
+    if (e.relatedTarget && inp.closest('.strow').contains(e.relatedTarget)) return;
+    setTimeout(() => { const cur = document.querySelector('#stBoth .strow.draft .stname'); if (stDraft && cur && !cur.value.trim() && document.activeElement !== cur) { stDraft = null; renderStSettings(); } }, 150);
+  });
+  $('#stBoth').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('stname') && e.target.closest('.strow.draft')) { e.preventDefault(); commitDraft(e.target); } });
+  $('#stBoth').addEventListener('click', (e) => { if (e.target.closest('[data-dcancel]')) { stDraft = null; renderStSettings(); } });
   $('#stAddMeeting').addEventListener('click', addMeetingStatus);
   /* מחיקת סטטוס מפגש: המשתתפים שסומנו בו עוברים לסטטוס אחר או מוסרים ממנו */
   async function removeMeetingStatus(k, to, used) {
