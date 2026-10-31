@@ -36,7 +36,7 @@ def build_test_admin():
             sys.exit('לא נמצא (או נמצא יותר מפעם אחת) בדף הניהול: ' + old[:70])
         t = t.replace(old, new)
 
-    rep('<title>משתתפים · יוצאים להרפתקה</title>', '<title>בדיקות · משתתפים</title>')
+    rep('<title>ניהול מפגשים · יוצאים להרפתקה</title>', '<title>בדיקות · ניהול מפגשים</title>')
     H_OLD, H_NEW = 'height: 100vh; height: 100dvh; margin-top: 0;', 'height: calc(100vh - 18px); height: calc(100dvh - 18px); margin-top: 18px;'
     if css is not None:
         if css.count(H_OLD) != 1:
