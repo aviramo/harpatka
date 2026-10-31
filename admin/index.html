@@ -741,13 +741,17 @@
     const tm = new Intl.DateTimeFormat('he-IL', { timeZone: 'Asia/Jerusalem', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(p.created_at));
     return base + ' בשעה ' + tm;
   }
-  function waLink(phone) {
+  /* קישור לשיחת וואטסאפ (31.10.26): במחשב ישר לאפליקציית וואטסאפ (whatsapp://, בלי לשונית של wa.me בדפדפן); בטלפון wa.me, שנפתח ישר באפליקציה */
+  const WA_DESK = !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches) && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  function waLink(phone, text) {
     let n = digits(phone);
     if (!n) return null;
     if (n.startsWith('0')) n = '972' + n.slice(1);
     else if (n.length === 9) n = '972' + n;
-    return 'https://wa.me/' + n;
+    const t = text ? encodeURIComponent(text) : '';
+    return WA_DESK ? 'whatsapp://send?phone=' + n + (t ? '&text=' + t : '') : 'https://wa.me/' + n + (t ? '?text=' + t : '');
   }
+  const waTgt = (href) => /^https?:/.test(href || '') ? ' target="_blank" rel="noopener"' : '';   // קישור אינטרנט בלשונית חדשה; קישור לאפליקציה בלי לשונית
 
   /* מספר ישראלי בפורמט בינלאומי (+972...) מוצג כמספר מקומי שמתחיל באפס */
   function localPhone(phone) {
@@ -1518,7 +1522,7 @@
       const hl = state.filter ? linkOf(p.id, state.filter) : null;
       const tgm = attTarget(), tgl = tgm ? linkOf(p.id, tgm.id) : null, showHere = !!(tgm && (state.filter ? attVisible(tgm) : state.showAtt !== false && attendOpen(tgm))), attOk = !!tgl, evc = evCircle(p);   // עיגול ההגעה לכל מי שמשויך למפגש, בכל סטטוס (גם "משויך")
       return '<li class="row' + (hl && hl.attended && attendOpen(state.meetings.find((x) => x.id === state.filter)) ? ' arrived' : '') + '">' +
-        (wa ? UI.tag(WA_ICON, 'ico rowwa', { href: wa, target: '_blank', rel: 'noopener', 'aria-label': 'וואטסאפ ל' + esc(p.name), title: 'וואטסאפ' }, 'a') : UI.tag(WA_ICON, 'ico rowwa nophone', { role: 'img', 'aria-label': 'אין טלפון', title: 'אין טלפון' })) +
+        (wa ? UI.tag(WA_ICON, 'ico rowwa', Object.assign({ href: wa }, /^https?:/.test(wa) ? { target: '_blank', rel: 'noopener' } : {}, { 'aria-label': 'וואטסאפ ל' + esc(p.name), title: 'וואטסאפ' }), 'a') : UI.tag(WA_ICON, 'ico rowwa nophone', { role: 'img', 'aria-label': 'אין טלפון', title: 'אין טלפון' })) +
         '<div class="main' + ' hasw' + (hereColOn ? ' att' : '') + (anyEv ? ' ev' : '') + (!state.filter && state.showPay ? ' bl' + (state.showAtt === false ? ' nosum' : '') : '') + '" role="button" tabindex="0" data-edit="' + p.id + '">' +
           '<div class="nm"><span class="name' + nameCls(p) + '" dir="rtl">' + nameMark(p) + '</span>' + '</div>' +   // רק השם מבודד (שם באנגלית לא הופך את השורה), וסמל החשבון תמיד משמאל לשם
           (true ? '<div class="meta">' + (true ? '<span class="age' + (originOf(p) ? ' ' + originOf(p).kind : '') + '"' + originAttr(p) + ' title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (p.gender ? '<b class="gl">' + (p.gender === 'male' ? 'ז' : 'נ') + '</b> ' : '') + (age != null ? age : (p.gender ? '' : '—')) + '</bdi></span>' : '') + '<span class="sidewrap">' + side + tags + payIc + '</span>' + '</div>' : '') +
@@ -2511,8 +2515,8 @@
     if (!(state.showSent === true || evOnFor(m) || hasSent(m) || evRecent(m))) return '';   // גם אחרי שחלון השליחה נסגר: במפגש שנשלחו בו פרטים, ביטול סימון "נשלח" מחזיר עיגול "לא נשלח" ולא גורם לו להיעלם   // בהפעלה ידנית: גם לפני החלון ובמפגש שטרם התחיל   // עוד לא נשלח: רק בחלון השליחה (עד שנפתחת ההגעה) ולמי שלא בסטטוס ברירת המחדל
     if (!evElig(p.id, l)) return '<span class="evc off" title="עוד לא זכאי לשליחה (סטטוס ברירת מחדל)" aria-label="עוד לא זכאי לשליחת פרטי המפגש">' + PIN_ICON + '</span>';   // עמודה תמיד מלאה כשהטוגל דולק
     if (inert) return '<span class="evc inert" title="פרטי המפגש לא נשלחו" aria-label="פרטי המפגש לא נשלחו">' + PIN_ICON + '</span>';
-    const base = waLink(p.phone);
-    return base ? '<a class="evc" data-evrow="' + p.id + '" href="' + base + '?text=' + encodeURIComponent(eventDayMessage(m)) + '" target="_blank" rel="noopener" title="שליחת פרטי המפגש בוואטסאפ" aria-label="שליחת פרטי המפגש בוואטסאפ">' + PIN_ICON + '</a>'
+    const base = waLink(p.phone, eventDayMessage(m));
+    return base ? '<a class="evc" data-evrow="' + p.id + '" href="' + base + '"' + waTgt(base) + ' title="שליחת פרטי המפגש בוואטסאפ" aria-label="שליחת פרטי המפגש בוואטסאפ">' + PIN_ICON + '</a>'
       : '<span class="evc off" title="אין טלפון" aria-label="אין טלפון">' + PIN_ICON + '</span>';
   };
   const DEFAULT_EVENT_MSG = ['ההתרגשות בעיצומה 🕺💃', 'היום זה קורה!', 'נפגשים הערב', '{הוראות הגעה}', '',
@@ -2538,7 +2542,7 @@
     const first = String(p.first_name || p.name || '').trim().split(/\s+/)[0] || '';
     const waHref = base;   // וואטסאפ נפתח לשיחה בלבד, בלי הודעת פתיחה
     let h = '<div class="ctop">' +
-      (base ? '<a class="cico cb-wa" href="' + waHref + '"' + '' + ' target="_blank" rel="noopener" aria-label="וואטסאפ" title="וואטסאפ">' + WA_ICON + '</a>' : '<span class="cico off" aria-label="וואטסאפ">' + WA_ICON + '</span>') + '</div>';
+      (base ? '<a class="cico cb-wa" href="' + waHref + '"' + waTgt(waHref) + ' aria-label="וואטסאפ" title="וואטסאפ">' + WA_ICON + '</a>' : '<span class="cico off" aria-label="וואטסאפ">' + WA_ICON + '</span>') + '</div>';
     box.innerHTML = h;
   }
   $('#pMsgs').addEventListener('click', (e) => {
