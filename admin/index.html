@@ -928,8 +928,19 @@
       const open = FLOAT_MENUS.filter((m) => { const x = m.el(); return x && !x.hidden; });
       if (!open.length || open.some((m) => e.target.closest && e.target.closest(m.keep))) return;
       e.stopImmediatePropagation();
-      if ((type === 'touchmove' || type === 'wheel' || type === 'contextmenu' || type === 'dblclick') && e.cancelable) e.preventDefault();   // בלי preventDefault על touchstart/pointerdown: הם מייצרים את ה-click שסוגר
+      if ((type === 'touchmove' || type === 'wheel' || type === 'contextmenu' || type === 'dblclick' || type === 'mousedown') && e.cancelable) e.preventDefault();   // בלי preventDefault על touchstart/pointerdown: הם מייצרים את ה-click שסוגר. mousedown: הסמן לא עובר לשדה שמאחורי התפריט (למשל תיבת ההערה), וה-click שסוגר עדיין נוצר
     }, { capture: true, passive: false });
+  });
+  /* גם הקלדה לא מגיעה לשדות שמאחורי תפריט פתוח (למשל תיבת ההערה בכרטיס המשתתף): רק Escape (סוגר) ו-Tab עוברים */
+  ['keydown', 'keypress', 'beforeinput', 'paste'].forEach((type) => {
+    document.addEventListener(type, (e) => {
+      if (type === 'keydown' && (e.key === 'Escape' || e.key === 'Tab')) return;
+      const open = FLOAT_MENUS.filter((m) => { const x = m.el(); return x && !x.hidden; });
+      const t = e.target; if (!open.length || !t || open.some((m) => t.closest && t.closest(m.keep))) return;
+      if (!(t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      if (e.cancelable) e.preventDefault(); e.stopImmediatePropagation();
+      if (document.activeElement === t) try { t.blur(); } catch (x) {}   // המקלדת נסגרת עד שהתפריט נסגר
+    }, true);
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') FLOAT_MENUS.forEach((m) => { const x = m.el(); if (x && !x.hidden) m.close(); }); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeHMenu(); });
