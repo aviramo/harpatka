@@ -8,7 +8,7 @@
 
 /* ---------- 1. טוקנים ---------- */
 :root {
-  --scrim: rgba(16, 20, 26, .55);   /* הכהיה מאחורי פופאפים ומאחורי פאנל הסינון */
+  --scrim: rgba(16, 20, 26, .55);   /* הכהיה מאחורי פופאפים */
   --bg: #FFFFFF;
   --surface: #F5F6F8;      /* אפור 50: פאנלים, ריחוף */
   --surface-2: #ECEEF1;    /* אפור 100: צ'יפ ניטרלי, לחיצה */
@@ -401,6 +401,7 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 .rowwa.nophone { background: var(--red-bg); border-color: var(--red-bg); color: var(--red); cursor: default; }
 /* הוספת משתתף חדש מהחיפוש: שורה מתחת לטבלה */
 .addbox:empty { display: none; }
+.addbox .newbtn > .tg + span { margin-inline-start: 9.5px; }   /* הטקסט מתחיל בקו של טקסט המגדר והגיל בשורות (עמודה של 44px, הטקסט ממורכז בה) */
 .addbox .newbtn { display: flex; align-items: center; gap: 8px; width: 100%; min-height: var(--ctl); padding: 8px var(--gut); background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); font-size: 16px; font-weight: 600; color: var(--text); text-align: right; margin-bottom: env(safe-area-inset-bottom); }
 .newbtn b { color: var(--text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -412,7 +413,7 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 #fMenu .fopt .fcnt { margin-inline-start: auto; font-size: 13.5px; color: var(--text-2); font-weight: 700; font-variant-numeric: tabular-nums; }
 #fMenu .fsep { height: 0; border-top: 1px solid var(--line); margin: 4px; }
 /* תפריט תצוגה: טוגלים */
-#viewMenu { display: block; width: min(420px, calc(100vw - 16px)); overflow-y: auto; overscroll-behavior: contain; padding: 4px 12px 12px; }
+#viewMenu { display: block; width: min(360px, calc(100vw - 16px)); overflow-y: auto; overscroll-behavior: contain; padding: 4px 12px 12px; }
 #viewMenu .vrow { display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px; background: transparent; text-align: start; }
 #viewMenu .vrow + .vrow { border-top: 1px solid var(--line); }
 #viewMenu .vic { flex: 0 0 auto; width: 36px; height: 36px; display: grid; place-items: center; background: transparent; color: var(--text); }   /* סמל בלי רקע */
@@ -957,7 +958,6 @@ html.is-loading .vbar { display: none; }
 #viewMenu .mgc { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 #viewMenu .mc.zero { opacity: .45; }
 #viewMenu .fclear { display: block; width: 100%; height: var(--ctl); margin-top: 4px; background: var(--surface-2); color: var(--text); font-weight: 700; }
-@media (max-width: 699px) { #viewMenu { width: auto; border-inline-width: 0; } }
 
 /* ---------- סמל המצב ליד השם: צמוד למילה האחרונה ובגובה הטקסט, כחלק מהשורה ---------- */
 .row .nm .name .nwrap { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }   /* המילה האחרונה והסמל יחידה אחת: הסמל ממורכז אנכית מול שורת הטקסט של המילה */
@@ -1003,11 +1003,6 @@ dialog .dclose { display: none; }
 @media (min-width: 1024px) {
   :is(#setDlg, #stDlg, #finDlg, #prDlg).drawer { width: calc(100vw - var(--listw)); }
 }
-
-/* ---------- מאחורי פאנל הסינון: הדף כהה למחצה, בדהייה (31.10.26) ---------- */
-#menuShade { position: fixed; inset: 0; z-index: 299; background: var(--scrim); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .22s ease, visibility 0s linear .22s; }
-#menuShade.on { opacity: 1; visibility: visible; transition: opacity .22s ease, visibility 0s; }
-@media (prefers-reduced-motion: reduce) { #menuShade, #menuShade.on { transition: none; } }
 
 /* ---------- סטטיסטיקות וכספים בפאנל רחב (31.10.26): מנצלים את הרוחב, לפי הרוחב של הפאנל עצמו (container query) ---------- */
 @media (min-width: 760px) { #stDlg.drawer #stBody, #finDlg.drawer #finMain { container-type: inline-size; } }   /* המכיל הוא אזור התוכן ולא ה-sheet: container יוצר מסגרת לאלמנטים fixed, ותפריט התקופה של הכספים נמצא ב-sheet */

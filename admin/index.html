@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261102n" />
+  <link rel="stylesheet" href="admin.css?v=20261102o" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -380,7 +380,6 @@
   </dialog>
 
   <div class="qmenu" id="qMenu" role="menu" hidden></div>
-  <div id="menuShade" aria-hidden="true"></div>
   <div class="qmenu" id="viewMenu" role="menu" hidden></div>
   <div class="qmenu" id="fMenu" role="menu" hidden></div>
   <div id="splitHandle" role="separator" aria-orientation="vertical" aria-label="רוחב הרשימה (גרירה, חצים במקלדת, לחיצה כפולה לברירת המחדל)" title="גרירה לשינוי הרוחב · לחיצה כפולה: ברירת מחדל" tabindex="0"></div>
@@ -3876,10 +3875,10 @@
     });
   }
   window.addEventListener('resize', alignFilters);
-  /* פאנל הסינון נפתח ונסגר באנימציה, ומאחוריו הדף כהה למחצה (#menuShade, בדהייה) */
+  /* תפריט הסינון והתצוגה: תפריט צף רגיל, מיושר לקצה הימני של כפתור הסינון, בלי הכהיית הדף */
   const noMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const closeView = () => {
-    const m = $('#viewMenu'), b = $('#filtBtn'); $('#menuShade').classList.remove('on'); if (b) b.setAttribute('aria-expanded', 'false');
+    const m = $('#viewMenu'), b = $('#filtBtn'); if (b) b.setAttribute('aria-expanded', 'false');
     if (m.hidden || m._closing) return;
     if (noMotion()) { m.hidden = true; return; }
     m._closing = true;
@@ -3892,11 +3891,10 @@
     const fb = e.target.closest('#filtBtn'); if (!fb) return;
     const m = $('#viewMenu'); if (!m.hidden) { closeView(); return; }
     m.getAnimations().forEach((x) => x.cancel()); m._closing = false;
-    renderViewMenu(); m.hidden = false; fb.setAttribute('aria-expanded', 'true'); $('#menuShade').classList.add('on');
+    renderViewMenu(); m.hidden = false; fb.setAttribute('aria-expanded', 'true');
     if (!noMotion()) m.animate([{ opacity: 0, transform: 'translateY(-8px)' }, { opacity: 1, transform: 'none' }], { duration: 200, easing: 'ease-out' });
     const r = fb.getBoundingClientRect(), top = Math.round(r.bottom + 8);
-    if (window.innerWidth < 700) { m.style.left = '0px'; m.style.right = '0px'; }   // במובייל מקצה לקצה
-    else { m.style.right = 'auto'; m.style.left = Math.max(8, Math.min(Math.round(r.right - m.offsetWidth), window.innerWidth - m.offsetWidth - 8)) + 'px'; }   // בדסקטופ מיושר לקצה הימני של התגית
+    m.style.right = 'auto'; m.style.left = Math.max(8, Math.min(Math.round(r.right - m.offsetWidth), window.innerWidth - m.offsetWidth - 8)) + 'px';   // מיושר לקצה הימני של הכפתור, כמו תפריט המיון
     m.style.top = top + 'px'; m.style.maxHeight = Math.max(240, window.innerHeight - top - 12) + 'px';
   };
   $('#listTags').addEventListener('click', listTagsClick); $('#lbFilt').addEventListener('click', listTagsClick);   // כפתור הסינון בשורת החיפוש, וגם אייקוני העמודות והמגדר בשורת הסינון
