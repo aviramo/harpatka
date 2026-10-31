@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261102j" />
+  <link rel="stylesheet" href="admin.css?v=20261102k" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1326,7 +1326,9 @@
     if (!mtSet || mtSet.k !== state.mtype) { const ids = new Set(state.meetings.filter((m) => typeIdOf(m) === state.mtype).map((m) => m.id)); mtSet = { k: state.mtype, s: new Set(state.att.filter((a) => ids.has(a.meeting_id)).map((a) => a.participant_id)) }; }
     return mtSet.s.has(p.id);
   };
-  const stMatch = (p, key) => { if (key === PNONE) return !ptagsOf(p).length; if (isPKey(key)) return ptagsOf(p).includes(key); if (state.filter) { const l = linkOf(p.id, state.filter); return !!l && dispStatus(l) === key; } return linksOf(p.id).some((l) => dispStatus(l) === key); };
+  /* סינון וספירה לפי סטטוס: משתתף נספר ומוצג גם בסטטוס של לפני המפגש וגם בסטטוס של אחרי המפגש שיש לו (בשורה עצמה מוצג רק של אחרי המפגש, אם יש, `dispStatus`) */
+  const hasStatus = (l, key) => linkStatus(l) === key || afterOf(l) === key;
+  const stMatch = (p, key) => { if (key === PNONE) return !ptagsOf(p).length; if (isPKey(key)) return ptagsOf(p).includes(key); if (state.filter) { const l = linkOf(p.id, state.filter); return !!l && hasStatus(l, key); } return linksOf(p.id).some((l) => hasStatus(l, key)); };
   function renderFacets() {
     normFilter();
     const q = state.q.trim().toLowerCase(), qd = digits(q), eg = effGender(), ep = effPay();
