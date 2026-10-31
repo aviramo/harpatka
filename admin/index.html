@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="he" dir="rtl">
+<html lang="he" dir="rtl" class="is-loading">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261031y" />
+  <link rel="stylesheet" href="admin.css?v=20261031z" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -28,7 +28,7 @@
       <div class="title-row">
         
         <div class="msel">
-          <h1><button type="button" id="mSel" aria-haspopup="menu" aria-expanded="false"><span id="mSelTxt">הכל</span><svg data-i="chev"></svg></button></h1>
+          <h1><button type="button" id="mSel" aria-haspopup="menu" aria-expanded="false"><span class="mldg" aria-hidden="true">טוען<b>.</b><b>.</b><b>.</b></span><span id="mSelTxt">הכל</span><svg data-i="chev"></svg></button></h1>
           <div class="hcount" id="hereCount" hidden></div>
           <button type="button" class="hcount attforce" id="attForce" hidden title="כיבוי מצב ההגעה הזמני">מצב הגעה זמני ✕</button>
           <div class="sortmenu mmenu" id="mMenu" role="menu" hidden></div>
@@ -1006,7 +1006,7 @@
   /* התאמה לחיפוש, אחת לכל המקומות: שם, טלפון (05... או 972...), אימייל של חשבון הגוגל המחובר, וטקסט ההערות */
   const qMatch = (p, q, qd) => p.name.toLowerCase().includes(q) || (qd.length >= 2 && phoneHay(p).includes(qd)) || (q.length >= 2 && emailHay(p).includes(q)) || hasNote(p, q);
   async function load(silent) {
-    if (!silent) $('#status').innerHTML = '<div class="empty">טוען…</div>';
+    if (!silent) { $('#status').innerHTML = '<div class="empty">טוען…</div>'; document.documentElement.classList.add('is-loading'); }   // מצב טעינה: "טוען..." בכותרת בלבד, בלי הקו ובלי מה שמתחתיו
     const myLoad = ++loadSeq;
     try {
       const [p, m, a, nn, prs, pps, pays, sts, pfs, pms, pubs, fin0, finr0, fintr0, mem0, mts] = await Promise.all([
@@ -1044,7 +1044,7 @@
       state.promoters = prs; state.promoPays = pps; state.payments = pays.filter((x) => !((payTomb.get(x.id) || 0) > Date.now())); rebuildNotes();
       sortMeetings();
       if (mem0) applyMembers(mem0);   // מצב חשבון הגוגל של כל משתתף (סמל ליד השם, סינון "אזור אישי"), לפני הציור
-      if (!silent) $('#status').innerHTML = '';
+      if (!silent) { $('#status').innerHTML = ''; document.documentElement.classList.remove('is-loading'); }   // הנתונים הגיעו: יוצאים ממצב הטעינה (הציור באותו רגע, גם בקישור עמוק)
       setTimeout(prefetchNoteImages, 1500);   // טעינה מוקדמת של צילומי ההערות למטמון
       if (deep) {
         const d = deep; deep = null;
@@ -1092,6 +1092,7 @@
     } catch (err) {
       console.error(err);
       if (silent) return;   // רענון שקט שנכשל: משאירים את מה שמוצג
+      document.documentElement.classList.remove('is-loading');
       const missing = err.code === 'PGRST205' || err.code === '42P01' || /does not exist|schema cache/i.test(err.message);
       $('#status').innerHTML = '<div class="error-box">' + (missing
         ? '<b>הטבלאות עוד לא קיימות.</b><br>צריך להריץ פעם אחת את <code>admin/schema.sql</code> ב-SQL Editor של Supabase'
