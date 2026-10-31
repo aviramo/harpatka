@@ -3476,7 +3476,7 @@
     const v = document.createElement('i'); v.className = 'dtv'; v.setAttribute('aria-hidden', 'true'); box.append(v);
     const paint = () => {
       const raw = DT_VAL.get.call(inp), isD = inp.type === 'date';
-      v.textContent = raw ? (isD ? raw.split('-').reverse().join('.') : raw.slice(0, 5)) : (inp.dataset.ph || (isD ? 'בחירת תאריך' : 'בחירת שעה'));
+      v.textContent = raw ? (isD ? raw.split('-').reverse().join('.') : raw.slice(0, 5)) : (inp.dataset.ph || (inp.dataset.noph ? '' : isD ? 'בחירת תאריך' : 'בחירת שעה'));
       v.classList.toggle('ph', !raw);
     };
     Object.defineProperty(inp, 'value', { configurable: true, get() { return DT_VAL.get.call(this); }, set(x) { DT_VAL.set.call(this, x); paint(); } });
@@ -3520,6 +3520,7 @@
     { const tf = !isType && $('#' + p + 'TypeF'), slot = q('TypeSlot'); if (slot) { if (tf) slot.replaceWith(tf); else slot.remove(); } }   // סוג המפגש באותה שורה עם שם המפגש
     const F = { te: tierEditor('#' + I('TierList'), '#' + I('TierAdd')), img: { url: null, blob: null, objUrl: null, inh: false }, tiersInh: false };
     const ty = () => (typOf ? typOf() : null);
+    if (isType) q('Time').dataset.noph = '1';   // בסוג המפגש בלי פלייסהולדר
     dtField(q('Time')); if (!isType) dtField(q('Date'));   // תאריך ושעה: הרכיב האחיד (מיושר לימין, פלייסהולדר של הסוג)
     F.q = q;
     F.grow = () => autoGrow(q('Dirs'));
@@ -3543,11 +3544,12 @@
     /* פלייסהולדרים: הערכים של הסוג (במפגש עם סוג), אחרת דוגמה */
     F.paint = () => {
       const t = ty();
-      q('Name').placeholder = (t && t.name) || (isType ? 'למשל: יוצאים להרפתקה' : (defMeetingName() || 'למשל: מפגש פתיחת עונה'));
-      q('Place').placeholder = (t && t.place) || 'למשל: המסילה';
-      q('City').placeholder = (t && t.city) || 'למשל: הרצליה';
-      q('Max').placeholder = t && t.max_participants != null ? String(t.max_participants) : 'ללא הגבלה';
-      q('Dirs').placeholder = (t && t.directions) || 'כתובת, קומה, חנייה, ואיך מגיעים בתחבורה ציבורית';
+      /* בסוג המפגש בלי פלייסהולדרים בכלל; במפגש הפלייסהולדר הוא הערך שנלקח מהסוג (או דוגמה כשאין סוג) */
+      q('Name').placeholder = isType ? '' : (t && t.name) || defMeetingName() || 'למשל: מפגש פתיחת עונה';
+      q('Place').placeholder = isType ? '' : (t && t.place) || 'למשל: המסילה';
+      q('City').placeholder = isType ? '' : (t && t.city) || 'למשל: הרצליה';
+      q('Max').placeholder = isType ? '' : t && t.max_participants != null ? String(t.max_participants) : 'ללא הגבלה';
+      q('Dirs').placeholder = isType ? '' : (t && t.directions) || 'כתובת, קומה, חנייה, ואיך מגיעים בתחבורה ציבורית';
       q('Time').dataset.ph = t && t.meeting_time ? String(t.meeting_time).slice(0, 5) : ''; q('Time').dtPaint();
       F.paintTiers(); F.paintImg(); F.grow();
     };
