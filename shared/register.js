@@ -78,14 +78,14 @@
   if (window.REGISTER_MIN !== false) document.documentElement.classList.add('reg-min');
   /* שאלת יציאה מהחשבון: אותה מעטפת פופאפ של ההרשמה (נפתח מלמעלה, פס סגירה בתחתית) */
   const LOGOUT_HTML = `<div id="logoutModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="logoutTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="logoutTtl"></p><a class="su-lgyes" href="__BASE__me/">כניסה לאזור האישי</a><button type="button" class="su-lgno" data-lg="yes">יציאה מהחשבון</button></div></div>`.replace(/__BASE__/g, BASE);
-  const OTHER_HTML = `<div id="otherModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="otherTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="otherTtl">לשלם בדרך אחרת</p><p class="su-lgq">נפתחת שיחת וואטסאפ עם אחד המנהלים, וההודעה כבר מוכנה:</p><p class="su-lginfo" id="otherInfo"></p><a class="wacard" id="otherHadar" target="_blank" rel="noopener"><img src="__BASE__images/hadar.jpg" width="52" height="52" alt=""><span class="wat"><b>הדר לוריא</b><small>שיחה בוואטסאפ</small></span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.5c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.6.9 1-3.5-.2-.4C3.2 15.6 2.7 13.8 2.7 12c0-5.1 4.2-9.3 9.3-9.3 2.5 0 4.8 1 6.6 2.7 1.8 1.8 2.7 4.1 2.7 6.6 0 5.2-4.2 9.5-9.3 9.5zM20 4C17.9 1.8 15 .7 12 .7 5.8.7.7 5.8.7 12c0 2 .5 3.9 1.5 5.6L.6 23.4l6-1.6c1.6.9 3.5 1.4 5.4 1.4 6.2 0 11.3-5.1 11.3-11.3 0-3-1.2-5.8-3.3-7.9z"/></svg></a><a class="wacard" id="otherOfir" target="_blank" rel="noopener"><img src="__BASE__images/ofir-v3.jpg" width="52" height="52" alt=""><span class="wat"><b>אופיר אבירם</b><small>שיחה בוואטסאפ</small></span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.5c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.6.9 1-3.5-.2-.4C3.2 15.6 2.7 13.8 2.7 12c0-5.1 4.2-9.3 9.3-9.3 2.5 0 4.8 1 6.6 2.7 1.8 1.8 2.7 4.1 2.7 6.6 0 5.2-4.2 9.5-9.3 9.5zM20 4C17.9 1.8 15 .7 12 .7 5.8.7.7 5.8.7 12c0 2 .5 3.9 1.5 5.6L.6 23.4l6-1.6c1.6.9 3.5 1.4 5.4 1.4 6.2 0 11.3-5.1 11.3-11.3 0-3-1.2-5.8-3.3-7.9z"/></svg></a></div></div>`.replace(/__BASE__/g, BASE);
+  const OTHER_HTML = `<div id="otherModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="otherTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="otherTtl">לשלם בדרך אחרת</p><p class="su-lgq">נפתחת שיחת וואטסאפ עם אחד המנחים, וההודעה כבר מוכנה:</p><p class="su-lginfo" id="otherInfo"></p><a class="wacard" id="otherHadar" target="_blank" rel="noopener"><img src="__BASE__images/hadar.jpg" width="52" height="52" alt=""><span class="wat"><b>הדר לוריא</b><small>שיחה בוואטסאפ</small></span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.5c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.6.9 1-3.5-.2-.4C3.2 15.6 2.7 13.8 2.7 12c0-5.1 4.2-9.3 9.3-9.3 2.5 0 4.8 1 6.6 2.7 1.8 1.8 2.7 4.1 2.7 6.6 0 5.2-4.2 9.5-9.3 9.5zM20 4C17.9 1.8 15 .7 12 .7 5.8.7.7 5.8.7 12c0 2 .5 3.9 1.5 5.6L.6 23.4l6-1.6c1.6.9 3.5 1.4 5.4 1.4 6.2 0 11.3-5.1 11.3-11.3 0-3-1.2-5.8-3.3-7.9z"/></svg></a><a class="wacard" id="otherOfir" target="_blank" rel="noopener"><img src="__BASE__images/ofir-v3.jpg" width="52" height="52" alt=""><span class="wat"><b>אופיר אבירם</b><small>שיחה בוואטסאפ</small></span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.5c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.6.9 1-3.5-.2-.4C3.2 15.6 2.7 13.8 2.7 12c0-5.1 4.2-9.3 9.3-9.3 2.5 0 4.8 1 6.6 2.7 1.8 1.8 2.7 4.1 2.7 6.6 0 5.2-4.2 9.5-9.3 9.5zM20 4C17.9 1.8 15 .7 12 .7 5.8.7.7 5.8.7 12c0 2 .5 3.9 1.5 5.6L.6 23.4l6-1.6c1.6.9 3.5 1.4 5.4 1.4 6.2 0 11.3-5.1 11.3-11.3 0-3-1.2-5.8-3.3-7.9z"/></svg></a></div></div>`.replace(/__BASE__/g, BASE);
   /* חשבון חסום או מנותק: פופאפ מלמעלה (אותה מעטפת) שמסביר שאי אפשר להתחבר דרך החשבון הזה, עם וואטסאפ להדר ולאופיר */
   const BLOCKED_HTML = OTHER_HTML.replace('id="otherModal"', 'id="blockedModal"').replace('aria-labelledby="otherTtl"', 'aria-labelledby="blockedTtl"')
-    .replace('<p class="su-lgwho" id="otherTtl">לשלם בדרך אחרת</p><p class="su-lgq">נפתחת שיחת וואטסאפ עם אחד המנהלים, וההודעה כבר מוכנה:</p><p class="su-lginfo" id="otherInfo"></p>',
+    .replace('<p class="su-lgwho" id="otherTtl">לשלם בדרך אחרת</p><p class="su-lgq">נפתחת שיחת וואטסאפ עם אחד המנחים, וההודעה כבר מוכנה:</p><p class="su-lginfo" id="otherInfo"></p>',
       '<p class="su-lgwho" id="blockedTtl">לא ניתן להתחבר דרך החשבון הזה</p><p class="su-lgq">החשבון הזה לא מאושר לכניסה לאתר. לשאלות אפשר לפנות אלינו בוואטסאפ:</p>')
     .replace('id="otherHadar"', 'id="blockedHadar"').replace('id="otherOfir"', 'id="blockedOfir"');
   /* כניסה עם גוגל כשהשכבה הקטנה של גוגל לא יכולה להופיע (למשל בהשהיה של גוגל אחרי שנסגרה): פופאפ קטן בתוך הדף עם הכפתור של גוגל, בלי חלון נפרד */
-  const GLOGIN_HTML = `<div id="gloginModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="gloginTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="gloginTtl">כניסה עם גוגל</p><p class="su-lgq">ממשיכים עם חשבון הגוגל שלכם, בלי סיסמה</p><div class="su-gbtn" id="gloginBtn"></div></div></div>`;
+  const GLOGIN_HTML = `<div id="gloginModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="gloginTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="gloginTtl">כניסה עם גוגל</p><p class="su-lgq">ממשיכים עם חשבון הגוגל שלכם, בלי סיסמה</p><div class="su-gbtn" id="gloginBtn"></div><a href="#" class="su-galt" id="gloginAlt" hidden>הרשמה בלי חשבון גוגל</a></div></div>`;
   document.body.insertAdjacentHTML('beforeend', MODAL_HTML + LOGOUT_HTML + OTHER_HTML + BLOCKED_HTML + GLOGIN_HTML);
 
   /* ===== מנגנון פופאפ כללי (משותף לכל ה-.modal) ===== */
@@ -542,23 +542,43 @@
       const d = r.ok ? await r.json() : null;
       if (!d || !d.access_token) throw new Error('token ' + r.status);
       localStorage.setItem(ME_KEY, JSON.stringify({ access_token: d.access_token, refresh_token: d.refresh_token }));
-    } catch (e) {   // החלפת האישור נכשלה: הכניסה הרגילה (ניווט, כי כבר אין לחיצה ישירה שמאפשרת חלון קופץ)
+    } catch (e) {   // החלפת האישור נכשלה. בהרשמה: הטופס המלא (ההרשמה לא נחסמת). באזור האישי: הכניסה הרגילה (ניווט)
+      if (c.after === 'reg') return regFallback(true);
       if (c.thenOpen) try { sessionStorage.setItem('harpatka_open_me', '1'); } catch (x) {}
       return loginGoogle(c.after);
     }
     afterLogin(c.after, c.thenOpen);
   }
+  /* ===== ההרשמה לעולם לא נחסמת בגלל הכניסה עם גוגל =====
+     כשהכניסה עם גוגל לא מצליחה בזמן הרשמה (הספרייה של גוגל לא נטענה או נטענת לאט, הכפתור של גוגל לא עובד, האישור לא התקבל,
+     או שהמשתתף סגר את השכבה של גוגל), נפתח פופאפ ההרשמה עם הטופס המלא (שם, טלפון, גיל, מגדר; harpatka_signup), כמו בדפדפן של אפליקציה.
+     hard: תקלה אמיתית (לא סגירה של המשתתף): מסתירים את "נרשמתם בעבר" כדי שלא ינסו שוב לשווא. חשבון חסום לא עובר כאן (showBlocked) */
+  function regFallback(hard) {
+    tapCtx = null;
+    if (hard) document.documentElement.classList.add('gl-fail');
+    const gm = document.getElementById('gloginModal'); let wait = 0;
+    if (gm && !gm.hidden) { try { closeModal(gm); } catch (e) {} wait = 400; }
+    setTimeout(() => {
+      if (contactModal && !contactModal.hidden) {   // כבר בפופאפ ההרשמה ("נרשמתם בעבר"): נשארים בטופס המלא
+        const f = contactModal.querySelector('[data-su="fail"]'); if (f && hard) f.textContent = 'ההתחברות עם גוגל לא הצליחה. אפשר להירשם כאן עם הפרטים';
+        return;
+      }
+      openReg(true, takeRegMeeting());
+    }, wait);
+  }
   /* כניסה עם גוגל, תמיד בתוך הדף:
      1. השכבה הקטנה של גוגל מעל הדף (אם הספרייה של גוגל עוד לא נטענה, למשל מיד אחרי יציאה מהחשבון, מחכים לה ולא פותחים חלון).
      2. אם השכבה לא יכולה להופיע (גוגל משהה אותה אחרי שנסגרה, אין חשבון גוגל מחובר בדפדפן): פופאפ קטן בתוך הדף עם הכפתור של גוגל.
-     3. החלון הנפרד (loginWindow) רק כשהספרייה של גוגל לא נטענת בכלל (נחסמה, אין רשת) */
+     3. כשהספרייה של גוגל לא נטענת בכלל (נחסמה, אין רשת): בהרשמה הטופס המלא (regFallback), ובאזור האישי החלון הנפרד (loginWindow) */
   function loginPopup(after, thenOpen) {
     if (!GL) return;
-    const ctx = { after, thenOpen }; tapCtx = ctx;
+    const ctx = { after, thenOpen }, reg = after === 'reg'; tapCtx = ctx;
     const p = gsiLoad();
     if (gsiState === 2 && window.google && google.accounts && google.accounts.id) return gsiPrompt(ctx);
-    if (!p || gsiState === -1) { tapCtx = null; return loginWindow(after, thenOpen); }
-    p.then((ok) => { if (tapCtx !== ctx) return; if (ok) gsiPrompt(ctx); else { tapCtx = null; loginWindow(after, thenOpen); } });
+    const giveUp = () => { if (reg) return regFallback(true); tapCtx = null; loginWindow(after, thenOpen); };
+    if (!p || gsiState === -1) return giveUp();
+    const wait = reg ? Promise.race([p, new Promise((r) => setTimeout(() => r(false), 3500))]) : p;   // בהרשמה לא מחכים לספרייה של גוגל יותר מכמה שניות
+    wait.then((ok) => { if (tapCtx !== ctx) return; if (ok && gsiState === 2) gsiPrompt(ctx); else giveUp(); });
   }
   function gsiPrompt(ctx) {
     try { google.accounts.id.cancel(); } catch (e) {}
@@ -569,7 +589,7 @@
         try {
           if (n.isSkippedMoment && n.isSkippedMoment()) {
             const why = n.getSkippedReason && n.getSkippedReason();
-            if (why === 'user_cancel' || why === 'tap_outside') tapCtx = null;   // המשתתף סגר אותה בעצמו: לא פותחים שום דבר אחר
+            if (why === 'user_cancel' || why === 'tap_outside' || why === 'auto_cancel') { tapCtx = null; if (ctx.after === 'reg') regFallback(false); }   // המשתתף סגר אותה בעצמו: באזור האישי לא נפתח כלום, ובהרשמה הטופס המלא (בלי גוגל)
             else fail = true;
           } else if (n.isNotDisplayed && n.isNotDisplayed()) fail = true;   // לא הופיעה (דפדפן בלי FedCM)
         } catch (e) { fail = true; }
@@ -577,15 +597,22 @@
       });
     } catch (e) { gsiButton(ctx); }
   }
-  /* פופאפ הגיבוי: הכפתור של גוגל (renderButton). בכרום הלחיצה עליו פותחת את חלון הבחירה הקטן של הדפדפן בתוך הדף */
+  /* פופאפ הגיבוי: הכפתור של גוגל (renderButton). בכרום הלחיצה עליו פותחת את חלון הבחירה הקטן של הדפדפן בתוך הדף.
+     בהרשמה מתחתיו "הרשמה בלי חשבון גוגל", שפותח את הטופס המלא */
   function gsiButton(ctx) {
+    const reg = ctx.after === 'reg';
     const m = document.getElementById('gloginModal'), box = m && m.querySelector('#gloginBtn');
-    if (!box) { tapCtx = null; return loginWindow(ctx.after, ctx.thenOpen); }
+    if (!box) { if (reg) return regFallback(true); tapCtx = null; return loginWindow(ctx.after, ctx.thenOpen); }
     tapCtx = ctx;
     try {
       box.innerHTML = '';
       google.accounts.id.renderButton(box, { type: 'standard', theme: 'outline', size: 'large', text: 'continue_with', shape: 'rectangular', logo_alignment: 'center', locale: 'he', width: 300 });
-    } catch (e) { tapCtx = null; return loginWindow(ctx.after, ctx.thenOpen); }
+    } catch (e) { if (reg) return regFallback(true); tapCtx = null; return loginWindow(ctx.after, ctx.thenOpen); }
+    const alt = m.querySelector('#gloginAlt');
+    if (alt) {
+      alt.hidden = !reg;
+      if (!alt.dataset.bound) { alt.dataset.bound = '1'; alt.addEventListener('click', (e) => { e.preventDefault(); regFallback(false); }); }
+    }
     if (m.hidden) openModal(m, true);
   }
   function takeLoginHash() {
