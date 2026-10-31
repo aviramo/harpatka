@@ -84,7 +84,9 @@
     .replace('<p class="su-lgwho" id="otherTtl">לשלם בדרך אחרת</p><p class="su-lgq">נפתחת שיחת וואטסאפ עם אחד המנהלים, וההודעה כבר מוכנה:</p><p class="su-lginfo" id="otherInfo"></p>',
       '<p class="su-lgwho" id="blockedTtl">לא ניתן להתחבר דרך החשבון הזה</p><p class="su-lgq">החשבון הזה לא מאושר לכניסה לאתר. לשאלות אפשר לפנות אלינו בוואטסאפ:</p>')
     .replace('id="otherHadar"', 'id="blockedHadar"').replace('id="otherOfir"', 'id="blockedOfir"');
-  document.body.insertAdjacentHTML('beforeend', MODAL_HTML + LOGOUT_HTML + OTHER_HTML + BLOCKED_HTML);
+  /* כניסה עם גוגל כשהשכבה הקטנה של גוגל לא יכולה להופיע (למשל בהשהיה של גוגל אחרי שנסגרה): פופאפ קטן בתוך הדף עם הכפתור של גוגל, בלי חלון נפרד */
+  const GLOGIN_HTML = `<div id="gloginModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="gloginTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="gloginTtl">כניסה עם גוגל</p><p class="su-lgq">ממשיכים עם חשבון הגוגל שלכם, בלי סיסמה</p><div class="su-gbtn" id="gloginBtn"></div></div></div>`;
+  document.body.insertAdjacentHTML('beforeend', MODAL_HTML + LOGOUT_HTML + OTHER_HTML + BLOCKED_HTML + GLOGIN_HTML);
 
   /* ===== מנגנון פופאפ כללי (משותף לכל ה-.modal) ===== */
   let modalLastFocus = null, urlBeforeReg = null;
@@ -509,25 +511,32 @@
      כשהשכבה לא יכולה להופיע (אין חשבון גוגל מחובר בדפדפן, גוגל השהה אותה אחרי שנסגרה, דפדפן שלא תומך, הכתובת לא מורשית אצל גוגל): החלון הקופץ (loginWindow).
      דורש ב-Google Cloud Console, ב-OAuth client של Supabase: Authorized JavaScript origins = https://harpatka.co.il ו-https://test.harpatka.co.il */
   const GCID = CONFIG.googleClientId || '';
-  let gsiState = 0, gsiNonce = '', tapCtx = null;   // gsiState: 0 לא נטען, 1 נטען, 2 מוכן, -1 נכשל
+  let gsiState = 0, gsiNonce = '', tapCtx = null, gsiP = null;   // gsiState: 0 לא נטען, 1 נטען, 2 מוכן, -1 נכשל; gsiP: מתי מוכן (true) או נכשל (false)
   function gsiLoad() {
-    if (gsiState || !GL || AS || !GCID || !window.crypto || !crypto.subtle) return;
+    if (gsiState || !GL || AS || !GCID || !window.crypto || !crypto.subtle) return gsiP;
     gsiState = 1;
-    const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true;
-    s.onerror = () => { gsiState = -1; };
-    s.onload = async () => {
-      try {
-        const raw = Array.from(crypto.getRandomValues(new Uint8Array(24)), (b) => b.toString(16).padStart(2, '0')).join('');
-        const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw))), (b) => b.toString(16).padStart(2, '0')).join('');
-        gsiNonce = raw;   // לגוגל עובר הגיבוב, ול-Supabase הערך המקורי (הוא בודק שהגיבוב שלו תואם לאישור)
-        google.accounts.id.initialize({ client_id: GCID, callback: onGoogleCredential, nonce: hash, auto_select: true, cancel_on_tap_outside: true, itp_support: true, use_fedcm_for_prompt: true, context: 'signin' });
-        gsiState = 2;
-      } catch (e) { gsiState = -1; }
-    };
-    document.head.appendChild(s);
+    gsiP = new Promise((res) => {
+      const t = setTimeout(() => { if (gsiState === 1) gsiState = -1; res(gsiState === 2); }, 8000);
+      const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true;
+      s.onerror = () => { gsiState = -1; clearTimeout(t); res(false); };
+      s.onload = async () => {
+        try {
+          const raw = Array.from(crypto.getRandomValues(new Uint8Array(24)), (b) => b.toString(16).padStart(2, '0')).join('');
+          const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw))), (b) => b.toString(16).padStart(2, '0')).join('');
+          gsiNonce = raw;   // לגוגל עובר הגיבוב, ול-Supabase הערך המקורי (הוא בודק שהגיבוב שלו תואם לאישור)
+          /* use_fedcm_for_button: הכפתור של גוגל (בפופאפ הגיבוי) פותח בכרום את חלון הבחירה הקטן של הדפדפן בתוך הדף, ולא חלון נפרד */
+          google.accounts.id.initialize({ client_id: GCID, callback: onGoogleCredential, nonce: hash, auto_select: true, cancel_on_tap_outside: true, itp_support: true, use_fedcm_for_prompt: true, use_fedcm_for_button: true, context: 'signin' });
+          gsiState = 2;
+        } catch (e) { gsiState = -1; }
+        clearTimeout(t); res(gsiState === 2);
+      };
+      document.head.appendChild(s);
+    });
+    return gsiP;
   }
   async function onGoogleCredential(resp) {
     const c = tapCtx || { after: null, thenOpen: false }; tapCtx = null;
+    { const gm = document.getElementById('gloginModal'); if (gm && !gm.hidden) try { closeModal(gm); } catch (e) {} }
     try {
       const r = await fetch(CONFIG.supabaseUrl + '/auth/v1/token?grant_type=id_token', { method: 'POST', headers: { apikey: CONFIG.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ provider: 'google', id_token: resp && resp.credential, nonce: gsiNonce }) });
       const d = r.ok ? await r.json() : null;
@@ -539,27 +548,45 @@
     }
     afterLogin(c.after, c.thenOpen);
   }
-  /* כניסה עם גוגל: קודם השכבה של גוגל מעל הדף; אם היא לא מוכנה או לא מופיעה, החלון הקופץ */
+  /* כניסה עם גוגל, תמיד בתוך הדף:
+     1. השכבה הקטנה של גוגל מעל הדף (אם הספרייה של גוגל עוד לא נטענה, למשל מיד אחרי יציאה מהחשבון, מחכים לה ולא פותחים חלון).
+     2. אם השכבה לא יכולה להופיע (גוגל משהה אותה אחרי שנסגרה, אין חשבון גוגל מחובר בדפדפן): פופאפ קטן בתוך הדף עם הכפתור של גוגל.
+     3. החלון הנפרד (loginWindow) רק כשהספרייה של גוגל לא נטענת בכלל (נחסמה, אין רשת) */
   function loginPopup(after, thenOpen) {
     if (!GL) return;
-    if (gsiState !== 2 || !window.google || !google.accounts || !google.accounts.id) { gsiLoad(); return loginWindow(after, thenOpen); }
     const ctx = { after, thenOpen }; tapCtx = ctx;
+    const p = gsiLoad();
+    if (gsiState === 2 && window.google && google.accounts && google.accounts.id) return gsiPrompt(ctx);
+    if (!p || gsiState === -1) { tapCtx = null; return loginWindow(after, thenOpen); }
+    p.then((ok) => { if (tapCtx !== ctx) return; if (ok) gsiPrompt(ctx); else { tapCtx = null; loginWindow(after, thenOpen); } });
+  }
+  function gsiPrompt(ctx) {
     try { google.accounts.id.cancel(); } catch (e) {}
     try {
       google.accounts.id.prompt((n) => {
         if (tapCtx !== ctx) return;
         let fail = false;
         try {
-          if (n.isNotDisplayed && n.isNotDisplayed()) fail = true;   // לא הופיעה (אין חשבון גוגל מחובר, הושהתה, לא נתמך)
-          else if (n.isSkippedMoment && n.isSkippedMoment()) {
+          if (n.isSkippedMoment && n.isSkippedMoment()) {
             const why = n.getSkippedReason && n.getSkippedReason();
             if (why === 'user_cancel' || why === 'tap_outside') tapCtx = null;   // המשתתף סגר אותה בעצמו: לא פותחים שום דבר אחר
             else fail = true;
-          }
+          } else if (n.isNotDisplayed && n.isNotDisplayed()) fail = true;   // לא הופיעה (דפדפן בלי FedCM)
         } catch (e) { fail = true; }
-        if (fail) { tapCtx = null; loginWindow(after, thenOpen); }
+        if (fail) gsiButton(ctx);
       });
-    } catch (e) { tapCtx = null; loginWindow(after, thenOpen); }
+    } catch (e) { gsiButton(ctx); }
+  }
+  /* פופאפ הגיבוי: הכפתור של גוגל (renderButton). בכרום הלחיצה עליו פותחת את חלון הבחירה הקטן של הדפדפן בתוך הדף */
+  function gsiButton(ctx) {
+    const m = document.getElementById('gloginModal'), box = m && m.querySelector('#gloginBtn');
+    if (!box) { tapCtx = null; return loginWindow(ctx.after, ctx.thenOpen); }
+    tapCtx = ctx;
+    try {
+      box.innerHTML = '';
+      google.accounts.id.renderButton(box, { type: 'standard', theme: 'outline', size: 'large', text: 'continue_with', shape: 'rectangular', logo_alignment: 'center', locale: 'he', width: 300 });
+    } catch (e) { tapCtx = null; return loginWindow(ctx.after, ctx.thenOpen); }
+    if (m.hidden) openModal(m, true);
   }
   function takeLoginHash() {
     const h = new URLSearchParams(location.hash.replace(/^#/, ''));
@@ -589,7 +616,7 @@
       ensureMeChannel();
       if (!meSheet && !window.__meAdmin) setTimeout(() => { try { openMeArea('', true); } catch (e) {} }, 1500);   // טעינה מוקדמת של האזור האישי (מוסתר), כדי שהפתיחה הראשונה תהיה מיידית
       if (pending === 'reg') setTimeout(() => openReg(true, takeRegMeeting()), 300);   // נכנסו עם גוגל מתוך הרשמה: פופאפ ההרשמה של המפגש שנבחר, במצב מחובר
-    } else if (d && d.status === 'noauth') { window.__meAdmin = false; clearMeName(); }
+    } else if (d && d.status === 'noauth') { window.__meAdmin = false; clearMeName(); if (!AS) setTimeout(gsiLoad, 800); }   // אורח (גם אחרי שהחיבור פג): השכבה של גוגל נטענת מראש
     else if (d && d.status === 'blocked' && !AS) showBlocked();   // החשבון נחסם או נותק (גם בזמן אמת, וגם מיד אחרי כניסה): ניתוק ופופאפ הסבר
     else { clearMeName(); applyMemberMode(); if (pending === 'reg' && !AS) setTimeout(() => openReg(true, takeRegMeeting()), 300); }   // מחובר לגוגל אבל אין משתתף מקושר: פופאפ ההרשמה עם הטלפון בלבד (מחבר או יוצר משתתף ונרשם באותו צעד)
   });
@@ -636,7 +663,7 @@
         if (AS) { if (window.top !== window) { try { parent.postMessage({ harpatka: 'me-logout' }, location.origin); } catch (er) {} } else location.href = location.pathname; return; }   // צפייה כמשתתף: "יציאה" = סיום הצפייה (בפופאפ של דף הניהול: סגירתו), בלי לנתק את החיבור של הדפדפן
         try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {}
         meInfo = null; window.__meName = null; window.__meAdmin = false; applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {}
-        gsiNoAuto(); closeModal(m);
+        gsiNoAuto(); gsiLoad(); closeModal(m);
       });
     }
     openModal(m, true);
@@ -651,7 +678,7 @@
   function showBlocked() {
     if (AS || Date.now() - blockedAt < 4000) return; blockedAt = Date.now();
     try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (e) {}
-    meInfo = null; mePending = null; window.__meAdmin = false; clearMeName(); applyMemberMode(); gsiNoAuto();
+    meInfo = null; mePending = null; window.__meAdmin = false; clearMeName(); applyMemberMode(); gsiNoAuto(); gsiLoad();
     const dlg = document.getElementById('blockedModal'); if (!dlg) return;
     dlg.querySelector('#blockedHadar').href = 'https://wa.me/' + CONFIG.whatsappHadar; dlg.querySelector('#blockedOfir').href = 'https://wa.me/' + CONFIG.whatsappOfir;
     let wait = 0;

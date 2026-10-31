@@ -165,7 +165,7 @@
     }
   </script>
 
-  <link rel="stylesheet" href="../shared/site.css?v=20261030m">
+  <link rel="stylesheet" href="../shared/site.css?v=20261030n">
   <script>
     /* סרטון פתיחה: אם הדפדפן מאפשר, מסתירים את ההזמנה (בלי להזיז את הדף) עד שהסרטון נגמר; רשת ביטחון אחרי 9 שניות */
     (function(){
@@ -179,7 +179,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="../shared/register.css?v=20261031i">
+  <link rel="stylesheet" href="../shared/register.css?v=20261031k">
 </head>
 
 <body class="grain">
@@ -193,6 +193,7 @@
         <p class="tb-main font-display" id="tbMain">&nbsp;</p>
         <p class="tb-sub" id="tbSub">&nbsp;</p>
       </div>
+      <a href="#" class="tb-cta" id="tbCta">הרשמה למפגש</a><!-- דסקטופ: כפתור ההרשמה בבאנר הקבוע (במקום הכפתור הקבוע בתחתית, שמתאים למובייל); אותה פעולה בדיוק -->
     </div>
   </div>
   <script>/* שומר מראש את הגובה של הבאנר הקבוע (מיד אחרי ה-HTML שלו, לפני שהדף מצויר), כדי שהדף לא יקפוץ למטה בטעינה */
@@ -407,15 +408,15 @@
     <div class="max-w-3xl mx-auto px-5 reveal">
       <div class="mt-list" id="mList" aria-live="polite">
         <div class="mt-skel" aria-hidden="true"></div>
+        <!-- האזור האישי הוא חלק מרשימת המפגשים: במובייל אחרי הכרטיסים, בדסקטופ הקובייה האחרונה בשורה -->
+        <a href="../me/" id="meAreaCard" class="block px-6 py-8 text-center" style="background:linear-gradient(120deg,#064452 0%,#0A6170 55%,#0F8A93 100%)">
+          <span class="block font-display font-bold" style="font-size:clamp(1.5rem,6vw,2rem);color:#FFFDF9">האזור האישי שלכם</span>
+          <span class="block lead mt-2 mb-5" style="font-size:1.05rem;color:rgba(255,253,249,.92)">המפגשים, התשלומים והפרטים שלכם במקום אחד, ונרשמים למפגש הבא בלחיצה</span>
+          <span class="inline-flex items-center justify-center gap-2 px-7 font-bold" style="background:#FFFDF9;color:#0A6170;min-height:52px;font-size:1.1rem;border-radius:0">כניסה לאזור האישי<svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></span>
+        </a>
       </div>
-      <script>/* גובה רשימת המפגשים נשמר מהביקור הקודם ונקבע לפני הציור, כדי שהדף לא יקפוץ כשהמפגשים נטענים */
-      (function(){ try { var h = localStorage.getItem('v8_mlist_h_' + (innerWidth >= 1024 ? 'd' : 'm')); if (h) { var l = document.getElementById('mList'), s = l.querySelector('.mt-skel'); l.style.minHeight = h + 'px'; if (s) s.style.height = h + 'px'; } } catch (e) {} })();</script>
-
-      <a href="../me/" id="meAreaCard" class="block mt-6 rounded-[28px] px-6 py-8 text-center" style="background:linear-gradient(120deg,#064452 0%,#0A6170 55%,#0F8A93 100%)">
-        <span class="block font-display font-bold" style="font-size:clamp(1.5rem,6vw,2rem);color:#FFFDF9">האזור האישי שלכם</span>
-        <span class="block lead mt-2 mb-5" style="font-size:1.05rem;color:rgba(255,253,249,.92)">המפגשים, התשלומים והפרטים שלכם במקום אחד, ונרשמים למפגש הבא בלחיצה</span>
-        <span class="inline-flex items-center justify-center gap-2 px-7 font-bold" style="background:#FFFDF9;color:#0A6170;min-height:52px;font-size:1.1rem;border-radius:0">כניסה לאזור האישי<svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></span>
-      </a>
+      <script>/* גובה המפגשים (בלי האזור האישי) נשמר מהביקור הקודם ונקבע לשלד לפני הציור, כדי שהדף לא יקפוץ כשהמפגשים נטענים */
+      (function(){ try { var h = localStorage.getItem('v9_mlist_h_' + (innerWidth >= 1024 ? 'd' : 'm')); if (h) { var s = document.querySelector('#mList .mt-skel'); if (s) s.style.height = h + 'px'; } } catch (e) {} })();</script>
     </div>
   </section>
 
@@ -850,15 +851,21 @@
           const ttl = document.createElement('div'); ttl.className = 'mt-ptitle'; ttl.textContent = 'מפגשים שהסתיימו'; pl.append(ttl);   // כותרת אחת במקום "הסתיים" בכל שורה
           d.past.forEach(m => {
             const r = document.createElement('div');
-            r.className = 'mt-prow font-display'; r.textContent = [label(m), m.time, m.city].filter(Boolean).join(' · ');   // שורה אחת ממורכזת: יום, תאריך, שעה ועיר
+            r.className = 'mt-prow font-display'; r.textContent = [label(m), m.time].filter(Boolean).join(' · ');   // שורה אחת ממורכזת: יום, תאריך, שעה ועיר (בדסקטופ העיר בשורה משלה)
+            if (m.city) { const c = document.createElement('span'); c.className = 'mt-pcity'; c.textContent = m.city; r.append(c); }
             pl.append(r);
           });
           frag.append(pl);
         }
         if (future.length) future.forEach((m, i) => frag.append(meetingCard(m, today, false, i === 0)));
         else frag.append(emptyCard(d.defName, d.defImg));
+        { const mac = el('meAreaCard'); if (mac) frag.append(mac); }   // האזור האישי נשאר אחרון ברשימה (בדסקטופ: הקובייה האחרונה בשורה)
         list.replaceChildren(frag);
-        try { list.style.minHeight = ''; const hk = 'v8_mlist_h_' + (innerWidth >= 1024 ? 'd' : 'm'); localStorage.setItem(hk, String(list.offsetHeight)); } catch (e) {}   // שומר את הגובה לביקור הבא (בלי קפיצה בטעינה)
+        try {   // שומר לביקור הבא את גובה המפגשים בלי האזור האישי (בלי קפיצה בטעינה)
+          list.style.minHeight = ''; const top = list.getBoundingClientRect().top, kids = [...list.children].filter(k => k.id !== 'meAreaCard');
+          const h = Math.round(Math.max(0, ...kids.map(k => k.getBoundingClientRect().bottom - top)));
+          if (h) localStorage.setItem('v9_mlist_h_' + (innerWidth >= 1024 ? 'd' : 'm'), String(h));
+        } catch (e) {}
         /* יותר ממפגש עתידי אחד: הכפתור הקבוע גולל לראשון (במקום לפתוח פופאפ) ונעלם כשהמפגשים העתידיים בתצוגה */
         window.__mtMulti = future.length > 1;
         { const sr = el('stickyReg'); if (window.__mtIO) window.__mtIO.disconnect();
@@ -867,8 +874,9 @@
             window.__mtIO = io; sr.classList.remove('cta-away');
             if (future.length > 1) [...list.querySelectorAll('.mt-card:not(.is-past)')].forEach(c => io.observe(c));
           } }
-        const sb = el('stickyRegBtn'); if (sb) sb.textContent = future.length ? 'הרשמה למפגש ' + short(dayN(future[0].date)) : 'השארת פרטים';   // עם התאריך: ברור לאיזה מפגש נרשמים
-        { const sr2 = el('stickyReg'); if (sr2) { const need = !window.__meName || future.some(m => { const st = window.HarpatkaMe ? HarpatkaMe.get(m.id) : null; return !(st && st.registered); }); sr2.style.display = need ? '' : 'none'; } }   // משתתף מחובר שכבר רשום לכל המפגשים (או שאין מפגש): אין מה להירשם אליו, ולכן בלי הכפתור הקבוע
+        const sb = el('stickyRegBtn'), tc = el('tbCta'), stxt = future.length ? 'הרשמה למפגש ' + short(dayN(future[0].date)) : 'השארת פרטים';   // עם התאריך: ברור לאיזה מפגש נרשמים
+        if (sb) sb.textContent = stxt; if (tc) tc.textContent = stxt;
+        { const sr2 = el('stickyReg'); const need = !window.__meName || future.some(m => { const st = window.HarpatkaMe ? HarpatkaMe.get(m.id) : null; return !(st && st.registered); }); if (sr2) sr2.style.display = need ? '' : 'none'; if (tc) tc.hidden = !need; }   // משתתף מחובר שכבר רשום לכל המפגשים (או שאין מפגש): אין מה להירשם אליו, ולכן בלי הכפתור הקבוע
       };
       { const sb = document.getElementById('stickyRegBtn');
         if (sb) sb.addEventListener('click', (e) => {
@@ -1093,7 +1101,9 @@
   /* לחיצה על הבאנר גוללת את הדף עד סקשן המפגשים */
   const goMeetings = () => { const s = document.getElementById('meetings'); if (s) s.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth', block: 'start' }); };
   bar.addEventListener('click', goMeetings);
-  bar.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goMeetings(); } });
+  bar.addEventListener('keydown', (e) => { if (e.target.closest && e.target.closest('#tbCta')) return; if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goMeetings(); } });
+  { const tc = el('tbCta');   // כפתור ההרשמה בבאנר (דסקטופ): אותה פעולה כמו הכפתור הקבוע בתחתית (כמה מפגשים: גלילה אליהם, מפגש אחד: פופאפ ההרשמה)
+    if (tc) tc.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); const sb = document.getElementById('stickyRegBtn'); if (sb) sb.click(); }); }
   /* הצטמצמות צמודה לגלילה (--p מ-0 עד 1 לאורך 110px), עם גובה שמור שלא קופץ */
   const RANGE = 110; let ticking = false;
   const apply = () => { ticking = false; if (document.documentElement.classList.contains('modal-lock')) return;   /* פופאפ פתוח: הדף נעול ומוזז ל-0, אבל ההדר נשאר במצב שהיה (לא נפתח) */
@@ -1107,6 +1117,6 @@
 </script>
   <script src="../shared/rt.js?v=1"></script>
   <script src="../shared/person-form.js?v=20261029i"></script>
-  <script src="../shared/register.js?v=20261032c"></script>
+  <script src="../shared/register.js?v=20261032d"></script>
 </body>
 </html>

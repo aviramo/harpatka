@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261031n" />
+  <link rel="stylesheet" href="admin.css?v=20261031o" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -2990,6 +2990,7 @@
     const reduced = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const root = document.documentElement;
     const offset = (d) => Math.max(120, window.innerHeight - d.getBoundingClientRect().top);
+    const desk = () => !!(window.matchMedia && window.matchMedia('(min-width: 760px)').matches);   // דסקטופ: פופאפ במרכז, נפתח ונסגר בדהייה (לא עולה מלמטה)
     const backdrop = (d, from, to, ms) => { try { d.animate([{ opacity: from }, { opacity: to }], { duration: ms, easing: 'ease', fill: 'both', pseudoElement: '::backdrop' }); } catch (e) {} };
     const unlock = () => { if (!document.querySelector('dialog[open]')) root.classList.remove('dlg-lock'); };
     proto.showModal = function () {
@@ -3001,6 +3002,7 @@
       this._closing = false;
       this.getAnimations().forEach((a) => a.cancel());
       if (reduced()) return;
+      if (desk()) { this.animate([{ opacity: 0, transform: 'scale(.97)' }, { opacity: 1, transform: 'none' }], { duration: 200, easing: 'ease-out' }); backdrop(this, 0, 1, 200); return; }
       const y = offset(this);
       this.animate([{ transform: 'translateY(' + y + 'px)' }, { transform: 'none' }], { duration: 340, easing: 'cubic-bezier(.22,.8,.2,1)' });
       backdrop(this, 0, 1, 340);
@@ -3014,7 +3016,8 @@
       const d = this, cur = from == null ? 0 : from, y = offset(d);
       d.getAnimations().forEach((a) => a.cancel());
       backdrop(d, 1, 0, 240);
-      const a = d.animate([{ transform: 'translateY(' + cur + 'px)' }, { transform: 'translateY(' + y + 'px)' }], { duration: 240, easing: 'cubic-bezier(.4,0,.8,.6)', fill: 'both' });
+      const a = desk() ? d.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.97)' }], { duration: 160, easing: 'ease-in', fill: 'both' })
+        : d.animate([{ transform: 'translateY(' + cur + 'px)' }, { transform: 'translateY(' + y + 'px)' }], { duration: 240, easing: 'cubic-bezier(.4,0,.8,.6)', fill: 'both' });
       const fin = () => { d._closing = false; d.getAnimations().forEach((x) => x.cancel()); rawClose.call(d, rv); unlock(); };
       a.onfinish = fin; a.oncancel = () => { if (d._closing) fin(); };
     };
