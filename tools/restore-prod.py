@@ -18,6 +18,7 @@ except Exception:
     pass
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SKIP = {'harpatka_settings', 'harpatka_audit'}
+LIMIT = 600_000   # בתים לבקשה אחת (לשירות השאילתות של Supabase יש מגבלת גודל)
 
 
 def arg(name):
@@ -40,15 +41,63 @@ def main():
     if not order:
         sys.exit('אין טבלאות להחזרה')
 
-    parts = ['create temp table _hk_restore (tbl text primary key, data jsonb) on commit drop;']
-    for t in order:
-        data = (src / (t + '.json')).read_text(encoding='utf-8')
-        tag = 'hk' + secrets.token_hex(6)
-        while tag in data:
-            tag = 'hk' + secrets.token_hex(6)
-        parts.append(f"insert into _hk_restore values ('{t}', ${tag}${data}${tag}$::jsonb);")
+    # שלב 1: הנתונים עולים במנות לטבלת ביניים בסכמה hk_restore (לא חשופה לאתר), כי לבקשה אחת יש מגבלת גודל
+    run = 'r' + secrets.token_hex(6)
+    q('create schema if not exists hk_restore; revoke all on schema hk_restore from public;'
+      ' create table if not exists hk_restore.chunks (run text, tbl text, part int, data jsonb, primary key (run, tbl, part));')
+    try:
+        batch, size, part = [], 0, 0
+        for t in order:
+            rows = json.loads((src / (t + '.json')).read_text(encoding='utf-8'))
+            chunk, csize = [], 0
+            for row in rows + [None]:
+                s = json.dumps(row, ensure_ascii=False) if row is not None else ''
+                if row is None or (chunk and csize + len(s.encode()) > LIMIT):
+                    if chunk or not rows:
+                        data = json.dumps(chunk, ensure_ascii=False)
+                        tag = 'hk' + secrets.token_hex(6)
+                        while tag in data:
+                            tag = 'hk' + secrets.token_hex(6)
+                        stmt = f"insert into hk_restore.chunks values ('{run}', '{t}', {part}, ${tag}${data}${tag}$::jsonb);"
+                        part += 1
+                        if batch and size + len(stmt.encode()) > LIMIT:
+                            q('\n'.join(batch))
+                            batch, size = [], 0
+                        batch.append(stmt)
+                        size += len(stmt.encode())
+                    chunk, csize = [], 0
+                if row is not None:
+                    chunk.append(row)
+                    csize += len(s.encode())
+        if batch:
+            q('\n'.join(batch))
+        print(f'  הנתונים הועלו לטבלת הביניים ({part} מנות)')
+        r = restore(run, schema, order, dry)
+    finally:
+        q(f"delete from hk_restore.chunks where run = '{run}'; do $x$ begin if not exists (select 1 from hk_restore.chunks) then drop schema hk_restore cascade; end if; end $x$;")
+    report(r, man, order, dry, schema)
+
+
+def q(text, check=True):
+    with tempfile.NamedTemporaryFile('w', suffix='.sql', delete=False, encoding='utf-8') as f:
+        f.write(text)
+        path = f.name
+    try:
+        r = subprocess.run(['supabase', 'db', 'query', '--linked', '-f', path], cwd=ROOT, capture_output=True, shell=(os.name == 'nt'))
+    finally:
+        os.unlink(path)
+    out = r.stderr.decode('utf-8', 'replace') + '\n' + r.stdout.decode('utf-8', 'replace')   # השגיאה של השאילתה עלולה להגיע גם בפלט הרגיל
+    if check and (r.returncode or '"_tag":"Error"' in out):
+        sys.exit('שאילתה נכשלה:\n' + out[-2000:])
+    return r.returncode, out
+
+
+def restore(run, schema, order, dry):
+    """שלב 2: טרנזקציה אחת שמרוקנת וממלאת את הטבלאות מטבלת הביניים. מחזיר את הפלט (בבדיקה יבשה ההודעה HK_DRY_OK עם הספירות)."""
     arr = 'array[' + ', '.join("'" + t + "'" for t in order) + ']::text[]'
-    parts.append(f"""do $hkdo$
+    # בתוך מחרוזת של format() במסד, ולכן הגרשיים כפולים
+    rows_of = f"(select coalesce(jsonb_agg(e), ''[]''::jsonb) from hk_restore.chunks ch, jsonb_array_elements(ch.data) e where ch.run = ''{run}'' and ch.tbl = %L)"
+    text = f"""do $hkdo$
 declare
   sch text := '{schema}';
   ord text[] := {arr};
@@ -63,10 +112,10 @@ begin
     select string_agg(format('%I', ic.column_name), ', ' order by ic.ordinal_position) into cols
       from information_schema.columns ic
      where ic.table_schema = sch and ic.table_name = t and ic.is_generated = 'NEVER'
-       and ic.column_name in (select distinct k from _hk_restore r, jsonb_array_elements(r.data) e, jsonb_object_keys(e) k where r.tbl = t);
+       and ic.column_name in (select distinct k from hk_restore.chunks ch, jsonb_array_elements(ch.data) e, jsonb_object_keys(e) k where ch.run = '{run}' and ch.tbl = t);
     n := 0;
     if cols is not null then
-      execute format('insert into %I.%I (%s) overriding system value select %s from jsonb_populate_recordset(null::%I.%I, (select data from _hk_restore where tbl = %L))', sch, t, cols, cols, sch, t, t);
+      execute format('insert into %I.%I (%s) overriding system value select %s from jsonb_populate_recordset(null::%I.%I, {rows_of})', sch, t, cols, cols, sch, t, t);
       get diagnostics n = row_count;
     end if;
     res := res || jsonb_build_object(t, n);
@@ -83,34 +132,33 @@ begin
   if array_length(skipped, 1) > 0 then res := res || jsonb_build_object('_missing_in_target', to_jsonb(skipped)); end if;
   if dry then raise exception 'HK_DRY_OK %', res; end if;
   raise notice 'HK_DONE %', res;
-end $hkdo$;""")
-    parts.append("select 'ok' as status;")
-
-    with tempfile.NamedTemporaryFile('w', suffix='.sql', delete=False, encoding='utf-8') as f:
-        f.write('\n'.join(parts))
-        path = f.name
-    try:
-        r = subprocess.run(['supabase', 'db', 'query', '--linked', '-f', path], cwd=ROOT, capture_output=True, shell=(os.name == 'nt'))
-    finally:
-        os.unlink(path)
-    err = r.stderr.decode('utf-8', 'replace')
+end $hkdo$;
+select 'ok' as status;"""
+    rc, out = q(text, check=False)
     if dry:
-        if 'HK_DRY_OK' not in err:
-            sys.exit('הבדיקה היבשה נכשלה:\n' + err[-2000:])
-        txt = err.split('HK_DRY_OK', 1)[1]   # ההודעה עלולה להגיע מקודדת (\") ולכן קוראים את הספירות בביטוי רגולרי
-        got = {k: int(v) for k, v in re.findall(r'(harpatka_\w+)\\?"\s*:\s*(\d+)', txt)}
-        miss = re.search(r'_missing_in_target\\?"\s*:\s*\[([^\]]*)\]', txt)
+        if 'HK_DRY_OK' not in out:
+            sys.exit('הבדיקה היבשה נכשלה:\n' + out[-2000:])
+    elif rc or '"_tag":"Error"' in out:
+        sys.exit('ההחזרה נכשלה ושום דבר לא השתנה:\n' + out[-2000:])
+    return out
+
+
+def report(out, man, order, dry, schema):
+    if dry:
+        txt = out.split('HK_DRY_OK', 1)[1]   # ההודעה עלולה להגיע מקודדת (\") ולכן קוראים את הספירות בביטוי רגולרי
+        got = {k: int(v) for k, v in re.findall(r'(harpatka_\w+)[\\"]*\s*:\s*(\d+)', txt)}
+        miss = re.search(r'_missing_in_target[\\"]*\s*:\s*\[([^\]]*)\]', txt)
         if miss:
             got['_missing_in_target'] = re.findall(r'harpatka_\w+', miss.group(1))
     else:
-        if r.returncode:
-            sys.exit('ההחזרה נכשלה ושום דבר לא השתנה:\n' + err[-2000:])
         got = {t: None for t in order}
     bad = []
     for t in order:
         exp = man['counts'].get(t)
         g = got.get(t)
-        mark = '' if g is None or g == exp else '  <-- שונה'
+        if t in got.get('_missing_in_target', []):
+            continue
+        mark = '' if (g is None and not dry) or g == exp else '  <-- שונה'
         if mark:
             bad.append(t)
         print(f'  {t}: בגיבוי {exp}' + ('' if g is None else f', הוחזרו {g}') + mark)
