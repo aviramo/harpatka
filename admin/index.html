@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104af" />
+  <link rel="stylesheet" href="admin.css?v=20261104ag" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1002,6 +1002,7 @@
     if (sig === sheetSig) return; sheetSig = sig;
     renderNotes(); refreshSheetMeetings(); renderContact();
     if (pTab === 'wallet') renderWallet();   // מסך יתרה ותשלומים
+    if (allocDlg.open && allocHome && allocHome.key === 'credit' && sheet.refundSync) sheet.refundSync();
     if (allocDlg.open && allocHome && allocHome.key === 'deposit') { paintDepLines(); if (sheet.paintMeth) sheet.paintMeth(); }   // מסך הקצאות הכסף למפגש (לא נוגע בשדה הסכום שמוקלד)
   }
   /* ---------- טעינה ---------- */
@@ -3061,9 +3062,14 @@
     allocMount('credit'); $('#pAllocChip').hidden = true;
     $('#allocTitle').innerHTML = 'החזרת כסף <span class="tsubname">· ' + esc(pp.name) + '</span>';
     { const sub = $('#pViewSub'); sub.innerHTML = 'ללא קשר למפגש'; sub.classList.add('bold'); sub.hidden = false; }
-    pForm.pay_refund.value = cr; payCtx = null;
+    pForm.pay_refund.value = cr; pForm.pay_refund.max = cr; payCtx = null;
+    /* אי אפשר להחזיר יותר מהיתרה: הכפתור כבוי כשהסכום ריק, אפס או גדול מהיתרה הנוכחית (מתעדכן גם בזמן אמת) */
+    const refundOk = () => { const a = parseFloat(pForm.pay_refund.value); return a > 0 && a <= Math.max(0, creditOf(pid)) + 0.001; };
+    sheet.refundSync = () => { $('#creditRefundBtn').disabled = !refundOk(); };
+    pForm.pay_refund.oninput = sheet.refundSync; sheet.refundSync();
     $('#creditRefundBtn').onclick = async () => {
-      const amt = Math.min(parseFloat(pForm.pay_refund.value) || 0, cr); if (!(amt > 0)) { pForm.pay_refund.focus(); return; }
+      if (!refundOk()) return;
+      const amt = parseFloat(pForm.pay_refund.value);
       try { await addPayRecord(pid, null, 'refund', amt, null, null, true); toast('הוחזרו ₪' + nfm(amt) + ' למשתתף'); allocDlg.close(); } catch (err) { fail(err); }
     };
     allocDlg.showModal(); if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
@@ -3071,11 +3077,11 @@
   allocDlg.addEventListener('close', () => {
     allocUnmount();
     if (!sheet) return;
-    sheet.depMid = null; sheet.modeApi = null; sheet.paintMeth = null;
+    sheet.depMid = null; sheet.modeApi = null; sheet.paintMeth = null; sheet.refundSync = null;
     if (pDlg.open) { refreshSheetMeetings(); renderNotes(); if (pTab === 'wallet') renderWallet(); } else sheet = null;   // נפתח מהרשימה: אין כרטיס מאחור
     render();
   });
-  allocDlg.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.name && e.target.name.startsWith('pay_')) { e.preventDefault(); if (allocHome && allocHome.key === 'credit') $('#creditRefundBtn').click(); else $('#depSave').click(); } });
+  allocDlg.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.name && e.target.name.startsWith('pay_')) { e.preventDefault(); if (allocHome && allocHome.key === 'credit') { if (!$('#creditRefundBtn').disabled) $('#creditRefundBtn').click(); } else $('#depSave').click(); } });
   const closePayCard = () => { if (allocDlg.open) allocDlg.close(); };   // אחרי תשלום או הקצאה פופאפ ההקצאה נסגר, וכרטיס המשתתף (אם פתוח) נשאר כמו שהוא
   const depSaveRun = async () => {
     const f = pForm, pid = sheet && sheet.id; const amt = parseFloat(f.pay_dep.value); if (!pid) return;
