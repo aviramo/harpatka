@@ -507,7 +507,7 @@
     const ilsF = (n) => '₪' + Math.round(Math.abs(n)).toLocaleString('he-IL'), payA = root.querySelector('[data-paybox]'), crN = q('crnote'), crB = q('paycredit');
     if (payA) { payA.hidden = useCr; const pe = payA.querySelector('[data-price]'); if (pe && payAmt > 0) pe.textContent = payAmt + ' ₪'; }
     if (crB) { crB.hidden = !useCr; crB.disabled = false; crB.textContent = 'תשלום מהקרדיט · ' + ilsF(Math.min(credit, price)); }
-    if (crN) { const t = crFull ? 'יש לכם קרדיט ' + ilsF(credit) + '. התשלום יורד מהקרדיט, ויישאר ' + ilsF(credit - price) : useCr ? 'הקרדיט כולו (' + ilsF(credit) + ') ינוצל על המפגש, ונשאר לשלם ' + ilsF(price - credit) + ' בפייבוקס' : rem ? 'שולם מהקרדיט ' + ilsF(x.paid) + '. נשאר לשלם ' + ilsF(rem) : ''; crN.textContent = t; crN.hidden = !t; }
+    if (crN) { const t = crFull ? 'יש לכם קרדיט ' + ilsF(credit) + '. התשלום יורד מהקרדיט, ויישאר ' + ilsF(credit - price) : useCr ? 'הקרדיט כולו (' + ilsF(credit) + ') ינוצל על המפגש, ונשאר לשלם ' + ilsF(price - credit) + ' בפייבוקס' : rem ? 'שולם ' + ilsF(x.paid) + '. נשאר לשלם ' + ilsF(rem) : ''; crN.textContent = t; crN.hidden = !t; }
     root.dataset.regState = '1';
     btn.hidden = true;
     root.querySelectorAll('.su-fold:not(.su-after)').forEach((f) => f.classList.add('shut'));
