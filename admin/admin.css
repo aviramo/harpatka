@@ -379,9 +379,10 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 /* גיל ומגדר: אריח ברוחב קבוע; רקע רק כשיש דרך הגעה (צבע הערוץ מהקוד) */
 #pPromoSel option { background: var(--bg); color: var(--text); font-weight: 400; }   /* הרשימה הנפתחת בצבע רגיל גם כשהשדה צבוע */
 .row .meta .age, .tchip { min-width: 44px; padding: 0 4px; background: transparent; color: var(--text-2); }
-.row .meta .age { grid-column: 1; }
+.row .meta .age { grid-column: 1; text-align: start; }   /* הגיל מימין ואחריו האות (ז / נ), והטקסט מתחיל בקצה הימני של העמודה (5px מהקצה: גבול ורפוד), כך שהמונה בשורת הסינון מיושר איתו */
 .row .meta .age .gl, .tchip b { color: var(--text); font-weight: 800; }
 .row .meta .age[style] .gl, .tchip[style] b { color: inherit; }
+.row .meta .age[style] { justify-self: start; min-width: 0; }   /* תגית צבעונית (דרך הגעה): רקע בגודל הטקסט, צמוד לקצה הימני של העמודה, כדי שהטקסט עדיין מיושר עם המונה בלי רווח ריק בצד שמאל */
 .row .meta .age:not([title]) { grid-column: 5; }
 .row .sidewrap { grid-column: 5; grid-row: 1; display: inline-flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0; }
 .row .main.bl .sidewrap { justify-content: flex-end; }
@@ -962,7 +963,7 @@ html.is-loading .hgrp { visibility: hidden; }
 .wrap > .vbar { flex: 0 0 calc(var(--ctl) + 1px); height: calc(var(--ctl) + 1px); background: var(--bg); border-bottom: 2px solid var(--line); }   /* מתחת לשורת החיפוש, באותו גובה, ומעל הרשימה; הקו מעל השורה הראשונה בעובי 2px (לבקשת בעל האתר) */
 :is(#filtBtn, #sortBtnH) { width: var(--tag); min-width: var(--tag); height: var(--tag); padding: 0; border: 0; background: transparent; color: var(--text); }   /* סינון ומיון: סמל בלבד, בלי רקע אפור */
 #listTags.vbar .stc:not([aria-pressed="true"]) { background: transparent; }
-.vbar .listcount { flex: 0 0 var(--agecol); min-width: var(--agecol); }   /* המונה במרכז תגית הגיל שמתחתיו (אותה עמודה, אותו רוחב) */
+.vbar .listcount { flex: 0 0 var(--agecol); min-width: var(--agecol); box-sizing: border-box; padding-inline-start: 5px; text-align: start; }   /* המונה באותה עמודה ובאותו רוחב של תגית הגיל, וקצהו הימני בקו אחד עם קצה הגיל (אותם 5px מהקצה) */
 #listTags.vbar .listcount + .stc { margin-inline-start: -9px; }   /* "זכר" מיושר לימין עם השם בשורות: הטקסט בקו אחד (הריפוד הפנימי של התגית 9px, כולל הגבול השקוף) */   /* זכר / נקבה בשורת הסינון: בלי רקע אפור; נבחר נשאר מלא בשחור */
 :is(#filtBtn, #sortBtnH) svg { width: 16px; height: 16px; }
 :is(#filtBtn, #sortBtnH).on:not(:hover) { background: transparent; }
