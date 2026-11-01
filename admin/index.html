@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104by" />
+  <link rel="stylesheet" href="admin.css?v=20261104bz" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -4554,16 +4554,18 @@
     const noCol = stScope === 'participant';   // תוויות משתתף בלי צבעים
     /* ציון התמדה: בחירה פשוטה בין מינוס 5 ל-5 (רק לסטטוס במפגש ואחרי המפגש) */
     const ptsSel = (s) => '<select class="stpts" data-pts="' + s.key + '" aria-label="ציון התמדה" title="ציון התמדה">' + [5, 4, 3, 2, 1, 0, -1, -2, -3, -4, -5].map((n) => '<option value="' + n + '"' + (Number(s.points || 0) === n ? ' selected' : '') + '>' + (n > 0 ? '+' + n : n) + '</option>').join('') + '</select>';
+    /* שם הסטטוס בצבע שלו; ניטרלי ותגית (בלי צבע): שדה לבן עם מסגרת, כי אפור רק בכפתורים */
+    const nameStyle = (s) => (noCol || s.color === 'neutral') ? 'background:var(--bg);color:' + (noCol ? 'var(--text)' : 'var(--gray)') + ';box-shadow:inset 0 0 0 1px var(--line-2)' : 'background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1];
     const mkRows = (arr, pts) => arr.map((s) => (s.key === sys)
       ? '<div class="strow locked" data-k="' + s.key + '">' +
       '<span class="stlockic" title="המיקום קבוע: תמיד ראשון">' + icon('lock', 'i18') + '</span>' +
-      '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם סטטוס המערכת" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1] + '" />' +
+      '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם סטטוס המערכת" style="' + nameStyle(s) + '" />' +
       '<button type="button" class="swcur" data-c="' + s.color + '" aria-haspopup="menu" aria-label="צבע: ' + (PALETTE[s.color] || PALETTE.sky)[2] + ' (לחיצה לשינוי)" title="שינוי צבע" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + '"></button>' +
       (pts ? ptsSel(s) : '<span class="stspacer" style="flex-basis:30px" aria-hidden="true"></span>') +
       '<small class="stcap">סטטוס מערכת: ברירת המחדל בשיוך משתתף למפגש</small></div>'
       : '<div class="strow' + (s._d ? ' draft' : '') + '" data-k="' + s.key + '"' + (s._d ? ' data-draft="1"' : '') + '>' +
       '<button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר"' + (s._d ? ' disabled' : '') + '>' + icon('grip', 'i18') + '</button>' +
-      '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם הסטטוס"' + (s._d ? ' placeholder="' + (noCol ? 'שם התגית' : 'שם הסטטוס') + '" autocomplete="off" enterkeyhint="done"' : '') + ' style="' + (noCol ? 'background:#fff;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)' : 'background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1]) + '" />' +
+      '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם הסטטוס"' + (s._d ? ' placeholder="' + (noCol ? 'שם התגית' : 'שם הסטטוס') + '" autocomplete="off" enterkeyhint="done"' : '') + ' style="' + nameStyle(s) + '" />' +
       (noCol ? '' : '<button type="button" class="swcur" data-c="' + s.color + '" aria-haspopup="menu" aria-label="צבע: ' + (PALETTE[s.color] || PALETTE.sky)[2] + ' (לחיצה לשינוי)" title="שינוי צבע" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + '"></button>') +
  (pts ? ptsSel(s) : '') + (s._d ? '<button type="button" class="stdel" data-dcancel="1" aria-label="ביטול" title="ביטול">×</button>' : s.key !== SYSTEM_STATUS ? '<button type="button" class="stdel" data-del="' + s.key + '" aria-label="מחיקת הסטטוס" title="מחיקת הסטטוס">×</button>' : '') + '</div>').join('');
     const dRow = { key: stDraft ? stDraft.key : '', label: '', color: 'neutral', points: 0, _d: true };

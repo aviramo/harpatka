@@ -257,7 +257,7 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 .vsw.on::after { transform: translateX(-18px); }
 
 /* 3.8 פאנל: קבוצת תוכן באפור בהיר, בלי מסגרת. שורות בתוכו עם קו מפריד */
-.setgrp, .srccard, .pmrow, .strow, .gacc, .bdc, .prrow, .topic, .stsec, .fsc, .ins, .dline, .tb, .cwhy { background: var(--surface); border: 0; }
+.srccard, .gacc, .bdc, .prrow, .topic, .stsec, .fsc, .ins, .dline, .tb, .cwhy { background: var(--surface); border: 0; }
 
 /* 3.9 שכבה צפה (תפריט): לבן, גבול דק, צל אחד. כל התפריטים בדף */
 .qmenu, .sortmenu, .hmenu, #fMenu, #viewMenu, #moreMenu, #finPerMenu, .colmenu, .attmenu {
@@ -780,7 +780,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 
 /* 6.4 הגדרות */
 #setDlg .sheet-head { position: relative; }
-#setDlg .setgrp { padding: 4px 12px; margin-bottom: 16px; }
+#setDlg .setgrp { padding: 0; margin-bottom: 16px; }
 #setDlg .settitle { padding: 8px 0 0; margin: 0; }
 #setDlg .setrow { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 0; text-align: right; background: none; }
 #setDlg .setgrp > .setrow:last-child { border-bottom: 0; }
@@ -794,14 +794,16 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 #setDlg .sethead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 #setDlg .setfield span { font-size: 13px; font-weight: 600; color: var(--text-2); }
 #setDlg .setinp { font-weight: 600; }
-#setDlg .setval { display: flex; align-items: center; justify-content: flex-end; min-height: var(--ctl); padding: 0 12px; background: var(--surface-2); color: var(--text); font-size: 16px; font-weight: 600; text-align: right; overflow-wrap: anywhere; user-select: text; }   /* חשבון הגוגל המחובר: לקריאה בלבד, בלי מסגרת של שדה */
+#setDlg .setval { display: flex; align-items: center; justify-content: flex-end; color: var(--text); font-size: 16px; font-weight: 600; text-align: right; overflow-wrap: anywhere; user-select: text; }   /* חשבון הגוגל המחובר: לקריאה בלבד, בלי מסגרת של שדה */
 #emText { height: auto !important; padding: 12px !important; line-height: 1.55; font-size: 15.5px; }
 .emvars { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 12px; }
 .emvars button { background: var(--surface-2); color: var(--text); border-color: transparent; }
 /* שורת סטטוס / תגית / דרך תשלום: ידית, שם, צבע, מחיקה */
-.pmrow { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding: 8px; }
+.pmrow { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; padding: 0; background: transparent; border: 0; }
 /* שורת סטטוס / תגית: עמודות קבועות בכל השורות (ידית או מנעול, שם, צבע, ציון התמדה, מחיקה), כך שהצבע, הציון והמחיקה מיושרים אנכית גם בשורות שאין בהן ציון או מחיקה */
-.strow { display: grid; grid-template-columns: var(--ib) minmax(0, 1fr) var(--ib) 60px var(--ib); align-items: center; gap: 8px; margin-bottom: 8px; padding: 8px; }
+.strow { display: grid; grid-template-columns: 28px minmax(0, 1fr) 28px 56px 28px; align-items: center; gap: 2px 8px; margin-bottom: 4px; padding: 0; background: transparent; border: 0; }   /* סטטוסים ותגיות: קומפקטי, בלי רקע (אפור רק בכפתורים) */
+.strow .sthandle, .strow .stdel, .pmrow .sthandle, .pmrow .stdel { flex: 0 0 28px; width: 28px; height: 32px; }
+.strow .swcur { width: 28px; height: 28px; }
 .strow .sthandle, .strow .stlockic { grid-column: 1; }
 .strow .stname { grid-column: 2; }
 .strow:not(:has(.swcur)) .stname { grid-column: 2 / 5; }   /* תגיות משתתף: בלי צבע וציון, השם תופס את העמודות שביניהם */
@@ -812,14 +814,15 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .strow.dragging, .pmrow.dragging { position: relative; z-index: 5; background: var(--bg); box-shadow: var(--pop); }
 .strow.dragging .sthandle, .pmrow.dragging .sthandle { cursor: grabbing; }
 .strow .stname, .srccard .stname { flex: 1 1 0; min-width: 0; height: 36px; padding: 0 8px; border: 0; font-size: 15.5px; font-weight: 600; text-align: right; }
+.strow .stname { height: 32px; }
 .strow .stname:focus, .srccard .stname:focus { outline: 1px solid var(--text); outline-offset: 1px; }
 .strow .stspacer { flex: 0 0 var(--ib); }
-.strow .stlockic { flex: 0 0 auto; width: var(--ib); height: var(--ib); display: grid; place-items: center; color: var(--text-2); }
-.strow .stpts { flex: 0 0 60px; width: 100%; height: 36px; padding: 0 4px; border: 0; background: var(--bg); color: var(--text); font: inherit; font-size: 15px; font-weight: 700; direction: ltr; text-align: center; text-align-last: center; }   /* ציון התמדה: בחירה בין 5- ל-5 */
-.strow .stcap { grid-column: 1 / -1; padding: 0 4px; font-size: 12.5px; font-weight: 600; color: var(--text-2); }
+.strow .stlockic { flex: 0 0 auto; width: 28px; height: 32px; display: grid; place-items: center; color: var(--text-2); }
+.strow .stpts { flex: 0 0 56px; width: 100%; height: 32px; padding: 0 4px; border: 1px solid var(--line-2); background: var(--bg); color: var(--text); font: inherit; font-size: 15px; font-weight: 700; direction: ltr; text-align: center; text-align-last: center; }   /* ציון התמדה: בחירה בין 5- ל-5 */
+.strow .stcap { grid-column: 2 / -1; padding: 0; font-size: 12.5px; font-weight: 600; color: var(--text-2); }
 .strow .swcur, .srccard .swcur { box-shadow: none; }   /* ריבוע צבע מלא, בלי טבעת ובלי מסגרת */
-.pmrow .pmname { flex: 1 1 auto; min-width: 0; height: 40px; font-weight: 600; }
-.pmrow .pmown { flex: 0 0 124px; width: 124px; height: 40px; font-size: 14px; }
+.pmrow .pmname { flex: 1 1 auto; min-width: 0; height: 32px; font-weight: 600; }
+.pmrow .pmown { flex: 0 0 124px; width: 124px; height: 32px; font-size: 14px; }
 #stListAfter { margin-bottom: 4px; }
 /* דרך הגעה: כרטיס עם שם, צבע, סוג עלות, קוד וסכום, והתחשבנות */
 .srccard { display: grid; gap: 12px; margin-bottom: 12px; padding: 12px; }
