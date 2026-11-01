@@ -181,11 +181,11 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 .metric[aria-pressed="true"] { background: var(--line); }   /* כרטיס שמסנן: מילוי כהה יותר, בלי מסגרת */
 /* קבוצת כרטיסים: רשת של שניים (בכספים, ביתרה, בסטטיסטיקות) או שלושה (שורה תחתונה, נושא) */
 .finsum, .walsum, .prsum, .stkpis { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-/* סיכום הכספים: בלי אפור, כל כרטיס ברקע בהיר בצבע שלו. כרטיס שמסנן מסומן במסגרת */
-.finsum .metric { background: transparent; }
-.finsum .metric.pos { background: var(--green-bg); }
-.finsum .metric.neg { background: var(--red-bg); }
-.finsum .metric.yel { background: var(--yellow-bg); }
+/* סיכום הכספים והיתרה: בלי אפור, כל כרטיס ברקע בהיר בצבע שלו. כרטיס שמסנן מסומן במסגרת */
+.finsum .metric, .walsum .metric { background: transparent; }
+.finsum .metric.pos, .walsum .metric.pos { background: var(--green-bg); }
+.finsum .metric.neg, .walsum .metric.neg { background: var(--red-bg); }
+.finsum .metric.yel, .walsum .metric.yel { background: var(--yellow-bg); }
 .finsum .metric[aria-pressed="true"] { border-color: var(--text); }
 .stbottom, .topic .tnums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .stbottom { margin-bottom: 12px; }
@@ -601,7 +601,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .mtadd { flex: 0 0 28px; position: relative; display: flex; align-items: center; justify-content: center; min-height: 0; padding: 0; border: 0; background: transparent; color: var(--text); cursor: pointer; }   /* שטח הלחיצה מתרחב מעבר ל-28px (לפי הסקיל: 44px ומעלה) כלפי מעלה, אל שורת המספר שלא לחיצה, ועד קצה האריח */
 .mtadd::before { content: ""; position: absolute; inset: -12px 0 -5px; }
 .mtadd[hidden] { display: none; }
-.mtadd svg { position: relative; width: 24px; height: 24px; stroke-width: 2.4; }
+.mtadd svg, .mlist .mrow .mmoney.mplus svg { position: relative; width: 24px; height: 24px; margin: 0; stroke-width: 2.4; }
 /* אפקט הלחיצה על כל האריח (לא רק על הפלוס): ריחוף בעכבר ולחיצה בנגיעה, כשאפשר לשייך למפגש (1.11.26) */
 .mtile:has(.mtadd:not([hidden])) { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 @media (hover: hover) { .mtile:has(.mtadd:not([hidden])):hover { background: var(--line); } }
@@ -617,15 +617,10 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .mlist .mrow .mlabel { grid-column: 1; grid-row: 1; width: 100%; background: transparent; color: var(--text); font-weight: 500; }
 .mlist .mrow.hl .mlabel { background: transparent; color: var(--text); font-weight: 800; }
 .mlist .mrow.hl { background: var(--surface-2); }
-.mlist .mrow .pay { grid-column: 1; grid-row: 2; width: 100%; padding: 0 4px; }   /* הצבע מהסטטוס עצמו (applyStatuses); בלי ברירת מחדל אדומה שדרסה אותו */
+.mlist .mrow .pay { grid-column: 1; grid-row: 2; width: 100%; padding: 0; }   /* הצבע מהסטטוס עצמו (applyStatuses); בלי ברירת מחדל אדומה שדרסה אותו */
 .mlist .mrow .pay.none { color: var(--text-2); }
 .mlist .mrow .pay, .mlist .mrow .pay.none { background: transparent; border-color: transparent; }   /* סטטוס המפגש בכרטיס: בלי רקע, הצבע שלו בטקסט בלבד (1.11.26) */
 .mlist .mrow .mline { display: contents; }
-/* מפגש דמה: משתתף שנפתח מתוך מפגש שהוא עוד לא משויך אליו (31.10.26); בגודל של מפגש רגיל */
-.mlist .mrow.dummy { padding: 0; background: transparent; border: 0; border-inline-end: 1px solid var(--line-2); min-height: var(--mrow-h); }
-.mlist .mrow.dummy .mdummy { grid-column: 1 / -1; grid-row: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; width: 100%; height: 100%; border: 0; background: transparent; color: var(--text-2); cursor: pointer; font-family: inherit; }
-.mlist .mrow.dummy .mdl { font-size: 15px; font-weight: 700; color: var(--text); }
-.mlist .mrow.dummy .mdd { font-size: 14px; font-weight: 700; }
 .mlist .mrow .mmoney { width: 100%; padding: 0 4px; }
 .mlist .mrow .mmoney { grid-column: 1; grid-row: 3; }
 .mlist .mrow .mmoney, .mlist .mrow .mmoney.free { background: transparent; }   /* מצב תשלום בכרטיס המפגש: שולם (הוקצה כסף) ודווח עם רקע, לא שולם וחינם בלי רקע (1.11.26) */
@@ -633,6 +628,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .mlist .mrow .mmoney.has { color: var(--green); }
 .mlist .mrow .mmoney.wait { color: var(--yellow); }
 .mlist .mrow .mmoney.free { color: var(--text-2); }
+.mlist .mrow .mmoney.mplus { display: flex; align-items: center; justify-content: center; color: var(--text); text-decoration: none; }   /* עוד לא משויך: פלוס במקום התשלום, כמו באריח */
 .more { display: block; width: 100%; height: var(--ctl); margin: 4px 0 8px; border: 1px solid transparent; background: var(--surface-2); color: var(--text); font-weight: 600; font-size: 15px; }
 /* הערה חדשה: שדה וצירוף צילום מסך */
 .nform { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 12px; border-bottom: 1px solid var(--line-2); }   /* הערה חדשה: בלי מסגרת, קו תחתון אחד לכל הרוחב, שכולל גם את כפתור התמונה (1.11.26) */
