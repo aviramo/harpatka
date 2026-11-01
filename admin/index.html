@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104d" />
+  <link rel="stylesheet" href="admin.css?v=20261104f" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -441,6 +441,8 @@
     usercheck: ['s', '<circle cx="10" cy="8" r="4"/><path d="M3 21c0-4.4 3.1-7 7-7 1.3 0 2.5.3 3.5.8"/><path d="M15.5 18l2.2 2.2L22 15.8"/>'],
     userx: ['s', '<circle cx="10" cy="8" r="4"/><path d="M3 21c0-4.4 3.1-7 7-7 1.3 0 2.5.3 3.5.8"/><path d="M16 16l5 5M21 16l-5 5"/>'],
     ban: ['s', '<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>'],   // חשבון גוגל חסום
+    male: ['s', '<circle cx="10" cy="14" r="5.5"/><path d="M14 10l6-6M15 4h5v5"/>'],   // סמל זכר (♂), בתגית הגיל והמגדר
+    female: ['s', '<circle cx="12" cy="9" r="5.5"/><path d="M12 14.5V21M9 18h6"/>'],   // סמל נקבה (♀)
     shield: ['s', '<path d="M12 3l8 3v6c0 4.8-3.4 8.4-8 9-4.6-.6-8-4.2-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-4.5"/>'],   // מחובר לחשבון גוגל
     trash: ['s', '<path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v6M14 11v6"/>'],   // משתתף מחוק
     user: ['s', '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>'],
@@ -1368,7 +1370,7 @@
     $('#facets').classList.toggle('searching', !!q);
     $('#facets').innerHTML = '';   // המגדר והסטטוס עברו לפס הצ'יפים (#stStrip)
     /* כל הסטטוסים (בתוך מפגש) או התגיות (בתצוגת הכל) כצ'יפים מעל הסינונים, ממורכזים ועוברים שורה: לחיצה מסננת (בחירה מרובה) */
-    const gchip = (g, label, cls) => { const n = nG(g); return '<button type="button" class="stc ' + cls + (n || eg === g ? '' : ' zero') + '" data-stg="' + g + '" aria-pressed="' + (eg === g) + '" title="' + label + '">' + label + ' <small>' + n + '</small></button>'; };
+    const gchip = (g, label, cls) => { const n = nG(g), sym = g === 'male' || g === 'female'; return '<button type="button" class="stc ' + cls + (n || eg === g ? '' : ' zero') + '" data-stg="' + g + '" aria-pressed="' + (eg === g) + '" title="' + label + '" aria-label="' + label + ' ' + n + '">' + (sym ? icon(g, 'i16') : label) + ' <small>' + n + '</small></button>'; };   // זכר / נקבה כסמל (♂ / ♀) ולא כמילה
     const anyF = !!(eg || effPaidF() || effSent() || effBal() || effAttF() || moreOn());
     const gHtml = state.showGender ? gchip('male', 'זכר', 'gm') + gchip('female', 'נקבה', 'gf') + (eg === 'none' ? gchip('none', 'ללא מגדר', 'gm') : '') : '';   // זכר / נקבה עם הכמויות בשורת הסינון והמיון (ליד תגית הסינון), תמיד כשהטוגל "מגדר" דולק (גם כשברשימה רק גברים או רק נשים)
     const evOn = !!(state.filter && sentView(state.meetings.find((x) => x.id === state.filter)));   // סינון השליחה מוצג כשהטוגל דולק (גם כשאף אחד עוד לא זכאי)
@@ -1530,7 +1532,7 @@
         (wa ? UI.tag(wsel ? (wsent ? icon('check') : PIN_ICON) : WA_ICON, 'ico rowwa' + (wsent ? ' sent' : ''), Object.assign({ href: wa }, /^https?:/.test(wa) ? { target: '_blank', rel: 'noopener' } : {}, wsel ? { 'data-wsend': p.id } : {}, { 'aria-label': 'וואטסאפ ל' + esc(p.name) + (wsent ? ', ההודעה נשלחה' : ''), title: wsel ? esc(wsent ? 'נשלחה ההודעה "' + wsel.name + '" · ' + fmtDT(wsent.sent_at) + ' · לחיצה לביטול הסימון' : 'וואטסאפ עם ההודעה: ' + wsel.name) : 'וואטסאפ' }), 'a') : UI.tag(WA_ICON, 'ico rowwa nophone', { role: 'img', 'aria-label': 'אין טלפון', title: 'אין טלפון' })) +
         '<div class="main' + ' hasw' + (anyEv ? ' ev' : '') + (!state.filter && state.showPay ? ' bl' + (state.showAtt === false ? ' nosum' : '') : '') + '" role="button" tabindex="0" data-edit="' + p.id + '">' +
           '<div class="nm"><span class="name' + nameCls(p) + '" dir="rtl">' + nameMark(p) + '</span>' + '</div>' +   // רק השם מבודד (שם באנגלית לא הופך את השורה), וסמל החשבון תמיד משמאל לשם
-          (true ? '<div class="meta">' + (true ? '<span class="age' + (originOf(p) ? ' ' + originOf(p).kind : '') + '"' + originAttr(p) + ' title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi>' + (age != null ? age : (p.gender ? '' : '—')) + (p.gender ? (age != null ? ' ' : '') + '<b class="gl">' + (p.gender === 'male' ? 'ז' : 'נ') + '</b>' : '') + '</bdi></span>' : '') + '<span class="sidewrap">' + side + tags + payIc + '</span>' + '</div>' : '') +
+          (true ? '<div class="meta">' + (true ? '<span class="age' + (originOf(p) ? ' ' + originOf(p).kind : '') + '"' + originAttr(p) + ' title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi dir="rtl">' + (age != null ? age : (p.gender ? '' : '—')) + (p.gender ? (age != null ? ' ' : '') + '<b class="gl">' + icon(p.gender === 'male' ? 'male' : 'female', 'i14') + '</b>' : '') + '</bdi></span>' : '') + '<span class="sidewrap">' + side + tags + payIc + '</span>' + '</div>' : '') +
           // הערה אחרונה וסימון צירוף תמונה לא מוצגים ברשימה (הערות רק בכרטיס המשתתף)
           evc +
           (!state.filter && state.showPay ? (() => { const b = Math.round(creditOf(p.id) * 100) / 100; const fa = b === 0 && freeAll(p); return '<span class="balic ' + (b > 0 ? 'pos' : b < 0 ? 'neg' : fa ? 'fr' : 'zero') + '" title="' + (b > 0 ? 'זכאי: יתרה לטובתו ₪' + nfm(b) : b < 0 ? 'חייב: יתרת חובה ₪' + nfm(-b) : fa ? 'חינם: בכל המפגשים שנרשם אליהם' : 'מאוזן') + '">₪</span>'; })() : '') +
@@ -3318,7 +3320,7 @@
     const o = originOf(p), cls = o ? ' ' + o.kind : '';   // צבע התגית לפי דרך ההגעה (צבע שנבחר בהגדרות)
     const src = o ? (o.kind === 'pr' ? ' · דרך הגעה: ' : ' · פרסום: ') + o.name : '';
     h.title = 'פרטי המשתתף' + src;
-    h.innerHTML = (age != null || p.gender ? '<span class="tchip' + cls + '"' + originAttr(p) + '><bdi>' + (age != null ? age : '') + (p.gender ? (age != null ? ' ' : '') + '<b>' + (p.gender === 'male' ? 'ז' : 'נ') + '</b>' : '') + '</bdi></span>' : '') + '<span class="tname' + nameCls(p) + '" dir="rtl"><bdi>' + esc(p.name) + '</bdi></span>';
+    h.innerHTML = (age != null || p.gender ? '<span class="tchip' + cls + '"' + originAttr(p) + '><bdi dir="rtl">' + (age != null ? age : '') + (p.gender ? (age != null ? ' ' : '') + '<b>' + icon(p.gender === 'male' ? 'male' : 'female', 'i16') + '</b>' : '') + '</bdi></span>' : '') + '<span class="tname' + nameCls(p) + '" dir="rtl"><bdi>' + esc(p.name) + '</bdi></span>';
     /* סמל המצב (מחובר לחשבון, חסום, מחוק) כאייקון קטן בפינה הימנית התחתונה של כפתור פרטי המשתתף, ולא ליד השם */
     const ib = $('#pInfoBtn'), mk = stMark(p);
     if (ib) {
