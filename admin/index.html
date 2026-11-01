@@ -468,6 +468,12 @@
   };
 
   /* חזרה בדפדפן: כל פתיחת פופאפ וכל כניסה למסך משנה בתוכו מוסיפות רשומת היסטוריה; חזרה בדפדפן חוזרת צעד אחד (מסך משנה ← המסך הראשי ← סגירה), וסגירה או חזרה בכפתורי המסך מנקות את הרשומות */
+  /* הגבול התחתון של תפריטים צפים (1.11.26): מעל האזור הבטוח בתחתית (פס המחוות / הבית של המכשיר, --safe-b, לפחות 28px), לא קרוב לקצה המסך; תפריט שלא נכנס מתחת לכפתור נפתח מעליו */
+  function menuBottom() {
+    let pr = document.getElementById('safeProbe');
+    if (!pr) { pr = document.createElement('div'); pr.id = 'safeProbe'; pr.setAttribute('aria-hidden', 'true'); pr.style.cssText = 'position:fixed;left:0;bottom:0;width:0;height:var(--safe-b);visibility:hidden;pointer-events:none'; document.body.appendChild(pr); }
+    return window.innerHeight - Math.max(8, pr.offsetHeight);
+  }
   const NAV = { stack: [], ignore: 0, fromPop: false };
   const NAV_BACK = { pDlg: '#pBack', setDlg: '#setBack', stDlg: '#stArrow', prDlg: '#prArrow', finDlg: '#finArrow' };
   const navDepthOf = (d) => {
@@ -2185,7 +2191,7 @@
     menu.hidden = false; fitQMenu(menu);   // רוחב התפריט לפי התוכן (השורה הרחבה ביותר של הצ'יפים), לא קבוע
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
     let left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8), top = r.bottom + 8;
-    if (top + mh > window.innerHeight - 8) top = Math.max(8, r.top - mh - 8);
+    if (top + mh > menuBottom()) top = Math.max(8, r.top - mh - 8);
     menu.style.left = left + 'px'; menu.style.top = top + 'px';
     menu.onclick = (e) => {
       const ed = e.target.closest('[data-qedit]'); if (ed) { openStatusSettings(ed.dataset.qedit); return; }
@@ -2210,7 +2216,7 @@
     menu.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
     const lefts = [anchor, $('#pMeetN')].filter((x) => x && !x.hidden && x.offsetWidth).map((x) => x.getBoundingClientRect().left);   // הקצה השמאלי של התגית כולה (המונה ו"+ שיוך למפגש" צמודים)
-    menu.style.left = Math.min(Math.max(8, Math.min(...lefts)), window.innerWidth - mw - 8) + 'px'; menu.style.top = (r.bottom + 8 + mh > window.innerHeight - 8 ? Math.max(8, r.top - mh - 8) : r.bottom + 8) + 'px';
+    menu.style.left = Math.min(Math.max(8, Math.min(...lefts)), window.innerWidth - mw - 8) + 'px'; menu.style.top = (r.bottom + 8 + mh > menuBottom() ? Math.max(8, r.top - mh - 8) : r.bottom + 8) + 'px';
     menu.onclick = (e) => { const b = e.target.closest('[data-am]'); if (!b) return; closeQ(); setLinkedWithStatus(pid, b.dataset.am, 'unpaid'); const m = state.meetings.find((x) => x.id === b.dataset.am); toast('שויך למפגש' + (m ? ' ' + dmShort(m) : '')); };
   });
   /* סטטוס משתתף (כללי): נפרד מסטטוס המפגש */
@@ -2243,7 +2249,7 @@
     menu.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
     let left = Math.min(Math.max(8, r.left + r.width / 2 - mw / 2), window.innerWidth - mw - 8), top = r.bottom + 8;
-    if (top + mh > window.innerHeight - 8) top = Math.max(8, r.top - mh - 8);
+    if (top + mh > menuBottom()) top = Math.max(8, r.top - mh - 8);
     menu.style.left = left + 'px'; menu.style.top = top + 'px';
     menu.onclick = (e) => { const ed = e.target.closest('[data-qedit]'); if (ed) { openStatusSettings(ed.dataset.qedit); return; }       const b = e.target.closest('[data-sf]'); if (!b) return; const k = b.dataset.sf; if (!k) { state.pay = null; closeQ(); } else { const cur = payKeys(state.pay), nx = cur.includes(k) ? cur.filter((x) => x !== k) : cur.concat(k); state.pay = nx.length ? nx.join(',') : null; }   /* בחירה מרובה: התפריט נשאר פתוח */
       menu.querySelectorAll('[data-sf]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.sf ? payKeys(state.pay).includes(x.dataset.sf) : !state.pay))); render(); syncUrl(); };
@@ -2827,7 +2833,7 @@
     menu.innerHTML = (rpt ? '<button type="button" role="menuitem" class="qi rej" data-md="reject" aria-pressed="false">דחיית דיווח</button>' : '') + (fr ? '<button type="button" role="menuitem" class="qi" data-md="pay" aria-pressed="false">לתשלום</button>' : (alv > 0 ? '<button type="button" role="menuitem" class="qi del" data-md="del" aria-pressed="false">מחיקת הקצאה</button>' : '') + '<button type="button" role="menuitem" class="qi free" data-md="free" aria-pressed="false"><span class="nps">₪</span>חינם</button>');   // בדיוק כמו המצבים בכרטיס המפגש: לתשלום (ניטרלי), חינם (לבן עם ₪ מחוק)
     menu.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
-    menu.style.left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8) + 'px'; menu.style.top = (r.bottom + 8 + mh > window.innerHeight - 8 ? Math.max(8, r.top - mh - 8) : r.bottom + 8) + 'px';   // בפופאפ הקטן שבתחתית המסך אין מקום מתחת לצ'יף: התפריט נפתח מעליו
+    menu.style.left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8) + 'px'; menu.style.top = (r.bottom + 8 + mh > menuBottom() ? Math.max(8, r.top - mh - 8) : r.bottom + 8) + 'px';   // בפופאפ הקטן שבתחתית המסך אין מקום מתחת לצ'יף: התפריט נפתח מעליו
     menu.onclick = (e) => {
       const b = e.target.closest('[data-md]'); if (!b) return; closeQ();
       const to = b.dataset.md, mapi = sheet.modeApi, pid = sheet.id, mid = sheet.depMid;
@@ -4246,7 +4252,7 @@
     m.dataset.pid = pid; m.hidden = false;
     const r = chip.getBoundingClientRect(), w = m.offsetWidth, h = m.offsetHeight;
     m.style.left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), window.innerWidth - w - 8) + 'px';
-    m.style.top = (r.bottom + h + 8 > window.innerHeight - 8 ? Math.max(8, r.top - h - 8) : r.bottom + 8) + 'px';
+    m.style.top = (r.bottom + h + 8 > menuBottom() ? Math.max(8, r.top - h - 8) : r.bottom + 8) + 'px';
   }
   window.addEventListener('scroll', () => { const m = $('#cntMenu'); if (m && !m.hidden) { m.hidden = true; m.dataset.pid = ''; } }, true);
   const listClick = (e) => {
@@ -4698,7 +4704,7 @@
     m.hidden = false;
     const r = anchor.getBoundingClientRect(), mw = m.offsetWidth, mh = m.offsetHeight;
     m.style.left = Math.min(Math.max(8, r.left + r.width / 2 - mw / 2), window.innerWidth - mw - 8) + 'px';
-    m.style.top = (r.bottom + 8 + mh > window.innerHeight - 8 ? Math.max(8, r.top - mh - 8) : r.bottom + 8) + 'px';
+    m.style.top = (r.bottom + 8 + mh > menuBottom() ? Math.max(8, r.top - mh - 8) : r.bottom + 8) + 'px';
     m.onclick = (e) => { const sw = e.target.closest('.sw'); if (!sw) return; m.hidden = true; if (onPickOverride) onPickOverride(sw.dataset.c); else saveStatus(key, { color: sw.dataset.c }); };
   }
   /* סדר הסטטוסים: גוררים בידית (עכבר או מגע) ומחליפים מקום; נשמר ברגע הפיסול. במקלדת: חצים על הידית */
