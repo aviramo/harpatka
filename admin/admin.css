@@ -623,6 +623,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .mlist .mrow .mmoney { width: 100%; padding: 0 4px; }
 .mlist .mrow .mmoney { grid-column: 1; grid-row: 3; }
 .mlist .mrow .mmoney, .mlist .mrow .mmoney.free { background: transparent; }   /* מצב תשלום בכרטיס המפגש: שולם (הוקצה כסף) ודווח עם רקע, לא שולם וחינם בלי רקע (1.11.26) */
+.mlist .mrow .pay, .mlist .mrow .mmoney { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }   /* הסטטוס והתשלום בכרטיס לחיצים: קו תחתון בצבע הטקסט (1.11.26) */
 .mlist .mrow .mmoney.has { color: var(--green); }
 .mlist .mrow .mmoney.wait { color: var(--yellow); }
 .mlist .mrow .mmoney.free { color: var(--text-2); }
@@ -649,21 +650,17 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .nch.nr { color: var(--red); }
 .nch.nf { color: var(--text-2); }
 .nch.nn { color: var(--text-2); }
-.nch.nago { flex: 0 0 auto; align-self: flex-start; position: relative; }   /* בשורה הראשונה של ההערה (לא באמצע הערה של כמה שורות); הרוחב קבוע לפי הזמן שעבר, כך שהפתיחה לא משנה את פריסת ההערה */
+.nch.nago { flex: 0 0 auto; align-self: flex-start; }   /* בשורה הראשונה של ההערה, גם בהערה של כמה שורות */
 .nitem.img .nrow { align-items: flex-start; }
 .nitem.img .nch.nago { align-self: flex-start; display: block; height: var(--tag); line-height: var(--tag); }
 .narw { display: inline-flex; align-items: center; justify-content: center; height: var(--tag); color: var(--text-3); }
-/* הצד השמאלי של ההערה: הזמן שעבר מוחלף באנימציה (רוחב ושקיפות) בשם הכותב, המועד המדויק והמחיקה, ולחיצה נוספת מחזירה (1.11.26; לפי הסקיל ui-ux-pro-max: האלמנט הנסתר יוצא מהפוקוס, ובלי תנועה ב-reduced-motion) */
-.nago .nsw.a { display: grid; grid-template-columns: 1fr; opacity: 1; visibility: visible; transition: opacity .2s ease, visibility 0s; }
-.nitem.open .nago .nsw.a { opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility 0s .2s; }
-/* שם ומועד: עולים מעל ההערה (שכבה על הקצה השמאלי, רקע אטום) ולא דוחפים את התגיות לשורה נוספת */
-.nago .nsw.b { position: absolute; inset-inline-end: 0; top: 0; z-index: 2; display: flex; align-items: center; width: max-content; height: var(--tag); padding-inline-start: 8px; background: var(--bg); opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility 0s .2s; }
-.nitem.open .nago .nsw.b { opacity: 1; visibility: visible; transition: opacity .2s ease .06s, visibility 0s; }
-.nago .nswi { display: flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden; white-space: nowrap; }
-.nago .nsw.b .nswi { gap: 12px; }
-.nago b { font-weight: 400; color: inherit; }
-.nago .ndel { flex: 0 0 auto; width: auto; height: auto; padding: 0; font-size: 13px; color: var(--red); text-decoration: underline; background: none; }
-@media (prefers-reduced-motion: reduce) { .nago .nsw.a, .nago .nsw.b { transition: none !important; } }
+/* לחיצה על הערה: נפתחת מתחתיה שורה, שם · מועד מדויק, מיושרת לימין, עם אנימציית פתיחה וסגירה (גובה ושקיפות; הסגירה מהירה מהפתיחה). הריפוד בתוך הילדים, כי ריפוד על .nmetai לא מתכווץ לאפס */
+.nmeta { display: grid; grid-template-rows: 0fr; opacity: 0; visibility: hidden; transition: grid-template-rows .18s ease-in, opacity .14s ease-in, visibility 0s .18s; }
+.nitem.open .nmeta { grid-template-rows: 1fr; opacity: 1; visibility: visible; transition: grid-template-rows .26s ease-out, opacity .22s ease-out .04s, visibility 0s; }
+.nmetai { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; min-height: 0; overflow: hidden; color: var(--text-2); font-size: 13px; font-weight: 400; line-height: 18px; }
+.nmetai > span { min-width: 0; padding-bottom: 8px; }
+.nmeta .ndel { flex: 0 0 auto; width: auto; height: auto; padding: 0 0 8px; font-size: 13px; line-height: 18px; color: var(--red); text-decoration: underline; background: none; }
+@media (prefers-reduced-motion: reduce) { .nmeta, .nitem.open .nmeta { transition: none; } }
 .nimg { display: block; margin-top: 4px; }
 .nimg img { display: block; width: 100%; aspect-ratio: 4 / 1; object-fit: cover; object-position: 50% 85%; min-height: 60px; cursor: zoom-in; }
 .nimg .nload { padding: 12px 0; color: var(--text-2); font-size: 13px; text-align: center; }
