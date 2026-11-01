@@ -586,7 +586,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 /* אריח בצד ימין של רצועת המפגשים (1.11.26; לפי הסקיל ui-ux-pro-max: שטח לחיצה 44px ומעלה, תווית נגישה לכפתור הסמל, מצב ריחוף ולחיצה): מלבן אחד, למעלה מונה המפגשים עם סמל יומן, ומתחתיו פלוס גדול ("שיוך למפגש"); בלי תת כותרת. בגובה כרטיס מפגש */
 .mwrap { display: flex; align-items: flex-start; margin: 0 0 12px; }
 .mwrap > .mlist { flex: 1 1 auto; min-width: 0; margin-bottom: 0; }
-.mtile { flex: 0 0 auto; width: 56px; height: 108px; margin-top: 4px; display: flex; flex-direction: column; background: transparent; border: 1px solid var(--line-2); color: var(--text); }   /* מסגרת שחורה בהירה במקום רקע */
+.mtile { flex: 0 0 auto; width: 56px; height: var(--mrow-h); margin-top: 4px; display: flex; flex-direction: column; background: transparent; border: 1px solid var(--line-2); color: var(--text); }   /* מסגרת שחורה בהירה במקום רקע */
 .mtile[hidden] { display: none; }
 .mtn { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; gap: 4px; min-height: 44px; font-size: 15px; font-weight: 800; }
 .mtn[hidden] { display: none; }
@@ -601,7 +601,9 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 /* רצועת המפגשים: כרטיס לכל מפגש (תאריך, סטטוס, תשלום) */
 .mlist { display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; margin: 0 calc(var(--gut) * -1) 12px; padding: 4px var(--gut); scroll-padding-inline: var(--gut); scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scrollbar-width: none; }
 .mlist::-webkit-scrollbar { display: none; }
-.mlist .mrow { flex: 0 0 auto; width: 120px; display: grid; grid-template-columns: 1fr; gap: 4px; padding: 8px; border: 1px solid var(--line-2); background: transparent; scroll-snap-align: start; }   /* מפגש בכרטיס המשתתף: מסגרת שחורה בהירה לכל המפגשים; המסומן ברקע שחור בהיר (1.11.26) */
+/* כרטיס מפגש קומפקטי (1.11.26): שלוש שורות של 28px בלי רווחים ביניהן, ריפוד 4px ורוחב 88px, כדי שיופיעו יותר מפגשים; האריח משמאל באותו גובה (`--mrow-h`) */
+:root { --mrow-h: 94px; }
+.mlist .mrow { flex: 0 0 auto; width: 88px; display: grid; grid-template-columns: 1fr; gap: 0; padding: 4px; border: 1px solid var(--line-2); background: transparent; scroll-snap-align: start; }   /* מפגש בכרטיס המשתתף: מסגרת שחורה בהירה לכל המפגשים; המסומן ברקע שחור בהיר (1.11.26) */
 /* כרטיס מפגש בשלוש שורות (1.11.26): תאריך, סטטוס, תשלום; המפגש המסומן: התאריך מודגש בלי רקע */
 .mlist .mrow .mlabel { grid-column: 1; grid-row: 1; width: 100%; background: transparent; color: var(--text); font-weight: 500; }
 .mlist .mrow.hl .mlabel { background: transparent; color: var(--text); font-weight: 800; }
@@ -611,7 +613,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .mlist .mrow .pay, .mlist .mrow .pay.none { background: transparent; border-color: transparent; }   /* סטטוס המפגש בכרטיס: בלי רקע, הצבע שלו בטקסט בלבד (1.11.26) */
 .mlist .mrow .mline { display: contents; }
 /* מפגש דמה: משתתף שנפתח מתוך מפגש שהוא עוד לא משויך אליו (31.10.26); בגודל של מפגש רגיל */
-.mlist .mrow.dummy { padding: 0; background: transparent; border: 1px solid var(--line-2); min-height: 108px; }
+.mlist .mrow.dummy { padding: 0; background: transparent; border: 1px solid var(--line-2); min-height: var(--mrow-h); }
 .mlist .mrow.dummy .mdummy { grid-column: 1 / -1; grid-row: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; width: 100%; height: 100%; border: 0; background: transparent; color: var(--text-2); cursor: pointer; font-family: inherit; }
 .mlist .mrow.dummy .mdl { font-size: 15px; font-weight: 700; color: var(--text); }
 .mlist .mrow.dummy .mdd { font-size: 14px; font-weight: 700; }
