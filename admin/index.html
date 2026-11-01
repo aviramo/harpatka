@@ -1034,7 +1034,9 @@
   }
   /* השם עם סמל המצב צמוד למילה האחרונה (לא יורד לבד לשורה, ובגובה הטקסט): בשם בעברית המילה האחרונה והסמל עטופים יחד; בשם באנגלית כל השם והסמל יחד */
   const nameMark = (p, sz) => { const mk = glMark(p, sz), t = String(p.name || '').trim(); if (!mk) return '<bdi>' + esc(t) + '</bdi>'; const i = t.lastIndexOf(' '); if (/[\u0590-\u05FF]/.test(t) && i > 0) return '<bdi>' + esc(t.slice(0, i)) + ' <span class="nwrap">' + esc(t.slice(i + 1)) + mk + '</span></bdi>'; return '<span class="nwrap"><bdi>' + esc(t) + '</bdi>' + mk + '</span>'; };
-  const glMark = (p, sz) => { const m = stMark(p); return m ? '<span class="glk' + (m.red ? ' red' : '') + '" title="' + esc(m.t) + '" aria-label="' + esc(m.t) + '">' + icon(m.k, sz || 'i16') + '</span>' : ''; };
+  /* סמל תגית ליד השם: למשתתף שיש לו לפחות תגית אחת (ב-title שמות התגיות), בנוסף לסמל המצב (מחובר, חסום, מחוק) */
+  const tagMark = (p, sz) => { const names = ptagsOf(p).map((k) => { const t = state.pstatuses.find((x) => x.key === k); return t ? t.label : ''; }).filter(Boolean); return names.length ? '<span class="glk" title="תגיות: ' + esc(names.join(', ')) + '" aria-label="תגיות: ' + esc(names.join(', ')) + '">' + icon('tag', sz || 'i16') + '</span>' : ''; };
+  const glMark = (p, sz) => { const m = stMark(p); return (m ? '<span class="glk' + (m.red ? ' red' : '') + '" title="' + esc(m.t) + '" aria-label="' + esc(m.t) + '">' + icon(m.k, sz || 'i16') + '</span>' : '') + tagMark(p, sz); };
   const nameCls = (p) => { const m = stMark(p); return m && m.red ? ' warn' : ''; };
   /* מצב החשבון השתנה (זמן אמת): הכותרת של כרטיס המשתתף הפתוח מתעדכנת (הסמל ליד השם) */
   function paintInfoBtn() {
