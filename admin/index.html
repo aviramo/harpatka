@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104ae" />
+  <link rel="stylesheet" href="admin.css?v=20261104af" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -160,9 +160,10 @@
         <button type="button" class="prnew" id="pPromoNew">+ דרך הגעה חדשה</button>
       </div>
       <div class="ppanel" data-panel="credit" hidden>
-        <p id="creditText" style="margin:0 0 16px;line-height:1.55"></p>
-        <label class="field"><span>סכום להחזרה למשתתף (₪)</span><input name="pay_refund" type="number" inputmode="decimal" min="0" step="any" /></label>
-        <div class="payact"><button class="btn soft-red" id="creditRefundBtn" type="button">להחזיר את הכסף למשתתף</button></div>
+        <div class="payrow">
+          <label class="field"><span>סכום (₪)</span><input form="pForm" name="pay_refund" type="number" inputmode="decimal" min="0" step="10" /></label>
+          <button class="btn danger paygo" id="creditRefundBtn" type="button">החזרת כסף</button>
+        </div>
       </div>
       <div class="ppanel" data-panel="refund" hidden>
         <p id="refundText" style="margin:0 0 16px;line-height:1.55"></p>
@@ -1001,7 +1002,7 @@
     if (sig === sheetSig) return; sheetSig = sig;
     renderNotes(); refreshSheetMeetings(); renderContact();
     if (pTab === 'wallet') renderWallet();   // מסך יתרה ותשלומים
-    if (allocDlg.open) { paintDepLines(); if (sheet.paintMeth) sheet.paintMeth(); }   // מסך הקצאות הכסף למפגש (לא נוגע בשדה הסכום שמוקלד)
+    if (allocDlg.open && allocHome && allocHome.key === 'deposit') { paintDepLines(); if (sheet.paintMeth) sheet.paintMeth(); }   // מסך הקצאות הכסף למפגש (לא נוגע בשדה הסכום שמוקלד)
   }
   /* ---------- טעינה ---------- */
   let loadSeq = 0, loadApplied = 0;
@@ -2787,7 +2788,7 @@
     navSync($('#pDlg'));
     syncUrl();
   }
-  pForm.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.name && e.target.name.startsWith('pay_')) { e.preventDefault(); if (pTab === 'zikuy') $('#zkCredit').click(); else if (pTab === 'pay') $('#paySave').click(); else if (pTab === 'credit') $('#creditRefundBtn').click(); else if (pTab === 'deposit') $('#depSave').click(); } });
+  pForm.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.name && e.target.name.startsWith('pay_')) { e.preventDefault(); if (pTab === 'zikuy') $('#zkCredit').click(); else if (pTab === 'pay') $('#paySave').click(); else if (pTab === 'deposit') $('#depSave').click(); } });
   /* יתרה ותשלומים: התשלומים נפרדים מהמפגשים. כל תשלום שמתקבל נכנס ליתרה של המשתתף, ובשיוך למפגש לוקחים ממנה */
   /* כסף שהוקצה למפגש מסוים: תשלומים למפגש פחות ביטולים והחזרים של אותו מפגש (בלי קשר לסטטוס) */
   const allocatedOf = (pid, mid) => state.payments.filter((x) => x.participant_id === pid && x.meeting_id === mid).reduce((s, x) => s + (x.kind === 'payment' ? Number(x.amount) : (x.kind === 'credit' || (x.kind === 'refund' && !x.from_credit)) ? -Number(x.amount) : 0), 0);
@@ -3034,10 +3035,11 @@
   /* פופאפ הקצאה (#allocDlg, 1.11.26): דיאלוג נפרד שעולה מלמטה מעל כרטיס המשתתף הפתוח, בלי לגעת בכרטיס (או לבד כשנפתח מעיגול ה-₪ ברשימה). מסך ההקצאה הקיים (הפאנל, הצ'יף "הקצאה" והשורה השנייה עם המועד) עובר אליו פיזית בפתיחה וחוזר לכרטיס בסגירה, כך שיש מימוש אחד של מסך ההקצאה. גם בדסקטופ רחב (כרטיס בצד הרשימה); אין יותר מסך הקצאה בתוך הכרטיס ואין לו כתובת */
   const allocDlg = $('#allocDlg');
   let allocHome = null;
-  function allocMount() {
+  function allocMount(key) {
     if (allocHome) return;
-    const panel = pForm.querySelector('.ppanel[data-panel="deposit"]'), chip = $('#pAllocChip'), sub = $('#pViewSub'); if (!panel) return;
-    allocHome = { panel, panelP: panel.parentNode, panelN: panel.nextSibling, chip, chipP: chip.parentNode, chipN: chip.nextSibling, sub, subP: sub.parentNode, subN: sub.nextSibling };
+    key = key || 'deposit';
+    const panel = pForm.querySelector('.ppanel[data-panel="' + key + '"]'), chip = $('#pAllocChip'), sub = $('#pViewSub'); if (!panel) return;
+    allocHome = { key, panel, panelP: panel.parentNode, panelN: panel.nextSibling, chip, chipP: chip.parentNode, chipN: chip.nextSibling, sub, subP: sub.parentNode, subN: sub.nextSibling };
     $('#allocHead').appendChild(chip); $('#allocSheet').insertBefore(sub, $('#allocSlot')); $('#allocSlot').appendChild(panel); panel.hidden = false;
   }
   function allocUnmount() {
@@ -3048,18 +3050,32 @@
     const pp = state.participants.find((x) => x.id === pid), m = mid ? state.meetings.find((x) => x.id === mid) : null; if (!pp || (mid && !m) || allocDlg.open) return;
     if (!(pDlg.open && sheet && sheet.id === pid)) { sheet = { id: pid, hl: state.filter || null, hlDone: false }; pForm.reset(); }   // נפתח מהרשימה: רק מצב המשתתף, בלי להציג את הכרטיס
     allocMount(); openDeposit(m ? m.id : null);
-    $('#allocTitle').innerHTML = 'הקצאה <span class="tsubname">· ' + esc(pp.name) + '</span>';
-    { const sub = $('#pViewSub'); sub.innerHTML = m ? esc(meetingLabel(m, true)) : 'תשלום ללא קשר למפגש'; sub.classList.toggle('bold', !m); sub.hidden = false; }   // בלי מפגש: במקום המועד, מודגש
+    $('#allocTitle').innerHTML = (m ? 'הקצאה' : 'קבלת תשלום') + ' <span class="tsubname">· ' + esc(pp.name) + '</span>';   // הכותרת כמו הכיתוב על הכפתור שפתח את הפופאפ
+    { const sub = $('#pViewSub'); sub.innerHTML = m ? esc(meetingLabel(m, true)) : 'ללא קשר למפגש'; sub.classList.toggle('bold', !m); sub.hidden = false; }   // בלי מפגש: במקום המועד, מודגש
+    allocDlg.showModal(); if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  }
+  /* החזרת כסף מהיתרה: אותו פופאפ, עם פאנל החזרת הכסף. הכותרת "החזרת כסף" (כמו הכפתור), ומתחתיה "ללא קשר למפגש" */
+  function openRefundPop() {
+    const pid = sheet && sheet.id, pp = state.participants.find((x) => x.id === pid); if (!pp || allocDlg.open) return;
+    const cr = creditOf(pid); if (!(cr > 0)) return;
+    allocMount('credit'); $('#pAllocChip').hidden = true;
+    $('#allocTitle').innerHTML = 'החזרת כסף <span class="tsubname">· ' + esc(pp.name) + '</span>';
+    { const sub = $('#pViewSub'); sub.innerHTML = 'ללא קשר למפגש'; sub.classList.add('bold'); sub.hidden = false; }
+    pForm.pay_refund.value = cr; payCtx = null;
+    $('#creditRefundBtn').onclick = async () => {
+      const amt = Math.min(parseFloat(pForm.pay_refund.value) || 0, cr); if (!(amt > 0)) { pForm.pay_refund.focus(); return; }
+      try { await addPayRecord(pid, null, 'refund', amt, null, null, true); toast('הוחזרו ₪' + nfm(amt) + ' למשתתף'); allocDlg.close(); } catch (err) { fail(err); }
+    };
     allocDlg.showModal(); if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   }
   allocDlg.addEventListener('close', () => {
     allocUnmount();
     if (!sheet) return;
     sheet.depMid = null; sheet.modeApi = null; sheet.paintMeth = null;
-    if (pDlg.open) { refreshSheetMeetings(); renderNotes(); } else sheet = null;   // נפתח מהרשימה: אין כרטיס מאחור
+    if (pDlg.open) { refreshSheetMeetings(); renderNotes(); if (pTab === 'wallet') renderWallet(); } else sheet = null;   // נפתח מהרשימה: אין כרטיס מאחור
     render();
   });
-  allocDlg.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.name && e.target.name.startsWith('pay_')) { e.preventDefault(); $('#depSave').click(); } });
+  allocDlg.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.name && e.target.name.startsWith('pay_')) { e.preventDefault(); if (allocHome && allocHome.key === 'credit') $('#creditRefundBtn').click(); else $('#depSave').click(); } });
   const closePayCard = () => { if (allocDlg.open) allocDlg.close(); };   // אחרי תשלום או הקצאה פופאפ ההקצאה נסגר, וכרטיס המשתתף (אם פתוח) נשאר כמו שהוא
   const depSaveRun = async () => {
     const f = pForm, pid = sheet && sheet.id; const amt = parseFloat(f.pay_dep.value); if (!pid) return;
@@ -3128,16 +3144,7 @@
     goView('zikuy');
   });
   /* החזרת כסף מהיתרה (רשומת החזר מהיתרה) */
-  $('#walRefund').addEventListener('click', () => {
-    const cr = creditOf(sheet.id); if (!(cr > 0)) return;
-    $('#creditText').innerHTML = 'ליתרה של המשתתף <b>₪' + nfm(cr) + '</b>. אפשר להחזיר לו את הכסף, כולו או חלקו. תירשם רשומת החזר, והיתרה תקטן.';
-    pForm.pay_refund.value = cr; payCtx = null;
-    $('#creditRefundBtn').onclick = async () => {
-      const amt = Math.min(parseFloat(pForm.pay_refund.value) || 0, cr); if (!(amt > 0)) { pForm.pay_refund.focus(); return; }
-      try { await addPayRecord(sheet.id, null, 'refund', amt, null, null, true); toast('הוחזרו ₪' + nfm(amt) + ' למשתתף'); setPTab(viewStack.pop() || 'wallet'); } catch (err) { fail(err); }
-    };
-    goView('credit');
-  });
+  $('#walRefund').addEventListener('click', openRefundPop);
   /* דרך הגעה הוא ברמת המשתתף: אייקון בכותרת (מואר כשיש דרך הגעה) פותח בחירת דרך הגעה */
   let promoFromPay = null;
   function openPromoterPickFromPay(pid, mid) {
