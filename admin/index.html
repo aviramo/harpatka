@@ -287,12 +287,12 @@
         <div class="sopts" id="setDelOpts"></div>
       </div>
       <div id="setSt" hidden>
-        <p class="sthint" id="stHint" style="margin:0 0 12px"></p>
         <div id="stBoth">
         <div class="stpart" id="stSecBefore" hidden>סטטוס הרשמה</div>
         <div id="stList"></div>
         <button type="button" class="btn ghost" id="stAdd" hidden>+ תגית חדשה</button>
         <div class="stpart" id="stSecMeeting" hidden>סטטוס מפגש</div>
+        <p class="sthint" id="stPtsHint" style="margin:0 0 8px" hidden>הנקודות נכנסות לציון ההתמדה של המשתתף</p>
         <div id="stListMeeting"></div>
         <button type="button" class="btn ghost" id="stAddMeeting" hidden>+ סטטוס מפגש חדש</button>
         </div>
@@ -4439,7 +4439,7 @@
   function showSetView(v) {
     setView = v; if (v !== 'st') stDraft = null;
     $('#setMain').hidden = v !== 'main'; $('#setTyDet').hidden = v !== 'tydet'; $('#setSt').hidden = v !== 'st'; $('#setDel').hidden = v !== 'del'; $('#setSrc').hidden = v !== 'src'; $('#setPm').hidden = v !== 'pm'; $('#setEm').hidden = v !== 'em'; $('#setBack').hidden = setIsRoot(v);   // המסך שהפופאפ נפתח עליו, וסוג חדש (מסך הפרטים הוא הראשי): אין לאן לחזור
-    $('#setTitle').textContent = v === 'tydet' ? (tyId ? 'עריכת סוג מפגש' : 'סוג מפגש חדש') : v === 'st' ? (stScope === 'meeting' ? 'סטטוסים על מפגשים' : 'תגיות על משתתפים') : v === 'del' ? 'מחיקת סטטוס' : v === 'src' ? 'דרכי הגעה' : v === 'pm' ? 'דרכי תשלום' : v === 'em' ? 'הודעה לפני המפגש' : 'החשבון שלי';
+    $('#setTitle').textContent = v === 'tydet' ? (tyId ? 'עריכת סוג מפגש' : 'סוג מפגש חדש') : v === 'st' ? (stScope === 'meeting' ? ((typeById(stType) || typeById(firstTypeId()) || {}).name || 'סטטוסים על מפגשים') : 'תגיות על משתתפים') : v === 'del' ? 'מחיקת סטטוס' : v === 'src' ? 'דרכי הגעה' : v === 'pm' ? 'דרכי תשלום' : v === 'em' ? 'הודעה לפני המפגש' : 'החשבון שלי';
     if (v === 'src') renderSources();
     if (v === 'pm') renderPm();
     if (v === 'tydet') renderTyDet();
@@ -4462,7 +4462,6 @@
     if (stDraft && ((stDraft.kind === 'tag') !== (stScope === 'participant'))) stDraft = null;
     const list = curSt(), sys = curSys();
     document.querySelectorAll('#setSt [data-sc]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.sc === stScope)));
-    $('#stHint').textContent = stScope === 'meeting' ? 'סטטוס של משתתף בתוך מפגש' + ((typeById(stType) || {}).name ? ' מסוג "' + typeById(stType).name + '"' : '') + '. לכל משתתף במפגש סטטוס הרשמה אחד וסטטוס מפגש אחד (שם, צבע וסדר, ואפשר ליצור חדשים; "' + (STATUS_LABEL[SYSTEM_STATUS] || 'משויך') + '" משותף לכל סוגי המפגשים). לכל סטטוס מפגש ציון התמדה (מ-5- עד 5), שנכנס לציון ההתמדה של המשתתף. הסטטוס המוצג ברשימה הוא סטטוס המפגש, ואם אין, סטטוס ההרשמה' : 'תגיות של המשתתף (ברשימה כשלא בוחרים מפגש). אפשר לסמן כמה תגיות לכל משתתף. תגית בלבד, בלי לוגיקה מאחוריה. שם וסדר, ואפשר ליצור תגית חדשה';
     $('#stAdd').hidden = false; $('#stAdd').textContent = stScope === 'meeting' ? '+ סטטוס הרשמה חדש' : '+ תגית חדשה';
     const noCol = stScope === 'participant';   // תוויות משתתף בלי צבעים
     /* ציון התמדה: בחירה פשוטה בין מינוס 5 ל-5 (רק לסטטוס במפגש ואחרי המפגש) */
@@ -4482,7 +4481,7 @@
     const dRow = { key: stDraft ? stDraft.key : '', label: '', color: 'neutral', points: 0, _d: true };
     $('#stList').innerHTML = mkRows(stDraft && stDraft.kind !== 'meeting' ? list.concat([dRow]) : list);
     const two = stScope === 'meeting';
-    $('#stSecBefore').hidden = !two; $('#stSecMeeting').hidden = !two; $('#stAddMeeting').hidden = !two; $('#stListMeeting').innerHTML = two ? mkRows(stDraft && stDraft.kind === 'meeting' ? mstatusList(stType || firstTypeId()).concat([dRow]) : mstatusList(stType || firstTypeId()), true) : '';
+    $('#stSecBefore').hidden = !two; $('#stSecMeeting').hidden = !two; $('#stPtsHint').hidden = !two; $('#stAddMeeting').hidden = !two; $('#stListMeeting').innerHTML = two ? mkRows(stDraft && stDraft.kind === 'meeting' ? mstatusList(stType || firstTypeId()).concat([dRow]) : mstatusList(stType || firstTypeId()), true) : '';
     if (stDraft) { const dv = document.querySelector('#stBoth .strow.draft .stname'); if (dv) { if (dVal) dv.value = dVal; if (dFoc) dv.focus(); } }
   }
   async function saveStatus(key, patch) {
