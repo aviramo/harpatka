@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104cq" />
+  <link rel="stylesheet" href="admin.css?v=20261104cr" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -330,14 +330,8 @@
         <div id="prMoves"></div>
       </div>
       <form id="prForm" class="ppanel" novalidate hidden>
-        <label class="field"><span>שם דרך ההגעה</span><input name="name" maxlength="60" autocomplete="off" /></label>
-        <div class="seg" role="radiogroup" aria-label="סוג עמלה" style="margin-bottom:12px">
-          <label><input type="radio" name="rtype" value="fixed" checked /><span>סכום קבוע (₪)</span></label>
-          <label><input type="radio" name="rtype" value="percent" /><span>אחוז מהתשלום (%)</span></label>
-        </div>
-        <label class="field"><span id="prRateLbl">עמלה לכל משתתף (₪)</span><input name="rate" type="number" inputmode="decimal" min="0" step="any" /></label>
+        <div id="prNewCard"></div>
         <button class="btn" id="prSave" type="submit">שמירה</button>
-        <button class="btn ghost danger" id="prDel" type="button" hidden>מחיקת דרך הגעה</button>
       </form>
     </div>
   </dialog>
@@ -2001,7 +1995,7 @@
 
   /* סימון הגעה למפגש (זמן אמת: מעדכן מיד, נשמר ומתעדכן אצל כולם) */
   /* דרכי הגעה: רשימה עם יתרה, דף התחשבנות לכל דרך הגעה (עמלות שנצברו מול תשלומים לדרך הגעה), הוספה, עריכה ומחיקה */
-  let prEditing = null, prAfterSave = null, prCur = null;
+  let prDraft = null, prAfterSave = null, prCur = null;
   const fmtD = (iso) => { if (!iso) return ''; const [y, m, d] = String(iso).slice(0, 10).split('-'); return Number(d) + '.' + Number(m) + '.' + y.slice(2); };
   const ils = (n) => '<bdi dir="ltr">₪' + nfm(n) + '</bdi>';   // בלי היפוך סימן השקל בטקסט מימין לשמאל
   /* תנועות דרך ההגעה: עמלות שנצברו (חיובי, אנחנו חייבים) ותשלומים אליו (שלילי), עם יתרה מצטברת */
@@ -2053,41 +2047,32 @@
     $('#ppForm').hidden = true; $('#ppOpen').hidden = false;
     show('#prDetail');
   }
-  function showPromoterForm(id) {
-    prEditing = id || null;
-    const x = id ? promoterOf(id) : null, f = $('#prForm');
-    f.name.value = x ? x.name : ''; f.rate.value = x ? Number(x.rate) : ''; f.rtype.value = x ? x.rate_type : 'fixed';
-    $('#prRateLbl').textContent = (f.rtype.value === 'percent') ? 'אחוז מהתשלום (%)' : 'עמלה לכל משתתף (₪)';
-    $('#prDel').hidden = !x; show('#prForm'); $('#prTitle').textContent = x ? 'עריכת ' + x.name : 'דרך הגעה חדשה';
-    if (!x) setTimeout(() => f.name.focus(), 50);
+  /* דרך הגעה חדשה: אותו כרטיס בדיוק כמו ברשימת דרכי ההגעה (srcCard), והיא נשמרת רק בלחיצה על שמירה */
+  function renderPrDraft() { $('#prNewCard').innerHTML = srcCard(prDraft, 'new'); }
+  function showPromoterForm() {
+    const used = new Set(state.promoters.map((s) => s.code).filter(Boolean)), code = 'abcdefghijklmnopqrstuvwxyz'.split('').find((c) => !used.has(c)) || null;
+    prCur = null; prDraft = { name: '', rate_type: 'fixed', rate: 0, color: 'red', code, cost_on_lead: true, cost_from_payment: false };
+    renderPrDraft(); show('#prForm'); $('#prTitle').textContent = 'דרך הגעה חדשה';
+    setTimeout(() => { const n = document.querySelector('#prNewCard .stname'); if (n) n.focus(); }, 50);
   }
   function showPromoterList() { prCur = null; if ($('#prDlg').open) $('#prDlg').close(); }   // אין מסך רשימה: ההתחשבנות נפתחת מכרטיס דרך ההגעה בהגדרות, וחזרה סוגרת
   /* הוספת דרך הגעה מתוך שדה בחירה (משתתף / תשלום): פותח את טופס דרך ההגעה, ואחרי שמירה בוחר אותו בשדה */
-  function openNewPromoter(cb) { prAfterSave = cb || null; showPromoterForm(null); $('#prDlg').showModal(); }
+  function openNewPromoter(cb) { prAfterSave = cb || null; showPromoterForm(); $('#prDlg').showModal(); }
   $('#prDlg').addEventListener('close', () => { prAfterSave = null; });
-  $('#prList').addEventListener('click', (e) => { if (e.target.closest('#prNew')) return showPromoterForm(null); const r = e.target.closest('[data-pr]'); if (r) showPromoterDetail(r.dataset.pr); });
+  $('#prList').addEventListener('click', (e) => { if (e.target.closest('#prNew')) return showPromoterForm(); const r = e.target.closest('[data-pr]'); if (r) showPromoterDetail(r.dataset.pr); });
   $('#prList').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-pr]')) { e.preventDefault(); showPromoterDetail(e.target.dataset.pr); } });
-  $('#prArrow').addEventListener('click', () => { if (prAfterSave) { prAfterSave = null; $('#prDlg').close(); } else if (prView === '#prForm' && prEditing) showPromoterDetail(prEditing); else showPromoterList(); });
-  $('#prForm').addEventListener('change', (e) => { if (e.target.name === 'rtype') $('#prRateLbl').textContent = e.target.value === 'percent' ? 'אחוז מהתשלום (%)' : 'עמלה לכל משתתף (₪)'; });
+  $('#prArrow').addEventListener('click', () => { prAfterSave = null; showPromoterList(); });
   $('#prForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const f = e.target, name = f.name.value.trim(), rate = parseFloat(f.rate.value);
-    if (!name) { f.name.focus(); return; }
-    if (!(rate >= 0)) { f.rate.focus(); return; }
-    const body = { name, rate_type: f.rtype.value, rate };
+    const nameI = document.querySelector('#prNewCard .stname'), name = nameI.value.trim().slice(0, 24);
+    if (!name) { toast('חסר שם לדרך ההגעה'); nameI.focus(); return; }
     try {
-      let saved;
-      if (prEditing) { await api(T.pr + '?id=eq.' + prEditing, { method: 'PATCH', body }); saved = promoterOf(prEditing); Object.assign(saved, body); }
-      else { const [row] = await api(T.pr, { method: 'POST', body, prefer: 'return=representation' }); saved = row; if (row && !promoterOf(row.id)) state.promoters.push(row); }
-      state.promoters.sort((a, b) => a.name.localeCompare(b.name, 'he'));
-      const cb = prAfterSave; prAfterSave = null;
-      if (cb && saved) { $('#prDlg').close(); cb(saved); toast('דרך ההגעה נוסף'); }
-      else { toast('נשמר'); if (prEditing) showPromoterDetail(prEditing); else showPromoterList(); }
+      const [row] = await api(T.pr, { method: 'POST', body: Object.assign({}, prDraft, { name }), prefer: 'return=representation' });
+      if (row && !promoterOf(row.id)) state.promoters.push(row);
+      state.promoters.sort((a, b) => a.name.localeCompare(b.name, 'he')); renderSources();
+      const cb = prAfterSave; prAfterSave = null; $('#prDlg').close();
+      if (cb && row) cb(row); toast('דרך ההגעה נוספה');
     } catch (err) { fail(err); }
-  });
-  $('#prDel').addEventListener('click', () => {
-    const x = promoterOf(prEditing); if (!x || !confirm('למחוק את דרך ההגעה ' + x.name + '? ההתחשבנות איתו תימחק, והתשלומים של המשתתפים יישארו בלי דרך הגעה.')) return;
-    api(T.pr + '?id=eq.' + x.id, { method: 'DELETE' }).then(() => { state.promoters = state.promoters.filter((y) => y.id !== x.id); state.promoPays = state.promoPays.filter((y) => y.promoter_id !== x.id); state.att.forEach((a) => { if (a.promoter_id === x.id) a.promoter_id = null; }); state.participants.forEach((q) => { if (q.promoter_id === x.id) q.promoter_id = null; }); prEditing = null; showPromoterList(); toast('נמחק'); }).catch(fail);
   });
   /* תשלום לדרך הגעה: סכום (ברירת מחדל: היתרה), תאריך והערה */
   $('#ppOpen').addEventListener('click', () => {
@@ -3563,7 +3548,7 @@
     else if ((tries || 0) < 10) setTimeout(() => focusMeetingCard((tries || 0) + 1), 60);
   }
   $('#pMeetings').addEventListener('click', (e) => {
-    const pay = e.target.closest('[data-mp]'), mm = e.target.closest('[data-mm]');
+    const mm = e.target.closest('[data-mm]'), row = e.target.closest('.mrow'), pay = e.target.closest('[data-mp]') || (row && !mm && row.querySelector('.pay'));   // לחיצה על התאריך, כמו על הסטטוס, פותחת את תפריט הסטטוס
     if (mm) {
       if (sheet.id) openPayFor(sheet.id, mm.dataset.mm);   // כפתור ה-₪ בכרטיס המפגש: פופאפ הקצאה שעולה מלמטה מעל הכרטיס (הכרטיס לא משתנה)
     } else if (pay) {
@@ -4618,22 +4603,24 @@
   /* דרכי הגעה בהגדרות: ערוצי פרסום ממומן (שם, צבע, קוד) ודרכי הגעה (שם, צבע, עמלה), בעיצוב דומה לסטטוסים */
   const colDot = (c, who) => '<button type="button" class="swcur" data-who="' + who + '" data-c="' + c + '" aria-haspopup="menu" aria-label="צבע" title="שינוי צבע" style="background:' + (PALETTE[c] || PALETTE.sky)[0] + '"></button>';
   const nameStyle = (c) => 'background:' + (PALETTE[c] || PALETTE.sky)[0] + ';color:' + (PALETTE[c] || PALETTE.sky)[1];
-  function renderSources() {
-    $('#srcPrList').innerHTML = state.promoters.map((x) => {
-      const used = state.participants.some((q) => q.promoter_id === x.id) || state.payments.some((q) => q.promoter_id === x.id) || state.participants.some((q) => x.code && q.source_code === x.code);
-      const fp = !!x.cost_from_payment, bal = ledgerOf(x.id).balance;
-      return '<div class="srccard" data-w="pr:' + x.id + '">' +
-        '<div class="srctop"><input class="stname" data-f="name" value="' + esc(x.name) + '" maxlength="24" aria-label="שם דרך ההגעה" style="' + nameStyle(x.color || 'red') + '" />' +
-        (used ? '' : '<button type="button" class="stdel" data-sdel="pr:' + x.id + '" aria-label="מחיקה" title="מחיקה">×</button>') + colDot(x.color || 'red', 'pr:' + x.id) + '</div>' +
-        '<div class="srcseg" role="radiogroup" aria-label="סוג העלות"><button type="button" role="radio" data-seg="lead" aria-pressed="' + !fp + '">עלות לליד</button><button type="button" role="radio" data-seg="pay" aria-pressed="' + fp + '">עלות מהתשלום</button></div>' +
-        '<div class="srcgrid">' +
-          '<label class="srcfld"><small>קוד בקישור</small><span class="srcin" dir="ltr"><i>?s=</i><input class="codein" data-f="code" value="' + esc(x.code || '') + '" maxlength="6" placeholder="—" aria-label="קוד בקישור" autocapitalize="off" autocomplete="off" /><button type="button" class="cpbtn" data-copylink="' + esc(x.code || '') + '" aria-label="העתקת הקישור" title="העתקת הקישור">' + icon('copy', 'i18') + '</button></span></label>' +
-          '<label class="srcfld"><small>' + (fp ? 'סכום או אחוז מהתשלום' : 'כמה עולה ליד') + '</small><span class="srcin">' +
-            (fp ? '<select class="ratetype" data-f="rate_type" aria-label="סוג"><option value="fixed"' + (x.rate_type !== 'percent' ? ' selected' : '') + '>₪</option><option value="percent"' + (x.rate_type === 'percent' ? ' selected' : '') + '>%</option></select>' : '<i>₪</i>') +
-            '<input class="codein ratein" data-f="rate" type="number" inputmode="decimal" min="0" value="' + Number(x.rate || 0) + '" aria-label="עלות" /></span></label>' +
-        '</div>' +
-        '<button type="button" class="prsettle" data-settle="' + x.id + '"><span>התחשבנות</span><b class="' + (bal > 0 ? 'owe' : 'ok') + '">' + (bal > 0 ? 'יתרה ₪' + nfm(bal) : 'מסולק ✓') + '</b></button></div>'; }).join('') || '<p class="mnone">אין דרכי הגעה</p>';
+  /* כרטיס דרך הגעה: הרכיב היחיד, ברשימה (w = 'pr:<מזהה>') וביצירה (w = 'new': בלי מחיקה, העתקת קישור והתחשבנות, כי עוד לא קיימת) */
+  function srcCard(x, w) {
+    const isNew = w === 'new', fp = !!x.cost_from_payment;
+    const used = !isNew && (state.participants.some((q) => q.promoter_id === x.id) || state.payments.some((q) => q.promoter_id === x.id) || state.participants.some((q) => x.code && q.source_code === x.code));
+    const bal = isNew ? 0 : ledgerOf(x.id).balance;
+    return '<div class="srccard" data-w="' + w + '">' +
+      '<div class="srctop"><input class="stname" data-f="name" value="' + esc(x.name) + '" maxlength="24" placeholder="שם דרך ההגעה" aria-label="שם דרך ההגעה" style="' + nameStyle(x.color || 'red') + '" />' +
+      (used || isNew ? '' : '<button type="button" class="stdel" data-sdel="' + w + '" aria-label="מחיקה" title="מחיקה">×</button>') + colDot(x.color || 'red', w) + '</div>' +
+      '<div class="srcseg" role="radiogroup" aria-label="סוג העלות"><button type="button" role="radio" data-seg="lead" aria-pressed="' + !fp + '">עלות לליד</button><button type="button" role="radio" data-seg="pay" aria-pressed="' + fp + '">עלות מהתשלום</button></div>' +
+      '<div class="srcgrid">' +
+        '<label class="srcfld"><small>קוד בקישור</small><span class="srcin" dir="ltr"><i>?s=</i><input class="codein" data-f="code" value="' + esc(x.code || '') + '" maxlength="6" placeholder="—" aria-label="קוד בקישור" autocapitalize="off" autocomplete="off" />' + (isNew ? '' : '<button type="button" class="cpbtn" data-copylink="' + esc(x.code || '') + '" aria-label="העתקת הקישור" title="העתקת הקישור">' + icon('copy', 'i18') + '</button>') + '</span></label>' +
+        '<label class="srcfld"><small>' + (fp ? 'סכום או אחוז מהתשלום' : 'כמה עולה ליד') + '</small><span class="srcin">' +
+          (fp ? '<select class="ratetype" data-f="rate_type" aria-label="סוג"><option value="fixed"' + (x.rate_type !== 'percent' ? ' selected' : '') + '>₪</option><option value="percent"' + (x.rate_type === 'percent' ? ' selected' : '') + '>%</option></select>' : '<i>₪</i>') +
+          '<input class="codein ratein" data-f="rate" type="number" inputmode="decimal" min="0" value="' + (isNew && !Number(x.rate) ? '' : Number(x.rate || 0)) + '" placeholder="0" aria-label="עלות" /></span></label>' +
+      '</div>' +
+      (isNew ? '' : '<button type="button" class="prsettle" data-settle="' + x.id + '"><span>התחשבנות</span><b class="' + (bal > 0 ? 'owe' : 'ok') + '">' + (bal > 0 ? 'יתרה ₪' + nfm(bal) : 'מסולק ✓') + '</b></button>') + '</div>';
   }
+  function renderSources() { $('#srcPrList').innerHTML = state.promoters.map((x) => srcCard(x, 'pr:' + x.id)).join('') || '<p class="mnone">אין דרכי הגעה</p>'; }
   /* דרכי תשלום: רשימה שהמנהל מגדיר (שם לכל דרך); מוצגת כצ'יפים בקבלת תשלום */
   function renderPm() {
     $('#pmList').innerHTML = state.payMethods.map((x) => '<div class="pmrow" data-k="' + esc(x.key) + '">' + '<button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר">' + icon('grip', 'i18') + '</button>' + '<input class="pmname" value="' + esc(x.name) + '" maxlength="20" aria-label="שם דרך התשלום" />' + '<select class="pmown" aria-label="הקופה של" title="הקופה של: מי מקבל את הכסף בדרך הזאת"><option value="">הקופה של…</option>' + finAdmins().map((e) => '<option value="' + esc(e) + '"' + (x.owner_email === e ? ' selected' : '') + '>' + esc(finName(e)) + '</option>').join('') + '</select>' + (state.payMethods.length > 1 ? '<button type="button" class="stdel" data-pdel="' + esc(x.key) + '" aria-label="מחיקה" title="מחיקה">×</button>' : '') + '</div>').join('');
@@ -4712,22 +4699,23 @@
     try { const [r] = await api(T.pm, { method: 'POST', body: row, prefer: 'return=representation' }); state.payMethods.push(r || row); renderPm(); const inp = document.querySelector('#pmList [data-k="' + key + '"] .pmname'); if (inp) { inp.focus(); inp.select(); } }
     catch (err) { fail(err); }
   });
-  const srcTarget = (w) => ({ tbl: T.pr, row: promoterOf(w.slice(3)), kind: 'pr' });
+  const srcTarget = (w) => ({ tbl: T.pr, row: w === 'new' ? prDraft : promoterOf(w.slice(3)), kind: 'pr' });
   async function saveSrc(w, patch) {
     const tg = srcTarget(w); if (!tg.row) return;
+    if (w === 'new') { Object.assign(prDraft, patch); if (patch.color || 'cost_from_payment' in patch || patch.rate_type) renderPrDraft(); return; }   // טיוטה: בלי ציור מחדש בזמן מעבר בין שדות
     const prev = Object.assign({}, tg.row); Object.assign(tg.row, patch); renderSources(); render(); if (sheet && sheet.id) setTitle(state.participants.find((x) => x.id === sheet.id));
     try { await api(tg.tbl + '?id=eq.' + tg.row.id, { method: 'PATCH', body: patch }); }
     catch (err) { Object.assign(tg.row, prev); renderSources(); render(); fail(err); }
   }
-  $('#setSrc').addEventListener('change', (e) => {
+  const srcChange = (e) => {
     const inp = e.target.closest('[data-f]'); if (!inp) return; const row = inp.closest('[data-w]'); if (!row) return; const w = row.dataset.w, f = inp.dataset.f, tg = srcTarget(w);
-    if (f === 'name') { const v = inp.value.trim().slice(0, 24); if (!v) { renderSources(); return; } saveSrc(w, { name: v }); }
-    else if (f === 'code') { const v = inp.value.trim().toLowerCase(); if (v && (!/^[a-z0-9]{1,6}$/.test(v) || state.promoters.some((s) => s !== tg.row && s.code === v))) { toast('קוד לא תקין או כבר קיים'); renderSources(); return; } saveSrc(w, { code: v || null }); }
+    if (f === 'name') { const v = inp.value.trim().slice(0, 24); if (!v) { if (w === 'new') prDraft.name = ''; else renderSources(); return; } saveSrc(w, { name: v }); }
+    else if (f === 'code') { const v = inp.value.trim().toLowerCase(); if (v && (!/^[a-z0-9]{1,6}$/.test(v) || state.promoters.some((s) => s !== tg.row && s.code === v))) { toast('קוד לא תקין או כבר קיים'); if (w === 'new') renderPrDraft(); else renderSources(); return; } saveSrc(w, { code: v || null }); }
     else if (f === 'cost_from_payment') saveSrc(w, inp.checked ? { cost_from_payment: true, cost_on_lead: false } : { cost_from_payment: false, cost_on_lead: true, rate_type: 'fixed' });
     else if (f === 'rate_type') saveSrc(w, { rate_type: inp.value });
     else if (f === 'rate') saveSrc(w, { rate: Math.max(0, Number(inp.value) || 0) });
-  });
-  $('#setSrc').addEventListener('click', async (e) => {
+  };
+  const srcClick = async (e) => {
     const cur = e.target.closest('.swcur'); if (cur) { const w = cur.dataset.who, tg = srcTarget(w); if (tg.row) openColorMenu(w, cur, tg.row.color || (tg.kind === 'ad' ? 'sky' : 'red'), (c) => saveSrc(w, { color: c })); return; }
     const cp0 = e.target.closest('[data-copylink]'); if (cp0) { e.preventDefault(); const c0 = cp0.dataset.copylink; if (!c0) { toast('אין קוד לדרך ההגעה הזו'); return; } const url0 = 'https://harpatka.co.il/?s=' + c0; (navigator.clipboard ? navigator.clipboard.writeText(url0) : Promise.reject()).then(() => toast('הקישור הועתק'), () => { prompt('העתיקו את הקישור', url0); }); return; }
     const sg0 = e.target.closest('[data-seg]'); if (sg0) { const w0 = sg0.closest('[data-w]').dataset.w, on = sg0.dataset.seg === 'pay'; const tg0 = srcTarget(w0); if (tg0.row && !!tg0.row.cost_from_payment !== on) saveSrc(w0, on ? { cost_from_payment: true, cost_on_lead: false } : { cost_from_payment: false, cost_on_lead: true, rate_type: 'fixed' }); return; }
@@ -4739,13 +4727,9 @@
       catch (err) { state.promoters = prevP; renderSources(); render(); fail(err); }
       return;
     }
-  });
-  $('#srcPrAdd').addEventListener('click', async () => {
-    const used = new Set(state.promoters.map((s) => s.code).filter(Boolean)), code = 'abcdefghijklmnopqrstuvwxyz'.split('').find((c) => !used.has(c)) || null;
-    const row = { name: 'דרך הגעה חדשה', rate_type: 'fixed', rate: 0, color: 'red', code, cost_on_lead: true, cost_from_payment: false };
-    try { const [r] = await api(T.pr, { method: 'POST', body: row, prefer: 'return=representation' }); if (r && !promoterOf(r.id)) state.promoters.push(r); renderSources(); const inp = document.querySelector('#srcPrList [data-w="pr:' + r.id + '"] .stname'); if (inp) { inp.focus(); inp.select(); } }
-    catch (err) { fail(err); }
-  });
+  };
+  [$('#setSrc'), $('#prForm')].forEach((box) => { box.addEventListener('change', srcChange); box.addEventListener('click', srcClick); });
+  $('#srcPrAdd').addEventListener('click', () => openNewPromoter());
   $('#setDlg').addEventListener('close', () => { setRoot = 'main'; showSetView('main'); tyId = null; stType = null; tyNew = null; tyFormFor = null; syncUrl(); });
   $('#stBoth').addEventListener('change', (e) => {
     const ps = e.target.closest('.stpts'); if (ps) { saveStatus(ps.dataset.pts, { points: Math.max(-5, Math.min(5, Math.round(Number(ps.value) || 0))) }); return; }   // ציון התמדה
@@ -4840,7 +4824,8 @@
   /* בחירת צבע: מציגים רק את הצבע הנוכחי, ובלחיצה נפתח תפריט קטן עם הפלטה */
   function openColorMenu(key, anchor, curOverride, onPickOverride) {
     let m = document.getElementById('colMenu');
-    if (!m) { m = document.createElement('div'); m.id = 'colMenu'; m.className = 'qmenu colmenu'; m.setAttribute('role', 'menu'); m.hidden = true; $('#setDlg').appendChild(m); }
+    if (!m) { m = document.createElement('div'); m.id = 'colMenu'; m.className = 'qmenu colmenu'; m.setAttribute('role', 'menu'); m.hidden = true; }
+    const host = anchor.closest('dialog') || document.body; if (m.parentElement !== host) host.appendChild(m);
     if (!m.hidden && m.dataset.k === key) { m.hidden = true; return; }
     const s = curOverride ? { color: curOverride } : allSt().find((x) => x.key === key); if (!s) return;
     m.dataset.k = key; m.style.width = 'auto';
