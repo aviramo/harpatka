@@ -1,4 +1,5 @@
-# מייצר תמונת מודעה (1080x1350, יחס 4:5) לכל שורה ב-ads/sentences.txt
+# מייצר תמונת מודעה לרשתות חברתיות לכל שורה ב-ads/sentences.txt וב-ads/sentences-move.txt:
+# יחס כללי 9:16 לאורך (1080x1920), וכל התוכן באזור בטוח 4:5 לאורך במרכז (1080x1350). מחוץ לאזור הבטוח רק המשך הרקע.
 # טקסט בשני צבעים: מה שבתוך [ ] מודגש בצבע ההדגשה. בלי צילומים.
 # בתחתית: שורת חיפוש עם "יוצאים להרפתקה" (רמז לחפש בגוגל), זכוכית מגדלת אחת בכפתור. בלי "מפגשים מסוג אחר" (אוק׳ 2026).
 # הרצה:  python ads/tools/build_ads.py [--all]   (דורש Chrome). בלי --all מייצר רק תמונות חסרות (טקסטים חדשים).
@@ -7,7 +8,8 @@ import os, sys, json, subprocess, html, tempfile, pathlib
 from concurrent.futures import ThreadPoolExecutor
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 CHROME = next(p for p in [r"C:\Program Files\Google\Chrome\Application\chrome.exe", r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"] if os.path.exists(p))
-W, H = 1080, 1350
+W, H = 1080, 1920
+SAFE = (H - 1350) // 2   # גובה הרצועה מעל ומתחת לאזור הבטוח (285)
 
 # (רקע, צבע טקסט ראשי, צבע הדגשה, עיגולי קישוט)
 STYLES = [
@@ -49,12 +51,12 @@ def page(text, i):
 *{{box-sizing:border-box;margin:0}}
 html,body{{width:{W}px;height:{H}px;overflow:hidden}}
 body{{background:{bg};color:{fg};font-family:Fredoka,Rubik,sans-serif;position:relative}}
-.c1{{position:absolute;{'left' if flip else 'right'}:-170px;top:-240px;width:620px;height:620px;border-radius:50%;background:{deco}}}
-.c2{{position:absolute;{'right' if flip else 'left'}:-130px;bottom:-70px;width:400px;height:520px;border-radius:200px 200px 0 0;background:{deco}}}
-.txt{{position:absolute;left:96px;right:96px;top:180px;bottom:350px;display:flex;align-items:center;justify-content:center;text-align:center}}
+.c1{{position:absolute;{'left' if flip else 'right'}:-170px;top:{SAFE-240}px;width:620px;height:620px;border-radius:50%;background:{deco}}}
+.c2{{position:absolute;{'right' if flip else 'left'}:-130px;bottom:0;width:400px;height:{520-70+SAFE}px;border-radius:200px 200px 0 0;background:{deco}}}
+.txt{{position:absolute;left:96px;right:96px;top:{SAFE+180}px;bottom:{SAFE+350}px;display:flex;align-items:center;justify-content:center;text-align:center}}
 #t{{font-weight:600;line-height:1.22;letter-spacing:-.005em}}
 #t em{{font-style:normal;color:{acc}}}
-.search{{position:absolute;bottom:112px;left:50%;transform:translateX(-50%);height:124px;display:flex;align-items:center;gap:26px;
+.search{{position:absolute;bottom:{SAFE+112}px;left:50%;transform:translateX(-50%);height:124px;display:flex;align-items:center;gap:26px;
   padding:0 46px 0 18px;border-radius:999px;background:#FFFDF9;border:3px solid rgba(63,56,47,.14);box-shadow:0 10px 30px rgba(63,56,47,.16);white-space:nowrap}}
 .search .q{{font-family:Rubik;font-size:60px;font-weight:600;color:#3F382F;line-height:1;display:flex;align-items:center}}
 .search .q b{{color:#C96F52;font-weight:700}}
@@ -74,7 +76,7 @@ while((t.scrollHeight>box.clientHeight||t.scrollWidth>box.clientWidth) && fs>40)
 
 def render(args):
     i, text, tmp, out = args          # i = מספר סידורי (id), מתחיל ב-1
-    name = f"ad-{i:02d}.png"
+    name = f"ad-{i:02d}-916.png"
     f = tmp / f"{i}.html"; f.write_text(page(text, i - 1), encoding="utf-8")
     subprocess.run([CHROME, "--headless", "--disable-gpu", "--hide-scrollbars", f"--window-size={W},{H}", "--virtual-time-budget=6000",
                     f"--user-data-dir={tmp/('p'+str(i))}", f"--screenshot={out/name}", f.as_uri()], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
@@ -101,7 +103,7 @@ def main():
             n = reg["next"]; reg["next"] = n + 1
             reg["items"][str(n)] = pt; by_text[pt] = n
         n = by_text[pt]
-        name = f"ad-{n:02d}.png"
+        name = f"ad-{n:02d}-916.png"   # ad-NN.png (4:5) נשארים בשביל ?ad=N בעמוד הבית
         items.append({"id": n, "file": name, "text": pt, **({"type": kind} if kind else {})})
         if force_all or not (out/name).exists():
             jobs.append((n, l, tmp, out))

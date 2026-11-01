@@ -8,7 +8,7 @@
   <link rel="icon" href="../images/favicon-v5.ico" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="../images/favicon-v5-32.png" />
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Assistant:wght@400;500;600;700&display=block" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/site.css?v=20261101a">
+  <link rel="stylesheet" href="../shared/site.css?v=20261101b">
   <script src="../shared/age.js?v=20261031a"></script>
 </head>
 <body>
@@ -132,6 +132,7 @@
       const f = document.createElement('figure');
       /* טקסט לחיפוש: מספר, נוסח המודעה (זהה בתמונה ובסרטון) ובמודעה עם סרטון גם הטקסטים הקבועים שבסרטון */
       f.dataset.type = c.type || 'msg';
+      f.classList.toggle('tall', c.h / c.w > 1.5);   // 9:16: התמונה והסרטון ביחס האמיתי שלהם
       f.dataset.text = [c.label, c.name, c.alt, c.vid && c.type !== 'photo' && c.type !== 'anim' ? (c.type === 'move' ? 'להכניס תנועה חדשה לחיים' : 'מפגש מסוג אחר') + ' לגילאי ' + ageText('to') + ' בפרק פתוח בחיים הזמנה יוצאים להרפתקה' : ''].join(' ');
       const head = document.createElement('div'); head.className = 'head';
       const n = document.createElement('span'); n.className = 'n'; n.textContent = c.label;
@@ -198,7 +199,7 @@
       (Array.isArray(items) ? items : []).forEach(it => {
         const pad = String(it.id).padStart(2, '0'), file = videos[String(it.id)];
         card(g, { label: it.id, name: 'מודעה ' + it.id, type: it.type, base: 'ad-' + pad, img: 'img/' + it.file, vid: file ? 'video/' + file : '',
-          w: 1080, h: 1350, alt: it.text });
+          w: 1080, h: 1920, alt: it.text });
       });
       applySearch();
     });
