@@ -164,7 +164,7 @@
     }
   </script>
 
-  <link rel="stylesheet" href="shared/site.css?v=20261101ft">
+  <link rel="stylesheet" href="shared/site.css?v=20261101fu">
   <script>
     /* סרטון פתיחה: אם הדפדפן מאפשר, מסתירים את ההזמנה (בלי להזיז את הדף) עד שהסרטון נגמר; רשת ביטחון אחרי 9 שניות */
     (function(){
@@ -814,9 +814,9 @@
         const st = !past && window.HarpatkaMe ? HarpatkaMe.get(m.id) : null;   // משתתף מחובר שכבר רשום למפגש הזה: מצב ההרשמה והתשלום במקום מדרגות המחיר
         if (st && st.registered) {
           /* משתתף מחובר שכבר רשום למפגש: הכפתור מציג את המצב (נרשמתם, שולם, דווח...) ולחיצה מובילה לאזור האישי על אותו מפגש */
-          const more = mk('div', 'mt-more'), box = mk('div'), paid = Number(st.paid) > 0, free = !!st.free;
-          const txt = free ? 'נרשמתם · חינם' : paid ? 'נרשמתם · שולם ₪' + Math.round(st.paid) : st.reported ? 'נרשמתם · התשלום ממתין לאישור' : st.rejected ? 'התשלום לא אושר · תשלום' + (st.price ? ' ₪' + st.price : '') : 'נרשמתם · תשלום' + (st.price ? ' ₪' + st.price : '');
-          const b = mk('a', 'mt-cta', txt);
+          const more = mk('div', 'mt-more'), box = mk('div'), paid = Number(st.paid) > 0, free = !!st.free, due = paid ? Number(st.due) || 0 : 0, canPay = !free && (!paid || due > 0);
+          const txt = free ? 'נרשמתם · חינם' : due > 0 ? 'נרשמתם · נשאר לשלם ₪' + Math.round(due) : paid ? 'נרשמתם · שולם ₪' + Math.round(st.paid) : st.reported ? 'נרשמתם · התשלום ממתין לאישור' : st.rejected ? 'התשלום לא אושר · תשלום' + (st.price ? ' ₪' + st.price : '') : 'נרשמתם · תשלום' + (st.price ? ' ₪' + st.price : '');
+          const b = mk('a', 'mt-cta' + (canPay ? ' topay' : ''), txt);   // אפשר לשלם: ירוק, כמו כפתור התשלום בפופאפ
           b.href = '#'; b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); reg(m); });   // גם אחרי דיווח: הפופאפ עם כפתור התשלום (נשאר עד שהתשלום באמת התקבל)   // בהמתנה לאישור דיווח: לא נפתח פופאפ   // פותח את פופאפ התשלום של המפגש (הפופאפ במצב "נרשמתם")
           box.append(b);
           if (!paid && !free && !st.reported) box.append(mk('div', 'mt-note', 'כדי שנוכל לשמור לכם את המקום, צריך להשלים את התשלום. עד אז המקום עוד לא סגור'));   // נרשם ולא שילם ולא דיווח: המקום נשמר רק עם תשלום
