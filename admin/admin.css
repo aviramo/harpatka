@@ -964,8 +964,7 @@ html.is-loading .hgrp { visibility: hidden; }
 :is(#filtBtn, #sortBtnH) { width: var(--tag); min-width: var(--tag); height: var(--tag); padding: 0; border: 0; background: transparent; color: var(--text); }   /* סינון ומיון: סמל בלבד, בלי רקע אפור */
 #listTags.vbar .stc:not([aria-pressed="true"]) { background: transparent; }
 .vbar .listcount { flex: 0 0 var(--agecol); min-width: var(--agecol); box-sizing: border-box; padding-inline-start: 5px; text-align: start; }   /* המונה באותה עמודה ובאותו רוחב של תגית הגיל, וקצהו הימני בקו אחד עם קצה הגיל (אותם 5px מהקצה) */
-#listTags .lclu { display: flex; gap: 8px; align-items: center; flex: 0 0 auto; }   /* ♂ ♀ בשורת הסינון: מוצבים ב-JS (placeGen) צמוד מימין לאייקוני הסינון של העמודות, ברווח 8px */
-#listClu .stc { padding-inline: 4px; }   /* ריפוד פנימי קטן: המרחק בין ♂ ל-♀ (8px + 5px + 5px) כמו המרחק בין אייקוני הסינון האחרים (תיבה של 28px עם סמל באמצע) */
+#listClu .stc { padding-inline: 4px; }   /* ריפוד פנימי קטן לזכר / נקבה בשורת הסינון (הרווחים ביניהם שווים: #listMid) */
 :is(#filtBtn, #sortBtnH) svg { width: 16px; height: 16px; }
 :is(#filtBtn, #sortBtnH).on:not(:hover) { background: transparent; }
 :is(#filtBtn, #sortBtnH).on::after { right: 3px; bottom: 3px; width: 6px; height: 6px; box-shadow: 0 0 0 1px var(--bg); }
@@ -1095,6 +1094,12 @@ dialog .dclose { display: none; }
 .mtinh2 span { display: inline-flex; align-items: center; height: var(--tag); padding: 0 12px; background: var(--surface-2); color: var(--text); font-size: 14px; font-weight: 600; }
 
 /* שורה אחת: מונה (בעמודת הגיל), חיפוש (נמתח לשאר המקום), סינון, מיון, זכר / נקבה. הצביר צמוד מימין לאייקוני הסינון של העמודות (JS: placeGen קובע את הריפוד השמאלי). בפוקוס או כשיש טקסט התיבה נמתחת עד הקצה השמאלי ומכסה את הצביר */
-#listTags .hsearch { margin: 0; min-width: 32px; }
-#listTags .hsearch:focus-within, #listTags .hsearch:has(input:not(:placeholder-shown)) { position: absolute; top: 0; bottom: 0; right: calc(var(--gut) + var(--agecol) + 8px); left: var(--gut); z-index: 6; height: auto; background: var(--bg); }
-#listTags .hsearch input { padding-right: 0; }   /* הטקסט של החיפוש (וה-placeholder) מתחיל בקו הימני של השמות ברשימה: התיבה נגמרת בקצה העמודה של השם, בלי ריפוד פנימי מימין */
+/* החיפוש בשורה הוא סמל (28px, צמוד למונה, והזכוכית מיושרת לימין עם השמות); לחיצה עליו (על שדה שקוף שמכסה אותו) מעבירה פוקוס לשדה והוא נפתח: בפוקוס או כשיש טקסט התיבה נמתחת עד הקצה השמאלי (מכסה את הצביר), והטקסט מתחיל בקו הימני של השמות */
+#listTags .hsearch { flex: 0 0 var(--tag); width: var(--tag); height: var(--tag); margin: 0 0 0 0; margin-inline-start: -8px; }
+#listTags .hsearch .ic { position: absolute; top: 50%; left: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; color: var(--text); pointer-events: none; }
+#listTags .hsearch input { position: absolute; top: -8px; bottom: -8px; left: -4px; right: -4px; width: auto; height: auto; opacity: 0; padding: 0; cursor: pointer; }
+#listTags .hsearch:focus-within, #listTags .hsearch:has(input:not(:placeholder-shown)) { position: absolute; top: 0; bottom: 0; right: calc(var(--gut) + var(--agecol) + 8px); left: var(--gut); z-index: 6; width: auto; height: auto; margin: 0; background: var(--bg); }
+#listTags .hsearch:focus-within .ic, #listTags .hsearch:has(input:not(:placeholder-shown)) .ic { display: none; }
+#listTags .hsearch:focus-within input, #listTags .hsearch:has(input:not(:placeholder-shown)) input { position: static; display: block; width: 100%; height: 100%; opacity: 1; padding: 0 0 0 calc(var(--ind) + 8px); cursor: text; }
+#listMid { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 4px; }   /* חיפוש, סינון, מיון, זכר, נקבה בהפרשים שווים ביניהם: הראשון (החיפוש) בקצה הימני של עמודת השם והאחרון (נקבה) 8px מאייקוני העמודות */
+#listTags .lclu { display: contents; }   /* הצביר של הסינון, המיון והמגדר: הילדים שלו הם פריטים ישירים של #listMid */
