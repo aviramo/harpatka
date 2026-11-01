@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104ag" />
+  <link rel="stylesheet" href="admin.css?v=20261104ahag" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1034,9 +1034,14 @@
   }
   /* השם עם סמל המצב צמוד למילה האחרונה (לא יורד לבד לשורה, ובגובה הטקסט): בשם בעברית המילה האחרונה והסמל עטופים יחד; בשם באנגלית כל השם והסמל יחד */
   const nameMark = (p, sz) => { const mk = glMark(p, sz), t = String(p.name || '').trim(); if (!mk) return '<bdi>' + esc(t) + '</bdi>'; const i = t.lastIndexOf(' '); if (/[\u0590-\u05FF]/.test(t) && i > 0) return '<bdi>' + esc(t.slice(0, i)) + ' <span class="nwrap">' + esc(t.slice(i + 1)) + mk + '</span></bdi>'; return '<span class="nwrap"><bdi>' + esc(t) + '</bdi>' + mk + '</span>'; };
-  /* סמל תגית ליד השם: למשתתף שיש לו לפחות תגית אחת (ב-title שמות התגיות), בנוסף לסמל המצב (מחובר, חסום, מחוק) */
-  const tagMark = (p, sz) => { const names = ptagsOf(p).map((k) => { const t = state.pstatuses.find((x) => x.key === k); return t ? t.label : ''; }).filter(Boolean); return names.length ? '<span class="glk" title="תגיות: ' + esc(names.join(', ')) + '" aria-label="תגיות: ' + esc(names.join(', ')) + '">' + icon('tag', sz || 'i16') + '</span>' : ''; };
-  const glMark = (p, sz) => { const m = stMark(p); return (m ? '<span class="glk' + (m.red ? ' red' : '') + '" title="' + esc(m.t) + '" aria-label="' + esc(m.t) + '">' + icon(m.k, sz || 'i16') + '</span>' : '') + tagMark(p, sz); };
+  /* סמל תגית ליד השם (ברשימה ובכותרת הכרטיס): כפתור שפותח תפריט בחירת תגיות (`data-qt`), ולצידו מונה התגיות שנבחרו (בלי להציג אפס). ברשימה מוצג רק למי שיש לו לפחות תגית; בכותרת הכרטיס תמיד (`always`), כדי שאפשר יהיה לבחור */
+  const tagMark = (p, sz, always) => {
+    const names = ptagsOf(p).map((k) => { const t = state.pstatuses.find((x) => x.key === k); return t ? t.label : ''; }).filter(Boolean);
+    if (!names.length && !always) return '';
+    const tt = names.length ? 'תגיות: ' + names.join(', ') : 'תגיות';
+    return '<button type="button" class="glk tgq" data-qt="' + p.id + '" title="' + esc(tt) + '" aria-label="' + esc(tt) + '">' + icon('tag', sz || 'i16') + (names.length ? '<span class="tgn">' + names.length + '</span>' : '') + '</button>';
+  };
+  const glMark = (p, sz) => { const m = stMark(p); return tagMark(p, sz) + (m ? '<span class="glk' + (m.red ? ' red' : '') + '" title="' + esc(m.t) + '" aria-label="' + esc(m.t) + '">' + icon(m.k, sz || 'i16') + '</span>' : ''); };   // סמל התגית הראשון אחרי השם, ואחריו סמל המצב
   const nameCls = (p) => { const m = stMark(p); return m && m.red ? ' warn' : ''; };
   /* מצב החשבון השתנה (זמן אמת): הכותרת של כרטיס המשתתף הפתוח מתעדכנת (הסמל ליד השם) */
   function paintInfoBtn() {
@@ -2161,8 +2166,8 @@
     let w = 0; rows.forEach((o) => { w = Math.max(w, o.r - o.l); });
     if (w > 0) menu.style.width = Math.min(max, Math.ceil(w + padX)) + 'px';
   }
-  function openQuickMenu(pid, anchor, mid) {
-    const menu = $('#qMenu'), inMeeting = !!(mid || state.filter);
+  function openQuickMenu(pid, anchor, mid, tagsOnly) {
+    const menu = $('#qMenu'), inMeeting = !tagsOnly && !!(mid || state.filter);   // tagsOnly: תפריט בחירת התגיות (גם בתוך מפגש נבחר)
     /* בתוך פופאפ התפריט צריך לשבת בתוכו (שכבת העל של הדיאלוג), אחרת הוא מוסתר מאחוריו */
     const host = anchor.closest('dialog') || document.body; if (menu.parentNode !== host) host.appendChild(menu);
     let cur, head, apply, qTid = null;
@@ -2227,15 +2232,15 @@
   async function toggleTag(pid, key) {
     const p = state.participants.find((x) => x.id === pid); if (!p) return;
     const prev = p.tags || [], has = prev.includes(key), next = has ? prev.filter((k) => k !== key) : prev.concat(key);
-    p.tags = next; render(); if (sheet && sheet.id === pid) fillPStatusSel(p);
+    p.tags = next; render(); if (sheet && sheet.id === pid) { fillPStatusSel(p); setTitle(p); }
     try { await api(T.p + '?id=eq.' + pid, { method: 'PATCH', body: { tags: next } }); }
-    catch (err) { p.tags = prev; render(); if (sheet && sheet.id === pid) fillPStatusSel(p); fail(err); }
+    catch (err) { p.tags = prev; render(); if (sheet && sheet.id === pid) { fillPStatusSel(p); setTitle(p); } fail(err); }
   }
   function placeTagsField() {
     const f = $('#pTagsField'), slot = $('#pTagsSlot'), home = $('#pTagsHome'); if (!f || !slot || !home) return;
-    const inMain = !!(sheet && sheet.id);
-    if (inMain) { if (f.parentElement !== slot) slot.appendChild(f); slot.hidden = !state.pstatuses.length; }
-    else { if (f.previousElementSibling !== home) home.after(f); slot.hidden = true; }
+    slot.hidden = true;
+    if (sheet && sheet.id) { f.hidden = true; return; }   // משתתף קיים: בלי רשימת תגיות בכרטיס; התגיות נבחרות מהסמל בכותרת (1.11.26)
+    f.hidden = false; if (f.previousElementSibling !== home) home.after(f);
   }
   function fillPStatusSel(p) {
     const box = $('#pStatusChips'); if (!box) return;
@@ -3199,7 +3204,8 @@
     else if (t === 'me-drag-end') { if (d > 110) { d0.style.transform = ''; d0.close(undefined, d); } else { d0.style.transition = 'transform .2s ease'; d0.style.transform = ''; setTimeout(() => { d0.style.transition = ''; }, 220); } }
   });
   window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout' && $('#meDlg').open) $('#meDlg').close(); });
-  $('#pDlg .sheet-head').addEventListener('click', (e) => { if (e.target.closest('#pBack, #pMsgs, #pViewAs, #pCall, #pAllocChip, #pInfoBtn, .saved')) return; { const cr = $('#pPayChip').getBoundingClientRect(); if (!$('#pPayChip').hidden && $('#pPayChip').offsetParent && e.clientX >= cr.left && e.clientX <= cr.right && e.clientY >= cr.top && e.clientY <= cr.bottom) { if (!e.target.closest('#pPayChip')) $('#pPayChip').click(); return; } }
+  $('#pDlg .sheet-head').addEventListener('click', (e) => { const qt = e.target.closest('[data-qt]'); if (qt) { e.stopPropagation(); if (!$('#qMenu').hidden) { closeQ(); return; } if (!state.pstatuses.length) { openStatusSettings('participant'); return; } openQuickMenu(qt.dataset.qt, qt, undefined, true); return; }
+    if (e.target.closest('#pBack, #pMsgs, #pViewAs, #pCall, #pAllocChip, #pInfoBtn, .saved')) return; { const cr = $('#pPayChip').getBoundingClientRect(); if (!$('#pPayChip').hidden && $('#pPayChip').offsetParent && e.clientX >= cr.left && e.clientX <= cr.right && e.clientY >= cr.top && e.clientY <= cr.bottom) { if (!e.target.closest('#pPayChip')) $('#pPayChip').click(); return; } }
     /* לחיצה על כל שורת הכותרת (השם והתגית וכל הרווח), מחוץ לכפתורים ולצ'יפים: במסך הראשי עוברת לפרטי המשתתף, ובפרטי המשתתף חוזרת לכרטיס (1.11.26) */
     if (e.target.closest('a, button, input, select, textarea, .dclose, #pPayChip') || !sheet || !sheet.id) return;
     if (pTab === 'main') openInfo(); else if (pTab === 'info' && !$('#pBack').hidden) $('#pBack').click(); });
@@ -3380,7 +3386,7 @@
     const o = originOf(p), cls = o ? ' ' + o.kind : '';   // צבע התגית לפי דרך ההגעה (צבע שנבחר בהגדרות)
     const src = o ? (o.kind === 'pr' ? ' · דרך הגעה: ' : ' · פרסום: ') + o.name : '';
     h.title = 'פרטי המשתתף' + src;
-    h.innerHTML = (age != null || p.gender ? '<span class="tchip' + cls + '"' + originAttr(p) + '><bdi dir="rtl">' + (age != null ? age : '') + (age != null ? ' ' : '') + '<b>' + (p.gender ? icon(p.gender === 'male' ? 'male' : 'female', 'i16') : '<span class="ic i16 ph" aria-hidden="true"></span>') + '</b>' + '</bdi></span>' : '') + '<span class="tname' + nameCls(p) + '" dir="rtl"><bdi>' + esc(p.name) + '</bdi></span>';
+    h.innerHTML = (age != null || p.gender ? '<span class="tchip' + cls + '"' + originAttr(p) + '><bdi dir="rtl">' + (age != null ? age : '') + (age != null ? ' ' : '') + '<b>' + (p.gender ? icon(p.gender === 'male' ? 'male' : 'female', 'i16') : '<span class="ic i16 ph" aria-hidden="true"></span>') + '</b>' + '</bdi></span>' : '') + '<span class="tname' + nameCls(p) + '" dir="rtl"><bdi>' + esc(p.name) + '</bdi>' + tagMark(p, 'i16', true) + '</span>';
     /* סמל המצב (מחובר לחשבון, חסום, מחוק) כאייקון קטן בפינה הימנית התחתונה של כפתור פרטי המשתתף, ולא ליד השם */
     const ib = $('#pInfoBtn'), mk = stMark(p);
     if (ib) {
@@ -4275,6 +4281,8 @@
     const cn = e.target.closest('.ptag.cnt');
     if (cn) { e.stopPropagation(); openCnt(cn); return; }   // צ'יף "הגיע X/Y": תפריט הסבר ופירוט
     { const rw = e.target.closest('.rowwa'); if (rw) { e.stopPropagation(); const ws = rw.dataset.wsend && waSelected(); if (ws) { waAwait = { pid: rw.dataset.wsend, mid: ws.m.id, key: ws.id, name: ws.name }; if (rw.classList.contains('sent')) { e.preventDefault(); askMsgSent(); } } return; } }   // וואטסאפ מהרשימה: רק פותח את השיחה, לא את כרטיס המשתתף; עם תבנית: בחזרה מאשרים שנשלחה. הודעה שכבר סומנה כנשלחה: לא פותח וואטסאפ, רק פופאפ אישור לביטול הסימון
+    const qt = e.target.closest('[data-qt]');
+    if (qt) { e.stopPropagation(); e.preventDefault(); if (!$('#qMenu').hidden) { closeQ(); return; } if (!state.pstatuses.length) { openStatusSettings('participant'); return; } openQuickMenu(qt.dataset.qt, qt, undefined, true); return; }
     const qs = e.target.closest('[data-qs]');
     if (qs) { e.stopPropagation(); if (!$('#qMenu').hidden) { closeQ(); return; } openQuickMenu(qs.dataset.qs, qs, state.filter || undefined); return; }
     const eu = e.target.closest('[data-evun]');
