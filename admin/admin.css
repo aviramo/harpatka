@@ -1136,3 +1136,14 @@ dialog .dclose { display: none; }
 .glk.tgq { align-items: center; gap: 2px; position: relative; padding: 0; border: 0; background: transparent; font: inherit; color: var(--text-2); cursor: pointer; }
 .glk.tgq .tgn { font-size: 12.5px; font-weight: 700; line-height: 1; }
 .glk.tgq::before { content: ""; position: absolute; inset: -8px -4px; }
+
+/* מתג (1.11.26, לפי הסקיל ui-ux-pro-max: role="switch" / aria-checked, המצב מוצג גם במיקום הידית ולא רק בצבע, שורה בגובה 44px, בלי הזזת פריסה). מרובע (בלי פינות מעוגלות); דולק = שחור, כבוי = אפור. בתפריט העריכה: "תגיות בשורה" */
+.swt { flex: 0 0 auto; position: relative; width: 36px; height: 20px; margin-inline-start: auto; background: var(--line-2); transition: background-color .15s; }
+.swt::after { content: ""; position: absolute; top: 2px; inset-inline-start: 2px; width: 16px; height: 16px; background: var(--bg); transition: inset-inline-start .15s; }
+[aria-checked="true"] > .swt { background: var(--text); }
+[aria-checked="true"] > .swt::after { inset-inline-start: 18px; }
+@media (prefers-reduced-motion: reduce) { .swt, .swt::after { transition: none; } }
+#editMenu .mdiv { height: 1px; margin: 4px 0; background: var(--line); }
+#editMenu #edTags { gap: 12px; }
+#editMenu #edTags[aria-checked="true"] { background: transparent; font-weight: inherit; }   /* מתג ולא בחירה: בלי הרקע והסימון ✓ של פריט נבחר בתפריט; המצב מוצג במתג עצמו */
+#editMenu #edTags[aria-checked="true"]::after { content: none; }

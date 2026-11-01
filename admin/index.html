@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104ahag" />
+  <link rel="stylesheet" href="admin.css?v=20261104ajaiahag" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -58,6 +58,8 @@
           <div class="sortmenu" id="editMenu" role="menu" aria-label="מה לערוך" hidden>
             <button type="button" role="menuitem" data-ed="tag"><svg data-i="tag"></svg><span>תגיות משתתפים</span></button>
             <button type="button" role="menuitem" data-ed="st"><svg data-i="flag"></svg><span>סטטוס מפגשים</span></button>
+            <div class="mdiv" role="separator"></div>
+            <button type="button" role="menuitemcheckbox" id="edTags" data-ed="showtags" aria-checked="true"><svg data-i="eye"></svg><span>תגיות בשורה</span><span class="swt" aria-hidden="true"></span></button>
           </div>
           <div class="sortmenu" id="waMenu" role="menu" hidden></div>
         </div>
@@ -1278,7 +1280,7 @@
   Object.defineProperty(state, 'showAtt', { get() { return true; }, set() {}, enumerable: true });
   [['showSent', 'sent']].forEach(([prop, key]) => Object.defineProperty(state, prop, { get() { const c = state.viewScopes[viewKey()]; return c && c[key] !== undefined && c[key] !== null ? c[key] : viewDef()[key]; }, set(v) { viewCtx()[key] = v; }, enumerable: true }));
   /* כפתור התגיות (31.10.26): הגדרה אחת לכל התצוגות (כל המשתתפים, סוגי מפגשים ומפגשים), לכל מנהל בנפרד; נשמר ב-view_scopes._g */
-  Object.defineProperty(state, 'showTags', { get() { return true; }, set() {}, enumerable: true });   // התגיות על המשתתפים תמיד גלויות בפס הסינון (1.11.26; כפתור התגיות בכותרת הוסר)
+  Object.defineProperty(state, 'showTags', { get() { const c = state.viewScopes._g; return !(c && c.tags === false); }, set(v) { (state.viewScopes._g || (state.viewScopes._g = {})).tags = !!v; }, enumerable: true });   // הצגת תגיות המשתתפים בשורת הסטטוסים: מתג בתפריט העריכה (1.11.26), נשמר לכל מנהל; ברירת מחדל: מוצגות
   /* המיון (1.11.26): הגדרה אחת לכל התצוגות, ברמת החשבון (לכל מנהל בנפרד, בכל מכשיר); נשמר ב-view_scopes._g.sort, ולכן לא בכתובת */
   Object.defineProperty(state, 'sort', { get() { const c = state.viewScopes._g; return c && c.sort ? c.sort : 'new'; }, set(v) { (state.viewScopes._g || (state.viewScopes._g = {})).sort = v; }, enumerable: true });
   function applyViewPrefs() { const pr = state.prefs[emailOf()] || {}; state.viewScopes = (pr.view_scopes && typeof pr.view_scopes === 'object') ? JSON.parse(JSON.stringify(pr.view_scopes)) : {}; }
@@ -4212,13 +4214,24 @@
   /* אייקון העריכה בסוף פס הסטטוסים: תפריט קטן ששואל מה לערוך, ולפי הבחירה נפתח הפופאפ המתאים (תגיות על משתתפים, או סטטוסים של המפגש / הסוג) */
   const closeEdit = () => { $('#editMenu').hidden = true; const b = document.querySelector('[data-stedit]'); if (b) b.setAttribute('aria-expanded', 'false'); };
   document.body.appendChild($('#editMenu'));
-  function openEditMenu(btn) {
-    const m = $('#editMenu'); if (!m.hidden) { closeEdit(); return; }
-    m.hidden = false; btn.setAttribute('aria-expanded', 'true');
-    const r = btn.getBoundingClientRect(), mw = m.offsetWidth;
+  function placeEditMenu(btn) {
+    const m = $('#editMenu'), r = btn.getBoundingClientRect(), mw = m.offsetWidth;
     m.style.left = Math.max(8, Math.min(Math.round(r.right - 5 - mw), window.innerWidth - mw - 12)) + 'px'; m.style.top = (r.bottom + 8) + 'px';   // הקצה הימני של התפריט בקו הימני של האייקון (עד שולי העמוד)
   }
-  $('#editMenu').addEventListener('click', (e) => { const b = e.target.closest('[data-ed]'); if (!b) return; closeEdit(); openStatusSettings(b.dataset.ed === 'tag' ? 'participant' : 'meeting'); });
+  const paintEditMenu = () => { const t = $('#edTags'); if (t) t.setAttribute('aria-checked', String(state.showTags)); };
+  function openEditMenu(btn) {
+    const m = $('#editMenu'); if (!m.hidden) { closeEdit(); return; }
+    paintEditMenu(); m.hidden = false; btn.setAttribute('aria-expanded', 'true'); placeEditMenu(btn);
+  }
+  $('#editMenu').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-ed]'); if (!b) return;
+    if (b.dataset.ed === 'showtags') {   // מתג: התפריט נשאר פתוח כדי לראות את התוצאה, ומתמקם מחדש כי האייקון זז כשהתגיות מוצגות או מוסתרות
+      state.showTags = !state.showTags; normFilter(); render(); saveViewPrefs(); paintEditMenu();
+      const eb = document.querySelector('[data-stedit]'); if (eb) { eb.setAttribute('aria-expanded', 'true'); placeEditMenu(eb); }
+      return;
+    }
+    closeEdit(); openStatusSettings(b.dataset.ed === 'tag' ? 'participant' : 'meeting');
+  });
   $('#stStrip').addEventListener('click', (e) => {
     const ed = e.target.closest('[data-stedit]'); if (ed) { e.stopPropagation(); openEditMenu(ed); return; }
     const pb = e.target.closest('[data-stp]'); if (pb) { state.paidF = state.paidF === pb.dataset.stp ? null : pb.dataset.stp; render(); syncUrl(); return; }
