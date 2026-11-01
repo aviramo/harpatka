@@ -425,20 +425,41 @@
   const hasSess = () => { try { return !!localStorage.getItem(TOK_KEY); } catch (e) { return false; } };   // יש חיבור גוגל שמור בדפדפן (גם אם עוד לא נטען המשתתף)
   /* מחובר באמת: המשתתף נטען מהשרת, או שיש חיבור שמור שעוד לא פג. חיבור שמור שפג (ואולי הרענון שלו נכשל) לא נחשב: הכפתורים פותחים כניסה עם גוגל */
   const loggedIn = () => { if (meInfo) return true; try { const s = JSON.parse(localStorage.getItem(TOK_KEY) || 'null'); return !!(s && s.access_token && jwtExp(s.access_token) * 1000 > Date.now() + 30000); } catch (e) { return false; } };
+  /* חיבור שמור שפג תוקפו (נפתח מחדש אחרי יותר משעה): ה-access token פג, וה-refresh token מחדש אותו בעת טעינת הדף (שבריר שנייה עד כמה שניות, בעיקר באייפון).
+     עד שהרענון מסתיים loggedIn() שקר, ולחיצה על הרשמה או על האזור האישי באותו רגע הפעילה כניסה עם גוגל מחדש (והמשתמש "לא נזכר"), למרות שהשם שלו כבר מוצג.
+     לכן כשיש חיבור שמור מחכים לסיום השחזור (עד 6 שניות, ואם הוא כבר הסתיים ונכשל מנסים עוד פעם) ורק אז מחליטים אם צריך כניסה */
+  let restoreP = null, restoreDone = false;
+  const sessionReady = async () => {
+    if (loggedIn()) return true;
+    if (!hasSess() || AS) return false;
+    const wait = (pr) => Promise.race([pr, new Promise((r) => setTimeout(r, 6000))]);
+    try { await wait(!restoreDone && restoreP ? restoreP : meLoader.now()); } catch (e) {}
+    return loggedIn();
+  };
   const REG_MEET_KEY = 'harpatka_reg_meeting';   // המפגש שנבחר להרשמה לפני הכניסה עם גוגל (גם אם הכניסה עברה בניווט רגיל)
   const takeRegMeeting = () => { let m = null; try { m = JSON.parse(sessionStorage.getItem(REG_MEET_KEY) || 'null'); sessionStorage.removeItem(REG_MEET_KEY); } catch (e) {} return m && m.id ? m : null; };
   const jwtExp = (tok) => { try { return JSON.parse(atob(tok.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).exp || 0; } catch (e) { return 0; } };
+  /* רענון החיבור: בקשה אחת בכל פעם. ה-refresh token של Supabase מתחלף בכל רענון (והשימוש החוזר בישן מבוטל אחרי 10 שניות, ואז כל החיבור נפסל), ולכן שתי בקשות רענון מקבילות
+     באותו דף (למשל טעינת המשתתף והערוץ בזמן אמת, ברשת איטית באייפון) עלולות לנתק את המשתמש. שאר הקוראים מחכים לאותה בקשה, ואם בינתיים חיבור אחר (לשונית אחרת) כבר רענן, משתמשים בו */
+  let refreshing = null;
   async function meToken() {
     let s = null; try { s = JSON.parse(localStorage.getItem(TOK_KEY) || 'null'); } catch (e) {}
     if (!s || !s.access_token) return null;
     if (jwtExp(s.access_token) * 1000 > Date.now() + 30000) return s.access_token;
     if (!s.refresh_token) return null;
-    try {
-      const r = await fetch(CONFIG.supabaseUrl + '/auth/v1/token?grant_type=refresh_token', { method: 'POST', headers: { apikey: CONFIG.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh_token: s.refresh_token }) });
-      if (!r.ok) return null;
-      const d = await r.json(); try { localStorage.setItem(TOK_KEY, JSON.stringify({ access_token: d.access_token, refresh_token: d.refresh_token })); } catch (e) {}
-      return d.access_token;
-    } catch (e) { return null; }
+    if (refreshing) return refreshing;
+    refreshing = (async () => {
+      try {
+        const r = await fetch(CONFIG.supabaseUrl + '/auth/v1/token?grant_type=refresh_token', { method: 'POST', headers: { apikey: CONFIG.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh_token: s.refresh_token }) });
+        if (!r.ok) {   // אולי לשונית אחרת רעננה בינתיים (הטוקן ששלחנו כבר הוחלף): אם יש עכשיו חיבור תקף, משתמשים בו
+          try { const n = JSON.parse(localStorage.getItem(TOK_KEY) || 'null'); if (n && n.access_token && jwtExp(n.access_token) * 1000 > Date.now() + 30000) return n.access_token; } catch (e) {}
+          return null;
+        }
+        const d = await r.json(); try { localStorage.setItem(TOK_KEY, JSON.stringify({ access_token: d.access_token, refresh_token: d.refresh_token })); } catch (e) {}
+        return d.access_token;
+      } catch (e) { return null; }
+    })();
+    try { return await refreshing; } finally { refreshing = null; }
   }
   async function meRpc(name, body) {
     const tok = await meToken(); if (!tok) throw new Error('auth');
@@ -772,7 +793,10 @@
   }
   function openMeArea(search, preload) {
     if (!GL) return;
-    if (!AS && !preload && !loggedIn()) { loginPopup('', true); return; }   // לא מחובר: ישר כניסה עם גוגל (בחלון קופץ), בלי מסך כניסה; אחרי ההתחברות האזור האישי נפתח
+    if (!AS && !preload && !loggedIn()) {   // לא מחובר: ישר כניסה עם גוגל (בחלון קופץ), בלי מסך כניסה; אחרי ההתחברות האזור האישי נפתח
+      if (hasSess()) { sessionReady().then((ok) => { if (ok) openMeArea(search, preload); else loginPopup('', true); }); return; }   // יש חיבור שמור: קודם מחכים לשחזור שלו
+      loginPopup('', true); return;
+    }
     const lm = document.getElementById('logoutModal'); if (!preload && lm && !lm.hidden) { try { closeModal(lm); } catch (e) {} }
     if (!meSheet) {
       meSheet = document.createElement('div'); meSheet.className = 'mesheet'; meSheet.hidden = true; meSheet.setAttribute('role', 'dialog'); meSheet.setAttribute('aria-modal', 'true'); meSheet.setAttribute('aria-label', 'האזור האישי');
@@ -823,7 +847,7 @@
   try { if (sessionStorage.getItem('harpatka_open_me')) { sessionStorage.removeItem('harpatka_open_me'); setTimeout(() => { try { if (localStorage.getItem(ME_KEY)) openMeArea(''); } catch (e) {} }, 700); } } catch (e) {}   // חזרה מהתחברות עם גוגל שהתחילה מתוך הפופאפ: נפתח מחדש
   document.querySelectorAll('[data-su="ame"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); try { closeModal(contactModal); } catch (x) {} setTimeout(() => openMeArea(''), 450); }));   // כניסה לאזור האישי (בתחתית אחרי ההרשמה): סוגרים את פופאפ ההרשמה ופותחים את האזור האישי
   document.querySelectorAll('[data-su="glink"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); loginPopup('reg'); }));   // נרשמתם בעבר: כניסה עם גוגל בחלון קופץ; אחרי החיבור פופאפ ההרשמה עובר למצב משתתף מחובר (בלי לפתוח את האזור האישי)
-  { const done = () => { window.HarpatkaMe.ready = true; try { window.dispatchEvent(new Event('harpatka:me')); } catch (e) {} }; Promise.resolve(loadMe()).then(done, done); }
+  { const done = () => { restoreDone = true; window.HarpatkaMe.ready = true; try { window.dispatchEvent(new Event('harpatka:me')); } catch (e) {} }; restoreP = Promise.resolve(loadMe()); restoreP.then(done, done); }
   if (GL && !AS && !loggedIn()) setTimeout(gsiLoad, 1500);   // השכבה של גוגל נטענת מראש למי שלא מחובר, כדי שתופיע מיד בלחיצה
   /* זמן אמת: מצב המשתתף המחובר דרך הערוץ "me" (בבדיקות "me-test"), ומפגשים והגדרות ציבוריות דרך הערוץ "meetings" (גם למבקרים לא מחוברים).
      הערוצים, חיבור מחדש, חזרה ללשונית וגיבוי כל 45 שניות מגיעים מ-HRT.channel */
@@ -848,7 +872,10 @@
   /* הרשמה כשהכניסה עם גוגל פעילה: מי שלא מחובר עובר קודם לכניסה עם גוגל (בלי פופאפ); אחרי הכניסה נפתח פופאפ ההרשמה של המפגש שנבחר:
      משתתף מקושר: הרשמה בלחיצה; בלי משתתף מקושר: הזנת פרטים, והכפתור יוצר משתתף, מחבר את החשבון ונרשם באותו צעד (harpatka_me_join) */
   window.HarpatkaRegister = { open: (auto, meeting) => {
-    if (GL && !AS && !loggedIn()) { try { sessionStorage.setItem(REG_MEET_KEY, JSON.stringify(meeting && meeting.id ? meeting : null)); } catch (e) {} loginPopup('reg'); return; }
+    if (GL && !AS && !loggedIn()) {
+      if (hasSess()) { sessionReady().then((ok) => { if (ok) openReg(auto, meeting); else { try { sessionStorage.setItem(REG_MEET_KEY, JSON.stringify(meeting && meeting.id ? meeting : null)); } catch (e) {} loginPopup('reg'); } }); return; }   // יש חיבור שמור: קודם מחכים לשחזור שלו
+      try { sessionStorage.setItem(REG_MEET_KEY, JSON.stringify(meeting && meeting.id ? meeting : null)); } catch (e) {} loginPopup('reg'); return;
+    }
     openReg(auto, meeting);
   } };   // לשימוש עמודים אחרים
   if (new URLSearchParams(location.search).has('register')) setTimeout(() => window.HarpatkaRegister.open(true), 500);   // הגעה דרך /register/: דף הבית נטען והפופאפ נפתח עליו

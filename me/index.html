@@ -43,13 +43,21 @@
   const store = () => (usingAdmin ? AKEY : SKEY);
   const saveSession = (s) => { session = s; try { localStorage.setItem(store(), JSON.stringify(s)); } catch (e) {} };
   const clearSession = () => { session = null; try { localStorage.removeItem(store()); } catch (e) {} };
+  /* רענון החיבור: בקשה אחת בכל פעם, ולפני כן בודקים אם דף הבית (או לשונית אחרת) כבר רענן: ה-refresh token של Supabase מתחלף בכל רענון, ושימוש חוזר בישן (אחרי 10 שניות) פוסל את כל החיבור,
+     והמשתמש צריך להתחבר מחדש. ב-me/ שבתוך הפופאפ יש עותק בזיכרון שנשאר ישן כשהדף הראשי מרענן */
+  let refreshP = null;
   async function refreshSession() {
     if (!session || !session.refresh_token) return false;
-    try {
-      const r = await fetch(DB.url + '/auth/v1/token?grant_type=refresh_token', { method: 'POST', headers: { apikey: DB.key, 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh_token: session.refresh_token }) });
-      if (!r.ok) return false;
-      const d = await r.json(); saveSession({ access_token: d.access_token, refresh_token: d.refresh_token }); return true;
-    } catch (e) { return false; }
+    try { const n = JSON.parse(localStorage.getItem(store()) || 'null'); if (n && n.access_token && n.access_token !== session.access_token) { if (sessionOk(n)) { session = n; return true; } if (n.refresh_token) session = n; } } catch (e) {}   // החיבור השמור חדש יותר
+    if (refreshP) return refreshP;
+    refreshP = (async () => {
+      try {
+        const r = await fetch(DB.url + '/auth/v1/token?grant_type=refresh_token', { method: 'POST', headers: { apikey: DB.key, 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh_token: session.refresh_token }) });
+        if (!r.ok) return false;
+        const d = await r.json(); saveSession({ access_token: d.access_token, refresh_token: d.refresh_token }); return true;
+      } catch (e) { return false; }
+    })();
+    try { return await refreshP; } finally { refreshP = null; }
   }
   /* מצב מוטמע (פופאפ האזור האישי בדף הבית ובדף הניהול, iframe): כניסה עם גוגל מנווטת את הדף הראשי וחוזרת אליו, והפופאפ נפתח מחדש */
   const EMBED = window.self !== window.top && new URLSearchParams(location.search).has('embed');
