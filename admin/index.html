@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104h" />
+  <link rel="stylesheet" href="admin.css?v=20261104i" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1380,7 +1380,7 @@
     $('#stStrip').style.setProperty('--nd', String(Math.max(2, String(state.participants.length).length)));
     { const tb = $('#tagBtn'), on = !!(state.showTags && state.pstatuses.length); tb.setAttribute('aria-pressed', String(on)); tb.title = state.pstatuses.length ? (on ? 'הסתרת התגיות משורת הסינון' : 'הצגת התגיות בשורת הסינון') : 'עוד לא הוגדרו תגיות (לחיצה פותחת הגדרות)'; }
     $('#lbFilt').innerHTML = '<button type="button" class="hfilt all' + (panelOn() ? ' on' : '') + '" id="filtBtn" aria-haspopup="menu" aria-expanded="' + !$('#viewMenu').hidden + '" aria-label="סינון ותצוגה' + (panelOn() ? ' (יש סינון פעיל)' : '') + '" title="סינון ותצוגה">' + icon('filter') + '</button>';
-    $('#listTags').innerHTML = '<div class="listcount" id="listCount" aria-live="polite" title="מספר הרשומות המוצגות">' + (state.listCnt == null ? '' : state.listCnt) + '</div>' + gHtml + '<div class="lbend" id="listWa"></div><div class="lbend" id="listPay"></div><div class="lbend" id="listSent"></div><div class="lbend" id="listBal"></div><div class="lbend" id="listAtt"></div>';   // אייקוני הסינון של העמודות (תשלום, שליחה, הגעה / יתרה, התמדה), מיושרים מעל העמודות שלהן
+    $('#listTags').innerHTML = '<div class="listcount" id="listCount" aria-live="polite" title="מספר הרשומות המוצגות">' + (state.listCnt == null ? '' : state.listCnt) + '</div>' + (gHtml ? '<div class="lbend" id="listGen">' + gHtml + '</div>' : '') + '<div class="lbend" id="listWa"></div><div class="lbend" id="listPay"></div><div class="lbend" id="listSent"></div><div class="lbend" id="listBal"></div><div class="lbend" id="listAtt"></div>';   // אייקוני הסינון של העמודות (תשלום, שליחה, הגעה / יתרה, התמדה), מיושרים מעל העמודות שלהן
     {   /* ספירה לכל אפשרות בתפריטי הסינון של העמודות: כמה משתתפים יוצגו אם בוחרים אותה (שאר הסינונים והחיפוש נשמרים) */
       const mid = state.filter, lk = (p) => linkOf(p.id, mid);
       const only = {
@@ -4014,6 +4014,12 @@
     closeF(); render(); syncUrl();
   });
   /* אייקוני הסינון מיושרים מעל העמודות שלהם ברשימה (₪, שליחה, הגעה, יתרה, התמדה) */
+  /* סינון ♂ ♀ בשורת הסינון: צמוד מימין לאייקוני הסינון של העמודות (הימני שבהם: וואטסאפ, תשלום, יתרה, התמדה, הגעה), ברווח הסטנדרטי של 8px */
+  function placeGen(br) {
+    const g = document.querySelector('#listGen'); if (!g) return;
+    let mx = -1; document.querySelectorAll('#listTags .lbend:not(#listGen) > *').forEach((e) => { const r = e.getBoundingClientRect(); if (r.width) mx = Math.max(mx, r.right - br.left); });
+    g.style.left = Math.round(mx < 0 ? (parseFloat(getComputedStyle($('#listTags')).paddingLeft) || 0) : mx + 8) + 'px';
+  }
   function alignFilters() {
     const bar = $('#listTags'); if (!bar) return; const br = bar.getBoundingClientRect();
     { const lb = document.querySelector('.listbar'), nm = document.querySelector('#list .row .name');   // שדה החיפוש (והקו מתחתיו) מסתיים איפה שנגמרת עמודת השמות, והאיקס בקצה שלו
@@ -4022,7 +4028,7 @@
     if (!document.querySelector('#list .row')) {   // רשימה ריקה: אין עמודות להתיישר מולן, האייקונים בשורה מהשוליים השמאליים
       let x = (parseFloat(getComputedStyle(bar).paddingLeft) || 0) + ((document.querySelector('#listWa') || {}).offsetWidth || 0) + 8;   // עמודת הוואטסאפ בקצה השמאלי
       ['#listSent', '#listPay', '#listBal', '#listAtt'].forEach((s) => { const b = document.querySelector(s); if (!b) return; const w = b.offsetWidth; if (!w) return; b.style.left = x + 'px'; x += w + 8; });
-      return;
+      placeGen(br); return;
     }
     [['#listPay', '#list .payic'], ['#listSent', '#list .evc'], ['#listBal', '#list .balic'], ['#listAtt', '#list .ptag.cnt']].forEach(([box, ref]) => {
       const b = document.querySelector(box), r = document.querySelector(ref); if (!b) return;
@@ -4033,7 +4039,7 @@
         const cx = a1 && a2 ? (a1.left + a1.width / 2 + a2.left + a2.width / 2) / 2 : a1 ? a1.left + a1.width / 2 + 40 : a2 ? a2.left + a2.width / 2 + 36 : null;
         if (cx != null && bb.width) b.style.left = Math.round(cx - br.left - (bb.left - b.getBoundingClientRect().left) - bb.width / 2) + 'px';
       }
-    });
+    });    placeGen(br);
   }
   window.addEventListener('resize', alignFilters);
   /* תפריט הסינון והתצוגה: תפריט צף רגיל, מיושר לקצה הימני של כפתור הסינון, בלי הכהיית הדף */
