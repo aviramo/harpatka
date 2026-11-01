@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104ac" />
+  <link rel="stylesheet" href="admin.css?v=20261104ad" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -131,7 +131,6 @@
         <div id="walHist"></div>
       </div>
       <div class="ppanel" data-panel="deposit" hidden>
-        <p class="sthint" id="depIntro" style="margin:0 0 12px">תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש</p>
         <div class="metchips" id="depMode" role="radiogroup" aria-label="סוג ההקצאה" hidden></div>
         <h4 class="depsec" id="depAddTitle" hidden>הקצאה למפגש</h4>
         <div class="metchips" id="depMethods" role="radiogroup" aria-label="דרך העברה"></div>
@@ -2933,7 +2932,6 @@
     f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; f.pay_depm.value = 'paybox'; f.pay_depn.value = ''; $('#depOtherField').hidden = true;
     { const al = m ? Math.max(0, allocatedOf(pid, m.id)) : 0, pr0 = m ? suggestPrice(pid, m) : 0; f.pay_dep.value = !m ? '' : al <= 0 ? pr0 : al < pr0 ? pr0 - al : ''; }   // מפגש ששולם חלקית: המוצע הוא היתרה
     { const pp = state.participants.find((x) => x.id === pid), lk = m && linkOf(pid, m.id), np = !!(m && pp && noPayOf(pp, lk)); $('#depFields').hidden = np; $('#depFree').hidden = !np; }
-    $('#depIntro').hidden = !!m; $('#depIntro').textContent = m ? 'מפגש ' + dmShort(m) : 'תשלום שהתקבל בלי קשר למפגש. הוא נכנס ליתרה, ואפשר לקחת ממנה בשיוך למפגש';
     { f.pay_dep.closest('label').querySelector('span').textContent = 'סכום (₪)'; $('#depSave').textContent = 'תשלום'; $('#depAddTitle').hidden = !m; paintDepLines(); }
     $('#depPkgLbl').textContent = m ? 'על כמה מפגשים' : 'חבילה'; f.pay_pkg.options[0].textContent = m ? '1' : '—';
     $('#depQuick').innerHTML = (() => { const q = quickPrices(m), l = m && linkOf(pid, m.id), r = l && l.pay_reported_at && Number(l.pay_reported_amount) > 0 ? Number(l.pay_reported_amount) : 0; return r && !q.includes(r) ? [r].concat(q) : q; })().map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
@@ -3038,14 +3036,14 @@
   }
   function allocUnmount() {
     if (!allocHome) return; const h = allocHome; allocHome = null;
-    h.panel.hidden = true; h.panelP.insertBefore(h.panel, h.panelN); h.chipP.insertBefore(h.chip, h.chipN); h.subP.insertBefore(h.sub, h.subN); h.chip.hidden = true; h.sub.hidden = true;
+    h.panel.hidden = true; h.panelP.insertBefore(h.panel, h.panelN); h.chipP.insertBefore(h.chip, h.chipN); h.subP.insertBefore(h.sub, h.subN); h.chip.hidden = true; h.sub.hidden = true; h.sub.classList.remove('bold');
   }
   function openAllocPop(pid, mid) {
     const pp = state.participants.find((x) => x.id === pid), m = mid ? state.meetings.find((x) => x.id === mid) : null; if (!pp || (mid && !m) || allocDlg.open) return;
     if (!(pDlg.open && sheet && sheet.id === pid)) { sheet = { id: pid, hl: state.filter || null, hlDone: false }; pForm.reset(); }   // נפתח מהרשימה: רק מצב המשתתף, בלי להציג את הכרטיס
     allocMount(); openDeposit(m ? m.id : null);
-    $('#allocTitle').innerHTML = (m ? 'הקצאה' : 'קבלת תשלום') + ' <span class="tsubname">· ' + esc(pp.name) + '</span>';
-    { const sub = $('#pViewSub'); sub.innerHTML = m ? esc(meetingLabel(m, true)) : ''; sub.hidden = !m; }
+    $('#allocTitle').innerHTML = 'הקצאה <span class="tsubname">· ' + esc(pp.name) + '</span>';
+    { const sub = $('#pViewSub'); sub.innerHTML = m ? esc(meetingLabel(m, true)) : 'תשלום ללא קשר למפגש'; sub.classList.toggle('bold', !m); sub.hidden = false; }   // בלי מפגש: במקום המועד, מודגש
     allocDlg.showModal(); if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   }
   allocDlg.addEventListener('close', () => {
