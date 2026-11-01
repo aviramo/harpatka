@@ -28,6 +28,7 @@
   --pop: 0 14px 34px -10px rgba(16, 24, 40, .22), 0 2px 6px rgba(16, 24, 40, .06);   /* שכבות צפות בלבד */
   --font: "Heebo", system-ui, -apple-system, "Segoe UI", sans-serif;
   --gut: 12px;             /* ריווח צד פנימי (במובייל אין רווח חיצוני) */
+  --agecol: 44px;         /* עמודת תגית הגיל והמגדר בשורת משתתף: גם המונה בשורת הסינון יושב בה, ו"זכר / נקבה" מתחילים בקו של השם */
   --ctl: 44px;             /* גובה שדה וכפתור טקסט (אחד לכל הכפתורים עם מילים) */
   --ib: 40px;              /* כפתור אייקון: ריבוע אחד לכל המערכת (וואטסאפ, חזרה, פרטים, תפריט, חיפוש...) */
   --tag: 28px;             /* תגית: גובה אחד לכל התגיות */
@@ -362,11 +363,11 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 .row:active { background: var(--surface-2); }
 .row.other .name { color: var(--text-2); }
 /* עמודות: גיל ומגדר | שם | (הערה, מוסתר) | תגיות | סטטוס או התמדה | מחוונים */
-.row .main { display: grid; grid-template-columns: 44px minmax(0, 1fr) 0 auto auto; column-gap: 8px; align-items: center; min-height: var(--ctl); padding: 8px var(--gut); padding-inline-end: calc(var(--gut) + var(--tag) + 8px); cursor: pointer; }   /* עמודת הוואטסאפ (.rowwa) בקצה השמאלי, אחרי כל העמודות */
-.row .main.att, .row .main.ev { grid-template-columns: 44px minmax(0, 1fr) 0 auto auto var(--ind); }   /* עמודת הסטטוס ברוחב התגית (לא 112px קבוע): התגיות עדיין מיושרות בקצה השמאלי, והשם מקבל את כל השאר */
-.row .main.att.ev { grid-template-columns: 44px minmax(0, 1fr) 0 auto auto var(--ind) var(--ind); }
-.row .main.bl { grid-template-columns: 44px minmax(0, 1fr) 0 auto 44px var(--ind); }   /* עמודת ההתמדה ברוחב הצ'יף וצמודה לתשלום ברווח אחיד של 8px, כמו בין התשלום לוואטסאפ */
-.row .main.bl.nosum { grid-template-columns: 44px minmax(0, 1fr) 0 auto var(--ind); }
+.row .main { display: grid; grid-template-columns: var(--agecol) minmax(0, 1fr) 0 auto auto; column-gap: 8px; align-items: center; min-height: var(--ctl); padding: 8px var(--gut); padding-inline-end: calc(var(--gut) + var(--tag) + 8px); cursor: pointer; }   /* עמודת הוואטסאפ (.rowwa) בקצה השמאלי, אחרי כל העמודות */
+.row .main.att, .row .main.ev { grid-template-columns: var(--agecol) minmax(0, 1fr) 0 auto auto var(--ind); }   /* עמודת הסטטוס ברוחב התגית (לא 112px קבוע): התגיות עדיין מיושרות בקצה השמאלי, והשם מקבל את כל השאר */
+.row .main.att.ev { grid-template-columns: var(--agecol) minmax(0, 1fr) 0 auto auto var(--ind) var(--ind); }
+.row .main.bl { grid-template-columns: var(--agecol) minmax(0, 1fr) 0 auto 44px var(--ind); }   /* עמודת ההתמדה ברוחב הצ'יף וצמודה לתשלום ברווח אחיד של 8px, כמו בין התשלום לוואטסאפ */
+.row .main.bl.nosum { grid-template-columns: var(--agecol) minmax(0, 1fr) 0 auto var(--ind); }
 .row .nm, .row .meta { display: contents; }
 .row .meta > * { grid-row: 1; text-align: center; }
 .row .nm .name { grid-column: 2; grid-row: 1; min-width: 0; text-align: right; font-size: 15.5px; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
@@ -960,7 +961,9 @@ html.is-loading .hgrp { visibility: hidden; }
 .vbar .lbend { position: absolute; top: 50%; left: var(--gut); z-index: 2; margin-top: calc(var(--ind) / -2); line-height: 0; }   /* אייקוני הסינון של העמודות, מיושרים ב-JS מעל העמודות (alignFilters) */
 .wrap > .vbar { flex: 0 0 calc(var(--ctl) + 1px); height: calc(var(--ctl) + 1px); background: var(--bg); border-bottom: 2px solid var(--line); }   /* מתחת לשורת החיפוש, באותו גובה, ומעל הרשימה; הקו מעל השורה הראשונה בעובי 2px (לבקשת בעל האתר) */
 :is(#filtBtn, #sortBtnH) { width: var(--tag); min-width: var(--tag); height: var(--tag); padding: 0; border: 0; background: transparent; color: var(--text); }   /* סינון ומיון: סמל בלבד, בלי רקע אפור */
-#listTags.vbar .stc:not([aria-pressed="true"]) { background: transparent; }   /* זכר / נקבה בשורת הסינון: בלי רקע אפור; נבחר נשאר מלא בשחור */
+#listTags.vbar .stc:not([aria-pressed="true"]) { background: transparent; }
+.vbar .listcount { flex: 0 0 var(--agecol); min-width: var(--agecol); }   /* המונה במרכז תגית הגיל שמתחתיו (אותה עמודה, אותו רוחב) */
+#listTags.vbar .listcount + .stc { margin-inline-start: -9px; }   /* "זכר" מיושר לימין עם השם בשורות: הטקסט בקו אחד (הריפוד הפנימי של התגית 9px, כולל הגבול השקוף) */   /* זכר / נקבה בשורת הסינון: בלי רקע אפור; נבחר נשאר מלא בשחור */
 :is(#filtBtn, #sortBtnH) svg { width: 16px; height: 16px; }
 :is(#filtBtn, #sortBtnH).on:not(:hover) { background: transparent; }
 :is(#filtBtn, #sortBtnH).on::after { right: 3px; bottom: 3px; width: 6px; height: 6px; box-shadow: 0 0 0 1px var(--bg); }
