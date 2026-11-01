@@ -11,8 +11,8 @@ begin
   em := lower(coalesce(auth.jwt() ->> 'email', ''));
   if em <> '' and exists (select 1 from public.harpatka_admins a where lower(a.email) = em) then return new; end if;   -- שיוך שמנהל עשה: בלי מייל
   select id, first_name, last_name, phone_norm, age, gender, xmin::text as xm into p from public.harpatka_participants where id = new.participant_id;
-  if p.id is null then return new; end if;
-  if p.xm = (txid_current() % 4294967296)::text then return new; end if;   -- המשתתף נוצר או חזר לפעילות בפעולה הזו: כבר נשלח "הרשמה חדשה מהאתר" עם המפגש
+  if p.id is null or not public.harpatka_details_done(p.first_name, p.last_name, p.age, p.gender) then return new; end if;   -- בלי פרטים: המייל נשלח בהשלמה (admin/signup-after-details.sql)
+  if txid_status(((txid_current() >> 32) << 32) + p.xm::bigint) = 'in progress' then return new; end if;   -- המשתתף נוצר או חזר לפעילות בפעולה הזו: כבר נשלח "הרשמה חדשה מהאתר" עם המפגש
   disp := case when p.phone_norm like '+972%' then '0' || substr(p.phone_norm, 5) else coalesce(p.phone_norm, '') end;
   nm := nullif(btrim(coalesce(p.first_name, '') || ' ' || coalesce(p.last_name, '')), '');
   perform public.harpatka_send_mail('meeting_signup', jsonb_build_object(

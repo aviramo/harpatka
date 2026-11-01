@@ -88,7 +88,7 @@ begin
                  else ' (כבר משויך/ת למפגש ' || public.harpatka_meeting_label(mid) || ')' end;
     perform public.harpatka_sys_note(pid, base || tail || ' · טלפון ' || norm, case when created then 'registered' when react then 'reactivated' else 'reregistered' end, mid, null, null, null, src);
   end if;
-  if created or react then perform public.harpatka_notify_signup(disp, norm, null, md, mt, pid, mid, null); end if;   -- מייל "הרשמה חדשה" למנהלים (עוד בלי שם: הטלפון)
+  if react then select * into pa from public.harpatka_participants where id = pid; if public.harpatka_details_done(pa.first_name, pa.last_name, pa.age, pa.gender) then perform public.harpatka_notify_signup(btrim(pa.first_name || ' ' || pa.last_name), norm, pa.age, md, mt, pid, mid, pa.gender); end if; end if;   -- משתתף חדש: המייל נשלח רק כשהשלים פרטים (admin/signup-after-details.sql)
 
   -- חיבור חשבון הגוגל למשתתף (מאושר מיד)
   if m.user_id is not null then
