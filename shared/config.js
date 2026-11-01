@@ -15,4 +15,6 @@ const CONFIG = {
   pixelId: '429806621602468',
   meetingFallback: { date: '2026-10-25', time: '20:00' },   // המפגש הקרוב אם הטעינה מבסיס הנתונים נכשלת
   meetingPlace: 'הרצליה',
+  /* שורת מפגש אחת לכל הפופאפים באתר: "יום שלישי 10.11 · 20:00 · הרצליה · המסילה" (רק מה שהוזן למפגש). שם המפגש מוצג מעליה */
+  meetingLine: (m) => { const [, mo, d] = String(m.date).split('-').map(Number), wd = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'][new Date(m.date + 'T12:00:00Z').getUTCDay()]; return ['יום ' + wd + ' ' + d + '.' + mo, m.time, m.city, m.place].filter(Boolean).join(' · '); },
 };
