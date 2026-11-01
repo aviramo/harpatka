@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104ab" />
+  <link rel="stylesheet" href="admin.css?v=20261104ac" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -138,15 +138,15 @@
         <div id="depFree" hidden><p class="sthint" style="margin:12px 0">המפגש סומן חינם ולא נדרש תשלום. בחירה בדרך תשלום או בהקצאה מהיתרה תבטל את החינם</p></div>
         <div id="depFields">
         <div class="payrow">
-          <label class="field"><span>סכום (₪)</span><input name="pay_dep" type="number" inputmode="decimal" min="0" step="10" /></label>
+          <label class="field"><span>סכום (₪)</span><input form="pForm" name="pay_dep" type="number" inputmode="decimal" min="0" step="10" /></label>
           <label class="field" id="depMSelF"><span>דרך תשלום</span><select id="depMSel" aria-label="דרך תשלום"></select></label>
-          <label class="field" style="display: none !important" aria-hidden="true"><span id="depPkgLbl">על כמה מפגשים</span><select name="pay_pkg" id="depPkgSel"><option value="">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select></label>
+          <label class="field" style="display: none !important" aria-hidden="true"><span id="depPkgLbl">על כמה מפגשים</span><select form="pForm" name="pay_pkg" id="depPkgSel"><option value="">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select></label>
           <button class="btn success paygo" id="depSave" type="button">תשלום</button>
         </div>
         <div class="pquick" id="depQuick"></div>
-        <label class="field payfield" id="depMethodSel" hidden><span>דרך העברה</span><select name="pay_depm"><option value="paybox">פייבוקס</option><option value="bit">ביט</option><option value="cash">מזומן</option><option value="bank">בנק</option><option value="other">אחר</option></select></label>
+        <label class="field payfield" id="depMethodSel" hidden><span>דרך העברה</span><select form="pForm" name="pay_depm"><option value="paybox">פייבוקס</option><option value="bit">ביט</option><option value="cash">מזומן</option><option value="bank">בנק</option><option value="other">אחר</option></select></label>
         <div class="payhint" id="depPkgHint"></div>
-        <label class="field" id="depOtherField" hidden><span>פירוט קצר</span><input name="pay_depn" maxlength="60" autocomplete="off" placeholder="למשל: פייפאל, צ׳ק" /></label>
+        <label class="field" id="depOtherField" hidden><span>פירוט קצר</span><input form="pForm" name="pay_depn" maxlength="60" autocomplete="off" placeholder="למשל: פייפאל, צ׳ק" /></label>
         </div>
         <div id="depLines" class="deplines" hidden></div>
       </div>
@@ -196,6 +196,14 @@
       </div>
       <button class="btn" id="pSubmit" type="submit">הוספה</button>
     </form>
+  </dialog>
+
+  <!-- פופאפ הקצאה: עולה מלמטה מעל כרטיס המשתתף (או לבד כשנפתח מהרשימה). מסך ההקצאה עצמו, הצ'יף והשורה השנייה עוברים אליו בפתיחה וחוזרים לכרטיס בסגירה (allocMount / allocUnmount) -->
+  <dialog id="allocDlg" aria-labelledby="allocTitle">
+    <div class="sheet" id="allocSheet">
+      <div class="sheet-head" id="allocHead"><h2 id="allocTitle">הקצאה</h2></div>
+      <div id="allocSlot"></div>
+    </div>
   </dialog>
 
   <!-- מפגש -->
@@ -465,7 +473,6 @@
   const NAV_BACK = { pDlg: '#pBack', setDlg: '#setBack', stDlg: '#stArrow', prDlg: '#prArrow', finDlg: '#finArrow' };
   const navDepthOf = (d) => {
     try {
-      if (d.id === 'pDlg' && d.classList.contains('compact')) return (sheet && sheet.fromCard) ? 1 : 0;   // פופאפ הקצאה שנפתח מכרטיס המשתתף: חזרה בדפדפן מחזירה לכרטיס
       if (d.id === 'pDlg') return (sheet && sheet.id && pTab !== 'main') ? Math.max(1, viewStack.filter((x) => x !== 'main').length + 1) : 0;
       if (d.id === 'setDlg') return setIsRoot(setView) ? 0 : setView === 'del' ? (setRoot === 'st' ? 1 : 2) : 1;   // עריכת סוג מפגש נפתחת מתפריט המפגשים: מסך הסוג הוא הראשי, והסטטוסים וההודעה שלו מסכי משנה
       if (d.id === 'stDlg') return stCur === 'main' ? 0 : 1;
@@ -527,7 +534,7 @@
     if (state.ageF) sp.set('ag', state.ageF);
     if (state.loginF) sp.set('lg', state.loginF);
     if (state.q.trim()) sp.set('q', state.q.trim());
-    if (openPid) { sp.set('p', openPid); if (pTab && pTab !== 'main' && pTab !== 'contact' && pTab !== 'meets') { sp.set('pt', pTab); if (pTab === 'deposit' && sheet && sheet.depMid) sp.set('pm', sheet.depMid); } }
+    if (openPid) { sp.set('p', openPid); if (pTab && pTab !== 'main' && pTab !== 'contact' && pTab !== 'meets' && pTab !== 'deposit') { sp.set('pt', pTab); } }
     if ($('#setDlg').open) sp.set('set', setView === 'main' ? '1' : setView === 'tydet' ? 'tydet:' + (tyId || '') : (setView === 'st' || setView === 'del') ? (stScope === 'meeting' ? 'st:' + (stType || '') : 'tag') : setView === 'em' ? 'em:' + (stType || '') : setView);   // סוג מפגש: עריכת הסוג, הסטטוסים וההודעה שלו
     if ($('#prDlg').open && prCur) sp.set('pr', prCur);
     if (mDlg.open) sp.set('em', editingMeeting ? editingMeeting.id : 'new');   // עריכת מפגש או מפגש חדש
@@ -979,7 +986,7 @@
   let sheetSig = '';
   const payTomb = new Map();   // הקצאות שנמחקו הרגע: טעינה מחדש שהתחילה לפני המחיקה לא מחזירה אותן (מונע הבהוב)
   function refreshOpenSheet() {
-    if (!(sheet && sheet.id && pDlg.open)) { sheetSig = ''; return; }
+    if (!(sheet && sheet.id && (pDlg.open || allocDlg.open))) { sheetSig = ''; return; }
     if (sheet.depLock && Date.now() < sheet.depLock) { sheetSig = ''; setTimeout(refreshOpenSheet, Math.max(100, sheet.depLock - Date.now() + 50)); return; }   // באמצע מעבר בין משלם / חינם / חוב: לא מציירים מחדש מנתוני ביניים
     /* חתימה של כל מה שמוצג בכרטיס המשתתף: הערות, שיוכים וסטטוסים, תשלומים והקצאות, ופרטי המשתתף; כשמשהו מזה משתנה (גם ממנהל אחר) הכרטיס והמסך הפתוח מתעדכנים בזמן אמת */
     const pid = sheet.id, pp = state.participants.find((x) => x.id === pid) || {};
@@ -989,7 +996,7 @@
     if (sig === sheetSig) return; sheetSig = sig;
     renderNotes(); refreshSheetMeetings(); renderContact();
     if (pTab === 'wallet') renderWallet();   // מסך יתרה ותשלומים
-    else if (pTab === 'deposit') { paintDepLines(); if (sheet.paintMeth) sheet.paintMeth(); }   // מסך הקצאות הכסף למפגש (לא נוגע בשדה הסכום שמוקלד)
+    if (allocDlg.open) { paintDepLines(); if (sheet.paintMeth) sheet.paintMeth(); }   // מסך הקצאות הכסף למפגש (לא נוגע בשדה הסכום שמוקלד)
   }
   /* ---------- טעינה ---------- */
   let loadSeq = 0, loadApplied = 0;
@@ -1096,7 +1103,6 @@
         if (d.p && state.participants.some((x) => x.id === d.p)) {
           openParticipant(d.p, ['meets', 'contact', 'info'].includes(d.pt) ? d.pt : 'contact');
           if (['wallet', 'zikuy', 'credit', 'refund', 'pay'].includes(d.pt)) { viewStack = []; goView('wallet'); }
-          else if (d.pt === 'deposit') { viewStack = []; openDeposit(d.pm && state.meetings.some((x) => x.id === d.pm) ? d.pm : null); }
           if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
         }
         else if (d.em === 'new') openMeeting(null);
@@ -2821,8 +2827,8 @@
     const rpt = !fr && !(alv > 0) && reportedOf(sheet.id, sheet.depMid);
     menu.innerHTML = (rpt ? '<button type="button" role="menuitem" class="qi rej" data-md="reject" aria-pressed="false">דחיית דיווח</button>' : '') + (fr ? '<button type="button" role="menuitem" class="qi" data-md="pay" aria-pressed="false">לתשלום</button>' : (alv > 0 ? '<button type="button" role="menuitem" class="qi del" data-md="del" aria-pressed="false">מחיקת הקצאה</button>' : '') + '<button type="button" role="menuitem" class="qi free" data-md="free" aria-pressed="false"><span class="nps">₪</span>חינם</button>');   // בדיוק כמו המצבים בכרטיס המפגש: לתשלום (ניטרלי), חינם (לבן עם ₪ מחוק)
     menu.hidden = false;
-    const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth;
-    menu.style.left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8) + 'px'; menu.style.top = (r.bottom + 8) + 'px';
+    const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
+    menu.style.left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8) + 'px'; menu.style.top = (r.bottom + 8 + mh > window.innerHeight - 8 ? Math.max(8, r.top - mh - 8) : r.bottom + 8) + 'px';   // בפופאפ הקטן שבתחתית המסך אין מקום מתחת לצ'יף: התפריט נפתח מעליו
     menu.onclick = (e) => {
       const b = e.target.closest('[data-md]'); if (!b) return; closeQ();
       const to = b.dataset.md, mapi = sheet.modeApi, pid = sheet.id, mid = sheet.depMid;
@@ -2850,8 +2856,7 @@
   /* קבלת תשלום: מהארנק (כללי) או מתוך מפגש (סמל ה-₪ ברשימה): אז הסכום המוצע הוא מחיר המפגש, ואפשר לשלם על כמה מפגשים (חבילה: הסכום מתחלק, והמפגש הזה ועוד קרובים שמשויכים אליהם נפרעים מיד) */
   /* כפתור ₪ של מפגש: בכל מצב (שולם, לא שולם, חינם) פותח את מסך התשלום של המפגש */
   function openPayFor(pid, mid) {
-    const pp = state.participants.find((x) => x.id === pid), lk = linkOf(pid, mid), m = state.meetings.find((x) => x.id === mid);
-    openDeposit(mid);
+    openAllocPop(pid, mid);   // פופאפ הקצאה שעולה מלמטה (אין יותר מסך הקצאה בתוך הכרטיס ואין לו כתובת)
   }
   /* הקצאות הכסף למפגש (מסך התשלום למפגש): כל תשלום שמוקצה למפגש הוא שורה: מהיתרה או בדרך העברה, עם סכום שאפשר לשנות ו-× להסרה. זיכוי והחזר מוצגים כשורות מידע */
   function paintDepLines() {
@@ -3011,9 +3016,9 @@
     sheet.paintMeth = paintMeth; paintMeth();
     const paintPkg = () => { const n = parseInt(f.pay_pkg.value, 10), a = parseFloat(f.pay_dep.value); $('#depPkgHint').innerHTML = n >= 2 && a > 0 ? 'מחיר למפגש בחבילה: <b>₪' + nfm(Math.round(a / n)) + '</b>. ' + (m ? 'המפגש הזה ועוד עד ' + (n - 1) + ' מפגשים קרובים משויכים ייפרעו מיד, והשאר ייפרעו בשיוך' : 'כל שיוך למפגש ייקח את הסכום הזה מהיתרה, עד ' + n + ' מפגשים') : ''; };
     sheet.depTyped = false; f.pay_pkg.oninput = paintPkg; f.pay_dep.oninput = () => { sheet.depTyped = true; paintPkg(); syncDepSave(); };
-    goView('deposit'); if (document.activeElement && document.activeElement.blur) document.activeElement.blur();   // בלי פוקוס אוטומטי: המקלדת לא עולה בכניסה למסך
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();   // בלי פוקוס אוטומטי: המקלדת לא עולה בכניסה למסך
   }
-  $('#walAdd').addEventListener('click', () => openDeposit(null));
+  $('#walAdd').addEventListener('click', () => { if (sheet && sheet.id) openAllocPop(sheet.id, null); });   // קבלת תשלום מהיתרה והארנק: גם היא פופאפ מלמטה
   /* "לא משלם" לפי מפגש: עקיפה בשיוך למפגש (true/false), מעל ברירת המחדל של המשתתף */
   async function setNoPay(v, repaint) {
     const pid = sheet && sheet.id, mid = sheet && sheet.depMid, l = pid && mid && linkOf(pid, mid), pp = pid && state.participants.find((x) => x.id === pid); if (!l || !pp) return;
@@ -3022,9 +3027,36 @@
     catch (err) { pendFail(h); l.no_pay = prev; $('#depFields').hidden = !v; $('#depFree').hidden = v; if (repaint) repaint(); render(); refreshSheetMeetings(); fail(err); }
   }
   /* אחרי שהתשלום נרשם הפופאפ (כרטיס המשתתף) נסגר, והרשימה מתעדכנת (31.10.26) */
-  /* פופאפ ההקצאה הקטן שנפתח מכרטיס המשתתף (כפתור ה-₪ בכרטיס המפגש): בסגירה, בחזרה או אחרי תשלום חוזרים לכרטיס המשתתף בגובה מלא, ולא סוגרים הכול */
-  function restoreCard() { if (sheet) sheet.fromCard = false; pDlg.classList.remove('compact'); pDlg.style.transform = ''; viewStack = []; setPTab('main'); }
-  const closePayCard = () => { viewStack = []; if (pDlg.classList.contains('compact')) { if (sheet && sheet.fromCard) { restoreCard(); return; } pDlg.close(); return; } setPTab('main'); };   // הפופאפ הקטן (נפתח מהרשימה) נסגר אחרי תשלום; כרטיס המשתתף חוזר למסך הראשי   // אחרי תשלום או הקצאה הכרטיס לא נסגר: חוזרים למסך הראשי של כרטיס המשתתף, כמו לחיצה על חץ החזרה
+  /* פופאפ הקצאה (#allocDlg, 1.11.26): דיאלוג נפרד שעולה מלמטה מעל כרטיס המשתתף הפתוח, בלי לגעת בכרטיס (או לבד כשנפתח מעיגול ה-₪ ברשימה). מסך ההקצאה הקיים (הפאנל, הצ'יף "הקצאה" והשורה השנייה עם המועד) עובר אליו פיזית בפתיחה וחוזר לכרטיס בסגירה, כך שיש מימוש אחד של מסך ההקצאה. גם בדסקטופ רחב (כרטיס בצד הרשימה); אין יותר מסך הקצאה בתוך הכרטיס ואין לו כתובת */
+  const allocDlg = $('#allocDlg');
+  let allocHome = null;
+  function allocMount() {
+    if (allocHome) return;
+    const panel = pForm.querySelector('.ppanel[data-panel="deposit"]'), chip = $('#pAllocChip'), sub = $('#pViewSub'); if (!panel) return;
+    allocHome = { panel, panelP: panel.parentNode, panelN: panel.nextSibling, chip, chipP: chip.parentNode, chipN: chip.nextSibling, sub, subP: sub.parentNode, subN: sub.nextSibling };
+    $('#allocHead').appendChild(chip); $('#allocSheet').insertBefore(sub, $('#allocSlot')); $('#allocSlot').appendChild(panel); panel.hidden = false;
+  }
+  function allocUnmount() {
+    if (!allocHome) return; const h = allocHome; allocHome = null;
+    h.panel.hidden = true; h.panelP.insertBefore(h.panel, h.panelN); h.chipP.insertBefore(h.chip, h.chipN); h.subP.insertBefore(h.sub, h.subN); h.chip.hidden = true; h.sub.hidden = true;
+  }
+  function openAllocPop(pid, mid) {
+    const pp = state.participants.find((x) => x.id === pid), m = mid ? state.meetings.find((x) => x.id === mid) : null; if (!pp || (mid && !m) || allocDlg.open) return;
+    if (!(pDlg.open && sheet && sheet.id === pid)) { sheet = { id: pid, hl: state.filter || null, hlDone: false }; pForm.reset(); }   // נפתח מהרשימה: רק מצב המשתתף, בלי להציג את הכרטיס
+    allocMount(); openDeposit(m ? m.id : null);
+    $('#allocTitle').innerHTML = (m ? 'הקצאה' : 'קבלת תשלום') + ' <span class="tsubname">· ' + esc(pp.name) + '</span>';
+    { const sub = $('#pViewSub'); sub.innerHTML = m ? esc(meetingLabel(m, true)) : ''; sub.hidden = !m; }
+    allocDlg.showModal(); if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  }
+  allocDlg.addEventListener('close', () => {
+    allocUnmount();
+    if (!sheet) return;
+    sheet.depMid = null; sheet.modeApi = null; sheet.paintMeth = null;
+    if (pDlg.open) { refreshSheetMeetings(); renderNotes(); } else sheet = null;   // נפתח מהרשימה: אין כרטיס מאחור
+    render();
+  });
+  allocDlg.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.name && e.target.name.startsWith('pay_')) { e.preventDefault(); $('#depSave').click(); } });
+  const closePayCard = () => { if (allocDlg.open) allocDlg.close(); };   // אחרי תשלום או הקצאה פופאפ ההקצאה נסגר, וכרטיס המשתתף (אם פתוח) נשאר כמו שהוא
   const depSaveRun = async () => {
     const f = pForm, pid = sheet && sheet.id; const amt = parseFloat(f.pay_dep.value); if (!pid) return;
     if (!(amt > 0)) { f.pay_dep.focus(); return; }
@@ -3153,7 +3185,7 @@
     if (e.target.closest('a, button, input, select, textarea, .dclose, #pPayChip') || !sheet || !sheet.id) return;
     if (pTab === 'main') openInfo(); else if (pTab === 'info' && !$('#pBack').hidden) $('#pBack').click(); });
   $('#pInfoBtn').addEventListener('click', () => openInfo());   // אייקון הפרטים (ליד היתרה): פותח את פרטי המשתתף (במקום לחיצה על השם)
-  $('#pBack').addEventListener('click', () => { if (pDlg.classList.contains('compact') && sheet && sheet.fromCard) { restoreCard(); return; } if (pTab === 'promoter') promoFromPay = null; setPTab(viewStack.pop() || 'main'); });
+  $('#pBack').addEventListener('click', () => { if (pTab === 'promoter') promoFromPay = null; setPTab(viewStack.pop() || 'main'); });
   const goView = (v) => { viewStack.push(pTab); setPTab(v); };
   const toMain = () => { viewStack = []; setPTab('main'); };
 
@@ -3204,7 +3236,6 @@
     };
     proto.close = function (rv, from) {
       if (!this.open || this._closing) return;
-      if (this.id === 'pDlg' && this.classList.contains('compact') && sheet && sheet.fromCard) { restoreCard(); return; }   // סגירה (החלקה, לחיצה בחוץ, Esc) של פופאפ ההקצאה שנפתח מהכרטיס: חוזרים לכרטיס
       navClose(this);
       if (this._side) {   // כרטיס בצד הרשימה: נסגר מיד, והאזור חוזר להודעה "בחרו משתתף"
         this._side = false; this.classList.remove('side'); this.getAnimations().forEach((a) => a.cancel());
@@ -3233,7 +3264,7 @@
         const ae = document.activeElement, typing = ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) && ae.type !== 'file';
         const kb = typing ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0;
         document.querySelectorAll('dialog[open]').forEach((d) => {
-          const full = ['pDlg', 'setDlg', 'stDlg', 'prDlg', 'finDlg'].includes(d.id) && !d.classList.contains('compact');   // פופאפים בגובה מלא: ממלאים בדיוק את האזור שמעל המקלדת, בלי רווח למעלה
+          const full = ['pDlg', 'setDlg', 'stDlg', 'prDlg', 'finDlg'].includes(d.id);   // פופאפים בגובה מלא: ממלאים בדיוק את האזור שמעל המקלדת, בלי רווח למעלה
           if (kb > 80) { d.style.marginBottom = kb + 'px'; d.style.maxHeight = Math.round(vv.height - (full ? 0 : 12)) + 'px'; if (full) d.style.height = Math.round(vv.height) + 'px'; }
           else { d.style.marginBottom = ''; d.style.maxHeight = ''; d.style.height = ''; }
         });
@@ -3376,7 +3407,6 @@
   /* דסקטופ רחב (31.10.26): השורה של המשתתף שהכרטיס שלו פתוח בצד מסומנת ברשימה */
   function markSel() { const on = pDlg && pDlg.open && pDlg._side; document.querySelectorAll('#list li.row').forEach((r) => { const e = r.querySelector('[data-edit]'); r.classList.toggle('sel', !!(on && e && e.dataset.edit === openPid)); }); }
   function openParticipant(id, tab, fromEl) {
-    pDlg.classList.remove('compact');
     const p = id ? state.participants.find((x) => x.id === id) : null;
     sheet = p ? { id: p.id, hl: state.filter || null, hlDone: false } : { id: null, links: new Map(state.filter ? [[state.filter, false]] : []) };
     pForm.reset();
@@ -3450,7 +3480,7 @@
   $('#pMeetings').addEventListener('click', (e) => {
     const pay = e.target.closest('[data-mp]'), mm = e.target.closest('[data-mm]');
     if (mm) {
-      if (sheet.id) { openPayFor(sheet.id, mm.dataset.mm); if (!pDlg._side) { pDlg.classList.add('compact'); sheet.fromCard = true; } }   // כפתור ה-₪ בכרטיס המפגש: אותו פופאפ הקצאה קטן כמו מעיגול ה-₪ ברשימה; אחרי תשלום או סגירה חוזרים לכרטיס
+      if (sheet.id) openPayFor(sheet.id, mm.dataset.mm);   // כפתור ה-₪ בכרטיס המפגש: פופאפ הקצאה שעולה מלמטה מעל הכרטיס (הכרטיס לא משתנה)
     } else if (pay) {
       const mid = pay.dataset.mp;
       if (sheet.id) { if (!$('#qMenu').hidden) closeQ(); else openQuickMenu(sheet.id, pay, mid); }
@@ -3936,7 +3966,7 @@
   });
 
   /* ---------- אירועים כלליים ---------- */
-  pDlg.addEventListener('close', () => { pDlg.classList.remove('compact'); sheet = null; openPid = null; syncUrl(); });
+  pDlg.addEventListener('close', () => { sheet = null; openPid = null; syncUrl(); });
   mDlg.addEventListener('close', syncUrl);
   pForm.phone.addEventListener('input', () => badPhone(false));
 
@@ -4240,7 +4270,7 @@
       return;
     }
     const pi = e.target.closest('.payic');
-    if (pi) { const r0 = pi.closest('li.row'), id0 = r0 && r0.querySelector('[data-edit]').dataset.edit; if (id0 && state.filter) { e.stopPropagation(); openParticipant(id0, undefined, r0); openPayFor(id0, state.filter); if (!pDlg._side) pDlg.classList.add('compact'); } return; }   /* מעיגול ה-₪ ברשימה: פופאפ קטן בגובה התוכן עם מסך ההקצאה בלבד (לא כרטיס משתתף בגובה מלא); אחרי תשלום הוא נסגר */
+    if (pi) { const r0 = pi.closest('li.row'), id0 = r0 && r0.querySelector('[data-edit]').dataset.edit; if (id0 && state.filter) { e.stopPropagation(); openAllocPop(id0, state.filter); } return; }   /* מעיגול ה-₪ ברשימה: פופאפ קטן בגובה התוכן עם מסך ההקצאה בלבד (לא כרטיס משתתף בגובה מלא); אחרי תשלום הוא נסגר */
     const bi = e.target.closest('.balic');
     if (bi) { const r1 = bi.closest('li.row'), id1 = r1 && r1.querySelector('[data-edit]').dataset.edit; if (id1) { e.stopPropagation(); openParticipant(id1, undefined, r1); viewStack = []; goView('wallet'); } return; }   // עיגול היתרה בתצוגת הכל: פותח את כרטיס המשתתף ישר במסך "יתרה ותשלומים"
     const row = e.target.closest('li.row'), ed = row && row.querySelector('[data-edit]');   // לחיצה בכל מקום בכרטיס פותחת את פרטי המשתתף

@@ -200,6 +200,10 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 .hfilt.on { background: var(--text); border-color: var(--text); color: #fff; }
 .row .payic.free::after, .row .balic.fr::after, .row .balic.zero::after, .hfilt.fr::after, .hfilt.free::after { content: ''; position: absolute; left: 4px; right: 4px; top: 50%; height: 1px; background: currentColor; transform: rotate(-35deg); }
 .row .evc.off, .row .payic.free, .row .evc.inert { cursor: default; }
+/* מצב תשלום על מפגש בלי רקע (1.11.26): עיגול ה-₪ ברשימה, אייקון הסינון ותפריט הסינון של התשלום; נשאר רק הסמל בצבע המצב (ירוק שולם, צהוב דווח, אדום, אפור לא שולם, חינם עם קו) */
+.row .payic, .row .payic.ok, .row .payic.wait, .row .payic.free, .row .payic:not(.ok):not(.free):not(.wait),
+.hfilt[data-fk="pay"]:not(.on), .hfilt[data-fk="pay"].yes, .hfilt[data-fk="pay"].wait, .hfilt[data-fk="pay"].mid, .hfilt[data-fk="pay"].no, .hfilt[data-fk="pay"].all, .hfilt[data-fk="pay"].free, .hfilt[data-fk="pay"].fr, .hfilt[data-fk="pay"].neu,
+#fMenu[data-kind="pay"] .hfilt { background: transparent; }
 .nps { position: relative; display: inline-block; margin-inline-end: 4px; }
 .nps::after { content: ''; position: absolute; left: -1px; right: -1px; top: 50%; height: 1px; background: currentColor; transform: rotate(-35deg); }
 
@@ -453,9 +457,9 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 #qMenu.am, #qMenu.am2 { width: max-content; min-width: 0; max-width: calc(100vw - 16px); display: flex; flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 8px; padding: 8px; }
 #qMenu.am .qi, #qMenu.am2 .qi { flex: 0 0 auto; height: var(--ctl); min-width: 160px; padding: 0 24px; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; border: 1px solid transparent; font-size: 16px; font-weight: 600; }
 #qMenu.am .qi { background: var(--surface-2); color: var(--text); }
-#qMenu.am2 .qi { background: var(--surface); color: var(--text-2); }
-#qMenu.am2 .qi.del, #qMenu.am2 .qi.rej { background: var(--red-bg); color: var(--red); }
-#qMenu.am2 .qi[aria-pressed="true"] { background: var(--surface-2); color: var(--text); }
+#qMenu.am2 .qi { background: transparent; color: var(--text-2); }   /* בלי רקע (1.11.26) */
+#qMenu.am2 .qi.del, #qMenu.am2 .qi.rej { background: transparent; color: var(--red); }
+#qMenu.am2 .qi[aria-pressed="true"] { background: transparent; color: var(--text); }
 /* תקופה בכספים */
 #finPerMenu { display: block; width: auto; min-width: 150px; max-width: 240px; max-height: 55vh; overflow-y: auto; }
 #finPerMenu .qi { height: auto; justify-content: space-between; }
@@ -498,10 +502,16 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 /* פופאפים בגובה מלא */
 #pDlg, #setDlg, #stDlg, #prDlg, #finDlg, #meDlg, #mDlg { height: 100dvh; max-height: 100dvh; }
 #setDlg .sheet, #stDlg .sheet, #prDlg .sheet, #mDlg .sheet { min-height: 100%; }
-/* פופאפ קטן לתשלום או הקצאה שנפתח מעיגול ה-₪ ברשימה: בגובה התוכן (עד 92% מהמסך), בלי חץ חזרה (אין כרטיס משתתף מאחוריו) (1.11.26) */
-#pDlg.compact { height: fit-content; max-height: 92dvh; }   /* fit-content ולא auto: בדיאלוג עם inset של 0 גובה auto נמתח לכל המסך */
-#pDlg.compact .sheet { height: auto; max-height: 92dvh; padding-bottom: 24px; }
-#pDlg.compact #pBack { display: none; }
+/* פופאפ הקצאה (#allocDlg, 1.11.26): דיאלוג נפרד שעולה מלמטה בגובה התוכן, מעל כרטיס המשתתף הפתוח (או לבד כשנפתח מהרשימה). הפאנל, הצ'יף והשורה השנייה עוברים אליו מהכרטיס בפתיחה (allocMount) */
+#allocDlg { height: fit-content; max-height: 92dvh; overflow: visible; }   /* fit-content ולא auto: בדיאלוג עם inset של 0 גובה auto נמתח לכל המסך */
+#allocDlg:focus { outline: none; }
+#allocDlg .sheet { display: flex; flex-direction: column; max-height: 92dvh; padding: 28px var(--gut) calc(24px + env(safe-area-inset-bottom)); }
+#allocDlg .sheet-head { position: relative; flex: 0 0 auto; gap: 8px; align-items: flex-start; text-align: right; }
+#allocDlg .sheet-head h2 { flex: 1 1 auto; min-width: 0; font-size: 20px; line-height: 25px; padding-top: calc((var(--tag-lg) - 25px) / 2); min-height: var(--tag-lg); }
+#allocDlg .sheet-head #pAllocChip { order: 2; flex: 0 0 auto; }
+#allocDlg .sheet-head:has(+ .pviewsub:not([hidden])) { margin-bottom: 0; }
+#allocDlg .pviewsub { margin-top: -8px; line-height: 1.3; }   /* מיושרת לימין עם המילה "הקצאה" (בלי ההזחה של חץ החזרה שיש בכרטיס) */
+#allocDlg .ppanel { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: contain; padding: 4px 0; }
 /* דסקטופ (31.10.26): כל הפופאפים במרכז המסך בגודל התוכן (עד 90% מהגובה, ואז גלילה בתוכם), בלי פס גרירה; נפתחים ונסגרים בדהייה */
 @media (min-width: 760px) {
   dialog { margin: auto; max-height: min(90vh, 920px); }
@@ -560,10 +570,10 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .paychip { background: var(--red-bg); color: var(--red); cursor: pointer; }
 .paychip.ok { background: var(--yellow-bg); color: var(--yellow); }
 .paychip.zero { background: var(--surface-2); color: var(--text-2); }
-.paychip.allocchip { background: var(--green-bg); color: var(--green); }
-.paychip.allocchip.rep { background: var(--yellow-bg); color: var(--yellow); }
-.paychip.allocchip.topay { background: var(--surface-2); color: var(--text-2); }
-.paychip.allocchip.free { color: var(--text-2); }
+.paychip.allocchip { background: transparent; color: var(--green); }   /* מצב תשלום בלי רקע (1.11.26): רק הטקסט והסמל בצבע המצב */
+.paychip.allocchip.rep { background: transparent; color: var(--yellow); }
+.paychip.allocchip.topay { background: transparent; color: var(--text-2); }
+.paychip.allocchip.free { background: transparent; color: var(--text-2); }
 #pPayChip[data-tab]:not([data-tab="main"]) { display: none; }
 /* תגיות המשתתף ושורת המפגשים */
 #pTagsSlot { margin-bottom: 12px; }
@@ -594,8 +604,9 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .mlist .mrow .mmoney { width: 100%; padding: 0 4px; }
 .mlist .mrow .mmoney { grid-column: 1; grid-row: 2; }
 .mlist .mrow .mmoney:only-of-type { grid-column: 1 / -1; }
-.mlist .mrow .mmoney.has { background: var(--green-bg); color: var(--green); }
-.mlist .mrow .mmoney.wait { background: var(--yellow-bg); color: var(--yellow); }
+.mlist .mrow .mmoney, .mlist .mrow .mmoney.has, .mlist .mrow .mmoney.wait, .mlist .mrow .mmoney.free { background: transparent; }   /* מצב תשלום בכרטיס המפגש בלי רקע (1.11.26) */
+.mlist .mrow .mmoney.has { color: var(--green); }
+.mlist .mrow .mmoney.wait { color: var(--yellow); }
 .mlist .mrow .mmoney.free { color: var(--text-2); }
 .more { display: block; width: 100%; height: var(--ctl); margin: 4px 0 8px; border: 1px solid transparent; background: var(--surface-2); color: var(--text); font-weight: 600; font-size: 15px; }
 /* הערה חדשה: שדה וצירוף צילום מסך */
