@@ -27,11 +27,9 @@
     </div>
     <select id="types" class="typesel" aria-label="סינון לפי סוג">
       <option value="">הכל</option>
-      <option value="msg">הכרויות</option>
-      <option value="move">תנועה חדשה</option>
-      <option value="photo">תמונות</option>
-      <option value="video">וידאו</option>
-      <option value="anim">אנימציה</option>
+      <option value="dating">מסרים הכרויות</option>
+      <option value="move">מסרים תנועה</option>
+      <option value="other">אחרים</option>
     </select>
   </div>
   </div>
@@ -206,16 +204,26 @@
     /* חיפוש: כל המילים שנכתבו חייבות להופיע (בלי ניקוד ופיסוק), על כל המודעות והסרטונים */
     const norm = s => String(s || '').toLowerCase().replace(/[֑-ׇ]/g, '').replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
     const qEl = document.getElementById('q'), qClr = document.getElementById('qClr'), typesEl = document.getElementById('types'), noneEl = document.getElementById('none');
-    let typeSel = '';
-    document.getElementById('types').addEventListener('change', e => { typeSel = e.target.value; applySearch(); });
-    const TYPE_LABELS = { '': 'הכל', msg: 'הכרויות', move: 'תנועה חדשה', photo: 'תמונות', video: 'וידאו', anim: 'אנימציה' };
+    /* קטגוריות, לכל אחת כתובת משלה: ?c=dating, ?c=move, ?c=other */
+    const TYPE_LABELS = { '': 'הכל', dating: 'מסרים הכרויות', move: 'מסרים תנועה', other: 'אחרים' };
+    const catOf = f => f.dataset.type === 'msg' ? 'dating' : f.dataset.type === 'move' ? 'move' : 'other';
+    let typeSel = new URLSearchParams(location.search).get('c') || '';
+    if (!Object.hasOwn(TYPE_LABELS, typeSel)) typeSel = '';
+    typesEl.value = typeSel;
+    typesEl.addEventListener('change', e => {
+      typeSel = e.target.value;
+      const u = new URL(location.href);
+      if (typeSel) u.searchParams.set('c', typeSel); else u.searchParams.delete('c');
+      history.replaceState(null, '', u);
+      applySearch();
+    });
     function applySearch() {
-      const words = norm(qEl.value).split(' ').filter(Boolean), count = { '': 0, msg: 0, photo: 0, video: 0 };
+      const words = norm(qEl.value).split(' ').filter(Boolean), count = { '': 0 };
       let shown = 0;
       document.querySelectorAll('#grid figure').forEach(f => {
-        const hay = norm(f.dataset.text), match = words.every(w => hay.includes(w)), ok = match && (!typeSel || f.dataset.type === typeSel);
+        const hay = norm(f.dataset.text), match = words.every(w => hay.includes(w)), ok = match && (!typeSel || catOf(f) === typeSel);
         f.hidden = !ok; if (ok) shown++;
-        if (match) { count[''] ++; count[f.dataset.type] = (count[f.dataset.type] || 0) + 1; }
+        if (match) { count[''] ++; count[catOf(f)] = (count[catOf(f)] || 0) + 1; }
         if (!ok) f.querySelector('.media') && f.querySelector('.media')._stop && f.querySelector('.media')._stop();
       });
       /* המספרים בתוך התפריט (לפי החיפוש הנוכחי), בלי להזיז את הפריסה */
