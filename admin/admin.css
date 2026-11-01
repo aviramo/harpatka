@@ -595,8 +595,10 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .mtadd::before { content: ""; position: absolute; inset: -12px 0 -5px; }
 .mtadd[hidden] { display: none; }
 .mtadd svg { position: relative; width: 24px; height: 24px; stroke-width: 2.4; }
-@media (hover: hover) { .mtadd:hover::before { background: var(--line); } }
-.mtadd:active::before { background: var(--line-2); }
+/* אפקט הלחיצה על כל האריח (לא רק על הפלוס): ריחוף בעכבר ולחיצה בנגיעה, כשאפשר לשייך למפגש (1.11.26) */
+.mtile:has(.mtadd:not([hidden])) { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+@media (hover: hover) { .mtile:has(.mtadd:not([hidden])):hover { background: var(--line); } }
+.mtile:has(.mtadd:not([hidden])):active { background: var(--line-2); }
 .mwrap:has(.mtile:not([hidden])) > .mlist { margin-inline-start: 0; margin-inline-end: calc(var(--gut) * -1); padding-inline-start: 0; scroll-padding-inline-start: 0; }   /* הרצועה מתחילה בקצה האריח (בלי חפיפה) */   /* הרצועה מתחילה אחרי האריח וממשיכה עד הקצה השמאלי של המסך */
 /* רצועת המפגשים: כרטיס לכל מפגש (תאריך, סטטוס, תשלום) */
 .mlist { display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; margin: 0 calc(var(--gut) * -1) 12px; padding: 4px var(--gut); scroll-padding-inline: var(--gut); scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scrollbar-width: none; }
