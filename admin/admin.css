@@ -284,7 +284,7 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 .qmenu .qedit, .qeditlink { display: flex; align-items: center; justify-content: center; gap: 8px; height: 32px; background: transparent; color: var(--text-2); font-size: 13px; font-weight: 600; }
 
 /* 3.10 שורת רשימה (שטוחה): תנועות, יומנים, שורות הגדרה */
-.finrow, .walrow, .logrow, .pmv, .bq, .cntmenu .cnr, .setrow { border-bottom: 1px solid var(--line); }
+.finrow, .walrow, .logrow, .bq, .cntmenu .cnr, .setrow { border-bottom: 1px solid var(--line); }
 .finrow:last-child, .walrow:last-child, .logrow:last-child, .bq:last-child { border-bottom: 0; }
 
 /* 3.11 גוונים (מחלקות שמתווספות לכל רכיב: צבע רקע וטקסט מהפלטה) */
@@ -697,6 +697,11 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .walrow .wl b { font-size: 15.5px; font-weight: 600; }
 .walrow .wl small { font-size: 13px; color: var(--text-2); }
 .walrow .wamt { font-weight: 800; font-size: 16.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.walrow:has(.wr) { align-items: flex-start; }   /* הסכום בשורה של השם, גם כשהפרטים עוברים שורה */
+.walrow .wr { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }   /* טור שמאלי בהתחשבנות דרך הגעה: הסכום, ומתחתיו היתרה אחרי התנועה או מחיקת התשלום */
+.walrow .wr small { font-size: 13px; color: var(--text-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.walrow .wr .ndel { position: relative; width: auto; height: auto; min-height: 0; padding: 0; font-size: 13px; line-height: 18px; color: var(--red); text-decoration: underline; background: none; }
+.walrow .wr .ndel::before { content: ""; position: absolute; inset: -13px -8px -13px 0; }   /* שטח לחיצה של 44px */
 .walrow.rcpt .wamt.wamt, .walrow .wamt.up { color: var(--green); }
 .walrow.usecr .wamt.wamt, .walrow.tobal .wamt.wamt { color: var(--yellow); }
 .walrow.alloc .wamt.wamt { color: var(--text); }
@@ -854,17 +859,6 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .prearn { text-align: left; font-size: 17px; font-weight: 800; line-height: 1.1; color: var(--text); }
 .prearn small { display: block; margin: 0; font-size: 12px; font-weight: 600; color: var(--text-2); }
 .prok { color: var(--green); font-weight: 800; font-size: 14.5px; }
-.pmv { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto 64px; align-items: center; gap: 8px; padding: 12px 0; font-size: 14.5px; }
-.pmv.ph { grid-template-columns: 52px minmax(0, 1fr) auto; }
-.pmv .d { color: var(--text-2); font-size: 13px; }
-.pmv .w { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pmv .w small { display: block; color: var(--text-2); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; }
-.pmv .a { text-align: left; font-weight: 800; font-variant-numeric: tabular-nums; }
-.pmv .a.c { color: var(--text); }
-.pmv .a.p { color: var(--green); }
-.pmv .a.r { color: var(--red); }
-.pmv .bl { text-align: left; color: var(--text-2); font-size: 13px; font-variant-numeric: tabular-nums; }
-.pmv .x { grid-column: 1 / -1; }
 .bq { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 0; }
 .bq .n { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .pst { background: var(--red-bg); color: var(--red); }

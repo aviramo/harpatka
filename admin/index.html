@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104cm" />
+  <link rel="stylesheet" href="admin.css?v=20261104cn" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -328,9 +328,6 @@
         <div id="prBrought"></div>
         <div class="clabel">תנועות (מהחדשה לישנה)</div>
         <div id="prMoves"></div>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <button type="button" class="btn ghost" id="prEdit" style="flex:1">עריכת דרך הגעה</button>
-        </div>
       </div>
       <form id="prForm" class="ppanel" novalidate hidden>
         <label class="field"><span>שם דרך ההגעה</span><input name="name" maxlength="60" autocomplete="off" /></label>
@@ -2022,7 +2019,7 @@
     const leadRow = (n) => ({ kind: 'c', date: todayISO(), amount: n * rate, who: 'עלות לידים', sub: n + ' לידים × ₪' + rate, key: 'leads' });
     const accNew = acc.filter((r) => !lastTs || String(r.ts || '') > lastTs).concat(leadsNew.length ? [leadRow(leadsNew.length)] : []);
     const lastRow = lp ? [{ kind: 'p', date: lp.paid_at, amount: -Number(lp.amount), who: 'תשלום לדרך הגעה', sub: ((lp.by_email ? 'שולם דרך ' + finName(lp.by_email) : '') + (lp.by_email && lp.note ? ' · ' : '') + (lp.note || '')), id: lp.id, key: lp.id }] : [];
-    const rows = accNew.concat(lastRow).sort((a, b) => String(a.date).localeCompare(String(b.date)) || (a.kind === 'c' ? -1 : 1)); { let run3 = 0; rows.forEach((r) => { run3 += r.amount; r.bal = run3; }); }
+    const rows = accNew.concat(lastRow).sort((a, b) => String(a.date).localeCompare(String(b.date)) || (a.kind === 'c' ? -1 : 1)); { let run3 = 0; rows.forEach((r) => { if (r.kind !== 'p') run3 += r.amount; r.bal = run3; }); }
     const accrued = acc.reduce((s, r) => s + r.amount, 0) + leadsAll.length * rate, paid = myPays.reduce((s, x) => s + Number(x.amount), 0);
     return { rows: rows.reverse(), accrued, paid, balance: accNew.reduce((s, r) => s + r.amount, 0) };
   }
@@ -2043,8 +2040,11 @@
     const L = ledgerOf(id);
     $('#prTitle').textContent = x.name;
     $('#prSum').innerHTML = UI.metric(L.balance > 0 ? 'יתרה לתשלום לדרך הגעה' : 'מסולק', ils(Math.max(L.balance, 0)), { tone: L.balance > 0 ? 'neg' : 'pos', cls: 'wide' });
-    $('#prMoves').innerHTML = L.rows.length ? L.rows.map((r) => '<div class="pmv"><span class="d">' + fmtD(r.date) + '</span><span class="w">' + esc(r.who) + (r.sub ? '<small>' + esc(r.sub) + '</small>' : '') + '</span><span class="a ' + r.kind + '"><bdi dir="ltr">' + (r.amount > 0 ? '+' : '−') + nfm(Math.abs(r.amount)) + '</bdi></span>' +
-      (r.kind === 'p' ? '<button type="button" class="ndel" data-delpay="' + r.id + '" aria-label="מחיקת תשלום" title="מחיקת תשלום">×</button>' : '<span class="bl" title="יתרה אחרי התנועה">' + nfm(r.bal) + '</span>') + '</div>').join('') : '<p class="mnone">עוד אין תנועות. עמלה נרשמת אוטומטית כשמסמנים תשלום של משתתף שהביא דרך ההגעה</p>';
+    /* תנועה: אותה שורה כמו בהיסטוריית התשלומים (walrow): מימין מי, ומתחתיו מתי ופרטים; משמאל הסכום, ומתחתיו היתרה אחרי התנועה או מחיקת התשלום */
+    const balAfter = (n) => '<bdi dir="ltr">' + (n < 0 ? '−' : '') + '₪' + nfm(Math.abs(n)) + '</bdi>';
+    $('#prMoves').innerHTML = L.rows.length ? L.rows.map((r) => '<div class="walrow"><div class="wl"><b>' + esc(r.who) + '</b><small>' + fmtD(r.date) + (r.sub ? ' · ' + esc(r.sub) : '') + '</small></div>' +
+      '<div class="wr"><span class="wamt' + (r.kind === 'p' ? ' up' : r.kind === 'r' ? ' down' : '') + '"><bdi dir="ltr">' + (r.amount > 0 ? '+' : '−') + '₪' + nfm(Math.abs(r.amount)) + '</bdi></span>' +
+      (r.kind === 'p' ? '<button type="button" class="ndel" data-delpay="' + r.id + '" aria-label="מחיקת תשלום">מחיקה</button>' : '<small>יתרה ' + balAfter(r.bal) + '</small>') + '</div></div>').join('') : '<p class="mnone">עוד אין תנועות. עמלה נרשמת אוטומטית כשמסמנים תשלום של משתתף שהביא דרך ההגעה</p>';
     /* משתתפים שהגיעו דרך דרך ההגעה, ומי שילם ומי לא */
     const brought = state.participants.filter((q) => q.promoter_id === id).sort((a, b) => a.name.localeCompare(b.name, 'he'));
     const stOf = (q) => { const ls = linksOf(q.id); if (ls.some((l) => l.paid && !l.exempt)) return ['paid', 'שילם']; if (ls.some((l) => linkStatus(l) === 'requested')) return ['requested', 'בטיפול']; if (ls.some((l) => l.exempt)) return ['exempt', 'חינם']; return ls.length ? ['unpaid', 'חדש'] : ['none', 'ללא מפגש']; };
@@ -2067,7 +2067,6 @@
   $('#prDlg').addEventListener('close', () => { prAfterSave = null; });
   $('#prList').addEventListener('click', (e) => { if (e.target.closest('#prNew')) return showPromoterForm(null); const r = e.target.closest('[data-pr]'); if (r) showPromoterDetail(r.dataset.pr); });
   $('#prList').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-pr]')) { e.preventDefault(); showPromoterDetail(e.target.dataset.pr); } });
-  $('#prEdit').addEventListener('click', () => showPromoterForm(prCur));
   $('#prArrow').addEventListener('click', () => { if (prAfterSave) { prAfterSave = null; $('#prDlg').close(); } else if (prView === '#prForm' && prEditing) showPromoterDetail(prEditing); else showPromoterList(); });
   $('#prForm').addEventListener('change', (e) => { if (e.target.name === 'rtype') $('#prRateLbl').textContent = e.target.value === 'percent' ? 'אחוז מהתשלום (%)' : 'עמלה לכל משתתף (₪)'; });
   $('#prForm').addEventListener('submit', async (e) => {
