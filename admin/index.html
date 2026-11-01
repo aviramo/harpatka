@@ -3837,6 +3837,20 @@
        נשמרות בשמירת המפגש / הסוג (saveTemplates); מחיקה מתבצעת רק בשמירה */
     const mfBox = q('MF'), tplBox = q('Tpl'), ed = (s) => q('Tpl' + s);
     F.tpl = { rows: [], cur: null };
+    F.tpl.rowsOf = (id) => (id ? (isType ? tplsOfType(id) : tplsOfMeeting(id)) : []).map((x) => ({ id: x.id, name: x.name, body: x.body }));
+    /* שמירה במסך עריכת תבנית: שומרת רק את התבניות (כשהמפגש או הסוג כבר קיימים; בחדש הן נשמרות יחד איתו) וחוזרת לטופס, בלי לסגור את הפופאפ */
+    F.tpl.saveBack = async (ownerId) => {
+      if (F.tpl.busy) return;
+      const cur = F.tpl.rows[F.tpl.cur];
+      if (cur && !String(cur.name || '').trim() && !String(cur.body || '').trim()) { toast('חסר שם לתבנית'); ed('Name').focus(); return; }
+      const tr = F.tpl.read(); if (tr.err) { toast(tr.err); if (tr.open) tr.open(); return; }
+      F.tpl.busy = true;
+      try {
+        if (ownerId) { await saveTemplates(isType ? { type_id: ownerId } : { meeting_id: ownerId }, tr.rows); F.tpl.rows = F.tpl.rowsOf(ownerId); }
+        F.tpl.close(); toast('התבנית נשמרה');
+      } catch (err) { fail(err); }
+      F.tpl.busy = false;
+    };
     F.tpl.render = () => {
       tplBox.innerHTML = F.tpl.rows.map((r, i) => '<button type="button" class="mtitem" data-i="' + i + '"><span>' + esc(r.name || 'תבנית חדשה') + '</span>' + icon('go', 'i18') + '</button>').join('');
     };
@@ -3919,7 +3933,7 @@
       F.tiersInh = !!t && h.has('price_tiers'); F.te.t = tiersOf(F.tiersInh ? t : s); F.te.render();
       if (F.img.objUrl) URL.revokeObjectURL(F.img.objUrl);
       F.img = { url: s.image_url || null, blob: null, objUrl: null, inh: !!t && h.has('image_url') };
-      F.tpl.rows = (s.id ? (isType ? tplsOfType(s.id) : tplsOfMeeting(s.id)) : []).map((x) => ({ id: x.id, name: x.name, body: x.body })); F.tpl.cur = null; mfBox.classList.remove('editing'); ed('Ed').hidden = true; F.tpl.render();
+      F.tpl.rows = F.tpl.rowsOf(s.id); F.tpl.cur = null; mfBox.classList.remove('editing'); ed('Ed').hidden = true; F.tpl.render();
       F.paint();
     };
     /* קריאה לשמירה: { body, inherit } או { err, el }. במפגש עם סוג שדה ריק נרשם ב-inherit ומקבל את ערך הסוג */
@@ -4028,6 +4042,7 @@
 
   mForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (mf.tpl.cur != null) { await mf.tpl.saveBack(editingMeeting && editingMeeting.id); return; }   // במסך עריכת תבנית: שומרים תבנית וחוזרים לטופס
     /* שדה ריק עם סוג = "כמו בסוג": נשמר הערך של הסוג ונרשם ב-inherit; שדה מלא = ערך משלו */
     const date = $('#mDate').value;
     if (!date) { $('#mDate').focus(); toast('חסר תאריך'); return; }
@@ -4465,6 +4480,7 @@
   }
   $('#tySave').addEventListener('click', async () => {
     const t = tyCur(); if (!t) return;
+    if (tyF.tpl.cur != null) { await tyF.tpl.saveBack(tyId); return; }   // במסך עריכת תבנית: שומרים תבנית וחוזרים לטופס
     const r = tyF.read(); if (r.err) { toast(r.err); if (r.el) r.el.focus(); return; }
     const tr = tyF.tpl.read(); if (tr.err) { toast(tr.err); if (tr.open) tr.open(); return; }   // תבניות הודעה: שם ונוסח לכל תבנית
     const body = r.body;
