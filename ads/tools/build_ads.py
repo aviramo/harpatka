@@ -88,19 +88,21 @@ def main():
     reg_path = ROOT/"ads"/"registry.json"
     reg = json.loads(reg_path.read_text(encoding="utf-8")) if reg_path.exists() else {"next": 1, "items": {}}
     by_text = {v: int(k) for k, v in reg["items"].items()}
-    lines = [l.strip() for l in (ROOT/"ads"/"sentences.txt").read_text(encoding="utf-8").splitlines() if l.strip()]
+    # sentences.txt: הקטגוריה "הכרויות". sentences-move.txt: הקטגוריה "תנועה חדשה" (שדה type ב-ads.json)
+    read = lambda f: [l.strip() for l in (ROOT/"ads"/f).read_text(encoding="utf-8").splitlines() if l.strip()]
+    lines = [(l, None) for l in read("sentences.txt")] + [(l, "move") for l in read("sentences-move.txt")]
     out = ROOT/"ads"/"img"; out.mkdir(parents=True, exist_ok=True)
     tmp = pathlib.Path(tempfile.mkdtemp())
     force_all = "--all" in sys.argv
     jobs, items = [], []
-    for l in lines:
+    for l, kind in lines:
         pt = plain(l)
         if pt not in by_text:
             n = reg["next"]; reg["next"] = n + 1
             reg["items"][str(n)] = pt; by_text[pt] = n
         n = by_text[pt]
         name = f"ad-{n:02d}.png"
-        items.append({"id": n, "file": name, "text": pt})
+        items.append({"id": n, "file": name, "text": pt, **({"type": kind} if kind else {})})
         if force_all or not (out/name).exists():
             jobs.append((n, l, tmp, out))
     reg_path.write_text(json.dumps(reg, ensure_ascii=False, indent=1), encoding="utf-8")
