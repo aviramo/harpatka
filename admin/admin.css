@@ -141,7 +141,9 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 /* מצבים */
 .stc.zero { opacity: .5; }
 .stc.editc { width: var(--tag); min-width: var(--tag); padding: 0; justify-content: center; }
-.stc.tagc.editc { background: transparent; border-color: transparent; }   /* בלי רקע; הסמל מיושר לימין, בקו הימני של הטקסט ברשימה (1.11.26) */
+.stc.tagc.editc { background: transparent; border-color: transparent; }   /* בלי רקע (1.11.26) */
+.ststrip .stlast { display: inline-flex; align-items: center; gap: 0; }
+.ststrip > .stc.editc { margin-inline-start: -5px; }   /* אייקון העריכה לבדו (בלי סטטוסים): קצה העיפרון הנראה בקו הימני של המונה והטקסט */   /* הסטטוס האחרון ואייקון העריכה צמודים, בלי רווח ביניהם, ולא נפרדים בשבירת שורה */
 @media (hover: hover) { .stc.tagc.editc:hover { background: var(--surface-2); } }   /* אייקון העריכה בסוף פס הסטטוסים: תגית מרובעת עם סמל בלבד (1.11.26) */
 #editMenu { min-width: 190px; }
 #editMenu button { justify-content: flex-start; text-align: right; }   /* הטקסט צמוד לסמל מימין (במקום להידחף לשמאל ב-space-between) */
@@ -940,7 +942,7 @@ html.is-loading .wrap > :not(header) { display: none !important; }
 @media (prefers-reduced-motion: reduce) { .mldg b { animation: none; } }
 
 /* כותרת המפגש: שם ארוך (למשל סוג מפגש) לא חורג מהמסך, נחתך ב-... */
-.title-row > .msel { max-width: 100%; }   /* בלי זה הכותרת מקבלת את רוחב הטקסט המלא ודוחפת את הדף הצידה */
+.title-row > .msel { max-width: 100%; margin-inline-start: 5px; }   /* כותרת המסך מיושרת לימין עם הטקסט ברשימה והמונה (5px מקצה העמודה: ריפוד וגבול) */   /* בלי זה הכותרת מקבלת את רוחב הטקסט המלא ודוחפת את הדף הצידה */
 .msel > h1 { min-width: 0; max-width: 100%; }
 #mSel { min-width: 0; max-width: 100%; }
 #mSelTxt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1111,3 +1113,5 @@ dialog .dclose { display: none; }
 #listTags .hsearch:focus-within input, #listTags .hsearch:has(input:not(:placeholder-shown)) input { position: static; display: block; width: 100%; height: 100%; opacity: 1; padding: 0 0 0 calc(var(--ind) + 8px); cursor: text; }
 #listMid { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 4px; }   /* חיפוש, סינון, מיון, זכר, נקבה בהפרשים שווים ביניהם: הראשון (החיפוש) בקצה הימני של עמודת השם והאחרון (נקבה) 8px מאייקוני העמודות */
 #listTags .lclu { display: contents; }   /* הצביר של הסינון, המיון והמגדר: הילדים שלו הם פריטים ישירים של #listMid */
+/* תפריטים צפים (תפריט ראשי, מיון, עריכה, תקופה, סינון עמודה, וואטסאפ): הרוחב לפי התוכן, וריפוד שווה משני הצדדים (1.11.26); בלי רוחב מינימלי קבוע */
+.hmenu, #sortMenu, #editMenu, #finPerMenu, #fMenu, #waMenu { width: max-content; min-width: 0; max-width: min(320px, calc(100vw - 16px)); }
