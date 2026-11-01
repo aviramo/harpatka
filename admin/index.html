@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104cs" />
+  <link rel="stylesheet" href="admin.css?v=20261104ct" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -2187,14 +2187,6 @@
     catch (err) { pendFail(h); const l2 = linkOf(pid, mid); if (l2) Object.assign(l2, { meeting_key: prevKey }); refresh(); fail(err); }
   }
   /* רוחב תפריט הסטטוס המהיר לפי התוכן: השורה הרחבה ביותר של הצ'יפים (עד הרוחב המרבי), בלי שוליים ריקים בצדדים; אותה חלוקה לשורות כמו ברוחב המלא */
-  function fitQMenu(menu) {
-    menu.style.width = '';
-    const cs = getComputedStyle(menu), padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 2, max = menu.getBoundingClientRect().width;
-    const rows = new Map();
-    menu.querySelectorAll('button.qi').forEach((b) => { const r = b.getBoundingClientRect(), k = Math.round(r.top), o = rows.get(k) || { l: Infinity, r: -Infinity }; o.l = Math.min(o.l, r.left); o.r = Math.max(o.r, r.right); rows.set(k, o); });
-    let w = 0; rows.forEach((o) => { w = Math.max(w, o.r - o.l); });
-    if (w > 0) menu.style.width = Math.min(max, Math.ceil(w + padX)) + 'px';
-  }
   function openQuickMenu(pid, anchor, mid, tagsOnly) {
     const menu = $('#qMenu'), inMeeting = !tagsOnly && !!(mid || state.filter);   // tagsOnly: תפריט בחירת התגיות (גם בתוך מפגש נבחר)
     /* בתוך פופאפ התפריט צריך לשבת בתוכו (שכבת העל של הדיאלוג), אחרת הוא מוסתר מאחוריו */
@@ -2224,7 +2216,7 @@
     /* תגיות לפי סוג מפגש: לכל סוג כותרת (שם הסוג) ומתחתיה התגיות שלו, כמו הסטטוסים; סוג בלי תגיות לא מוצג; סוג ההקשר הנוכחי ראשון */
     const tagGroupsH = () => {
       const ctx = ctxTid(), ts = state.mtypes.length ? state.mtypes.slice().sort((a, b) => ((b.id === ctx) - (a.id === ctx))) : [null];
-      return ts.map((t) => { const l = pstatusList(t ? t.id : null).slice().reverse(); return l.length ? '<div class="qhd">' + esc(t ? t.name : 'תגיות') + '</div>' + l.map(chipH).join('') : ''; }).join('');
+      return ts.map((t) => { const l = pstatusList(t ? t.id : null); return l.length ? '<div class="qhd">' + esc(t ? t.name : 'תגיות') + '</div>' + l.map(chipH).join('') : ''; }).join('');
     };
     const phSecs = phaseSecs();   // מקטע סטטוס מפגש (רק מ-שעה לפני תחילת המפגש); סטטוסי ההרשמה תמיד עם כותרת
     menu.innerHTML =
@@ -2232,7 +2224,7 @@
       (inMeeting ? '<div class="qhd">סטטוס הרשמה</div>' : '') +   // הכותרת תמיד בתוך מפגש, גם כשעוד אין מקטע "סטטוס מפגש" (לפני שעה מתחילת המפגש)
       (inMeeting ? statusList(qTid).map(chipH).join('') : tagGroupsH()) +
       phSecs;
-    menu.hidden = false; fitQMenu(menu);   // רוחב התפריט לפי התוכן (השורה הרחבה ביותר של הצ'יפים), לא קבוע
+    menu.className = 'qmenu qlist'; menu.style.width = ''; menu.hidden = false;   // כל פריט בשורה משלו, מיושר לימין עם הכותרות, והרוחב לפי התוכן
     const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
     let left = Math.min(Math.max(8, r.left), window.innerWidth - mw - 8), top = r.bottom + 8;
     if (top + mh > menuBottom()) top = Math.max(8, r.top - mh - 8);
