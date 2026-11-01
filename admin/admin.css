@@ -586,17 +586,17 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 /* אריח בצד ימין של רצועת המפגשים (1.11.26; לפי הסקיל ui-ux-pro-max: שטח לחיצה 44px ומעלה, תווית נגישה לכפתור הסמל, מצב ריחוף ולחיצה): מלבן אחד, למעלה מונה המפגשים עם סמל יומן, ומתחתיו פלוס גדול ("שיוך למפגש"); בלי תת כותרת. בגובה כרטיס מפגש */
 .mwrap { display: flex; align-items: stretch; margin: 0 0 12px; }   /* האריח נמתח לגובה הכרטיס הגבוה ביותר (הרצועה מוסיפה 4px ריפוד מלמעלה ומלמטה, והאריח 4px שוליים) */
 .mwrap > .mlist { flex: 1 1 auto; min-width: 0; margin-bottom: 0; gap: 0; padding-block: 0; border-block: 1px solid var(--line-2); }   /* גריד: המפגשים צמודים, קו אנכי בין מפגש למפגש, וקו עליון ותחתון לכל האורך */
-.mtile { flex: 0 0 auto; width: 56px; min-height: var(--mrow-h); margin-block: 0; display: flex; flex-direction: column; position: relative; z-index: 1; background: var(--bg); border: 1px solid var(--line-2); color: var(--text); }   /* אטום (רקע הדף), כדי שמפגשים שנגללים לא ייראו דרכו; מסגרת שחורה בהירה */
+.mtile { flex: 0 0 auto; width: 56px; min-height: var(--mrow-h); margin-block: 0; display: flex; flex-direction: column; padding-block: 4px; position: relative; z-index: 1; background: var(--bg); border: 1px solid var(--line-2); color: var(--text); }   /* אטום (רקע הדף), כדי שמפגשים שנגללים לא ייראו דרכו; מסגרת שחורה בהירה */
 .mtile[hidden] { display: none; }
-.mtn { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; min-height: 44px; font-size: 15px; font-weight: 800; line-height: 18px; }   /* סמל היומן מעל המספר */
+.mtn { flex: 0 0 auto; display: grid; grid-template-rows: 28px 28px; justify-items: center; align-items: center; font-size: 15px; font-weight: 800; line-height: 28px; }   /* שלוש שורות של 28px כמו כרטיס המפגש (ריפוד 4px): סמל היומן בשורת התאריך, המספר בשורת הסטטוס, והפלוס בשורת התשלום */
 .mtn[hidden] { display: none; }
 .mtn svg { width: 16px; height: 16px; }
-.mtile:has(.mtadd:not([hidden])) .mtn { flex: 0 0 44px; }
-.mtadd { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--text); cursor: pointer; }
+.mtadd { flex: 0 0 28px; position: relative; display: flex; align-items: center; justify-content: center; min-height: 0; padding: 0; border: 0; background: transparent; color: var(--text); cursor: pointer; }   /* שטח הלחיצה מתרחב מעבר ל-28px (לפי הסקיל: 44px ומעלה) כלפי מעלה, אל שורת המספר שלא לחיצה, ועד קצה האריח */
+.mtadd::before { content: ""; position: absolute; inset: -12px 0 -5px; }
 .mtadd[hidden] { display: none; }
-.mtadd svg { width: 28px; height: 28px; stroke-width: 2.4; }
-@media (hover: hover) { .mtadd:hover { background: var(--line); } }
-.mtadd:active { background: var(--line-2); }
+.mtadd svg { position: relative; width: 24px; height: 24px; stroke-width: 2.4; }
+@media (hover: hover) { .mtadd:hover::before { background: var(--line); } }
+.mtadd:active::before { background: var(--line-2); }
 .mwrap:has(.mtile:not([hidden])) > .mlist { margin-inline-start: 0; margin-inline-end: calc(var(--gut) * -1); padding-inline-start: 0; scroll-padding-inline-start: 0; }   /* הרצועה מתחילה בקצה האריח (בלי חפיפה) */   /* הרצועה מתחילה אחרי האריח וממשיכה עד הקצה השמאלי של המסך */
 /* רצועת המפגשים: כרטיס לכל מפגש (תאריך, סטטוס, תשלום) */
 .mlist { display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; margin: 0 calc(var(--gut) * -1) 12px; padding: 4px var(--gut); scroll-padding-inline: var(--gut); scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scrollbar-width: none; }
@@ -644,19 +644,21 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .nch.nr { background: var(--red-bg); color: var(--red); }
 .nch.nf { color: var(--text-2); }
 .nch.nn { background: var(--surface-2); color: var(--text-2); }
-.nch.nago { flex: 0 0 auto; align-self: center; }
+.nch.nago { flex: 0 0 auto; align-self: flex-start; position: relative; }   /* בשורה הראשונה של ההערה (לא באמצע הערה של כמה שורות); הרוחב קבוע לפי הזמן שעבר, כך שהפתיחה לא משנה את פריסת ההערה */
 .nitem.img .nrow { align-items: flex-start; }
 .nitem.img .nch.nago { align-self: flex-start; display: block; height: var(--tag); line-height: var(--tag); }
 .narw { display: inline-flex; align-items: center; justify-content: center; height: var(--tag); color: var(--text-3); }
 /* הצד השמאלי של ההערה: הזמן שעבר מוחלף באנימציה (רוחב ושקיפות) בשם הכותב, המועד המדויק והמחיקה, ולחיצה נוספת מחזירה (1.11.26; לפי הסקיל ui-ux-pro-max: האלמנט הנסתר יוצא מהפוקוס, ובלי תנועה ב-reduced-motion) */
-.nago .nsw { display: grid; grid-template-columns: 0fr; opacity: 0; visibility: hidden; transition: grid-template-columns .26s ease, opacity .2s ease, visibility 0s .26s; }
-.nago .nsw.a, .nitem.open .nago .nsw.b { grid-template-columns: 1fr; opacity: 1; visibility: visible; transition: grid-template-columns .26s ease, opacity .2s ease .06s, visibility 0s; }
-.nitem.open .nago .nsw.a { grid-template-columns: 0fr; opacity: 0; visibility: hidden; transition: grid-template-columns .26s ease, opacity .2s ease, visibility 0s .26s; }
+.nago .nsw.a { display: grid; grid-template-columns: 1fr; opacity: 1; visibility: visible; transition: opacity .2s ease, visibility 0s; }
+.nitem.open .nago .nsw.a { opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility 0s .2s; }
+/* שם ומועד: עולים מעל ההערה (שכבה על הקצה השמאלי, רקע אטום) ולא דוחפים את התגיות לשורה נוספת */
+.nago .nsw.b { position: absolute; inset-inline-end: 0; top: 0; z-index: 2; display: flex; align-items: center; width: max-content; height: var(--tag); padding-inline-start: 8px; background: var(--bg); opacity: 0; visibility: hidden; transition: opacity .2s ease, visibility 0s .2s; }
+.nitem.open .nago .nsw.b { opacity: 1; visibility: visible; transition: opacity .2s ease .06s, visibility 0s; }
 .nago .nswi { display: flex; align-items: center; gap: 8px; min-width: 0; overflow: hidden; white-space: nowrap; }
 .nago .nsw.b .nswi { gap: 12px; }
 .nago b { font-weight: 400; color: inherit; }
 .nago .ndel { flex: 0 0 auto; width: auto; height: auto; padding: 0; font-size: 13px; color: var(--red); text-decoration: underline; background: none; }
-@media (prefers-reduced-motion: reduce) { .nago .nsw { transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { .nago .nsw.a, .nago .nsw.b { transition: none !important; } }
 .nimg { display: block; margin-top: 4px; }
 .nimg img { display: block; width: 100%; aspect-ratio: 4 / 1; object-fit: cover; object-position: 50% 85%; border: 1px solid var(--line); background: var(--bg); min-height: 60px; cursor: zoom-in; }
 .nimg .nload { padding: 12px 0; color: var(--text-2); font-size: 13px; text-align: center; }
@@ -1163,3 +1165,5 @@ dialog .dclose { display: none; }
 #editMenu #edTags { gap: 12px; }
 #editMenu #edTags[aria-checked="true"] { background: transparent; font-weight: inherit; }   /* מתג ולא בחירה: בלי הרקע והסימון ✓ של פריט נבחר בתפריט; המצב מוצג במתג עצמו */
 #editMenu #edTags[aria-checked="true"]::after { content: none; }
+/* תווית "מפגשים" משמאל למפגש הכי ישן (1.11.26): טיפוגרפיה של כותרת הכרטיס (20px) באפור, ממורכזת אנכית ברצועה, עם רווח אופקי */
+.mlist .mend { flex: 0 0 auto; align-self: center; padding-inline: 24px; font-size: 20px; line-height: 25px; font-weight: 800; color: var(--text-2); white-space: nowrap; user-select: none; }
