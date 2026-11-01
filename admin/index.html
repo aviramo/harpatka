@@ -465,7 +465,8 @@
   const NAV_BACK = { pDlg: '#pBack', setDlg: '#setBack', stDlg: '#stArrow', prDlg: '#prArrow', finDlg: '#finArrow' };
   const navDepthOf = (d) => {
     try {
-      if (d.id === 'pDlg') return (!d.classList.contains('compact') && sheet && sheet.id && pTab !== 'main') ? Math.max(1, viewStack.filter((x) => x !== 'main').length + 1) : 0;
+      if (d.id === 'pDlg' && d.classList.contains('compact')) return (sheet && sheet.fromCard) ? 1 : 0;   // פופאפ הקצאה שנפתח מכרטיס המשתתף: חזרה בדפדפן מחזירה לכרטיס
+      if (d.id === 'pDlg') return (sheet && sheet.id && pTab !== 'main') ? Math.max(1, viewStack.filter((x) => x !== 'main').length + 1) : 0;
       if (d.id === 'setDlg') return setIsRoot(setView) ? 0 : setView === 'del' ? (setRoot === 'st' ? 1 : 2) : 1;   // עריכת סוג מפגש נפתחת מתפריט המפגשים: מסך הסוג הוא הראשי, והסטטוסים וההודעה שלו מסכי משנה
       if (d.id === 'stDlg') return stCur === 'main' ? 0 : 1;
       if (d.id === 'finDlg') return finV === 'main' ? 0 : 1;
@@ -3021,7 +3022,9 @@
     catch (err) { pendFail(h); l.no_pay = prev; $('#depFields').hidden = !v; $('#depFree').hidden = v; if (repaint) repaint(); render(); refreshSheetMeetings(); fail(err); }
   }
   /* אחרי שהתשלום נרשם הפופאפ (כרטיס המשתתף) נסגר, והרשימה מתעדכנת (31.10.26) */
-  const closePayCard = () => { viewStack = []; if (pDlg.classList.contains('compact')) { pDlg.close(); return; } setPTab('main'); };   // הפופאפ הקטן (נפתח מהרשימה) נסגר אחרי תשלום; כרטיס המשתתף חוזר למסך הראשי   // אחרי תשלום או הקצאה הכרטיס לא נסגר: חוזרים למסך הראשי של כרטיס המשתתף, כמו לחיצה על חץ החזרה
+  /* פופאפ ההקצאה הקטן שנפתח מכרטיס המשתתף (כפתור ה-₪ בכרטיס המפגש): בסגירה, בחזרה או אחרי תשלום חוזרים לכרטיס המשתתף בגובה מלא, ולא סוגרים הכול */
+  function restoreCard() { if (sheet) sheet.fromCard = false; pDlg.classList.remove('compact'); pDlg.style.transform = ''; viewStack = []; setPTab('main'); }
+  const closePayCard = () => { viewStack = []; if (pDlg.classList.contains('compact')) { if (sheet && sheet.fromCard) { restoreCard(); return; } pDlg.close(); return; } setPTab('main'); };   // הפופאפ הקטן (נפתח מהרשימה) נסגר אחרי תשלום; כרטיס המשתתף חוזר למסך הראשי   // אחרי תשלום או הקצאה הכרטיס לא נסגר: חוזרים למסך הראשי של כרטיס המשתתף, כמו לחיצה על חץ החזרה
   const depSaveRun = async () => {
     const f = pForm, pid = sheet && sheet.id; const amt = parseFloat(f.pay_dep.value); if (!pid) return;
     if (!(amt > 0)) { f.pay_dep.focus(); return; }
@@ -3150,7 +3153,7 @@
     if (e.target.closest('a, button, input, select, textarea, .dclose, #pPayChip') || !sheet || !sheet.id) return;
     if (pTab === 'main') openInfo(); else if (pTab === 'info' && !$('#pBack').hidden) $('#pBack').click(); });
   $('#pInfoBtn').addEventListener('click', () => openInfo());   // אייקון הפרטים (ליד היתרה): פותח את פרטי המשתתף (במקום לחיצה על השם)
-  $('#pBack').addEventListener('click', () => { if (pTab === 'promoter') promoFromPay = null; setPTab(viewStack.pop() || 'main'); });
+  $('#pBack').addEventListener('click', () => { if (pDlg.classList.contains('compact') && sheet && sheet.fromCard) { restoreCard(); return; } if (pTab === 'promoter') promoFromPay = null; setPTab(viewStack.pop() || 'main'); });
   const goView = (v) => { viewStack.push(pTab); setPTab(v); };
   const toMain = () => { viewStack = []; setPTab('main'); };
 
@@ -3201,6 +3204,7 @@
     };
     proto.close = function (rv, from) {
       if (!this.open || this._closing) return;
+      if (this.id === 'pDlg' && this.classList.contains('compact') && sheet && sheet.fromCard) { restoreCard(); return; }   // סגירה (החלקה, לחיצה בחוץ, Esc) של פופאפ ההקצאה שנפתח מהכרטיס: חוזרים לכרטיס
       navClose(this);
       if (this._side) {   // כרטיס בצד הרשימה: נסגר מיד, והאזור חוזר להודעה "בחרו משתתף"
         this._side = false; this.classList.remove('side'); this.getAnimations().forEach((a) => a.cancel());
@@ -3446,7 +3450,7 @@
   $('#pMeetings').addEventListener('click', (e) => {
     const pay = e.target.closest('[data-mp]'), mm = e.target.closest('[data-mm]');
     if (mm) {
-      if (sheet.id) openPayFor(sheet.id, mm.dataset.mm);   // שולם / חינם: יתרה ותשלומים, אחרת קבלת תשלום
+      if (sheet.id) { openPayFor(sheet.id, mm.dataset.mm); if (!pDlg._side) { pDlg.classList.add('compact'); sheet.fromCard = true; } }   // כפתור ה-₪ בכרטיס המפגש: אותו פופאפ הקצאה קטן כמו מעיגול ה-₪ ברשימה; אחרי תשלום או סגירה חוזרים לכרטיס
     } else if (pay) {
       const mid = pay.dataset.mp;
       if (sheet.id) { if (!$('#qMenu').hidden) closeQ(); else openQuickMenu(sheet.id, pay, mid); }
