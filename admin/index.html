@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104bj" />
+  <link rel="stylesheet" href="admin.css?v=20261104bn" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1463,7 +1463,7 @@
   }
 
   /* מיון הרשימה */
-  const SORTS = [['new', 'הרשמה', 'מהחדש לישן', 'מהישן לחדש'], ['upd', 'עדכון', 'מהעדכני לישן', 'מהישן לעדכני'], ['pers', 'התמדה', 'מהגבוהה לנמוכה', 'מהנמוכה לגבוהה'], ['status', 'סטטוס', 'לפי סדר הסטטוסים בסוג המפגש', 'בסדר הפוך', true]];   // סטטוס (רק בתוך מפגש): לפי סדר הסטטוסים של סוג המפגש (סטטוס הרשמה ואחריו סטטוס מפגש, כמו בפס הצ'יפים)   // הרשמה: לפי מועד ההרשמה; עדכון: לפי הפעולה האחרונה שבוצעה על המשתתף
+  const SORTS = [['new', 'הרשמה', 'מהחדש לישן', 'מהישן לחדש'], ['upd', 'עדכון', 'מהעדכני לישן', 'מהישן לעדכני'], ['pers', 'התמדה', 'מהגבוהה לנמוכה', 'מהנמוכה לגבוהה'], ['status', 'סטטוס', 'לפי סדר הסטטוסים בסוג המפגש', 'בסדר הפוך', true], ['pay', 'תשלום', 'דווח, לא שולם, שולם, חינם', 'בסדר הפוך', true]];   // סטטוס (רק בתוך מפגש): לפי סדר הסטטוסים של סוג המפגש (סטטוס הרשמה ואחריו סטטוס מפגש, כמו בפס הצ'יפים)   // הרשמה: לפי מועד ההרשמה; עדכון: לפי הפעולה האחרונה שבוצעה על המשתתף
   function sortCmp() {
     const byNew = (a, b) => String(b.created_at || '').localeCompare(String(a.created_at || ''));
     const byName = (a, b) => a.name.localeCompare(b.name, 'he');
@@ -1474,6 +1474,10 @@
       const order = statusList().map((x) => x.key).concat(mstatusList().map((x) => x.key));
       const rk = (q) => { const l = linkOf(q.id, state.filter); if (!l) return 1e9; const i = order.indexOf(dispStatus(l)); return i < 0 ? 1e8 : i; };
       return rev((a, b) => (rk(a) - rk(b)) || byNew(a, b) || byName(a, b));
+    }
+    if (state.sort === 'pay' && state.filter) {   // תשלום (רק בתוך מפגש): דווח, לא שולם, שולם, חינם (אותו סדר כמו בתפריט הסינון)
+      const o = { w: 0, '0': 1, '1': 2, n: 3 };
+      return rev((a, b) => ((o[payStateOf(a)] ?? 1) - (o[payStateOf(b)] ?? 1)) || byNew(a, b) || byName(a, b));
     }
     if (state.sort === 'pers') {   // התמדה: לפי הציון הממוצע למפגש (אותו דירוג של צ'יף ההתמדה); מי שעוד אין לו נתונים תמיד בסוף, בשני הכיוונים
       const by = attCtx().by, none = (x) => !x || !x.total;
@@ -1504,8 +1508,8 @@
   const closeSort = () => { $('#sortMenu').hidden = true; const b = $('#sortBtnH'); if (b) b.setAttribute('aria-expanded', 'false'); };   // התפריט הצף (מועבר ל-body) נפתח מכפתור המיון בכותרת
   document.body.appendChild($('#sortMenu'));
   $('#listTags').addEventListener('click', (e) => { const b = e.target.closest('#sortBtnH'); if (!b) return; e.stopPropagation(); const m = $('#sortMenu'); if (!m.hidden) { closeSort(); return; } m.hidden = false; b.setAttribute('aria-expanded', 'true'); const r = b.getBoundingClientRect(), mw = m.offsetWidth; m.style.left = Math.max(8, Math.min(Math.round(r.right - mw), window.innerWidth - mw - 8)) + 'px'; m.style.top = (r.bottom + 8) + 'px'; });   // תפריט המיון מיושר לקצה הימני של התגית שלו
-  $('#sortMenu').addEventListener('click', (e) => { const b = e.target.closest('[data-sort]'); if (!b) return; if (b.dataset.sort === state.sort) state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc'; else { state.sort = b.dataset.sort; state.sortDir = 'desc'; } closeSort(); render(); saveViewPrefs(); });   // לחיצה נוספת על המיון שנבחר: סדר הפוך
-  document.addEventListener('click', (e) => { if (!e.target.closest('#sortMenu, #sortBtnH')) closeSort(); });
+  $('#sortMenu').addEventListener('click', (e) => { const b = e.target.closest('[data-sort]'); if (!b) return; if (b.dataset.sort === state.sort) state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc'; else { state.sort = b.dataset.sort; state.sortDir = 'desc'; closeSort(); } render(); saveViewPrefs(); });   // לחיצה נוספת על המיון שנבחר: סדר הפוך והתפריט נשאר פתוח (לראות את הכיוון משתנה); בחירת מיון אחר סוגרת אותו
+  document.addEventListener('click', (e) => { if (e.target.isConnected && !e.target.closest('#sortMenu, #sortBtnH')) closeSort(); });   // (isConnected: לחיצה על אפשרות שהתפריט צייר מחדש כבר לא בדף, ואינה לחיצה בחוץ)
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSort(); });
 
   /* הודעה כשאין תוצאות, לפי הסינון הפעיל */
@@ -2307,7 +2311,7 @@
       menu.querySelectorAll('[data-sf]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.sf ? payKeys(state.pay).includes(x.dataset.sf) : !state.pay))); render(); syncUrl(); };
   }
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeQ(); });
-  window.addEventListener('scroll', closeQ, true);
+  window.addEventListener('scroll', (e) => { if (e.target && e.target.closest && e.target.closest('#qMenu')) return; closeQ(); }, true);   // גלילה בדף סוגרת את התפריט המהיר, אבל לא גלילה בתוך התפריט עצמו (רשימה ארוכה)
   /* שינוי סטטוס הוא רק שינוי תווית: לא נוגע בתשלומים, ביתרה או בהחזרים (התשלומים מנוהלים בנפרד, במסך התשלום של המפגש וביתרה) */
   async function setPayStatus(pid, mid, st) {
     const l = linkOf(pid, mid);
@@ -3395,7 +3399,7 @@
       };
       d.addEventListener('touchstart', (e) => {
         tOn = false; tdy = 0;
-        tOk = e.touches.length === 1 && !d._closing && !e.target.closest('.grab, .sheet-head') && !scrolledDown(e.target);
+        tOk = e.touches.length === 1 && !d._closing && !e.target.closest('.grab, .sheet-head, .fm-open') && !scrolledDown(e.target);   // גם לא מתוך תפריט צף פתוח: החלקה בתוכו גוללת אותו ולא את הפופאפ
         if (tOk) { ty0 = e.touches[0].clientY; tx0 = e.touches[0].clientX; tt0 = performance.now(); }
       }, { passive: true });
       d.addEventListener('touchmove', (e) => {
@@ -4102,7 +4106,8 @@
       return;
     }
     const cur = fstate(kind) || null, lab = FLAB[kind];
-    const opts = [[null, 'all', lab[0]]].concat(kind === 'pay' ? [['w', 'wait', lab[4]]] : kind === 'bal' ? [['w', 'wait', lab[5]]] : [], [['1', 'yes', lab[1]], ['0', 'no', lab[2]]]).concat(kind === 'pay' ? [['n', 'fr', lab[3]]] : kind === 'bal' ? [['n', 'free', lab[3]], ['f', 'fr', lab[4]]] : []);
+    const opts = [[null, 'all', lab[0]]].concat(kind === 'pay' ? [['w', 'wait', lab[4]], ['0', 'no', lab[2]], ['1', 'yes', lab[1]], ['n', 'fr', lab[3]]]   // תשלום: דווח, לא שולם, שולם, חינם (אותו סדר כמו במיון)
+      : kind === 'bal' ? [['w', 'wait', lab[5]], ['1', 'yes', lab[1]], ['0', 'no', lab[2]], ['n', 'free', lab[3]], ['f', 'fr', lab[4]]] : [['1', 'yes', lab[1]], ['0', 'no', lab[2]]]);
     m.innerHTML = opts.map((o) => UI.fopt(o[0] === null ? '' : o[0], cur === o[0], o[1], fglyph(kind, o[1]), o[2], (FC[kind] || {})[o[0] === null ? '' : o[0]] ?? 0)).join('');
     if (kind === 'pay') {   // בנוסף: סינון לפי דרך התשלום ולפי הסכום ששולם למפגש
       const pmc = FC.payMeth || {}, pks = state.payMethods.filter((pm) => pmc[pm.key]);
