@@ -164,7 +164,7 @@
     }
   </script>
 
-  <link rel="stylesheet" href="shared/site.css?v=20261101fs">
+  <link rel="stylesheet" href="shared/site.css?v=20261101fx">
   <script>
     /* סרטון פתיחה: אם הדפדפן מאפשר, מסתירים את ההזמנה (בלי להזיז את הדף) עד שהסרטון נגמר; רשת ביטחון אחרי 9 שניות */
     (function(){
@@ -178,7 +178,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="shared/register.css?v=20261031p">
+  <link rel="stylesheet" href="shared/register.css?v=20261031q">
 </head>
 
 <body class="grain">
@@ -564,7 +564,7 @@
 
 
   <script src="shared/age.js?v=20261031a"></script>
-  <script src="shared/config.js?v=20261030g"></script>
+  <script src="shared/config.js?v=20261030h"></script>
   <script>
     /* ====== CONFIG — החליפו בערכים האמיתיים ====== */
 
@@ -814,12 +814,16 @@
         const st = !past && window.HarpatkaMe ? HarpatkaMe.get(m.id) : null;   // משתתף מחובר שכבר רשום למפגש הזה: מצב ההרשמה והתשלום במקום מדרגות המחיר
         if (st && st.registered) {
           /* משתתף מחובר שכבר רשום למפגש: הכפתור מציג את המצב (נרשמתם, שולם, דווח...) ולחיצה מובילה לאזור האישי על אותו מפגש */
-          const more = mk('div', 'mt-more'), box = mk('div'), paid = Number(st.paid) > 0, free = !!st.free;
-          const txt = free ? 'נרשמתם · חינם' : paid ? 'נרשמתם · שולם ₪' + Math.round(st.paid) : st.reported ? 'נרשמתם · התשלום ממתין לאישור' : st.rejected ? 'התשלום לא אושר · תשלום' + (st.price ? ' ₪' + st.price : '') : 'נרשמתם · תשלום' + (st.price ? ' ₪' + st.price : '');
-          const b = mk('a', 'mt-cta', txt);
+          const more = mk('div', 'mt-more'), box = mk('div'), paid = Number(st.paid) > 0, free = !!st.free, due = paid ? Number(st.due) || 0 : 0, canPay = !free && (!paid || due > 0);
+          const amt = due > 0 ? Math.round(due) : st.price;   // יתרה אחרי קרדיט: הסכום שנשאר לשלם, אחרת מחיר המפגש
+          const txt = free ? 'נרשמתם · חינם' : !canPay ? 'נרשמתם · שולם ₪' + Math.round(st.paid) : st.reported ? 'נרשמתם · התשלום ממתין לאישור' : st.rejected ? 'התשלום לא אושר · תשלום' + (amt ? ' ₪' + amt : '') : 'נרשמתם · תשלום' + (amt ? ' ₪' + amt : '');
+          const b = mk('a', 'mt-cta ' + (canPay ? 'topay' : 'settled'), txt);   // אפשר לשלם: ירוק, כמו כפתור התשלום בפופאפ; אין מה לשלם (שולם או חינם): אפור
           b.href = '#'; b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); reg(m); });   // גם אחרי דיווח: הפופאפ עם כפתור התשלום (נשאר עד שהתשלום באמת התקבל)   // בהמתנה לאישור דיווח: לא נפתח פופאפ   // פותח את פופאפ התשלום של המפגש (הפופאפ במצב "נרשמתם")
+          const sp = !paid && !free && !st.reported ? tierSplit(m, m.tiers, today) : null;   // עוד לא שילם: מדרגות המחיר, כי המחיר יכול לעלות (יתרה אחרי קרדיט לא תלויה במדרגות)
+          if (sp) { const pb = fill(mkBox(), sp.past, 'done'); if (!pb.hidden) box.append(pb); }
           box.append(b);
-          if (!paid && !free && !st.reported) box.append(mk('div', 'mt-note', 'כדי שנוכל לשמור לכם את המקום, צריך להשלים את התשלום. עד אז המקום עוד לא סגור'));   // נרשם ולא שילם ולא דיווח: המקום נשמר רק עם תשלום
+          if (sp) { const fb = fill(mkBox(), sp.future, 'fut'); if (!fb.hidden) box.append(fb); }
+          if (canPay && !st.reported) box.append(mk('div', 'mt-note', 'כדי שנוכל לשמור לכם את המקום, צריך להשלים את התשלום. עד אז המקום עוד לא סגור'));   // נרשם ולא שילם ולא דיווח: המקום נשמר רק עם תשלום
           more.append(box); inn.append(more);
           c.style.cursor = 'pointer'; c.addEventListener('click', () => reg(m));
         } else if (!past) {
@@ -1137,6 +1141,6 @@
 </script>
   <script src="shared/rt.js?v=1"></script>
   <script src="shared/person-form.js?v=20261029i"></script>
-  <script src="shared/register.js?v=20261032m"></script>
+  <script src="shared/register.js?v=20261032p"></script>
 </body>
 </html>
