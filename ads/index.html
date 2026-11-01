@@ -8,7 +8,7 @@
   <link rel="icon" href="../images/favicon-v5.ico" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="../images/favicon-v5-32.png" />
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Assistant:wght@400;500;600;700&display=block" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/site.css?v=20261101d">
+  <link rel="stylesheet" href="../shared/site.css?v=20261101fs">
   <script src="../shared/age.js?v=20261031a"></script>
 </head>
 <body>
@@ -118,10 +118,13 @@
       { label: 'יש רגעים שמפספסים', name: 'הסרטון יש רגעים שמפספסים', type: 'photo', base: 'biodanza', w: 1080, h: 1350,
       img: 'img/biodanza-feed-cfba800c.jpg', vid: 'video/biodanza-feed-cfba800c.mp4', alt: 'יש רגעים שמפספסים. ויש רגעים שבוחרים להיות בהם. יוצאים להרפתקה: להיות, לנוע, להיפגש' }];
 
+    // במובייל כל סרטון מתנגן במסך מלא. אייפון בלי מסך מלא לאלמנט: בלי playsinline הוא פותח את הנגן שלו במסך מלא בעצמו
+    const FS_MOBILE = matchMedia('(hover: none) and (pointer: coarse)').matches;
+    const FS_NATIVE = FS_MOBILE && !Element.prototype.requestFullscreen;
     const stops = [];   // סרטון אחד בכל פעם: כשאחד מתחיל לנגן, כל השאר עוצרים וחוזרים לתמונה
     // גלילה: סרטון שיוצא מהמסך (נשאר ממנו פחות מרבע) נעצר וחוזר לתמונה
     const io = 'IntersectionObserver' in window && new IntersectionObserver(es => es.forEach(e => {
-      if (e.intersectionRatio < 0.25 && e.target._stop) e.target._stop();
+      if (e.intersectionRatio < 0.25 && e.target._stop && document.fullscreenElement !== e.target) e.target._stop();
     }), { threshold: [0, 0.25] });
 
     // c: {label (מעל התמונה), name (לתוויות נגישות), base (שם קובץ בהורדה), img, vid, w, h, alt}
@@ -142,7 +145,7 @@
       head.appendChild(moreMenu(c.name, c.base, c.img, c.vid));
       if (c.vid) {
         const v = document.createElement('video');
-        v.playsInline = true; v.preload = 'none';
+        v.playsInline = !FS_NATIVE; v.preload = 'none';
         v.width = c.w; v.height = c.h; v.poster = im.src; v.src = c.vid;
         v.style.backgroundImage = 'url("' + im.src + '")';   // בלי שחור: סרטון שקטן מהתא יושב על הרקע של התמונה
         v.setAttribute('aria-label', 'השהיה או המשך של ' + c.name);
@@ -166,11 +169,13 @@
         const toggle = () => { if (v.paused) v.play().catch(() => {}); else v.pause(); };
         const show = on => {
           f.classList.toggle('playing', on);
-          if (on) { v.currentTime = 0; paint(); v.play().catch(() => {}); v.focus({ preventScroll: true }); } else v.pause();
+          if (on) { v.currentTime = 0; paint(); v.play().catch(() => {}); v.focus({ preventScroll: true }); }
+          else { v.pause(); if (document.fullscreenElement === media) document.exitFullscreen().catch(() => {}); }
         };
-        im.addEventListener('click', () => show(true));   // לחיצה על התמונה: ניגון
+        const start = () => { show(true); if (FS_MOBILE && media.requestFullscreen) media.requestFullscreen().catch(() => {}); };
+        im.addEventListener('click', start);              // לחיצה על התמונה: ניגון
         v.addEventListener('click', toggle);              // לחיצה על הסרטון: השהיה / המשך
-        im.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(true); } });
+        im.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); start(); } });
         v.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
         bPP.addEventListener('click', toggle);
         bStop.addEventListener('click', () => { show(false); im.focus({ preventScroll: true }); });   // סטופ: חזרה לתמונה
@@ -183,6 +188,8 @@
         v.addEventListener('ended', () => show(false));   // בסוף הסרטון התא חוזר לתמונה
         const stop = () => { if (f.classList.contains('playing')) show(false); };
         stops.push(stop);
+        media.addEventListener('fullscreenchange', () => { if (document.fullscreenElement !== media) stop(); });   // יציאה ממסך מלא: חזרה לתמונה
+        v.addEventListener('webkitendfullscreen', stop);
         media._stop = stop; if (io) io.observe(media);
         v.addEventListener('play', () => stops.forEach(s => s !== stop && s()));
         f.classList.add('has-video'); media.appendChild(v);
