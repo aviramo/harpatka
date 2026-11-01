@@ -820,7 +820,10 @@
           const txt = free ? 'נרשמתם · חינם' : !canPay ? 'נרשמתם · שולם ₪' + Math.round(st.paid) : st.reported ? 'נרשמתם · התשלום ממתין לאישור' : st.rejected ? 'התשלום לא אושר · תשלום' + (amt ? ' ₪' + amt : '') : 'נרשמתם · תשלום' + (amt ? ' ₪' + amt : '');
           const b = mk('a', 'mt-cta ' + (canPay ? 'topay' : 'settled'), txt);   // אפשר לשלם: ירוק, כמו כפתור התשלום בפופאפ; אין מה לשלם (שולם או חינם): אפור
           b.href = '#'; b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); reg(m); });   // גם אחרי דיווח: הפופאפ עם כפתור התשלום (נשאר עד שהתשלום באמת התקבל)   // בהמתנה לאישור דיווח: לא נפתח פופאפ   // פותח את פופאפ התשלום של המפגש (הפופאפ במצב "נרשמתם")
+          const sp = !paid && !free && !st.reported ? tierSplit(m, m.tiers, today) : null;   // עוד לא שילם: מדרגות המחיר, כי המחיר יכול לעלות (יתרה אחרי קרדיט לא תלויה במדרגות)
+          if (sp) { const pb = fill(mkBox(), sp.past, 'done'); if (!pb.hidden) box.append(pb); }
           box.append(b);
+          if (sp) { const fb = fill(mkBox(), sp.future, 'fut'); if (!fb.hidden) box.append(fb); }
           if (canPay && !st.reported) box.append(mk('div', 'mt-note', 'כדי שנוכל לשמור לכם את המקום, צריך להשלים את התשלום. עד אז המקום עוד לא סגור'));   // נרשם ולא שילם ולא דיווח: המקום נשמר רק עם תשלום
           more.append(box); inn.append(more);
           c.style.cursor = 'pointer'; c.addEventListener('click', () => reg(m));
