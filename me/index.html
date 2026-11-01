@@ -7,7 +7,7 @@
 <title>האזור האישי | יוצאים להרפתקה</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&family=Rubik:wght@500;700;800&display=block" rel="stylesheet" />
-<link rel="stylesheet" href="../shared/site.css?v=20261030q" />
+<link rel="stylesheet" href="../shared/site.css?v=20261030s" />
 <script>try { if (window.self !== window.top && /[?&]embed=/.test(location.search)) document.documentElement.classList.add('embed'); } catch (e) {}</script>   <!-- בפופאפ: הרקע הטורקיז כבר בציור הראשון -->
 </head>
 <body>
@@ -93,9 +93,9 @@
   function viewLogin() {
     { const bc = $('#balChip'); if (bc) bc.hidden = true; }
     if (EMBED) { try { window.parent.postMessage({ harpatka: 'me-login' }, location.origin); } catch (e) {} app.innerHTML = '<div class="center">טוען…</div>'; return; }   // בפופאפ: בלי מסך כניסה; הדף הראשי סוגר את הפופאפ ופותח כניסה עם גוגל
-    if (EMBED) { app.innerHTML = '<div class="card"><h2>האזור האישי</h2><p class="muted" style="margin:0 0 14px">כאן אפשר לראות את המפגשים שלכם, את התשלומים והיתרה, להירשם למפגש הבא ולעדכן פרטים</p><button type="button" class="gbtn" id="gBtn">' + G + 'כניסה עם גוגל</button></div>'; $('#gBtn').onclick = goGoogle; return; }
+    if (EMBED) { app.innerHTML = '<div class="card"><h2>האזור האישי</h2><p class="muted" style="margin:0 0 14px">כאן אפשר לראות את המפגשים שלכם, את התשלומים והקרדיט, להירשם למפגש הבא ולעדכן פרטים</p><button type="button" class="gbtn" id="gBtn">' + G + 'כניסה עם גוגל</button></div>'; $('#gBtn').onclick = goGoogle; return; }
     /* מסך כניסה: פופאפ שיורד מלמעלה (כמו פופאפ ההרשמה) עם כפתור ההתחברות; סגירה (לחיצה בחוץ או על הפס) חוזרת לדף הבית */
-    app.innerHTML = '<div class="lgback" id="lgBack"></div><div class="lgpop" id="lgPop" role="dialog" aria-modal="true" aria-labelledby="lgT"><button type="button" class="lggrab" id="lgGrab" aria-label="סגירה"><i></i></button><h2 id="lgT">האזור האישי</h2><p class="muted" style="margin:0 0 14px">כאן אפשר לראות את המפגשים שלכם, את התשלומים והיתרה, להירשם למפגש הבא ולעדכן פרטים</p><button type="button" class="gbtn" id="gBtn">' + G + 'כניסה עם גוגל</button></div>';
+    app.innerHTML = '<div class="lgback" id="lgBack"></div><div class="lgpop" id="lgPop" role="dialog" aria-modal="true" aria-labelledby="lgT"><button type="button" class="lggrab" id="lgGrab" aria-label="סגירה"><i></i></button><h2 id="lgT">האזור האישי</h2><p class="muted" style="margin:0 0 14px">כאן אפשר לראות את המפגשים שלכם, את התשלומים והקרדיט, להירשם למפגש הבא ולעדכן פרטים</p><button type="button" class="gbtn" id="gBtn">' + G + 'כניסה עם גוגל</button></div>';
     $('#gBtn').onclick = goGoogle;
     requestAnimationFrame(() => requestAnimationFrame(() => { $('#lgPop').classList.add('open'); $('#lgBack').classList.add('open'); }));
     const closeLg = () => { $('#lgPop').classList.remove('open'); $('#lgBack').classList.remove('open'); setTimeout(() => { location.href = '../'; }, 280); };
@@ -156,20 +156,29 @@
     const credit = Math.round(Number(data.balance) || 0);   // בשקלים שלמים: סכום זעיר (שבר או -0) לא מוצג כ"חוב 0"
     let h = '';
     setTitle(((p.first_name || '') + ' ' + (p.last_name || '')).trim() || String(p.phone || '').replace(/^\+972/, '0'));   // שם המשתתף מחליף את הכותרת "האזור האישי"; עוד בלי פרטים: הטלפון
-    { const bc = $('#balChip'); if (bc) { bc.hidden = !credit; bc.className = 'chip ' + (credit > 0 ? 'wait' : 'no'); bc.textContent = (credit > 0 ? 'קרדיט ' : 'חוב ') + ils(Math.abs(credit)); bc.title = credit > 0 ? 'יתרה לטובתכם' : 'יתרת חוב'; } }   // קרדיט (או חוב) כצ'יף ליד "יציאה", רק כשיש; בלי שורת יתרה
+    { const bc = $('#balChip'); if (bc) { bc.hidden = !credit; bc.className = 'chip ' + (credit > 0 ? 'wait' : 'no'); bc.textContent = (credit > 0 ? 'קרדיט ' : 'חוב ') + ils(Math.abs(credit)); bc.title = credit > 0 ? 'קרדיט לטובתכם' : 'חוב'; } }   // קרדיט (או חוב) כצ'יף ליד "יציאה", רק כשיש; בלי שורת יתרה
     // סקשן אחד "המפגשים שלי": כל מפגש עתידי (אפשר להירשם, לשלם ולבטל) ומפגשים שהיו. כל מפגש נפתח ונסגר; הקרוב פתוח כברירת מחדל
     const ordered = ms.slice().sort((a, b) => (String(b.date) + String(b.time)).localeCompare(String(a.date) + String(a.time))), upcoming = ordered.filter((m) => m.future);   // מהחדש לישן
     const firstId = keepOpen && ordered.some((m) => m.id === keepOpen) ? keepOpen : null; keepOpen = null;   // אין מפגש פתוח כברירת מחדל; רק מפגש שהרגע נרשמו אליו או ביטלו נשאר פתוח
     /* שורת מפגש קבועה (בלי פתיחה וסגירה): מימין יום, תאריך ושעה ומתחתיהם עיר ושם המפגש; משמאל מצב ההגעה ומתחתיו התשלום (עם הסכום);
        כשצריך לשלם: כפתור תשלום גדול בפייבוקס כמו בפופאפ ההרשמה (הלחיצה מדווחת על תשלום) ו"רוצים לשלם בדרך אחרת?"; בלי הוראות הגעה */
     const rowHtml = (m) => {
-      const paid = Number(m.paid) > 0, free = !!m.free;
+      const paid = Number(m.paid) > 0, free = !!m.free, price = Number(m.price) || 0;
+      const rem = (paid && m.reported && Number(m.reported_amount) > 0) ? Number(m.reported_amount) : 0;   // שארית אחרי ניצול חלקי של קרדיט (דווחה, ממתינה לאימות)
+      const useCr = !paid && !free && credit > 0 && price > 0, crFull = useCr && credit >= price;   // יש קרדיט שאפשר לנצל על המפגש (עד המקסימום שלו)
       const att = '';   // אין יותר סימון הגעה (הסטטוס במפגש הוא תווית וציון בלבד, ולא מוצג למשתתף)
-      const pay = free ? '<span class="chip">חינם</span>' : paid ? '<span class="chip ok">שולם ' + ils(m.paid) + '</span>'
+      const pay = free ? '<span class="chip">חינם</span>' : rem ? '<span class="chip wait">ממתין לאישור תשלום</span>' : paid ? '<span class="chip ok">שולם ' + ils(m.paid) + '</span>'
         : m.reported ? '<span class="chip wait">ממתין לאישור תשלום</span>'
         : m.rejected ? '<span class="chip no">התשלום לא אושר</span>' : '<span class="chip no">' + (m.future ? 'טרם שולם' : 'לא שולם') + '</span>';
       let foot = '';
-      if (!paid && !free && CFG.payboxLink) foot +=   /* גם מפגש שהסתיים ולא שולם: אפשר לשלם ולדווח (1.11.26) */ '<div class="payfold" data-pf="' + m.id + '"><div><a class="btn pay" data-paynow="' + m.id + '" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">לתשלום ' + (m.price ? m.price + ' ₪ ' : '') + 'בפייבוקס</a><div class="paylinks"><button type="button" class="lnk" data-other="' + m.id + '">רוצים לשלם בדרך אחרת?</button></div><div class="msg" data-pm="' + m.id + '"></div></div></div>';
+      if (((!paid && !free) || rem > 0) && CFG.payboxLink) {   /* גם מפגש שהסתיים ולא שולם: אפשר לשלם ולדווח (1.11.26). יש קרדיט: מנצלים אותו עד המקסימום; מחיר גבוה מהקרדיט = שארית בפייבוקס */
+        const payAmt = rem || (useCr ? price - credit : price), note = crFull ? '<p class="crnote">יישאר לכם קרדיט ' + ils(credit - price) + '</p>'
+          : useCr ? '<p class="crnote">הקרדיט שלכם (' + ils(credit) + ') ינוצל על המפגש, והיתרה ' + ils(payAmt) + ' בפייבוקס</p>'
+          : rem ? '<p class="crnote">שולם מהקרדיט ' + ils(m.paid) + '. נשאר לשלם ' + ils(rem) + '</p>' : '';
+        const main = crFull ? '<button type="button" class="btn pay" data-paycredit="' + m.id + '">תשלום מהקרדיט · ' + ils(price) + '</button>'
+          : '<a class="btn pay" data-paynow="' + m.id + '"' + (useCr ? ' data-usecredit="1"' : '') + ' href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">לתשלום ' + (payAmt ? payAmt + ' ₪ ' : '') + 'בפייבוקס</a>';
+        foot += '<div class="payfold" data-pf="' + m.id + '"><div>' + (crFull ? main + note : note + main) + '<div class="paylinks"><button type="button" class="lnk" data-other="' + m.id + '">רוצים לשלם בדרך אחרת?</button></div><div class="msg" data-pm="' + m.id + '"></div></div></div>';
+      }
       if (m.future) { const sure = unregSure === m.id; foot += '<button type="button" class="lnk sm" data-unreg="' + m.id + '"' + (sure ? ' data-sure="1"' : '') + '>' + (sure ? UNREG_SURE : 'ביטול רישום') + '</button><div class="msg" data-um="' + m.id + '"></div>'; }
       /* שורה ראשונה: המועד · העיר; שורה שנייה: שם המפגש · המיקום (31.10.26) */
       return '<div class="mtg" data-mid="' + m.id + '"><div class="mtrow"><div class="mtw"><div class="mtd"><span class="c1">' + esc(dayParts(m.date).day) + '</span><bdi dir="ltr">' + esc(m.time) + ' · ' + esc(dayParts(m.date).date) + '</bdi>' + (m.city ? ' · ' + esc(m.city) : '') + '</div>' + ((m.name || m.place) ? '<div class="c5">' + esc([m.name, m.place].filter(Boolean).join(' · ')) + '</div>' : '') + '</div><div class="mts">' + att + pay + '</div></div>' + (foot ? '<div class="mtfoot">' + foot + '</div>' : '') + '</div>';
@@ -214,13 +223,27 @@
         else { ob.fail(); toast(msg, 'אי אפשר לבטל את הרישום למפגש הזה', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול רישום'; }
       } catch (e) { rel(); ob.fail(); toast(msg, 'משהו השתבש, אפשר לנסות שוב', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול רישום'; }
     }; });
+    /* תשלום מהקרדיט: הקרדיט מכסה את מחיר המפגש, ומוקצה לו (בלי פייבוקס) */
+    app.querySelectorAll('[data-paycredit]').forEach((cb) => { cb.onclick = async () => {
+      const id = cb.dataset.paycredit, msg = app.querySelector('[data-pm="' + id + '"]'), m = ms.find((x) => x.id === id); if (!m || cb.disabled) return; cb.disabled = true;
+      const price = Number(m.price) || 0, ob = meOpt(id, { paid: price, reported: false, rejected: false }, false, -price), rel = HRT.busy(cb);
+      try {
+        const r = await rpc('harpatka_me_pay_credit', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {}));
+        rel();
+        if (r && (r.status === 'ok' || r.status === 'already')) { ob.done(); keepOpen = id; load(); }
+        else { ob.fail(); toast(msg, r && r.status === 'no_credit' ? 'אין קרדיט זמין' : 'אי אפשר לשלם מהקרדיט', true); cb.disabled = false; }
+      } catch (e) { rel(); ob.fail(); toast(msg, 'משהו השתבש, אפשר לנסות שוב', true); cb.disabled = false; }
+    }; });
     /* לחיצה על התשלום בפייבוקס = דיווח על תשלום, אוטומטית (בלי קישור "שילמתי"): פייבוקס נפתח בלשונית חדשה והמפגש מסומן "ממתין לאישור" */
     app.querySelectorAll('[data-paynow]').forEach((pa) => { pa.addEventListener('click', async () => {
       const id = pa.dataset.paynow, fold = app.querySelector('[data-pf="' + id + '"]');
       if (pa.dataset.rep) return; pa.dataset.rep = '1';
-      const ob = meOpt(id, { reported: true, rejected: false }, true);
+      const mm = ms.find((x) => x.id === id), price = mm ? Number(mm.price) || 0 : 0, cr = pa.dataset.usecredit && credit > 0 ? Math.min(credit, price) : 0;   // יש קרדיט שיינצל: הדיווח הוא על השארית בלבד
+      const ob = cr ? meOpt(id, { paid: cr, reported: true, reported_amount: price - cr, rejected: false }, true, -cr) : meOpt(id, { reported: true, rejected: false }, true);
       try {
-        const r = await rpc('harpatka_me_report_payment', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {}));
+        let r;
+        if (cr) { const j = await rpc('harpatka_me_pay_credit', Object.assign({ p_meeting: id, p_report: true }, imp ? { p_as: asId } : {})); r = j && j.status === 'no_credit' ? await rpc('harpatka_me_report_payment', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {})) : (j && (j.status === 'ok' || j.status === 'already') ? 'ok' : 'x'); }
+        else r = await rpc('harpatka_me_report_payment', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {}));
         if (r === 'ok' || r === 'reported' || r === 'already') {
           ob.done(); keepOpen = id;
           load();   // הסטטוס מתחלף ל"ממתין לאישור תשלום"; כפתור התשלום נשאר עד שהתשלום באמת התקבל
@@ -264,8 +287,8 @@
     meApplied = my; return HRT.reconcile(d, t0);
   }
   /* שינוי של המשתתף על מפגש: מוצג מיד (ציור מחדש עם שמירת המפגשים הפתוחים), נשמר מול טעינות ישנות, ומתבטל אם השרת דוחה */
-  function meOpt(mid, patch, keepFold) {
-    const apply = (d) => { const mm = ((d && d.meetings) || []).find((x) => x.id === mid); if (mm) Object.assign(mm, patch); };
+  function meOpt(mid, patch, keepFold, balDelta) {
+    const apply = (d) => { const mm = ((d && d.meetings) || []).find((x) => x.id === mid); if (mm) Object.assign(mm, patch); if (balDelta && d) d.balance = (Number(d.balance) || 0) + balDelta; };   // balDelta: שינוי בקרדיט (למשל ניצול שלו לתשלום)
     const h = HRT.optimistic(apply);
     if (data && data.status === 'ok' && !keepFold) { keepOpenSet = new Set([...app.querySelectorAll('.mtg.open')].map((x) => x.dataset.mid)); keepDetOpen = !!(app.querySelector('#detBody') && app.querySelector('#detBody').classList.contains('open')); keepOpen = mid; apply(data); viewMain(); }
     else if (data) apply(data);

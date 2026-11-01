@@ -65,6 +65,8 @@
             <div class="su-fold su-after shut" data-su="after"><div>
               <p class="su-paynote">המקום נשמר באופן זמני, והוא יישמר קבוע רק לאחר תשלום</p>
               <div class="su-payfold" data-su="payfold"><div>
+                <p class="su-crnote" data-su="crnote" hidden></p>
+                <button type="button" data-su="paycredit" class="btn-primary rounded-full px-8 py-4 text-[1.2rem] block text-center w-full" hidden>תשלום מהקרדיט</button>
                 <a href="#" target="_blank" rel="noopener" data-paybox class="btn-primary rounded-full px-8 py-4 text-[1.2rem] block text-center w-full">לתשלום <span data-price>80 ₪</span> בפייבוקס</a>
                 <div class="su-paylinks" data-su="paylinks"><button type="button" class="su-lnk" data-su="other">רוצים לשלם בדרך אחרת?</button></div>
               </div></div>
@@ -242,10 +244,12 @@
       let tk = null; try { tk = localStorage.getItem('harpatka_claim_token'); } catch (e) {}
       if (!meInfo && !tk) return;   // דיווח דורש חשבון מחובר (או צפייה כמשתתף) או אסימון מהרשמה שהרגע נעשתה
       reporting = true;
-      const ob = meInfo ? meOptimistic(m.id, { reported: true, rejected: false }) : null;
+      const x0 = meInfo ? (meInfo.meetings || []).find((y) => y.id === m.id) : null, pr0 = x0 ? Number(x0.price) || 0 : 0, cr0 = meInfo && payA.dataset.usecredit && meInfo.credit > 0 ? Math.min(meInfo.credit, pr0) : 0;   // יש קרדיט שיינצל: הדיווח הוא על השארית בלבד
+      const ob = meInfo ? (cr0 ? meOptimistic(m.id, { paid: cr0, reported: true, reported_amount: pr0 - cr0, rejected: false }, -cr0) : meOptimistic(m.id, { reported: true, rejected: false })) : null;
       try {
         let r;
-        if (meInfo) r = await meRpc('harpatka_me_report_payment', { p_meeting: m.id });
+        if (meInfo && cr0) { const j = await meRpc('harpatka_me_pay_credit', { p_meeting: m.id, p_report: true }); r = j && j.status === 'no_credit' ? await meRpc('harpatka_me_report_payment', { p_meeting: m.id }) : (j && (j.status === 'ok' || j.status === 'already') ? 'ok' : 'x'); }
+        else if (meInfo) r = await meRpc('harpatka_me_report_payment', { p_meeting: m.id });
         else {
           const res = await fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_report_payment_token', { method: 'POST', keepalive: true, headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_token: tk, p_meeting: m.id }) });
           if (!res.ok) throw new Error('HTTP ' + res.status); r = await res.json();
@@ -258,6 +262,21 @@
       reporting = false;
     };
     if (payA) payA.addEventListener('click', () => { reportPay(); });
+    /* תשלום מהקרדיט: הקרדיט מכסה את מחיר המפגש ומוקצה לו (בלי פייבוקס) */
+    const cbtn = q('paycredit'); let crBusy = false;
+    if (cbtn) cbtn.addEventListener('click', async () => {
+      const m = selMeeting || nearest; if (!m || !m.id || !meInfo || crBusy) return;
+      const x = (meInfo.meetings || []).find((y) => y.id === m.id), price = x ? Number(x.price) || 0 : 0, credit = Number(meInfo.credit) || 0; if (!x || !price || credit <= 0) return;
+      crBusy = true; cbtn.disabled = true;
+      const amt = Math.min(credit, price), ob = meOptimistic(m.id, { paid: amt, reported: false, rejected: false }, -amt), rel = HRT.busy(cbtn);
+      applyRegState(m);
+      try {
+        const r = await meRpc('harpatka_me_pay_credit', { p_meeting: m.id });
+        if (!r || (r.status !== 'ok' && r.status !== 'already')) throw new Error('credit failed');
+        ob.done(); rel(); meLoader.reload(0);
+      } catch (e) { rel(); ob.fail(); cbtn.disabled = false; const f = q('fail'); if (f) f.textContent = 'אי אפשר לשלם מהקרדיט כרגע, אפשר לנסות שוב'; }
+      crBusy = false;
+    });
     if (q('other')) q('other').addEventListener('click', () => openOtherPay(selMeeting || nearest));
     form.addEventListener('submit', async (e) => {
       e.preventDefault(); q('fail').textContent = '';
@@ -448,18 +467,27 @@
     if (!x) {
       if (root.dataset.regState) {   // חזרה למצב הרשמה רגיל
         delete root.dataset.regState; btn.hidden = false; note.innerHTML = NOTE0; if (fold) fold.hidden = false; if (rep) rep.hidden = true;
+        { const pa0 = root.querySelector('[data-paybox]'), cb0 = q('paycredit'), cn0 = q('crnote'); if (pa0) { pa0.hidden = false; pa0.dataset.usecredit = ''; } if (cb0) cb0.hidden = true; if (cn0) cn0.hidden = true; showMeeting(m || selMeeting || nearest); }
         if (!btn.classList.contains('saved')) { after.classList.add('shut'); root.querySelectorAll('.su-fold:not(.su-after)').forEach((f) => f.classList.remove('shut')); }
       }
       btn.hidden = noMeet;
       return;
     }
     const paid = Number(x.paid) > 0, free = !!x.free, reported = !!x.reported, rejected = !!x.rejected && !reported;
+    /* קרדיט (בלשון המשתתף): יש קרדיט = אפשר לשלם ממנו על המפגש עד המקסימום שלו. הקרדיט מכסה: כפתור תשלום מהקרדיט (בלי פייבוקס); מחיר גבוה מהקרדיט: הקרדיט מנוצל והשארית בפייבוקס;
+       אחרי ניצול חלקי (שולם מהקרדיט ויש שארית שדווחה) מוצגת השארית לתשלום */
+    const price = Number(x.price) || 0, credit = Math.max(0, Number(meInfo.credit) || 0), rem = (paid && reported && Number(x.reported_amount) > 0) ? Number(x.reported_amount) : 0;
+    const useCr = !paid && !free && credit > 0 && price > 0, crFull = useCr && credit >= price, payAmt = rem || (useCr ? price - credit : price);
+    const ilsF = (n) => '₪' + Math.round(Math.abs(n)).toLocaleString('he-IL'), payA = root.querySelector('[data-paybox]'), crN = q('crnote'), crB = q('paycredit');
+    if (payA) { payA.hidden = crFull; payA.dataset.usecredit = useCr && !crFull ? '1' : ''; const pe = payA.querySelector('[data-price]'); if (pe && payAmt) pe.textContent = payAmt + ' ₪'; }
+    if (crB) { crB.hidden = !crFull; crB.disabled = false; crB.textContent = 'תשלום מהקרדיט · ' + ilsF(price); }
+    if (crN) { const t = crFull ? 'יש לכם קרדיט ' + ilsF(credit) + '. התשלום יורד מהקרדיט, ויישאר ' + ilsF(credit - price) : useCr ? 'הקרדיט שלכם (' + ilsF(credit) + ') ינוצל על המפגש, והיתרה ' + ilsF(payAmt) + ' בפייבוקס' : rem ? 'שולם מהקרדיט ' + ilsF(x.paid) + '. נשאר לשלם ' + ilsF(rem) : ''; crN.textContent = t; crN.hidden = !t; }
     root.dataset.regState = '1';
     btn.hidden = true;
     root.querySelectorAll('.su-fold:not(.su-after)').forEach((f) => f.classList.add('shut'));
     after.classList.remove('shut');
-    note.innerHTML = '<span class="su-regd">נרשמתם למפגש</span>' + (free ? 'המפגש בשבילכם ללא תשלום' : paid ? 'התשלום התקבל. נתראה!' : reported ? 'התשלום ממתין לאישור שלנו' : rejected ? 'לא מצאנו את התשלום. אפשר להשלים אותו כאן' : 'המקום יישמר קבוע רק לאחר תשלום');   // "נרשמתם למפגש" בשורה משלו בכתום, והמצב מתחתיו
-    if (fold) fold.hidden = paid || free;   // כפתור התשלום נשאר עד שהתשלום באמת התקבל, גם אחרי דיווח (אולי לחצו ולא שילמו בפועל)
+    note.innerHTML = '<span class="su-regd">נרשמתם למפגש</span>' + (free ? 'המפגש בשבילכם ללא תשלום' : (paid && !rem) ? 'התשלום התקבל. נתראה!' : reported ? 'התשלום ממתין לאישור שלנו' : rejected ? 'לא מצאנו את התשלום. אפשר להשלים אותו כאן' : 'המקום יישמר קבוע רק לאחר תשלום');   // "נרשמתם למפגש" בשורה משלו בכתום, והמצב מתחתיו
+    if (fold) fold.hidden = (paid && !rem) || free;   // כפתור התשלום נשאר עד שהתשלום באמת התקבל, גם אחרי דיווח (אולי לחצו ולא שילמו בפועל)
     if (rep) rep.hidden = true;   // "ממתין לאישור" כבר כתוב בהודעה שמעל
   }
   let phoneMode = false;   // מחוברים עם גוגל, אין משתתף מקושר: פופאפ ההרשמה במצב הזנת טלפון בלבד
@@ -645,7 +673,7 @@
     window.__meAdmin = false;   // מנהל הוא גם משתתף: בדף הבית מתנהג בדיוק כמו כל משתתף (אזור אישי והרשמה), בלי מעבר לדף הניהול
     if (d && d.status === 'ok' && d.participant) {   // משתתף מקושר (גם אם עוד לא השלים פרטים: אז הפופאפ מבקש אותם)
       const pp = d.participant, ph = String(pp.phone || '');
-      meInfo = { first: String(pp.first_name || '').trim(), last: String(pp.last_name || '').trim(), age: pp.age, gender: pp.gender, phone: ph.indexOf('+972') === 0 ? '0' + ph.slice(4) : ph, meetings: d.meetings || [] };
+      meInfo = { first: String(pp.first_name || '').trim(), last: String(pp.last_name || '').trim(), age: pp.age, gender: pp.gender, phone: ph.indexOf('+972') === 0 ? '0' + ph.slice(4) : ph, meetings: d.meetings || [], credit: Number(d.balance) || 0 };   // credit: הקרדיט של המשתתף (אפשר לשלם ממנו על מפגש)
       meInfo.complete = meInfo.first.length >= 2 && meInfo.last.length >= 2 && meInfo.age != null && !!meInfo.gender;
       applyMemberMode(); applyRegState(selMeeting || nearest);
       if (!AS) try { localStorage.setItem('harpatka_me_name', meDisplay()); } catch (e) {}
@@ -667,8 +695,8 @@
     return meLoader.now();   // תקלה זמנית: ממשיכים כאורח, עם הטופס הרגיל
   }
   /* שינוי של המשתתף על מפגש (הרשמה, דיווח תשלום): מוצג מיד, נשמר גם מול טעינות שהתחילו לפני שהשרת קלט אותו, ומתבטל אם השליחה נכשלת */
-  function meOptimistic(mid, patch) {
-    const apply = (d) => { const mm = ((d && d.meetings) || []).find((x) => x.id === mid); if (mm) Object.assign(mm, patch); };
+  function meOptimistic(mid, patch, creditDelta) {
+    const apply = (d) => { const mm = ((d && d.meetings) || []).find((x) => x.id === mid); if (mm) Object.assign(mm, patch); if (creditDelta && d) { if ('balance' in d) d.balance = (Number(d.balance) || 0) + creditDelta; else if ('credit' in d) d.credit = (Number(d.credit) || 0) + creditDelta; } };   // creditDelta: שינוי בקרדיט (ניצול שלו לתשלום); בתשובת השרת השדה balance ובמצב השמור credit
     const h = HRT.optimistic(apply);
     if (meInfo) { apply(meInfo); try { window.dispatchEvent(new Event('harpatka:me')); } catch (e) {} }
     return { done: h.done, fail: () => { h.fail(); meLoader.reload(0); } };
