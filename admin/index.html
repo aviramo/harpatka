@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104ay" />
+  <link rel="stylesheet" href="admin.css?v=20261104bf" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -481,6 +481,16 @@
     let pr = document.getElementById('safeProbe');
     if (!pr) { pr = document.createElement('div'); pr.id = 'safeProbe'; pr.setAttribute('aria-hidden', 'true'); pr.style.cssText = 'position:fixed;left:0;bottom:0;width:0;height:var(--safe-b);visibility:hidden;pointer-events:none'; document.body.appendChild(pr); }
     return window.innerHeight - Math.max(8, pr.offsetHeight);
+  }
+  /* מיקום אנכי של תפריט צף ביחס לעוגן: מתחתיו אם נכנס, אחרת מעליו, ואם לא נכנס באף צד, בצד הרחב מביניהם עם גובה מוגבל וגלילה פנימית, כך שהתפריט אף פעם לא חורג מגבולות המסך */
+  function placeMenuV(menu, aTop, aBottom, onlyBelow) {   // onlyBelow: תמיד מתחת לעוגן, ואם הרשימה ארוכה מוגבלת בגובה וגוללת
+    const minTop = 8 + (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--envtop')) || 0);
+    const below = menuBottom() - (aBottom + 8), above = aTop - 8 - minTop;
+    menu.style.maxHeight = ''; const mh = menu.offsetHeight;
+    if (mh <= below || onlyBelow) { menu.style.top = (aBottom + 8) + 'px'; if (mh > below) menu.style.maxHeight = Math.max(96, Math.floor(below)) + 'px'; }
+    else if (mh <= above) menu.style.top = (aTop - 8 - mh) + 'px';
+    else if (below >= above) { menu.style.maxHeight = Math.floor(below) + 'px'; menu.style.top = (aBottom + 8) + 'px'; }
+    else { menu.style.maxHeight = Math.floor(above) + 'px'; menu.style.top = minTop + 'px'; }
   }
   const NAV = { stack: [], ignore: 0, fromPop: false };
   const NAV_BACK = { pDlg: '#pBack', setDlg: '#setBack', stDlg: '#stArrow', prDlg: '#prArrow', finDlg: '#finArrow' };
@@ -2144,7 +2154,7 @@
     const up = ls.filter((l) => { const m = state.meetings.find((x) => x.id === l.meeting_id); return m && !isPast(m); }).sort((a, b) => key(a).localeCompare(key(b)))[0];
     return up || ls.slice().sort((a, b) => key(b).localeCompare(key(a)))[0] || null;
   };
-  const closeQ = () => { const q = $('#qMenu'); q.hidden = true; q.className = 'qmenu'; q.style.width = ''; };
+  const closeQ = () => { const q = $('#qMenu'); q.hidden = true; q.className = 'qmenu'; q.style.width = ''; q.style.maxWidth = ''; q.style.maxHeight = ''; };
   /* קישור קטן "עריכה" בכל מקום שבוחרים סטטוס: פותח את ניהול הסטטוסים בהגדרות על הסוג המתאים */
   const editBtn = () => '';   // עריכת סטטוסים ותוויות רק דרך ההגדרות
   function openStatusSettings(scope) {
@@ -2238,11 +2248,14 @@
     if (!free.length) return;
     const host = anchor.closest('dialog') || document.body; if (menu.parentNode !== host) host.appendChild(menu);
     menu.className = 'qmenu am'; menu.style.width = '';
-    menu.innerHTML = free.map((m) => '<button type="button" role="menuitem" class="qi" data-am="' + m.id + '">' + esc(dmShort(m)) + ' · ' + esc(String(m.meeting_time).slice(0, 5)) + '</button>').join('');
-    menu.hidden = false;
-    const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
+    const nmOf = (m) => String(m.name || '').trim() || String((typeById(m.type_id) || {}).name || '').trim();   // שם המפגש (או שם הסוג כשאין לו שם), ליד המועד
+    menu.innerHTML = free.map((m) => { const nm = nmOf(m); return '<button type="button" role="menuitem" class="qi" data-am="' + m.id + '"><span class="amt">' + esc(dmShort(m)) + ' · ' + esc(String(m.meeting_time).slice(0, 5)) + '</span>' + (nm ? '<span class="amn">· ' + esc(nm) + '</span>' : '') + '</button>'; }).join('');
+    menu.style.maxHeight = ''; menu.hidden = false;
     const tile = $('#pMeetTile').getBoundingClientRect();   // האריח בצד ימין של הרצועה: הקצה הימני של התפריט בקו הימני של האריח, מתחתיו
-    menu.style.left = Math.min(Math.max(8, Math.round(tile.right - mw)), window.innerWidth - mw - 8) + 'px'; menu.style.top = (tile.bottom + 8 + mh > menuBottom() ? Math.max(8, tile.top - mh - 8) : tile.bottom + 8) + 'px';
+    menu.style.maxWidth = Math.max(160, Math.floor(tile.right - 8)) + 'px';   // לא רחב יותר ממה שנכנס משמאל לקצה הימני של האריח (שם ארוך נחתך ב-"..."), כדי שהתפריט יישאר מיושר לימין האריח
+    placeMenuV(menu, tile.top, tile.bottom, true);   // תמיד מתחת לאריח; הגובה והגלילה נקבעים לפני מדידת הרוחב (פס גלילה מוסיף רוחב)
+    const mw = menu.offsetWidth;   // האריח בצד ימין של הרצועה: הקצה הימני של התפריט בקו הימני של האריח, מתחתיו
+    menu.style.left = Math.min(Math.max(8, Math.round(tile.right - mw)), window.innerWidth - mw - 8) + 'px';   // מיושר לימין האריח
     menu.onclick = (e) => { const b = e.target.closest('[data-am]'); if (!b) return; closeQ(); setLinkedWithStatus(pid, b.dataset.am, 'unpaid'); const m = state.meetings.find((x) => x.id === b.dataset.am); toast('שויך למפגש' + (m ? ' ' + dmShort(m) : '')); };
   });
   /* סטטוס משתתף (כללי): נפרד מסטטוס המפגש */
@@ -3328,7 +3341,8 @@
       const g = document.createElement('div'); g.className = 'grab'; g.innerHTML = '<i></i>'; g.setAttribute('aria-hidden', 'true');
       d.insertBefore(g, d.firstChild);
       d.addEventListener('close', () => { navClose(d); });   // סגירה שלא עברה דרך close שלנו (form method=dialog, או הדפדפן סוגר דיאלוג בלחיצה על "חזרה" כשאי אפשר לבטל): מחזירים את רשומת ההיסטוריה שנוספה בפתיחה, אחרת המחסנית של "חזרה" מתמלאת
-      d.addEventListener('cancel', (e) => {   // Escape או כפתור "חזרה" של הדפדפן/אנדרואיד (Chrome סוגר דיאלוג מודלי לפני ההיסטוריה): בתוך מסך משנה חוזרים צעד אחד כמו בחץ שבפופאפ, ורק במסך הראשי סוגרים
+      d.addEventListener('cancel', (e) => {   // (אירוע cancel של שדה קובץ שבתוך הפופאפ, למשל סגירת בורר התמונות בלי בחירה, עולה בבועה אל הדיאלוג; מתעלמים ממנו, אחרת הפופאפ נסגר) Escape או כפתור "חזרה" של הדפדפן/אנדרואיד (Chrome סוגר דיאלוג מודלי לפני ההיסטוריה): בתוך מסך משנה חוזרים צעד אחד כמו בחץ שבפופאפ, ורק במסך הראשי סוגרים
+        if (e.target !== d) return;
         e.preventDefault();
         const top = NAV.stack.find((x) => x.d === d), bk = top && navDepthOf(d) > 0 && NAV_BACK[d.id] ? $(NAV_BACK[d.id]) : null;
         if (bk && !bk.hidden) bk.click(); else d.close();
@@ -3506,9 +3520,8 @@
         '<div class="mline">' + (sheet.id ? '<button type="button" class="mmoney' + (allocatedOf(sheet.id, m.id) > 0 ? ' has' : freeL ? ' free' : reportedOf(sheet.id, m.id) ? ' wait' : '') + '" data-mm="' + m.id + '"' + (on ? '' : ' hidden') + ' title="תשלום למפגש">' + (allocatedOf(sheet.id, m.id) > 0 ? '₪' + nfm(allocatedOf(sheet.id, m.id)) : freeL ? '<span class="nps">₪</span>חינם' : reportedOf(sheet.id, m.id) ? 'דווח' + reportedAmt(sheet.id, m.id) : 'לא שולם') + '</button>' : '') +
         '</div>' +
       '</div>';
-    }).join('') + (sheet.id && cards.length ? '<span class="mend" aria-hidden="true">מפגשים</span>' : '');   // תווית "מפגשים" משמאל למפגש הכי ישן (הקצה הנגלל של הרצועה), באותה טיפוגרפיה של הכותרת באפור
+    }).join('') + (sheet.id ? '<span class="mend" aria-hidden="true">מפגשים</span>' : '');   // תווית "מפגשים" משמאל למפגש הכי ישן (הקצה הנגלל של הרצועה), באותה טיפוגרפיה של הכותרת באפור
     focusMeetingCard();
-    if (sheet.id && !cards.length) box.innerHTML = '<p class="mnone">עוד לא משויך לאף מפגש</p>';
   }
 
   $('#pMore').addEventListener('click', () => { mLimit += 3; refreshSheetMeetings(); });
