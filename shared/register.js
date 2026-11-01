@@ -244,12 +244,10 @@
       let tk = null; try { tk = localStorage.getItem('harpatka_claim_token'); } catch (e) {}
       if (!meInfo && !tk) return;   // דיווח דורש חשבון מחובר (או צפייה כמשתתף) או אסימון מהרשמה שהרגע נעשתה
       reporting = true;
-      const x0 = meInfo ? (meInfo.meetings || []).find((y) => y.id === m.id) : null, pr0 = x0 ? Number(x0.price) || 0 : 0, cr0 = meInfo && payA.dataset.usecredit && meInfo.credit > 0 ? Math.min(meInfo.credit, pr0) : 0;   // יש קרדיט שיינצל: הדיווח הוא על השארית בלבד
-      const ob = meInfo ? (cr0 ? meOptimistic(m.id, { paid: cr0, reported: true, reported_amount: pr0 - cr0, rejected: false }, -cr0) : meOptimistic(m.id, { reported: true, rejected: false })) : null;
+      const ob = meInfo ? meOptimistic(m.id, { reported: true, rejected: false }) : null;
       try {
         let r;
-        if (meInfo && cr0) { const j = await meRpc('harpatka_me_pay_credit', { p_meeting: m.id, p_report: true }); r = j && j.status === 'no_credit' ? await meRpc('harpatka_me_report_payment', { p_meeting: m.id }) : (j && (j.status === 'ok' || j.status === 'already') ? 'ok' : 'x'); }
-        else if (meInfo) r = await meRpc('harpatka_me_report_payment', { p_meeting: m.id });
+        if (meInfo) r = await meRpc('harpatka_me_report_payment', { p_meeting: m.id });
         else {
           const res = await fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_report_payment_token', { method: 'POST', keepalive: true, headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_token: tk, p_meeting: m.id }) });
           if (!res.ok) throw new Error('HTTP ' + res.status); r = await res.json();
@@ -268,7 +266,7 @@
       const m = selMeeting || nearest; if (!m || !m.id || !meInfo || crBusy) return;
       const x = (meInfo.meetings || []).find((y) => y.id === m.id), price = x ? Number(x.price) || 0 : 0, credit = Number(meInfo.credit) || 0; if (!x || !price || credit <= 0) return;
       crBusy = true; cbtn.disabled = true;
-      const amt = Math.min(credit, price), ob = meOptimistic(m.id, { paid: amt, reported: false, rejected: false }, -amt), rel = HRT.busy(cbtn);
+      const amt = Math.min(credit, price), ob = meOptimistic(m.id, { paid: amt, due: price > amt ? price - amt : null, reported: false, rejected: false }, -amt), rel = HRT.busy(cbtn);   // שארית (אם הקרדיט לא מכסה): מופיע מיד כפתור פייבוקס עליה
       applyRegState(m);
       try {
         const r = await meRpc('harpatka_me_pay_credit', { p_meeting: m.id });
@@ -467,21 +465,20 @@
     if (!x) {
       if (root.dataset.regState) {   // חזרה למצב הרשמה רגיל
         delete root.dataset.regState; btn.hidden = false; note.innerHTML = NOTE0; if (fold) fold.hidden = false; if (rep) rep.hidden = true;
-        { const pa0 = root.querySelector('[data-paybox]'), cb0 = q('paycredit'), cn0 = q('crnote'); if (pa0) { pa0.hidden = false; pa0.dataset.usecredit = ''; } if (cb0) cb0.hidden = true; if (cn0) cn0.hidden = true; showMeeting(m || selMeeting || nearest); }
+        { const pa0 = root.querySelector('[data-paybox]'), cb0 = q('paycredit'), cn0 = q('crnote'); if (pa0) pa0.hidden = false; if (cb0) cb0.hidden = true; if (cn0) cn0.hidden = true; showMeeting(m || selMeeting || nearest); }
         if (!btn.classList.contains('saved')) { after.classList.add('shut'); root.querySelectorAll('.su-fold:not(.su-after)').forEach((f) => f.classList.remove('shut')); }
       }
       btn.hidden = noMeet;
       return;
     }
     const paid = Number(x.paid) > 0, free = !!x.free, reported = !!x.reported, rejected = !!x.rejected && !reported;
-    /* קרדיט (בלשון המשתתף): יש קרדיט = אפשר לשלם ממנו על המפגש עד המקסימום שלו. הקרדיט מכסה: כפתור תשלום מהקרדיט (בלי פייבוקס); מחיר גבוה מהקרדיט: הקרדיט מנוצל והשארית בפייבוקס;
-       אחרי ניצול חלקי (שולם מהקרדיט ויש שארית שדווחה) מוצגת השארית לתשלום */
-    const price = Number(x.price) || 0, credit = Math.max(0, Number(meInfo.credit) || 0), rem = (paid && reported && Number(x.reported_amount) > 0) ? Number(x.reported_amount) : 0;
-    const useCr = !paid && !free && credit > 0 && price > 0, crFull = useCr && credit >= price, payAmt = rem || (useCr ? price - credit : price);
+    /* קרדיט (בלשון המשתתף): יש קרדיט = כפתור אחד בלבד, תשלום מהקרדיט עד המקסימום שלו. רק אחרי שהשתמשו בו, ואם נשארה שארית (due) או שאין קרדיט, מופיע הכפתור של פייבוקס */
+    const price = Number(x.price) || 0, credit = Math.max(0, Number(meInfo.credit) || 0), rem = (paid && Number(x.due) > 0) ? Number(x.due) : 0;
+    const useCr = !paid && !free && credit > 0 && price > 0, crFull = useCr && credit >= price, payAmt = rem || price;
     const ilsF = (n) => '₪' + Math.round(Math.abs(n)).toLocaleString('he-IL'), payA = root.querySelector('[data-paybox]'), crN = q('crnote'), crB = q('paycredit');
-    if (payA) { payA.hidden = crFull; payA.dataset.usecredit = useCr && !crFull ? '1' : ''; const pe = payA.querySelector('[data-price]'); if (pe && payAmt) pe.textContent = payAmt + ' ₪'; }
-    if (crB) { crB.hidden = !crFull; crB.disabled = false; crB.textContent = 'תשלום מהקרדיט · ' + ilsF(price); }
-    if (crN) { const t = crFull ? 'יש לכם קרדיט ' + ilsF(credit) + '. התשלום יורד מהקרדיט, ויישאר ' + ilsF(credit - price) : useCr ? 'הקרדיט שלכם (' + ilsF(credit) + ') ינוצל על המפגש, והיתרה ' + ilsF(payAmt) + ' בפייבוקס' : rem ? 'שולם מהקרדיט ' + ilsF(x.paid) + '. נשאר לשלם ' + ilsF(rem) : ''; crN.textContent = t; crN.hidden = !t; }
+    if (payA) { payA.hidden = useCr; const pe = payA.querySelector('[data-price]'); if (pe && payAmt > 0) pe.textContent = payAmt + ' ₪'; }
+    if (crB) { crB.hidden = !useCr; crB.disabled = false; crB.textContent = 'תשלום מהקרדיט · ' + ilsF(Math.min(credit, price)); }
+    if (crN) { const t = crFull ? 'יש לכם קרדיט ' + ilsF(credit) + '. התשלום יורד מהקרדיט, ויישאר ' + ilsF(credit - price) : useCr ? 'הקרדיט כולו (' + ilsF(credit) + ') ינוצל על המפגש, ונשאר לשלם ' + ilsF(price - credit) + ' בפייבוקס' : rem ? 'שולם מהקרדיט ' + ilsF(x.paid) + '. נשאר לשלם ' + ilsF(rem) : ''; crN.textContent = t; crN.hidden = !t; }
     root.dataset.regState = '1';
     btn.hidden = true;
     root.querySelectorAll('.su-fold:not(.su-after)').forEach((f) => f.classList.add('shut'));

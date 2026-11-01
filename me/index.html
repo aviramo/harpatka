@@ -7,7 +7,7 @@
 <title>האזור האישי | יוצאים להרפתקה</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&family=Rubik:wght@500;700;800&display=block" rel="stylesheet" />
-<link rel="stylesheet" href="../shared/site.css?v=20261030s" />
+<link rel="stylesheet" href="../shared/site.css?v=20261030t" />
 <script>try { if (window.self !== window.top && /[?&]embed=/.test(location.search)) document.documentElement.classList.add('embed'); } catch (e) {}</script>   <!-- בפופאפ: הרקע הטורקיז כבר בציור הראשון -->
 </head>
 <body>
@@ -164,20 +164,20 @@
        כשצריך לשלם: כפתור תשלום גדול בפייבוקס כמו בפופאפ ההרשמה (הלחיצה מדווחת על תשלום) ו"רוצים לשלם בדרך אחרת?"; בלי הוראות הגעה */
     const rowHtml = (m) => {
       const paid = Number(m.paid) > 0, free = !!m.free, price = Number(m.price) || 0;
-      const rem = (paid && m.reported && Number(m.reported_amount) > 0) ? Number(m.reported_amount) : 0;   // שארית אחרי ניצול חלקי של קרדיט (דווחה, ממתינה לאימות)
-      const useCr = !paid && !free && credit > 0 && price > 0, crFull = useCr && credit >= price;   // יש קרדיט שאפשר לנצל על המפגש (עד המקסימום שלו)
+      const rem = (paid && Number(m.due) > 0) ? Number(m.due) : 0;   // שארית אחרי ניצול חלקי של קרדיט: נשארה לתשלום בפייבוקס
+      const useCr = !paid && !free && credit > 0 && price > 0, crAmt = Math.min(credit, price), crFull = useCr && credit >= price;   // יש קרדיט שאפשר לנצל על המפגש (עד המקסימום שלו): הכפתור הראשון
       const att = '';   // אין יותר סימון הגעה (הסטטוס במפגש הוא תווית וציון בלבד, ולא מוצג למשתתף)
-      const pay = free ? '<span class="chip">חינם</span>' : rem ? '<span class="chip wait">ממתין לאישור תשלום</span>' : paid ? '<span class="chip ok">שולם ' + ils(m.paid) + '</span>'
+      const pay = free ? '<span class="chip">חינם</span>' : rem ? (m.reported ? '<span class="chip wait">ממתין לאישור תשלום</span>' : '<span class="chip no">נשאר לשלם ' + ils(rem) + '</span>') : paid ? '<span class="chip ok">שולם ' + ils(m.paid) + '</span>'
         : m.reported ? '<span class="chip wait">ממתין לאישור תשלום</span>'
         : m.rejected ? '<span class="chip no">התשלום לא אושר</span>' : '<span class="chip no">' + (m.future ? 'טרם שולם' : 'לא שולם') + '</span>';
       let foot = '';
-      if (((!paid && !free) || rem > 0) && CFG.payboxLink) {   /* גם מפגש שהסתיים ולא שולם: אפשר לשלם ולדווח (1.11.26). יש קרדיט: מנצלים אותו עד המקסימום; מחיר גבוה מהקרדיט = שארית בפייבוקס */
-        const payAmt = rem || (useCr ? price - credit : price), note = crFull ? '<p class="crnote">יישאר לכם קרדיט ' + ils(credit - price) + '</p>'
-          : useCr ? '<p class="crnote">הקרדיט שלכם (' + ils(credit) + ') ינוצל על המפגש, והיתרה ' + ils(payAmt) + ' בפייבוקס</p>'
-          : rem ? '<p class="crnote">שולם מהקרדיט ' + ils(m.paid) + '. נשאר לשלם ' + ils(rem) + '</p>' : '';
-        const main = crFull ? '<button type="button" class="btn pay" data-paycredit="' + m.id + '">תשלום מהקרדיט · ' + ils(price) + '</button>'
-          : '<a class="btn pay" data-paynow="' + m.id + '"' + (useCr ? ' data-usecredit="1"' : '') + ' href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">לתשלום ' + (payAmt ? payAmt + ' ₪ ' : '') + 'בפייבוקס</a>';
-        foot += '<div class="payfold" data-pf="' + m.id + '"><div>' + (crFull ? main + note : note + main) + '<div class="paylinks"><button type="button" class="lnk" data-other="' + m.id + '">רוצים לשלם בדרך אחרת?</button></div><div class="msg" data-pm="' + m.id + '"></div></div></div>';
+      /* כפתור אחד בכל שלב: קודם הקרדיט (עד המקסימום שלו), ורק אחרי שהשתמשו בו, ואם נשארה שארית (או שאין קרדיט), הכפתור של פייבוקס (1.11.26) */
+      if (useCr) foot += '<div class="payfold" data-pf="' + m.id + '"><div><button type="button" class="btn pay" data-paycredit="' + m.id + '">תשלום מהקרדיט · ' + ils(crAmt) + '</button>'
+        + '<p class="crnote">' + (crFull ? 'יישאר לכם קרדיט ' + ils(credit - price) : 'הקרדיט כולו ינוצל על המפגש, ונשאר לשלם ' + ils(price - credit) + ' בפייבוקס') + '</p>'
+        + '<div class="paylinks"><button type="button" class="lnk" data-other="' + m.id + '">רוצים לשלם בדרך אחרת?</button></div><div class="msg" data-pm="' + m.id + '"></div></div></div>';
+      else if (((!paid && !free) || rem > 0) && CFG.payboxLink) {   /* גם מפגש שהסתיים ולא שולם: אפשר לשלם ולדווח (1.11.26) */
+        const payAmt = rem || price;
+        foot += '<div class="payfold" data-pf="' + m.id + '"><div>' + (rem ? '<p class="crnote">שולם מהקרדיט ' + ils(m.paid) + '. נשאר לשלם ' + ils(rem) + '</p>' : '') + '<a class="btn pay" data-paynow="' + m.id + '" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">לתשלום ' + (payAmt ? payAmt + ' ₪ ' : '') + 'בפייבוקס</a><div class="paylinks"><button type="button" class="lnk" data-other="' + m.id + '">רוצים לשלם בדרך אחרת?</button></div><div class="msg" data-pm="' + m.id + '"></div></div></div>';
       }
       if (m.future) { const sure = unregSure === m.id; foot += '<button type="button" class="lnk sm" data-unreg="' + m.id + '"' + (sure ? ' data-sure="1"' : '') + '>' + (sure ? UNREG_SURE : 'ביטול רישום') + '</button><div class="msg" data-um="' + m.id + '"></div>'; }
       /* שורה ראשונה: המועד · העיר; שורה שנייה: שם המפגש · המיקום (31.10.26) */
@@ -226,7 +226,7 @@
     /* תשלום מהקרדיט: הקרדיט מכסה את מחיר המפגש, ומוקצה לו (בלי פייבוקס) */
     app.querySelectorAll('[data-paycredit]').forEach((cb) => { cb.onclick = async () => {
       const id = cb.dataset.paycredit, msg = app.querySelector('[data-pm="' + id + '"]'), m = ms.find((x) => x.id === id); if (!m || cb.disabled) return; cb.disabled = true;
-      const price = Number(m.price) || 0, ob = meOpt(id, { paid: price, reported: false, rejected: false }, false, -price), rel = HRT.busy(cb);
+      const price = Number(m.price) || 0, amt = Math.min(credit, price), ob = meOpt(id, { paid: amt, due: price > amt ? price - amt : null, reported: false, rejected: false }, false, -amt), rel = HRT.busy(cb);   // שארית (אם הקרדיט לא מכסה): מופיע מיד כפתור פייבוקס עליה
       try {
         const r = await rpc('harpatka_me_pay_credit', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {}));
         rel();
@@ -238,12 +238,9 @@
     app.querySelectorAll('[data-paynow]').forEach((pa) => { pa.addEventListener('click', async () => {
       const id = pa.dataset.paynow, fold = app.querySelector('[data-pf="' + id + '"]');
       if (pa.dataset.rep) return; pa.dataset.rep = '1';
-      const mm = ms.find((x) => x.id === id), price = mm ? Number(mm.price) || 0 : 0, cr = pa.dataset.usecredit && credit > 0 ? Math.min(credit, price) : 0;   // יש קרדיט שיינצל: הדיווח הוא על השארית בלבד
-      const ob = cr ? meOpt(id, { paid: cr, reported: true, reported_amount: price - cr, rejected: false }, true, -cr) : meOpt(id, { reported: true, rejected: false }, true);
+      const ob = meOpt(id, { reported: true, rejected: false }, true);
       try {
-        let r;
-        if (cr) { const j = await rpc('harpatka_me_pay_credit', Object.assign({ p_meeting: id, p_report: true }, imp ? { p_as: asId } : {})); r = j && j.status === 'no_credit' ? await rpc('harpatka_me_report_payment', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {})) : (j && (j.status === 'ok' || j.status === 'already') ? 'ok' : 'x'); }
-        else r = await rpc('harpatka_me_report_payment', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {}));
+        const r = await rpc('harpatka_me_report_payment', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {}));
         if (r === 'ok' || r === 'reported' || r === 'already') {
           ob.done(); keepOpen = id;
           load();   // הסטטוס מתחלף ל"ממתין לאישור תשלום"; כפתור התשלום נשאר עד שהתשלום באמת התקבל
