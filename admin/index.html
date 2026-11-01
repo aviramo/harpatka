@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104bh" />
+  <link rel="stylesheet" href="admin.css?v=20261104bj" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -448,6 +448,8 @@
     search: ['s', '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/><path d="M10.5 8v5M8 10.5h5" stroke-width="1.8"/>'],
     sliders: ['s', '<path d="M4 7h9"/><path d="M17 7h3"/><circle cx="15" cy="7" r="2"/><path d="M4 17h3"/><path d="M11 17h9"/><circle cx="9" cy="17" r="2"/>'],
     sort: ['s', '<path d="M7 4v15M7 19l-3-3M7 19l3-3M17 20V5M17 5l-3 3M17 5l3 3"/>'],
+    sdown: ['s', '<path d="M12 5v14M6 13l6 6 6-6"/>'],
+    sup: ['s', '<path d="M12 19V5M6 11l6-6 6 6"/>'],
     filter: ['s', '<path d="M4 5h16l-6.5 7.5V18l-3 1.5v-7z"/>'],
     spark: ['f', '<path d="M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"/>'],
     stats: ['s', '<path d="M5 20V11M12 20V4M19 20v-6"/>'],
@@ -1301,6 +1303,7 @@
   /* כפתור התגיות (31.10.26): הגדרה אחת לכל התצוגות (כל המשתתפים, סוגי מפגשים ומפגשים), לכל מנהל בנפרד; נשמר ב-view_scopes._g */
   Object.defineProperty(state, 'showTags', { get() { const c = state.viewScopes._g; return !(c && c.tags === false); }, set(v) { (state.viewScopes._g || (state.viewScopes._g = {})).tags = !!v; }, enumerable: true });   // הצגת תגיות המשתתפים בשורת הסטטוסים: מתג בתפריט העריכה (1.11.26), נשמר לכל מנהל; ברירת מחדל: מוצגות
   /* המיון (1.11.26): הגדרה אחת לכל התצוגות, ברמת החשבון (לכל מנהל בנפרד, בכל מכשיר); נשמר ב-view_scopes._g.sort, ולכן לא בכתובת */
+  Object.defineProperty(state, 'sortDir', { get() { const c = state.viewScopes._g; return c && c.sortDir === 'asc' ? 'asc' : 'desc'; }, set(v) { (state.viewScopes._g || (state.viewScopes._g = {})).sortDir = v === 'asc' ? 'asc' : 'desc'; }, enumerable: true });   // כיוון המיון: desc = ברירת המחדל של כל מיון (חדש, עדכני, התמדה גבוהה קודם), asc = הפוך; לחיצה נוספת על המיון שנבחר הופכת
   Object.defineProperty(state, 'sort', { get() { const c = state.viewScopes._g; return c && c.sort ? c.sort : 'new'; }, set(v) { (state.viewScopes._g || (state.viewScopes._g = {})).sort = v; }, enumerable: true });
   function applyViewPrefs() { const pr = state.prefs[emailOf()] || {}; state.viewScopes = (pr.view_scopes && typeof pr.view_scopes === 'object') ? JSON.parse(JSON.stringify(pr.view_scopes)) : {}; }
   async function saveViewPrefs() {
@@ -1423,7 +1426,7 @@
     $('#stStrip').style.setProperty('--nd', String(Math.max(2, String(state.participants.length).length)));
     { const lc = $('#listCount'); lc.textContent = state.listCnt == null ? '' : state.listCnt; }
     const filtHtml = '<button type="button" class="hfilt all' + (panelOn() ? ' on' : '') + '" id="filtBtn" aria-haspopup="menu" aria-expanded="' + !$('#viewMenu').hidden + '" aria-label="סינון ותצוגה' + (panelOn() ? ' (יש סינון פעיל)' : '') + '" title="סינון ותצוגה">' + icon('filter') + '</button>';
-    const sortHtml = '<button type="button" class="hfilt all' + (state.sort !== 'new' ? ' on' : '') + '" id="sortBtnH" aria-haspopup="menu" aria-expanded="' + !$('#sortMenu').hidden + '" aria-label="מיון הרשימה" title="מיון: ' + (SORTS.find((x) => x[0] === state.sort) || SORTS[0])[1] + '">' + icon('sort') + '</button>';
+    const sortHtml = '<button type="button" class="hfilt all' + (state.sort !== 'new' || state.sortDir === 'asc' ? ' on' : '') + '" id="sortBtnH" aria-haspopup="menu" aria-expanded="' + !$('#sortMenu').hidden + '" aria-label="מיון הרשימה" title="מיון: ' + (SORTS.find((x) => x[0] === state.sort) || SORTS[0])[1] + (state.sortDir === 'asc' ? ' (הפוך)' : '') + '">' + icon('sort') + '</button>';
     $('#listClu').innerHTML = filtHtml + sortHtml + gHtml;   // מימין לשמאל: סינון, מיון, זכר, נקבה (צמודים לאייקוני הסינון של העמודות)
     ['#listWa', '#listPay', '#listSent', '#listBal', '#listAtt'].forEach((q) => { $(q).innerHTML = ''; });   // אייקוני הסינון של העמודות (תשלום, שליחה, הגעה / יתרה, התמדה), מיושרים מעל העמודות שלהן
     {   /* ספירה לכל אפשרות בתפריטי הסינון של העמודות: כמה משתתפים יוצגו אם בוחרים אותה (שאר הסינונים והחיפוש נשמרים) */
@@ -1460,19 +1463,29 @@
   }
 
   /* מיון הרשימה */
-  const SORTS = [['new', 'הרשמה'], ['upd', 'עדכון']];   // הרשמה: לפי מועד ההרשמה; עדכון: לפי הפעולה האחרונה שבוצעה על המשתתף
+  const SORTS = [['new', 'הרשמה', 'מהחדש לישן', 'מהישן לחדש'], ['upd', 'עדכון', 'מהעדכני לישן', 'מהישן לעדכני'], ['pers', 'התמדה', 'מהגבוהה לנמוכה', 'מהנמוכה לגבוהה'], ['status', 'סטטוס', 'לפי סדר הסטטוסים בסוג המפגש', 'בסדר הפוך', true]];   // סטטוס (רק בתוך מפגש): לפי סדר הסטטוסים של סוג המפגש (סטטוס הרשמה ואחריו סטטוס מפגש, כמו בפס הצ'יפים)   // הרשמה: לפי מועד ההרשמה; עדכון: לפי הפעולה האחרונה שבוצעה על המשתתף
   function sortCmp() {
     const byNew = (a, b) => String(b.created_at || '').localeCompare(String(a.created_at || ''));
     const byName = (a, b) => a.name.localeCompare(b.name, 'he');
     const ageOf = (p) => { const x = shownAge(p); return x == null ? null : x; };
     const byAge = (dir) => (a, b) => { const x = ageOf(a), y = ageOf(b); if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1; return dir * (x - y); };
+    const asc = state.sortDir === 'asc', rev = (f) => asc ? (a, b) => -f(a, b) : f;   // כיוון הפוך: הופכים את ההשוואה
+    if (state.sort === 'status' && state.filter) {   // סטטוס: לפי מיקום הסטטוס המוצג (סטטוס מפגש, ואם אין, סטטוס הרשמה) ברשימת הסטטוסים של סוג המפגש; מי שאין לו שיוך או סטטוס מוכר בסוף
+      const order = statusList().map((x) => x.key).concat(mstatusList().map((x) => x.key));
+      const rk = (q) => { const l = linkOf(q.id, state.filter); if (!l) return 1e9; const i = order.indexOf(dispStatus(l)); return i < 0 ? 1e8 : i; };
+      return rev((a, b) => (rk(a) - rk(b)) || byNew(a, b) || byName(a, b));
+    }
+    if (state.sort === 'pers') {   // התמדה: לפי הציון הממוצע למפגש (אותו דירוג של צ'יף ההתמדה); מי שעוד אין לו נתונים תמיד בסוף, בשני הכיוונים
+      const by = attCtx().by, none = (x) => !x || !x.total;
+      return (a, b) => { const x = by[a.id], y = by[b.id], xn = none(x), yn = none(y); if (xn || yn) return xn && yn ? byName(a, b) : xn ? 1 : -1; const d = (y.score / y.total - x.score / x.total) || (y.score - x.score) || (y.came - x.came); return (asc ? -d : d) || byName(a, b); };
+    }
     if (state.sort === 'upd') {   // עדכון: הפעולה האחרונה על המשתתף: הרשמה, שיוך או שינוי במפגש, הגעה, שליחת פרטים, דיווח, תשלום או הערה (גם הערות מערכת)
       const last = new Map(), bump = (id, v) => { if (id && v && String(v) > (last.get(id) || '')) last.set(id, String(v)); };
       state.participants.forEach((q) => bump(q.id, q.created_at));
       state.att.forEach((l) => ['created_at', 'attended_at', 'details_sent_at', 'pay_reported_at', 'pay_requested_at', 'paid_at'].forEach((k) => bump(l.participant_id, l[k])));
       state.payments.forEach((x) => bump(x.participant_id, x.created_at));
       state.notes.forEach((n) => bump(n.participant_id, n.created_at));
-      return (a, b) => (last.get(b.id) || '').localeCompare(last.get(a.id) || '') || byName(a, b);
+      return rev((a, b) => (last.get(b.id) || '').localeCompare(last.get(a.id) || '') || byName(a, b));
     }
     switch (state.sort) {
       case 'old': return (a, b) => -byNew(a, b) || byName(a, b);
@@ -1480,18 +1493,18 @@
       case 'age_asc': return (a, b) => byAge(1)(a, b) || byNew(a, b);
       case 'age_desc': return (a, b) => byAge(-1)(a, b) || byNew(a, b);
       case 'unpaid': return (a, b) => { const o = { unpaid: 0, requested: 1, paid: 2, willpay: 3, maybe: 3, exempt: 3 }, x = o[paidState(a)] ?? 3, y = o[paidState(b)] ?? 3; return x - y || byNew(a, b); };
-      default: return (a, b) => byNew(a, b) || byName(a, b);
+      default: return rev((a, b) => byNew(a, b) || byName(a, b));
     }
   }
   function renderSort() {
     
     
-    $('#sortMenu').innerHTML = SORTS.map((s) => '<button type="button" role="menuitemradio" data-sort="' + s[0] + '" aria-checked="' + (state.sort === s[0]) + '">' + s[1] + '</button>').join('');
+    $('#sortMenu').innerHTML = SORTS.filter((s) => !s[4] || state.filter).map((s) => { const on = state.sort === s[0], t = on ? s[1] + ', ' + (state.sortDir === 'asc' ? s[3] : s[2]) + ' (לחיצה נוספת הופכת את הסדר)' : s[1]; return '<button type="button" role="menuitemradio" data-sort="' + s[0] + '" aria-checked="' + on + '" title="' + esc(t) + '"' + (on ? ' aria-label="' + esc(t) + '"' : '') + '><span>' + s[1] + '</span>' + (on ? '<span class="sdir" aria-hidden="true">' + icon(state.sortDir === 'asc' ? 'sup' : 'sdown', 'i16') + '</span>' : '') + '</button>'; }).join('');
   }
   const closeSort = () => { $('#sortMenu').hidden = true; const b = $('#sortBtnH'); if (b) b.setAttribute('aria-expanded', 'false'); };   // התפריט הצף (מועבר ל-body) נפתח מכפתור המיון בכותרת
   document.body.appendChild($('#sortMenu'));
   $('#listTags').addEventListener('click', (e) => { const b = e.target.closest('#sortBtnH'); if (!b) return; e.stopPropagation(); const m = $('#sortMenu'); if (!m.hidden) { closeSort(); return; } m.hidden = false; b.setAttribute('aria-expanded', 'true'); const r = b.getBoundingClientRect(), mw = m.offsetWidth; m.style.left = Math.max(8, Math.min(Math.round(r.right - mw), window.innerWidth - mw - 8)) + 'px'; m.style.top = (r.bottom + 8) + 'px'; });   // תפריט המיון מיושר לקצה הימני של התגית שלו
-  $('#sortMenu').addEventListener('click', (e) => { const b = e.target.closest('[data-sort]'); if (!b) return; state.sort = b.dataset.sort; closeSort(); render(); saveViewPrefs(); });
+  $('#sortMenu').addEventListener('click', (e) => { const b = e.target.closest('[data-sort]'); if (!b) return; if (b.dataset.sort === state.sort) state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc'; else { state.sort = b.dataset.sort; state.sortDir = 'desc'; } closeSort(); render(); saveViewPrefs(); });   // לחיצה נוספת על המיון שנבחר: סדר הפוך
   document.addEventListener('click', (e) => { if (!e.target.closest('#sortMenu, #sortBtnH')) closeSort(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSort(); });
 
