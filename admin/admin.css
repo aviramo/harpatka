@@ -293,13 +293,12 @@ body.locked .wrap, body.locked #statsBtn { display: none !important; }
 .wrap { width: 100%; height: 100vh; height: 100dvh; margin-top: 0; display: flex; flex-direction: column; padding: 0; }
 .wrap > header.top { flex: 0 0 auto; position: relative; z-index: 5; background: var(--bg); }   /* בלי קו מעל שורת החיפוש (31.10.26) */
 .wrap > #status { flex: 0 0 auto; }
-.wrap > .listbar { flex: 0 0 36px; }
 .wrap > .list { flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior-y: auto; scrollbar-width: none; padding-bottom: var(--safe-b); }   /* הרשימה מסתיימת מעל פס המחוות של המכשיר (31.10.26): השורה האחרונה נגללת עד אזור בטוח */
 .wrap > .list:has(~ .addbox:not(:empty)) { padding-bottom: 0; }   /* כשכרטיס "הוספת משתתף חדש" מתחתיה, האזור הבטוח נשאר מתחתיו */
 .wrap > .list::-webkit-scrollbar { display: none; }
 .wrap > .list:empty { display: none; }
 .wrap > .addbox { flex: 0 0 auto; }
-body:has(#status .empty) .listbar, body:has(#status .empty) .ststrip, body:has(#status .empty) .vbar { display: none; }
+body:has(#status .empty) .ststrip, body:has(#status .empty) .vbar { display: none; }
 
 /* כותרת: בורר המפגש מימין, כפתורי תצוגה, מיון ותפריט משמאל */
 .title-row { position: relative; height: 56px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 0 var(--gut); }
@@ -346,7 +345,6 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 .ststrip:empty { display: none; }
 
 /* שורת הסינונים מעל הטבלה (כמו כותרת טבלה): חיפוש, הכל / ז / נ / ⋯, ואייקוני סינון מעל העמודות */
-.listbar { position: relative; height: 36px; display: flex; gap: 8px; align-items: center; padding: 0 var(--gut); background: var(--bg); }   /* בלי קו בין שורת החיפוש לשורת הסינון (31.10.26) */
 /* חיפוש: סגור הוא תגית אייקון (ריבוע בגובה התגית, גבול מתאר), ונפתח לכל רוחב השורה באותו גובה */
 .search { position: relative; display: block; }
 .hsearch input::-webkit-search-cancel-button, .hsearch input::-webkit-search-decoration { -webkit-appearance: none; appearance: none; display: none; }
@@ -952,13 +950,12 @@ html.menu-open .fm-open, html.menu-open .fm-open * { pointer-events: auto !impor
 html.is-loading .hgrp { visibility: hidden; }
 
 /* ---------- שורת החיפוש: מספר הרשומות במקום הזכוכית (עמודת הוואטסאפ), ומשמאלו תיבת חיפוש פתוחה תמיד בלי מסגרת (31.10.26) ---------- */
-.listbar .lbfilt { flex: 0 0 var(--tag); display: flex; align-items: center; justify-content: center; }
-.listbar .listcount, .vbar .listcount, #viewMenu .fsh .listcount { flex: 0 0 var(--tag); min-width: var(--tag); text-align: center; font-size: 14px; font-weight: 700; color: var(--text-2); font-variant-numeric: tabular-nums; }
-.listbar .hsearch { position: relative; flex: 1 1 auto; min-width: 0; height: 100%; margin: 0; }
-.listbar .hsearch input { display: block; width: 100%; height: 100%; padding: 0 9px 0 calc(var(--ind) + 8px); border: 0; background: transparent; font-size: 16px; color: var(--text); cursor: text; }
-.listbar .hsearch input:focus { outline: none; }
-.listbar .hsearch input::placeholder { color: var(--text-3); text-overflow: ellipsis; }
-.listbar .hsearch input:placeholder-shown:not(:focus) { padding-left: 9px; text-overflow: ellipsis; }   /* כשהשדה ריק ולא בפוקוס אין איקס, ולכן לא שומרים לו מקום: הטקסט "חיפוש או הוספת משתתף" לא נחתך בשדה צר (31.10.26) */
+.vbar .listcount, #viewMenu .fsh .listcount { flex: 0 0 var(--tag); min-width: var(--tag); text-align: center; font-size: 14px; font-weight: 700; color: var(--text-2); font-variant-numeric: tabular-nums; }
+#listTags .hsearch { position: relative; flex: 1 1 auto; min-width: 0; height: 100%; margin: 0; }
+#listTags .hsearch input { display: block; width: 100%; height: 100%; padding: 0 9px 0 calc(var(--ind) + 8px); border: 0; background: transparent; font-size: 16px; color: var(--text); cursor: text; }
+#listTags .hsearch input:focus { outline: none; }
+#listTags .hsearch input::placeholder { color: var(--text-3); text-overflow: ellipsis; }
+#listTags .hsearch input:placeholder-shown:not(:focus) { padding-left: 9px; text-overflow: ellipsis; }   /* כשהשדה ריק ולא בפוקוס אין איקס, ולכן לא שומרים לו מקום: הטקסט "חיפוש או הוספת משתתף" לא נחתך בשדה צר (31.10.26) */
 
 /* ---------- שורת הסינון והמיון: שתי תגיות (סינון, מיון); נקודה = יש סינון שלא רואים בשורה / מיון שאינו ברירת המחדל ---------- */
 .vbar { position: relative; display: flex; align-items: center; gap: 8px; padding: 0 var(--gut); }
@@ -967,7 +964,8 @@ html.is-loading .hgrp { visibility: hidden; }
 :is(#filtBtn, #sortBtnH) { width: var(--tag); min-width: var(--tag); height: var(--tag); padding: 0; border: 0; background: transparent; color: var(--text); }   /* סינון ומיון: סמל בלבד, בלי רקע אפור */
 #listTags.vbar .stc:not([aria-pressed="true"]) { background: transparent; }
 .vbar .listcount { flex: 0 0 var(--agecol); min-width: var(--agecol); box-sizing: border-box; padding-inline-start: 5px; text-align: start; }   /* המונה באותה עמודה ובאותו רוחב של תגית הגיל, וקצהו הימני בקו אחד עם קצה הגיל (אותם 5px מהקצה) */
-#listGen { display: flex; gap: 8px; align-items: center; }   /* ♂ ♀ בשורת הסינון: מוצבים ב-JS (placeGen) צמוד מימין לאייקוני הסינון של העמודות, ברווח 8px */
+#listTags .lclu { display: flex; gap: 8px; align-items: center; flex: 0 0 auto; }   /* ♂ ♀ בשורת הסינון: מוצבים ב-JS (placeGen) צמוד מימין לאייקוני הסינון של העמודות, ברווח 8px */
+#listClu .stc { padding-inline: 4px; }   /* ריפוד פנימי קטן: המרחק בין ♂ ל-♀ (8px + 5px + 5px) כמו המרחק בין אייקוני הסינון האחרים (תיבה של 28px עם סמל באמצע) */
 :is(#filtBtn, #sortBtnH) svg { width: 16px; height: 16px; }
 :is(#filtBtn, #sortBtnH).on:not(:hover) { background: transparent; }
 :is(#filtBtn, #sortBtnH).on::after { right: 3px; bottom: 3px; width: 6px; height: 6px; box-shadow: 0 0 0 1px var(--bg); }
@@ -995,16 +993,10 @@ html.is-loading .vbar { display: none; }
 .hgrp .tagbtn[aria-pressed="true"]::after { content: ''; position: absolute; right: 2px; bottom: 2px; width: 7px; height: 7px; background: var(--text); box-shadow: 0 0 0 2px var(--bg); }
 
 /* כפתור ניקוי החיפוש: בגודל ריבועי ההגעה (--ind) ובאותה עמודה שלהם, בקצה השמאלי */
-.listbar .sclear { left: 0; width: var(--ind); height: var(--ind); margin-top: calc(var(--ind) / -2); font-size: 18px; }
+#listTags .sclear { left: 0; width: var(--ind); height: var(--ind); margin-top: calc(var(--ind) / -2); font-size: 18px; }
 
 /* כפתור המיון בשורת החיפוש, בעמודת ריבועי ההגעה (כמו כפתור ניקוי החיפוש); כשיש טקסט בחיפוש או שהוא בפוקוס, כפתור הניקוי מכסה אותו */
 /* שטח הלחיצה של כפתור המיון גדול מהסמל, בעיקר ימינה (31.10.26): פספוס קטן לא פותח את החיפוש והמקלדת; ::before כי ::after תפוס לנקודת המיון הפעיל */
-#sortBtnH { position: relative; }
-#sortBtnH::before { content: ''; position: absolute; top: -4px; bottom: -4px; left: -12px; right: -24px; }
-.listbar .hsearch { margin-left: var(--srch-end, calc(var(--ind) + 8px)); }   /* השדה נגמר איפה שנגמרת עמודת השמות (JS: alignFilters); האיקס בקצה שלו */
-.listbar .hsearch { box-shadow: inset 0 -1px 0 var(--line); }   /* הקו מתחת לשדה החיפוש בלבד (לא מתחת לסמל הסינון); כהה בפוקוס */
-.listbar .hsearch:focus-within { box-shadow: inset 0 -1px 0 var(--text); }
-.listbar .lbsort { position: absolute; left: var(--gut); top: 50%; margin-top: calc(var(--ind) / -2); display: flex; }
 
 /* ---------- דסקטופ רחב (מ-1024px, 31.10.26): הרשימה בעמודה בצד ימין, וכרטיס המשתתף בצד שמאל במקום פופאפ ---------- */
 #splitEmpty { display: none; }
@@ -1101,3 +1093,7 @@ dialog .dclose { display: none; }
 .mtinh2 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
 .mtinh2 small { flex: 1 0 100%; color: var(--text-2); font-size: 13px; font-weight: 600; }
 .mtinh2 span { display: inline-flex; align-items: center; height: var(--tag); padding: 0 12px; background: var(--surface-2); color: var(--text); font-size: 14px; font-weight: 600; }
+
+/* שורה אחת: מונה (בעמודת הגיל), חיפוש (נמתח לשאר המקום), סינון, מיון, זכר / נקבה. הצביר צמוד מימין לאייקוני הסינון של העמודות (JS: placeGen קובע את הריפוד השמאלי). בפוקוס או כשיש טקסט התיבה נמתחת עד הקצה השמאלי ומכסה את הצביר */
+#listTags .hsearch { margin: 0; min-width: 32px; }
+#listTags .hsearch:focus-within, #listTags .hsearch:has(input:not(:placeholder-shown)) { position: absolute; top: 0; bottom: 0; right: calc(var(--gut) + var(--agecol) + 8px); left: var(--gut); z-index: 6; height: auto; background: var(--bg); }

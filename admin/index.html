@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104i" />
+  <link rel="stylesheet" href="admin.css?v=20261104k" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -63,12 +63,15 @@
     </header>
 
     <div id="status"></div>
-    <div class="listbar"><div class="lbfilt" id="lbFilt"></div><label class="search hsearch">   <!-- כפתור הסינון מימין לתיבת החיפוש (מיושר לעמודת הוואטסאפ), ומשמאלו תיבת החיפוש פתוחה תמיד, בלי מסגרת; מספר הרשומות בשורת הסינון, באותו מקום -->
-        <input id="q" type="search" placeholder="חיפוש או הוספת משתתף" autocomplete="off" aria-label="חיפוש או הוספת משתתף" />
+    <div class="vbar" id="listTags" role="group" aria-label="חיפוש, סינון ומיון">   <!-- שורה אחת: מונה הרשומות (מימין, בעמודת הגיל), תיבת החיפוש, הסינון, המיון, זכר / נקבה (צמודים לאייקוני הסינון של העמודות), ואייקוני העמודות עצמם (נקבעים ב-JS מעל העמודות שלהם) -->
+      <div class="listcount" id="listCount" aria-live="polite" title="מספר הרשומות המוצגות"></div>
+      <label class="search hsearch">
+        <input id="q" type="search" placeholder="חיפוש" autocomplete="off" aria-label="חיפוש או הוספת משתתף" />
         <button type="button" class="sclear" id="qClear" aria-label="ניקוי החיפוש" tabindex="-1">×</button>
-      </label><span class="lbsort" id="lbSort"></span>   <!-- המיון בקצה השמאלי של שורת החיפוש; בזמן חיפוש כפתור הניקוי מכסה אותו -->
+      </label>
+      <div class="lclu" id="listClu"></div>
+      <div class="lbend" id="listWa"></div><div class="lbend" id="listPay"></div><div class="lbend" id="listSent"></div><div class="lbend" id="listBal"></div><div class="lbend" id="listAtt"></div>
     </div>
-    <div class="vbar" id="listTags" role="group" aria-label="סינון ומיון"></div>   <!-- שורת הסינון והמיון (מתחת לשורת החיפוש): תגית סינון, זכר / נקבה ותגית מיון -->
     <ul class="list" id="list"></ul>
     <div class="addbox" id="addBox"></div>
   </div>
@@ -1379,8 +1382,11 @@
     const editLink = '<button type="button" class="qeditlink" data-qedit="' + (state.filter ? 'meeting' : 'participant') + '" style="margin:0">' + icon('edit', 'i14') + ' עריכה</button>';
     $('#stStrip').style.setProperty('--nd', String(Math.max(2, String(state.participants.length).length)));
     { const tb = $('#tagBtn'), on = !!(state.showTags && state.pstatuses.length); tb.setAttribute('aria-pressed', String(on)); tb.title = state.pstatuses.length ? (on ? 'הסתרת התגיות משורת הסינון' : 'הצגת התגיות בשורת הסינון') : 'עוד לא הוגדרו תגיות (לחיצה פותחת הגדרות)'; }
-    $('#lbFilt').innerHTML = '<button type="button" class="hfilt all' + (panelOn() ? ' on' : '') + '" id="filtBtn" aria-haspopup="menu" aria-expanded="' + !$('#viewMenu').hidden + '" aria-label="סינון ותצוגה' + (panelOn() ? ' (יש סינון פעיל)' : '') + '" title="סינון ותצוגה">' + icon('filter') + '</button>';
-    $('#listTags').innerHTML = '<div class="listcount" id="listCount" aria-live="polite" title="מספר הרשומות המוצגות">' + (state.listCnt == null ? '' : state.listCnt) + '</div>' + (gHtml ? '<div class="lbend" id="listGen">' + gHtml + '</div>' : '') + '<div class="lbend" id="listWa"></div><div class="lbend" id="listPay"></div><div class="lbend" id="listSent"></div><div class="lbend" id="listBal"></div><div class="lbend" id="listAtt"></div>';   // אייקוני הסינון של העמודות (תשלום, שליחה, הגעה / יתרה, התמדה), מיושרים מעל העמודות שלהן
+    { const lc = $('#listCount'); lc.textContent = state.listCnt == null ? '' : state.listCnt; }
+    const filtHtml = '<button type="button" class="hfilt all' + (panelOn() ? ' on' : '') + '" id="filtBtn" aria-haspopup="menu" aria-expanded="' + !$('#viewMenu').hidden + '" aria-label="סינון ותצוגה' + (panelOn() ? ' (יש סינון פעיל)' : '') + '" title="סינון ותצוגה">' + icon('filter') + '</button>';
+    const sortHtml = '<button type="button" class="hfilt all' + (state.sort !== 'new' ? ' on' : '') + '" id="sortBtnH" aria-haspopup="menu" aria-expanded="' + !$('#sortMenu').hidden + '" aria-label="מיון הרשימה" title="מיון: ' + (SORTS.find((x) => x[0] === state.sort) || SORTS[0])[1] + '">' + icon('sort') + '</button>';
+    $('#listClu').innerHTML = filtHtml + sortHtml + gHtml;   // מימין לשמאל: סינון, מיון, זכר, נקבה (צמודים לאייקוני הסינון של העמודות)
+    ['#listWa', '#listPay', '#listSent', '#listBal', '#listAtt'].forEach((q) => { $(q).innerHTML = ''; });   // אייקוני הסינון של העמודות (תשלום, שליחה, הגעה / יתרה, התמדה), מיושרים מעל העמודות שלהן
     {   /* ספירה לכל אפשרות בתפריטי הסינון של העמודות: כמה משתתפים יוצגו אם בוחרים אותה (שאר הסינונים והחיפוש נשמרים) */
       const mid = state.filter, lk = (p) => linkOf(p.id, mid);
       const only = {
@@ -1409,7 +1415,6 @@
     $('#listSent').innerHTML = evOn ? fbtn('sent', effSent(), sentN('1'), sentN('0')) : '';
     $('#listBal').innerHTML = !state.filter && state.showPay ? fbtn('bal', effBal(), '', '') : '';
     $('#listAtt').innerHTML = !state.filter && state.showAtt !== false ? '<button type="button" class="hfilt ' + (() => { const k = effAttF(), o = k && ATT_OPTS_F.find((x) => x[0] === k); return !o ? 'all' : attCls(o[2]); })() + '" data-fk="att" aria-haspopup="menu" aria-label="סינון לפי התמדה" title="סינון לפי התמדה והגעה (לחיצה לפתיחת תפריט)">' + (() => { const k = effAttF(), o = k && ATT_OPTS_F.find((x) => x[0] === k); return o ? ATT_GLYPH[o[3]]() : PERSIST_ICON; })() + '</button>' : '';
-    $('#lbSort').innerHTML = '<button type="button" class="hfilt all' + (state.sort !== 'new' ? ' on' : '') + '" id="sortBtnH" aria-haspopup="menu" aria-expanded="' + !$('#sortMenu').hidden + '" aria-label="מיון הרשימה" title="מיון: ' + (SORTS.find((s) => s[0] === state.sort) || SORTS[0])[1] + '">' + icon('sort') + '</button>';   // נקודה בתגית = יש סינון שלא רואים בשורת הסינון / מיון שאינו ברירת המחדל
     const stItems = (state.filter ? ((state.showTags && state.pstatuses.length) ? pstatusList().slice().reverse() : []).concat(statusList()).concat(((m0) => (m0 && phaseOpen(m0)) ? mstatusList() : [])(state.meetings.find((x) => x.id === state.filter))) : ((state.showTags && state.pstatuses.length) ? pstatusList().slice().reverse() : [])).filter((s) => isPKey(s.key) || epk.includes(s.key) || state.participants.some((p) => (!state.filter || linkOf(p.id, state.filter)) && stMatch(p, s.key)));   // תגיות על משתתפים: כשכפתור התגיות מסומן הן מוצגות תמיד, גם בלי משתתפים (31.10.26); סטטוסים רק כשיש בהם משתתפים
     $('#stStrip').innerHTML = stItems.map((s) => { const n = nP(s.key), on = epk.includes(s.key); return '<button type="button" class="stc ' + (isPKey(s.key) ? 'tagc' : s.key) + (n || on ? '' : ' zero') + '" data-stc="' + s.key + '" aria-pressed="' + on + '">' + esc(s.label) + ' <small>' + n + '</small></button>'; }).join('');   // "חינם" (לא משלם) נמצא בפאנל הסינון, לא כצ'יף נפרד
   }
@@ -1445,7 +1450,7 @@
   }
   const closeSort = () => { $('#sortMenu').hidden = true; const b = $('#sortBtnH'); if (b) b.setAttribute('aria-expanded', 'false'); };   // התפריט הצף (מועבר ל-body) נפתח מכפתור המיון בכותרת
   document.body.appendChild($('#sortMenu'));
-  $('#lbSort').addEventListener('click', (e) => { const b = e.target.closest('#sortBtnH'); if (!b) return; e.stopPropagation(); const m = $('#sortMenu'); if (!m.hidden) { closeSort(); return; } m.hidden = false; b.setAttribute('aria-expanded', 'true'); const r = b.getBoundingClientRect(), mw = m.offsetWidth; m.style.left = Math.max(8, Math.min(Math.round(r.right - mw), window.innerWidth - mw - 8)) + 'px'; m.style.top = (r.bottom + 8) + 'px'; });   // תפריט המיון מיושר לקצה הימני של התגית שלו
+  $('#listTags').addEventListener('click', (e) => { const b = e.target.closest('#sortBtnH'); if (!b) return; e.stopPropagation(); const m = $('#sortMenu'); if (!m.hidden) { closeSort(); return; } m.hidden = false; b.setAttribute('aria-expanded', 'true'); const r = b.getBoundingClientRect(), mw = m.offsetWidth; m.style.left = Math.max(8, Math.min(Math.round(r.right - mw), window.innerWidth - mw - 8)) + 'px'; m.style.top = (r.bottom + 8) + 'px'; });   // תפריט המיון מיושר לקצה הימני של התגית שלו
   $('#sortMenu').addEventListener('click', (e) => { const b = e.target.closest('[data-sort]'); if (!b) return; state.sort = b.dataset.sort; closeSort(); render(); });
   document.addEventListener('click', (e) => { if (!e.target.closest('#sortMenu, #sortBtnH')) closeSort(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSort(); });
@@ -3929,6 +3934,7 @@
   mDlg.addEventListener('close', syncUrl);
   pForm.phone.addEventListener('input', () => badPhone(false));
 
+  { const q = $('#q'); q.addEventListener('focus', () => { q.placeholder = 'חיפוש או הוספת משתתף'; }); q.addEventListener('blur', () => { q.placeholder = 'חיפוש'; }); }   // בשורה הצרה רק "חיפוש"; בפוקוס התיבה נפתחת ומוצג הטקסט המלא
   $('#qClear').addEventListener('mousedown', (e) => e.preventDefault());
   $('#qClear').addEventListener('mousedown', (e) => e.preventDefault());   // לא לגרום לפוקוס לקפוץ לפני הלחיצה
   /* שני שלבים: לחיצה ראשונה מוחקת את הטקסט (התיבה נשארת פתוחה), שנייה סוגרת את התיבה (קיפול וסגירת המקלדת) */
@@ -4014,17 +4020,15 @@
     closeF(); render(); syncUrl();
   });
   /* אייקוני הסינון מיושרים מעל העמודות שלהם ברשימה (₪, שליחה, הגעה, יתרה, התמדה) */
-  /* סינון ♂ ♀ בשורת הסינון: צמוד מימין לאייקוני הסינון של העמודות (הימני שבהם: וואטסאפ, תשלום, יתרה, התמדה, הגעה), ברווח הסטנדרטי של 8px */
+  /* החיפוש, הסינון, המיון וזכר / נקבה זורמים בשורה אחת מהמונה שמימין, וצמודים מימין לאייקוני הסינון של העמודות: הריפוד השמאלי של השורה = הקצה הימני של הימני באייקונים (וואטסאפ, תשלום, יתרה, התמדה, הגעה) + 8px (הרווח הסטנדרטי) */
   function placeGen(br) {
-    const g = document.querySelector('#listGen'); if (!g) return;
-    let mx = -1; document.querySelectorAll('#listTags .lbend:not(#listGen) > *').forEach((e) => { const r = e.getBoundingClientRect(); if (r.width) mx = Math.max(mx, r.right - br.left); });
-    g.style.left = Math.round(mx < 0 ? (parseFloat(getComputedStyle($('#listTags')).paddingLeft) || 0) : mx + 8) + 'px';
+    const bar = $('#listTags'); let mx = -1;
+    bar.querySelectorAll('.lbend > *').forEach((e) => { const r = e.getBoundingClientRect(); if (r.width) mx = Math.max(mx, r.right - br.left); });
+    bar.style.paddingLeft = mx < 0 ? '' : Math.round(mx + 8) + 'px';
   }
   function alignFilters() {
     const bar = $('#listTags'); if (!bar) return; const br = bar.getBoundingClientRect();
-    { const lb = document.querySelector('.listbar'), nm = document.querySelector('#list .row .name');   // שדה החיפוש (והקו מתחתיו) מסתיים איפה שנגמרת עמודת השמות, והאיקס בקצה שלו
-      const typing = !!(lb && (lb.querySelector('.search:focus-within') || ($('#q') && $('#q').value)) && lb.style.getPropertyValue('--srch-end'));   // בזמן הקלדה הרוחב נשאר קבוע (העמודות זזות כשהרשימה מסתננת)
-      if (lb && !typing) { if (nm) lb.style.setProperty('--srch-end', Math.max(0, Math.round(nm.getBoundingClientRect().left - lb.getBoundingClientRect().left - (parseFloat(getComputedStyle(lb).paddingLeft) || 0))) + 'px'); else lb.style.removeProperty('--srch-end'); } }
+    bar.style.paddingLeft = '';   // הריפוד השמאלי של השורה נקבע מחדש ב-placeGen, אחרי שהאייקונים הוצבו
     if (!document.querySelector('#list .row')) {   // רשימה ריקה: אין עמודות להתיישר מולן, האייקונים בשורה מהשוליים השמאליים
       let x = (parseFloat(getComputedStyle(bar).paddingLeft) || 0) + ((document.querySelector('#listWa') || {}).offsetWidth || 0) + 8;   // עמודת הוואטסאפ בקצה השמאלי
       ['#listSent', '#listPay', '#listBal', '#listAtt'].forEach((s) => { const b = document.querySelector(s); if (!b) return; const w = b.offsetWidth; if (!w) return; b.style.left = x + 'px'; x += w + 8; });
@@ -4065,7 +4069,7 @@
     m.style.right = 'auto'; m.style.left = Math.max(8, Math.min(Math.round(r.right - m.offsetWidth), window.innerWidth - m.offsetWidth - 8)) + 'px';   // מיושר לקצה הימני של הכפתור, כמו תפריט המיון
     m.style.top = top + 'px'; m.style.maxHeight = Math.max(240, window.innerHeight - top - 12) + 'px';
   };
-  $('#listTags').addEventListener('click', listTagsClick); $('#lbFilt').addEventListener('click', listTagsClick);   // כפתור הסינון בשורת החיפוש, וגם אייקוני העמודות והמגדר בשורת הסינון
+  $('#listTags').addEventListener('click', listTagsClick);   // כפתור הסינון בשורת החיפוש, וגם אייקוני העמודות והמגדר בשורת הסינון
   /* בחירת הודעה לוואטסאפ (עמודת הוואטסאפ בשורת הסינון): "הודעה ריקה" (סמל וואטסאפ), "הוראות הגעה", תבניות הסוג ואחריהן תבניות המפגש, והוספת תבנית.
      הבחירה נשמרת לכל תצוגה, וקישור הוואטסאפ של כל משתתף ברשימה נפתח עם ההודעה המוכנה */
   document.body.appendChild($('#waMenu'));
