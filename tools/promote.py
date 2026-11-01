@@ -29,8 +29,9 @@ def run(*a, check=True, out=False):
 
 if run('git', 'rev-parse', '--abbrev-ref', 'HEAD', out=True) != 'staging':
     sys.exit('מריצים מתוך הענף staging')
-if run('git', 'status', '--porcelain', '--untracked-files=no', '--', '.', ':(exclude)ads/video', ':(exclude)ads/videos.json', out=True):   # סרטונים שהרינדור מפרסם ברקע לא עוצרים העלאה
-    sys.exit('יש שינויים שלא נשמרו בענף staging: קודם tools/stage.py')
+unsaved = run('git', 'status', '--porcelain', '--untracked-files=no', '--', '.', ':(exclude)ads/video', ':(exclude)ads/videos.json', out=True)
+if unsaved:   # לא עוצר: עולה רק מה שנשמר, והעריכות יכולות להיות של שיחה אחרת באמצע עבודה
+    print('שימו לב: עריכות שלא נשמרו ולכן לא עולות (אם הן שלכם: קודם tools/stage.py):\n' + unsaved)
 run('git', 'fetch', '-q', 'origin')
 
 # כלל קבוע (31.10.26): שינוי שנוגע בבסיס הנתונים (קבצי SQL) לא עולה בלי גיבוי נתוני האמת ותוכנית רולבק על המצב הנוכחי של האמת.
