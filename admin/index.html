@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104q" />
+  <link rel="stylesheet" href="admin.css?v=20261104r" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -505,7 +505,7 @@
       else top.d.close();
     } finally { NAV.fromPop = false; }
   });
-  const state = { mtypes: [], tpls: [], msgSent: [], mtype: null, pubSettings: {}, prefs: {}, statuses: [], pstatuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, paidF: null, gender: null, sort: 'new', sent: null, bal: null, viewScopes: {}, attF: null, srcF: null, ageF: null, fin: [], finRec: [], finTr: [], finPeriod: 'all', finFilter: null };
+  const state = { mtypes: [], tpls: [], msgSent: [], mtype: null, pubSettings: {}, prefs: {}, statuses: [], pstatuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, paidF: null, gender: null, sent: null, bal: null, viewScopes: {}, attF: null, srcF: null, ageF: null, fin: [], finRec: [], finTr: [], finPeriod: 'all', finFilter: null };
   /* קישור עמוק מהמייל: ?m=<מפגש>&p=<משתתף>; נשמר בזמן הכניסה עם גוגל (שמחזירה בלי הפרמטרים) */
   let deep = null;
   try {
@@ -531,7 +531,6 @@
     if (state.attF) sp.set('af', state.attF);
     if (state.ageF) sp.set('ag', state.ageF);
     if (state.loginF) sp.set('lg', state.loginF);
-    if (state.sort !== 'new') sp.set('s', state.sort);
     if (state.q.trim()) sp.set('q', state.q.trim());
     if (openPid) { sp.set('p', openPid); if (pTab && pTab !== 'main' && pTab !== 'contact' && pTab !== 'meets') { sp.set('pt', pTab); if (pTab === 'deposit' && sheet && sheet.depMid) sp.set('pm', sheet.depMid); } }
     if ($('#setDlg').open) sp.set('set', setView === 'main' ? '1' : setView === 'type' ? 'type:' + (tyId || '') : setView === 'tydet' ? 'tydet:' + (tyId || '') : (setView === 'st' || setView === 'del') ? (stScope === 'meeting' ? 'st:' + (stType || '') : 'tag') : setView === 'em' ? 'em:' + (stType || '') : setView);   // סוג מפגש: עריכת הסוג, הסטטוסים וההודעה שלו
@@ -1095,7 +1094,6 @@
         if (d.af && ATT_OPTS_F.some((o) => o[0] === d.af)) state.attF = d.af;
         if (d.lg === 'yes' || d.lg === 'no' || d.lg === 'blocked') state.loginF = d.lg;
         if (d.ag && AGE_B.some((x) => x[0] === d.ag)) state.ageF = d.ag;
-        if (d.s && SORTS.some((x) => x[0] === d.s)) state.sort = d.s;
         if (d.q) { state.q = d.q; $('#q').value = d.q; }
         urlReady = true;
         render();
@@ -1265,6 +1263,8 @@
   [['showSent', 'sent']].forEach(([prop, key]) => Object.defineProperty(state, prop, { get() { const c = state.viewScopes[viewKey()]; return c && c[key] !== undefined && c[key] !== null ? c[key] : viewDef()[key]; }, set(v) { viewCtx()[key] = v; }, enumerable: true }));
   /* כפתור התגיות (31.10.26): הגדרה אחת לכל התצוגות (כל המשתתפים, סוגי מפגשים ומפגשים), לכל מנהל בנפרד; נשמר ב-view_scopes._g */
   Object.defineProperty(state, 'showTags', { get() { const c = state.viewScopes._g; return c && c.tags !== undefined ? c.tags : VIEW_DEF.tags; }, set(v) { (state.viewScopes._g || (state.viewScopes._g = {})).tags = v; }, enumerable: true });
+  /* המיון (1.11.26): הגדרה אחת לכל התצוגות, ברמת החשבון (לכל מנהל בנפרד, בכל מכשיר); נשמר ב-view_scopes._g.sort, ולכן לא בכתובת */
+  Object.defineProperty(state, 'sort', { get() { const c = state.viewScopes._g; return c && c.sort ? c.sort : 'new'; }, set(v) { (state.viewScopes._g || (state.viewScopes._g = {})).sort = v; }, enumerable: true });
   function applyViewPrefs() { const pr = state.prefs[emailOf()] || {}; state.viewScopes = (pr.view_scopes && typeof pr.view_scopes === 'object') ? JSON.parse(JSON.stringify(pr.view_scopes)) : {}; }
   async function saveViewPrefs() {
     const em = emailOf(), body = { email: em, view_scopes: state.viewScopes };
@@ -1454,7 +1454,7 @@
   const closeSort = () => { $('#sortMenu').hidden = true; const b = $('#sortBtnH'); if (b) b.setAttribute('aria-expanded', 'false'); };   // התפריט הצף (מועבר ל-body) נפתח מכפתור המיון בכותרת
   document.body.appendChild($('#sortMenu'));
   $('#listTags').addEventListener('click', (e) => { const b = e.target.closest('#sortBtnH'); if (!b) return; e.stopPropagation(); const m = $('#sortMenu'); if (!m.hidden) { closeSort(); return; } m.hidden = false; b.setAttribute('aria-expanded', 'true'); const r = b.getBoundingClientRect(), mw = m.offsetWidth; m.style.left = Math.max(8, Math.min(Math.round(r.right - mw), window.innerWidth - mw - 8)) + 'px'; m.style.top = (r.bottom + 8) + 'px'; });   // תפריט המיון מיושר לקצה הימני של התגית שלו
-  $('#sortMenu').addEventListener('click', (e) => { const b = e.target.closest('[data-sort]'); if (!b) return; state.sort = b.dataset.sort; closeSort(); render(); });
+  $('#sortMenu').addEventListener('click', (e) => { const b = e.target.closest('[data-sort]'); if (!b) return; state.sort = b.dataset.sort; closeSort(); render(); saveViewPrefs(); });
   document.addEventListener('click', (e) => { if (!e.target.closest('#sortMenu, #sortBtnH')) closeSort(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSort(); });
 
