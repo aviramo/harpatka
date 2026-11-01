@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104bp" />
+  <link rel="stylesheet" href="admin.css?v=20261104bq" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -3704,6 +3704,17 @@
       im.src = url;
     });
   }
+  const DMEDIA_RE = /\n*לפרטים נוספים:\s*(https?:\/\/\S+)\s*$/;   // שורת הקובץ המצורף בסוף הוראות ההגעה
+  async function uploadMeetingMedia(file) {
+    const isImg = /^image\//.test(file.type), isVid = /^video\/(mp4|quicktime|webm)$/.test(file.type);
+    if (!isImg && !isVid) throw new Error('אפשר לצרף תמונה (JPG, PNG, WebP) או סרטון (MP4, MOV, WebM)');
+    if (isVid && file.size > 50 * 1024 * 1024) throw new Error('הסרטון גדול מדי (עד 50MB)');
+    const body = isImg ? await compressMeetingImage(file) : file, type = isImg ? 'image/jpeg' : file.type, ext = isImg ? 'jpg' : file.type === 'video/quicktime' ? 'mov' : file.type === 'video/webm' ? 'webm' : 'mp4';
+    const path = 'd/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+    const r = await fetch(DB.url + '/storage/v1/object/meeting-media/' + path, { method: 'POST', headers: { apikey: DB.key, Authorization: 'Bearer ' + session.access_token, 'Content-Type': type, 'Cache-Control': '31536000' }, body });
+    if (!r.ok) throw new Error('העלאת הקובץ נכשלה (' + r.status + ')');
+    return DB.url + '/storage/v1/object/public/meeting-media/' + path;
+  }
   async function uploadMeetingImage(blob) {
     const path = 'm/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
     const r = await fetch(DB.url + '/storage/v1/object/meeting-images/' + path, { method: 'POST', headers: { apikey: DB.key, Authorization: 'Bearer ' + session.access_token, 'Content-Type': 'image/jpeg', 'Cache-Control': '31536000' }, body: blob });
@@ -3791,6 +3802,8 @@
         '<label class="field"><span>עיר</span><input id="' + I('City') + '" name="city" type="text" maxlength="40" autocomplete="off" /></label>' +
         '<label class="field"><span>מיקום</span><input id="' + I('Place') + '" name="place" type="text" maxlength="60" autocomplete="off" /></label></div>' +
       '<label class="field"><span>הוראות הגעה</span><textarea id="' + I('Dirs') + '" name="directions" rows="3" maxlength="800"></textarea></label>' +
+      '<div class="dmcur" id="' + I('DCur') + '" hidden><span>קובץ מצורף בסוף ההוראות:</span><a id="' + I('DLink') + '" target="_blank" rel="noopener">פתיחה</a><button type="button" id="' + I('DDel') + '">הסרה</button></div>' +
+      '<button type="button" class="mtpladd dmadd" id="' + I('DAttach') + '">+ תמונה או סרטון להוראות ההגעה</button><input type="file" id="' + I('DFile') + '" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" hidden />' +
       (isType ? '' : '<div class="mtinh2" id="' + I('TplInh') + '" hidden></div>') + '<div class="mtlist" id="' + I('Tpl') + '"></div>' +
       '<button type="button" class="mtpladd" id="' + I('TplAdd') + '">+ תבנית הודעה</button>' +
       '<div class="mfrow"><label class="field"><span>כמות משתתפים</span><input id="' + I('Max') + '" name="max" type="number" inputmode="numeric" min="1" max="500" step="1" /></label></div>' +
@@ -3817,6 +3830,8 @@
     dtField(q('Time')); if (!isType) dtField(q('Date'));   // תאריך ושעה: הרכיב האחיד (מיושר לימין, פלייסהולדר של הסוג)
     F.q = q;
     F.grow = () => autoGrow(q('Dirs'));
+    /* תמונה או סרטון בהוראות ההגעה: הקובץ עולה לדלי meeting-media והקישור נכנס לסוף ההוראות, אחרי "לפרטים נוספים:". גם בסוג מפגש וגם במפגש; במפגש שיורש את ההוראות מהסוג (השדה ריק) הצירוף מתחיל מההוראות של הסוג ונהיה שלו */
+    F.paintMedia = () => { const m = DMEDIA_RE.exec(q('Dirs').value); q('DCur').hidden = !m; if (m) q('DLink').href = m[1]; };
     /* תבניות הודעה: בטופס רק רשימת שמות; לחיצה על שם פותחת מסך עריכה נפרד באותו פופאפ (שם, נוסח וכפתורי שדות, חץ חזרה).
        נשמרות בשמירת המפגש / הסוג (saveTemplates); מחיקה מתבצעת רק בשמירה */
     const mfBox = q('MF'), tplBox = q('Tpl'), ed = (s) => q('Tpl' + s);
@@ -3892,7 +3907,7 @@
       q('Max').placeholder = isType ? '' : t && t.max_participants != null ? String(t.max_participants) : 'ללא הגבלה';
       q('Dirs').placeholder = isType ? '' : (t && t.directions) || 'כתובת, קומה, חנייה, ואיך מגיעים בתחבורה ציבורית';
       q('Time').dataset.ph = t && t.meeting_time ? String(t.meeting_time).slice(0, 5) : ''; q('Time').dtPaint();
-      F.paintTiers(); F.paintImg(); F.grow(); F.paintTplInh();
+      F.paintTiers(); F.paintImg(); F.grow(); F.paintMedia(); F.paintTplInh();
     };
     /* מילוי: src = מפגש או סוג; inh = השדות שנלקחים מהסוג (מוצגים ריקים) */
     F.fill = (src, inh) => {
@@ -3929,7 +3944,22 @@
       if (t && F.img.inh) return { url: t.image_url || null, inh: true };
       return { url: F.img.blob ? await uploadMeetingImage(F.img.blob) : (F.img.url || null), inh: false };
     };
-    q('Dirs').addEventListener('input', F.grow);
+    q('Dirs').addEventListener('input', () => { F.grow(); F.paintMedia(); });
+    q('DAttach').addEventListener('click', () => q('DFile').click());
+    q('DDel').addEventListener('click', () => { q('Dirs').value = q('Dirs').value.replace(DMEDIA_RE, '').trimEnd(); F.grow(); F.paintMedia(); });
+    q('DFile').addEventListener('change', async (e) => {
+      const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
+      const btn = q('DAttach'), t0 = btn.textContent; btn.disabled = true; btn.textContent = 'מעלה…';
+      try {
+        const url = await uploadMeetingMedia(f);
+        let base = q('Dirs').value; if (!base.trim() && !isType && ty() && ty().directions) base = ty().directions;   // יורש מהסוג: מתחילים מההוראות של הסוג
+        base = base.replace(DMEDIA_RE, '').trimEnd();
+        const next = (base ? base + '\n\n' : '') + 'לפרטים נוספים: ' + url;
+        if (next.length > 800) { toast('ההוראות ארוכות מדי עם הקישור, צריך לקצר את הטקסט'); }
+        else { q('Dirs').value = next; F.grow(); F.paintMedia(); }
+      } catch (err) { toast(err.message || 'העלאת הקובץ נכשלה'); }
+      btn.disabled = false; btn.textContent = t0;
+    });
     q('ImgPick').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); q('ImgFile').click(); } });
     q('ImgFile').addEventListener('change', async (e) => {
       const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
