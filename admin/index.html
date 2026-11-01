@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104r" />
+  <link rel="stylesheet" href="admin.css?v=20261104s" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -2769,7 +2769,7 @@
     });
     const ex = !!(sheet && sheet.id);
     { const va = $('#pViewAs'); va.hidden = !(ex && tab === 'info'); if (ex) va.href = '../?as=' + encodeURIComponent(sheet.id); const pp0 = ex && state.participants.find((x) => x.id === sheet.id), tl = pp0 && telLink(pp0.phone), ca = $('#pCall'); ca.hidden = !(tab === 'info' && tl); if (tl) ca.href = tl; }   // כניסה לאזור האישי כפי שהמשתתף רואה: בפרטי המשתתף, בשמאל למעלה
-    $('#pBack').hidden = !(ex && tab !== 'main'); $('#pPayChip').dataset.tab = tab; if (tab !== 'deposit') { const c1 = $('#pAllocChip'); if (c1) c1.hidden = true; } $('#pInfoBtn').hidden = !(ex && tab === 'main'); paintInfoBtn(); $('#pTitle').classList.remove('tap'); $('#pTitle').tabIndex = -1; $('#pTitle').setAttribute('role', 'heading'); $('#pMsgs').hidden = tab !== 'main';
+    $('#pBack').hidden = !(ex && tab !== 'main'); $('#pPayChip').dataset.tab = tab; if (tab !== 'deposit') { const c1 = $('#pAllocChip'); if (c1) c1.hidden = true; } $('#pInfoBtn').hidden = !(ex && tab === 'main'); $('#pDlg .sheet-head').classList.toggle('navrow', ex && (tab === 'main' || tab === 'info')); paintInfoBtn(); $('#pTitle').classList.remove('tap'); $('#pTitle').tabIndex = -1; $('#pTitle').setAttribute('role', 'heading'); $('#pMsgs').hidden = tab !== 'main';
     { const sub = tab === 'confirm' ? cvTitle : (tab === 'deposit' && sheet && sheet.depMid) ? 'הקצאה' : SUBVIEW[tab], pp0 = ex ? state.participants.find((x) => x.id === sheet.id) : null;
       const allocScr = tab === 'deposit' && sheet && sheet.depMid, pm = sub && state.meetings.find((x) => x.id === (allocScr ? sheet.depMid : payCtx && payCtx.mid));
       $('#pViewSub').hidden = !(sub && pm);
@@ -3150,7 +3150,10 @@
     else if (t === 'me-drag-end') { if (d > 110) { d0.style.transform = ''; d0.close(undefined, d); } else { d0.style.transition = 'transform .2s ease'; d0.style.transform = ''; setTimeout(() => { d0.style.transition = ''; }, 220); } }
   });
   window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout' && $('#meDlg').open) $('#meDlg').close(); });
-  $('#pDlg .sheet-head').addEventListener('click', (e) => { if (e.target.closest('#pBack, #pMsgs, #pViewAs, #pCall, #pAllocChip, #pInfoBtn, .saved')) return; { const cr = $('#pPayChip').getBoundingClientRect(); if (!$('#pPayChip').hidden && $('#pPayChip').offsetParent && e.clientX >= cr.left && e.clientX <= cr.right && e.clientY >= cr.top && e.clientY <= cr.bottom) { if (!e.target.closest('#pPayChip')) $('#pPayChip').click(); return; } } });
+  $('#pDlg .sheet-head').addEventListener('click', (e) => { if (e.target.closest('#pBack, #pMsgs, #pViewAs, #pCall, #pAllocChip, #pInfoBtn, .saved')) return; { const cr = $('#pPayChip').getBoundingClientRect(); if (!$('#pPayChip').hidden && $('#pPayChip').offsetParent && e.clientX >= cr.left && e.clientX <= cr.right && e.clientY >= cr.top && e.clientY <= cr.bottom) { if (!e.target.closest('#pPayChip')) $('#pPayChip').click(); return; } }
+    /* לחיצה על כל שורת הכותרת (השם והתגית וכל הרווח), מחוץ לכפתורים ולצ'יפים: במסך הראשי עוברת לפרטי המשתתף, ובפרטי המשתתף חוזרת לכרטיס (1.11.26) */
+    if (e.target.closest('a, button, input, select, textarea, .dclose, #pPayChip') || !sheet || !sheet.id) return;
+    if (pTab === 'main') openInfo(); else if (pTab === 'info' && !$('#pBack').hidden) $('#pBack').click(); });
   $('#pInfoBtn').addEventListener('click', () => openInfo());   // אייקון הפרטים (ליד היתרה): פותח את פרטי המשתתף (במקום לחיצה על השם)
   $('#pBack').addEventListener('click', () => { if (pTab === 'promoter') promoFromPay = null; setPTab(viewStack.pop() || 'main'); });
   const goView = (v) => { viewStack.push(pTab); setPTab(v); };
