@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104ef" />
+  <link rel="stylesheet" href="admin.css?v=20261104eg" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1101,7 +1101,7 @@
         api(T.p + '?select=*'),
         api(T.m + '?select=*'),
         api(T.a + '?select=meeting_key,participant_id,meeting_id,paid,pay_requested_at,status_key,created_at,exempt,attended,paid_amount,promoter_id,commission,paid_at,details_sent_at,will_pay,maybe,no_pay,pay_reported_at,pay_reported_amount,pay_due_amount,pay_closed_at'),
-        api(T.n + '?select=id,participant_id,body,author_email,author_name,created_at,has_image,system,event_type,old_status,new_status,meeting_id,amount,mail_id,mail_failed,mail_noaddr&order=created_at.desc'),
+        api(T.n + '?select=id,participant_id,body,author_email,author_name,created_at,has_image,system,event_type,old_status,new_status,meeting_id,meeting_short,status_label,status_color,amount,mail_id,mail_failed,mail_noaddr&order=created_at.desc'),
         api(T.pr + '?select=*&order=name.asc'),
         api(T.pp + '?select=*&order=paid_at.desc'),
         api(T.pay + '?select=*&order=created_at.desc'),
@@ -2451,18 +2451,24 @@
   const senderName = () => ((state.prefs[emailOf()] || {}).sender_name || '').trim() || SENDERS[emailOf()] || authorName();
   /* שם הכותב מוצג לפי השם שהוגדר בהגדרות ("שם השולח בהודעות") של אותו מנהל, ולא לפי שם חשבון הגוגל שנשמר בהערה */
   /* שם מנהל בכל המערכת: תמיד לפי מה שהוגדר בהגדרות ("השם שלי"), אחרת השם הקבוע; לעולם לא אימייל ולא שם חשבון הגוגל. בלי אימייל בכלל (הערות מערכת, הרשמה מהאתר): השם שנשמר ("מערכת") */
-  const noteAuthor = (email, name) => { const e = String(email || '').toLowerCase(), pr = ((state.prefs[e] || {}).sender_name || '').trim(); if (pr || SENDERS[e]) return pr || SENDERS[e]; return e ? 'מערכת' : (name || 'מערכת'); };
+  const adminName = (e) => ((state.prefs[e] || {}).sender_name || '').trim() || SENDERS[e] || '';
+  const noteAuthor = (email, name) => { const e = String(email || '').toLowerCase(); return adminName(e) || (e ? 'מערכת' : (name || 'מערכת')); };
+  const noteBy = (n) => adminName(String(n.author_email || '').toLowerCase()) || n.author_name || 'מערכת';   // בהערה: מנהל קיים בשם שלו עכשיו, אחרת השם שנשמר בהערה
   /* תאריך ושעה בתוך הערה (25.10 · 20:00) מוצגים כיחידה אחת משמאל לימין, כדי שהסדר לא יתהפך בתוך משפט בעברית */
   const noteTextHtml = (s) => esc(s).replace(/(\d{1,2}\.\d{1,2}(?:\.\d{2,4})?(?:\s*·\s*\d{1,2}:\d{2})?|\d{1,2}:\d{2})/g, '<bdi dir="ltr">$1</bdi>');
   /* הערות מערכת: טקסט בלבד בצבעי המערכת. המפגש תמיד ראשון ואחריו חץ, ואז הפעולה; שינוי (סטטוס, סכום הקצאה) הוא "ישן ← חדש" */
   const NCH = (txt, cls) => UI.tag(txt, 'nch ' + cls);
   const NARW = '<span class="narw" aria-hidden="true">' + icon('go', 'i16') + '</span>';   // חץ כ-SVG: ממורכז אנכית באמת (התו ← יושב נמוך בגופן)
-  const nStKey = (name) => { const s = state.statuses.concat(state.mstatuses).find((x) => x.label === name); return s ? s.key : null; };
-  const NLEGACY = { 'שילם': 'paid', 'ישלם': 'willpay', 'ספונטני': 'maybe', 'אולי': 'maybe', 'בטיפול': 'requested', 'חינם': 'exempt', 'חדש': 'unpaid', 'טרם טופל': 'unpaid', 'משויך': 'unpaid' };   // שמות ישנים של סטטוסים מובנים בהערות: מוצגים בשם ובצבע הנוכחיים של אותו סטטוס
-  const nStChip = (name) => { let k = nStKey(name), lb = name === 'חינם' ? 'לא לתשלום' : name; if (!k && NLEGACY[name]) { const s = state.statuses.find((x) => x.key === NLEGACY[name]); if (s) { k = s.key; lb = s.label; } } return NCH(esc(lb), k ? 'pay ' + k : 'nn'); };
+  const NST_TONE = { green: 'ng', red: 'nr', amber: 'ny', sky: 'nb', neutral: 'nn' };
+  const nStChip = (n, name) => {   // הערך נשמר בהערה ולא משתנה (new_status). סטטוס קיים: השם והצבע שלו עכשיו. סטטוס שנמחק: השם והצבע שנשמרו בהערה
+    const s = n.new_status && state.statuses.concat(state.mstatuses).find((x) => x.key === n.new_status);
+    if (s) return NCH(esc(s.label), 'pay ' + s.key);
+    const lb = n.status_label || name || '';
+    return NCH(esc(lb === 'חינם' ? 'לא לתשלום' : lb), NST_TONE[n.status_color] || 'nn');
+  };
   function sysChips(n) {
     const b = String(n.body || ''), ev = n.event_type || '';
-    const mo = n.meeting_id && state.meetings.find((x) => x.id === n.meeting_id), md = mo ? dmShort(mo) : ((/(\d{1,2}\.\d{1,2})/.exec(b) || [])[1] || '');
+    const md = n.meeting_short || '';   // התאריך נשמר בהערה ולא משתנה
     const M0 = md ? NCH('<bdi dir="ltr">' + esc(md) + '</bdi>', 'nm') : '', M = M0 && M0 + NARW;   // M: התאריך והחץ שאחריו
     const amt = (n.amount != null && n.amount !== '') ? Number(n.amount) : Number((/₪\s*([\d.]+)/.exec(b) || [])[1] || 0);
     const sh = (v) => '<bdi dir="ltr">₪' + nfm(v) + '</bdi>';
@@ -2472,16 +2478,9 @@
       case 'status_changed': case 'meeting_status_changed': case 'after_status_changed': case 'during_status_changed': {
         const m = /:\s*(.+?)\s*\(היה:\s*(.+)\)\s*$/.exec(b); if (!m) return null;
         const pm = /^(.+?)\s*₪\s*([\d.]+)(?:\s+ב.+)?$/.exec(m[1]);   // "שילם ₪100 בפייבוקס": הסטטוס, ואחריו צ'יף תשלום כמו בשאר ההערות
-        return M + nStChip(pm ? pm[1] : m[1]);   // המפגש והסטטוס החדש, בלי הישן. התשלום לא שייך לשורת שינוי סטטוס: הוא נרשם בהערה נפרדת
+        return M + nStChip(n, pm ? pm[1] : m[1]);   // המפגש והסטטוס החדש, בלי הישן. התשלום לא שייך לשורת שינוי סטטוס: הוא נרשם בהערה נפרדת
       }
-      case 'meeting_linked': {   // שיוך = המפגש והסטטוס שבו נוצר השיוך: ה"היה" של שינוי הסטטוס הראשון אחריו, ואם אין, הסטטוס הנוכחי של השיוך (לא השתנה), ואם הוסר, סטטוס ברירת המחדל
-        const later = state.notes.filter((x) => x.participant_id === n.participant_id && x.meeting_id === n.meeting_id && x.event_type === 'status_changed' && String(x.created_at) > String(n.created_at)).sort((p1, p2) => String(p1.created_at).localeCompare(String(p2.created_at)))[0];
-        const wm = later && /\(היה:\s*(.+)\)\s*$/.exec(later.body), ds = state.statuses.find((x) => x.key === SYSTEM_STATUS);
-        let from = wm ? wm[1] : '';
-        if (!from) { const lk = linkOf(n.participant_id, n.meeting_id), st = lk && state.statuses.find((x) => x.key === linkStatus(lk)); if (st) from = st.label; }
-        if (!from && ds) from = ds.label;
-        return from ? M + nStChip(from) : M0;   // שיוך: המפגש והסטטוס שבו נוצר השיוך, בלי חץ ובלי צ'יף "לא משויך"
-      }   // שיוך למפגש = סטטוס ברירת המחדל (בצבע ובשם הנוכחיים)
+      case 'meeting_linked': return n.new_status ? M + nStChip(n) : M0;   // שיוך: המפגש והסטטוס שבו נוצר השיוך, כפי שנשמר בהערה
       case 'meeting_removed': return M + NCH('הסרה מהמפגש', 'nr');   // כמו שינוי סטטוס: המפגש והמצב החדש, בלי הסטטוס שהיה
       case 'free_on': return M + NCH('לא לתשלום', 'nf');   // מצב התשלום של המפגש: המפגש והמצב החדש, בלי הישן
       case 'free_off': return M + NCH('לתשלום', 'nr');
@@ -2751,7 +2750,7 @@
     if (!p) { list.innerHTML = ''; return; }
     const ns = notesOf(p.id);   // הערות וצילומי מסך יחד, מהחדש לישן
     sheet.nOpen = sheet.nOpen || new Set();
-    const meta = (n) => '<span><bdi>' + esc(noteAuthor(n.author_email, n.author_name)) + '</bdi> · ' + esc(fmtDT(n.created_at)) + '</span>' + (n.system ? '' : '<button type="button" class="ndel" data-del="' + n.id + '" aria-label="מחיקת הערה" title="מחיקת הערה">מחיקה</button>');   // השורה שנפתחת מתחת להערה: שם · מועד מדויק
+    const meta = (n) => '<span><bdi>' + esc(noteBy(n)) + '</bdi> · ' + esc(fmtDT(n.created_at)) + '</span>' + (n.system ? '' : '<button type="button" class="ndel" data-del="' + n.id + '" aria-label="מחיקת הערה" title="מחיקת הערה">מחיקה</button>');   // השורה שנפתחת מתחת להערה: שם · מועד מדויק
     list.innerHTML = ns.length ? ns.map((n) => '<div class="nitem' + (n.system ? ' sys' : '') + ' fold' + (n.has_image ? ' img' : '') + (sheet.nOpen.has(n.id) ? ' open' : '') + '" data-nid="' + n.id + '"' + (n.event_type ? ' data-ev="' + esc(n.event_type) + '"' : '') + (n.new_status ? ' data-st="' + esc(n.new_status) + '"' : '') + '>' +
       ('<div class="nrow"><div class="ntext' + (!n.has_image ? ' chips' : '') + '">' + (n.has_image ? '<a class="nimg" data-img="' + n.id + '"><div class="nload">טוען תמונה…</div></a>' : ((n.system && sysChips(n)) || '<span class="nch ' + (n.system ? 'nn' : 'nw') + '">' + noteTextHtml(n.body) + '</span>')) + (n.mail_id ? NARW + '<button type="button" class="nmail' + (n.mail_failed ? ' bad' + (n.mail_noaddr ? ' noacc' : '') : '') + '" data-mail="' + n.mail_id + '">' + (n.mail_failed ? icon('warn', 'i16') + 'המייל לא נשלח' : 'מייל') + '</button>' : '') + '</div></div><span class="nch nago"><span class="nagot" data-ts="' + esc(n.created_at) + '">' + agoText(n.created_at) + '</span></span><div class="nmeta"><div class="nmetai">' + meta(n) + '</div></div>') + '</div>').join('')
       : '<p class="mnone">עוד אין הערות. אפשר לרשום למעלה מה דיברתם, מה הוחלט ומה צריך לזכור, או לצרף צילום מסך משיחה</p>';
