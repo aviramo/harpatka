@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104dr" />
+  <link rel="stylesheet" href="admin.css?v=20261104ds" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1279,8 +1279,7 @@
       if (s.color === 'orange') s.color = 'red';   // כתום הוסר מהפלטה (היה כמעט זהה לאדום)
       const c = PALETTE[s.color] || PALETTE.sky;
       css += '.row .ptag.' + s.key + ', .pay.' + s.key + ', .sopt.' + s.key + ', .pst.' + s.key + ', .qmenu .qi.' + s.key + ', .stprev.' + s.key + ', .stpill.' + s.key + ', .stc.' + s.key + ' { background: ' + c[0] + '; color: ' + c[1] + '; }\n';
-      css += '.ststrip .stc.' + s.key + '[aria-pressed="true"] { border-color: transparent; }\n.ststrip .stc.' + s.key + ' .fdot { background: ' + (s.color === 'amber' ? 'var(--yellow-fill)' : c[1]) + '; }\n';   // סטטוס מסומן בפס הסינון: הרקע לא משתנה, ונקודה בצבע שלו
-      css += '.qmenu .qi.' + s.key + '[aria-pressed="true"] { background: ' + c[1] + '; color: #fff; border-color: transparent; }\n';   // סטטוס נבחר בתפריט הסטטוס המהיר: מילוי כהה בצבע שלו, לא מסגרת
+      css += '.ststrip .stc.' + s.key + '[aria-pressed="true"] { border-color: transparent; }\n.ststrip .stc.' + s.key + ' .fdot, .qmenu .qi.' + s.key + ' .fdot { background: ' + (s.color === 'amber' ? 'var(--yellow-fill)' : c[1]) + '; }\n';   // סטטוס מסומן בפס הסינון: הרקע לא משתנה, ונקודה בצבע שלו
     });
     let el = document.getElementById('stDyn');
     if (!el) { el = document.createElement('style'); el.id = 'stDyn'; document.head.appendChild(el); }
@@ -2243,9 +2242,9 @@
       if (!mm || !phaseOpen(mm)) return '';
       const list = mstatusList(qTid); if (!list.length) return '';
       const held = meetingKeyOf(ll);
-      return '<div class="qhd">סטטוס מפגש</div>' + list.map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-qm="' + s.key + '" aria-pressed="' + (held === s.key) + '">' + esc(s.label) + '</button>').join('');
+      return '<div class="qhd">סטטוס מפגש</div>' + list.map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-qm="' + s.key + '" aria-pressed="' + (held === s.key) + '">' + esc(s.label) + UI.fdot('st') + '</button>').join('');
     };
-    const chipH = (s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-qk="' + s.key + '" aria-pressed="' + (inMeeting ? s.key === cur : tagSet.has(s.key)) + '">' + esc(s.label) + '</button>';
+    const chipH = (s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-qk="' + s.key + '" aria-pressed="' + (inMeeting ? s.key === cur : tagSet.has(s.key)) + '">' + esc(s.label) + UI.fdot(isPKey(s.key) ? 'ink' : 'st') + '</button>';
     /* תגיות לפי סוג מפגש: לכל סוג כותרת (שם הסוג) ומתחתיה התגיות שלו, כמו הסטטוסים; סוג בלי תגיות לא מוצג; סוג ההקשר הנוכחי ראשון */
     const tagGroupsH = () => {
       const ctx = ctxTid(), ts = state.mtypes.length ? state.mtypes.slice().sort((a, b) => ((b.id === ctx) - (a.id === ctx))) : [null];
@@ -2946,7 +2945,7 @@
       chip.hidden = false; const rp = !fr && !(al > 0) && reportedOf(pid, m.id); chip.classList.toggle('free', fr && !(al > 0)); chip.classList.toggle('topay', !fr && !(al > 0) && !rp); chip.classList.toggle('rep', !!rp);
       const curL = al > 0 ? '₪' + nfm(al) : fr ? 'לא לתשלום' : rp ? 'דיווח' + reportedAmt(pid, m.id) : 'לתשלום';
       const opts = [].concat(!fr && al > 0 && dueOf(pid, m.id) > 0 ? [['close', 'סגירת תשלום']] : [], rp ? [['reject', 'דחיית דיווח']] : [], fr ? [['pay', 'לתשלום']] : [], !fr && al > 0 ? [['del', 'מחיקת הקצאה']] : [], fr || al > 0 ? [] : [['free', 'לא לתשלום']]);   // בלי המצב הנוכחי: הוא כתוב על הכפתור
-      const chipH = (al > 0 ? '₪' + nfm(al) : fr ? '<span class="nps">₪</span>לא לתשלום' : rp ? 'דיווח' + reportedAmt(pid, m.id).replace(' ', '&nbsp;') : 'לתשלום') + icon('chev', 'i14') + '<select aria-label="מצב המפגש">' + opts.map((o) => '<option value="' + o[0] + '">' + esc(o[1]) + '</option>').join('') + '</select>';
+      const chipH = (al > 0 ? '₪' + nfm(al) : fr ? 'לא לתשלום' : rp ? 'דיווח' + reportedAmt(pid, m.id).replace(' ', '&nbsp;') : 'לתשלום') + icon('chev', 'i14') + '<select aria-label="מצב המפגש">' + opts.map((o) => '<option value="' + o[0] + '">' + esc(o[1]) + '</option>').join('') + '</select>';
       if (chip.dataset.h !== chipH) { chip.innerHTML = chipH; chip.dataset.h = chipH; }   // בלי ציור מחדש כשאין שינוי: עדכון בזמן אמת לא יסגור תפריט פתוח
       { const cs = chip.querySelector('select'); if (document.activeElement !== cs) cs.selectedIndex = -1; }   // אף אפשרות לא נבחרת מראש, כך שגם בחירה באפשרות היחידה נקלטת
       chip.title = 'מצב המפגש';
