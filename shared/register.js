@@ -874,7 +874,7 @@
     meChan = HRT.channel({ url: CONFIG.supabaseUrl, key: CONFIG.supabaseKey }, IS_TEST ? 'me-test' : 'me', () => { try { if (!meInfo && !localStorage.getItem(TOK_KEY)) return; } catch (e) { return; } meLoader.reload(250); }, { poll: 45000 });
   }
   try { if (localStorage.getItem(TOK_KEY)) ensureMeChannel(); } catch (e) {}
-  HRT.channel({ url: CONFIG.supabaseUrl, key: CONFIG.supabaseKey }, IS_TEST ? 'meetings-test' : 'meetings', () => { setTimeout(() => { loadNearest(); try { window.dispatchEvent(new Event('harpatka:meetings')); } catch (e) {} }, 200 + Math.random() * 800); }, { poll: 90000 });   // פיזור קטן כדי שכל המבקרים לא יטענו באותו רגע
+  HRT.channel({ url: CONFIG.supabaseUrl, key: CONFIG.supabaseKey }, IS_TEST ? 'meetings-test' : 'meetings', () => { setTimeout(() => { loadNearestOnce(); try { window.dispatchEvent(new Event('harpatka:meetings')); } catch (e) {} }, 200 + Math.random() * 800); }, { poll: 90000 });   // פיזור קטן כדי שכל המבקרים לא יטענו באותו רגע
   const contactModal = document.getElementById('contactModal');
   /* השלמת פרטים אחרי כניסה עם גוגל: שם פרטי ושם משפחה מהחשבון (רק בשדות ריקים) */
   function prefillGoogleName() {
