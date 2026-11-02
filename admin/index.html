@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104ep" />
+  <link rel="stylesheet" href="admin.css?v=20261104eu" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -102,18 +102,17 @@
       <p id="pViewSub" class="pviewsub" hidden></p>
       <div class="ppanel" data-panel="main">
         <div id="pTagsSlot" hidden></div>
-        <div class="mlist mhere" id="pHere" hidden></div>
         <div class="ptabs" id="pTabs" role="tablist" aria-label="הערות ומפגשים">
           <button type="button" role="tab" id="pTabM" aria-controls="pgM" aria-selected="false" tabindex="-1"><span class="pmn" id="pMeetN"></span></button>
           <button type="button" role="tab" id="pTabW" aria-controls="pgW" aria-selected="false" tabindex="-1"><span class="pmn">יתרה <span id="pBalN"></span></span></button>
-          <button type="button" role="tab" id="pTabN" aria-controls="pgN" aria-selected="true"><span class="pmn">הערות <span id="pNoteN"></span></span></button>
+          <button type="button" role="tab" id="pTabN" aria-controls="pgN" aria-selected="true">הערות</button>
           <button type="button" role="tab" id="pTabI" aria-controls="pgI" aria-selected="false" tabindex="-1"><span class="pmn">פרטים<span class="ptm" id="pTabMark"></span></span></button>
           <span class="ptabi" aria-hidden="true"></span>
         </div>
         <div class="ppager" id="pPager">
           <section class="ppage" id="pgM" role="tabpanel" aria-labelledby="pTabM" inert>
             <div class="mlist" id="pMeetings"></div>
-            <button type="button" class="btn ghost" id="pAddMeet" hidden>+ שיוך למפגש</button>
+            <div class="maddw"><button type="button" class="btn ghost" id="pAddMeet" hidden>+ שיוך למפגש</button></div>
           </section>
           <section class="ppage" id="pgW" role="tabpanel" aria-labelledby="pTabW" inert>
         <div class="walsum" id="walSum"></div>
@@ -2749,7 +2748,6 @@
     const p = sheet && sheet.id ? state.participants.find((x) => x.id === sheet.id) : null;
     if (!p) { list.innerHTML = ''; return; }
     const ns = notesOf(p.id);   // הערות וצילומי מסך יחד, מהחדש לישן
-    $('#pNoteN').textContent = ns.length;
     sheet.nOpen = sheet.nOpen || new Set();
     const meta = (n) => '<span><bdi>' + esc(n.author_name || 'מערכת') + '</bdi> · ' + esc(fmtDT(n.created_at)) + '</span>' + (n.system ? '' : '<button type="button" class="ndel" data-del="' + n.id + '" aria-label="מחיקת הערה" title="מחיקת הערה">מחיקה</button>');   // השורה שנפתחת מתחת להערה: שם · מועד מדויק
     list.innerHTML = ns.length ? ns.map((n) => '<div class="nitem' + (n.system ? ' sys' : '') + ' fold' + (n.has_image ? ' img' : '') + (sheet.nOpen.has(n.id) ? ' open' : '') + '" data-nid="' + n.id + '"' + (n.event_type ? ' data-ev="' + esc(n.event_type) + '"' : '') + (n.new_status ? ' data-st="' + esc(n.new_status) + '"' : '') + '>' +
@@ -2851,7 +2849,7 @@
     try {
       const [row] = await api(T.n, { method: 'POST', body: Object.assign({ participant_id: sheet.id, body, author_email: emailOf(), author_name: senderName() }, pendingImg ? { image: pendingImg } : {}), prefer: 'return=representation' });
       if (row) { if (row.image) { imgCache.set(row.id, row.image); imgDB.set(row.id, row.image); delete row.image; row.has_image = true; } if (!state.notes.some((x) => x.id === row.id)) state.notes.push(row); }
-      rebuildNotes(); ta.value = ''; setPending(null); renderNotes(); render(); toast('ההערה נשמרה');
+      rebuildNotes(); ta.value = ''; setPending(null); renderNotes(); render(); ta.blur(); toast('ההערה נשמרה');   // אחרי השמירה המקלדת נסגרת
     } catch (err) { fail(err); }
     btn.disabled = false;
   });
@@ -3610,14 +3608,15 @@
     const a = Math.min(pgTabs.length - 1, Math.floor(p)), b = Math.min(pgTabs.length - 1, a + 1), t = Math.min(1, p - a), ta = pgTabs[a], tb = pgTabs[b], ind = box.querySelector('.ptabi');   // offset ולא getBoundingClientRect: בפתיחה הפופאפ בדסקטופ באנימציית scale, והמדידה יוצאת עקומה
     ind.style.width = (ta.offsetWidth + (tb.offsetWidth - ta.offsetWidth) * t) + 'px'; ind.style.transform = 'translateX(' + (ta.offsetLeft + (tb.offsetLeft - ta.offsetLeft) * t) + 'px)';
   }
-  function pgApply() { if (sheet && !sheet.id) { pgBox.scrollLeft = 0; pgPages[3].inert = false; return; } pgBox.scrollLeft = -pgCur * pgBox.clientWidth; pgInd(pgCur); pgMark(pgCur); }
+  function pgAnchor() { const w = pgTabs[3].offsetWidth; if (w) $('#pTabs').style.setProperty('--tabi', (w / 2) + 'px'); }   // "פרטים" ממורכז מעל עמודת התשלום (ה-CSS צריך את חצי הרוחב שלו), וממנו נגזרים המרווחים
+  function pgApply() { if (sheet && !sheet.id) { pgBox.scrollLeft = 0; pgPages[3].inert = false; return; } pgBox.scrollLeft = -pgCur * pgBox.clientWidth; pgAnchor(); pgInd(pgCur); pgMark(pgCur); }
   function pgGo(i) { pgBox.scrollTo({ left: -i * pgBox.clientWidth, behavior: reducedMotion() ? 'auto' : 'smooth' }); pgMark(i); }
   let pgLock = 0;
   pgBox.addEventListener('scroll', () => { const w = pgBox.clientWidth; if (!w || (sheet && !sheet.id)) return; const p = Math.abs(pgBox.scrollLeft) / w; pgInd(p); if (Date.now() > pgLock) { const i = Math.round(p); if (i !== pgCur) pgMark(i); } }, { passive: true });
   pgTabs.forEach((t, i) => t.addEventListener('click', () => { pgLock = Date.now() + 500; pgGo(i); }));   // בזמן הגלילה אחרי לחיצה על אטב לא מסמנים דף ביניים
   $('#pTabs').addEventListener('keydown', (e) => { if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return; e.preventDefault(); const i = Math.min(pgTabs.length - 1, Math.max(0, pgCur + (e.key === 'ArrowLeft' ? 1 : -1))); pgLock = Date.now() + 500; pgGo(i); pgTabs[i].focus(); });
   { let w0 = 0; new ResizeObserver(() => { const w = pgBox.clientWidth; if (w && w !== w0) { w0 = w; pgBox.scrollLeft = -pgCur * w; } pgInd(); }).observe(pgBox); }
-  { const ro = new ResizeObserver(() => pgInd()); pgTabs.forEach((t) => ro.observe(t)); }   // המונה או הגופן שינו את רוחב הטאב
+  { const ro = new ResizeObserver(() => { pgAnchor(); pgInd(); }); pgTabs.forEach((t) => ro.observe(t)); }   // המונה או הגופן שינו את רוחב הטאב
   function refreshSheetMeetings() {
     if (!sheet) return;
     renderContact();
@@ -3627,10 +3626,9 @@
     { const ab = $('#pAddMeet'); if (ab) ab.hidden = !(sheet.id && state.meetings.some((m) => !linkOf(sheet.id, m.id))); }   // שיוך למפגש מהכרטיס
     { /* מספר אחד: יתרה = חוב פחות קרדיט. חוב רק על מפגשים שביקשנו עליהם תשלום ("בטיפול") או שהמשתתף אמר שישלם ("ישלם"); רשום בלבד (חדש) הוא עוד לא חוב */
       const owed = sheet.id ? owedOf(sheet.id) : 0;
-      const net = owed - (sheet.id ? creditOf(sheet.id) : 0), bn = $('#pBalN');   // בטאב היתרה: חוב באדום, קרדיט בצהוב
-      bn.className = net > 0 ? 'pbd' : net < 0 ? 'pbc' : ''; bn.innerHTML = '<bdi dir="ltr">₪' + nfm(Math.abs(net)) + '</bdi>'; }
-    box.innerHTML = shown.map(meetRow).join('');
-    { const here = $('#pHere'), hm = sheet.id && sheet.hl && state.meetings.find((x) => x.id === sheet.hl); here.hidden = !hm; here.innerHTML = hm ? meetRow(hm) : ''; }   // המפגש שממנו הגענו: תמיד מוצג, גם כשעוד לא משויך אליו
+      const net = owed - (sheet.id ? creditOf(sheet.id) : 0), bn = $('#pBalN');
+      bn.innerHTML = '<bdi dir="ltr">₪' + nfm(Math.abs(net)) + '</bdi>'; }
+    box.innerHTML = desc.filter((m) => shown.includes(m) || m.id === sheet.hl).map(meetRow).join('');   // המפגש שממנו הגענו מודגש ברשימה, וכשעוד לא משויך אליו: "שיוך למפגש" במקומו לפי התאריך (לא נספר במונה)
   }
 
   const meetClick = (e) => {
@@ -3643,7 +3641,7 @@
       else { sheet.links.has(mid) ? sheet.links.delete(mid) : sheet.links.set(mid, false); refreshSheetMeetings(); }
     }
   };
-  $('#pMeetings').addEventListener('click', meetClick); $('#pHere').addEventListener('click', meetClick);
+  $('#pMeetings').addEventListener('click', meetClick);
 
   /* שם פרטי ושם משפחה של משתתף (נתונים ישנים בלי הפיצול: המילה הראשונה = שם פרטי) */
   function splitName(p) {
