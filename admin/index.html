@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104dd" />
+  <link rel="stylesheet" href="admin.css?v=20261104de" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1115,7 +1115,7 @@
       /* משתתף שהוסר (active = false) מוסתר רק מרשימת כל המשתתפים (כשלא נבחר מפגש); במסך מפגש הוא מופיע כל עוד הוא משויך אליו, וכל הנתונים וההיסטוריה נשארים. יחזור אם יירשם שוב עם אותו טלפון */
       for (const x of p) if (!String(x.name || '').trim()) { x.name = localPhone(x.phone_norm || x.phone) || 'ללא שם'; x.noName = true; }   // נרשם עם גוגל ועוד לא השלים פרטים: במקום השם מוצג הטלפון (רק בתצוגה; השם נשמר בשדות שם פרטי ומשפחה)
       state.inactiveNames = new Map(p.filter((x) => x.active === false).map((x) => [x.id, x.name]));
-      state.participants = p; state.meetings = m; state.att = a; applyAttPending(); state.notes = nn;   // "הסרת משתתף" רק מסתירה אותו ברשימת כל המשתתפים; השיוכים, ההערות וההיסטוריה נשארים
+      state.participants = p; state.meetings = m; if (state.filter && !m.some((x) => x.id === state.filter)) state.filter = null; state.att = a; applyAttPending(); state.notes = nn;   // "הסרת משתתף" רק מסתירה אותו ברשימת כל המשתתפים; השיוכים, ההערות וההיסטוריה נשארים
       state.promoters = prs; state.promoPays = pps; state.payments = pays.filter((x) => !((payTomb.get(x.id) || 0) > Date.now())); rebuildNotes();
       sortMeetings();
       if (mem0) applyMembers(mem0);   // מצב חשבון הגוגל של כל משתתף (סמל ליד השם, סינון "אזור אישי"), לפני הציור
@@ -1209,10 +1209,12 @@
           '<button type="button" class="medit" data-edit-m="' + m.id + '" aria-label="עריכת מפגש" title="עריכת מפגש">' + EDIT_ICON + '</button></div>';
       }).join('') +
       '<div class="mtr maddrow" id="addMeeting"><span>מפגש חדש</span><button type="button" role="menuitem" class="medit madd" aria-label="מפגש חדש">' + icon('plus') + '</button></div>';
+    if (!$('#mMenu').hidden) placeMSel();   // התפריט נשאר פתוח בבחירה: הכותרת משנה רוחב והוא נשאר צמוד אליה
   }
   const closeMSel = () => { $('#mMenu').hidden = true; $('#mSel').setAttribute('aria-expanded', 'false'); };
-  $('#mSel').addEventListener('click', (e) => { e.stopPropagation(); const m = $('#mMenu'); m.hidden = !m.hidden; $('#mSel').setAttribute('aria-expanded', String(!m.hidden)); if (!m.hidden) { if (window.innerWidth < 700) { m.style.left = m.style.right = ''; m.style.top = Math.round($('#mSel').getBoundingClientRect().bottom + 8) + 'px'; } else { m.style.top = ''; const host = m.offsetParent || m.parentElement, hr = host.getBoundingClientRect(); m.style.right = 'auto'; const br = $('#mSel').getBoundingClientRect(); const x = Math.max(8, Math.min(Math.round(br.right - m.offsetWidth), window.innerWidth - m.offsetWidth - 8)); m.style.left = Math.round(x - hr.left) + 'px'; } m.style.maxHeight = Math.max(240, Math.floor(window.innerHeight - m.getBoundingClientRect().top - 12)) + 'px'; } });   // התפריט עד תחתית המסך, ונגלל בתוכו   // דסקטופ: הקצה הימני של התפריט בקו ישר עם הקצה הימני של הכותרת; במובייל ממורכז
-  document.addEventListener('click', (e) => { if (!e.target.closest('.msel')) closeMSel(); });
+  const placeMSel = () => { const m = $('#mMenu'); if (window.innerWidth < 700) { m.style.left = m.style.right = ''; m.style.top = Math.round($('#mSel').getBoundingClientRect().bottom + 8) + 'px'; } else { m.style.top = ''; const host = m.offsetParent || m.parentElement, hr = host.getBoundingClientRect(); m.style.right = 'auto'; const br = $('#mSel').getBoundingClientRect(); const x = Math.max(8, Math.min(Math.round(br.right - m.offsetWidth), window.innerWidth - m.offsetWidth - 8)); m.style.left = (x - hr.left) + 'px'; } m.style.maxHeight = Math.max(240, Math.floor(window.innerHeight - m.getBoundingClientRect().top - 12)) + 'px'; };
+  $('#mSel').addEventListener('click', (e) => { e.stopPropagation(); const m = $('#mMenu'); m.hidden = !m.hidden; $('#mSel').setAttribute('aria-expanded', String(!m.hidden)); if (!m.hidden) placeMSel(); });   // התפריט עד תחתית המסך, ונגלל בתוכו   // דסקטופ: הקצה הימני של התפריט בקו ישר עם הקצה הימני של הכותרת; במובייל ממורכז
+  document.addEventListener('click', (e) => { if (e.target.isConnected && !e.target.closest('.msel')) closeMSel(); });   // (isConnected: שורה שהתפריט צייר מחדש כבר לא בדף, ואינה לחיצה בחוץ)
 
   const WA_ICON = icon('wa');
 
@@ -1263,7 +1265,7 @@
       if (s.color === 'orange') s.color = 'red';   // כתום הוסר מהפלטה (היה כמעט זהה לאדום)
       const c = PALETTE[s.color] || PALETTE.sky;
       css += '.row .ptag.' + s.key + ', .pay.' + s.key + ', .sopt.' + s.key + ', .pst.' + s.key + ', .qmenu .qi.' + s.key + ', .stprev.' + s.key + ', .stpill.' + s.key + ', .stc.' + s.key + ' { background: ' + c[0] + '; color: ' + c[1] + '; }\n';
-      css += '.mlist .mrow.hl.st-' + s.key + ' { background: ' + c[0] + '; }\n';   // המפגש הנבחר בכרטיס המשתתף: ברקע של הסטטוס שלו
+      css += '.mlist .mrow.hl.st-' + s.key + ' { background: ' + (s.color === 'neutral' ? 'var(--surface)' : c[0]) + '; }\n';   // המפגש הנבחר בכרטיס המשתתף: ברקע של הסטטוס שלו; ניטרלי באפור הבהיר
       css += '.ststrip .stc.' + s.key + '[aria-pressed="true"] { background: ' + c[1] + '; color: #fff; border-color: transparent; }\n';   // סטטוס מסומן בפס הסינון: מתמלא בצבע שלו (במקום גבול), כמו הכל / ז / נ
       css += '.qmenu .qi.' + s.key + '[aria-pressed="true"] { background: ' + c[1] + '; color: #fff; border-color: transparent; }\n';   // סטטוס נבחר בתפריט הסטטוס המהיר: מילוי כהה בצבע שלו, לא מסגרת
     });
@@ -1384,7 +1386,7 @@
   const paidVia = (pid, mid, key) => state.payments.some((x) => x.participant_id === pid && x.meeting_id === mid && (x.kind === 'payment' || x.kind === 'deposit') && x.method === key);
   const payF = (p, f) => (f && f[0] === 'm') ? (!noPayOf(p, linkOf(p.id, state.filter)) && paidVia(p.id, state.filter, f.slice(1))) : (f && f[0] === 'a') ? (!noPayOf(p, linkOf(p.id, state.filter)) && Math.round(allocatedOf(p.id, state.filter)) === Number(f.slice(1))) : payStateOf(p) === f;   // 'a80': ששולם בדיוק 80 למפגש הזה
   const paidOk = (p) => { const f = effPaidF(); return (!f || payF(p, f)) && sentOk(p); };
-  const normFilter = () => { if (state.pay) { const ks = payKeys(state.pay).filter((k) => state.filter ? (!isPKey(k) || state.showTags) : (isPKey(k) && state.showTags)); const tg = ks.filter((k) => isPKey(k)), keep = ks.filter((k) => !isPKey(k)).slice(-1).concat(tg.slice(-1)); state.pay = keep.length ? keep.join(',') : null; } };   // תגית אחת בלבד (גם מקישור ישן); סטטוסים רק בתוך מפגש, תגיות בתצוגת הכל או כשהתגיות מוצגות
+  const normFilter = () => { if (state.pay) { const alive = (k) => k === PNONE || state.statuses.concat(state.mstatuses, state.pstatuses).some((s) => s.key === k); const ks = payKeys(state.pay).filter(alive).filter((k) => state.filter ? (!isPKey(k) || state.showTags) : (isPKey(k) && state.showTags)); const tg = ks.filter((k) => isPKey(k)), keep = ks.filter((k) => !isPKey(k)).slice(-1).concat(tg.slice(-1)); state.pay = keep.length ? keep.join(',') : null; } };   // תגית אחת בלבד (גם מקישור ישן); סטטוסים רק בתוך מפגש, תגיות בתצוגת הכל או כשהתגיות מוצגות
   /* סוג מפגש שנבחר בתפריט (בלי מפגש מסוים): התצוגה היא כמו "כל המשתתפים", רק עם מי שמשויך לפחות למפגש אחד מהסוג */
   let mtSet = null;
   const mtypeOk = (p) => {
@@ -4136,20 +4138,19 @@
   $('#q').addEventListener('keydown', (e) => { if (e.key === 'Escape') $('#qClear').click(); });
   $('#q').addEventListener('input', (e) => { state.q = e.target.value; renderList(); syncUrl(); });
 
-  $('#mMenu').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-filter], [data-mt]')) { e.preventDefault(); e.target.click(); } });
+  $('#mMenu').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-filter], [data-mt]')) { e.preventDefault(); const d = e.target.dataset, sel = d.mt ? '[data-mt="' + d.mt + '"]' : '[data-filter="' + d.filter + '"]'; e.target.click(); const again = $('#mMenu').querySelector(sel); if (again) again.focus(); } });   // התפריט צויר מחדש: הפוקוס נשאר על אותה שורה
   $('#mMenu').addEventListener('click', (e) => {
     if (e.target.closest('#addMeeting')) { closeMSel(); return openMeeting(null); }
     if (e.target.closest('#addType')) { closeMSel(); return createType(); }
     const et = e.target.closest('[data-edit-t]');
     if (et) { closeMSel(); return openTypeEditor(et.dataset.editT); }
     const ty = e.target.closest('[data-mt]');
-    if (ty) { closeMSel(); allChosen(false); state.mtype = ty.dataset.mt; state.filter = null; render(); return; }   // בחירת סוג: תצוגה כמו "כל המשתתפים" מסוננת לסוג, והתפריט מציג רק את המפגשים שלו
+    if (ty) { allChosen(false); state.mtype = ty.dataset.mt; state.filter = null; render(); return; }   // בחירת סוג: תצוגה כמו "כל המשתתפים" מסוננת לסוג, והתפריט מציג רק את המפגשים שלו
     const ed = e.target.closest('[data-edit-m]');
     if (ed) { closeMSel(); return openMeeting(ed.dataset.editM); }
     const c = e.target.closest('[data-filter]');
     if (!c) return;
-    closeMSel();
-    pickFilter(c.dataset.filter || null);
+    pickFilter(c.dataset.filter || null);   // התפריט נשאר פתוח, והרשימה שמאחוריו מתעדכנת
   });
   const pickFilter = (id) => {
     state.filter = id;
