@@ -2462,6 +2462,7 @@
     const amt = (n.amount != null && n.amount !== '') ? Number(n.amount) : Number((/₪\s*([\d.]+)/.exec(b) || [])[1] || 0);
     const sh = (v) => '<bdi dir="ltr">₪' + nfm(v) + '</bdi>';
     const meth = ((/ ב([^\s(][^()]*)$/.exec(b) || [])[1] || '').trim();
+    const regTx = b.replace(/\s*·\s*טלפון\s*\S+\s*$/, '').replace(/\s*ושויך\/ה למפגש.*$/, '').replace(/\s*\(כבר משויך.*\)\s*$/, '').replace(/\s*עם חשבון גוגל/, '');   // טקסט ההרשמה בלי הטלפון, המפגש וחשבון הגוגל
     switch (ev) {
       case 'status_changed': case 'meeting_status_changed': case 'after_status_changed': case 'during_status_changed': {
         const m = /:\s*(.+?)\s*\(היה:\s*(.+)\)\s*$/.exec(b); if (!m) return null;
@@ -2500,15 +2501,15 @@
         const cv = (v) => NCH(v ? '<bdi dir="ltr">' + esc(fx(v.trim())) + '</bdi>' : 'ריק', 'nm');
         return NCH(esc(pm[1]), 'nn') + cv(pm[2]) + NARW + cv(pm[3]);
       }
-      case 'google_linked': { const gm = /^חובר חשבון גוגל\s+(\S+)\s+·\s*(.*)$/.exec(b); if (!gm) return null; return NCH('<bdi dir="ltr">' + esc(gm[1]) + '</bdi>', 'nn') + (gm[2].trim() ? NCH('<bdi dir="ltr">' + esc(localPhone(gm[2].trim())) + '</bdi>', 'nn') : ''); }   // חיבור חשבון גוגל: צ'יף האימייל ואחריו צ'יף הטלפון
+      case 'google_linked': { const gm = /^חובר חשבון גוגל\s+(\S+)\s+·\s*(.*)$/.exec(b); if (!gm) return null; return NCH('<bdi dir="ltr">' + esc(gm[1]) + '</bdi>', 'nn') + (gm[2].trim() ? NARW + NCH('<bdi dir="ltr">' + esc(localPhone(gm[2].trim())) + '</bdi>', 'nn') : ''); }   // חיבור חשבון גוגל: האימייל, חץ והטלפון
       case 'alloc_added': return M + NCH('הקצאה&nbsp;' + sh(amt), 'ny');
       case 'alloc_removed': return M + NCH('הוסרה הקצאה&nbsp;' + sh(amt), 'ny');
       case 'alloc_changed': { const m = /מ-₪([\d.]+) ל-₪([\d.]+)/.exec(b); return m ? M + NCH('הקצאה&nbsp;' + sh(Number(m[1])), 'ny') + NARW + NCH(sh(Number(m[2])), 'ny') : M + NCH('הקצאה שונתה&nbsp;' + sh(amt), 'ny'); }
       case 'payment_received': case 'deposit': return NCH('תשלום&nbsp;' + sh(amt) + (meth ? '&nbsp;ב' + esc(meth) : ''), 'ng');
       case 'refund': return M + NCH('החזרת כסף&nbsp;' + sh(amt) + (meth ? '&nbsp;·&nbsp;' + esc(meth) : ''), 'nr');
-      case 'registered': case 'reregistered': { const tx = b.replace(/\s*·\s*טלפון\s*\S+\s*$/, '').replace(/\s*ושויך\/ה למפגש.*$/, '').replace(/\s*\(כבר משויך.*\)\s*$/, '').replace(/\s*עם חשבון גוגל/, ''); return M + NCH(esc(tx), 'nn'); }   // הרשמה: בלי הטלפון ובלי חשבון הגוגל (הם בהערת החיבור ובפרטי המשתתף)
+      case 'registered': case 'reregistered': return M + NCH(esc(regTx), 'nn');   // הרשמה: בלי הטלפון ובלי חשבון הגוגל (הם בהערת החיבור ובפרטי המשתתף)
       case 'deactivated': return NCH(esc(b), 'nr');
-      case 'reactivated': return NCH(esc(b), 'ng');
+      case 'reactivated': return M + NCH(esc(regTx.replace(' בהרשמה חדשה', ' בהרשמה')), 'ng');   // חזרה לפעילות בהרשמה: המפגש, חץ והטקסט, כמו הערת הרשמה
       default: return M ? M + NCH(noteTextHtml(b.replace(/\s*למפגש\s+\d{1,2}\.\d{1,2}(?:\.\d{2,4})?\s*$/, '')), 'nn') : null;   // הערת מערכת בלי תצוגה משלה (למשל מייל אישור תשלום): התאריך, חץ והטקסט בלי התאריך
     }
   }
