@@ -1020,7 +1020,7 @@
     if (sheet.depLock && Date.now() < sheet.depLock) { sheetSig = ''; setTimeout(refreshOpenSheet, Math.max(100, sheet.depLock - Date.now() + 50)); return; }   // באמצע מעבר בין משלם / חינם / חוב: לא מציירים מחדש מנתוני ביניים
     /* חתימה של כל מה שמוצג בכרטיס המשתתף: הערות, שיוכים וסטטוסים, תשלומים והקצאות, ופרטי המשתתף; כשמשהו מזה משתנה (גם ממנהל אחר) הכרטיס והמסך הפתוח מתעדכנים בזמן אמת */
     const pid = sheet.id, pp = state.participants.find((x) => x.id === pid) || {};
-    const sig = notesOf(pid).map((n) => n.id).join(',') + '|' + state.att.filter((a) => a.participant_id === pid).map((a) => [a.meeting_id, a.paid, a.exempt, a.pay_requested_at, a.attended, a.paid_amount, a.details_sent_at, a.will_pay, a.maybe, a.status_key, a.meeting_key, a.no_pay, a.pay_reported_at, a.pay_reported_amount].join(':')).join(',')
+    const sig = notesOf(pid).map((n) => n.id).join(',') + '|' + state.att.filter((a) => a.participant_id === pid).map((a) => [a.meeting_id, a.paid, a.exempt, a.pay_requested_at, a.attended, a.paid_amount, a.details_sent_at, a.will_pay, a.maybe, a.status_key, a.meeting_key, a.no_pay, a.pay_reported_at, a.pay_reported_amount, a.pay_due_amount].join(':')).join(',')
       + '|' + state.payments.filter((x) => x.participant_id === pid).map((x) => [x.id, x.kind, x.amount, x.method, x.meeting_id, x.from_credit].join(':')).join(',')
       + '|' + [pp.name, pp.phone, pp.age, pp.gender, pp.promoter_id, pp.source_code, (pp.tags || []).join('+'), pp.active].join(':');
     if (sig === sheetSig) return; sheetSig = sig;
@@ -2467,6 +2467,7 @@
       case 'details_sent': return M + NCH('נשלחו פרטי המפגש', 'nn');
       case 'details_unsent': return M + NCH('שליחת הפרטים בוטלה', 'nn');
       case 'payment_reported': return M + NCH('דווח&nbsp;' + sh(amt), 'ny');   // דיווח ממתין: מפגש + צ'יף צהוב עם הסכום
+      case 'payment_closed': return M + NCH('נשאר&nbsp;' + sh(amt), 'nr') + NARW + NCH('התשלום נסגר', 'ng');   // סגירת תשלום: מה שנשאר לשלם נמחק
       case 'payment_rejected': return M + NCH('דווח&nbsp;' + sh(amt), 'ny') + NARW + NCH('נדחה&nbsp;' + sh(amt), 'nr');   // דחיית דיווח: מפגש + צ'יף אדום עם הסכום
       case 'profile_changed': {   // המשתתף שינה ערך באזור האישי: צ'יף שם הערך, הערך הישן, חץ, והערך החדש
         const pm = /^([^:]+):\s*(.*?)\s*←\s*(.*)$/.exec(b); if (!pm) return null;
@@ -2879,8 +2880,23 @@
   /* צ'יפ מצב המפגש בכותרת (במסך ההקצאה): תפריט של מערכת ההפעלה (select שקוף מעל הצ'יף, נבנה ב-paintDepLines). האפשרות הראשונה היא המצב הנוכחי, והשאר פעולות עם פופאפ אישור בהתאם */
   $('#pAllocChip').addEventListener('change', (e) => {
     const sel = e.target.closest('select'); if (!sel || !sheet || !sheet.id || !sheet.depMid || !sheet.modeApi) return;
-    const to = sel.value; sel.value = ''; if (!to) return;
+    const to = sel.value; sel.selectedIndex = -1; if (!to) return;
     const mapi = sheet.modeApi, pid = sheet.id, mid = sheet.depMid;
+    if (to === 'close') {   // סגירת תשלום: ההקצאה נמוכה מעלות הכרטיס, ומה שנשאר לשלם נמחק: המפגש נחשב שולם (כמו "הנחה, המפגש סגור" בזמן התשלום)
+      const cl = linkOf(pid, mid), ca = Math.round(allocatedOf(pid, mid) * 100) / 100, cd = dueOf(pid, mid);
+      confirmAct('לסגור את התשלום?', pid, mid, async () => {
+        try {
+          await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body: { pay_due_amount: null, pay_reported_at: null, pay_reported_amount: null, pay_rejected_at: null } });
+          if (cl) { cl.pay_due_amount = null; cl.pay_reported_at = null; cl.pay_reported_amount = null; cl.pay_rejected_at = null; }
+          try {
+            const [nr] = await api(T.n, { method: 'POST', body: { participant_id: pid, body: 'נסגר התשלום, בלי ₪' + cd + ' שנשארו לשלם', system: true, event_type: 'payment_closed', meeting_id: mid, amount: cd, author_email: emailOf(), author_name: senderName() }, prefer: 'return=representation' });
+            if (nr && !state.notes.some((x) => x.id === nr.id)) { state.notes.push(nr); rebuildNotes(); }
+          } catch (e0) { console.error(e0); }   // התשלום נסגר גם אם ההערה לא נשמרה
+          toast('התשלום נסגר'); closePayCard(); refreshOpenSheet(); render();
+        } catch (e) { fail(e); }
+      }, 'שולמו <b>' + ils(ca) + '</b>. <b>' + ils(cd) + '</b> שנשארו לשלם יימחקו, והמפגש ייחשב כשולם.', 'כן, לסגור את התשלום', null, { green: true });
+      return;
+    }
     if (to === 'reject') {   // דחיית דיווח: מנקה את הדיווח, מסמנת דחייה (הערת מערכת, מייל למשתתף ושינוי באזור האישי ובדף הבית דרך הטריגר בבסיס הנתונים)
       const rl = linkOf(pid, mid), ra = reportedAmt(pid, mid);
       confirmAct('לדחות את הדיווח?', pid, mid, async () => {
@@ -2915,9 +2931,10 @@
       const fr = !!(linkOf(pid, m.id) && noPayOf(null, linkOf(pid, m.id)));
       chip.hidden = false; const rp = !fr && !(al > 0) && reportedOf(pid, m.id); chip.classList.toggle('free', fr && !(al > 0)); chip.classList.toggle('topay', !fr && !(al > 0) && !rp); chip.classList.toggle('rep', !!rp);
       const curL = al > 0 ? '₪' + nfm(al) : fr ? 'חינם' : rp ? 'דיווח' + reportedAmt(pid, m.id) : 'לתשלום';
-      const opts = [['', curL]].concat(rp ? [['reject', 'דחיית דיווח']] : [], fr ? [['pay', 'לתשלום']] : [], !fr && al > 0 ? [['del', 'מחיקת הקצאה']] : [], fr ? [] : [['free', 'חינם']]);
+      const opts = [].concat(!fr && al > 0 && dueOf(pid, m.id) > 0 ? [['close', 'סגירת תשלום']] : [], rp ? [['reject', 'דחיית דיווח']] : [], fr ? [['pay', 'לתשלום']] : [], !fr && al > 0 ? [['del', 'מחיקת הקצאה']] : [], fr ? [] : [['free', 'חינם']]);   // בלי המצב הנוכחי: הוא כתוב על הכפתור
       const chipH = (al > 0 ? '₪' + nfm(al) : fr ? '<span class="nps">₪</span>חינם' : rp ? 'דיווח' + reportedAmt(pid, m.id).replace(' ', '&nbsp;') : 'לתשלום') + icon('chev', 'i14') + '<select aria-label="מצב המפגש">' + opts.map((o) => '<option value="' + o[0] + '">' + esc(o[1]) + '</option>').join('') + '</select>';
       if (chip.dataset.h !== chipH) { chip.innerHTML = chipH; chip.dataset.h = chipH; }   // בלי ציור מחדש כשאין שינוי: עדכון בזמן אמת לא יסגור תפריט פתוח
+      { const cs = chip.querySelector('select'); if (document.activeElement !== cs) cs.selectedIndex = -1; }   // אף אפשרות לא נבחרת מראש, כך שגם בחירה באפשרות היחידה נקלטת
       chip.title = 'מצב המפגש';
     }
     box.hidden = true; box.innerHTML = ''; return;   // בלי שורת הקצאה בתחתית: הסכום המוקצה מוצג רק בצ'יפ שבכותרת
