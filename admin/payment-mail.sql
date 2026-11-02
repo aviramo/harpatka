@@ -26,7 +26,6 @@ begin
   if em is null then
     select lower(m.email) into em from __S__.harpatka_members m where m.participant_id = p_pid and coalesce(m.email, '') <> '' and m.status <> 'blocked' order by (m.status = 'approved') desc limit 1;
   end if;
-  if em is null then return false; end if;
   select * into mt from __S__.harpatka_meetings where id = p_mid; if not found then return false; end if;
   select * into pa from __S__.harpatka_participants where id = p_pid; if not found then return false; end if;
   nm := coalesce(nullif(trim(mt.name), ''), (select nullif(trim(t.name), '') from __S__.harpatka_meeting_types t where t.id = mt.type_id), '');
@@ -54,14 +53,14 @@ begin
     dh := regexp_replace(dh, '(^|\s|>)(https?://[^\s<]+)', '\1<a href="\2" style="color:#C8411B;font-weight:bold">\2</a>', 'g');
     dir_b := '<div style="font-size:16px;font-weight:bold;margin-bottom:6px">איך מגיעים</div><div style="font-size:16px;line-height:1.6;margin-bottom:18px">' || dh || '</div>';
   end if;
-  vars := jsonb_build_object('first_name', coalesce(nullif(pa.first_name, ''), pa.name, ''), 'when', whn, 'paid', paid_txt, 'rem', coalesce('₪' || trim_scale(p_rem)::text, ''),
+  vars := jsonb_build_object('_pid', p_pid, '_mid', p_mid, 'first_name', coalesce(nullif(pa.first_name, ''), pa.name, ''), 'when', whn, 'paid', paid_txt, 'rem', coalesce('₪' || trim_scale(p_rem)::text, ''),
     'name_block', name_b, 'where_block', where_b, 'credit_block', credit_b, 'dir_block', dir_b,
     'me_link', 'https://harpatka.co.il/me/?m=' || p_mid, 'wa_hadar', 'https://wa.me/972546163012', 'wa_ofir', 'https://wa.me/972587078708');
+  if em is null then
+    perform __S__.harpatka_mail_record(case when p_partial then 'payment_partial' else 'payment_confirmed' end, vars, null, null, null, 'failed', 'אין אימייל, המשתתף לא מחובר לחשבון גוגל');
+    return false;
+  end if;
   perform __S__.harpatka_send_mail(case when p_partial then 'payment_partial' else 'payment_confirmed' end, vars, em);
-  begin
-    perform __S__.harpatka_sys_note(p_pid, case when p_partial then 'נשלח מייל על תשלום חלקי' else 'נשלח מייל אישור תשלום' end || ' למפגש ' || __S__.harpatka_meeting_short(p_mid), 'payment_mail', p_mid);
-  exception when others then null;
-  end;
   return true;
 exception when others then
   return false;   -- כשל במייל לא מבטל את התשלום

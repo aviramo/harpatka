@@ -155,7 +155,7 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 .hcount { background: var(--green-bg); color: var(--green); }
 .attforce { background: var(--yellow-bg); color: var(--yellow); cursor: pointer; }
 .frec { margin-inline-start: 8px; padding: 0; background: transparent; }   /* תווית בשורת תנועה בכספים: טקסט בלבד, בלי רקע */
-/* כפתורים (לא משויך, חינם, תגיות המשתתף) בלי מסגרת, במילוי אפור בהיר מאוד (31.10.26) */
+/* כפתורים (לא משויך, לא לתשלום, תגיות המשתתף) בלי מסגרת, במילוי אפור בהיר מאוד (31.10.26) */
 .row .ptag.empty, .mlist .mrow .pay.none, .mlist .mrow .mmoney.free, .pstchips .sopt, .paychip.allocchip.free { background: var(--surface); border-color: transparent; }
 /* הערות: טקסט בלבד, בלי רקע ובלי מסגרת (1.11.26). מה שהיה לו רקע נשאר בצבע שלו בטקסט. הטקסט המלא תמיד מוצג ושובר שורות כשהוא ארוך. #nList כדי לגבור על צבעי הסטטוסים שמוזרקים מהקוד */
 #nList .nch:not(.nago) { height: auto; min-height: var(--tag); padding: 4px 0; border: 0; background: transparent; font-weight: 400; line-height: 18px; white-space: normal; overflow-wrap: anywhere; overflow: visible; text-overflow: clip; text-align: start; }
@@ -204,7 +204,7 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 .hfilt.all, .hfilt.free, .hfilt.fr, .row .payic.free, .row .balic.zero, .row .evc.off { background: transparent; color: var(--text-2); }   /* שקוף ולא לבן: על שורה מסומנת או בריחוף לא נראה ריבוע לבן */
 .row .payic.free::after, .row .balic.fr::after, .row .balic.zero::after, .hfilt.fr::after, .hfilt.free::after { content: ''; position: absolute; left: 4px; right: 4px; top: 50%; height: 1px; background: currentColor; transform: rotate(-35deg); }
 .row .evc.off, .row .payic.free, .row .evc.inert { cursor: default; }
-/* מצב תשלום על מפגש (2.11.26): שולם (ירוק), דווח (צהוב) ולתשלום (אדום בהיר) עם רקע; חינם והכל בלי רקע, רק הסמל. עיגול ה-₪ ברשימה, אייקון הסינון ותפריט הסינון של התשלום */
+/* מצב תשלום על מפגש (2.11.26): שולם (ירוק), דווח (צהוב) ולתשלום (אדום בהיר) עם רקע; לא לתשלום והכל בלי רקע, רק הסמל. עיגול ה-₪ ברשימה, אייקון הסינון ותפריט הסינון של התשלום */
 .row .payic.free,
 .hfilt[data-fk="pay"].all, .hfilt[data-fk="pay"].free, .hfilt[data-fk="pay"].fr, .hfilt[data-fk="pay"].neu,
 #fMenu[data-kind="pay"] .hfilt.all, #fMenu[data-kind="pay"] .hfilt.free, #fMenu[data-kind="pay"] .hfilt.fr, #fMenu[data-kind="pay"] .hfilt.neu { background: transparent; }
@@ -600,7 +600,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 #pDlg .sheet-head #pPayChip { background: transparent; min-width: 0; padding-inline: 20px 0; margin-inline-end: 3px; }
 #pPayChip:active { opacity: .6; }
 @media (hover: hover) { #pPayChip:hover { text-decoration: underline; } }
-.paychip.allocchip { position: relative; background: var(--green-bg); color: var(--green); }   /* מוקצה (שולם), דווח ולתשלום עם רקע; חינם בלי רקע */
+.paychip.allocchip { position: relative; background: var(--green-bg); color: var(--green); }   /* מוקצה (שולם), דווח ולתשלום עם רקע; לא לתשלום בלי רקע */
 .paychip.allocchip.rep { background: var(--yellow-bg); color: var(--yellow); }
 .paychip.allocchip.topay { background: var(--red-bg); color: var(--red); }
 .paychip.allocchip.free { background: transparent; color: var(--text-2); }
@@ -641,14 +641,13 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .mlist .mrow { cursor: pointer; }
 .mlist .mrow .mlabel { grid-column: 1; grid-row: 1; width: 100%; background: transparent; color: var(--text); font-weight: 500; }
 .mlist .mrow.hl .mlabel { background: transparent; color: var(--text); font-weight: 800; }
-.mlist .mrow.hl { background: var(--surface); }
 .mlist .mrow .pay { grid-column: 1; grid-row: 2; width: 100%; padding: 0; }   /* הצבע מהסטטוס עצמו (applyStatuses); בלי ברירת מחדל אדומה שדרסה אותו */
 .mlist .mrow .pay.none { color: var(--text-2); }
 .mlist .mrow .pay, .mlist .mrow .pay.none { background: transparent; border-color: transparent; }   /* סטטוס המפגש בכרטיס: בלי רקע, הצבע שלו בטקסט בלבד (1.11.26) */
 .mlist .mrow .mline { display: contents; }
 .mlist .mrow .mmoney { width: 100%; padding: 0 4px; }
 .mlist .mrow .mmoney { grid-column: 1; grid-row: 3; margin-top: 8px; }   /* רווח בין הסטטוס לתשלום; ובאריח, באותו גובה, בין הסמל לפלוס */
-.mlist .mrow .mmoney, .mlist .mrow .mmoney.free { background: transparent; }   /* מצב תשלום בכרטיס המפגש: שולם (הוקצה כסף) ודווח עם רקע, לא שולם וחינם בלי רקע (1.11.26) */
+.mlist .mrow .mmoney, .mlist .mrow .mmoney.free { background: transparent; }   /* מצב תשלום בכרטיס המפגש: שולם (הוקצה כסף) ודווח עם רקע, לא לתשלום ולא לתשלום בלי רקע (1.11.26) */
 .mlist .mrow .pay, .mlist .mrow .mmoney { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }   /* הסטטוס והתשלום בכרטיס לחיצים: קו תחתון בצבע הטקסט (1.11.26) */
 .mlist .mrow .mmoney.has { color: var(--green); }
 .mlist .mrow .mmoney.wait { color: var(--yellow); }
@@ -1260,3 +1259,19 @@ dialog { border-radius: var(--r) var(--r) 0 0; }
 #viewMenu .mc[aria-pressed="true"] { background: transparent; border-color: transparent; color: var(--text); }
 #viewMenu .mc[data-sc][aria-pressed="true"] { background: transparent; color: var(--sfg); }
 .fdot.sc { background: var(--sfg); }
+/* קישור למייל בסוף הערת האירוע, ומסך הצפייה במייל */
+.nmail { position: relative; display: inline-flex; align-items: center; height: 28px; padding: 0; border: 0; background: transparent; color: var(--text); font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer; }
+.nmail::before { content: ''; position: absolute; inset: -8px -6px; }
+.mailmeta { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; font-size: 14px; color: var(--text-2); }
+.mailmeta b { font-size: 16px; font-weight: 700; color: var(--text); }
+#mailFrame { display: block; width: 100%; min-height: 240px; border: 0; background: var(--bg); }
+#mailFrame[hidden] { display: none; }
+.nmail.bad { gap: 4px; color: var(--red); }   /* מייל שלא נשלח: סמל אזהרה */
+.mailbad { display: flex; align-items: flex-start; gap: 4px; margin-bottom: 8px; font-weight: 700; color: var(--red); }
+#pDlg .sheet-head #mailTheme { order: 3; }   /* בקצה השמאלי של הכותרת */
+#pDlg .sheet-head #mailTheme[hidden] { display: none; }
+/* הדמיית מצב כהה: הפופאפ כולו, כולל הכותרת, בפלטה הפוכה. המייל בלי צבעי מצב כהה משלו, ולכן הופכים אותו כמו שאפליקציות מייל עושות */
+#pDlg.maildark { --bg: #16191D; --surface: #16191D; --surface-2: #5A626C; --text: #FFFFFF; --text-2: #C7CCD3; --text-3: #8A929B; --line: #5A626C; --line-2: #5A626C; background: var(--bg); color: var(--text); }
+#pDlg.maildark #mailFrame { background: #FFFFFF; filter: invert(.91) hue-rotate(180deg); }   /* רקע המסגרת לבן: אחרי ההיפוך הוא כהה כמו הפופאפ */
+/* המפגש הנבחר בכרטיס המשתתף (2.11.26): בלי רקע על הכרטיס; התאריך מודגש, והסטטוס תגית ברקע שלו בלי קו תחתון (הרקע ב-applyStatuses). "שיוך למפגש" נשאר קישור */
+.mlist .mrow.hl .pay:not(.none) { justify-self: center; width: auto; max-width: 100%; padding: 0 8px; text-decoration: none; }

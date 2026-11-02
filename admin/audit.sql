@@ -63,7 +63,7 @@ begin
 
   for t in select table_name from information_schema.tables
            where table_schema = sch and table_type = 'BASE TABLE' and table_name like 'harpatka\_%'
-             and table_name not in ('harpatka_audit', 'harpatka_finance_log', 'harpatka_anon_likes') loop
+             and table_name not in ('harpatka_audit', 'harpatka_finance_log', 'harpatka_anon_likes', 'harpatka_mail_log') loop
     execute format('drop trigger if exists harpatka_audit_trg on %I.%I', sch, t);
     execute format('create trigger harpatka_audit_trg after insert or update or delete on %I.%I for each row execute function %I.harpatka_audit_fn()', sch, t, sch);
   end loop;

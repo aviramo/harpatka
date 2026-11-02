@@ -137,7 +137,7 @@ begin
       begin
         select value into mail_on from public.harpatka_settings where key = 'mail_v2';
         if mail_on = '1' then
-          perform public.harpatka_send_mail('member_approved', jsonb_build_object('board_link', 'https://harpatka.co.il/board/'), new.email);
+          null;   -- המייל הוסר (2.11.26, admin/no-board-approved-mail.sql): הלוח הוסר מהאתר
         end if;
       exception when others then null; end;
     end if;

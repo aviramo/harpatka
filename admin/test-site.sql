@@ -2,7 +2,7 @@
 -- סביבת בדיקות לאתר כולו (test.harpatka.co.il): משלים בסכמת test את מה שהאתר הציבורי צריך:
 -- טבלאות הלוח (לבבות, לבבות אנונימיים) והגדרות ריקות, כל הפונקציות harpatka_* של public (הרשמה, לוח, אזור אישי, ...)
 -- בעותק שעובד על טבלאות test, הרשאות זהות, וטריגר פרסום פוסטים ממתינים.
--- מיילים בבדיקות כבויים: harpatka_send_mail בסכמת test היא פונקציה ריקה (לא שולחת כלום).
+-- מיילים בבדיקות יוצאים רק לאופיר: harpatka_send_mail בסכמת test מוגדרת ב-admin/mail-log.sql.
 -- הכתובת האמיתית של חיבור המנהלים נשארת public.harpatka_is_admin / public.harpatka_admins (אותם מנהלים).
 -- אידמפוטנטי; להריץ שוב אחרי כל שינוי בפונקציות של public ואחרי איפוס הסכמה (test-env.sql).
 -- ==========================================================================
@@ -19,37 +19,7 @@ alter table test.harpatka_settings enable row level security;
 -- עם "[בדיקות]" בנושא, וכל קישור ל-harpatka.co.il מוחלף ב-test.harpatka.co.il. הטמפלטים מ-test.harpatka_mail_templates (עותק של public, וטמפלטים חדשים שנבדקים קודם כאן), ואחרת מ-public.
 create table if not exists test.harpatka_mail_templates (like public.harpatka_mail_templates including all);
 insert into test.harpatka_mail_templates select * from public.harpatka_mail_templates on conflict do nothing;
-create or replace function test.harpatka_send_mail(p_key text, p_vars jsonb default '{}'::jsonb, p_to text default null, p_extra jsonb default '{}'::jsonb)
-returns void language plpgsql security definer set search_path to 'test', 'public' as $$
-declare t record; rk text; fr text; v jsonb;
-begin
-  select subject, html into t from test.harpatka_mail_templates where key = p_key;
-  if not found then select subject, html into t from public.harpatka_mail_templates where key = p_key; end if;
-  if not found then return; end if;
-  select value into rk from public.harpatka_settings where key = 'resend_key';
-  select value into fr from public.harpatka_settings where key = 'mail_from';
-  if coalesce(rk, '') = '' or coalesce(fr, '') = '' then return; end if;
-  v := replace(coalesce(p_vars, '{}'::jsonb)::text, 'https://harpatka.co.il/', 'https://test.harpatka.co.il/')::jsonb;
-  perform net.http_post(
-    url := 'https://api.resend.com/emails',
-    body := jsonb_build_object('from', fr, 'to', jsonb_build_array('ofir.aviram@gmail.com'),
-              'subject', '[בדיקות] ' || public.harpatka_render(t.subject, v, false),
-              'html', replace(public.harpatka_render(t.html, v, true), 'https://harpatka.co.il/', 'https://test.harpatka.co.il/')),
-    headers := jsonb_build_object('Content-Type', 'application/json', 'Authorization', 'Bearer ' || rk),
-    timeout_milliseconds := 30000);
-exception when others then null;
-end $$;
-
--- עמודות שנוספו ל-public אחרי שהסכמה הועתקה (אזור אישי)
-alter table test.harpatka_members add column if not exists wants_me boolean not null default false;
-
--- חסימה זמנית של מנהלים באתר הבדיקות בלבד (28.10.26): מנהל שהאימייל שלו בטבלה הזו לא נחשב מנהל בפונקציות האתר בסכמת test (אזור אישי, לוח, ...),
--- כך אפשר לבדוק אותן כמשתתף רגיל. לא נוגע ב-public. להחזרה: delete from test.harpatka_admin_blocked where email = '...'.
-create table if not exists test.harpatka_admin_blocked (email text primary key);
-create or replace function test.harpatka_is_admin_site() returns boolean
-language sql stable security definer set search_path to 'test', 'public' as $$
-  select public.harpatka_is_admin() and not exists (select 1 from test.harpatka_admin_blocked b where lower(b.email) = lower(coalesce(auth.jwt() ->> 'email', '')));
-$$;
+-- test.harpatka_send_mail מוגדרת ב-admin/mail-log.sql (שולח אחד לשתי הסביבות): להריץ אותו אחרי הקובץ הזה
 grant execute on function test.harpatka_is_admin_site() to anon, authenticated;
 
 do $copy$
@@ -60,7 +30,7 @@ begin
     select p.oid, p.proname, pg_get_function_identity_arguments(p.oid) ia
     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.proname like 'harpatka\_%'
-      and p.proname not in ('harpatka_is_admin', 'harpatka_send_mail', 'harpatka_render', 'harpatka_html_esc', 'harpatka_board_signal', 'harpatka_me_signal', 'harpatka_meetings_signal', 'harpatka_posts_notify_comment')
+      and p.proname not in ('harpatka_is_admin', 'harpatka_send_mail', 'harpatka_mail_build', 'harpatka_mail_record', 'harpatka_mail_sync', 'harpatka_render', 'harpatka_html_esc', 'harpatka_board_signal', 'harpatka_me_signal', 'harpatka_meetings_signal', 'harpatka_posts_notify_comment')
   loop
     def := pg_get_functiondef(r.oid);
     def := replace(def, 'public.harpatka_', 'test.harpatka_');

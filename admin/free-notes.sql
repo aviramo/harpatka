@@ -35,7 +35,7 @@ begin
       perform __S__.harpatka_sys_note(new.participant_id, case when new.attended then 'הגיע/ה למפגש ' else 'סימון ההגעה בוטל למפגש ' end || __S__.harpatka_meeting_short(new.meeting_id), case when new.attended then 'attended' else 'attendance_cancelled' end, new.meeting_id);
     end if;
     if coalesce(old.no_pay, false) <> coalesce(new.no_pay, false) then   -- סימון "חינם" במסך ההקצאה
-      perform __S__.harpatka_sys_note(new.participant_id, case when coalesce(new.no_pay, false) then 'המפגש ' || __S__.harpatka_meeting_short(new.meeting_id) || ' סומן כחינם' else 'החינם בוטל למפגש ' || __S__.harpatka_meeting_short(new.meeting_id) end,
+      perform __S__.harpatka_sys_note(new.participant_id, case when coalesce(new.no_pay, false) then 'המפגש ' || __S__.harpatka_meeting_short(new.meeting_id) || ' סומן לא לתשלום' else 'חזרה לתשלום למפגש ' || __S__.harpatka_meeting_short(new.meeting_id) end,
         case when coalesce(new.no_pay, false) then 'free_on' else 'free_off' end, new.meeting_id);
     end if;
     if (old.details_sent_at is null) <> (new.details_sent_at is null) then

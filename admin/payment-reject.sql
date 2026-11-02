@@ -30,7 +30,7 @@ end $$;
 -- דחייה: הערת מערכת ומייל למשתתף (רק אם יש לו חשבון מחובר עם אימייל; בלי אימייל הדחייה עדיין מוצגת באזור האישי ובדף הבית)
 create or replace function public.harpatka_att_reject_notify() returns trigger
 language plpgsql security definer set search_path = public as $$
-declare mt public.harpatka_meetings; pa public.harpatka_participants; em text;
+declare mt public.harpatka_meetings; pa public.harpatka_participants; em text; vars jsonb;
 begin
   if new.pay_rejected_at is null or new.pay_rejected_at is not distinct from old.pay_rejected_at then return new; end if;
   select * into mt from public.harpatka_meetings where id = new.meeting_id;
@@ -41,11 +41,13 @@ begin
   end;
   begin
     select lower(m.email) into em from public.harpatka_members m where m.participant_id = new.participant_id and coalesce(m.email, '') <> '' order by (m.status = 'approved') desc limit 1;
+    vars := jsonb_build_object('_pid', new.participant_id, '_mid', new.meeting_id, 'first_name', coalesce(nullif(pa.first_name, ''), pa.name, ''),
+      'meeting', to_char(mt.meeting_date, 'DD.MM') || ' · ' || to_char(mt.meeting_time, 'HH24:MI') || coalesce(' · ' || nullif(mt.city, ''), ''),
+      'me_link', 'https://harpatka.co.il/me/?m=' || new.meeting_id);
     if em is not null then
-      perform public.harpatka_send_mail('payment_rejected', jsonb_build_object(
-        'first_name', coalesce(nullif(pa.first_name, ''), pa.name, ''),
-        'meeting', to_char(mt.meeting_date, 'DD.MM') || ' · ' || to_char(mt.meeting_time, 'HH24:MI') || coalesce(' · ' || nullif(mt.city, ''), ''),
-        'me_link', 'https://harpatka.co.il/me/?m=' || new.meeting_id), em);
+      perform public.harpatka_send_mail('payment_rejected', vars, em);
+    else
+      perform public.harpatka_mail_record('payment_rejected', vars, null, null, null, 'failed', 'אין אימייל, המשתתף לא מחובר לחשבון גוגל');
     end if;
   exception when others then null;   -- כשל במייל לא מבטל את הדחייה
   end;
