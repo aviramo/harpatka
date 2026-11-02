@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104eu" />
+  <link rel="stylesheet" href="admin.css?v=20261104ev" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -3602,21 +3602,13 @@
     pgPages.forEach((d, k) => { d.inert = k !== i; });   // הדף שלא מוצג לא מקבל פוקוס
     if (ch) { try { syncUrl(); } catch (e) {} }
   }
-  function pgInd(p) {   // המחוון בדיוק מתחת לטקסט של הטאב, ובהחלקה נע ומשנה רוחב יחד עם הגלילה
-    const box = $('#pTabs'), w = pgBox.clientWidth; if (!w || !box.offsetParent) return;
-    if (p == null) p = Math.abs(pgBox.scrollLeft) / w;
-    const a = Math.min(pgTabs.length - 1, Math.floor(p)), b = Math.min(pgTabs.length - 1, a + 1), t = Math.min(1, p - a), ta = pgTabs[a], tb = pgTabs[b], ind = box.querySelector('.ptabi');   // offset ולא getBoundingClientRect: בפתיחה הפופאפ בדסקטופ באנימציית scale, והמדידה יוצאת עקומה
-    ind.style.width = (ta.offsetWidth + (tb.offsetWidth - ta.offsetWidth) * t) + 'px'; ind.style.transform = 'translateX(' + (ta.offsetLeft + (tb.offsetLeft - ta.offsetLeft) * t) + 'px)';
-  }
-  function pgAnchor() { const w = pgTabs[3].offsetWidth; if (w) $('#pTabs').style.setProperty('--tabi', (w / 2) + 'px'); }   // "פרטים" ממורכז מעל עמודת התשלום (ה-CSS צריך את חצי הרוחב שלו), וממנו נגזרים המרווחים
-  function pgApply() { if (sheet && !sheet.id) { pgBox.scrollLeft = 0; pgPages[3].inert = false; return; } pgBox.scrollLeft = -pgCur * pgBox.clientWidth; pgAnchor(); pgInd(pgCur); pgMark(pgCur); }
+  function pgApply() { if (sheet && !sheet.id) { pgBox.scrollLeft = 0; pgPages[3].inert = false; return; } pgBox.scrollLeft = -pgCur * pgBox.clientWidth; $('#pTabs').style.setProperty('--pg', pgCur); pgMark(pgCur); }
   function pgGo(i) { pgBox.scrollTo({ left: -i * pgBox.clientWidth, behavior: reducedMotion() ? 'auto' : 'smooth' }); pgMark(i); }
   let pgLock = 0;
-  pgBox.addEventListener('scroll', () => { const w = pgBox.clientWidth; if (!w || (sheet && !sheet.id)) return; const p = Math.abs(pgBox.scrollLeft) / w; pgInd(p); if (Date.now() > pgLock) { const i = Math.round(p); if (i !== pgCur) pgMark(i); } }, { passive: true });
+  pgBox.addEventListener('scroll', () => { const w = pgBox.clientWidth; if (!w || (sheet && !sheet.id)) return; const p = Math.abs(pgBox.scrollLeft) / w; $('#pTabs').style.setProperty('--pg', p); if (Date.now() > pgLock) { const i = Math.round(p); if (i !== pgCur) pgMark(i); } }, { passive: true });
   pgTabs.forEach((t, i) => t.addEventListener('click', () => { pgLock = Date.now() + 500; pgGo(i); }));   // בזמן הגלילה אחרי לחיצה על אטב לא מסמנים דף ביניים
   $('#pTabs').addEventListener('keydown', (e) => { if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return; e.preventDefault(); const i = Math.min(pgTabs.length - 1, Math.max(0, pgCur + (e.key === 'ArrowLeft' ? 1 : -1))); pgLock = Date.now() + 500; pgGo(i); pgTabs[i].focus(); });
-  { let w0 = 0; new ResizeObserver(() => { const w = pgBox.clientWidth; if (w && w !== w0) { w0 = w; pgBox.scrollLeft = -pgCur * w; } pgInd(); }).observe(pgBox); }
-  { const ro = new ResizeObserver(() => { pgAnchor(); pgInd(); }); pgTabs.forEach((t) => ro.observe(t)); }   // המונה או הגופן שינו את רוחב הטאב
+  { let w0 = 0; new ResizeObserver(() => { const w = pgBox.clientWidth; if (w && w !== w0) { w0 = w; pgBox.scrollLeft = -pgCur * w; } }).observe(pgBox); }
   function refreshSheetMeetings() {
     if (!sheet) return;
     renderContact();

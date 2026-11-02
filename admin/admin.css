@@ -612,8 +612,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .pstchips .sopt { color: var(--text); }
 /* אריח בצד ימין של רצועת המפגשים (1.11.26; לפי הסקיל ui-ux-pro-max: שטח לחיצה 44px ומעלה, תווית נגישה לכפתור הסמל, מצב ריחוף ולחיצה): מלבן אחד, למעלה מונה המפגשים עם סמל יומן, ומתחתיו פלוס גדול ("שיוך למפגש"); בלי תת כותרת. בגובה כרטיס מפגש */
 /* שורת מפגש בכרטיס המשתתף (2.11.26): אותו רכיב בדף המפגשים ובמפגש שממנו הגענו. העמודות ברוחב קבוע, כך שהסטטוס והתשלום מיושרים בין השורות */
-:root { --mpay: 80px; }   /* עמודת התשלום בשורת מפגש: גם העוגן של הטאב "פרטים" */
-.mlist .mrow { display: grid; grid-template-columns: minmax(0, 1fr) 96px var(--mpay); column-gap: 8px; align-items: center; min-height: var(--ctl); border-bottom: 1px solid var(--surface-2); background: transparent; cursor: pointer; }
+.mlist .mrow { display: grid; grid-template-columns: minmax(0, 1fr) 96px 80px; column-gap: 8px; align-items: center; min-height: var(--ctl); border-bottom: 1px solid var(--surface-2); background: transparent; cursor: pointer; }
 .mlist .mrow:last-child { border-bottom: 0; }
 .mwhen { min-width: 0; display: flex; align-items: baseline; gap: 8px; }   /* תאריך ושם בשורה אחת; שם ארוך נחתך */
 .mlist .mrow .mlabel { flex: 0 0 auto; width: auto; height: auto; padding: 0; border: 0; background: transparent; color: var(--text); font-weight: 500; line-height: 20px; }
@@ -632,16 +631,14 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .mlist .mrow .mmoney.mplus { display: flex; align-items: center; justify-content: center; color: var(--text); }   /* עוד לא משויך: פלוס במקום התשלום */
 .mlist .mrow .mmoney.mplus svg { width: 16px; height: 16px; margin: 0; stroke-width: 2.4; }
 /* אטבים. המחוון עוקב אחרי הגלילה של הפייג'ר */
-.ptabs { position: relative; display: flex; justify-content: space-between; margin-inline: calc(var(--gut) * -1); padding-inline: var(--gut) calc(var(--gut) + var(--mpay) / 2 - var(--tabi, 22px)); border-bottom: 1px solid var(--line); }   /* הימני בקצה הימני; "פרטים" ממורכז מעל עמודת התשלום (העוגן, --tabi = חצי מרוחבו, מ-pgAnchor), והמרווחים ביניהם שווים */
-.ptabs [role="tab"] { position: relative; flex: 0 0 auto; display: flex; align-items: center; height: var(--ctl); padding: 0; border: 0; background: none; color: var(--text-2); font-size: 15px; font-weight: 700; white-space: nowrap; cursor: pointer; }   /* אותו משקל בכל הטאבים, כדי שלא יזוזו בבחירה */
-.ptabs [role="tab"]::before { content: ""; position: absolute; inset: 0 -8px; }   /* שטח לחיצה רחב מהטקסט */
+.ptabs { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); margin-inline: calc(var(--gut) * -1); border-bottom: 1px solid var(--line); }   /* ארבעה טאבים ברוחב שווה, מקצה לקצה של המסך */
+.ptabs [role="tab"] { display: flex; align-items: center; justify-content: center; height: var(--ctl); padding: 0; border: 0; background: none; color: var(--text-2); font-size: 15px; font-weight: 700; white-space: nowrap; cursor: pointer; }
 .ptabs [role="tab"][aria-selected="true"] { color: var(--text); }
 .pmn { display: inline-flex; align-items: center; gap: 4px; }
-#pTabI .pmn { position: relative; }
-.ptm { position: absolute; top: 50%; inset-inline-start: 100%; margin-inline-start: 4px; transform: translateY(-50%); display: inline-flex; color: var(--text-2); }   /* מחוץ לזרימה: סמל המצב לא מזיז את העוגן */
+.ptm { display: inline-flex; color: var(--text-2); }
 .ptm:empty { display: none; }
 .ptm.red { color: var(--red); }
-.ptabi { position: absolute; bottom: -1px; left: 0; height: 2px; background: var(--text); pointer-events: none; }   /* המיקום והרוחב מ-pgInd */
+.ptabi { position: absolute; bottom: -1px; inset-inline-start: 0; width: 25%; height: 2px; background: var(--text); transform: translateX(calc(var(--pg, 0) * -100%)); pointer-events: none; }   /* בדיוק רבע, ונע עם הגלילה של הפייג'ר */
 /* הפייג'ר: שני דפים זה לצד זה עם הצמדה. בכל דף הגלילה האנכית שלו */
 .ppager { display: flex; margin-inline: calc(var(--gut) * -1); overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .ppager::-webkit-scrollbar { display: none; }
