@@ -637,18 +637,19 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 :root { --mrow-h: 82px; }
 .mlist .mrow { flex: 0 0 auto; width: 88px; display: grid; grid-template-columns: 1fr; gap: 0; padding: 4px; border: 0; border-block: 1px solid var(--line-2); border-inline-end: 1px solid var(--line-2); background: transparent; scroll-snap-align: start; }   /* מפגש בכרטיס המשתתף: מסגרת שחורה בהירה לכל המפגשים; המסומן ברקע שחור בהיר (1.11.26) */
 /* כרטיס מפגש בשלוש שורות (1.11.26): תאריך, סטטוס, תשלום; המפגש המסומן: התאריך מודגש בלי רקע */
-.mlist .mrow .mlabel, .mlist .mrow .pay { height: 18px; line-height: 18px; border: 0; }   /* התאריך והסטטוס צמודים; שניהם פותחים את תפריט הסטטוס */
+.mlist .mrow .mlabel, .mlist .mrow:not(.hl) .pay, .mlist .mrow .pay.none { height: 18px; line-height: 18px; border: 0; }   /* התאריך והסטטוס צמודים; שניהם פותחים את תפריט הסטטוס */
 .mlist .mrow { cursor: pointer; }
 .mlist .mrow .mlabel { grid-column: 1; grid-row: 1; width: 100%; background: transparent; color: var(--text); font-weight: 500; }
 .mlist .mrow.hl .mlabel { background: transparent; color: var(--text); font-weight: 800; }
-.mlist .mrow .pay { grid-column: 1; grid-row: 2; width: 100%; padding: 0; }   /* הצבע מהסטטוס עצמו (applyStatuses); בלי ברירת מחדל אדומה שדרסה אותו */
+.mlist .mrow .pay { grid-column: 1; grid-row: 2; }
+.mlist .mrow:not(.hl) .pay, .mlist .mrow .pay.none { width: 100%; padding: 0; }   /* הצבע מהסטטוס עצמו (applyStatuses); בלי ברירת מחדל אדומה שדרסה אותו */
 .mlist .mrow .pay.none { color: var(--text-2); }
-.mlist .mrow .pay, .mlist .mrow .pay.none { background: transparent; border-color: transparent; }   /* סטטוס המפגש בכרטיס: בלי רקע, הצבע שלו בטקסט בלבד (1.11.26) */
+.mlist .mrow:not(.hl) .pay, .mlist .mrow .pay.none { background: transparent; border-color: transparent; }   /* סטטוס המפגש בכרטיס: בלי רקע, הצבע שלו בטקסט בלבד (1.11.26) */
 .mlist .mrow .mline { display: contents; }
 .mlist .mrow .mmoney { width: 100%; padding: 0 4px; }
 .mlist .mrow .mmoney { grid-column: 1; grid-row: 3; margin-top: 8px; }   /* רווח בין הסטטוס לתשלום; ובאריח, באותו גובה, בין הסמל לפלוס */
 .mlist .mrow .mmoney, .mlist .mrow .mmoney.free { background: transparent; }   /* מצב תשלום בכרטיס המפגש: שולם (הוקצה כסף) ודווח עם רקע, לא לתשלום ולא לתשלום בלי רקע (1.11.26) */
-.mlist .mrow .pay, .mlist .mrow .mmoney { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }   /* הסטטוס והתשלום בכרטיס לחיצים: קו תחתון בצבע הטקסט (1.11.26) */
+.mlist .mrow:not(.hl) .pay, .mlist .mrow .pay.none, .mlist .mrow .mmoney { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }   /* הסטטוס והתשלום בכרטיס לחיצים: קו תחתון בצבע הטקסט (1.11.26) */
 .mlist .mrow .mmoney.has { color: var(--green); }
 .mlist .mrow .mmoney.wait { color: var(--yellow); }
 .mlist .mrow .mmoney.free { color: var(--text-2); }
@@ -1273,5 +1274,5 @@ dialog { border-radius: var(--r) var(--r) 0 0; }
 /* הדמיית מצב כהה: הפופאפ כולו, כולל הכותרת, בפלטה הפוכה. המייל בלי צבעי מצב כהה משלו, ולכן הופכים אותו כמו שאפליקציות מייל עושות */
 #pDlg.maildark { --bg: #16191D; --surface: #16191D; --surface-2: #5A626C; --text: #FFFFFF; --text-2: #C7CCD3; --text-3: #8A929B; --line: #5A626C; --line-2: #5A626C; background: var(--bg); color: var(--text); }
 #pDlg.maildark #mailFrame { background: #FFFFFF; filter: invert(.91) hue-rotate(180deg); }   /* רקע המסגרת לבן: אחרי ההיפוך הוא כהה כמו הפופאפ */
-/* המפגש הנבחר בכרטיס המשתתף (2.11.26): בלי רקע על הכרטיס; התאריך מודגש, והסטטוס תגית ברקע שלו בלי קו תחתון (הרקע ב-applyStatuses). "שיוך למפגש" נשאר קישור */
-.mlist .mrow.hl .pay:not(.none) { justify-self: center; width: auto; max-width: 100%; padding: 0 8px; text-decoration: none; }
+/* המפגש הנבחר בכרטיס המשתתף (2.11.26): בלי רקע על הכרטיס והתאריך מודגש. הסטטוס הוא רכיב התגית עצמו, בלי שום דריסה; כאן רק המיקום: במרכז, והשוליים השליליים שומרים על גובה הכרטיס כך ששאר המפגשים לא זזים. "שיוך למפגש" נשאר קישור */
+.mlist .mrow.hl .pay:not(.none) { justify-self: center; max-width: 100%; margin-bottom: -10px; }
