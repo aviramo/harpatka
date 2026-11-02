@@ -14,7 +14,8 @@ insert into __S__.harpatka_mail_templates (key, subject, html) values ('meeting_
 {{{meeting_block}}}
 <div style="font-size:16px;line-height:1.6;color:#2C231D;margin-bottom:16px">המקום נשמר זמנית, והוא יישמר קבוע רק אחרי התשלום.{{{price_note}}}</div>
 {{{credit_block}}}
-<a href="{{me_link}}" style="display:block;background:#C8411B;color:#ffffff;text-decoration:none;font-weight:bold;font-size:17px;text-align:center;padding:14px 20px;border-radius:0">{{pay_label}}</a>
+<a href="{{me_link}}" style="display:block;background:#4E7D2C;color:#ffffff;text-decoration:none;font-weight:bold;font-size:17px;text-align:center;padding:14px 20px;border-radius:0">{{pay_label}}</a>
+<div style="font-size:15px;line-height:1.6;color:#4A3D33;text-align:center;margin-top:10px">{{pay_after}}</div>
 <div style="font-size:15px;line-height:1.6;color:#4A3D33;margin-top:18px">שאלות או שינויים? אפשר לכתוב לנו בוואטסאפ: <span style="white-space:nowrap"><a href="{{wa_hadar}}" style="color:#C8411B;font-weight:bold">הדר</a> · <a href="{{wa_ofir}}" style="color:#C8411B;font-weight:bold">אופיר</a></span></div>
 <div style="font-size:16px;line-height:1.6;color:#2C231D;margin-top:18px">נתראה, אופיר והדר</div>
 </div></div></div>$tpl$)
@@ -47,6 +48,7 @@ begin
   perform __S__.harpatka_mail_participant('meeting_registered', p_pid, v || jsonb_build_object(
     'me_link', 'https://harpatka.co.il/me/?m=' || p_mid,
     'pay_label', case when price is null then 'לתשלום' else 'לתשלום ₪' || price end,
+    'pay_after', 'ברגע שנקבל את התשלום, נשלח לך מייל אישור' || case when coalesce(__S__.harpatka_mail_directions(p_mid), '') <> '' then ' עם הוראות ההגעה למפגש' else '' end,   -- מבטיחים הוראות הגעה רק כשיש כאלה למפגש
     'price_note', note));
 end $f$;
 revoke all on function __S__.harpatka_reg_mail_send(uuid, uuid, text) from public, anon, authenticated;

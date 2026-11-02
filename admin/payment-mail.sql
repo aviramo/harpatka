@@ -148,7 +148,7 @@ insert into __S__.harpatka_mail_templates (key, subject, html) values ('payment_
 <div style="font-size:20px;font-weight:bold;color:#2C231D;margin-bottom:12px">שלום {{first_name}},</div>
 <div style="font-size:16px;line-height:1.6;color:#2C231D;margin-bottom:16px">התקבל {{paid}} על המפגש. נשאר להשלים {{rem}}, והמקום שלך יישמר קבוע רק אחרי השלמת התשלום.</div>
 <div style="border:1px solid #FFD8AE;background:#FFF5E8;padding:14px 16px;margin-bottom:18px">{{{name_block}}}<div style="font-size:19px;font-weight:bold;color:#2C231D">{{when}}</div>{{{where_block}}}</div>
-<a href="{{me_link}}" style="display:block;background:#C8411B;color:#ffffff;text-decoration:none;font-weight:bold;font-size:17px;text-align:center;padding:14px 20px;border-radius:0">להשלמת התשלום באזור האישי</a>
+<a href="{{me_link}}" style="display:block;background:#4E7D2C;color:#ffffff;text-decoration:none;font-weight:bold;font-size:17px;text-align:center;padding:14px 20px;border-radius:0">להשלמת התשלום באזור האישי</a>
 <div style="font-size:15px;line-height:1.6;color:#4A3D33;margin-top:18px">רוצה לשלם בדרך אחרת, או יש שאלה? אפשר לכתוב לנו בוואטסאפ: <a href="{{wa_hadar}}" style="color:#C8411B;font-weight:bold">הדר</a> · <a href="{{wa_ofir}}" style="color:#C8411B;font-weight:bold">אופיר</a></div>
 <div style="font-size:16px;line-height:1.6;color:#2C231D;margin-top:18px">נתראה,<br>אופיר והדר</div>
 </div></div></div>$h$)
