@@ -4,6 +4,7 @@
         python tools/promote.py
   0. שינויי בסיס נתונים (קבצי SQL שהשתנו): מסרב להעלות בלי גיבוי של public שנעשה ב-6 השעות האחרונות, על אותו קומיט שרץ עכשיו באמת.
      שינויי תצוגה בלבד (בלי SQL): בלי גיבוי ובלי תוכנית רולבק, מעלים ישר אחרי האישור (כלל מ-31.10.26).
+     הוספת עמודות בלבד (קובץ SQL שכולו add column): גם בלי גיבוי (כלל מ-2.11.26).
   1. בודק שאין שינויים לא שמורים בענף staging (חוץ מסרטוני מודעות), ושסביבת הבדיקות פורסמה (tools/stage.py).
   2. main <- staging, דחיפה ל-origin main בלי לעבור ענף: האתר האמיתי (harpatka.co.il) מתעדכן.
   3. מסנכרן את staging עם main, כך ששתי הסביבות זהות.
@@ -36,11 +37,26 @@ run('git', 'fetch', '-q', 'origin')
 
 # כלל קבוע (31.10.26): שינוי שנוגע בבסיס הנתונים (קבצי SQL) לא עולה בלי גיבוי נתוני האמת ותוכנית רולבק על המצב הנוכחי של האמת.
 # שינויי תצוגה בלבד (בלי SQL) עולים ישר אחרי האישור, בלי גיבוי (לבקשת בעל האתר: "לא צריך להחמיר יותר מדי").
-import datetime, json
+import datetime, json, re
+
+def only_adds_columns(files):
+    # קובץ SQL שכל מה שהוא עושה הוא הוספת עמודות: בלי גיבוי ובלי תוכנית רולבק (לבקשת בעל האתר, 2.11.26). בכל ספק: לא
+    for f in files:
+        try:
+            txt = re.sub(r'--[^\n]*', '', (ROOT / f).read_text(encoding='utf-8'))
+        except Exception:
+            return False
+        for st in (x.strip() for x in txt.split(';')):
+            if st and not re.fullmatch(r"(?is)alter\s+table\s+\S+\s+add\s+column\s+(if\s+not\s+exists\s+)?[^,]+(,\s*add\s+column\s+(if\s+not\s+exists\s+)?[^,]+)*|notify\s+pgrst\s*,\s*'reload schema'", st):
+                return False
+    return True
+
 sql = run('git', 'diff', '--name-only', 'origin/main...staging', '--', '*.sql', out=True)
 prod = run('git', 'rev-parse', 'origin/main', out=True)
 backup = None
-if sql:
+if sql and only_adds_columns(sql.split()):
+    print('הוספת עמודות בלבד: בלי גיבוי')
+elif sql:
     for d in sorted((ROOT.parent / 'harpatka-backups').glob('*-prod'), reverse=True):
         try:
             m = json.loads((d / '_manifest.json').read_text(encoding='utf-8'))
