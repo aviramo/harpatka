@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104fd" />
+  <link rel="stylesheet" href="admin.css?v=20261104fe" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -210,6 +210,13 @@
   </dialog>
 
   <!-- פופאפ הקצאה: עולה מלמטה מעל כרטיס המשתתף (או לבד כשנפתח מהרשימה). מסך ההקצאה עצמו, הצ'יף והשורה השנייה עוברים אליו בפתיחה וחוזרים לכרטיס בסגירה (allocMount / allocUnmount) -->
+  <dialog id="tplDlg" aria-labelledby="tplTitle">
+    <div class="sheet">
+      <div class="sheet-head"><h2 id="tplTitle">תבנית הודעה</h2></div>
+      <p class="sthint stintro" id="tplIntro"></p>
+      <div class="mtedit" id="tplFields"></div>
+    </div>
+  </dialog>
   <dialog id="mailDlg" aria-labelledby="mailTitle">
     <div class="sheet" id="mailSheet">
       <div class="sheet-head"><h2 id="mailTitle">מייל</h2><button type="button" class="hbtn" id="mailTheme" aria-pressed="false" aria-label="הדמיית מצב כהה" title="הדמיית מצב כהה"><svg data-i="moon"></svg></button></div>
@@ -551,7 +558,7 @@
   let deep = null;
   try {
     const sp = new URLSearchParams(location.search);
-    if (['m', 'p', 'pay', 'at', 'pd', 'sv', 'bl', 'tg', 'tga', 'q', 'em', 'g', 's', 'st', 'pt', 'bd', 'pm', 'set', 'stv', 'pr', 'fin', 'sc', 'ag', 'lg', 'af', 'se', 'sp', 'sa', 'mt'].some((k) => sp.get(k))) { deep = { mt: sp.get('mt'), m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), at: sp.get('at'), pd: sp.get('pd'), sv: sp.get('sv'), bl: sp.get('bl'), tg: sp.get('tg'), tga: sp.get('tga'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g'), s: sp.get('s'), st: sp.get('st'), pt: sp.get('pt'), bd: sp.get('bd'), pm: sp.get('pm'), set: sp.get('set'), stv: sp.get('stv'), pr: sp.get('pr'), fin: sp.get('fin'), sc: sp.get('sc'), ag: sp.get('ag'), lg: sp.get('lg'), ml: sp.get('ml'), se: sp.get('se'), sp: sp.get('sp'), sa: sp.get('sa'), af: sp.get('af') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
+    if (['m', 'p', 'pay', 'at', 'pd', 'sv', 'bl', 'tg', 'tga', 'q', 'em', 'g', 's', 'st', 'pt', 'bd', 'pm', 'set', 'stv', 'pr', 'fin', 'sc', 'ag', 'lg', 'af', 'se', 'sp', 'sa', 'mt', 'tpl'].some((k) => sp.get(k))) { deep = { tpl: sp.get('tpl'), mt: sp.get('mt'), m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), at: sp.get('at'), pd: sp.get('pd'), sv: sp.get('sv'), bl: sp.get('bl'), tg: sp.get('tg'), tga: sp.get('tga'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g'), s: sp.get('s'), st: sp.get('st'), pt: sp.get('pt'), bd: sp.get('bd'), pm: sp.get('pm'), set: sp.get('set'), stv: sp.get('stv'), pr: sp.get('pr'), fin: sp.get('fin'), sc: sp.get('sc'), ag: sp.get('ag'), lg: sp.get('lg'), ml: sp.get('ml'), se: sp.get('se'), sp: sp.get('sp'), sa: sp.get('sa'), af: sp.get('af') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
     else { deep = JSON.parse(sessionStorage.getItem('harpatka_deep') || 'null'); }
   } catch (e) {}
   const $ = (s) => document.querySelector(s);
@@ -578,6 +585,7 @@
     if ($('#prDlg').open && prCur) sp.set('pr', prCur);
     if (mDlg.open) sp.set('em', editingMeeting ? editingMeeting.id : 'new');   // עריכת מפגש או מפגש חדש
     if ($('#bdDlg').open) sp.set('bd', '1');
+    if ($('#tplDlg').open && tplEd) sp.set('tpl', tplEd.id);   // עריכת תבנית הודעה
     if ($('#stDlg').open) { sp.set('st', '1'); if (stCur && stCur !== 'main') sp.set('stv', stCur); }
     if ($('#finDlg').open) sp.set('fin', finV === 'log' ? 'log' : finV === 'settle' ? 'settle' : finV === 'form' ? (finEdit && finEdit.id ? 'edit-' + finEdit.type + '-' + finEdit.id : 'new-' + ((finEdit && finEdit.kind) || 'expense')) : '1');   // כל שלב בכספים: ראשי, יומן, התחשבנות, טופס חדש או עריכה
     const s = sp.toString();
@@ -1165,6 +1173,7 @@
           if (d.ml) openMail(d.ml);
           if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
         }
+        else if (d.tpl && state.tpls.some((x) => x.id === d.tpl)) openTplPop(d.tpl);
         else if (d.em === 'new') openMeeting(null);
         else if (d.em && state.meetings.some((x) => x.id === d.em)) openMeeting(d.em);
         else if (d.set || d.pr) {
@@ -2633,6 +2642,13 @@
      תבנית = שם ונוסח עם שדות; של סוג מפגש (לכל מפגשיו) או של מפגש אחד (בנוסף לאלה של הסוג). בעמודת הוואטסאפ של הרשימה בוחרים תבנית,
      וקישור הוואטסאפ של כל משתתף ברשימה נפתח עם ההודעה המוכנה. שדות: {שם} (שם פרטי), {תאריך}, {מקום} (עיר ומיקום), {הוראות הגעה}, {התכנסות}, {התחלה}, {סיום} */
   const MSG_VARS = ['{שם}', '{תאריך}', '{מקום}', '{הוראות הגעה}', '{התכנסות}', '{התחלה}', '{סיום}'];
+  /* שדות עריכת תבנית הודעה: רכיב אחד, בטופס מפגש וסוג מפגש ובפופאפ שנפתח מתפריט הוואטסאפ */
+  const tplFieldsHtml = (I) =>
+    '<label class="field"><span>שם התבנית</span><input type="text" class="mtname" id="' + I('TplName') + '" maxlength="60" autocomplete="off" /></label>' +
+    '<label class="field"><span>נוסח ההודעה</span><textarea class="mtbody" id="' + I('TplBody') + '" rows="6" maxlength="2000"></textarea></label>' +
+    '<div class="emvars" id="' + I('TplVars') + '">' + MSG_VARS.map((v) => '<button type="button" data-v="' + v + '">' + v + '</button>').join('') + '</div>' +
+    '<button type="button" class="mtdel" id="' + I('TplDel') + '">מחיקת התבנית</button>';
+  const insertMsgVar = (ta, v) => { const a = ta.selectionStart == null ? ta.value.length : ta.selectionStart, b = ta.selectionEnd == null ? a : ta.selectionEnd; ta.setRangeText(v, a, b, 'end'); autoGrow(ta); ta.focus(); };
   const DAY_FULL = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
   function fillMsg(tpl, m, p) {   // רכיב אחד: גם ההודעה לפני המפגש וגם תבניות הוואטסאפ
     let t = String(tpl || '');
@@ -3892,10 +3908,7 @@
         (isType ? '' : '<button type="button" id="' + I('TierReset') + '" hidden>כמו בסוג המפגש</button>') + '</div></div></div>' +
       '<div class="mtedit" id="' + I('TplEd') + '" hidden>' +
         '<div class="mthead"><button type="button" class="hbtn hback" id="' + I('TplBack') + '" aria-label="חזרה" title="חזרה">' + icon('back') + '</button><b>עריכת תבנית</b></div>' +
-        '<label class="field"><span>שם התבנית</span><input type="text" class="mtname" id="' + I('TplName') + '" maxlength="60" autocomplete="off" /></label>' +
-        '<label class="field"><span>נוסח ההודעה</span><textarea class="mtbody" id="' + I('TplBody') + '" rows="6" maxlength="2000"></textarea></label>' +
-        '<div class="emvars" id="' + I('TplVars') + '">' + MSG_VARS.map((v) => '<button type="button" data-v="' + v + '">' + v + '</button>').join('') + '</div>' +
-        '<button type="button" class="mtdel" id="' + I('TplDel') + '">מחיקת התבנית</button></div>';
+        tplFieldsHtml(I) + '</div>';
     { const tf = !isType && $('#' + p + 'TypeF'), slot = q('TypeSlot'); if (slot) { if (tf) slot.replaceWith(tf); else slot.remove(); } }   // סוג המפגש באותה שורה עם שם המפגש
     const F = { te: tierEditor('#' + I('TierList'), '#' + I('TierAdd'), () => F.changed()), img: { url: null, blob: null, objUrl: null, inh: false }, tiersInh: false };
     const ty = () => (typOf ? typOf() : null);
@@ -3980,8 +3993,7 @@
     ed('Body').addEventListener('input', () => { const r = F.tpl.rows[F.tpl.cur]; if (r) r.body = ed('Body').value; autoGrow(ed('Body')); });
     ed('Vars').addEventListener('click', (e) => {
       const v = e.target.closest('[data-v]'), r = F.tpl.rows[F.tpl.cur]; if (!v || !r) return;
-      const ta = ed('Body'), a = ta.selectionStart == null ? ta.value.length : ta.selectionStart, b = ta.selectionEnd == null ? a : ta.selectionEnd;
-      ta.setRangeText(v.dataset.v, a, b, 'end'); r.body = ta.value; autoGrow(ta); ta.focus();
+      insertMsgVar(ed('Body'), v.dataset.v); r.body = ed('Body').value;
     });
     ed('Back').addEventListener('click', () => {
       const r = F.tpl.rows[F.tpl.cur];
@@ -4383,18 +4395,46 @@
     if (!tid || !typeById(tid)) { toast('אין סוג מפגש להוספת תבנית'); return; }
     openTypeEditor(tid); tyFormFor = null; showSetView('tydet'); tyF.tpl.add();
   }
-  /* עריכת התבנית שנבחרה (העיפרון בשורה שלה): אותו מסך עריכה כמו בהוספת תבנית, בתוך המפגש או בתוך סוג המפגש, לפי מי שהתבנית שייכת לו */
-  function waEditTemplate(id) {
-    const x = waList().find((t) => t.id === id); if (!x) return;
-    closeWa();
-    if (x.own === 'meeting') { openMeeting(x.m.id); mf.tpl.open(mf.tpl.rows.findIndex((r) => r.id === id)); return; }
-    const tid = typeIdOf(x.m);
-    if (!tid || !typeById(tid)) { toast('אין סוג מפגש לעריכת התבנית'); return; }
-    openTypeEditor(tid); tyFormFor = null; showSetView('tydet'); tyF.tpl.open(tyF.tpl.rows.findIndex((r) => r.id === id));
+  /* עריכת תבנית הודעה בפופאפ עצמאי (העיפרון בתפריט הוואטסאפ): בראש שם סוג המפגש, ומתחתיו השדות. נשמר אוטומטית, גם בעזיבת שדה וגם בסגירה; בלי שם או נוסח לא נשמר */
+  let tplEd = null;
+  const tplW = (n) => $('#wt' + n);
+  $('#tplFields').innerHTML = tplFieldsHtml((n) => 'wt' + n);
+  const tplRowsOf = (e) => (e.scope.type_id ? tplsOfType(e.scope.type_id) : tplsOfMeeting(e.scope.meeting_id)).map((r) => ({ id: r.id, name: r.name, body: r.body }));
+  function openTplPop(id) {
+    const t = state.tpls.find((x) => x.id === id); if (!t) return;
+    const m = t.meeting_id ? state.meetings.find((x) => x.id === t.meeting_id) : null, ty = typeById(t.type_id || (m && typeIdOf(m)));
+    tplEd = { id, scope: t.type_id ? { type_id: t.type_id } : { meeting_id: t.meeting_id } };
+    $('#tplTitle').textContent = ty && ty.name ? ty.name : 'תבנית הודעה';
+    $('#tplIntro').textContent = m ? 'ההודעה שייכת למפגש ' + dm(m) + ' בלבד' : 'ההודעה שייכת לסוג המפגש, וחלה על כל המפגשים שלו';
+    tplW('TplName').value = t.name || ''; tplW('TplBody').value = t.body || '';
+    const del = tplW('TplDel'); del.dataset.sure = ''; del.textContent = 'מחיקת התבנית';
+    $('#tplDlg').showModal(); autoGrow(tplW('TplBody'));
+    const ae = document.activeElement; if (ae && ae.closest && ae.closest('#tplDlg')) ae.blur();   // בלי מקלדת בפתיחה
+    syncUrl();
   }
+  async function tplPopSave(e) {
+    const t = e && state.tpls.find((x) => x.id === e.id); if (!t) return;
+    const name = tplW('TplName').value.trim(), body = tplW('TplBody').value.replace(/\s+$/, '');
+    if (t.name === name && t.body === body) return;
+    if (!name || !body) { toast(!name ? 'חסר שם לתבנית, השינוי לא נשמר' : 'חסר נוסח לתבנית, השינוי לא נשמר'); return; }
+    try { await saveTemplates(e.scope, tplRowsOf(e).map((r) => r.id === e.id ? { id: r.id, name, body } : r)); render(); toast('ההודעה נשמרה'); }
+    catch (err) { fail(err); }
+  }
+  tplW('TplName').addEventListener('change', () => tplPopSave(tplEd));
+  tplW('TplBody').addEventListener('change', () => tplPopSave(tplEd));
+  tplW('TplBody').addEventListener('input', () => autoGrow(tplW('TplBody')));
+  tplW('TplVars').addEventListener('click', (e) => { const v = e.target.closest('[data-v]'); if (v) insertMsgVar(tplW('TplBody'), v.dataset.v); });
+  tplW('TplDel').addEventListener('click', async () => {
+    const e = tplEd, del = tplW('TplDel'); if (!e) return;
+    if (del.dataset.sure !== '1') { del.dataset.sure = '1'; del.textContent = 'בטוח? לחיצה נוספת מוחקת'; return; }   // נמחקת מיד, יחד עם סימוני השליחה שלה
+    tplEd = null; $('#tplDlg').close();
+    try { await saveTemplates(e.scope, tplRowsOf(e).filter((r) => r.id !== e.id)); render(); toast('התבנית נמחקה'); }
+    catch (err) { fail(err); }
+  });
+  $('#tplDlg').addEventListener('close', () => { const e = tplEd; tplEd = null; tplPopSave(e); });
   $('#waMenu').addEventListener('click', (e) => {
     const we = e.target.closest('[data-wedit]');
-    if (we) { waEditTemplate(we.dataset.wedit); return; }
+    if (we) { closeWa(); openTplPop(we.dataset.wedit); return; }
     const sf = e.target.closest('[data-wsf]');
     if (sf) { waSetFilter(sf.dataset.wsf); refreshWa(); return; }
     const wa = e.target.closest('[data-wadd]');
