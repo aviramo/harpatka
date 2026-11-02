@@ -2,7 +2,7 @@
 --   sed 's/__S__/test/g' admin/mail-no-pay.sql | supabase db query --linked
 --   sed 's/__S__/public/g' admin/mail-no-pay.sql | supabase db query --linked
 -- * לא שולם כלום, ולכן לא "התשלום התקבל" אלא "המקום שלך שמור", עם פרטי המפגש והוראות ההגעה. לא במפגש שכבר עבר. נקשר להערה "לתשלום ← לא לתשלום".
--- * כל סימון שולח מייל: סימון, ביטול וסימון נוסף הם שני מיילים.
+-- * מייל על סגירת תשלום יוצא פעם אחת בלבד למפגש (harpatka_mail_close, לפי pay_mail_sent_at): תשלום מלא, "סגירת תשלום" או "לא לתשלום", מה שקורה ראשון. גם האזהרה "המייל לא נשלח" מופיעה פעם אחת.
 insert into __S__.harpatka_mail_templates (key, subject, html) values ('place_saved', 'המקום שלך שמור', $tpl$<div dir="rtl" style="direction:rtl;text-align:right;background:#FFFFFF;padding:24px 16px;font-family:Arial,Helvetica,sans-serif;color:#2C231D">
 <div style="max-width:520px;margin:0 auto;background:#FFFFFF;border-top:4px solid #E5562D">
 <div style="padding:22px 4px 4px"><div style="font-size:14px;font-weight:bold;color:#C8411B"><span style="display:inline-block;width:9px;height:9px;background:#E5562D;margin-left:8px;vertical-align:middle"></span>יוצאים להרפתקה</div></div>
@@ -30,6 +30,28 @@ begin
 end $f$;
 revoke all on function __S__.harpatka_mail_directions(uuid) from public, anon, authenticated;
 
+-- מייל על סגירת תשלום: פעם אחת בלבד לכל מפגש. בלי אימייל: מתעדים פעם אחת שלא נשלח, ומנסים שוב בסגירה הבאה (אולי המשתתף התחבר בינתיים). הסרה ממפגש מוחקת את השיוך, ולכן שיוך מחדש מתחיל מההתחלה
+create or replace function __S__.harpatka_mail_close(p_key text, p_pid uuid, p_mid uuid, p_vars jsonb, p_em text default null)
+returns boolean language plpgsql security definer set search_path = __S__, public as $f$
+declare sent timestamptz; em text := lower(nullif(trim(coalesce(p_em, '')), ''));
+begin
+  select a.pay_mail_sent_at into sent from __S__.harpatka_attendance a where a.participant_id = p_pid and a.meeting_id = p_mid;
+  if sent is not null then return false; end if;
+  if em is null then
+    select lower(m.email) into em from __S__.harpatka_members m where m.participant_id = p_pid and coalesce(m.email, '') <> '' and m.status <> 'blocked' order by (m.status = 'approved') desc limit 1;
+  end if;
+  if em is null then
+    if not exists (select 1 from __S__.harpatka_mail_log l where l.participant_id = p_pid and l.meeting_id = p_mid and l.tpl in ('payment_confirmed', 'place_saved')) then
+      perform __S__.harpatka_mail_record(p_key, p_vars, null, null, null, 'failed', 'אין אימייל, המשתתף לא מחובר לחשבון גוגל');
+    end if;
+    return false;
+  end if;
+  perform __S__.harpatka_send_mail(p_key, p_vars, em);
+  update __S__.harpatka_attendance set pay_mail_sent_at = now() where participant_id = p_pid and meeting_id = p_mid;
+  return true;
+end $f$;
+revoke all on function __S__.harpatka_mail_close(text, uuid, uuid, jsonb, text) from public, anon, authenticated;
+
 do $do$
 declare d text;
 begin
@@ -37,8 +59,12 @@ begin
   if d not like '%harpatka_mail_directions%' then
     d := regexp_replace(d, $r$dirs := trim\(replace\(coalesce\(mt\.directions.*?dir_b := [^\n]*\s+end if;$r$, 'dir_b := __S__.harpatka_mail_directions(p_mid);');
     if d not like '%harpatka_mail_directions%' then raise exception 'harpatka_pay_mail patch did not apply'; end if;
-    execute d;
   end if;
+  if d not like '%harpatka_mail_close%' then
+    d := regexp_replace(d, $r$if em is null then\s+perform \S+harpatka_mail_record\(.*?\s+perform \S+harpatka_send_mail\(case when p_partial[^\n]*\s+return true;$r$, $r$return __S__.harpatka_mail_close(case when p_partial then 'payment_partial' else 'payment_confirmed' end, p_pid, p_mid, vars, em);$r$);
+    if d not like '%harpatka_mail_close%' then raise exception 'harpatka_pay_mail close patch did not apply'; end if;
+  end if;
+  execute d;
 end $do$;
 
 create or replace function __S__.harpatka_no_pay_mail_fn() returns trigger
@@ -48,7 +74,7 @@ begin
   if not coalesce(new.no_pay, false) or coalesce(old.no_pay, false) then return null; end if;
   select * into mt from __S__.harpatka_meetings where id = new.meeting_id;
   if not found or mt.meeting_date < (now() at time zone 'Asia/Jerusalem')::date then return null; end if;   -- מפגש שעבר: בלי מייל
-  perform __S__.harpatka_mail_participant('place_saved', new.participant_id, __S__.harpatka_mail_common(new.participant_id, new.meeting_id)
+  perform __S__.harpatka_mail_close('place_saved', new.participant_id, new.meeting_id, __S__.harpatka_mail_common(new.participant_id, new.meeting_id)
     || jsonb_build_object('dir_block', __S__.harpatka_mail_directions(new.meeting_id)));
   return null;
 exception when others then return null;   -- כשל במייל לא מבטל את הסימון

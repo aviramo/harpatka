@@ -36,6 +36,8 @@ grant select on __S__.harpatka_mail_log to authenticated;
 
 alter table __S__.harpatka_notes add column if not exists mail_id uuid references __S__.harpatka_mail_log(id) on delete set null;
 alter table __S__.harpatka_notes add column if not exists mail_failed boolean not null default false;
+alter table __S__.harpatka_notes add column if not exists mail_noaddr boolean not null default false;   -- לא נשלח כי למשתתף אין חשבון גוגל (מוצג בצהוב; תקלה אמיתית באדום)
+update __S__.harpatka_notes n set mail_noaddr = true from __S__.harpatka_mail_log l where n.mail_id = l.id and l.status = 'failed' and l.error like 'אין אימייל%' and not n.mail_noaddr;
 
 -- בונה את המייל מהתבנית: הנושא והתוכן כפי שיישלחו. בבדיקות הקישורים לאתר הבדיקות
 create or replace function __S__.harpatka_mail_build(p_key text, p_vars jsonb, out ok boolean, out subj text, out body text, out tpl_to text)
@@ -58,7 +60,7 @@ drop function if exists __S__.harpatka_mail_record(text, jsonb, text, text, text
 create or replace function __S__.harpatka_mail_record(p_key text, p_vars jsonb, p_to text, p_subject text, p_html text, p_status text default 'pending', p_error text default null)
 returns uuid language plpgsql security definer set search_path = __S__, public as $f$
 declare
-  pid uuid; mid uuid; lid uuid; nid uuid; evs text[]; subj text := p_subject; body text := p_html; bad boolean := p_status = 'failed'; adr text := nullif(trim(coalesce(p_to, '')), '');
+  pid uuid; mid uuid; lid uuid; nid uuid; evs text[]; subj text := p_subject; body text := p_html; bad boolean := p_status = 'failed'; noaddr boolean := p_status = 'failed' and coalesce(p_error, '') like 'אין אימייל%'; adr text := nullif(trim(coalesce(p_to, '')), '');
   actor text := coalesce(nullif(auth.jwt() -> 'user_metadata' ->> 'full_name', ''), auth.jwt() ->> 'email');
 begin
   if adr is null and not (bad and coalesce(p_vars ->> '_pid', '') <> '') then return null; end if;   -- מייל למנהלים
@@ -99,14 +101,14 @@ begin
           and (mid is null or n.meeting_id is null or n.meeting_id = mid)
           and n.created_at >= now() - interval '2 minutes'
         order by array_position(evs, n.event_type), n.created_at desc limit 1;
-      if nid is not null then update __S__.harpatka_notes set mail_id = lid, mail_failed = bad where id = nid; return lid; end if;
+      if nid is not null then update __S__.harpatka_notes set mail_id = lid, mail_failed = bad, mail_noaddr = noaddr where id = nid; return lid; end if;
     exception when others then null;
     end;
   end if;
   -- אין הערת אירוע, או שהתוכן לא נשמר: הערה משלו
   begin
-    insert into __S__.harpatka_notes (participant_id, body, author_email, author_name, system, event_type, meeting_id, mail_id, mail_failed)
-      values (pid, case when lid is null then case when bad then 'מייל לא נשלח: ' else 'נשלח מייל: ' end else '' end || coalesce(subj, 'מייל'), coalesce(auth.jwt() ->> 'email', 'system'), coalesce(actor, 'מערכת'), true, 'mail_sent', mid, lid, bad);
+    insert into __S__.harpatka_notes (participant_id, body, author_email, author_name, system, event_type, meeting_id, mail_id, mail_failed, mail_noaddr)
+      values (pid, case when lid is null then case when bad then 'מייל לא נשלח: ' else 'נשלח מייל: ' end else '' end || coalesce(subj, 'מייל'), coalesce(auth.jwt() ->> 'email', 'system'), coalesce(actor, 'מערכת'), true, 'mail_sent', mid, lid, bad, noaddr);
   exception when others then null;
   end;
   return lid;
@@ -230,7 +232,7 @@ begin
     d := regexp_replace(d, $r$begin\s+perform\s+\S+harpatka_sys_note\(p_pid,[^\n]*'payment_mail', p_mid\);\s+exception when others then null;\s+end;\s*$r$, '');
     if d not like '%''_pid''%' or d like '%''payment_mail''%' then raise exception 'harpatka_pay_mail patch did not apply'; end if;
   end if;
-  if d not like '%אין אימייל%' then
+  if d not like '%אין אימייל%' and d not like '%harpatka_mail_close%' then   -- אחרי mail-no-pay.sql הטיפול בחסר אימייל נמצא ב-harpatka_mail_close
     d := replace(d, 'if em is null then return false; end if;', '');
     d := replace(d, $r$perform __S__.harpatka_send_mail(case when p_partial then 'payment_partial' else 'payment_confirmed' end, vars, em);$r$, $r$if em is null then
     perform __S__.harpatka_mail_record(case when p_partial then 'payment_partial' else 'payment_confirmed' end, vars, null, null, null, 'failed', 'אין אימייל, המשתתף לא מחובר לחשבון גוגל');

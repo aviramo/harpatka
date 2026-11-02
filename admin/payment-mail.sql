@@ -51,12 +51,7 @@ begin
   vars := jsonb_build_object('_pid', p_pid, '_mid', p_mid, 'first_name', coalesce(nullif(pa.first_name, ''), pa.name, ''), 'when', whn, 'paid', paid_txt, 'rem', coalesce('₪' || trim_scale(p_rem)::text, ''),
     'name_block', name_b, 'where_block', where_b, 'credit_block', credit_b, 'dir_block', dir_b,
     'me_link', 'https://harpatka.co.il/me/?m=' || p_mid, 'wa_hadar', 'https://wa.me/972546163012', 'wa_ofir', 'https://wa.me/972587078708');
-  if em is null then
-    perform __S__.harpatka_mail_record(case when p_partial then 'payment_partial' else 'payment_confirmed' end, vars, null, null, null, 'failed', 'אין אימייל, המשתתף לא מחובר לחשבון גוגל');
-    return false;
-  end if;
-  perform __S__.harpatka_send_mail(case when p_partial then 'payment_partial' else 'payment_confirmed' end, vars, em);
-  return true;
+  return __S__.harpatka_mail_close(case when p_partial then 'payment_partial' else 'payment_confirmed' end, p_pid, p_mid, vars, em);
 exception when others then
   return false;   -- כשל במייל לא מבטל את התשלום
 end $f$;

@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104dt" />
+  <link rel="stylesheet" href="admin.css?v=20261104du" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1030,7 +1030,7 @@
     if (sheet.depLock && Date.now() < sheet.depLock) { sheetSig = ''; setTimeout(refreshOpenSheet, Math.max(100, sheet.depLock - Date.now() + 50)); return; }   // באמצע מעבר בין משלם / לא לתשלום / חוב: לא מציירים מחדש מנתוני ביניים
     /* חתימה של כל מה שמוצג בכרטיס המשתתף: הערות, שיוכים וסטטוסים, תשלומים והקצאות, ופרטי המשתתף; כשמשהו מזה משתנה (גם ממנהל אחר) הכרטיס והמסך הפתוח מתעדכנים בזמן אמת */
     const pid = sheet.id, pp = state.participants.find((x) => x.id === pid) || {};
-    const sig = notesOf(pid).map((n) => n.id + (n.mail_id || '') + (n.mail_failed ? '!' : '')).join(',') + '|' + state.att.filter((a) => a.participant_id === pid).map((a) => [a.meeting_id, a.paid, a.exempt, a.pay_requested_at, a.attended, a.paid_amount, a.details_sent_at, a.will_pay, a.maybe, a.status_key, a.meeting_key, a.no_pay, a.pay_reported_at, a.pay_reported_amount, a.pay_due_amount, a.pay_closed_at].join(':')).join(',')
+    const sig = notesOf(pid).map((n) => n.id + (n.mail_id || '') + (n.mail_failed ? (n.mail_noaddr ? '?' : '!') : '')).join(',') + '|' + state.att.filter((a) => a.participant_id === pid).map((a) => [a.meeting_id, a.paid, a.exempt, a.pay_requested_at, a.attended, a.paid_amount, a.details_sent_at, a.will_pay, a.maybe, a.status_key, a.meeting_key, a.no_pay, a.pay_reported_at, a.pay_reported_amount, a.pay_due_amount, a.pay_closed_at].join(':')).join(',')
       + '|' + state.payments.filter((x) => x.participant_id === pid).map((x) => [x.id, x.kind, x.amount, x.method, x.meeting_id, x.from_credit].join(':')).join(',')
       + '|' + [pp.name, pp.phone, pp.age, pp.gender, pp.promoter_id, pp.source_code, (pp.tags || []).join('+'), pp.active].join(':');
     if (sig === sheetSig) return; sheetSig = sig;
@@ -1094,7 +1094,7 @@
         api(T.p + '?select=*'),
         api(T.m + '?select=*'),
         api(T.a + '?select=meeting_key,participant_id,meeting_id,paid,pay_requested_at,status_key,created_at,exempt,attended,paid_amount,promoter_id,commission,paid_at,details_sent_at,will_pay,maybe,no_pay,pay_reported_at,pay_reported_amount,pay_due_amount,pay_closed_at'),
-        api(T.n + '?select=id,participant_id,body,author_email,author_name,created_at,has_image,system,event_type,old_status,new_status,meeting_id,amount,mail_id,mail_failed&order=created_at.desc'),
+        api(T.n + '?select=id,participant_id,body,author_email,author_name,created_at,has_image,system,event_type,old_status,new_status,meeting_id,amount,mail_id,mail_failed,mail_noaddr&order=created_at.desc'),
         api(T.pr + '?select=*&order=name.asc'),
         api(T.pp + '?select=*&order=paid_at.desc'),
         api(T.pay + '?select=*&order=created_at.desc'),
@@ -2743,7 +2743,7 @@
     sheet.nOpen = sheet.nOpen || new Set();
     const meta = (n) => '<span><bdi>' + esc(noteAuthor(n.author_email, n.author_name)) + '</bdi> · ' + esc(fmtDT(n.created_at)) + '</span>' + (n.system ? '' : '<button type="button" class="ndel" data-del="' + n.id + '" aria-label="מחיקת הערה" title="מחיקת הערה">מחיקה</button>');   // השורה שנפתחת מתחת להערה: שם · מועד מדויק
     list.innerHTML = ns.length ? ns.map((n) => '<div class="nitem' + (n.system ? ' sys' : '') + ' fold' + (n.has_image ? ' img' : '') + (sheet.nOpen.has(n.id) ? ' open' : '') + '" data-nid="' + n.id + '"' + (n.event_type ? ' data-ev="' + esc(n.event_type) + '"' : '') + (n.new_status ? ' data-st="' + esc(n.new_status) + '"' : '') + '>' +
-      ('<div class="nrow"><div class="ntext' + (n.system && sysChips(n) ? ' chips' : '') + '">' + (n.has_image ? '<a class="nimg" data-img="' + n.id + '"><div class="nload">טוען תמונה…</div></a>' : ((n.system && sysChips(n)) || '<span class="nch ' + (n.system ? 'nn' : 'nw') + '">' + noteTextHtml(n.body) + '</span>')) + (n.mail_id ? NARW + '<button type="button" class="nmail' + (n.mail_failed ? ' bad' : '') + '" data-mail="' + n.mail_id + '">' + (n.mail_failed ? icon('warn', 'i16') + 'המייל לא נשלח' : 'מייל') + '</button>' : '') + '</div><span class="nch nago"><span class="nagot" data-ts="' + esc(n.created_at) + '">' + agoText(n.created_at) + '</span></span></div><div class="nmeta"><div class="nmetai">' + meta(n) + '</div></div>') + '</div>').join('')
+      ('<div class="nrow"><div class="ntext' + (n.system && sysChips(n) ? ' chips' : '') + '">' + (n.has_image ? '<a class="nimg" data-img="' + n.id + '"><div class="nload">טוען תמונה…</div></a>' : ((n.system && sysChips(n)) || '<span class="nch ' + (n.system ? 'nn' : 'nw') + '">' + noteTextHtml(n.body) + '</span>')) + (n.mail_id ? NARW + '<button type="button" class="nmail' + (n.mail_failed ? ' bad' + (n.mail_noaddr ? ' noacc' : '') : '') + '" data-mail="' + n.mail_id + '">' + (n.mail_failed ? icon('warn', 'i16') + 'המייל לא נשלח' : 'מייל') + '</button>' : '') + '</div><span class="nch nago"><span class="nagot" data-ts="' + esc(n.created_at) + '">' + agoText(n.created_at) + '</span></span></div><div class="nmeta"><div class="nmetai">' + meta(n) + '</div></div>') + '</div>').join('')
       : '<p class="mnone">עוד אין הערות. אפשר לרשום למעלה מה דיברתם, מה הוחלט ומה צריך לזכור, או לצרף צילום מסך משיחה</p>';
     list.querySelectorAll('[data-img]').forEach(loadNoteImg);
   }
@@ -3299,12 +3299,14 @@
       const [r] = await api(T.ml + '?id=eq.' + id + '&select=subject,to_addr,sent_at,html,status,error', { ui: false });
       if (!sheet || sheet.mailId !== id) return;
       if (!r) { meta.textContent = 'המייל לא נמצא'; return; }
-      meta.innerHTML = (r.status === 'failed' ? '<div class="mailbad">' + icon('warn', 'i16') + '<span>המייל לא נשלח' + (r.error ? ': ' + esc(r.error) : '') + '</span></div>' : '') + '<b>' + esc(r.subject || '') + '</b><span>' + (r.to_addr ? 'אל <bdi dir="ltr">' + esc(r.to_addr) + '</bdi> · ' : '') + '<bdi dir="ltr">' + esc(fmtDT(r.sent_at)) + '</bdi></span>';
+      meta.innerHTML = (r.status === 'failed' ? '<div class="mailbad' + (/^אין אימייל/.test(r.error || '') ? ' noacc' : '') + '">' + icon('warn', 'i16') + '<span>המייל לא נשלח' + (r.error ? ': ' + esc(r.error) : '') + '</span></div>' : '') + '<b>' + esc(r.subject || '') + '</b><span>' + (r.to_addr ? 'אל <bdi dir="ltr">' + esc(r.to_addr) + '</bdi> · ' : '') + '<bdi dir="ltr">' + esc(fmtDT(r.sent_at)) + '</bdi></span>';
       fr.onload = () => { try { fr.style.height = fr.contentDocument.documentElement.scrollHeight + 'px'; } catch (e) {} };
       if (!r.html) return;   // מייל שלא נשלח לפני שנבנה (למשל בלי אימייל): רק הסיבה
       fr.hidden = false; fr.srcdoc = '<!doctype html><base target="_blank">' + r.html;   // ה-HTML כפי שנשלח; base רק כדי שקישורים ייפתחו בלשונית חדשה
     } catch (err) { meta.textContent = 'לא ניתן לטעון את המייל'; fail(err); }
   }
+  /* המייל לא קולט נגיעות (pointer-events), כדי שגלילה והחלקה למטה לסגירה יעבדו מכל מקום בפופאפ; קישורים שבתוכו נפתחים מכאן */
+  $('[data-panel="mail"]').addEventListener('click', (e) => { const fr = $('#mailFrame'); if (fr.hidden) return; const b = fr.getBoundingClientRect(); if (e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom) return; let a = null; try { const el = fr.contentDocument.elementFromPoint(e.clientX - b.left, e.clientY - b.top); a = el && el.closest('a[href]'); } catch (x) {} if (a) window.open(a.href, '_blank', 'noopener'); });
   const toMain = () => { viewStack = []; setPTab('main'); };
 
   /* מעטפת אחת לכל הפופאפים (משתתף, מפגש, סטטיסטיקה, אישור): עולים מלמטה, נסגרים באנימציה,
