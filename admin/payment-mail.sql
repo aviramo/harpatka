@@ -47,13 +47,7 @@ begin
     if bal > 0 then credit_b := '<div style="font-size:15px;color:#4A3D33;margin-top:4px">נשאר לך קרדיט של ₪' || trim_scale(bal)::text || '</div>'; end if;
   end if;
   -- הוראות הגעה: טקסט מוגן, שורות, וקישור לתמונה או לסרטון כ"לפתיחה"
-  dirs := trim(replace(coalesce(mt.directions, ''), chr(13), ''));
-  if dirs <> '' then
-    dh := replace(__S__.harpatka_pm_esc(dirs), chr(10), '<br>');
-    dh := regexp_replace(dh, '(https?://[^\s<]+/storage/v1/object/public/meeting-media/[^\s<]+)', '<a href="\1" style="color:#C8411B;font-weight:bold">לפתיחה</a>', 'g');
-    dh := regexp_replace(dh, '(^|\s|>)(https?://[^\s<]+)', '\1<a href="\2" style="color:#C8411B;font-weight:bold">\2</a>', 'g');
-    dir_b := '<div style="font-size:16px;font-weight:bold;margin-bottom:6px">איך מגיעים</div><div style="font-size:16px;line-height:1.6;margin-bottom:18px">' || dh || '</div>';
-  end if;
+  dir_b := __S__.harpatka_mail_directions(p_mid);
   vars := jsonb_build_object('_pid', p_pid, '_mid', p_mid, 'first_name', coalesce(nullif(pa.first_name, ''), pa.name, ''), 'when', whn, 'paid', paid_txt, 'rem', coalesce('₪' || trim_scale(p_rem)::text, ''),
     'name_block', name_b, 'where_block', where_b, 'credit_block', credit_b, 'dir_block', dir_b,
     'me_link', 'https://harpatka.co.il/me/?m=' || p_mid, 'wa_hadar', 'https://wa.me/972546163012', 'wa_ofir', 'https://wa.me/972587078708');

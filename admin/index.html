@@ -552,7 +552,7 @@
     if (!urlReady) return;
     const sp = new URLSearchParams();
     if (state.mtype) sp.set('mt', state.mtype);   // סוג המפגש שנבחר בתפריט המפגשים
-    if (state.filter) sp.set('m', state.filter);
+    { const nm0 = nextMeetingOf(); if (state.filter) { if (!nm0 || nm0.id !== state.filter) sp.set('m', state.filter); } else if (!state.mtype && nm0) sp.set('m', 'all'); }   // כתובת בלי מפגש = המפגש הקרוב, ולכן הוא לא נכתב בכתובת; "כל המשתתפים" שנבחר במפורש הוא m=all
     if (state.pay) sp.set('pay', state.pay);
     if (state.paidF) sp.set('pd', state.paidF);
     if (state.sent) sp.set('sv', state.sent);
@@ -843,7 +843,6 @@
   /* המפגש הקרוב: הראשון שעוד לא עבר (לפי תאריך ושעה). בטעינה הראשונה של הדף נפתחים עליו, אלא אם הגיעו בקישור עמוק או שבחרו במפורש "כל המשתתפים" (נשמר בלשונית, ולכן גם רענון משאיר את הבחירה) */
   const nextMeetingOf = () => state.meetings.filter((m) => !isPast(m)).sort((a, b) => (a.meeting_date + a.meeting_time).localeCompare(b.meeting_date + b.meeting_time))[0] || null;
   let autoMeetDone = false;
-  const allChosen = (v) => { try { if (v === undefined) return sessionStorage.getItem('harpatka_all_chosen') === '1'; if (v) sessionStorage.setItem('harpatka_all_chosen', '1'); else sessionStorage.removeItem('harpatka_all_chosen'); } catch (e) {} return false; };
   /* המפגש שעליו מסמנים הגעה ברשימה הראשית: המפגש שנבחר בכותרת, אחרת הקרוב ביותר (או של היום) */
   /* מחיר ברירת מחדל לפי מועד התשלום: 80 ₪ עד יומיים לפני ההתייקרות, ומשלושה ימים לפני המפגש 100 ₪ */
   /* מדרגות מחיר לכל מפגש (העמודה price_tiers, מועתקת למפגש חדש מהמפגש הקודם): { base, steps: [{ days, price }], final }.
@@ -1132,7 +1131,7 @@
       if (mem0) applyMembers(mem0);   // מצב חשבון הגוגל של כל משתתף (סמל ליד השם, סינון "אזור אישי"), לפני הציור
       if (!silent) { $('#status').innerHTML = ''; document.documentElement.classList.remove('is-loading'); }   // הנתונים הגיעו: יוצאים ממצב הטעינה (הציור באותו רגע, גם בקישור עמוק)
       setTimeout(prefetchNoteImages, 1500);   // טעינה מוקדמת של צילומי ההערות למטמון
-      if (!silent && !autoMeetDone) { autoMeetDone = true; if (!deep && !allChosen()) { const nm = nextMeetingOf(); if (nm) state.filter = nm.id; } }   // בטעינה הראשונה נפתחים על המפגש הקרוב
+      if (!silent && !autoMeetDone) { autoMeetDone = true; if (!(deep && (deep.m || deep.mt))) { const nm = nextMeetingOf(); if (nm) state.filter = nm.id; } }   // כתובת בלי מפגש ובלי סוג מפגש נפתחת על המפגש הקרוב
       if (deep) {
         const d = deep; deep = null;
         try { sessionStorage.removeItem('harpatka_deep'); } catch (e) {}
@@ -4195,7 +4194,7 @@
     const et = e.target.closest('[data-edit-t]');
     if (et) { closeMSel(); return openTypeEditor(et.dataset.editT); }
     { const picked = e.target.closest('[data-filter], [data-mt]'); if (picked && !e.target.closest('[data-edit-t], [data-edit-m]') && picked.getAttribute('aria-checked') === 'true') { closeMSel(); return; } }   // לחיצה נוספת על מה שכבר נבחר סוגרת את התפריט
-    const ty = e.target.closest('[data-mt]');    if (ty) { allChosen(false); state.mtype = ty.dataset.mt; state.filter = null; render(); return; }   // בחירת סוג: תצוגה כמו "כל המשתתפים" מסוננת לסוג, והתפריט מציג רק את המפגשים שלו
+    const ty = e.target.closest('[data-mt]');    if (ty) { state.mtype = ty.dataset.mt; state.filter = null; render(); return; }   // בחירת סוג: תצוגה כמו "כל המשתתפים" מסוננת לסוג, והתפריט מציג רק את המפגשים שלו
     const ed = e.target.closest('[data-edit-m]');
     if (ed) { closeMSel(); return openMeeting(ed.dataset.editM); }
     const c = e.target.closest('[data-filter]');
@@ -4204,7 +4203,6 @@
   });
   const pickFilter = (id) => {
     state.filter = id;
-    allChosen(!state.filter);   // "כל המשתתפים" שנבחר במפורש נשמר בלשונית (רענון לא קופץ למפגש הקרוב)
     state.mtype = null;   // בחירה אחת בלבד בתפריט: כל המשתתפים, סוג מפגש או מפגש (בחירת מפגש מבטלת את בחירת הסוג)
     render();
   };

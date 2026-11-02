@@ -845,7 +845,7 @@
     requestAnimationFrame(() => requestAnimationFrame(() => meSheet.classList.add('open')));
     { const fr = meSheet.querySelector('iframe'), fp = () => { try { if (!meSheet.hidden && fr.contentWindow.harpatkaFocusPhone) fr.contentWindow.harpatkaFocusPhone(); } catch (e) {} };   // שלב הטלפון: הפוקוס בשדה והמקלדת עולה; באייפון רק מיד בתוך הלחיצה, ובשאר אחרי שהפופאפ סיים לעלות
       if (/iP(hone|ad|od)/.test(navigator.userAgent)) fp(); else setTimeout(fp, 380); }
-    if (!meSheetPush && !EMB) { try { history.pushState({ meSheet: 1 }, ''); meSheetPush = true; } catch (e) {} }
+    if (!meSheetPush && !EMB) { try { if (AS) history.pushState({ meSheet: 1 }, ''); else history.pushState({ meSheet: 1 }, '', BASE + 'me' + (search || '')); meSheetPush = true; } catch (e) {} }   // כשהפופאפ פתוח הכתובת היא /me, ובסגירה חוזרת למה שהיתה (רענון ב-/me פותח אותו שוב)
   }
   document.addEventListener('click', (e) => {   // קישור לאזור האישי (כרטיס האזור האישי, כפתור המפגש, קישורי ההרשמה): פותחים את הפופאפ במקום לעבור לדף
     const a = e.target.closest && e.target.closest('a[href]'); if (!a || e.defaultPrevented || e.button || e.ctrlKey || e.metaKey || e.shiftKey || a.target === '_blank') return;

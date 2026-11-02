@@ -91,6 +91,7 @@ begin
       when 'payment_rejected' then array['payment_rejected']
       when 'payment_refunded' then array['refund']
       when 'meeting_removed' then array['meeting_removed']
+      when 'place_saved' then array['free_on']
       else array[]::text[] end;
     begin
       select n.id into nid from __S__.harpatka_notes n
