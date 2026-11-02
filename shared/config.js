@@ -21,6 +21,6 @@ const CONFIG = {
     const [, mo, d] = String(m.date).split('-').map(Number), wd = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'][new Date(m.date + 'T12:00:00Z').getUTCDay()];
     const when = 'יום ' + wd + ' ' + d + '.' + mo + (m.time ? ' · ' + String(m.time).slice(0, 5) : ''), where = [m.city, m.place].map((x) => String(x || '').trim()).filter(Boolean).join(' · '), n = Number(m.max) || 0;
     const ppl = n ? '<span class="mbox-ppl" aria-label="' + n + ' משתתפים" title="' + n + ' משתתפים">' + (where ? '<i aria-hidden="true">·</i>' : '') + '<b aria-hidden="true">' + n + '</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg></span>' : '';
-    return '<div class="mbox">' + (m.img ? '<img class="mbox-img" src="' + esc(m.img) + '" alt="" decoding="async">' : '') + '<div class="mbox-in">' + (m.name ? '<div class="mbox-name">' + esc(m.name) + '</div>' : '') + '<div class="mbox-when">' + esc(when) + '</div>' + (where || n ? '<div class="mbox-where">' + esc(where) + ppl + '</div>' : '') + (extra || '') + '</div></div>';
+    return '<div class="mbox"><div class="mbox-in">' + (m.name ? '<div class="mbox-name">' + esc(m.name) + '</div>' : '') + '<div class="mbox-when">' + esc(when) + '</div>' + (where || n ? '<div class="mbox-where">' + esc(where) + ppl + '</div>' : '') + (extra || '') + '</div></div>';
   },
 };

@@ -788,7 +788,7 @@
     if (m && m.date) { const [, mo, d] = String(m.date).split('-').map(Number), wd = HE_DAYS[new Date(m.date + 'T12:00:00Z').getUTCDay()]; info = 'יום ' + wd + ' ' + d + '.' + mo + (m.time ? ' בשעה ' + m.time : ''); }
     const text = 'היי, אני רוצה להעביר את התשלום בדרך אחרת למפגש ביום ' + info.replace(/^יום /, '');
     const wa = (num) => 'https://wa.me/' + num + '?text=' + encodeURIComponent(text);
-    dlg.querySelector('#otherInfo').innerHTML = m && m.date ? CONFIG.meetingBox(Object.assign({}, m, { name: m.name || defMeetingName, img: '' })) : '';
+    dlg.querySelector('#otherInfo').innerHTML = m && m.date ? CONFIG.meetingBox(Object.assign({}, m, { name: m.name || defMeetingName })) : '';
     dlg.querySelector('#otherHadar').href = wa(CONFIG.whatsappHadar); dlg.querySelector('#otherOfir').href = wa(CONFIG.whatsappOfir);
     openModal(dlg, true);
   }
@@ -922,7 +922,7 @@
   let defMeetingName = '';   // שם ברירת המחדל למפגש (harpatka_public_settings)
   const showMeeting = (m) => {
     setSubmitLabel(m);
-    { const nm = m ? '' : defMeetingName, box = m && m.date ? CONFIG.meetingBox(Object.assign({}, m, { name: m.name || defMeetingName, img: '' })) : ''; document.querySelectorAll('[data-meeting-name]').forEach((e) => { e.textContent = nm; e.hidden = !nm; }); document.querySelectorAll('[data-meeting-box]').forEach((e) => { if (e.__box !== box) { e.__box = box; e.innerHTML = box; } }); }   // פרטי המפגש במסגרת; אין מפגש: רק שם ברירת המחדל
+    { const nm = m ? '' : defMeetingName, box = m && m.date ? CONFIG.meetingBox(Object.assign({}, m, { name: m.name || defMeetingName })) : ''; document.querySelectorAll('[data-meeting-name]').forEach((e) => { e.textContent = nm; e.hidden = !nm; }); document.querySelectorAll('[data-meeting-box]').forEach((e) => { if (e.__box !== box) { e.__box = box; e.innerHTML = box; } }); }   // פרטי המפגש במסגרת; אין מפגש: רק שם ברירת המחדל
     if (!m) { document.querySelectorAll('[data-price]').forEach((e) => { e.textContent = priceFor(999, null) + ' ₪'; }); return; }
     document.querySelectorAll('[data-meeting-place]').forEach((e) => { e.textContent = CONFIG.meetingPlace || ''; });
     const left = dayN(m.date) - dayN(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()));

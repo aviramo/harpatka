@@ -8,7 +8,7 @@
 <title>האזור האישי | יוצאים להרפתקה</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&family=Rubik:wght@500;700;800&display=block" rel="stylesheet" />
-<link rel="stylesheet" href="../shared/meeting-box.css?v=1" />
+<link rel="stylesheet" href="../shared/meeting-box.css?v=2" />
 <link rel="stylesheet" href="../shared/site.css?v=20261103o" />
 <script>try { if (window.self !== window.top && /[?&]embed=/.test(location.search)) document.documentElement.classList.add('embed'); } catch (e) {}</script>   <!-- בפופאפ: הרקע הטורקיז כבר בציור הראשון -->
 </head>
@@ -25,7 +25,7 @@
     <button type="button" class="btn ghost" id="otherClose">סגירה</button>
   </dialog>
 </div>
-<script src="../shared/config.js?v=20261103a"></script>
+<script src="../shared/config.js?v=20261103b"></script>
 <script src="../shared/rt.js?v=1"></script>
 <script src="../shared/person-form.js?v=20261103a"></script>
 <script>
@@ -195,7 +195,7 @@
       }
       if (m.future) { const sure = unregSure === m.id; foot += '<button type="button" class="lnk sm" data-unreg="' + m.id + '"' + (sure ? ' data-sure="1"' : '') + '>' + (sure ? UNREG_SURE : 'ביטול רישום') + '</button><div class="msg" data-um="' + m.id + '"></div>'; }
       /* אותו רכיב כמו בפופאפים ובדף הבית, עם המצב והתשלום בתוך המסגרת. מפגש שעבר: בלי תמונה ובלי כמות משתתפים */
-      return '<div class="mtg" data-mid="' + m.id + '">' + CFG.meetingBox(m.future ? m : Object.assign({}, m, { img: '', max: 0 }), '<div class="mts">' + att + pay + '</div>' + (foot ? '<div class="mtfoot">' + foot + '</div>' : '')) + '</div>';
+      return '<div class="mtg" data-mid="' + m.id + '">' + CFG.meetingBox(m.future ? m : Object.assign({}, m, { max: 0 }), '<div class="mts">' + att + pay + '</div>' + (foot ? '<div class="mtfoot">' + foot + '</div>' : '')) + '</div>';
     };
     // רק המפגשים שנרשמתי אליהם (מהחדש לישן); הרשמה למפגש חדש נעשית מדף הבית
     const mine = ordered.filter((m) => m.registered);
@@ -266,7 +266,7 @@
       const info = fmtDate(m.date) + ' בשעה ' + m.time + (m.city ? ' (' + m.city + ')' : '') + (m.name ? ', ' + m.name : '');
       const text = 'היי, אני רוצה להעביר את התשלום בדרך אחרת למפגש ביום ' + info.replace(/^יום /, '');
       const wa = (num) => 'https://wa.me/' + num + '?text=' + encodeURIComponent(text);
-      $('#otherInfo').innerHTML = CFG.meetingBox(Object.assign({}, m, { img: '' }));
+      $('#otherInfo').innerHTML = CFG.meetingBox(m);
       $('#otherHadar').href = wa(CFG.whatsappHadar); $('#otherOfir').href = wa(CFG.whatsappOfir);
       $('#otherDlg').showModal();
     }; });
