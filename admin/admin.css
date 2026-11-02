@@ -333,7 +333,10 @@ body:has(#status .empty) .ststrip, body:has(#status .empty) .vbar { display: non
 h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-height: 1.2; }
 #mSel { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
 #mSel svg { width: 18px; height: 18px; color: var(--text); transition: transform .2s; }
-#mSel[aria-expanded="true"] svg { transform: rotate(180deg); }
+#mSel[aria-expanded="true"] > svg { transform: rotate(180deg); }
+.mseln { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; color: var(--text-2); font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }   /* אחרי הכותרת: נקודה, סמל משתתף וכמות */
+.mseln i { font-style: normal; margin-inline-end: 4px; }
+#mSel .mseln svg { width: 16px; height: 16px; color: var(--text-3); }
 .hgrp { display: flex; align-items: center; gap: 8px; }
 #listTags { display: flex; align-items: center; gap: 8px; }
 .hicons { position: relative; display: flex; }
@@ -384,6 +387,7 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 .list .empty { padding: 32px var(--gut); }
 .row { position: relative; border-bottom: 1px solid var(--line); background: var(--bg); cursor: pointer; transition: background .12s; }
 @media (hover: hover) { .row:hover { background: var(--surface); } }
+.row.last { background: var(--surface); }   /* המשתתף שהפופאפ שלו נסגר, עד הלחיצה הבאה במסך */
 .row.other .name { color: var(--text-2); }
 /* עמודות: גיל ומגדר | שם | (הערה, מוסתר) | תגיות | סטטוס או התמדה | מחוונים */
 .row .main { display: grid; grid-template-columns: var(--agecol) minmax(0, 1fr) 0 auto auto; column-gap: 8px; align-items: center; min-height: var(--ctl); padding: 8px var(--gut); padding-inline-end: calc(var(--gut) + var(--tag) + 8px); cursor: pointer; }   /* עמודת הוואטסאפ (.rowwa) בקצה השמאלי, אחרי כל העמודות */
@@ -1013,7 +1017,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 /* מצב טעינה (31.10.26): בכותרת רק "טוען" ושלוש נקודות, בלי הקו של הכותרת ובלי שום דבר מתחתיה */
 #mSel .mldg { display: none; }
 html.is-loading #mSel .mldg { display: inline-flex; align-items: baseline; }
-html.is-loading #mSelTxt, html.is-loading #mSel svg, html.is-loading #hereCount { display: none; }
+html.is-loading #mSelTxt, html.is-loading #mSelN, html.is-loading #mSel svg, html.is-loading #hereCount { display: none; }
 html.is-loading #mSel { pointer-events: none; }
 html.is-loading .wrap > header.top { border-bottom-color: transparent; }
 html.is-loading .wrap > :not(header) { display: none !important; }

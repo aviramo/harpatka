@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104de" />
+  <link rel="stylesheet" href="admin.css?v=20261104dg" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -28,7 +28,7 @@
       <div class="title-row">
         
         <div class="msel">
-          <h1><button type="button" id="mSel" aria-haspopup="menu" aria-expanded="false"><span class="mldg" aria-hidden="true">טוען<b>.</b><b>.</b><b>.</b></span><span id="mSelTxt">הכל</span><svg data-i="chev"></svg></button></h1>
+          <h1><button type="button" id="mSel" aria-haspopup="menu" aria-expanded="false"><span class="mldg" aria-hidden="true">טוען<b>.</b><b>.</b><b>.</b></span><span id="mSelTxt">הכל</span><span id="mSelN" class="mseln"></span><svg data-i="chev"></svg></button></h1>
           
           <div class="sortmenu mmenu" id="mMenu" role="menu" hidden></div>
         </div>
@@ -1191,6 +1191,8 @@
        בסוג: המשתתפים הפעילים שמשויכים לאחד המפגשים שלו */
     const actP = state.participants.filter((x) => x.active !== false);
     const pOfType = (tid) => { const ms = new Set(state.meetings.filter((m) => typeIdOf(m) === tid).map((m) => m.id)); const ids = new Set(state.att.filter((a) => ms.has(a.meeting_id)).map((a) => a.participant_id)); return actP.filter((x) => ids.has(x.id)).length; };
+    /* בכותרת, בכל המצבים: נקודה וכמות המשתתפים המשויכים, אותו מספר כמו בתפריט (לא תלוי בסינונים; מה שמוצג אחרי סינון הוא המונה שבשורת הסינון) */
+    { const n = cur ? state.att.filter((a) => a.meeting_id === cur.id).length : state.mtype && typeById(state.mtype) ? pOfType(state.mtype) : actP.length; $('#mSelN').innerHTML = '<i aria-hidden="true">·</i>' + icon('user', 'i16') + n; $('#mSel').setAttribute('aria-label', $('#mSelTxt').textContent + ', ' + n + ' משתתפים'); }
     const mcell = (n, k, dim) => '<span class="mc' + (dim ? ' dim' : '') + '" title="' + MCI[k][1] + '" aria-label="' + MCI[k][1] + ' ' + n + '"><i class="mci" aria-hidden="true">' + MCI[k][0] + '</i>' + n + '</span>';   // הסמל מימין למספר, כל הסמלים בעמודה על אותו קו אנכי
     /* סוגי המפגשים לפי המפגש האחרון שלהם (התאריך והשעה המאוחרים ביותר, גם עתידי): הסוג של המפגש האחרון ראשון; סוג בלי מפגשים בסוף, לפי הסדר הקבוע */
     const lastOfType = (tid) => state.meetings.reduce((mx, m) => typeIdOf(m) === tid ? Math.max(mx, Date.parse(m.meeting_date + 'T' + String(m.meeting_time || '00:00').slice(0, 5)) || 0) : mx, -1);
@@ -2882,7 +2884,7 @@
     const sel = e.target.closest('select'); if (!sel || !sheet || !sheet.id || !sheet.depMid || !sheet.modeApi) return;
     const to = sel.value; sel.selectedIndex = -1; if (!to) return;
     const mapi = sheet.modeApi, pid = sheet.id, mid = sheet.depMid;
-    if (to === 'close') {   // סגירת תשלום: ההקצאה נמוכה מעלות הכרטיס, ומה שנשאר לשלם נמחק: המפגש נחשב שולם (כמו "הנחה, המפגש סגור" בזמן התשלום)
+    if (to === 'close') {   // סגירת תשלום: ההקצאה נמוכה מעלות הכרטיס, ומה שנשאר לשלם נמחק: המפגש נחשב שולם, ונשלח מייל "התשלום התקבל" (בשרת: רק אם באמת שולם, ולמפגש שלא עבר)
       const cl = linkOf(pid, mid), ca = Math.round(allocatedOf(pid, mid) * 100) / 100, cd = dueOf(pid, mid);
       confirmAct('לסגור את התשלום?', pid, mid, async () => {
         try {
@@ -2892,9 +2894,10 @@
             const [nr] = await api(T.n, { method: 'POST', body: { participant_id: pid, body: 'נסגר התשלום, בלי ₪' + cd + ' שנשארו לשלם', system: true, event_type: 'payment_closed', meeting_id: mid, amount: cd, author_email: emailOf(), author_name: senderName() }, prefer: 'return=representation' });
             if (nr && !state.notes.some((x) => x.id === nr.id)) { state.notes.push(nr); rebuildNotes(); }
           } catch (e0) { console.error(e0); }   // התשלום נסגר גם אם ההערה לא נשמרה
-          toast('התשלום נסגר'); closePayCard(); refreshOpenSheet(); render();
+          let ml = ''; try { ml = await api('rpc/harpatka_close_payment_mail', { method: 'POST', body: { p_pid: pid, p_mid: mid } }); } catch (e1) { console.error(e1); }   // התשלום נסגר גם אם המייל נכשל
+          toast(ml === 'sent' ? 'התשלום נסגר ונשלח מייל למשתתף' : ml === 'no_email' ? 'התשלום נסגר. למשתתף אין חשבון מחובר, לכן לא נשלח מייל' : 'התשלום נסגר'); closePayCard(); refreshOpenSheet(); render();
         } catch (e) { fail(e); }
-      }, 'שולמו <b>' + ils(ca) + '</b>. <b>' + ils(cd) + '</b> שנשארו לשלם יימחקו, והמפגש ייחשב כשולם.', 'כן, לסגור את התשלום', null, { green: true });
+      }, 'שולמו <b>' + ils(ca) + '</b>. <b>' + ils(cd) + '</b> שנשארו לשלם יימחקו, והמפגש ייחשב כשולם.' + (isPast(state.meetings.find((x) => x.id === mid) || {}) ? '' : ' המשתתף יקבל מייל שהתשלום התקבל, אם יש לו חשבון מחובר.'), 'כן, לסגור את התשלום', null, { green: true });
       return;
     }
     if (to === 'reject') {   // דחיית דיווח: מנקה את הדיווח, מסמנת דחייה (הערת מערכת, מייל למשתתף ושינוי באזור האישי ובדף הבית דרך הטריגר בבסיס הנתונים)
@@ -3141,12 +3144,12 @@
     allocUnmount();
     if (!sheet) return;
     sheet.depMid = null; sheet.modeApi = null; sheet.paintMeth = null; sheet.refundSync = null;
-    if (pDlg.open) { refreshSheetMeetings(); renderNotes(); if (pTab === 'wallet') renderWallet(); } else sheet = null;   // נפתח מהרשימה: אין כרטיס מאחור
+    if (pDlg.open) { refreshSheetMeetings(); renderNotes(); if (pTab === 'wallet') renderWallet(); } else { lastPid = sheet && sheet.id || null; sheet = null; markSel(); }   // נפתח מהרשימה: אין כרטיס מאחור
     render();
   });
   allocDlg.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.name && e.target.name.startsWith('pay_')) { e.preventDefault(); if (allocHome && allocHome.key === 'credit') { if (!$('#creditRefundBtn').disabled) $('#creditRefundBtn').click(); } else $('#depSave').click(); } });
   const closePayCard = () => { if (allocDlg.open) allocDlg.close(); };   // אחרי תשלום או הקצאה פופאפ ההקצאה נסגר, וכרטיס המשתתף (אם פתוח) נשאר כמו שהוא
-  const depSaveRun = async (dueAmt) => {   // dueAmt: נשאר לשלם על המפגש (לא הנחה)
+  const depSaveRun = async (dueAmt) => {   // dueAmt: נשאר לשלם על המפגש
     const f = pForm, pid = sheet && sheet.id; const amt = parseFloat(f.pay_dep.value); if (!pid) return;
     const dueMeta = dueAmt > 0 ? { reason: 'partial_due:' + dueAmt } : null, setDue = (mid) => { const l = linkOf(pid, mid); if (l) l.pay_due_amount = dueMeta ? dueAmt : null; };
     if (!(amt > 0)) { f.pay_dep.focus(); return; }
@@ -3190,13 +3193,10 @@
     const mid = sheet.depMid || null, mt = f.pay_depm.value, pm = state.payMethods.find((x) => x.key === mt);
     const src = sheet.depCr && mid ? 'מהיתרה' : (mt === 'other' ? (f.pay_depn.value.trim() || 'אחר') : (pm ? pm.name : mt));
     const html = 'סכום: <b>' + ils(amt) + '</b><br>' + (sheet.depCr && mid ? 'ירד מהיתרה של המשתתף' : 'דרך: <b>' + esc(src) + '</b>') + (mid ? '' : '<br>התשלום ייכנס ליתרה של המשתתף');
-    /* פחות ממה שנשאר לשלם על המפגש: הנחה (המפגש סגור) או נשאר לשלם (המשתתף רואה כפתור תשלום על השארית). בחבילה אין שאלה */
+    /* פחות ממה שנשאר לשלם על המפגש: תמיד נשאר לשלם (המשתתף רואה כפתור תשלום על השארית), ואם זו הנחה סוגרים אחר כך ב"סגירת תשלום". לא בחבילה */
     const mo = mid && !(parseInt(f.pay_pkg.value, 10) >= 2) ? state.meetings.find((x) => x.id === mid) : null, owe = mo ? oweOf(pid, mo) : 0, rem = Math.round((owe - amt) * 100) / 100;
-    if (rem > 0) {
-      confirmAct(sheet.depCr ? 'אישור הקצאה למפגש' : 'אישור תשלום למפגש', pid, mid, () => depSaveRun(), html + '<br>נשאר לשלם על המפגש: <b>' + ils(owe) + '</b>. אם זו הנחה, המפגש נסגר. אם נשאר לשלם, המשתתף יראה כפתור תשלום על <b>' + ils(rem) + '</b>.', 'הנחה, המפגש סגור', { label: 'נשאר לשלם ₪' + nfm(rem), fn: () => depSaveRun(rem) }, (sheet.depCr && mid) ? { yellow: true } : { green: true });
-      return;
-    }
-    confirmAct(mid ? (sheet.depCr ? 'אישור הקצאה למפגש' : 'אישור תשלום למפגש') : 'אישור קבלת תשלום', pid, mid, () => depSaveRun(), html, (sheet.depCr && mid) ? 'אישור הקצאה' : 'אישור תשלום', null, (sheet.depCr && mid) ? { yellow: true } : { green: true });   // מהיתרה: צהוב כהה, אחרת ירוק
+    const due = rem > 0 ? rem : 0;
+    confirmAct(mid ? (sheet.depCr ? 'אישור הקצאה למפגש' : 'אישור תשלום למפגש') : 'אישור קבלת תשלום', pid, mid, () => depSaveRun(due), html + (due ? '<br>נשאר לשלם: <b>' + ils(due) + '</b>' : ''), (sheet.depCr && mid) ? 'אישור הקצאה' : 'אישור תשלום', null, (sheet.depCr && mid) ? { yellow: true } : { green: true });   // מהיתרה: צהוב כהה, אחרת ירוק
   });
   /* זיכוי: מחזיר חלק מתשלום שהוקצה למפגש. ליתרה (kind credit) או כסף למשתתף (kind refund) */
   $('#walZikuy').addEventListener('click', () => {
@@ -3496,7 +3496,9 @@
     h.addEventListener('keydown', (e) => { if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return; e.preventDefault(); setW(curW() + (e.key === 'ArrowLeft' ? 24 : -24)); saved = curW(); save(); });   // חץ שמאלה מרחיב את הרשימה
   })();
   /* דסקטופ רחב (31.10.26): השורה של המשתתף שהכרטיס שלו פתוח בצד מסומנת ברשימה */
-  function markSel() { const on = pDlg && pDlg.open && pDlg._side; document.querySelectorAll('#list li.row').forEach((r) => { const e = r.querySelector('[data-edit]'); r.classList.toggle('sel', !!(on && e && e.dataset.edit === openPid)); }); }
+  let lastPid = null;   // המשתתף שהפופאפ שלו נסגר: הרשומה שלו באפור בהיר עד הלחיצה הבאה במסך
+  function markSel() { const on = pDlg && pDlg.open && pDlg._side; document.querySelectorAll('#list li.row').forEach((r) => { const e = r.querySelector('[data-edit]'), id = e && e.dataset.edit; r.classList.toggle('sel', !!(on && id === openPid)); r.classList.toggle('last', !!(id && id === lastPid)); }); }
+  window.addEventListener('click', () => { if (lastPid) { lastPid = null; markSel(); } }, true);   // לחיצה, לא נגיעה: גלילה ברשימה לא מבטלת את הסימון
   function openParticipant(id, tab, fromEl) {
     const p = id ? state.participants.find((x) => x.id === id) : null;
     sheet = p ? { id: p.id, hl: state.filter || null, hlDone: false } : { id: null, links: new Map(state.filter ? [[state.filter, false]] : []) };
@@ -4143,7 +4145,7 @@
   });
 
   /* ---------- אירועים כלליים ---------- */
-  pDlg.addEventListener('close', () => { sheet = null; openPid = null; syncUrl(); });
+  pDlg.addEventListener('close', () => { lastPid = sheet && sheet.id || null; sheet = null; openPid = null; syncUrl(); markSel(); });
   mDlg.addEventListener('close', () => { if (mf.dirty) mf.changed(); syncUrl(); });
   pForm.phone.addEventListener('input', () => badPhone(false));
 
