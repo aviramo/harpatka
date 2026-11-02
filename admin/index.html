@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104dw" />
+  <link rel="stylesheet" href="admin.css?v=20261104dz" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -113,11 +113,11 @@
         </div>
         <button type="button" class="more" id="pMore" hidden>טען עוד</button>
         <div class="nform">
-          <textarea id="nText" rows="1" maxlength="1000" enterkeyhint="send" aria-label="הערה חדשה" placeholder="הערה חדשה, אנטר לשמירה"></textarea>
+          <textarea id="nText" rows="1" maxlength="1000" enterkeyhint="enter" aria-label="הערה חדשה" placeholder="הערה חדשה"></textarea>
           <div class="nprev" id="nPrev" hidden><img id="nPrevImg" alt="תצוגה מקדימה" /><button type="button" id="nPrevX" aria-label="הסרת התמונה">×</button></div>
           <button type="button" class="nattach" id="nAttach" aria-label="צירוף צילום מסך" title="צירוף צילום מסך"><svg data-i="img"></svg></button>
           <input type="file" id="nFile" accept="image/*" hidden />
-          <button type="button" id="nAdd" hidden aria-hidden="true" tabindex="-1">הוספה</button>
+          <button type="button" class="nattach nsave" id="nAdd" hidden aria-label="שמירת ההערה" title="שמירת ההערה"><svg data-i="check"></svg></button>
         </div>
         <div id="nList"></div>
       </div>
@@ -303,6 +303,7 @@
       </div>
       <div id="setSt" hidden>
         <div id="stBoth">
+        <p class="sthint stintro" id="stIntro"></p>
         <div class="stpart" id="stSecBefore" hidden>סטטוס הרשמה</div>
         <div id="stList"></div>
         <button type="button" class="btn ghost" id="stAdd" hidden>+ תגית חדשה</button>
@@ -505,13 +506,15 @@
   const navDepthOf = (d) => {
     try {
       if (d.id === 'pDlg') return (sheet && sheet.id && pTab !== 'main') ? Math.max(1, viewStack.filter((x) => x !== 'main').length + 1) : 0;
-      if (d.id === 'setDlg') return setIsRoot(setView) ? 0 : setView === 'del' ? (setRoot === 'st' ? 1 : 2) : 1;   // עריכת סוג מפגש נפתחת מתפריט המפגשים: מסך הסוג הוא הראשי, והסטטוסים וההודעה שלו מסכי משנה
+      if (d.id === 'mDlg') return d.querySelector('.mf.editing') ? 1 : 0;   // עריכת תבנית הודעה היא מסך משנה
+      if (d.id === 'setDlg') return (setView === 'tydet' && d.querySelector('.mf.editing')) ? 1 : setIsRoot(setView) ? 0 : setView === 'del' ? (setRoot === 'st' ? 1 : 2) : 1;   // עריכת סוג מפגש נפתחת מתפריט המפגשים: מסך הסוג הוא הראשי, והסטטוסים וההודעה שלו מסכי משנה
       if (d.id === 'stDlg') return stCur === 'main' ? 0 : 1;
       if (d.id === 'finDlg') return finV === 'main' ? 0 : 1;
       if (d.id === 'prDlg') return RANK[prView] || 0;
     } catch (e) {}
     return 0;
   };
+  const navBackBtn = (d) => { const e = d.querySelector && d.querySelector('.mf.editing .mthead .hback'); if (e) return e; const k = NAV_BACK[d.id]; return k ? $(k) : null; };   // החץ של המסך שמוצג עכשיו
   const navOpen = (d) => { NAV.stack.push({ d, sub: 0 }); try { history.pushState({ nav: 1 }, ''); } catch (e) {} };
   function navSync(d) {
     const t0 = NAV.stack.find((x) => x.d === d); if (!t0) return;
@@ -523,8 +526,8 @@
   }
   const navClose = (d) => {
     const i = NAV.stack.map((x) => x.d).lastIndexOf(d); if (i < 0) return;
-    const n = 1 + NAV.stack[i].sub; NAV.stack.splice(i, 1);
-    if (NAV.fromPop) return;
+    const sub = NAV.stack[i].sub, n = 1 + sub; NAV.stack.splice(i, 1);
+    if (NAV.fromPop) { if (sub > 0) { NAV.ignore++; history.go(-sub); } return; }   // החזרה כבר הורידה רשומה אחת; אם נשארו רשומות של מסכי משנה, מורידים גם אותן
     NAV.ignore++; history.go(-n);
   };
   window.addEventListener('popstate', () => {
@@ -532,11 +535,13 @@
     const top = NAV.stack[NAV.stack.length - 1]; if (!top) return;
     if (top.d.tagName === 'DIALOG' && !top.d.open) { NAV.stack.pop(); return; }   // רשומה ישנה של פופאפ שכבר סגור (נסגר מחוץ ל-close שלנו): החזרה הזו שייכת לה, לא סוגרים כלום
     NAV.fromPop = true;
+    let left = -1;
     try {
-      const dep = navDepthOf(top.d);   // ההחלטה לפי המסך שמוצג בפועל (לא לפי מונה שמור שעלול להתפספס): בתוך מסך משנה חוזרים צעד, רק במסך הראשי סוגרים
-      if (dep > 0 && NAV_BACK[top.d.id] && $(NAV_BACK[top.d.id]) && !$(NAV_BACK[top.d.id]).hidden) { $(NAV_BACK[top.d.id]).click(); top.sub = navDepthOf(top.d); }
+      const dep = navDepthOf(top.d), bk = dep > 0 ? navBackBtn(top.d) : null;   // ההחלטה לפי המסך שמוצג בפועל (לא לפי מונה שמור שעלול להתפספס): בתוך מסך משנה חוזרים צעד, רק במסך הראשי סוגרים
+      if (bk && !bk.hidden) { left = Math.max(0, top.sub - 1); bk.click(); top.sub = left; }
       else top.d.close();
     } finally { NAV.fromPop = false; }
+    if (left >= 0) navSync(top.d);   // אם המסך לא השתנה (למשל תבנית לא מושלמת נשארת פתוחה), מחזירים את הרשומה שהחזרה הורידה
   });
   const state = { mtypes: [], tpls: [], msgSent: [], mtype: null, pubSettings: {}, prefs: {}, statuses: [], pstatuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, paidF: null, gender: null, sent: null, bal: null, viewScopes: {}, attF: null, srcF: null, ageF: null, fin: [], finRec: [], finTr: [], finPeriod: 'all', finFilter: null };
   /* קישור עמוק מהמייל: ?m=<מפגש>&p=<משתתף>; נשמר בזמן הכניסה עם גוגל (שמחזירה בלי הפרמטרים) */
@@ -2748,7 +2753,7 @@
     sheet.nOpen = sheet.nOpen || new Set();
     const meta = (n) => '<span><bdi>' + esc(noteAuthor(n.author_email, n.author_name)) + '</bdi> · ' + esc(fmtDT(n.created_at)) + '</span>' + (n.system ? '' : '<button type="button" class="ndel" data-del="' + n.id + '" aria-label="מחיקת הערה" title="מחיקת הערה">מחיקה</button>');   // השורה שנפתחת מתחת להערה: שם · מועד מדויק
     list.innerHTML = ns.length ? ns.map((n) => '<div class="nitem' + (n.system ? ' sys' : '') + ' fold' + (n.has_image ? ' img' : '') + (sheet.nOpen.has(n.id) ? ' open' : '') + '" data-nid="' + n.id + '"' + (n.event_type ? ' data-ev="' + esc(n.event_type) + '"' : '') + (n.new_status ? ' data-st="' + esc(n.new_status) + '"' : '') + '>' +
-      ('<div class="nrow"><div class="ntext' + (n.system && !n.has_image ? ' chips' : '') + '">' + (n.has_image ? '<a class="nimg" data-img="' + n.id + '"><div class="nload">טוען תמונה…</div></a>' : ((n.system && sysChips(n)) || '<span class="nch ' + (n.system ? 'nn' : 'nw') + '">' + noteTextHtml(n.body) + '</span>')) + (n.mail_id ? NARW + '<button type="button" class="nmail' + (n.mail_failed ? ' bad' + (n.mail_noaddr ? ' noacc' : '') : '') + '" data-mail="' + n.mail_id + '">' + (n.mail_failed ? icon('warn', 'i16') + 'המייל לא נשלח' : 'מייל') + '</button>' : '') + '</div><span class="nch nago"><span class="nagot" data-ts="' + esc(n.created_at) + '">' + agoText(n.created_at) + '</span></span></div><div class="nmeta"><div class="nmetai">' + meta(n) + '</div></div>') + '</div>').join('')
+      ('<div class="nrow"><div class="ntext' + (!n.has_image ? ' chips' : '') + '">' + (n.has_image ? '<a class="nimg" data-img="' + n.id + '"><div class="nload">טוען תמונה…</div></a>' : ((n.system && sysChips(n)) || '<span class="nch ' + (n.system ? 'nn' : 'nw') + '">' + noteTextHtml(n.body) + '</span>')) + (n.mail_id ? NARW + '<button type="button" class="nmail' + (n.mail_failed ? ' bad' + (n.mail_noaddr ? ' noacc' : '') : '') + '" data-mail="' + n.mail_id + '">' + (n.mail_failed ? icon('warn', 'i16') + 'המייל לא נשלח' : 'מייל') + '</button>' : '') + '</div><span class="nch nago"><span class="nagot" data-ts="' + esc(n.created_at) + '">' + agoText(n.created_at) + '</span></span></div><div class="nmeta"><div class="nmetai">' + meta(n) + '</div></div>') + '</div>').join('')
       : '<p class="mnone">עוד אין הערות. אפשר לרשום למעלה מה דיברתם, מה הוחלט ומה צריך לזכור, או לצרף צילום מסך משיחה</p>';
     list.querySelectorAll('[data-img]').forEach(loadNoteImg);
     noteFades();
@@ -2782,6 +2787,11 @@
     pendingImg = src || null;
     $('#nPrev').hidden = !pendingImg; $('#nText').hidden = !!pendingImg;
     if (pendingImg) $('#nPrevImg').src = pendingImg; else $('#nFile').value = '';
+    syncNote();
+  }
+  function syncNote() {   // יש טקסט: כפתור שמירה במקום צירוף התמונה. השדה גדל עם הטקסט (עד max-height ב-CSS, ואז נגלל בתוכו)
+    const ta = $('#nText'), has = !pendingImg && !!ta.value.trim();
+    $('#nAttach').hidden = has; $('#nAdd').hidden = !has; autoGrow(ta);
   }
   function compressImage(file) {
     return new Promise((ok, no) => {
@@ -2798,7 +2808,8 @@
   }
   async function takeFile(f) { if (!f || !/^image\//.test(f.type)) return; try { setPending(await compressImage(f)); } catch (e) { toast('לא ניתן לקרוא את התמונה'); return; } $('#nAdd').click(); }   // תמונה נשמרת מיד, בלי ללחוץ על הוספה
   $('#nAttach').addEventListener('click', () => $('#nFile').click());
-  $('#nText').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); $('#nAdd').click(); } });   // אנטר שומר את ההערה (שיפט+אנטר: שורה חדשה)
+  $('#nText').addEventListener('input', syncNote);
+  $('#nAdd').addEventListener('mousedown', (e) => e.preventDefault());   // הפוקוס נשאר בשדה: המקלדת לא נסגרת והכפתור לא זז לפני הלחיצה
   $('#nFile').addEventListener('change', (e) => takeFile(e.target.files[0]));
   $('#nPrevX').addEventListener('click', () => setPending(null));
   $('#nText').addEventListener('paste', (e) => { const f = [...(e.clipboardData ? e.clipboardData.files : [])].find((x) => /^image\//.test(x.type)); if (f) { e.preventDefault(); takeFile(f); } });
@@ -3286,7 +3297,7 @@
   /* מאזינים על כל הכותרת ובודקים אם הלחיצה באזור השם והתגית (הכותרת נבנית מחדש בעדכונים, ולכן היעד של הלחיצה יכול להיות ההורה) */
   /* דף הבית כפי שהמשתתף רואה אותו (כאילו מחובר): פופאפ שעולה מלמטה עד למעלה, iframe של /?as=<מזהה> (בלי האזור האישי me/) */
   /* בכל פתיחה iframe חדש (הטעינה הראשונה של iframe חדש לא מוסיפה רשומה להיסטוריה של הדפדפן), ובסגירה מוחלף ב-iframe ריק. החלפת src של iframe קיים הוסיפה רשומות, ו"חזרה" חזרה בתוך ה-iframe במקום לסגור את הפופאפ */
-  const meFrameNew = (url) => { const old = $('#meFrame'), fr = document.createElement('iframe'); fr.id = 'meFrame'; fr.title = old.title; if (url) fr.src = url; old.replaceWith(fr); };
+  const meFrameNew = (url) => { const old = $('#meFrame'), fr = document.createElement('iframe'); fr.id = 'meFrame'; fr.title = old.title; if (url) { fr.src = url; fr.addEventListener('load', () => { try { fr.contentDocument.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !fr.contentDocument.querySelector('.modal:not([hidden])')) $('#meDlg').close(); }, true); } catch (x) {} }); } old.replaceWith(fr); };   // Esc כשהפוקוס בתוך המסגרת לא מגיע לפופאפ: סוגרים מכאן, אלא אם פופאפ פנימי פתוח
   $('#pViewAs').addEventListener('click', (e) => { e.preventDefault(); if (!sheet || !sheet.id) return; meFrameNew('../?as=' + encodeURIComponent(sheet.id)); $('#meDlg').showModal(); });
   $('#meDlg').addEventListener('close', () => { meFrameNew(''); $('#meDlg').style.transform = ''; });
   window.addEventListener('message', (e) => {   // החלקה למטה בתוך האזור האישי (כשהוא בראשו) מזיזה וסוגרת את הפופאפ
@@ -3423,12 +3434,12 @@
       if (DRAWERS.includes(d.id)) { const h = d.querySelector('.sheet-head'); if (h) { const x = document.createElement('button'); x.type = 'button'; x.className = 'hbtn dclose'; x.setAttribute('aria-label', 'סגירה'); x.title = 'סגירה'; x.innerHTML = icon('close'); x.addEventListener('click', () => d.close()); h.appendChild(x); } }   // כפתור סגירה לפאנל מצד שמאל (מוצג רק בדסקטופ)
       const g = document.createElement('div'); g.className = 'grab'; g.innerHTML = '<i></i>'; g.setAttribute('aria-hidden', 'true');
       d.insertBefore(g, d.firstChild);
-      d.addEventListener('close', () => { navClose(d); });   // סגירה שלא עברה דרך close שלנו (form method=dialog, או הדפדפן סוגר דיאלוג בלחיצה על "חזרה" כשאי אפשר לבטל): מחזירים את רשומת ההיסטוריה שנוספה בפתיחה, אחרת המחסנית של "חזרה" מתמלאת
+      d.addEventListener('close', () => { navClose(d); unlock(); setTimeout(() => { try { syncUrl(); } catch (e) {} }, 0); });   // סגירה שלא עברה דרך close שלנו (form method=dialog, או הדפדפן סוגר דיאלוג בלחיצה על "חזרה" כשאי אפשר לבטל): מחזירים את רשומת ההיסטוריה שנוספה בפתיחה, אחרת המחסנית של "חזרה" מתמלאת
       d.addEventListener('cancel', (e) => {   // (אירוע cancel של שדה קובץ שבתוך הפופאפ, למשל סגירת בורר התמונות בלי בחירה, עולה בבועה אל הדיאלוג; מתעלמים ממנו, אחרת הפופאפ נסגר) Escape או כפתור "חזרה" של הדפדפן/אנדרואיד (Chrome סוגר דיאלוג מודלי לפני ההיסטוריה): בתוך מסך משנה חוזרים צעד אחד כמו בחץ שבפופאפ, ורק במסך הראשי סוגרים
         if (e.target !== d) return;
         e.preventDefault();
         if (Date.now() - escMenuAt < 150) return;
-        const top = NAV.stack.find((x) => x.d === d), bk = top && navDepthOf(d) > 0 && NAV_BACK[d.id] ? $(NAV_BACK[d.id]) : null;
+        const top = NAV.stack.find((x) => x.d === d), bk = top && navDepthOf(d) > 0 ? navBackBtn(d) : null;
         if (bk && !bk.hidden) bk.click(); else d.close();
       });
       d.addEventListener('click', (e) => { if (e.target === d && !d._side) d.close(); });    // לחיצה בחוץ (לא בכרטיס שבצד הרשימה)
@@ -3935,10 +3946,10 @@
     F.tpl.open = (i) => {
       const r = F.tpl.rows[i]; if (!r) return;
       F.tpl.cur = i; ed('Name').value = r.name || ''; ed('Body').value = r.body || ''; ed('Del').dataset.sure = ''; ed('Del').textContent = 'מחיקת התבנית';
-      mfBox.classList.add('editing'); ed('Ed').hidden = false; autoGrow(ed('Body')); ed('Ed').scrollIntoView({ block: 'start' });
+      mfBox.classList.add('editing'); ed('Ed').hidden = false; autoGrow(ed('Body')); ed('Ed').scrollIntoView({ block: 'start' }); navSync(mfBox.closest('dialog'));
     };
     F.tpl.close = () => {
-      F.tpl.cur = null; mfBox.classList.remove('editing'); ed('Ed').hidden = true; F.tpl.render();
+      F.tpl.cur = null; mfBox.classList.remove('editing'); ed('Ed').hidden = true; F.tpl.render(); navSync(mfBox.closest('dialog'));
       tplBox.scrollIntoView({ block: 'start' });
     };
     F.tpl.add = () => {   // תבנית חדשה ישר במסך העריכה, מוכנה לכתיבה
@@ -4032,7 +4043,7 @@
       F.tiersInh = !!t && h.has('price_tiers'); F.te.t = tiersOf(F.tiersInh ? t : s); F.te.render();
       if (F.img.objUrl) URL.revokeObjectURL(F.img.objUrl);
       F.img = { url: s.image_url || null, blob: null, objUrl: null, inh: !!t && h.has('image_url') };
-      F.tpl.rows = F.tpl.rowsOf(s.id); F.tpl.cur = null; mfBox.classList.remove('editing'); ed('Ed').hidden = true; F.tpl.render();
+      F.tpl.rows = F.tpl.rowsOf(s.id); F.tpl.cur = null; mfBox.classList.remove('editing'); ed('Ed').hidden = true; F.tpl.render(); navSync(mfBox.closest('dialog'));
       F.paint();
     };
     /* קריאה לשמירה: { body, inherit } או { err, el }. במפגש עם סוג שדה ריק נרשם ב-inherit ומקבל את ערך הסוג */
@@ -4138,7 +4149,7 @@
     syncUrl();
   }
   /* שדה מרובה שורות: מתחיל בשורה אחת ומתרחב לפי הטקסט */
-  function autoGrow(ta) { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight + 2, 260) + 'px'; }
+  function autoGrow(ta) { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight + ta.offsetHeight - ta.clientHeight, 260) + 'px'; }
 
   /* גוף הבקשה מהטופס, או null (עם הודעה). שדה ריק עם סוג = "כמו בסוג": נשמר הערך של הסוג ונרשם ב-inherit; שדה מלא = ערך משלו */
   async function meetingBody() {
@@ -4702,6 +4713,7 @@
     const dRow = { key: stDraft ? stDraft.key : '', label: '', color: 'neutral', points: 0, _d: true };
     $('#stList').innerHTML = mkRows(stDraft && stDraft.kind !== 'meeting' ? list.concat([dRow]) : list);
     const two = stScope === 'meeting';
+    $('#stIntro').textContent = two ? 'הסטטוסים שייכים לסוג המפגש, וחלים על כל המפגשים שלו' : 'תגית מסמנת את המשתתף עצמו, בלי קשר למפגש מסוים';
     $('#stSecBefore').hidden = !two; $('#stSecMeeting').hidden = !two; $('#stLeadF').hidden = !two; if (two) { const el = $('#stLead'); if (!el.options.length) el.innerHTML = STATUS_LEADS.map((o) => '<option value="' + o[0] + '">' + o[1] + '</option>').join(''); el.value = statusLeadOf(typeById(stType || firstTypeId())); } $('#stPtsHint').hidden = !two; $('#stAddMeeting').hidden = !two; $('#stListMeeting').innerHTML = two ? mkRows(stDraft && stDraft.kind === 'meeting' ? mstatusList(stType || firstTypeId()).concat([dRow]) : mstatusList(stType || firstTypeId()), true) : '';
     if (stDraft) { const dv = document.querySelector('#stBoth .strow.draft .stname'); if (dv) { if (dVal) dv.value = dVal; if (dFoc) dv.focus(); } }
   }

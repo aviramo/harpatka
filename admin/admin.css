@@ -157,10 +157,10 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 .frec { margin-inline-start: 8px; padding: 0; background: transparent; }   /* תווית בשורת תנועה בכספים: טקסט בלבד, בלי רקע */
 /* כפתורים (לא משויך, לא לתשלום, תגיות המשתתף) בלי מסגרת, במילוי אפור בהיר מאוד (31.10.26) */
 .row .ptag.empty, .mlist .mrow .pay.none, .mlist .mrow .mmoney.free, .pstchips .sopt, .paychip.allocchip.free { background: var(--surface); border-color: transparent; }
-/* הערות: טקסט בלבד, בלי רקע ובלי מסגרת (1.11.26). מה שהיה לו רקע נשאר בצבע שלו בטקסט. הטקסט המלא תמיד מוצג ושובר שורות כשהוא ארוך. #nList כדי לגבור על צבעי הסטטוסים שמוזרקים מהקוד */
+/* הערות: טקסט בלבד, בלי רקע ובלי מסגרת (1.11.26). מה שהיה לו רקע נשאר בצבע שלו בטקסט. כל הערה בשורה אחת שנגררת הצידה. #nList כדי לגבור על צבעי הסטטוסים שמוזרקים מהקוד */
 #nList .nch:not(.nago) { height: auto; min-height: var(--tag); padding: 4px 0; border: 0; background: transparent; font-weight: 400; line-height: 18px; white-space: normal; overflow-wrap: anywhere; overflow: visible; text-overflow: clip; text-align: start; }
-/* הערה שכתבנו ידנית: המקום היחיד עם הדגשה, ושומרת על שבירות השורה שהוקלדו */
-#nList .nch.nw { font-weight: 700; white-space: pre-wrap; color: var(--text); }
+/* הערה שכתבנו ידנית: המקום היחיד עם הדגשה */
+#nList .nch.nw { font-weight: 700; color: var(--text); }
 /* הזמן שעבר ליד הערה: טקסט, לא תגית */
 .nch.nago { display: flex; align-items: center; height: var(--tag); padding: 0; border: 0; background: none; line-height: var(--tag); overflow: visible; color: var(--text-2); font-weight: 500; font-size: 13px; }
 
@@ -510,6 +510,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 /* כותרות משנה, תוויות קבוצה, הסברים */
 .clabel, .settitle, .stpart, .depsec, .stp h4, .sect-title { margin: 16px 0 8px; font-size: 12.5px; font-weight: 700; color: var(--text-2); letter-spacing: .02em; }
 .sthint, .payhint, .hint, .pviewsub, .fsnote, .finowed { margin: 0 0 12px; color: var(--text-2); font-size: 14px; line-height: 1.5; }
+.sthint.stintro { margin: -20px 0 16px; }   /* תת כותרת מתחת לשם סוג המפגש במסכי הסטטוסים והתגיות */
 .payhint b { color: var(--text); }
 .mnone { margin: 4px 0 12px; color: var(--text-2); font-size: 14.5px; }
 .ppanel[hidden] { display: none; }
@@ -666,6 +667,8 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .nform textarea { border-width: 0; background: transparent; flex: 1 1 auto; min-width: 0; height: auto; min-height: var(--ib); max-height: 140px; padding: 8px 0; resize: none; line-height: 1.4; font-size: 16px; }
 .nattach { color: var(--text-2); }
 .nform .nattach { margin-inline-end: -12px; }   /* הסמל עצמו (לא הכפתור) בקצה השמאלי, בקו של הקו התחתון, היתרה והזמנים */
+.nform .nsave { position: relative; color: var(--text); }
+.nform .nsave::before { content: ""; position: absolute; inset: -2px; }   /* שטח לחיצה של 44px, בלי לשנות את גובה השורה כשהסמל מתחלף */
 .nprev { position: relative; flex: 1 1 auto; min-width: 0; height: 60px; display: flex; align-items: center; }
 .nprev img { width: 60px; height: 60px; object-fit: cover; border: 1px solid var(--line); }
 .nprev button { position: absolute; top: -7px; inset-inline-start: -7px; width: 22px; height: 22px; background: var(--text); color: #fff; font-size: 15px; line-height: 1; }
@@ -676,10 +679,11 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .nrow { display: flex; align-items: flex-end; gap: 8px; padding: 4px 0; }
 .nrow .ntext { flex: 1 1 auto; min-width: 0; margin: 0; padding: 0; line-height: 1; }
 .ntext { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); }
-.ntext.chips { display: flex; flex-wrap: nowrap; align-items: center; gap: 4px; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: none; white-space: nowrap; }   /* הערת מערכת: שורה אחת שנגררת הצידה, בלי גלישה */
+.ntext.chips { display: flex; flex-wrap: nowrap; align-items: center; gap: 4px; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: none; white-space: nowrap; }   /* כל הערה: שורה אחת שנגררת הצידה, בלי גלישה */
 .ntext.chips::-webkit-scrollbar { display: none; }
 .ntext.chips > * { flex: 0 0 auto; }
 #nList .ntext.chips .nch:not(.nago) { display: flex; align-items: center; min-height: var(--tag); padding: 0; white-space: nowrap; overflow-wrap: normal; }   /* הטקסט והחץ על אותו קו אמצע */
+#nList .ntext.chips .nch.nw { display: block; line-height: var(--tag); }   /* טקסט חופשי: בלי flex, אחרת הרווחים ליד תאריך ושעה (bdi) נעלמים. ירידת שורה שהוקלדה מוצגת כרווח */
 .ntext.chips .narw svg { transform: translateY(-1px); }
 .ntext.chips.fl, .ntext.chips.fr { cursor: grab; }
 .ntext.chips.fl { -webkit-mask-image: linear-gradient(to right, transparent, #000 40px); mask-image: linear-gradient(to right, transparent, #000 40px); }   /* דהייה בקצה שיש אחריו עוד תוכן */
