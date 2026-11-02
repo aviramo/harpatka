@@ -183,7 +183,7 @@
       const att = '';   // אין יותר סימון הגעה (הסטטוס במפגש הוא תווית וציון בלבד, ולא מוצג למשתתף)
       const pay = free ? '<span class="chip">לא לתשלום</span>' : rem ? (m.reported ? '<span class="chip wait">ממתין לאישור תשלום</span>' : '<span class="chip no">נשאר לשלם ' + ils(rem) + '</span>') : paid ? '<span class="chip ok">שולם ' + ils(m.paid) + '</span>'
         : m.reported ? '<span class="chip wait">ממתין לאישור תשלום</span>'
-        : m.rejected ? '<span class="chip no">התשלום לא אושר</span>' : '<span class="chip no">' + (m.future ? 'טרם שולם' : 'לא שולם') + '</span>';
+        : '<span class="chip no">' + (m.future ? 'טרם שולם' : 'לא שולם') + '</span>';
       let foot = '';
       /* כפתור אחד בכל שלב: קודם הקרדיט (עד המקסימום שלו), ורק אחרי שהשתמשו בו, ואם נשארה שארית (או שאין קרדיט), הכפתור של פייבוקס (1.11.26) */
       if (useCr) foot += '<div class="payfold" data-pf="' + m.id + '"><div><button type="button" class="btn pay" data-paycredit="' + m.id + '">תשלום מהקרדיט · ' + ils(crAmt) + '</button>'
@@ -229,7 +229,7 @@
       }
       unregSure = null; clearTimeout(unregT);
       ub.disabled = true;
-      const ob = meOpt(id, { registered: false, reported: false, rejected: false }), rel = HRT.busy(ub);
+      const ob = meOpt(id, { registered: false, reported: false }), rel = HRT.busy(ub);
       try {
         const r = await rpc('harpatka_me_unregister', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {}));
         rel();
@@ -240,7 +240,7 @@
     /* תשלום מהקרדיט: הקרדיט מכסה את מחיר המפגש, ומוקצה לו (בלי פייבוקס) */
     app.querySelectorAll('[data-paycredit]').forEach((cb) => { cb.onclick = async () => {
       const id = cb.dataset.paycredit, msg = app.querySelector('[data-pm="' + id + '"]'), m = ms.find((x) => x.id === id); if (!m || cb.disabled) return; cb.disabled = true;
-      const price = Number(m.price) || 0, amt = Math.min(credit, price), ob = meOpt(id, { paid: amt, due: price > amt ? price - amt : null, reported: false, rejected: false }, false, -amt), rel = HRT.busy(cb);   // שארית (אם הקרדיט לא מכסה): מופיע מיד כפתור פייבוקס עליה
+      const price = Number(m.price) || 0, amt = Math.min(credit, price), ob = meOpt(id, { paid: amt, due: price > amt ? price - amt : null, reported: false }, false, -amt), rel = HRT.busy(cb);   // שארית (אם הקרדיט לא מכסה): מופיע מיד כפתור פייבוקס עליה
       try {
         const r = await rpc('harpatka_me_pay_credit', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {}));
         rel();
@@ -252,7 +252,7 @@
     app.querySelectorAll('[data-paynow]').forEach((pa) => { pa.addEventListener('click', async () => {
       const id = pa.dataset.paynow, fold = app.querySelector('[data-pf="' + id + '"]');
       if (pa.dataset.rep) return; pa.dataset.rep = '1';
-      const ob = meOpt(id, { reported: true, rejected: false }, true);
+      const ob = meOpt(id, { reported: true }, true);
       try {
         const r = await rpc('harpatka_me_report_payment', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {}));
         if (r === 'ok' || r === 'reported' || r === 'already') {

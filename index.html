@@ -816,7 +816,7 @@
           /* משתתף מחובר שכבר רשום למפגש: הכפתור מציג את המצב (נרשמתם, שולם, דווח...) ולחיצה מובילה לאזור האישי על אותו מפגש */
           const more = mk('div', 'mt-more'), box = mk('div'), paid = Number(st.paid) > 0, free = !!st.free, due = paid ? Number(st.due) || 0 : 0, canPay = !free && (!paid || due > 0);
           const amt = due > 0 ? Math.round(due) : st.price;   // יתרה אחרי קרדיט: הסכום שנשאר לשלם, אחרת מחיר המפגש
-          const txt = free ? 'נרשמתם · לא לתשלום' : !canPay ? 'נרשמתם · שולם ₪' + Math.round(st.paid) : st.reported ? 'נרשמתם · התשלום ממתין לאישור' : st.rejected ? 'התשלום לא אושר · תשלום' + (amt ? ' ₪' + amt : '') : 'נרשמתם · תשלום' + (amt ? ' ₪' + amt : '');
+          const txt = free ? 'נרשמתם · לא לתשלום' : !canPay ? 'נרשמתם · שולם ₪' + Math.round(st.paid) : st.reported ? 'נרשמתם · התשלום ממתין לאישור' : 'נרשמתם · תשלום' + (amt ? ' ₪' + amt : '');
           const b = mk('a', 'mt-cta ' + (canPay ? 'topay' : 'settled'), txt);   // אפשר לשלם: ירוק, כמו כפתור התשלום בפופאפ; אין מה לשלם (שולם או לא לתשלום): אפור
           b.href = '#'; b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); reg(m); });   // גם אחרי דיווח: הפופאפ עם כפתור התשלום (נשאר עד שהתשלום באמת התקבל)   // בהמתנה לאישור דיווח: לא נפתח פופאפ   // פותח את פופאפ התשלום של המפגש (הפופאפ במצב "נרשמתם")
           const sp = !paid && !free && !st.reported ? tierSplit(m, m.tiers, today) : null;   // עוד לא שילם: מדרגות המחיר, כי המחיר יכול לעלות (יתרה אחרי קרדיט לא תלויה במדרגות)
@@ -1141,6 +1141,6 @@
 </script>
   <script src="shared/rt.js?v=1"></script>
   <script src="shared/person-form.js?v=20261103a"></script>
-  <script src="shared/register.js?v=20261103g"></script>
+  <script src="shared/register.js?v=20261103h"></script>
 </body>
 </html>

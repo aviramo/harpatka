@@ -82,7 +82,7 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 .btn.soft-red, #zkRefund, #refundYes { background: var(--red-bg); border-color: var(--red-bg); color: var(--red); }
 .btn.soft-yel, #zkCredit, #creditYes, #walZikuy { background: var(--yellow-bg); border-color: var(--yellow-bg); color: var(--yellow); }
 #walZikuy { display: none !important; }
-#cNo, #cvNo, #ppCancel, #refundNo { display: none !important; }   /* בפופאפים אין כפתור ביטול: סוגרים בפס, בלחיצה בחוץ או ב-Esc */
+#cNo, #ppCancel, #refundNo { display: none !important; }   /* בפופאפים אין כפתור ביטול: סוגרים בפס, בלחיצה בחוץ או ב-Esc */
 .saved { font-size: 14px; color: var(--green); font-weight: 700; opacity: 0; transition: opacity .2s; }
 .saved.on { opacity: 1; }
 #savedMark { display: none !important; }
@@ -612,13 +612,14 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .pstchips .sopt { color: var(--text); }
 /* אריח בצד ימין של רצועת המפגשים (1.11.26; לפי הסקיל ui-ux-pro-max: שטח לחיצה 44px ומעלה, תווית נגישה לכפתור הסמל, מצב ריחוף ולחיצה): מלבן אחד, למעלה מונה המפגשים עם סמל יומן, ומתחתיו פלוס גדול ("שיוך למפגש"); בלי תת כותרת. בגובה כרטיס מפגש */
 /* שורת מפגש בכרטיס המשתתף (2.11.26): אותו רכיב בדף המפגשים ובמפגש שממנו הגענו. העמודות ברוחב קבוע, כך שהסטטוס והתשלום מיושרים בין השורות */
-.mlist .mrow { display: grid; grid-template-columns: minmax(0, 1fr) 96px 80px; column-gap: 8px; align-items: center; min-height: var(--ctl); border-bottom: 1px solid var(--surface-2); background: transparent; cursor: pointer; }
+.mlist .mrow { display: grid; grid-template-columns: minmax(0, 1fr) 96px 80px; column-gap: 8px; align-items: center; min-height: var(--ctl); border-bottom: 1px solid var(--surface-2); background: transparent; }
 .mlist .mrow:last-child { border-bottom: 0; }
 .mwhen { min-width: 0; display: flex; align-items: baseline; gap: 8px; }   /* תאריך ושם בשורה אחת; שם ארוך נחתך */
 .mlist .mrow .mlabel { flex: 0 0 auto; width: auto; height: auto; padding: 0; border: 0; background: transparent; color: var(--text); font-weight: 500; line-height: 20px; }
 .mnm { flex: 0 1 auto; min-width: 0; overflow: hidden; color: var(--text-2); font-size: 13px; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; }
 .mtm { flex: 0 0 auto; color: var(--text-2); font-size: 13px; line-height: 18px; }
-.mlist .mrow.hl .mlabel, .mlist .mrow.hl .mtm, .mlist .mrow.hl .mnm { color: var(--text); font-weight: 800; }   /* המפגש שממנו הגענו: התאריך, השעה והשם מודגשים */
+.mlist .mrow.hl .mlabel, .mlist .mrow.hl .mtm, .mlist .mrow.hl .mnm { color: var(--text); font-weight: 800; }
+.mlist .mrow.hl .pay, .mlist .mrow.hl .mmoney { font-weight: 800; }   /* המפגש שממנו הגענו: כל השורה מודגשת, גם הסטטוס והתשלום */
 .mlist .mrow .pay { position: relative; width: 100%; padding: 0; background: transparent; border-color: transparent; overflow: visible; }   /* הצבע מהסטטוס עצמו (applyStatuses), בלי רקע */
 .mlist .mrow .pay.none { background: transparent; color: var(--text-2); }
 .mlist .mrow .mline { display: contents; }
@@ -648,9 +649,11 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 #pgM { padding-top: 5.5px; }
 #pgW { padding-top: 16px; }
 #pgI { padding-top: 17px; }
-#pgM, #pgW, #pgI { overflow-y: auto; overscroll-behavior-y: contain; }
-#pgW, #pgI { padding-bottom: var(--safe-b); }
-#pgW { display: block; }
+#pgM, #pgI { overflow-y: auto; overscroll-behavior-y: contain; }
+#pgI { padding-bottom: var(--safe-b); }
+#pgW { overflow: hidden; }
+#pgW > #walSum, #pgW > .payact { flex: 0 0 auto; }
+#pgW > #walHist { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; padding-bottom: var(--safe-b); }   /* מהכפתור ומעלה קבוע, ורק ההיסטוריה נגללת */
 #pgI { display: block; }
 #pDlg.newp .ptabs, #pDlg.newp #pgM, #pDlg.newp #pgW, #pDlg.newp #pgN { display: none; }   /* משתתף חדש: רק הפרטים */
 .maddw { flex: 0 0 auto; position: sticky; bottom: 0; z-index: 1; display: flex; justify-content: center; padding-bottom: var(--safe-b); background: var(--bg); }   /* אחרי הרשימה, ועם הרבה מפגשים צמוד לתחתית ותמיד גלוי */
@@ -1159,10 +1162,10 @@ dialog .dclose { display: none; }
 /* ---------- יתרה ותשלומים בכרטיס רחב (31.10.26): הסיכום והכפתורים בטור צר מימין, וההיסטוריה בטור משמאל ---------- */
 @media (min-width: 1024px) { #pDlg.side #pForm { container-type: inline-size; } }   /* התפריטים הצפים של הכרטיס מחוברים לדיאלוג ולא לטופס, ולכן לא מושפעים */
 @container (min-width: 720px) {
-  #pForm #pgW { display: grid; grid-template-columns: 300px minmax(0, 720px); grid-template-rows: auto 1fr; column-gap: 32px; align-content: start; align-items: start; }
-  #pForm #pgW > #walSum { grid-column: 1; grid-row: 1; grid-template-columns: minmax(0, 1fr); margin: 0; }
-  #pForm #pgW > .payact { grid-column: 1; grid-row: 2; flex-direction: column; margin: 12px 0 0 !important; }
-  #pForm #pgW > #walHist { grid-column: 2; grid-row: 1 / span 2; }
+  #pForm #pgW { position: relative; }
+  #pForm #pgW > #walSum { width: 300px; grid-template-columns: minmax(0, 1fr); margin: 0; }
+  #pForm #pgW > .payact { width: 300px; flex-direction: column; margin: 12px 0 0 !important; }
+  #pForm #pgW > #walHist { position: absolute; top: 16px; bottom: 0; inset-inline-start: calc(var(--gut) + 332px); width: min(720px, calc(100% - var(--gut) * 2 - 332px)); }
 }
 
 

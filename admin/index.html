@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104ew" />
+  <link rel="stylesheet" href="admin.css?v=20261104ez" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -209,10 +209,6 @@
       <div class="ppanel" data-panel="refund" hidden>
         <p id="refundText" style="margin:0 0 16px;line-height:1.55"></p>
         <div class="payact" style="flex-direction:column"><button class="btn soft-red" id="refundYes" type="button">להחזיר תשלום</button><button class="btn soft-yel" id="creditYes" type="button">להשאיר כקרדיט (בלי להחזיר כסף)</button><button class="btn ghost" id="refundNo" type="button" style="color:var(--muted)">ביטול</button></div>
-      </div>
-      <div class="ppanel" data-panel="confirm" hidden>
-        <p id="cvText" style="margin:0 0 16px;line-height:1.55"></p>
-        <div class="payact" style="flex-direction:column"><button class="btn" id="cvYes" type="button"></button><button class="btn ghost" id="cvNo" type="button" style="color:var(--muted)">ביטול</button></div>
       </div>
       <button class="btn" id="pSubmit" type="submit">הוספה</button>
     </form>
@@ -2542,21 +2538,7 @@
   /* אחרי שליחת הודעת הוואטסאפ: כשחוזרים לדשבורד שואלים את המנהל אם להעביר את הסטטוס ל"בטיפול" (לא אוטומטי) */
   let markAwait = null;
   /* שאלת אישור אחרי חזרה מוואטסאפ: אם פופאפ המשתתף פתוח, השאלה היא מסך בתוכו (חץ חזרה בכותרת, כמו פרטי המשתתף); אחרת חלון אישור */
-  function askConfirm(p, title, textHtml, yesLabel, onYes, danger) {   // danger: כפתור האישור באדום (מחיקה)
-    $('#cvYes').classList.toggle('danger', !!danger);
-    if ($('#pDlg').open && sheet && sheet.id === p.id) {
-      cvTitle = title; $('#cvText').innerHTML = textHtml; $('#cvYes').textContent = yesLabel;
-      $('#cvYes').onclick = () => { onYes(); setPTab(viewStack.pop() || 'main'); };
-      $('#cvNo').onclick = () => setPTab(viewStack.pop() || 'main');
-      goView('confirm'); return;
-    }
-    const dlg = $('#cDlg'), yes = $('#cYes'), no = $('#cNo');
-    $('#cTitle').textContent = title; $('#cText').innerHTML = textHtml; yes.textContent = yesLabel;
-    const reset = () => { yes.textContent = 'אישור'; };
-    yes.onclick = () => { dlg.close(); reset(); onYes(); };
-    no.onclick = () => { dlg.close(); reset(); };
-    dlg.showModal();
-  }
+  function askConfirm(p, title, textHtml, yesLabel, onYes, danger) { confirmAct(title, p.id, null, onYes, textHtml, yesLabel, null, { plain: true, primary: !danger }); }   // פופאפ רגיל מלמטה, גם מעל כרטיס המשתתף. danger: כפתור האישור באדום
   function askMarkRequested() {
     if (!markAwait) return;
     const p = state.participants.find((x) => x.id === markAwait); markAwait = null; if (!p) return;
@@ -2864,7 +2846,6 @@
   /* מסך אחד: ראשי (וואטסאפ וחיוג, מפגשים אחרונים, הערות) או פרטים (אייקון בכותרת; חץ חזרה בתוכו) */
   let pTab = 'main';
   const reducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let cvTitle = '';
   const SUBVIEW = { mail: 'מייל', deposit: 'קבלת תשלום', status: 'סטטוס מפגש', pay: 'תשלום למפגש', promoter: 'דרך הגעה', refund: 'ביטול תשלום', credit: 'החזרת קרדיט', zikuy: 'זיכוי' };
   let viewStack = [], payCtx = null;
   function setPTab(tab, instant) {
@@ -2880,7 +2861,7 @@
     $('#pDlg').classList.toggle('newp', !ex);
     { const va = $('#pViewAs'); va.hidden = !(ex && tab === 'main'); if (ex) va.href = '../?as=' + encodeURIComponent(sheet.id); const pp0 = ex && state.participants.find((x) => x.id === sheet.id), tl = pp0 && telLink(pp0.phone), ca = $('#pCall'); ca.hidden = !(tab === 'main' && tl); if (tl) ca.href = tl; }   // חיוג וצפייה כמשתתף: בשורת הכפתורים בכל דפי הכרטיס
     $('#pBack').hidden = !(ex && tab !== 'main'); if (tab !== 'deposit') { const c1 = $('#pAllocChip'); if (c1) c1.hidden = true; } $('#pTagSlot').hidden = !(ex && tab === 'main'); $('#pDlg .sheet-head').classList.toggle('navrow', ex && tab === 'main'); repaintTitle(); $('#pTitle').classList.remove('tap'); $('#pTitle').tabIndex = -1; $('#pTitle').setAttribute('role', 'heading'); $('#pMsgs').hidden = tab !== 'main';
-    { const sub = tab === 'confirm' ? cvTitle : (tab === 'deposit' && sheet && sheet.depMid) ? 'תשלום' : SUBVIEW[tab], pp0 = ex ? state.participants.find((x) => x.id === sheet.id) : null;
+    { const sub = (tab === 'deposit' && sheet && sheet.depMid) ? 'תשלום' : SUBVIEW[tab], pp0 = ex ? state.participants.find((x) => x.id === sheet.id) : null;
       const allocScr = tab === 'deposit' && sheet && sheet.depMid, pm = sub && state.meetings.find((x) => x.id === (allocScr ? sheet.depMid : payCtx && payCtx.mid));
       $('#pViewSub').hidden = !(sub && pm);
       if (sub) { $('#pTitle').innerHTML = esc(sub) + (pp0 ? ' <span class="tsubname">· ' + esc(pp0.name) + '</span>' : ''); $('#pViewSub').innerHTML = !pm ? '' : allocScr ? esc(meetingLabel(pm, true)) : esc(meetingLabel(pm, true)); }   // מסך ההקצאה: "<יום תאריך שעה>" (בלי שם המפגש) בטקסט קטן מתחת לכותרת, מיושר אליה וצמוד אליה   // שם המשתתף ליד הכותרת
@@ -3624,7 +3605,7 @@
   }
 
   const meetClick = (e) => {
-    const mm = e.target.closest('[data-mm]'), row = e.target.closest('.mrow'), pay = e.target.closest('[data-mp]') || (row && !mm && row.querySelector('.pay'));   // לחיצה על התאריך, כמו על הסטטוס, פותחת את תפריט הסטטוס
+    const mm = e.target.closest('[data-mm]'), pay = e.target.closest('[data-mp]');   // רק לחיצה על הסטטוס פותחת את תפריט הסטטוס
     if (mm) {
       if (sheet.id) openPayFor(sheet.id, mm.dataset.mm);   // כפתור ה-₪ בכרטיס המפגש: פופאפ הקצאה שעולה מלמטה מעל הכרטיס (הכרטיס לא משתנה)
     } else if (pay) {
@@ -3743,7 +3724,7 @@
       try { await api('harpatka_members?user_id=eq.' + uid, { method: 'PATCH', body: to === 'removed' ? { participant_id: null, status: 'pending' } : { status: to } }); /* ניתוק: הקישור למשתתף נמחק (החשבון יכול להתחבר שוב בטלפון); חסימה וביטול חסימה משאירים אותו משויך */ toast('עודכן'); loadMemberMap(); loadGoogleAcc(state.participants.find((x) => x.id === pid)); } catch (err) { fail(err); }
     }, MSG[1], MSG[2], null, to === 'approved' ? { primary: true } : undefined);
   });
-  /* מחיקת משתתף: אישור כמסך בתוך הכרטיס (לא חלון confirm של הדפדפן, שבטלפון עלול להיחסם בשקט ואז לא קורה כלום) */
+  /* מחיקת משתתף: פופאפ אישור מלמטה (לא חלון confirm של הדפדפן, שבטלפון עלול להיחסם בשקט ואז לא קורה כלום) */
   $('#pDelete').addEventListener('click', () => {
     const p = state.participants.find((x) => x.id === sheet.id); if (!p) return;
     askConfirm(p, 'מחיקת משתתף', '<b>' + esc(p.name) + '</b> יוסר מרשימת כל המשתתפים ויופיע רק בחיפוש. השיוך שלו למפגשים, התשלומים, ההערות וההיסטוריה נשארים, ואפשר להחזיר אותו לפעילות בכל רגע.', 'כן, למחוק', () => deleteParticipant(p), true);

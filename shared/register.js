@@ -255,7 +255,7 @@
       let tk = null; try { tk = localStorage.getItem('harpatka_claim_token'); } catch (e) {}
       if (!meInfo && !tk) return;   // דיווח דורש חשבון מחובר (או צפייה כמשתתף) או אסימון מהרשמה שהרגע נעשתה
       reporting = true;
-      const ob = meInfo ? meOptimistic(m.id, { reported: true, rejected: false }) : null;
+      const ob = meInfo ? meOptimistic(m.id, { reported: true }) : null;
       try {
         let r;
         if (meInfo) r = await meRpc('harpatka_me_report_payment', { p_meeting: m.id });
@@ -277,7 +277,7 @@
       const m = selMeeting || nearest; if (!m || !m.id || !meInfo || crBusy) return;
       const x = (meInfo.meetings || []).find((y) => y.id === m.id), price = x ? Number(x.price) || 0 : 0, credit = Number(meInfo.credit) || 0; if (!x || !price || credit <= 0) return;
       crBusy = true; cbtn.disabled = true;
-      const amt = Math.min(credit, price), ob = meOptimistic(m.id, { paid: amt, due: price > amt ? price - amt : null, reported: false, rejected: false }, -amt), rel = HRT.busy(cbtn);   // שארית (אם הקרדיט לא מכסה): מופיע מיד כפתור פייבוקס עליה
+      const amt = Math.min(credit, price), ob = meOptimistic(m.id, { paid: amt, due: price > amt ? price - amt : null, reported: false }, -amt), rel = HRT.busy(cbtn);   // שארית (אם הקרדיט לא מכסה): מופיע מיד כפתור פייבוקס עליה
       applyRegState(m);
       try {
         const r = await meRpc('harpatka_me_pay_credit', { p_meeting: m.id });
@@ -503,7 +503,7 @@
       btn.hidden = noMeet;
       return;
     }
-    const paid = Number(x.paid) > 0, free = !!x.free, reported = !!x.reported, rejected = !!x.rejected && !reported;
+    const paid = Number(x.paid) > 0, free = !!x.free, reported = !!x.reported;
     /* קרדיט (בלשון המשתתף): יש קרדיט = כפתור אחד בלבד, תשלום מהקרדיט עד המקסימום שלו. רק אחרי שהשתמשו בו, ואם נשארה שארית (due) או שאין קרדיט, מופיע הכפתור של פייבוקס */
     const price = Number(x.price) || 0, credit = Math.max(0, Number(meInfo.credit) || 0), rem = (paid && Number(x.due) > 0) ? Number(x.due) : 0;
     const useCr = !paid && !free && credit > 0 && price > 0, crFull = useCr && credit >= price, payAmt = rem || price;
@@ -515,7 +515,7 @@
     btn.hidden = true;
     root.querySelectorAll('.su-fold:not(.su-after)').forEach((f) => f.classList.add('shut'));
     after.classList.remove('shut');
-    note.innerHTML = '<span class="su-regd">נרשמתם למפגש</span>' + (free ? 'המפגש בשבילכם ללא תשלום' : (paid && !rem) ? (x.pay_mail ? 'התשלום התקבל, ופרטי המפגש' + (String(x.directions || '').trim() ? ' והוראות ההגעה' : '') + ' נשלחו אליכם במייל. נתראה!' : 'התשלום התקבל. נתראה!') : reported ? 'התשלום ממתין לאישור שלנו' : rejected ? 'לא מצאנו את התשלום. אפשר להשלים אותו כאן' : 'המקום יישמר קבוע רק לאחר תשלום');   // "נרשמתם למפגש" בשורה משלו בכתום, והמצב מתחתיו
+    note.innerHTML = '<span class="su-regd">נרשמתם למפגש</span>' + (free ? 'המפגש בשבילכם ללא תשלום' : (paid && !rem) ? (x.pay_mail ? 'התשלום התקבל, ופרטי המפגש' + (String(x.directions || '').trim() ? ' והוראות ההגעה' : '') + ' נשלחו אליכם במייל. נתראה!' : 'התשלום התקבל. נתראה!') : reported ? 'התשלום ממתין לאישור שלנו' : 'המקום יישמר קבוע רק לאחר תשלום');   // "נרשמתם למפגש" בשורה משלו בכתום, והמצב מתחתיו
     if (fold) fold.hidden = (paid && !rem) || free;   // כפתור התשלום נשאר עד שהתשלום באמת התקבל, גם אחרי דיווח (אולי לחצו ולא שילמו בפועל)
     if (rep) rep.hidden = true;   // "ממתין לאישור" כבר כתוב בהודעה שמעל
   }
