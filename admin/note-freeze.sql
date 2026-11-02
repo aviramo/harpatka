@@ -1,8 +1,8 @@
--- ערכים בהערות ובלוגים לא משתנים (2.11.26). אידמפוטנטי. להחליף __S__ ב-test או ב-public:
+-- מה שנכתב בהערה לא משתנה (2.11.26). אידמפוטנטי. להחליף __S__ ב-test או ב-public:
 --   sed 's/__S__/test/g' admin/note-freeze.sql | supabase db query --linked
 --   sed 's/__S__/public/g' admin/note-freeze.sql | supabase db query --linked
--- * הערך נשמר בהערה ולא משתנה: איזה סטטוס (new_status) ותאריך המפגש (meeting_short). בשיוך למפגש (meeting_linked) הסטטוס עד עכשיו חושב בתצוגה מהנתונים הנוכחיים, ולכן השתנה אחרי הסרה.
--- * הפניות: בכל הערה נשמרים גם השם והצבע של הסטטוס (status_label, status_color) והשם של מי שביצע (author_name). כל עוד הסטטוס או המנהל קיימים, השם והצבע נלקחים מהם ומתעדכנים; כשהם נמחקים, מוצג מה שנשמר.
+-- * בכל הערה נשמרים ברגע שהיא נוצרת: איזה סטטוס (new_status), השם והצבע שלו (status_label, status_color), תאריך המפגש (meeting_short) והשם של מי שביצע (author_name).
+-- * התצוגה נלקחת רק מההערה: שינוי או מחיקה של סטטוס, מנהל או מפגש לא משנים הערה שכבר נכתבה. בשיוך למפגש (meeting_linked) הסטטוס עד עכשיו חושב בתצוגה מהנתונים הנוכחיים, ולכן השתנה אחרי הסרה.
 -- * הערות קיימות: בשיוך, הסטטוס מיומן הביקורת, אחרת מהשינוי הראשון אחריו, אחרת מהשיוך הקיים, אחרת סטטוס ברירת המחדל.
 alter table __S__.harpatka_notes
   add column if not exists meeting_short text,
@@ -89,8 +89,11 @@ update __S__.harpatka_notes n set meeting_short = coalesce(substring(n.body from
   where n.system and n.meeting_short is null;
 update __S__.harpatka_notes n set status_label = coalesce(n.status_label, t.label), status_color = coalesce(n.status_color, t.color)
   from __S__.harpatka_statuses t where t.key = n.new_status and (n.status_label is null or n.status_color is null);
+-- שינוי סטטוס: השם כפי שכתוב בהערה
 update __S__.harpatka_notes n set status_label = substring(n.body from ':\s*([^(₪]+?)\s*(?:₪|\(היה:)')
-  where n.system and n.status_label is null and n.new_status is not null;
+  where n.system and n.event_type in ('status_changed', 'meeting_status_changed', 'during_status_changed', 'after_status_changed')
+    and substring(n.body from ':\s*([^(₪]+?)\s*(?:₪|\(היה:)') is not null
+    and n.status_label is distinct from substring(n.body from ':\s*([^(₪]+?)\s*(?:₪|\(היה:)');
 update __S__.harpatka_notes n set author_name = __S__.harpatka_note_author(n.author_email, n.author_name)
   where n.author_name is distinct from __S__.harpatka_note_author(n.author_email, n.author_name);
 notify pgrst, 'reload schema';
