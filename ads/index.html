@@ -8,7 +8,7 @@
   <link rel="icon" href="../images/favicon-v5.ico" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="../images/favicon-v5-32.png" />
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Assistant:wght@400;500;600;700&display=block" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/site.css?v=20261103d">
+  <link rel="stylesheet" href="../shared/site.css?v=20261103e">
   <script src="../shared/age.js?v=20261031a"></script>
 </head>
 <body>
@@ -69,7 +69,17 @@
     }
 
     let openMore = null;
-    const closeMore = () => { if (openMore) { openMore.classList.remove('open'); openMore.querySelector('.dots').setAttribute('aria-expanded', 'false'); openMore = null; } };
+    /* תפריט פתוח: שכבה שקופה על כל הדף. נגיעה בה, גם תחילת גלילה, סוגרת את התפריט מיד. השכבה נשארת עד סוף הנגיעה, כדי שהנגיעה לא תפעיל את מה שמתחתיה ולא תגלול */
+    const shield = document.createElement('div'); shield.className = 'menu-shield'; shield.hidden = true; document.body.appendChild(shield);
+    let shieldT;
+    const hideShield = () => { clearTimeout(shieldT); shield.hidden = true; };
+    const closeMenu = () => { if (openMore) { openMore.classList.remove('open'); openMore.querySelector('.dots').setAttribute('aria-expanded', 'false'); openMore = null; } };
+    const closeMore = () => { closeMenu(); hideShield(); };
+    shield.addEventListener('pointerdown', closeMenu);
+    ['pointerup', 'pointercancel'].forEach(ev => shield.addEventListener(ev, () => { shieldT = setTimeout(hideShield, 350); }));
+    shield.addEventListener('click', hideShield);
+    shield.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+    shield.addEventListener('wheel', e => { e.preventDefault(); closeMore(); }, { passive: false });
     document.addEventListener('click', e => { if (openMore && !openMore.contains(e.target)) closeMore(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && openMore) { const b = openMore.querySelector('.dots'); closeMore(); b.focus(); } });
 
@@ -96,7 +106,7 @@
       });
       btn.addEventListener('click', () => {
         if (openMore === wrap) { closeMore(); return; }
-        closeMore(); wrap.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); openMore = wrap;
+        closeMore(); wrap.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); openMore = wrap; shield.hidden = false;
         { const mn = wrap.querySelector('.menu'); mn.style.left = ''; const over = mn.getBoundingClientRect().right - (document.documentElement.clientWidth - 8); if (over > 0) mn.style.left = -over + 'px'; }   // בעמודה הימנית התפריט לא יוצא מהמסך
         if (navigator.share) kinds.forEach(k => getFile(k.url, k.name, k.type).catch(() => {}));   // מוכן לשיתוף
       });
@@ -143,13 +153,17 @@
       img: 'img/adventure-changes-13640018.jpg', vid: 'video/adventure-changes-13640018.mp4',
       alt: 'מרגישים לפעמים שהחיים עומדים במקום? רוצים שמשהו ישתנה? אבל כל צעד מרגיש כמו מאמץ? ומה אם יש דרך אחרת? בלי להילחם בעצמכם. בלי להתאמץ כל כך. פשוט לשחק. לנוע. ליהנות. לפעמים דווקא ההנאה מניעה את השינוי. יוצאים להרפתקה, מכניסים תנועה לחיים. לנשים וגברים בגילאי ' + ageText('to') + ' בפרק פתוח בחיים. בואו לחוות את זה בעצמכם' }];
 
-    // במובייל כל סרטון מתנגן במסך מלא. אייפון בלי מסך מלא לאלמנט: בלי playsinline הוא פותח את הנגן שלו במסך מלא בעצמו
+    // במובייל כל סרטון ממלא את המסך בתוך הדף, ולא במסך מלא של הדפדפן: שם הדפדפן מציג הודעה שאי אפשר לכבות, והיא מסתירה את פס הבקרה. כפתור החזרה סוגר. אייפון: בלי playsinline הוא פותח את הנגן שלו בעצמו
     const FS_MOBILE = matchMedia('(hover: none) and (pointer: coarse)').matches;
     const FS_NATIVE = FS_MOBILE && !Element.prototype.requestFullscreen;
+    let fsOpen = null;   // הסרטון שממלא עכשיו את המסך
+    const fsEnter = m => { m.classList.add('fsx'); document.documentElement.classList.add('vid-open'); fsOpen = m; history.pushState({ adVideo: 1 }, ''); };
+    const fsExit = m => { m.classList.remove('fsx'); document.documentElement.classList.remove('vid-open'); if (fsOpen === m) { fsOpen = null; history.back(); } };
+    window.addEventListener('popstate', () => { if (fsOpen) { const m = fsOpen; fsOpen = null; m._stop(); } });   // כפתור החזרה סוגר את הסרטון ולא עוזב את הדף
     const stops = [];   // סרטון אחד בכל פעם: כשאחד מתחיל לנגן, כל השאר עוצרים וחוזרים לתמונה
     // גלילה: סרטון שיוצא מהמסך (נשאר ממנו פחות מרבע) נעצר וחוזר לתמונה
     const io = 'IntersectionObserver' in window && new IntersectionObserver(es => es.forEach(e => {
-      if (e.intersectionRatio < 0.25 && e.target._stop && document.fullscreenElement !== e.target) e.target._stop();
+      if (e.intersectionRatio < 0.25 && e.target._stop && !e.target.classList.contains('fsx')) e.target._stop();
     }), { threshold: [0, 0.25] });
 
     // c: {label (מעל התמונה), name (לתוויות נגישות), base (שם קובץ בהורדה), img, vid, w, h, alt}
@@ -195,9 +209,9 @@
         const show = on => {
           f.classList.toggle('playing', on);
           if (on) { v.currentTime = 0; paint(); v.play().catch(() => {}); v.focus({ preventScroll: true }); }
-          else { v.pause(); if (document.fullscreenElement === media) document.exitFullscreen().catch(() => {}); }
+          else { v.pause(); if (media.classList.contains('fsx')) fsExit(media); }
         };
-        const start = () => { show(true); if (FS_MOBILE && media.requestFullscreen) media.requestFullscreen().catch(() => {}); };
+        const start = () => { show(true); if (FS_MOBILE && !FS_NATIVE) fsEnter(media); };
         im.addEventListener('click', start);              // לחיצה על התמונה: ניגון
         v.addEventListener('click', toggle);              // לחיצה על הסרטון: השהיה / המשך
         im.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); start(); } });
@@ -213,7 +227,6 @@
         v.addEventListener('ended', () => show(false));   // בסוף הסרטון התא חוזר לתמונה
         const stop = () => { if (f.classList.contains('playing')) show(false); };
         stops.push(stop);
-        media.addEventListener('fullscreenchange', () => { if (document.fullscreenElement !== media) stop(); });   // יציאה ממסך מלא: חזרה לתמונה
         v.addEventListener('webkitendfullscreen', stop);
         media._stop = stop; if (io) io.observe(media);
         v.addEventListener('play', () => stops.forEach(s => s !== stop && s()));

@@ -679,7 +679,6 @@ html .su-lnk{ color:var(--olive); }
 :where(.pg-ads) .grid .dots{ position:relative; width:1.4rem; height:1.4rem; display:grid; place-items:center; padding:0; cursor:pointer; border:0; background:none; color:var(--muted); }
 :where(.pg-ads) .grid .dots::before{ content:''; position:absolute; inset:-.65rem; }   /* הסמל קטן, ושטח הלחיצה נשאר 44px */
 @media (hover:hover){ :where(.pg-ads) .grid .dots:hover{ color:var(--ink); } }
-:where(.pg-ads) .grid .dots[aria-expanded="true"]{ background:var(--band); color:var(--ink); }
 :where(.pg-ads) .grid .dots svg{ width:1.1rem; height:1.1rem; display:block; fill:currentColor; }
 :where(.pg-ads) .grid .menu{ display:none; position:absolute; top:calc(100% + .35rem); left:0; z-index:20; min-width:12rem; padding:.35rem; background:var(--paper); color:var(--ink); border:1px solid rgba(44,35,29,.14); box-shadow:0 18px 34px -18px rgba(44,35,29,.55); }
 :where(.pg-ads) .grid .more.open .menu{ display:block; }
@@ -709,9 +708,13 @@ html .su-lnk{ color:var(--olive); }
 /* בקרת ניגון בזמן ניגון: סטופ (חזרה לתמונה), השהיה/המשך, מיקום בסרטון וזמן. כמו בכל נגן: משמאל לימין */
 :where(.pg-ads) .grid .ctl{ display:none; position:absolute; left:0; right:0; bottom:0; z-index:5; align-items:center; gap:.4rem; padding:1.8rem .55rem .5rem; background:linear-gradient(to top, rgba(0,0,0,.62), rgba(0,0,0,0)); }
 :where(.pg-ads) .grid .playing .ctl{ display:flex; }
-:where(.pg-ads) .grid .media:fullscreen{ display:flex; align-items:center; justify-content:center; background:#000; }
-:where(.pg-ads) .grid .media:fullscreen video{ width:100%; height:100%; aspect-ratio:auto; object-fit:contain; background:#000 !important; }   /* במסך מלא הסרטון שלם, בלי חיתוך הכיתובים */
-:where(.pg-ads) .grid .media:fullscreen .ctl{ padding-bottom:calc(.5rem + env(safe-area-inset-bottom)); }
+:where(.pg-ads) .grid .media.fsx{ position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; background:#000; }   /* הסרטון ממלא את המסך בתוך הדף */
+:where(.pg-ads) .grid .media.fsx video{ width:100%; height:100%; aspect-ratio:auto; object-fit:contain; background:#000 !important; }   /* הסרטון שלם, בלי חיתוך הכיתובים */
+:where(.pg-ads) .grid .media.fsx .ctl{ padding-bottom:calc(.5rem + env(safe-area-inset-bottom)); }
+html.vid-open:where(.pg-ads){ overflow:hidden; }
+:where(.pg-ads) .menu-shield{ position:fixed; inset:0; z-index:40; touch-action:none; }   /* תפריט ⋯ פתוח: כל הדף חסום לנגיעות */
+:where(.pg-ads) .menu-shield[hidden]{ display:none; }
+:where(.pg-ads) .grid .more.open{ z-index:41; }
 :where(.pg-ads) .grid .ctl .cb{ flex:none; width:2.5rem; height:2.5rem; display:grid; place-items:center; padding:0; border:0; background:var(--paper); color:var(--ink); cursor:pointer; }
 :where(.pg-ads) .grid .ctl .cb svg{ width:1rem; height:1rem; display:block; fill:currentColor; }
 :where(.pg-ads) .grid .ctl .seek{ --p:0%; flex:1 1 auto; min-width:0; height:2.5rem; margin:0 .15rem; background:none; cursor:pointer; -webkit-appearance:none; appearance:none; }
