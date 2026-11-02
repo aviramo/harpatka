@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104cz" />
+  <link rel="stylesheet" href="admin.css?v=20261104da" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -238,7 +238,7 @@
   </dialog>
 
   <dialog id="iDlg" aria-label="צילום מסך" style="max-width:520px">
-    <div class="sheet" style="padding-bottom:20px">
+    <div class="sheet">
       <div class="idate" id="iDate"></div>
       <div class="iwrap" id="iWrap">
         <button type="button" class="inav inext" id="iNext" aria-label="הבאה" hidden><svg data-i="prev"></svg></button>
@@ -858,6 +858,16 @@
     const v = pr.rate_type === 'percent' ? Math.round((Number(amount) || 0) * Number(pr.rate)) / 100 : Number(pr.rate); return Number.isFinite(v) ? v : ''; };
   /* עמלה מתשלום: אחוז = על כל תשלום; ₪ קבוע = פעם אחת למשתתף (בתשלום הראשון) */
   const commOnEvery = (pr) => !!(pr && pr.cost_from_payment && pr.rate_type === 'percent');
+  /* כסף שהמשתתף שילם בפועל (בלי הקצאות מהיתרה, פחות החזרים), והלידים של דרך הגעה */
+  const cashOf = (x) => (((x.kind === 'payment' || x.kind === 'deposit') && !x.from_credit) ? Number(x.amount) : x.kind === 'refund' ? -Number(x.amount) : 0);
+  const netPaid = (pid) => state.payments.filter((x) => x.participant_id === pid).reduce((s, x) => s + cashOf(x), 0);
+  const srcLeads = (id) => state.participants.filter((q) => (channelOf(q) || {}).id === id);
+  /* מעבר בין עלות לליד לעלות מהתשלום: הערך מחושב כך שהעלות הכוללת של דרך ההגעה נשארת אותו דבר. בלי נתונים (אין לידים או אין משלמים) הערך לא משתנה */
+  function costRateFor(x, toPay) {
+    const r = Number(x.rate) || 0, leads = srcLeads(x.id), L = leads.length, P = leads.filter((q) => netPaid(q.id) > 0).length;
+    const total = toPay ? r * L : x.rate_type === 'percent' ? leads.reduce((s, q) => s + netPaid(q.id), 0) * r / 100 : r * P, per = toPay ? P : L;
+    return total > 0 && per > 0 ? { rate: Math.round(total / per * 10) / 10, L, P } : null;
+  }
   const fillPromoterSelect = (sel, val, none) => { sel.innerHTML = '<option value="">' + (none || 'ללא') + '</option>' + state.promoters.map((x) => '<option value="' + x.id + '">' + esc(x.name) + ' (' + rateLabel(x) + ')</option>').join('') + '<option value="__new">+ דרך הגעה חדשה</option>'; sel.value = val || ''; };
   /* תצוגת ההגעה (מונה, הדגשת שורה, כפתור "הגיע") מופיעה החל מחצי שעה לפני תחילת המפגש (שעון ישראל) */
   const nowIL = () => {
@@ -1187,7 +1197,7 @@
     const typesByLast = state.mtypes.map((t, i) => ({ t, i, k: lastOfType(t.id) })).sort((x, y) => (y.k - x.k) || (x.i - y.i)).map((x) => x.t);
     const types = state.mtypes.length ? typesByLast.map((t) => '<div class="mtr mrow2 mtyrow" role="menuitemradio" tabindex="0" data-mt="' + t.id + '" aria-checked="' + (state.mtype === t.id && !state.filter) + '"><span>' + esc(t.name || 'ללא שם') + '</span>' + mcell(state.meetings.filter((m) => typeIdOf(m) === t.id).length, 'cal') + mcell(pOfType(t.id), 'user') +
         '<button type="button" class="medit" data-edit-t="' + t.id + '" aria-label="עריכת סוג המפגש" title="עריכת סוג המפגש">' + EDIT_ICON + '</button></div>').join('') +
-      '<div class="mtr maddrow addt" id="addType"><span>סוג מפגש חדש</span><span></span><span></span><button type="button" role="menuitem" class="medit madd" aria-label="סוג מפגש חדש">' + icon('plus') + '</button></div>' : '';   // השם בימין והפלוס בעמודת העיפרון, וכל השורה לחיצה
+      '<div class="mtr maddrow addt" id="addType"><span>סוג מפגש חדש</span><button type="button" role="menuitem" class="medit madd" aria-label="סוג מפגש חדש">' + icon('plus') + '</button></div>' : '';   // השם בימין והפלוס מיד אחריו, וכל השורה לחיצה
     const shownM = state.meetings.filter((m) => !state.mtype || typeIdOf(m) === state.mtype);
     /* "כל המשתתפים" ראשון: רמה מעל סוגי המפגשים והמפגשים */
     $('#mMenu').innerHTML = '<div class="mtop">' +
@@ -1198,7 +1208,7 @@
         return '<div class="mtr mrow2' + (isPast(m) ? ' past' : '') + (isNext ? ' next' : '') + '" role="menuitemradio" tabindex="0" data-filter="' + m.id + '" aria-checked="' + (state.filter === m.id) + '"><span>' + dayTime(m) + '</span><span></span>' + mcell(ls.length, 'reg') +
           '<button type="button" class="medit" data-edit-m="' + m.id + '" aria-label="עריכת מפגש" title="עריכת מפגש">' + EDIT_ICON + '</button></div>';
       }).join('') +
-      '<div class="mtr maddrow" id="addMeeting"><span>מפגש חדש</span><span></span><span></span><button type="button" role="menuitem" class="medit madd" aria-label="מפגש חדש">' + icon('plus') + '</button></div>';
+      '<div class="mtr maddrow" id="addMeeting"><span>מפגש חדש</span><button type="button" role="menuitem" class="medit madd" aria-label="מפגש חדש">' + icon('plus') + '</button></div>';
   }
   const closeMSel = () => { $('#mMenu').hidden = true; $('#mSel').setAttribute('aria-expanded', 'false'); };
   $('#mSel').addEventListener('click', (e) => { e.stopPropagation(); const m = $('#mMenu'); m.hidden = !m.hidden; $('#mSel').setAttribute('aria-expanded', String(!m.hidden)); if (!m.hidden) { if (window.innerWidth < 700) { m.style.left = m.style.right = ''; m.style.top = Math.round($('#mSel').getBoundingClientRect().bottom + 8) + 'px'; } else { m.style.top = ''; const host = m.offsetParent || m.parentElement, hr = host.getBoundingClientRect(); m.style.right = 'auto'; const br = $('#mSel').getBoundingClientRect(); const x = Math.max(8, Math.min(Math.round(br.right - m.offsetWidth), window.innerWidth - m.offsetWidth - 8)); m.style.left = Math.round(x - hr.left) + 'px'; } m.style.maxHeight = Math.max(240, Math.floor(window.innerHeight - m.getBoundingClientRect().top - 12)) + 'px'; } });   // התפריט עד תחתית המסך, ונגלל בתוכו   // דסקטופ: הקצה הימני של התפריט בקו ישר עם הקצה הימני של הכותרת; במובייל ממורכז
@@ -1666,8 +1676,7 @@
 
     /* כל המדדים לפי כל המשתתפים הפעילים (גם מי שלא שויך לאף מפגש), והכסף לפי רשומות התשלום: הכנסה נטו = תשלומים והפקדות (בלי הקצאה מהיתרה) פחות החזרים, בדיוק כמו במסך הכספים */
     const allP = state.participants, n = allP.length, pmAll = S.perMeeting;
-    const cashOf = (x) => (((x.kind === 'payment' || x.kind === 'deposit') && !x.from_credit) ? Number(x.amount) : x.kind === 'refund' ? -Number(x.amount) : 0);
-    const paidBy = new Map(allP.map((p) => [p.id, state.payments.filter((x) => x.participant_id === p.id).reduce((s, x) => s + cashOf(x), 0)]));
+    const paidBy = new Map(allP.map((p) => [p.id, netPaid(p.id)]));
     const isFreeP = (p) => { const ls = linksOf(p.id); return ls.length > 0 && ls.every((l) => l.no_pay); };
     const payers = allP.filter((p) => paidBy.get(p.id) > 0), freeP = allP.filter(isFreeP), cohort = allP.filter((p) => !isFreeP(p)), unpaidP = cohort.filter((p) => !(paidBy.get(p.id) > 0));
     const noMeetingN = allP.filter((p) => !linksOf(p.id).length).length;
@@ -1687,7 +1696,7 @@
     // ----- דרכי הגעה -----
     const src = (p) => channelOf(p) ? 'promo' : String(p.source || '').startsWith('site') ? 'site' : 'other';
     const adP = allP.filter((p) => channelOf(p)), adPaid = adP.filter((p) => paidBy.get(p.id) > 0 && !isFreeP(p));
-    const proRows = state.promoters.map((x) => { const L = ledgerOf(x.id), recs = state.payments.filter((q) => q.promoter_id === x.id), leads = allP.filter((q) => (channelOf(q) || {}).id === x.id), paidN = leads.filter((q) => paidBy.get(q.id) > 0).length, inc = leads.reduce((s, q) => s + paidBy.get(q.id), 0), cm = (!x.cost_from_payment ? leads.length * Number(x.rate || 0) : 0) + recs.reduce((s, q) => s + (q.kind === 'payment' ? 1 : -1) * (Number(q.commission) || 0), 0); return { x, inc, cm, bal: L.balance, leadsN: leads.length, paidN }; });
+    const proRows = state.promoters.map((x) => { const L = ledgerOf(x.id), recs = state.payments.filter((q) => q.promoter_id === x.id), leads = srcLeads(x.id), paidN = leads.filter((q) => paidBy.get(q.id) > 0).length, inc = leads.reduce((s, q) => s + paidBy.get(q.id), 0), cm = (!x.cost_from_payment ? leads.length * Number(x.rate || 0) : 0) + recs.reduce((s, q) => s + (q.kind === 'payment' ? 1 : -1) * (Number(q.commission) || 0), 0); return { x, inc, cm, bal: L.balance, leadsN: leads.length, paidN }; });
     const noCh = allP.filter((q) => !channelOf(q)), noChPaid = noCh.filter((q) => paidBy.get(q.id) > 0);
     const proOwed = proRows.reduce((s, r) => s + Math.max(0, r.bal), 0), proInc = proRows.reduce((s, r) => s + r.inc, 0);
     const proCost = proRows.reduce((s, r) => s + r.cm, 0), proLeads = proRows.reduce((s, r) => s + r.leadsN, 0), proPaidN = proRows.reduce((s, r) => s + r.paidN, 0);
@@ -2011,7 +2020,7 @@
     const x0 = promoterOf(id), rate = x0 ? Number(x0.rate) : 0, byLead = !!(x0 && !x0.cost_from_payment && rate > 0);
     const myPays = state.promoPays.filter((x) => x.promoter_id === id).slice().sort((a, b) => String(b.created_at || b.paid_at).localeCompare(String(a.created_at || a.paid_at)));
     const lp = myPays[0], lastTs = lp ? String(lp.created_at || (lp.paid_at + 'T23:59:59')) : '';
-    const leadsAll = byLead ? state.participants.filter((q) => (channelOf(q) || {}).id === id) : [], leadsNew = leadsAll.filter((q) => String(q.created_at || '') > lastTs);
+    const leadsAll = byLead ? srcLeads(id) : [], leadsNew = leadsAll.filter((q) => String(q.created_at || '') > lastTs);
     const leadRow = (n) => ({ kind: 'c', date: todayISO(), amount: n * rate, who: 'עלות לידים', sub: n + ' לידים × ₪' + rate, key: 'leads' });
     const accNew = acc.filter((r) => !lastTs || String(r.ts || '') > lastTs).concat(leadsNew.length ? [leadRow(leadsNew.length)] : []);
     const lastRow = lp ? [{ kind: 'p', date: lp.paid_at, amount: -Number(lp.amount), who: 'תשלום לדרך הגעה', sub: ((lp.by_email ? 'שולם דרך ' + finName(lp.by_email) : '') + (lp.by_email && lp.note ? ' · ' : '') + (lp.note || '')), id: lp.id, key: lp.id }] : [];
@@ -2050,7 +2059,11 @@
     show('#prDetail');
   }
   /* דרך הגעה חדשה: אותו כרטיס בדיוק כמו ברשימת דרכי ההגעה (srcCard), והיא נשמרת רק בלחיצה על שמירה */
-  function renderPrDraft() { $('#prNewCard').innerHTML = srcCard(prDraft, 'new'); }
+  function renderPrDraft() {
+    const box = $('#prNewCard'), nm = box.querySelector('[data-f="name"]'), rt = box.querySelector('[data-f="rate"]');   // ציור מחדש לא מוחק מה שהוקלד ועוד לא נשמר
+    if (nm) prDraft.name = nm.value; if (rt) prDraft.rate = Math.max(0, Number(rt.value) || 0);
+    box.innerHTML = srcCard(prDraft, 'new');
+  }
   function showPromoterForm() {
     const used = new Set(state.promoters.map((s) => s.code).filter(Boolean)), code = 'abcdefghijklmnopqrstuvwxyz'.split('').find((c) => !used.has(c)) || null;
     prCur = null; prDraft = { name: '', rate_type: 'fixed', rate: 0, color: 'red', code, cost_on_lead: true, cost_from_payment: false };
@@ -4597,10 +4610,10 @@
     return '<div class="srccard" data-w="' + w + '">' +
       '<div class="srctop"><input class="stname" data-f="name" value="' + esc(x.name) + '" maxlength="24" placeholder="שם דרך ההגעה" aria-label="שם דרך ההגעה" style="' + nameStyle(x.color || 'red') + '" />' +
       (used || isNew ? '' : '<button type="button" class="stdel" data-sdel="' + w + '" aria-label="מחיקה" title="מחיקה">×</button>') + colDot(x.color || 'red', w) + '</div>' +
-      '<div class="srcseg" role="radiogroup" aria-label="סוג העלות"><button type="button" role="radio" data-seg="lead" aria-pressed="' + !fp + '">עלות לליד</button><button type="button" role="radio" data-seg="pay" aria-pressed="' + fp + '">עלות מהתשלום</button></div>' +
       '<div class="srcgrid">' +
-        '<label class="srcfld"><small>קוד בקישור</small><span class="srcin" dir="ltr"><i>?s=</i><input class="codein" data-f="code" value="' + esc(x.code || '') + '" maxlength="6" placeholder="—" aria-label="קוד בקישור" autocapitalize="off" autocomplete="off" />' + (isNew ? '' : '<button type="button" class="cpbtn" data-copylink="' + esc(x.code || '') + '" aria-label="העתקת הקישור" title="העתקת הקישור">' + icon('copy', 'i18') + '</button>') + '</span></label>' +
-        '<label class="srcfld"><small>' + (fp ? 'סכום או אחוז מהתשלום' : 'כמה עולה ליד') + '</small><span class="srcin">' +
+        '<label class="srcfld"><small>קוד בקישור <bdi dir="ltr">?s=</bdi></small><span class="srcin" dir="ltr"><input class="codein" data-f="code" value="' + esc(x.code || '') + '" maxlength="6" placeholder="—" aria-label="קוד בקישור" autocapitalize="off" autocomplete="off" />' + (isNew ? '' : '<button type="button" class="cpbtn" data-copylink="' + esc(x.code || '') + '" aria-label="העתקת הקישור" title="העתקת הקישור">' + icon('copy', 'i18') + '</button>') + '</span></label>' +
+        '<label class="srcfld"><small>סוג עלות</small><select class="srcsel" data-f="cost_type" aria-label="סוג העלות"><option value="lead"' + (fp ? '' : ' selected') + '>עלות לליד</option><option value="pay"' + (fp ? ' selected' : '') + '>עלות מהתשלום</option></select></label>' +
+        '<label class="srcfld"><small>' + (fp ? 'סכום או אחוז' : 'כמה עולה ליד') + '</small><span class="srcin">' +
           (fp ? '<select class="ratetype" data-f="rate_type" aria-label="סוג"><option value="fixed"' + (x.rate_type !== 'percent' ? ' selected' : '') + '>₪</option><option value="percent"' + (x.rate_type === 'percent' ? ' selected' : '') + '>%</option></select>' : '<i>₪</i>') +
           '<input class="codein ratein" data-f="rate" type="number" inputmode="decimal" min="0" value="' + (isNew && !Number(x.rate) ? '' : Number(x.rate || 0)) + '" placeholder="0" aria-label="עלות" /></span></label>' +
       '</div>' +
@@ -4697,14 +4710,17 @@
     const inp = e.target.closest('[data-f]'); if (!inp) return; const row = inp.closest('[data-w]'); if (!row) return; const w = row.dataset.w, f = inp.dataset.f, tg = srcTarget(w);
     if (f === 'name') { const v = inp.value.trim().slice(0, 24); if (!v) { if (w === 'new') prDraft.name = ''; else renderSources(); return; } saveSrc(w, { name: v }); }
     else if (f === 'code') { const v = inp.value.trim().toLowerCase(); if (v && (!/^[a-z0-9]{1,6}$/.test(v) || state.promoters.some((s) => s !== tg.row && s.code === v))) { toast('קוד לא תקין או כבר קיים'); if (w === 'new') renderPrDraft(); else renderSources(); return; } saveSrc(w, { code: v || null }); }
-    else if (f === 'cost_from_payment') saveSrc(w, inp.checked ? { cost_from_payment: true, cost_on_lead: false } : { cost_from_payment: false, cost_on_lead: true, rate_type: 'fixed' });
+    else if (f === 'cost_type') {
+      const toPay = inp.value === 'pay', c = w === 'new' ? null : costRateFor(tg.row, toPay);
+      saveSrc(w, Object.assign(toPay ? { cost_from_payment: true, cost_on_lead: false } : { cost_from_payment: false, cost_on_lead: true, rate_type: 'fixed' }, c ? { rate: c.rate } : {}));
+      if (c) toast('₪' + c.rate + (toPay ? ' למשלם' : ' לליד') + ': ' + c.L + ' לידים, ' + c.P + ' שילמו');
+    }
     else if (f === 'rate_type') saveSrc(w, { rate_type: inp.value });
     else if (f === 'rate') saveSrc(w, { rate: Math.max(0, Number(inp.value) || 0) });
   };
   const srcClick = async (e) => {
     const cur = e.target.closest('.swcur'); if (cur) { const w = cur.dataset.who, tg = srcTarget(w); if (tg.row) openColorMenu(w, cur, tg.row.color || (tg.kind === 'ad' ? 'sky' : 'red'), (c) => saveSrc(w, { color: c })); return; }
     const cp0 = e.target.closest('[data-copylink]'); if (cp0) { e.preventDefault(); const c0 = cp0.dataset.copylink; if (!c0) { toast('אין קוד לדרך ההגעה הזו'); return; } const url0 = 'https://harpatka.co.il/?s=' + c0; (navigator.clipboard ? navigator.clipboard.writeText(url0) : Promise.reject()).then(() => toast('הקישור הועתק'), () => { prompt('העתיקו את הקישור', url0); }); return; }
-    const sg0 = e.target.closest('[data-seg]'); if (sg0) { const w0 = sg0.closest('[data-w]').dataset.w, on = sg0.dataset.seg === 'pay'; const tg0 = srcTarget(w0); if (tg0.row && !!tg0.row.cost_from_payment !== on) saveSrc(w0, on ? { cost_from_payment: true, cost_on_lead: false } : { cost_from_payment: false, cost_on_lead: true, rate_type: 'fixed' }); return; }
     const st0 = e.target.closest('[data-settle]'); if (st0) { showPromoterDetail(st0.dataset.settle); $('#prDlg').showModal(); return; }   // ההתחשבנות דרך דרכי ההגעה
     const d = e.target.closest('[data-sdel]'); if (d) {
       const w = d.dataset.sdel, tg = srcTarget(w); if (!tg.row) return;
