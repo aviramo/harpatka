@@ -3297,12 +3297,13 @@
   let mailDark = false;
   const paintMailTheme = () => { const b = $('#mailTheme'); $('#mailDlg').classList.toggle('maildark', mailDark); b.setAttribute('aria-pressed', String(mailDark)); const lb = mailDark ? 'הדמיית מצב בהיר' : 'הדמיית מצב כהה'; b.title = lb; b.setAttribute('aria-label', lb); b.innerHTML = icon(mailDark ? 'sun' : 'moon'); };
   $('#mailTheme').addEventListener('click', () => { mailDark = !mailDark; paintMailTheme(); });
+  const mailFrameNew = () => { const old = $('#mailFrame'), f = document.createElement('iframe'); f.id = 'mailFrame'; f.title = old.title; f.setAttribute('sandbox', old.getAttribute('sandbox')); f.hidden = true; old.replaceWith(f); return f; };   // מסגרת חדשה בכל פתיחה: ניווט של iframe שכבר נטען מוסיף רשומה להיסטוריה של הדפדפן
   async function openMail(id) {
     if (!sheet || !sheet.id) return;
-    const meta = $('#mailMeta'), fr = $('#mailFrame');
+    const meta = $('#mailMeta'), fr = mailFrameNew();
     const dlg = $('#mailDlg'), who = state.participants.find((x) => x.id === sheet.id);
     $('#mailTitle').innerHTML = 'מייל' + (who ? ' <span class="tsubname">· ' + esc(who.name) + '</span>' : '');
-    sheet.mailId = id; meta.textContent = 'טוען…'; fr.hidden = true; fr.removeAttribute('srcdoc'); fr.style.height = ''; paintMailTheme();
+    sheet.mailId = id; meta.textContent = 'טוען…'; paintMailTheme();
     if (!dlg.open) dlg.showModal();   // פופאפ רגיל מלמטה, מעל כרטיס המשתתף
     syncUrl();
     try {
@@ -3316,7 +3317,7 @@
     } catch (err) { meta.textContent = 'לא ניתן לטעון את המייל'; fail(err); }
   }
   /* המייל לא קולט נגיעות (pointer-events), כדי שגלילה והחלקה למטה לסגירה יעבדו מכל מקום בפופאפ; קישורים שבתוכו נפתחים מכאן */
-  $('#mailDlg').addEventListener('close', () => { if (sheet) sheet.mailId = null; $('#mailFrame').removeAttribute('srcdoc'); syncUrl(); });
+  $('#mailDlg').addEventListener('close', () => { if (sheet) sheet.mailId = null; mailFrameNew(); });   // הכתובת מתעדכנת במעטפת הפופאפים
   $('#mailSheet').addEventListener('click', (e) => { const fr = $('#mailFrame'); if (fr.hidden) return; const b = fr.getBoundingClientRect(); if (e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom) return; let a = null; try { const el = fr.contentDocument.elementFromPoint(e.clientX - b.left, e.clientY - b.top); a = el && el.closest('a[href]'); } catch (x) {} if (a) window.open(a.href, '_blank', 'noopener'); });
   const toMain = () => { viewStack = []; setPTab('main'); };
 
