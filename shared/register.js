@@ -108,6 +108,8 @@
     locked = false; document.documentElement.classList.remove('modal-lock'); document.body.style.top = '';
     window.scrollTo({ top: lockY, left: 0, behavior: 'instant' });
   }
+  /* שדה הטלפון: פוקוס שגם פותח מקלדת (PersonForm.focusKeyboard) */
+  function kbFocus(el) { const pf = window.PersonForm; if (pf && pf.focusKeyboard) pf.focusKeyboard(el); else el.focus({ preventScroll: true }); }
   function openModal(m, noFocus){
     if (m.id === 'contactModal') { regUrl(true); modalHistPush(); }
     modalLastFocus = document.activeElement;
@@ -122,7 +124,7 @@
       if (f.matches('.modal-box')) f.setAttribute('tabindex', '-1');
       /* שדה השם מקבל פוקוס רק אחרי שהמגירה סיימה לרדת: אם המקלדת עולה בזמן שהטופס עוד מחוץ למסך, הדפדפן (אנדרואיד) מזיז את הדף והחלק העליון נחתך. ב-iOS חייבים מיד (בתוך הלחיצה) */
       const ios = /iP(hone|ad|od)/.test(navigator.userAgent);
-      if (f.matches('input, select, textarea') && !ios) setTimeout(() => { if (!m.hidden && m.classList.contains('open')) f.focus({ preventScroll: true }); }, 420);
+      if (f.matches('input, select, textarea') && !ios) setTimeout(() => { if (!m.hidden && m.classList.contains('open')) { if (tel) kbFocus(tel); else f.focus({ preventScroll: true }); } }, 420);
       else f.focus({ preventScroll: true });
     }
   }
@@ -521,7 +523,7 @@
   let createdHere = false;   // המשתתף נוצר בהרשמה הזו (בשלב הטלפון): RegistrationValue נשלח כשהגיל ידוע, בהשלמת הפרטים
   function setPhoneMode(on) {
     const was = phoneMode; phoneMode = !!on; document.documentElement.classList.toggle('reg-phone', phoneMode);
-    if (phoneMode && !was) { const m = document.getElementById('contactModal'), t = m && !m.hidden && m.querySelector('input[type="tel"]'); if (t) try { t.focus({ preventScroll: true }); } catch (e) {} }   // נכנסו עם גוגל מתוך הפופאפ: עוברים לשדה הטלפון
+    if (phoneMode && !was) { const m = document.getElementById('contactModal'), t = m && !m.hidden && m.querySelector('input[type="tel"]'); if (t) try { kbFocus(t); } catch (e) {} }   // נכנסו עם גוגל מתוך הפופאפ: עוברים לשדה הטלפון
   }
   /* שם להצגה של המשתתף המחובר: שם פרטי ומשפחה, ואם עוד לא השלים פרטים: הטלפון */
   const meDisplay = () => meInfo ? ((meInfo.first + ' ' + meInfo.last).trim() || meInfo.phone || '') : '';

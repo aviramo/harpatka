@@ -91,6 +91,17 @@
     set('first', vals.first); set('last', vals.last); set('phone', vals.phone); set('age', vals.age); set('gender', vals.gender);
   }
 
+  /* פוקוס בשדה שגם פותח מקלדת. דפדפן פותח מקלדת רק בתוך לחיצה, ואחרי חלון הכניסה של גוגל הפוקוס מגיע בלי לחיצה: בכרום באנדרואיד מבקשים אותה ב-VirtualKeyboard. באייפון אין ממשק כזה, ושם יש רק פוקוס */
+  function focusKeyboard(input) {
+    if (!input) return;
+    var vk = navigator.virtualKeyboard, can = vk && vk.show && 'virtualKeyboardPolicy' in input;
+    try {
+      if (can) input.virtualKeyboardPolicy = 'manual';
+      input.focus({ preventScroll: true });
+      if (can) { vk.show(); setTimeout(function () { input.virtualKeyboardPolicy = ''; }, 600); }   // חוזרים לברירת המחדל, כדי שנגיעה בשדה תפתח מקלדת כרגיל
+    } catch (e) {}
+  }
+
   window.normPhone = normPhone;
-  window.PersonForm = { html: html, err: err, bind: bind, read: read, validate: validate, serverError: serverError, fill: fill, setErr: setErr, clearAll: clearAll, normPhone: normPhone, MSG: MSG };
+  window.PersonForm = { html: html, err: err, bind: bind, read: read, validate: validate, serverError: serverError, fill: fill, setErr: setErr, clearAll: clearAll, focusKeyboard: focusKeyboard, normPhone: normPhone, MSG: MSG };
 })();
