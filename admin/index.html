@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104fc" />
+  <link rel="stylesheet" href="admin.css?v=20261104fd" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -4352,7 +4352,7 @@
     /* מתחת לקו: סינון לפי שליחה (רק כשנבחרה תבנית, לא בהודעה ריקה) ואחריו הוספת תבנית */
     const cn = sel ? waCounts() : null, seg = sel ? '<div class="wseg" role="group" aria-label="סינון הרשימה לפי שליחה של התבנית שנבחרה" title="מציג ברשימה את כולם, רק מי שנשלחה לו התבנית שנבחרה, או רק מי שלא">' + [['', 'הכל'], ['1', 'נשלח'], ['0', 'לא נשלח']].map((o) => '<button type="button" class="stc tagc' + (cn[o[0]] || f === o[0] ? '' : ' zero') + '" data-wsf="' + o[0] + '" aria-pressed="' + (f === o[0]) + '">' + o[1] + ' <small>' + cn[o[0]] + '</small>' + UI.fdot(f === o[0] && (o[0] === '1' ? 'green' : o[0] === '0' ? 'red' : 'ink')) + '</button>').join('') + '</div>' : '', bot = seg + addRows();
     $('#waMenu').innerHTML = item('', WA_ICON, 'הודעה ריקה', '', !sel) +
-      waList().map((x) => item(x.id, PIN_ICON, x.name || 'ללא שם', x.tag || '', !!sel && sel.id === x.id)).join('') +
+      waList().map((x) => { const on = !!sel && sel.id === x.id, b = item(x.id, PIN_ICON, x.name || 'ללא שם', x.tag || '', on); return on ? '<div class="wrow">' + b + '<button type="button" class="wedit" role="menuitem" data-wedit="' + esc(x.id) + '" title="עריכת ההודעה" aria-label="עריכת ההודעה">' + icon('edit', 'i18') + '</button></div>' : b; }).join('') +
       (bot ? '<div class="wbot">' + bot + '</div>' : '');
     function addRows() {
       const inM = !!(state.filter && curMeeting()), ty = typeById(inM ? typeIdOf(curMeeting()) : state.mtype), row = (k, label) => '<button type="button" class="wadd" data-wadd="' + k + '"><span class="wmi">' + icon('plus') + '<span class="wmn">' + esc(label) + '</span></span></button>';
@@ -4383,7 +4383,18 @@
     if (!tid || !typeById(tid)) { toast('אין סוג מפגש להוספת תבנית'); return; }
     openTypeEditor(tid); tyFormFor = null; showSetView('tydet'); tyF.tpl.add();
   }
+  /* עריכת התבנית שנבחרה (העיפרון בשורה שלה): אותו מסך עריכה כמו בהוספת תבנית, בתוך המפגש או בתוך סוג המפגש, לפי מי שהתבנית שייכת לו */
+  function waEditTemplate(id) {
+    const x = waList().find((t) => t.id === id); if (!x) return;
+    closeWa();
+    if (x.own === 'meeting') { openMeeting(x.m.id); mf.tpl.open(mf.tpl.rows.findIndex((r) => r.id === id)); return; }
+    const tid = typeIdOf(x.m);
+    if (!tid || !typeById(tid)) { toast('אין סוג מפגש לעריכת התבנית'); return; }
+    openTypeEditor(tid); tyFormFor = null; showSetView('tydet'); tyF.tpl.open(tyF.tpl.rows.findIndex((r) => r.id === id));
+  }
   $('#waMenu').addEventListener('click', (e) => {
+    const we = e.target.closest('[data-wedit]');
+    if (we) { waEditTemplate(we.dataset.wedit); return; }
     const sf = e.target.closest('[data-wsf]');
     if (sf) { waSetFilter(sf.dataset.wsf); refreshWa(); return; }
     const wa = e.target.closest('[data-wadd]');
