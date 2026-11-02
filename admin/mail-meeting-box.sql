@@ -2,13 +2,15 @@
 --   sed 's/__S__/test/g' admin/mail-meeting-box.sql | supabase db query --linked
 --   sed 's/__S__/public/g' admin/mail-meeting-box.sql | supabase db query --linked
 -- * harpatka_mail_meeting_box: תמונה, שם, מועד ושורת עיר, מיקום וכמות משתתפים. כל שדה ריק במפגש נלקח מסוג המפגש.
+-- * בלי נקודות בין חלקים שיכולים לעבור שורה: במייל אי אפשר לדעת אם השורה נשברת ולהסתיר את הנקודה. יום ושעה, וכמות המשתתפים, הם יחידות שלא נשברות.
+-- * סמל המשתתפים הוא תמונה (images/mail-person-v1.png), כי Gmail מסיר SVG. טורקיז, כי תמונה לא מתהפכת במצב כהה. כשתמונות חסומות ייתכן שיוצג רק המספר, כי התמונה קטנה והטקסט החלופי נחתך.
 -- * בלי שכפול: שם שזהה לכותרת המייל ("יוצאים להרפתקה") לא מוצג שוב, והמועד הוסר מהמשפט במייל דחיית התשלום.
 -- * harpatka_me מחזירה גם img ו-max, וגם שם, עיר ומיקום מהסוג כשהם ריקים במפגש, לאזור האישי.
 -- * הרצה חוזרת של mail-refund-removed.sql, payment-mail.sql או payment-reject.sql מחזירה את הגרסה הישנה: אחריהן מריצים שוב את הקובץ הזה.
 create or replace function __S__.harpatka_mail_meeting_box(p_mid uuid)
 returns text language plpgsql stable security definer set search_path = __S__, public as $f$
 declare
-  mt __S__.harpatka_meetings; ty __S__.harpatka_meeting_types; nm text; wh text; img text; n int;
+  mt __S__.harpatka_meetings; ty __S__.harpatka_meeting_types; nm text; wh text; img text; n int; ppl text := '';
   days text[] := array['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 begin
   select * into mt from __S__.harpatka_meetings where id = p_mid;
@@ -18,13 +20,14 @@ begin
   if nm = 'יוצאים להרפתקה' then nm := ''; end if;   -- כבר בכותרת המייל
   img := coalesce(nullif(trim(mt.image_url), ''), nullif(trim(ty.image_url), ''), (select nullif(trim(s.value), '') from __S__.harpatka_public_settings s where s.key = 'default_meeting_image'));
   n := coalesce(mt.max_participants, ty.max_participants);
-  wh := concat_ws(' · ', coalesce(nullif(trim(mt.city), ''), nullif(trim(ty.city), '')), coalesce(nullif(trim(mt.place), ''), nullif(trim(ty.place), '')), case when n > 0 then n || ' משתתפים' end);
+  wh := __S__.harpatka_pm_esc(concat_ws(', ', coalesce(nullif(trim(mt.city), ''), nullif(trim(ty.city), '')), coalesce(nullif(trim(mt.place), ''), nullif(trim(ty.place), ''))));
+  if n > 0 then ppl := ' <span style="display:inline-block;white-space:nowrap;padding:0 5px">' || n || '&nbsp;<img src="https://harpatka.co.il/images/mail-person-v1.png" width="16" height="16" alt="משתתפים" style="display:inline-block;width:16px;height:16px;vertical-align:-3px;border:0"></span>'; end if;
   return '<div style="border:1px solid #FFD8AE;border-bottom:4px solid #E5562D;background:#FFFFFF;text-align:center;margin-bottom:18px">'
     || case when img is not null then '<img src="' || __S__.harpatka_pm_esc(img) || '" width="520" alt="" style="display:block;width:100%;max-width:100%;height:auto;border:0">' else '' end
     || '<div style="padding:14px 12px 16px">'
     || case when nm <> '' then '<div style="font-size:15px;font-weight:bold;color:#C8411B;margin-bottom:4px">' || __S__.harpatka_pm_esc(nm) || '</div>' else '' end
-    || '<div style="font-size:24px;line-height:1.25;font-weight:bold;color:#2C231D">יום ' || days[extract(dow from mt.meeting_date)::int + 1] || ' ' || to_char(mt.meeting_date, 'FMDD.FMMM') || ' · ' || to_char(mt.meeting_time, 'HH24:MI') || '</div>'
-    || case when wh <> '' then '<div style="font-size:15px;line-height:1.4;font-weight:bold;color:#4A3D33;margin-top:6px"><span style="display:inline-block;width:8px;height:8px;background:#0F8A93;margin-left:6px"></span>' || __S__.harpatka_pm_esc(wh) || '</div>' else '' end
+    || '<div style="font-size:22px;line-height:1.25;font-weight:bold;color:#2C231D"><span style="display:inline-block;white-space:nowrap;padding:0 7px">יום ' || days[extract(dow from mt.meeting_date)::int + 1] || ' ' || to_char(mt.meeting_date, 'FMDD.FMMM') || '</span> <span style="display:inline-block;white-space:nowrap;padding:0 7px">' || to_char(mt.meeting_time, 'HH24:MI') || '</span></div>'
+    || case when wh <> '' or ppl <> '' then '<div style="font-size:15px;line-height:1.4;font-weight:bold;color:#4A3D33;margin-top:6px"><span style="display:inline-block;width:8px;height:8px;background:#0F8A93;margin-left:6px"></span>' || wh || ppl || '</div>' else '' end
     || '</div></div>';
 end $f$;
 revoke all on function __S__.harpatka_mail_meeting_box(uuid) from public, anon, authenticated;
