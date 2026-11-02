@@ -676,7 +676,15 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .nrow { display: flex; align-items: flex-end; gap: 8px; padding: 4px 0; }
 .nrow .ntext { flex: 1 1 auto; min-width: 0; margin: 0; padding: 0; line-height: 1; }
 .ntext { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); }
-.ntext.chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ntext.chips { display: flex; flex-wrap: nowrap; align-items: center; gap: 4px; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: none; white-space: nowrap; }   /* הערת מערכת: שורה אחת שנגררת הצידה, בלי גלישה */
+.ntext.chips::-webkit-scrollbar { display: none; }
+.ntext.chips > * { flex: 0 0 auto; }
+#nList .ntext.chips .nch:not(.nago) { display: flex; align-items: center; min-height: var(--tag); padding: 0; white-space: nowrap; overflow-wrap: normal; }   /* הטקסט והחץ על אותו קו אמצע */
+.ntext.chips .narw svg { transform: translateY(-1px); }
+.ntext.chips.fl, .ntext.chips.fr { cursor: grab; }
+.ntext.chips.fl { -webkit-mask-image: linear-gradient(to right, transparent, #000 40px); mask-image: linear-gradient(to right, transparent, #000 40px); }   /* דהייה בקצה שיש אחריו עוד תוכן */
+.ntext.chips.fr { -webkit-mask-image: linear-gradient(to left, transparent, #000 40px); mask-image: linear-gradient(to left, transparent, #000 40px); }
+.ntext.chips.fl.fr { -webkit-mask-image: linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent); }
 .nch.nm { color: var(--text); }
 .nch.ny { color: var(--yellow); }
 .nch.ng { color: var(--green); }
@@ -1218,6 +1226,7 @@ dialog .dclose { display: none; }
 #qMenu.am { overflow-y: auto; overscroll-behavior: contain; }
 #qMenu.am { display: grid; grid-template-columns: max-content max-content minmax(0, max-content); row-gap: 8px; align-content: start; }   /* שלוש עמודות משותפות לכל השורות (subgrid): התאריכים, השעות והשמות כל אחד על אותו קו אנכי */
 #qMenu.am .qi { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; justify-content: normal; column-gap: 4px; min-width: 0; padding: 0 16px; text-align: start; }   /* הכול מיושר לימין והרוחב לפי התוכן (השורה הרחבה ביותר קובעת) */
+#qMenu.am .qhd { grid-column: 1 / -1; padding: 4px 16px 0; text-align: start; }   /* תת הכותרת "שיוך למפגש": בקו של הטקסט בשורות */
 #qMenu.am .amd, #qMenu.am .amh { text-align: start; font-variant-numeric: tabular-nums; }
 #qMenu.am .amh::before, #qMenu.am .amn::before { content: "·"; margin-inline-end: 4px; }   /* נקודה מפרידה עם רווחים קטנים משני הצדדים (4px), והעמודות עדיין על אותו קו */
 #qMenu.am .amn { min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: start; color: var(--text-2); font-weight: 500; }

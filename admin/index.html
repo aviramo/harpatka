@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104dv" />
+  <link rel="stylesheet" href="admin.css?v=20261104dw" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -2288,7 +2288,7 @@
     const host = anchor.closest('dialog') || document.body; if (menu.parentNode !== host) host.appendChild(menu);
     menu.className = 'qmenu am'; menu.style.width = '';
     const nmOf = (m) => String(m.name || '').trim() || String((typeById(m.type_id) || {}).name || '').trim();   // שם המפגש (או שם הסוג כשאין לו שם), ליד המועד
-    menu.innerHTML = free.map((m) => { const nm = nmOf(m); return '<button type="button" role="menuitem" class="qi" data-am="' + m.id + '"><span class="amd">' + esc(dmShort(m)) + '</span><span class="amh">' + esc(String(m.meeting_time).slice(0, 5)) + '</span>' + (nm ? '<span class="amn">' + esc(nm) + '</span>' : '') + '</button>'; }).join('');   // שלוש עמודות: תאריך, שעה, שם (כל עמודה על אותו קו אנכי בכל השורות)
+    menu.innerHTML = '<div class="qhd">שיוך למפגש</div>' + free.map((m) => { const nm = nmOf(m); return '<button type="button" role="menuitem" class="qi" data-am="' + m.id + '"><span class="amd">' + esc(dmShort(m)) + '</span><span class="amh">' + esc(String(m.meeting_time).slice(0, 5)) + '</span>' + (nm ? '<span class="amn">' + esc(nm) + '</span>' : '') + '</button>'; }).join('');   // שלוש עמודות: תאריך, שעה, שם (כל עמודה על אותו קו אנכי בכל השורות)
     menu.style.maxHeight = ''; menu.hidden = false;
     const tile = $('#pMeetTile').getBoundingClientRect();   // האריח בצד ימין של הרצועה: הקצה הימני של התפריט בקו הימני של האריח, מתחתיו
     menu.style.maxWidth = Math.max(160, Math.floor(tile.right - 8)) + 'px';   // לא רחב יותר ממה שנכנס משמאל לקצה הימני של האריח (שם ארוך נחתך ב-"..."), כדי שהתפריט יישאר מיושר לימין האריח
@@ -2753,9 +2753,23 @@
     sheet.nOpen = sheet.nOpen || new Set();
     const meta = (n) => '<span><bdi>' + esc(noteAuthor(n.author_email, n.author_name)) + '</bdi> · ' + esc(fmtDT(n.created_at)) + '</span>' + (n.system ? '' : '<button type="button" class="ndel" data-del="' + n.id + '" aria-label="מחיקת הערה" title="מחיקת הערה">מחיקה</button>');   // השורה שנפתחת מתחת להערה: שם · מועד מדויק
     list.innerHTML = ns.length ? ns.map((n) => '<div class="nitem' + (n.system ? ' sys' : '') + ' fold' + (n.has_image ? ' img' : '') + (sheet.nOpen.has(n.id) ? ' open' : '') + '" data-nid="' + n.id + '"' + (n.event_type ? ' data-ev="' + esc(n.event_type) + '"' : '') + (n.new_status ? ' data-st="' + esc(n.new_status) + '"' : '') + '>' +
-      ('<div class="nrow"><div class="ntext' + (n.system && sysChips(n) ? ' chips' : '') + '">' + (n.has_image ? '<a class="nimg" data-img="' + n.id + '"><div class="nload">טוען תמונה…</div></a>' : ((n.system && sysChips(n)) || '<span class="nch ' + (n.system ? 'nn' : 'nw') + '">' + noteTextHtml(n.body) + '</span>')) + (n.mail_id ? NARW + '<button type="button" class="nmail' + (n.mail_failed ? ' bad' + (n.mail_noaddr ? ' noacc' : '') : '') + '" data-mail="' + n.mail_id + '">' + (n.mail_failed ? icon('warn', 'i16') + 'המייל לא נשלח' : 'מייל') + '</button>' : '') + '</div><span class="nch nago"><span class="nagot" data-ts="' + esc(n.created_at) + '">' + agoText(n.created_at) + '</span></span></div><div class="nmeta"><div class="nmetai">' + meta(n) + '</div></div>') + '</div>').join('')
+      ('<div class="nrow"><div class="ntext' + (n.system && !n.has_image ? ' chips' : '') + '">' + (n.has_image ? '<a class="nimg" data-img="' + n.id + '"><div class="nload">טוען תמונה…</div></a>' : ((n.system && sysChips(n)) || '<span class="nch ' + (n.system ? 'nn' : 'nw') + '">' + noteTextHtml(n.body) + '</span>')) + (n.mail_id ? NARW + '<button type="button" class="nmail' + (n.mail_failed ? ' bad' + (n.mail_noaddr ? ' noacc' : '') : '') + '" data-mail="' + n.mail_id + '">' + (n.mail_failed ? icon('warn', 'i16') + 'המייל לא נשלח' : 'מייל') + '</button>' : '') + '</div><span class="nch nago"><span class="nagot" data-ts="' + esc(n.created_at) + '">' + agoText(n.created_at) + '</span></span></div><div class="nmeta"><div class="nmetai">' + meta(n) + '</div></div>') + '</div>').join('')
       : '<p class="mnone">עוד אין הערות. אפשר לרשום למעלה מה דיברתם, מה הוחלט ומה צריך לזכור, או לצרף צילום מסך משיחה</p>';
     list.querySelectorAll('[data-img]').forEach(loadNoteImg);
+    noteFades();
+  }
+  /* הערת מערכת ארוכה היא שורה אחת שנגררת הצידה: דהייה בקצה שיש אחריו עוד תוכן (fl משמאל, fr מימין). בעברית scrollLeft שלילי */
+  const noteFade = (el) => { const max = el.scrollWidth - el.clientWidth, x = Math.abs(el.scrollLeft); el.classList.toggle('fl', max > 1 && x < max - 1); el.classList.toggle('fr', x > 1); };
+  const noteFades = () => document.querySelectorAll('#nList .ntext.chips').forEach(noteFade);
+  $('#nList').addEventListener('scroll', (e) => { if (e.target.classList && e.target.classList.contains('chips')) noteFade(e.target); }, true);
+  new ResizeObserver(noteFades).observe($('#nList'));   // גם כשהרשימה נחשפת או שרוחב הכרטיס משתנה
+  if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', noteFades);   // הגופן משנה את רוחב הטקסט
+  /* בעכבר אין גרירה מובנית: גוררים בעצמנו, וגרירה לא פותחת את ההערה. במגע הגלילה רגילה */
+  { let drag = null, moved = false;
+    $('#nList').addEventListener('pointerdown', (e) => { const el = e.pointerType === 'mouse' && e.button === 0 && e.target.closest('.ntext.chips'); moved = false; drag = el && el.scrollWidth > el.clientWidth + 1 ? { el, x: e.clientX, left: el.scrollLeft } : null; });
+    window.addEventListener('pointermove', (e) => { if (!drag) return; const dx = e.clientX - drag.x; if (Math.abs(dx) > 4) moved = true; if (moved) drag.el.scrollLeft = drag.left - dx; });
+    window.addEventListener('pointerup', () => { drag = null; });
+    $('#nList').addEventListener('click', (e) => { if (moved) { moved = false; e.stopPropagation(); e.preventDefault(); } }, true);
   }
   /* תמונת ההערה נטענת רק כשרואים אותה (לא נכללת בטעינה הכללית) */
   async function loadNoteImg(a) {
