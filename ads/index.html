@@ -8,7 +8,7 @@
   <link rel="icon" href="../images/favicon-v5.ico" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="../images/favicon-v5-32.png" />
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Assistant:wght@400;500;600;700&display=block" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/site.css?v=20261103e">
+  <link rel="stylesheet" href="../shared/site.css?v=20261103f">
   <script src="../shared/age.js?v=20261031a"></script>
 </head>
 <body>
@@ -40,6 +40,7 @@
     const json = u => fetch(u).then(r => r.ok ? r.json() : {}).catch(() => ({}));
     const DOTS = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>';
     const I_DL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg>';
+    const I_WARN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 2.5 20h19L12 3.5z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>';
     const I_STOP = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
     const I_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg>';
     const I_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5.5" width="4" height="13" rx="1"/><rect x="13.5" y="5.5" width="4" height="13" rx="1"/></svg>';
@@ -116,25 +117,25 @@
 
     // סרטונים שמופיעים ראשונים, לפני המודעות הממוספרות. סרטון מעודכן = שם קובץ חדש (cache)
     const SCENES_END = 'יוצאים להרפתקה, מכניסים תנועה לחיים. לנשים וגברים בגילאי ' + ageText('to') + ' בפרק פתוח בחיים. ';
-    const FEATURED = [{ label: 'מרגישה שהחיים עומדים במקום? (בת 50)', name: 'הסרטון מרגישה שהחיים עומדים במקום', type: 'photo', base: 'adventure-woman', w: 1080, h: 1920,
+    const FEATURED = [{ label: 'מרגישה שהחיים עומדים במקום? (בת 50)', cr: true, name: 'הסרטון מרגישה שהחיים עומדים במקום', type: 'photo', base: 'adventure-woman', w: 1080, h: 1920,
       img: 'img/adventure-woman-c6a5a5cb.jpg', vid: 'video/adventure-woman-c6a5a5cb.mp4',
       alt: 'מרגישה לפעמים שהחיים עומדים במקום? רוצה שמשהו ישתנה? אבל כל צעד מרגיש כמו מאמץ? ומה אם יש דרך אחרת? בלי להילחם בעצמך. בלי להתאמץ כל כך. פשוט לשחק. לנוע. ליהנות. לפעמים דווקא ההנאה מניעה את השינוי. ' + SCENES_END + 'בואי לחוות את זה בעצמך' },
       { label: 'מרגישה שהחיים עומדים במקום? (בת 50, מוזיקה אחרת)', name: 'הסרטון מרגישה שהחיים עומדים במקום, בת 50, מוזיקה אחרת', type: 'photo', base: 'adventure-woman-b', w: 1080, h: 1920,
       img: 'img/adventure-woman-b-f2b8fedd.jpg', vid: 'video/adventure-woman-b-f2b8fedd.mp4',
       alt: 'מרגישה לפעמים שהחיים עומדים במקום? רוצה שמשהו ישתנה? אבל כל צעד מרגיש כמו מאמץ? ומה אם יש דרך אחרת? בלי להילחם בעצמך. בלי להתאמץ כל כך. פשוט לשחק. לנוע. ליהנות. לפעמים דווקא ההנאה מניעה את השינוי. ' + SCENES_END + 'בואי לחוות את זה בעצמך' },
-      { label: 'מרגיש שהחיים עומדים במקום? (בן 50)', name: 'הסרטון מרגיש שהחיים עומדים במקום', type: 'photo', base: 'adventure-man2', w: 1080, h: 1920,
+      { label: 'מרגיש שהחיים עומדים במקום? (בן 50)', cr: true, name: 'הסרטון מרגיש שהחיים עומדים במקום', type: 'photo', base: 'adventure-man2', w: 1080, h: 1920,
       img: 'img/adventure-man2-058f8493.jpg', vid: 'video/adventure-man2-058f8493.mp4',
       alt: 'מרגיש לפעמים שהחיים עומדים במקום? רוצה שמשהו ישתנה? אבל כל צעד מרגיש כמו מאמץ? ומה אם יש דרך אחרת? בלי להילחם בעצמך. בלי להתאמץ כל כך. פשוט לשחק. לנוע. ליהנות. לפעמים דווקא ההנאה מניעה את השינוי. ' + SCENES_END + 'בוא לחוות את זה בעצמך' },
       { label: 'מרגיש שהחיים עומדים במקום? (בן 50, מוזיקה אחרת)', name: 'הסרטון מרגיש שהחיים עומדים במקום, בן 50, מוזיקה אחרת', type: 'photo', base: 'adventure-man2-b', w: 1080, h: 1920,
       img: 'img/adventure-man2-b-2229a37a.jpg', vid: 'video/adventure-man2-b-2229a37a.mp4',
       alt: 'מרגיש לפעמים שהחיים עומדים במקום? רוצה שמשהו ישתנה? אבל כל צעד מרגיש כמו מאמץ? ומה אם יש דרך אחרת? בלי להילחם בעצמך. בלי להתאמץ כל כך. פשוט לשחק. לנוע. ליהנות. לפעמים דווקא ההנאה מניעה את השינוי. ' + SCENES_END + 'בוא לחוות את זה בעצמך' },
-      { label: 'מרגישה שהחיים עומדים במקום? (בת 40)', name: 'הסרטון מרגישה שהחיים עומדים במקום, בת 40', type: 'photo', base: 'adventure-woman40', w: 1080, h: 1920,
+      { label: 'מרגישה שהחיים עומדים במקום? (בת 40)', cr: true, name: 'הסרטון מרגישה שהחיים עומדים במקום, בת 40', type: 'photo', base: 'adventure-woman40', w: 1080, h: 1920,
       img: 'img/adventure-woman40-c97471fa.jpg', vid: 'video/adventure-woman40-c97471fa.mp4',
       alt: 'מרגישה לפעמים שהחיים עומדים במקום? רוצה שמשהו ישתנה? אבל כל צעד מרגיש כמו מאמץ? ומה אם יש דרך אחרת? בלי להילחם בעצמך. בלי להתאמץ כל כך. פשוט לשחק. לנוע. ליהנות. לפעמים דווקא ההנאה מניעה את השינוי. ' + SCENES_END + 'בואי לחוות את זה בעצמך' },
       { label: 'מרגישה שהחיים עומדים במקום? (בת 40, מוזיקה אחרת)', name: 'הסרטון מרגישה שהחיים עומדים במקום, בת 40, מוזיקה אחרת', type: 'photo', base: 'adventure-w40b', w: 1080, h: 1920,
       img: 'img/adventure-w40b-9bdfc709.jpg', vid: 'video/adventure-w40b-9bdfc709.mp4',
       alt: 'מרגישה לפעמים שהחיים עומדים במקום? רוצה שמשהו ישתנה? אבל כל צעד מרגיש כמו מאמץ? ומה אם יש דרך אחרת? בלי להילחם בעצמך. בלי להתאמץ כל כך. פשוט לשחק. לנוע. ליהנות. לפעמים דווקא ההנאה מניעה את השינוי. ' + SCENES_END + 'בואי לחוות את זה בעצמך' },
-      { label: 'מרגיש שהחיים עומדים במקום? (בן 40)', name: 'הסרטון מרגיש שהחיים עומדים במקום, בן 40', type: 'photo', base: 'adventure-man40', w: 1080, h: 1920,
+      { label: 'מרגיש שהחיים עומדים במקום? (בן 40)', cr: true, name: 'הסרטון מרגיש שהחיים עומדים במקום, בן 40', type: 'photo', base: 'adventure-man40', w: 1080, h: 1920,
       img: 'img/adventure-man40-42dd4828.jpg', vid: 'video/adventure-man40-42dd4828.mp4',
       alt: 'מרגיש לפעמים שהחיים עומדים במקום? רוצה שמשהו ישתנה? אבל כל צעד מרגיש כמו מאמץ? ומה אם יש דרך אחרת? בלי להילחם בעצמך. בלי להתאמץ כל כך. פשוט לשחק. לנוע. ליהנות. לפעמים דווקא ההנאה מניעה את השינוי. ' + SCENES_END + 'בוא לחוות את זה בעצמך' },
       { label: 'מרגיש שהחיים עומדים במקום? (בן 40, מוזיקה אחרת)', name: 'הסרטון מרגיש שהחיים עומדים במקום, בן 40, מוזיקה אחרת', type: 'photo', base: 'adventure-man40-b', w: 1080, h: 1920,
@@ -143,13 +144,13 @@
       { label: 'ביודנסה', name: 'הסרטון ביודנסה', type: 'photo', base: 'biodanza-story', w: 1080, h: 1920,
       img: 'img/biodanza-story-6f1bb118.jpg', vid: 'video/biodanza-story-6f1bb118.mp4',
       alt: 'מתי בפעם האחרונה חייכו אליכם בלי מילים? מתי רקדתם בלי לחשוב? מתי הרגשתם חיבור עם כולם? מתי יצאתם ביחד לדרך משותפת והרגשתם בבית? ביודנסה. יוצאים להרפתקה, מפגש מסוג אחר. לנשים וגברים בגילאי ' + ageText('to') + ' בפרק פתוח בחיים. להיות, לנוע, להיפגש' },
-      { label: 'עוד סוויפ?', name: 'הסרטון עוד סוויפ', type: 'photo', base: 'sweeps-story', w: 1080, h: 1920,
+      { label: 'עוד סוויפ?', cr: true, name: 'הסרטון עוד סוויפ', type: 'photo', base: 'sweeps-story', w: 1080, h: 1920,
       img: 'img/sweeps-story-bf23344e.jpg', vid: 'video/sweeps-story-bf23344e.mp4',
       alt: 'עוד סוויפ? מרימים את המבט, מתחילים לנוע. יוצאים להרפתקה: מפגש דרך מוזיקה, תנועה וחיבור. לנשים וגברים בגילאי ' + ageText('to') + ' בפרק פתוח בחיים. בואו לחוות את זה בעצמכם' },
       { label: 'יש רגעים שמפספסים', name: 'הסרטון יש רגעים שמפספסים', type: 'photo', base: 'moments-story', w: 1080, h: 1920,
       img: 'img/moments-story-572f0cdd.jpg', vid: 'video/moments-story-572f0cdd.mp4',
       alt: 'יש רגעים שמפספסים. ויש רגעים שבוחרים להיות בהם. יוצאים להרפתקה: להיות, לנוע, להיפגש. לנשים וגברים בגילאי ' + ageText('to') + ' בפרק פתוח בחיים. בואו לחוות את זה בעצמכם' },
-      { label: 'מרגישים שהחיים עומדים במקום? (Changes)', name: 'הסרטון מרגישים שהחיים עומדים במקום על Changes', type: 'photo', base: 'adventure-changes', w: 1080, h: 1920,
+      { label: 'מרגישים שהחיים עומדים במקום? (Changes)', cr: true, name: 'הסרטון מרגישים שהחיים עומדים במקום על Changes', type: 'photo', base: 'adventure-changes', w: 1080, h: 1920,
       img: 'img/adventure-changes-13640018.jpg', vid: 'video/adventure-changes-13640018.mp4',
       alt: 'מרגישים לפעמים שהחיים עומדים במקום? רוצים שמשהו ישתנה? אבל כל צעד מרגיש כמו מאמץ? ומה אם יש דרך אחרת? בלי להילחם בעצמכם. בלי להתאמץ כל כך. פשוט לשחק. לנוע. ליהנות. לפעמים דווקא ההנאה מניעה את השינוי. יוצאים להרפתקה, מכניסים תנועה לחיים. לנשים וגברים בגילאי ' + ageText('to') + ' בפרק פתוח בחיים. בואו לחוות את זה בעצמכם' }];
 
@@ -172,10 +173,12 @@
       /* טקסט לחיפוש: מספר, נוסח המודעה (זהה בתמונה ובסרטון) ובמודעה עם סרטון גם הטקסטים הקבועים שבסרטון */
       f.dataset.type = c.type || 'msg';
       f.classList.toggle('tall', c.h / c.w > 1.5);   // 9:16: התמונה והסרטון ביחס האמיתי שלהם
-      f.dataset.text = [c.label, c.name, c.alt, c.vid && c.type !== 'photo' && c.type !== 'anim' ? (c.type === 'move' ? 'להכניס תנועה חדשה לחיים' : 'מפגש מסוג אחר') + ' לגילאי ' + ageText('to') + ' בפרק פתוח בחיים הזמנה יוצאים להרפתקה' : ''].join(' ');
+      f.dataset.text = [c.label, c.name, c.alt, c.cr ? 'מוגן בזכויות יוצרים' : '', c.vid && c.type !== 'photo' && c.type !== 'anim' ? (c.type === 'move' ? 'להכניס תנועה חדשה לחיים' : 'מפגש מסוג אחר') + ' לגילאי ' + ageText('to') + ' בפרק פתוח בחיים הזמנה יוצאים להרפתקה' : ''].join(' ');
       const head = document.createElement('div'); head.className = 'head';
       const n = document.createElement('span'); n.className = 'n'; n.textContent = c.label;
-      head.appendChild(n);
+      const ttl = document.createElement('div'); ttl.className = 'ttl'; ttl.appendChild(n);
+      if (c.cr) { const w = document.createElement('span'); w.className = 'crw'; w.innerHTML = I_WARN + 'מוגן בזכויות יוצרים'; ttl.appendChild(w); }   // cr: מוזיקה מסחרית, במודעה ממומנת עלולה להיחסם
+      head.appendChild(ttl);
       const media = document.createElement('div'); media.className = 'media';
       const im = document.createElement('img');
       im.loading = 'lazy'; im.width = c.w; im.height = c.h; im.src = c.img; im.alt = c.alt;
