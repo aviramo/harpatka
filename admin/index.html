@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104dg" />
+  <link rel="stylesheet" href="admin.css?v=20261104dh" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1191,8 +1191,8 @@
        בסוג: המשתתפים הפעילים שמשויכים לאחד המפגשים שלו */
     const actP = state.participants.filter((x) => x.active !== false);
     const pOfType = (tid) => { const ms = new Set(state.meetings.filter((m) => typeIdOf(m) === tid).map((m) => m.id)); const ids = new Set(state.att.filter((a) => ms.has(a.meeting_id)).map((a) => a.participant_id)); return actP.filter((x) => ids.has(x.id)).length; };
-    /* בכותרת, בכל המצבים: נקודה וכמות המשתתפים המשויכים, אותו מספר כמו בתפריט (לא תלוי בסינונים; מה שמוצג אחרי סינון הוא המונה שבשורת הסינון) */
-    { const n = cur ? state.att.filter((a) => a.meeting_id === cur.id).length : state.mtype && typeById(state.mtype) ? pOfType(state.mtype) : actP.length; $('#mSelN').innerHTML = '<i aria-hidden="true">·</i>' + icon('user', 'i16') + n; $('#mSel').setAttribute('aria-label', $('#mSelTxt').textContent + ', ' + n + ' משתתפים'); }
+    /* בכותרת, בכל המצבים: סמל וכמות המשתתפים המשויכים, אותו מספר כמו בתפריט (לא תלוי בסינונים; מה שמוצג אחרי סינון הוא המונה שבשורת הסינון) */
+    { const n = cur ? state.att.filter((a) => a.meeting_id === cur.id).length : state.mtype && typeById(state.mtype) ? pOfType(state.mtype) : actP.length; $('#mSelN').innerHTML = icon('user', 'i16') + n; $('#mSel').setAttribute('aria-label', $('#mSelTxt').textContent + ', ' + n + ' משתתפים'); }
     const mcell = (n, k, dim) => '<span class="mc' + (dim ? ' dim' : '') + '" title="' + MCI[k][1] + '" aria-label="' + MCI[k][1] + ' ' + n + '"><i class="mci" aria-hidden="true">' + MCI[k][0] + '</i>' + n + '</span>';   // הסמל מימין למספר, כל הסמלים בעמודה על אותו קו אנכי
     /* סוגי המפגשים לפי המפגש האחרון שלהם (התאריך והשעה המאוחרים ביותר, גם עתידי): הסוג של המפגש האחרון ראשון; סוג בלי מפגשים בסוף, לפי הסדר הקבוע */
     const lastOfType = (tid) => state.meetings.reduce((mx, m) => typeIdOf(m) === tid ? Math.max(mx, Date.parse(m.meeting_date + 'T' + String(m.meeting_time || '00:00').slice(0, 5)) || 0) : mx, -1);
@@ -2913,11 +2913,7 @@
       return;
     }
     if ((to === 'free') === mapi.free()) return;
-    if (to === 'free') {
-      const al = Math.round(allocatedOf(pid, mid) * 100) / 100;
-      if (al > 0) confirmAct('חינם: להעביר את ההקצאה ליתרה?', pid, mid, () => mapi.go('free').then(closePayCard), 'המפגש יסומן כחינם. <b>' + ils(al) + '</b> שהוקצו אליו יוסרו ממנו ויעברו כזיכוי ליתרה של המשתתף, ואפשר יהיה להקצות אותם למפגש אחר או להחזיר אותם ככסף. לא מוחזר כסף עכשיו.', 'כן, העברת הסכום ליתרה', null, { yellow: true });
-      else mapi.go('free').then(closePayCard);
-    } else mapi.go('pay');
+    if (to === 'free') mapi.go('free').then(closePayCard); else mapi.go('pay');
   });
   $('#pPayChip').addEventListener('click', () => { if (!sheet || !sheet.id) return; viewStack = []; goView('wallet'); });
   /* קבלת תשלום: מהארנק (כללי) או מתוך מפגש (סמל ה-₪ ברשימה): אז הסכום המוצע הוא מחיר המפגש, ואפשר לשלם על כמה מפגשים (חבילה: הסכום מתחלק, והמפגש הזה ועוד קרובים שמשויכים אליהם נפרעים מיד) */
@@ -2934,7 +2930,7 @@
       const fr = !!(linkOf(pid, m.id) && noPayOf(null, linkOf(pid, m.id)));
       chip.hidden = false; const rp = !fr && !(al > 0) && reportedOf(pid, m.id); chip.classList.toggle('free', fr && !(al > 0)); chip.classList.toggle('topay', !fr && !(al > 0) && !rp); chip.classList.toggle('rep', !!rp);
       const curL = al > 0 ? '₪' + nfm(al) : fr ? 'חינם' : rp ? 'דיווח' + reportedAmt(pid, m.id) : 'לתשלום';
-      const opts = [].concat(!fr && al > 0 && dueOf(pid, m.id) > 0 ? [['close', 'סגירת תשלום']] : [], rp ? [['reject', 'דחיית דיווח']] : [], fr ? [['pay', 'לתשלום']] : [], !fr && al > 0 ? [['del', 'מחיקת הקצאה']] : [], fr ? [] : [['free', 'חינם']]);   // בלי המצב הנוכחי: הוא כתוב על הכפתור
+      const opts = [].concat(!fr && al > 0 && dueOf(pid, m.id) > 0 ? [['close', 'סגירת תשלום']] : [], rp ? [['reject', 'דחיית דיווח']] : [], fr ? [['pay', 'לתשלום']] : [], !fr && al > 0 ? [['del', 'מחיקת הקצאה']] : [], fr || al > 0 ? [] : [['free', 'חינם']]);   // בלי המצב הנוכחי: הוא כתוב על הכפתור
       const chipH = (al > 0 ? '₪' + nfm(al) : fr ? '<span class="nps">₪</span>חינם' : rp ? 'דיווח' + reportedAmt(pid, m.id).replace(' ', '&nbsp;') : 'לתשלום') + icon('chev', 'i14') + '<select aria-label="מצב המפגש">' + opts.map((o) => '<option value="' + o[0] + '">' + esc(o[1]) + '</option>').join('') + '</select>';
       if (chip.dataset.h !== chipH) { chip.innerHTML = chipH; chip.dataset.h = chipH; }   // בלי ציור מחדש כשאין שינוי: עדכון בזמן אמת לא יסגור תפריט פתוח
       { const cs = chip.querySelector('select'); if (document.activeElement !== cs) cs.selectedIndex = -1; }   // אף אפשרות לא נבחרת מראש, כך שגם בחירה באפשרות היחידה נקלטת
