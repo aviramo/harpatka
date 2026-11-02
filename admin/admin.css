@@ -165,10 +165,14 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 
 /* 3.35 כרטיס מספר (UI.metric): כל הסיכומים במערכת (כספים, יתרה ותשלומים, התחשבנות, סטטיסטיקות).
    רקע אפור, תווית קטנה למעלה, ערך גדול, שורת משנה. המצב צובע רק את הערך: ירוק, אדום, צהוב (יתרה וקרדיט), אפור */
-.metric { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; padding: 12px; background: var(--surface); border: 1px solid transparent; text-align: start; }
+.metric { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; padding: 12px; background: transparent; border: 1px solid var(--line); text-align: start; }   /* בלי מילוי אפור: ניטרלי עם קו דק, ועם משמעות ברקע הבהיר של הצבע */
 .metric > small { display: block; color: var(--text-2); font-size: 12.5px; font-weight: 600; line-height: 1.3; }
 .metric > b { display: block; color: var(--text); font-size: 20px; font-weight: 800; line-height: 1.2; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .metric > .msub { font-size: 12px; font-weight: 500; }
+.metric.pos, .metric.neg, .metric.yel { border-color: transparent; }
+.metric.pos { background: var(--green-bg); }
+.metric.neg { background: var(--red-bg); }
+.metric.yel { background: var(--yellow-bg); }
 .metric.pos > b { color: var(--green); }
 .metric.neg > b { color: var(--red); }
 .metric.yel > b { color: var(--yellow); }
@@ -178,18 +182,13 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 .metric i.cneg { color: var(--red); }
 .metric.wide { grid-column: 1 / -1; }
 .metric[data-ff] { cursor: pointer; }
-.metric[aria-pressed="true"] { background: var(--line); }   /* כרטיס שמסנן: מילוי כהה יותר, בלי מסגרת */
+.metric[aria-pressed="true"] { border-color: var(--text); }   /* כרטיס שמסנן: קו כהה */
 /* קבוצת כרטיסים: רשת של שניים (בכספים, ביתרה, בסטטיסטיקות) או שלושה (שורה תחתונה, נושא) */
 .finsum, .walsum, .prsum, .stkpis { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
 /* סיכום הכספים והיתרה: בלי אפור, כל כרטיס ברקע בהיר בצבע שלו. כרטיס שמסנן מסומן במסגרת */
-.finsum .metric, .walsum .metric { background: transparent; }
-.finsum .metric.pos, .walsum .metric.pos { background: var(--green-bg); }
-.finsum .metric.neg, .walsum .metric.neg { background: var(--red-bg); }
-.finsum .metric.yel, .walsum .metric.yel { background: var(--yellow-bg); }
-.finsum .metric[aria-pressed="true"] { border-color: var(--text); }
 .stbottom, .topic .tnums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.stbottom { margin-bottom: 24px; }
 .stbottom { margin-bottom: 12px; }
-.topic .tnums .metric { background: var(--bg); }
 
 /* 3.4 מחוון מצב (ריבוע 28px): הגעה ✓, שליחת פרטים, תשלום ₪, יתרה ₪; ברשימה, בסינון ובתפריט הסינון */
 .row .evc, .row .payic, .row .balic, .hfilt {
@@ -263,7 +262,8 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 .vsw.on::after { transform: translateX(-18px); }
 
 /* 3.8 פאנל: קבוצת תוכן באפור בהיר, בלי מסגרת. שורות בתוכו עם קו מפריד */
-.gacc, .bdc, .prrow, .topic, .stsec, .ins, .dline, .tb, .cwhy { background: var(--surface); border: 0; }
+.gacc, .bdc, .prrow, .ins, .dline { background: transparent; border: 1px solid var(--line); }
+.topic, .stsec, .tb, .cwhy { background: transparent; border: 0; }
 
 /* 3.9 שכבה צפה (תפריט): לבן, גבול דק, צל אחד. כל התפריטים בדף */
 .qmenu, .sortmenu, .hmenu, #fMenu, #viewMenu, #moreMenu, #finPerMenu, .colmenu, .attmenu {
@@ -498,6 +498,11 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .grab i { width: 40px; height: 4px; background: var(--line-2); }
 .sheet { padding: 28px var(--gut) calc(20px + env(safe-area-inset-bottom)); }
 .sheet-head { display: flex; align-items: center; justify-content: flex-start; gap: 8px; min-height: var(--ib); margin-bottom: 16px; }
+/* שורת הכותרת של כל פופאפ: 16px בין כל שני פריטים נראים (סמל או טקסט), כמו בין כפתור התפריט לכפתור המפגש הקרוב בכותרת הדף. כפתור ברוחב 28px עם סמל של 20px ו-8px בין הכפתורים = 16px בין הסמלים; שטח הלחיצה ממשיך 4px לכל צד */
+.sheet-head .hbtn, .sheet-head .cico { position: relative; width: var(--tag); }
+.sheet-head .hbtn::before, .sheet-head .cico::before { content: ""; position: absolute; inset: 0 -4px; }
+/* חץ החזרה וסמל פרטי המשתתף: המרכז בקו של האריח שמתחת (40px מהקצה), ו-16px מהסמל לטקסט שאחריו */
+.sheet-head .hback, #pDlg .sheet-head #pInfoBtn { margin-inline: 6px 4px; }
 .sheet h2 { flex: 1 1 auto; min-width: 0; margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -.01em; line-height: 1.25; }
 /* כותרות משנה, תוויות קבוצה, הסברים */
 .clabel, .settitle, .stpart, .depsec, .stp h4, .sect-title { margin: 16px 0 8px; font-size: 12.5px; font-weight: 700; color: var(--text-2); letter-spacing: .02em; }
@@ -547,8 +552,9 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 #pDlg .sheet-head { align-items: flex-start; }   /* שם ארוך: הכול מיושר לשורה הראשונה של השם, וההמשך שלו יורד מתחת */
 #pDlg .sheet-head h2 { display: flex; align-items: flex-start; gap: 8px; flex: 1 1 auto; min-width: 0; font-size: 20px; line-height: 25px; padding-top: calc((var(--tag-lg) - 25px) / 2); min-height: var(--tag-lg); }
 #pDlg .sheet-head h2 .tchip { margin-top: calc((var(--tag-lg) - 25px) / -2); }   /* תגית הגיל בגובה הכפתורים, למרות הריפוד של הכותרת */
-#pDlg .sheet-head .tchip { padding: 0 4px; }   /* תגית הגיל והמגדר בכותרת הכרטיס: ריפוד קטן (במקום 12px), כדי לקרב אותה לאייקון הפרטים ולשם */
-#pDlg .sheet-head h2 { gap: 4px; }   /* הרווח בין תגית הגיל והמגדר לשם: 4px (במקום 8px) */
+#pDlg .sheet-head .tchip { min-width: 0; padding: 0; }
+#pDlg .sheet-head .tchip[style] { padding: 0 8px; }
+#pDlg .sheet-head h2 { gap: 16px; }
 /* שם ארוך: רק השם שובר שורה; התגיות והכפתורים בכותרת (גיל ומגדר, יתרה, פרטים, וואטסאפ) נשארים בגודלם ובמקומם (31.10.26) */
 #pDlg .tname { flex: 1 1 auto; min-width: 0; white-space: normal; overflow-wrap: anywhere; line-height: 25px; }
 #pDlg .sheet-head > *:not(h2), #pDlg .sheet-head h2 .tchip { flex: 0 0 auto; max-width: none; overflow: visible; text-overflow: clip; }
@@ -557,26 +563,26 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 #pDlg .tname .glk.red { color: var(--red); }
 /* סמל המצב (מחובר לחשבון, חסום, מחוק) כאייקון קטן בפינה הימנית התחתונה של כפתור פרטי המשתתף */
 #pInfoBtn { position: relative; }
-#pInfoBtn .ibadge { position: absolute; right: 2px; bottom: 2px; display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; background: var(--bg); color: var(--text-2); pointer-events: none; }
+#pInfoBtn .ibadge { position: absolute; right: -4px; bottom: 2px; display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; background: var(--bg); color: var(--text-2); pointer-events: none; }
 #pInfoBtn .ibadge.red { color: var(--red); }
 #pMsgs { display: contents; }
 /* כותרת כרטיס המשתתף, מימין לשמאל: חזרה, פרטי המשתתף, תגית הגיל והשם, היתרה, ובקצה השמאלי וואטסאפ (31.10.26) */
 #pDlg .sheet-head #pBack { order: -3; }
 /* השורה השנייה במסך משנה (שם המפגש ומועדו): מיושרת לטקסט הכותרת (אחרי חץ החזרה) וצמודה אליה */
 #pDlg .sheet-head:has(+ .pviewsub:not([hidden])) { margin-bottom: 0; }
-#pDlg .pviewsub { margin-top: -8px; padding-inline-start: calc(var(--ib) + 8px); line-height: 1.3; }
+#pDlg .pviewsub { margin-top: -8px; padding-inline-start: calc(var(--tag) + 18px); line-height: 1.3; }
 #pDlg .sheet-head #pInfoBtn { order: -2; }
 #pDlg .sheet-head.navrow { cursor: pointer; }   /* כל שורת הכותרת לחיצה: במסך הראשי פותחת את פרטי המשתתף, ובפרטים חוזרת לכרטיס */
 #pDlg .sheet-head #pPayChip, #pDlg .sheet-head #pAllocChip { order: 3; }   /* הוואטסאפ בקצה השמאלי, והיתרה מימינו (2.11.26) */
 #pDlg .sheet-head #pMsgs .ctop { order: 4; display: flex; margin: 0; }
 #pCall { order: 4; }   /* בפרטי המשתתף: החיוג בקצה השמאלי, מימינו התגית, ומימינה הצפייה כמשתתף (2.11.26) */
 #pViewAs { order: 1; }
-/* התגית והמונה רק בפרטי המשתתף, מימין לטלפון ובגודל שלו: אותו כפתור של 40px וסמל של 20px, והמונה בפינה (בלי אפס) */
+/* התגית והמונה רק בפרטי המשתתף, מימין לטלפון ובגודל שלו: אותו כפתור וסמל של 20px, והמונה בפינה (בלי אפס) */
 #pDlg .sheet-head #pTagSlot { order: 2; flex: 0 0 auto; line-height: 0; }
-#pTagSlot .glk.tgq { display: inline-grid; place-items: center; width: var(--ib); height: var(--ib); color: var(--text); }
+#pTagSlot .glk.tgq { display: inline-grid; place-items: center; width: var(--tag); height: var(--ib); color: var(--text); }
 #pTagSlot .glk.tgq svg { width: 20px; height: 20px; }
-#pTagSlot .glk.tgq::before { inset: 0; }
-#pTagSlot .glk.tgq .tgn { position: absolute; top: 4px; left: 3px; color: var(--text); }
+#pTagSlot .glk.tgq::before { inset: 0 -4px; }
+#pTagSlot .glk.tgq .tgn { position: absolute; top: 3px; left: -4px; color: var(--text); }
 @media (hover: hover) { #pTagSlot .glk.tgq:hover { background: var(--surface); } }
 #pDlg .ppanel { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior-y: contain; padding: 4px 0; }
 #pDlg .ppanel[data-panel="main"] { display: flex; flex-direction: column; overflow: hidden; margin-inline: calc(var(--gut) * -1); padding-inline: var(--gut); }
@@ -588,9 +594,10 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .paychip { background: var(--red-bg); color: var(--red); cursor: pointer; }
 .paychip.ok { background: var(--yellow-bg); color: var(--yellow); }
 .paychip.zero { background: var(--surface-2); color: var(--text-2); }
-#pPayChip { background: transparent; }   /* היתרה בכותרת: בלי רקע, רק הצבע לפי המצב (חוב אדום, יתרה צהוב, אפס אפור) */
-#pPayChip:active { background: var(--surface-2); }
-@media (hover: hover) { #pPayChip:hover { background: var(--surface-2); } }
+/* היתרה בכותרת: בלי רקע, רק הצבע לפי המצב (חוב אדום, יתרה צהוב, אפס אפור). הטקסט צמוד לשמאל ו-16px מסמל הוואטסאפ; שטח הלחיצה ממשיך ימינה */
+#pDlg .sheet-head #pPayChip { background: transparent; min-width: 0; padding-inline: 20px 0; margin-inline-end: 3px; }
+#pPayChip:active { opacity: .6; }
+@media (hover: hover) { #pPayChip:hover { text-decoration: underline; } }
 .paychip.allocchip { position: relative; background: var(--green-bg); color: var(--green); }   /* מוקצה (שולם), דווח ולתשלום עם רקע; חינם בלי רקע */
 .paychip.allocchip.rep { background: var(--yellow-bg); color: var(--yellow); }
 .paychip.allocchip.topay { background: var(--red-bg); color: var(--red); }
@@ -894,7 +901,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 #finMain > * { flex: 0 0 auto; }
 #finMain > #finScroll { padding-bottom: 12px; }
 .finlogbtn { margin-inline-start: auto; }
-.finperbtn { display: inline-flex; align-items: center; gap: 8px; height: var(--ib); padding: 0 12px; border: 1px solid transparent; background: var(--bg); color: var(--text); font-size: 15px; font-weight: 600; }
+.finperbtn { display: inline-flex; align-items: center; gap: 8px; height: var(--ib); padding-block: 0; padding-inline: 12px 4px; border: 1px solid transparent; background: var(--bg); color: var(--text); font-size: 15px; font-weight: 600; }
 .finperbtn svg { width: 14px; height: 14px; }
 .finowed { grid-column: 1 / -1; padding: 0; font-size: 13px; }
 .fincmds { display: flex; gap: 8px; margin-bottom: 8px; position: sticky; top: 0; z-index: 2; padding: 8px 0; margin-top: -8px; background: var(--bg); }   /* + הכנסה / + הוצאה נשארים זמינים בראש האזור הנגלל */
@@ -926,10 +933,11 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 
 /* 6.7 סטטיסטיקות */
 .stsheet { padding-top: 28px; }
-.topic { display: block; width: 100%; margin-bottom: 12px; padding: 12px; text-align: right; }
-.topic .th { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.topic { display: block; width: 100%; margin-bottom: 24px; padding: 0; text-align: right; }
+.topic .th { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: var(--tag); margin-bottom: 8px; }
+.topic .thr { display: flex; align-items: center; gap: 8px; }
 .topic .th b { font-size: 18px; font-weight: 800; }
-.topic .tmore { display: block; margin-top: 8px; color: var(--text); font-weight: 700; font-size: 14px; }
+.topic .tmore { color: var(--text-2); font-weight: 600; font-size: 14px; white-space: nowrap; }
 .trend { font-weight: 700; }
 .trend i { font-style: normal; font-size: 11px; margin-inline-end: 4px; }
 .trend.up { background: var(--green-bg); color: var(--green); }
@@ -942,7 +950,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .tb .tr { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); padding: 8px 12px; border-top: 1px solid var(--line); font-size: 14.5px; font-variant-numeric: tabular-nums; }
 .tb .tr > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; }
 .tb .tr > span:first-child { text-align: right; font-weight: 600; }
-.tb .th2 { border-top: 0; background: var(--surface); color: var(--text-2); font-weight: 700; font-size: 12.5px; }
+.tb .th2 { border-top: 0; background: transparent; color: var(--text-2); font-weight: 700; font-size: 12.5px; }
 .tb.mv .tr { grid-auto-flow: row; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; align-items: center; }
 .tb.mv .tr > span { white-space: normal; overflow: visible; text-overflow: clip; }
 .tb.mv .tr > span:last-child { text-align: left; white-space: nowrap; font-weight: 700; }
