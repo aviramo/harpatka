@@ -27,6 +27,7 @@ begin
     select lower(m.email) into em from __S__.harpatka_members m where m.participant_id = p_pid and coalesce(m.email, '') <> '' and m.status <> 'blocked' order by (m.status = 'approved') desc limit 1;
   end if;
   select * into mt from __S__.harpatka_meetings where id = p_mid; if not found then return false; end if;
+  if mt.meeting_date < (now() at time zone 'Asia/Jerusalem')::date then return false; end if;   -- מפגש שעבר: בלי מייל
   select * into pa from __S__.harpatka_participants where id = p_pid; if not found then return false; end if;
   nm := coalesce(nullif(trim(mt.name), ''), (select nullif(trim(t.name), '') from __S__.harpatka_meeting_types t where t.id = mt.type_id), '');
   whn := 'יום ' || days[extract(dow from mt.meeting_date)::int + 1] || ' ' || to_char(mt.meeting_date, 'FMDD.FMMM') || ' · ' || to_char(mt.meeting_time, 'HH24:MI');
