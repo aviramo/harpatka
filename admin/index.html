@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104ez" />
+  <link rel="stylesheet" href="admin.css?v=20261104fb" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -94,7 +94,6 @@
         <div class="paychip allocchip" id="pAllocChip" hidden></div>
         <span id="pTagSlot" hidden></span>
         <div id="pMsgs"></div>
-        <button type="button" class="hbtn" id="mailTheme" aria-pressed="false" aria-label="הדמיית מצב כהה" title="הדמיית מצב כהה" hidden><svg data-i="moon"></svg></button>
         <a class="hbtn" id="pViewAs" target="_blank" rel="noopener" aria-label="צפייה בדף הבית כמשתתף" title="צפייה בדף הבית כמשתתף" hidden><svg data-i="eye"></svg></a>
         <a class="hbtn" id="pCall" aria-label="חיוג למשתתף" title="חיוג למשתתף" hidden><svg data-i="call"></svg></a>
         <span class="saved" id="savedMark">נשמר ✓</span>
@@ -166,10 +165,6 @@
         <label class="field" id="payBalField" hidden><span id="payBalLabel">מהיתרה</span><input name="pay_bal" type="number" inputmode="decimal" min="0" step="any" /></label>
         <div class="payhint" id="payHint"></div>
       </div>
-      <div class="ppanel" data-panel="mail" hidden>
-        <div class="mailmeta" id="mailMeta"></div>
-        <iframe id="mailFrame" title="המייל שנשלח" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" hidden></iframe>
-      </div>
       <div class="ppanel" data-panel="deposit" hidden>
         <div class="metchips" id="depMode" role="radiogroup" aria-label="סוג ההקצאה" hidden></div>
         <h4 class="depsec" id="depAddTitle" hidden>הקצאה למפגש</h4>
@@ -215,6 +210,13 @@
   </dialog>
 
   <!-- פופאפ הקצאה: עולה מלמטה מעל כרטיס המשתתף (או לבד כשנפתח מהרשימה). מסך ההקצאה עצמו, הצ'יף והשורה השנייה עוברים אליו בפתיחה וחוזרים לכרטיס בסגירה (allocMount / allocUnmount) -->
+  <dialog id="mailDlg" aria-labelledby="mailTitle">
+    <div class="sheet" id="mailSheet">
+      <div class="sheet-head"><h2 id="mailTitle">מייל</h2><button type="button" class="hbtn" id="mailTheme" aria-pressed="false" aria-label="הדמיית מצב כהה" title="הדמיית מצב כהה"><svg data-i="moon"></svg></button></div>
+      <div class="mailmeta" id="mailMeta"></div>
+      <iframe id="mailFrame" title="המייל שנשלח" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" hidden></iframe>
+    </div>
+  </dialog>
   <dialog id="allocDlg" aria-labelledby="allocTitle">
     <div class="sheet" id="allocSheet">
       <div class="sheet-head" id="allocHead"><h2 id="allocTitle">תשלום</h2></div>
@@ -571,7 +573,7 @@
     if (state.ageF) sp.set('ag', state.ageF);
     if (state.loginF) sp.set('lg', state.loginF);
     if (state.q.trim()) sp.set('q', state.q.trim());
-    if (openPid) { sp.set('p', openPid); if (pTab && pTab !== 'main' && pTab !== 'contact' && pTab !== 'meets' && pTab !== 'deposit') { sp.set('pt', pTab); if (pTab === 'mail' && sheet && sheet.mailId) sp.set('ml', sheet.mailId); } if (pTab === 'main' && pgCur) sp.set('pg', PG_IDS[pgCur]); }
+    if (openPid) { sp.set('p', openPid); if (pTab && pTab !== 'main' && pTab !== 'contact' && pTab !== 'meets' && pTab !== 'deposit') { sp.set('pt', pTab); } if (sheet && sheet.mailId && document.getElementById('mailDlg').open) sp.set('ml', sheet.mailId); if (pTab === 'main' && pgCur) sp.set('pg', PG_IDS[pgCur]); }
     if ($('#setDlg').open) sp.set('set', setView === 'main' ? '1' : setView === 'tydet' ? 'tydet:' + (tyId || '') : (setView === 'st' || setView === 'del') ? ((stScope === 'meeting' ? 'st:' : 'tag:') + (stType || '')) : setView === 'em' ? 'em:' + (stType || '') : setView);   // סוג מפגש: עריכת הסוג, הסטטוסים וההודעה שלו
     if ($('#prDlg').open && prCur) sp.set('pr', prCur);
     if (mDlg.open) sp.set('em', editingMeeting ? editingMeeting.id : 'new');   // עריכת מפגש או מפגש חדש
@@ -1160,7 +1162,7 @@
         if (d.p && state.participants.some((x) => x.id === d.p)) {
           openParticipant(d.p, ['meets', 'contact', 'info'].includes(d.pt) ? d.pt : 'contact');
           if (['wallet', 'zikuy', 'credit', 'refund', 'pay'].includes(d.pt)) { viewStack = []; goView('wallet'); }
-          if (d.pt === 'mail' && d.ml) openMail(d.ml);
+          if (d.ml) openMail(d.ml);
           if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
         }
         else if (d.em === 'new') openMeeting(null);
@@ -2295,10 +2297,9 @@
     menu.innerHTML = '<div class="qhd">שיוך למפגש</div>' + free.map((m) => { const nm = meetName(m); return '<button type="button" role="menuitem" class="qi" data-am="' + m.id + '"><span class="amd">' + esc(dmShort(m)) + '</span><span class="amh">' + esc(String(m.meeting_time).slice(0, 5)) + '</span>' + (nm ? '<span class="amn">' + esc(nm) + '</span>' : '') + '</button>'; }).join('');   // שלוש עמודות: תאריך, שעה, שם (כל עמודה על אותו קו אנכי בכל השורות)
     menu.style.maxHeight = ''; menu.hidden = false;
     const ar = anchor.getBoundingClientRect();
-    menu.style.maxWidth = Math.max(160, Math.floor(ar.right - 8)) + 'px';   // שם ארוך נחתך ב-"...", כדי שהתפריט יישאר מיושר לימין הכפתור
-    placeMenuV(menu, ar.top, ar.bottom);
-    const mw = menu.offsetWidth;
-    menu.style.left = Math.min(Math.max(8, Math.round(ar.right - mw)), window.innerWidth - mw - 8) + 'px';
+    const hr = host.getBoundingClientRect();
+    menu.style.maxWidth = 'none'; menu.style.width = hr.width + 'px'; menu.style.left = hr.left + 'px';   // לכל רוחב המסך (בדסקטופ: רוחב הכרטיס)
+    placeMenuV(menu, ar.top, ar.bottom);   // הכפתור בתחתית (הרבה מפגשים): נפתח כלפי מעלה
     menu.onclick = (e) => { const b = e.target.closest('[data-am]'); if (!b) return; closeQ(); setLinkedWithStatus(pid, b.dataset.am, 'unpaid'); const m = state.meetings.find((x) => x.id === b.dataset.am); toast('שויך למפגש' + (m ? ' ' + dmShort(m) : '')); };
   });
   /* סטטוס משתתף (כללי): נפרד מסטטוס המפגש */
@@ -2846,7 +2847,7 @@
   /* מסך אחד: ראשי (וואטסאפ וחיוג, מפגשים אחרונים, הערות) או פרטים (אייקון בכותרת; חץ חזרה בתוכו) */
   let pTab = 'main';
   const reducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const SUBVIEW = { mail: 'מייל', deposit: 'קבלת תשלום', status: 'סטטוס מפגש', pay: 'תשלום למפגש', promoter: 'דרך הגעה', refund: 'ביטול תשלום', credit: 'החזרת קרדיט', zikuy: 'זיכוי' };
+  const SUBVIEW = { deposit: 'קבלת תשלום', status: 'סטטוס מפגש', pay: 'תשלום למפגש', promoter: 'דרך הגעה', refund: 'ביטול תשלום', credit: 'החזרת קרדיט', zikuy: 'זיכוי' };
   let viewStack = [], payCtx = null;
   function setPTab(tab, instant) {
     if ((tab === 'info' || tab === 'wallet') && sheet && sheet.id) pgMark(tab === 'info' ? 3 : 1);   // פרטים ויתרה הם דפים בפייג'ר
@@ -3294,25 +3295,29 @@
   const goView = (v) => { if (v === 'wallet') { viewStack = []; setPTab(v); return; } viewStack.push(pTab); setPTab(v); };   // היתרה היא דף בפייג'ר, לא מסך משנה
   /* המייל שנשלח למשתתף, כפי שנשמר בשליחה. בלי סקריפטים (sandbox), וקישורים נפתחים בלשונית חדשה */
   let mailDark = false;
-  const paintMailTheme = () => { const on = pTab === 'mail', b = $('#mailTheme'); b.hidden = !on; pDlg.classList.toggle('maildark', on && mailDark); b.setAttribute('aria-pressed', String(mailDark)); const lb = mailDark ? 'הדמיית מצב בהיר' : 'הדמיית מצב כהה'; b.title = lb; b.setAttribute('aria-label', lb); b.innerHTML = icon(mailDark ? 'sun' : 'moon'); };
+  const paintMailTheme = () => { const b = $('#mailTheme'); $('#mailDlg').classList.toggle('maildark', mailDark); b.setAttribute('aria-pressed', String(mailDark)); const lb = mailDark ? 'הדמיית מצב בהיר' : 'הדמיית מצב כהה'; b.title = lb; b.setAttribute('aria-label', lb); b.innerHTML = icon(mailDark ? 'sun' : 'moon'); };
   $('#mailTheme').addEventListener('click', () => { mailDark = !mailDark; paintMailTheme(); });
   async function openMail(id) {
     if (!sheet || !sheet.id) return;
     const meta = $('#mailMeta'), fr = $('#mailFrame');
-    sheet.mailId = id; meta.textContent = 'טוען…'; fr.hidden = true; fr.removeAttribute('srcdoc'); fr.style.height = '';
-    if (pTab !== 'mail') goView('mail');
+    const dlg = $('#mailDlg'), who = state.participants.find((x) => x.id === sheet.id);
+    $('#mailTitle').innerHTML = 'מייל' + (who ? ' <span class="tsubname">· ' + esc(who.name) + '</span>' : '');
+    sheet.mailId = id; meta.textContent = 'טוען…'; fr.hidden = true; fr.removeAttribute('srcdoc'); fr.style.height = ''; paintMailTheme();
+    if (!dlg.open) dlg.showModal();   // פופאפ רגיל מלמטה, מעל כרטיס המשתתף
+    syncUrl();
     try {
       const [r] = await api(T.ml + '?id=eq.' + id + '&select=subject,to_addr,sent_at,html,status,error', { ui: false });
       if (!sheet || sheet.mailId !== id) return;
       if (!r) { meta.textContent = 'המייל לא נמצא'; return; }
-      meta.innerHTML = (r.status === 'failed' ? '<div class="mailbad' + (/^אין אימייל/.test(r.error || '') ? ' noacc' : '') + '">' + icon('warn', 'i16') + '<span>המייל לא נשלח' + (r.error ? ': ' + esc(r.error) : '') + '</span></div>' : '') + '<b>' + esc(r.subject || '') + '</b><span>' + (r.to_addr ? 'אל <bdi dir="ltr">' + esc(r.to_addr) + '</bdi> · ' : '') + '<bdi dir="ltr">' + esc(fmtDT(r.sent_at)) + '</bdi></span>';
+      meta.innerHTML = (r.status === 'failed' ? '<div class="mailbad' + (/^אין אימייל/.test(r.error || '') ? ' noacc' : '') + '">' + icon('warn', 'i16') + '<span>המייל לא נשלח' + (r.error ? ': ' + esc(r.error) : '') + '</span></div>' : '') + '<b>' + esc(r.subject || '') + '</b>' + (r.to_addr ? '<span class="mailto">' + (r.status === 'failed' ? 'כתובת: ' : 'נשלח אל ') + '<bdi dir="ltr">' + esc(r.to_addr) + '</bdi></span>' : '') + '<span><bdi dir="ltr">' + esc(fmtDT(r.sent_at)) + '</bdi></span>';
       fr.onload = () => { try { fr.style.height = fr.contentDocument.documentElement.scrollHeight + 'px'; } catch (e) {} };
       if (!r.html) return;   // מייל שלא נשלח לפני שנבנה (למשל בלי אימייל): רק הסיבה
       fr.hidden = false; fr.srcdoc = '<!doctype html><base target="_blank">' + r.html;   // ה-HTML כפי שנשלח; base רק כדי שקישורים ייפתחו בלשונית חדשה
     } catch (err) { meta.textContent = 'לא ניתן לטעון את המייל'; fail(err); }
   }
   /* המייל לא קולט נגיעות (pointer-events), כדי שגלילה והחלקה למטה לסגירה יעבדו מכל מקום בפופאפ; קישורים שבתוכו נפתחים מכאן */
-  $('[data-panel="mail"]').addEventListener('click', (e) => { const fr = $('#mailFrame'); if (fr.hidden) return; const b = fr.getBoundingClientRect(); if (e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom) return; let a = null; try { const el = fr.contentDocument.elementFromPoint(e.clientX - b.left, e.clientY - b.top); a = el && el.closest('a[href]'); } catch (x) {} if (a) window.open(a.href, '_blank', 'noopener'); });
+  $('#mailDlg').addEventListener('close', () => { if (sheet) sheet.mailId = null; $('#mailFrame').removeAttribute('srcdoc'); syncUrl(); });
+  $('#mailSheet').addEventListener('click', (e) => { const fr = $('#mailFrame'); if (fr.hidden) return; const b = fr.getBoundingClientRect(); if (e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom) return; let a = null; try { const el = fr.contentDocument.elementFromPoint(e.clientX - b.left, e.clientY - b.top); a = el && el.closest('a[href]'); } catch (x) {} if (a) window.open(a.href, '_blank', 'noopener'); });
   const toMain = () => { viewStack = []; setPTab('main'); };
 
   /* מעטפת אחת לכל הפופאפים (משתתף, מפגש, סטטיסטיקה, אישור): עולים מלמטה, נסגרים באנימציה,
@@ -3601,7 +3606,7 @@
       const owed = sheet.id ? owedOf(sheet.id) : 0;
       const net = owed - (sheet.id ? creditOf(sheet.id) : 0), bn = $('#pBalN');
       bn.innerHTML = '<bdi dir="ltr">₪' + nfm(Math.abs(net)) + '</bdi>'; }
-    box.innerHTML = desc.filter((m) => shown.includes(m) || m.id === sheet.hl).map(meetRow).join('');   // המפגש שממנו הגענו מודגש ברשימה, וכשעוד לא משויך אליו: "שיוך למפגש" במקומו לפי התאריך (לא נספר במונה)
+    box.innerHTML = desc.filter((m) => shown.includes(m) || m.id === sheet.hl).map(meetRow).join('');   // המפגש שממנו הגענו מסומן ברשימה, וכשעוד לא משויך אליו: "שיוך למפגש" במקומו לפי התאריך (לא נספר במונה)
   }
 
   const meetClick = (e) => {
@@ -4182,7 +4187,7 @@
   });
 
   /* ---------- אירועים כלליים ---------- */
-  pDlg.addEventListener('close', () => { pDlg.classList.remove('maildark'); lastPid = sheet && sheet.id || null; sheet = null; openPid = null; syncUrl(); markSel(); });
+  pDlg.addEventListener('close', () => { lastPid = sheet && sheet.id || null; sheet = null; openPid = null; syncUrl(); markSel(); });
   mDlg.addEventListener('close', () => { if (mf.dirty) mf.changed(); syncUrl(); });
   pForm.phone.addEventListener('input', () => badPhone(false));
 

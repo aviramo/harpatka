@@ -520,7 +520,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 @keyframes pviewL { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: none; } }
 @keyframes pviewR { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
 /* פופאפים בגובה מלא */
-#pDlg, #setDlg, #stDlg, #prDlg, #finDlg, #meDlg, #mDlg { height: 100dvh; max-height: 100dvh; }
+#pDlg, #setDlg, #stDlg, #prDlg, #finDlg, #meDlg, #mDlg, #mailDlg { height: 100dvh; max-height: 100dvh; }
 #setDlg .sheet, #stDlg .sheet, #prDlg .sheet, #mDlg .sheet { min-height: 100%; }
 /* פופאפ הקצאה (#allocDlg, 1.11.26): דיאלוג נפרד שעולה מלמטה בגובה התוכן, מעל כרטיס המשתתף הפתוח (או לבד כשנפתח מהרשימה). הפאנל, הצ'יף והשורה השנייה עוברים אליו מהכרטיס בפתיחה (allocMount) */
 #allocDlg { height: fit-content; max-height: 92dvh; overflow: visible; }   /* fit-content ולא auto: בדיאלוג עם inset של 0 גובה auto נמתח לכל המסך */
@@ -618,8 +618,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .mlist .mrow .mlabel { flex: 0 0 auto; width: auto; height: auto; padding: 0; border: 0; background: transparent; color: var(--text); font-weight: 500; line-height: 20px; }
 .mnm { flex: 0 1 auto; min-width: 0; overflow: hidden; color: var(--text-2); font-size: 13px; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; }
 .mtm { flex: 0 0 auto; color: var(--text-2); font-size: 13px; line-height: 18px; }
-.mlist .mrow.hl .mlabel, .mlist .mrow.hl .mtm, .mlist .mrow.hl .mnm { color: var(--text); font-weight: 800; }
-.mlist .mrow.hl .pay, .mlist .mrow.hl .mmoney { font-weight: 800; }   /* המפגש שממנו הגענו: כל השורה מודגשת, גם הסטטוס והתשלום */
+.mlist .mrow.hl { margin-inline: calc(var(--gut) * -1); padding-inline: var(--gut); background: var(--surface); }   /* המפגש שממנו הגענו: לכל הרוחב ובלי הדגשות, כמו משתתף מסומן ברשימה (.row.last) */
 .mlist .mrow .pay { position: relative; width: 100%; padding: 0; background: transparent; border-color: transparent; overflow: visible; }   /* הצבע מהסטטוס עצמו (applyStatuses), בלי רקע */
 .mlist .mrow .pay.none { background: transparent; color: var(--text-2); }
 .mlist .mrow .mline { display: contents; }
@@ -1235,9 +1234,9 @@ dialog .dclose { display: none; }
 /* תווית "מפגשים" משמאל למפגש הכי ישן (1.11.26): טיפוגרפיה של כותרת הכרטיס (20px) באפור, ממורכזת אנכית ברצועה, עם רווח אופקי */
 /* תפריט "שיוך למפגש": ארוך מדי = גלילה פנימית (הגובה המרבי נקבע ב-placeMenuV); ליד המועד שם המפגש, שנחתך ב-"..." כשהוא ארוך (1.11.26) */
 #qMenu.am { overflow-y: auto; overscroll-behavior: contain; }
-#qMenu.am { display: grid; grid-template-columns: max-content max-content minmax(0, max-content); row-gap: 8px; align-content: start; }   /* שלוש עמודות משותפות לכל השורות (subgrid): התאריכים, השעות והשמות כל אחד על אותו קו אנכי */
-#qMenu.am .qi { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; justify-content: normal; column-gap: 4px; min-width: 0; padding: 0 16px; text-align: start; }   /* הכול מיושר לימין והרוחב לפי התוכן (השורה הרחבה ביותר קובעת) */
-#qMenu.am .qhd { grid-column: 1 / -1; padding: 4px 16px 0; text-align: start; }   /* תת הכותרת "שיוך למפגש": בקו של הטקסט בשורות */
+#qMenu.am { display: grid; grid-template-columns: max-content max-content minmax(0, 1fr); row-gap: 8px; align-content: start; border-inline: 0; border-radius: 0; }   /* שלוש עמודות משותפות לכל השורות (subgrid): התאריכים, השעות והשמות כל אחד על אותו קו אנכי */
+#qMenu.am .qi { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; justify-content: normal; column-gap: 4px; min-width: 0; padding: 0 calc(var(--gut) - 8px); text-align: start; }   /* הכול מיושר לימין והרוחב לפי התוכן (השורה הרחבה ביותר קובעת) */
+#qMenu.am .qhd { grid-column: 1 / -1; padding: 4px calc(var(--gut) - 8px) 0; text-align: start; }   /* תת הכותרת "שיוך למפגש": בקו של הטקסט בשורות */
 #qMenu.am .amd, #qMenu.am .amh { text-align: start; font-variant-numeric: tabular-nums; }
 #qMenu.am .amh::before, #qMenu.am .amn::before { content: "·"; margin-inline-end: 4px; }   /* נקודה מפרידה עם רווחים קטנים משני הצדדים (4px), והעמודות עדיין על אותו קו */
 #qMenu.am .amn { min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: start; color: var(--text-2); font-weight: 500; }
@@ -1284,6 +1283,8 @@ dialog { border-radius: var(--r) var(--r) 0 0; }
 .nmail::before { content: ''; position: absolute; inset: -8px -6px; }
 .mailmeta { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; font-size: 14px; color: var(--text-2); }
 .mailmeta b { font-size: 16px; font-weight: 700; color: var(--text); }
+.mailmeta .mailto { color: var(--text); overflow-wrap: anywhere; }   /* הכתובת כפי שנשמרה ביומן ברגע השליחה, לא מהמשתתף */
+#mailDlg .sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 #mailFrame { display: block; width: 100%; min-height: 240px; border: 0; background: var(--bg); pointer-events: none; }   /* נגיעות עוברות לפופאפ: גלילה והחלקה לסגירה מכל מקום; קישורים נפתחים ב-JS */
 #mailFrame[hidden] { display: none; }
 .nmail.bad { gap: 4px; color: var(--red); }   /* מייל שלא נשלח: סמל אזהרה */
@@ -1291,8 +1292,8 @@ dialog { border-radius: var(--r) var(--r) 0 0; }
 #pDlg .sheet-head #mailTheme { order: 3; }   /* בקצה השמאלי של הכותרת */
 #pDlg .sheet-head #mailTheme[hidden] { display: none; }
 /* הדמיית מצב כהה: הפופאפ כולו, כולל הכותרת, בפלטה הפוכה. המייל בלי צבעי מצב כהה משלו, ולכן הופכים אותו כמו שאפליקציות מייל עושות */
-#pDlg.maildark { --yellow: #F5B400; --bg: #16191D; --surface: #16191D; --surface-2: #5A626C; --text: #FFFFFF; --text-2: #C7CCD3; --text-3: #8A929B; --line: #5A626C; --line-2: #5A626C; background: var(--bg); color: var(--text); }
-#pDlg.maildark #mailFrame { background: #FFFFFF; filter: invert(.91) hue-rotate(180deg); }   /* רקע המסגרת לבן: אחרי ההיפוך הוא כהה כמו הפופאפ */
+#mailDlg.maildark { --yellow: #F5B400; --bg: #16191D; --surface: #16191D; --surface-2: #5A626C; --text: #FFFFFF; --text-2: #C7CCD3; --text-3: #8A929B; --line: #5A626C; --line-2: #5A626C; background: var(--bg); color: var(--text); }
+#mailDlg.maildark #mailFrame { background: #FFFFFF; filter: invert(.91) hue-rotate(180deg); }   /* רקע המסגרת לבן: אחרי ההיפוך הוא כהה כמו הפופאפ */
 /* המפגש הנבחר בכרטיס המשתתף (2.11.26): בלי רקע על הכרטיס והתאריך מודגש. הסטטוס הוא רכיב התגית עצמו, בלי שום דריסה; כאן רק המיקום במרכז. "שיוך למפגש" נשאר קישור */
 /* תפריט בחירת הסטטוס והתגיות: הנבחר לא משנה רקע, ויש לו נקודה (של סטטוס בצבע שלו, מ-applyStatuses; של תגית בשחור). הנקודה תמיד בסימון ומוצגת רק בנבחר, כי תגיות מתחלפות במקום */
 #qMenu.qlist .qi { position: relative; }

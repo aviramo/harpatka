@@ -3,6 +3,7 @@
 --   sed 's/__S__/public/g' admin/mail-meeting-box.sql | supabase db query --linked
 -- * harpatka_mail_meeting_box: תמונה, שם, מועד ושורת עיר, מיקום וכמות משתתפים. כל שדה ריק במפגש נלקח מסוג המפגש.
 -- * נקודות כמו באתר, בין התאריך לשעה ובין העיר, המיקום והכמות. במייל אי אפשר לדעת אם שורה נשברת, ולכן הגדלים נבחרו כך שהשורות ייכנסו, גם בטקסט מוגדל פי 1.4 (Gmail בטלפון), ושורת המיקום נשברת מראש לפי אורך, ואז בלי נקודה בנקודת השבירה.
+-- * סימן כיוון (&rlm;) סביב הנקודות: מיקום באנגלית (Guna House) לא הופך את סדר העיר, המיקום והכמות.
 -- * סמל המשתתפים הוא תמונה (images/mail-person-v1.png), כי Gmail מסיר SVG. טורקיז, כי תמונה לא מתהפכת במצב כהה. כשתמונות חסומות ייתכן שיוצג רק המספר, כי התמונה קטנה והטקסט החלופי נחתך.
 -- * בלי שכפול: שם שזהה לכותרת המייל ("יוצאים להרפתקה") לא מוצג שוב, והמועד הוסר מהמשפט במייל דחיית התשלום.
 -- * harpatka_me מחזירה גם img ו-max, וגם שם, עיר ומיקום מהסוג כשהם ריקים במפגש, לאזור האישי.
@@ -22,9 +23,9 @@ begin
   n := coalesce(mt.max_participants, ty.max_participants);
   ct := coalesce(nullif(trim(mt.city), ''), nullif(trim(ty.city), ''), ''); pl := coalesce(nullif(trim(mt.place), ''), nullif(trim(ty.place), ''), ''); ln := char_length(ct) + char_length(pl);
   -- עיר ומיקום בשורה אחת עם נקודה, ובמיקום ארוך כל אחד בשורה משלו
-  wh := __S__.harpatka_pm_esc(ct) || case when ct <> '' and pl <> '' then case when ln <= 26 then ' · ' else '<br>' end else '' end || __S__.harpatka_pm_esc(pl);
+  wh := __S__.harpatka_pm_esc(ct) || case when ct <> '' and pl <> '' then case when ln <= 26 then '&rlm; · &rlm;' else '<br>' end else '' end || __S__.harpatka_pm_esc(pl);
   -- הכמות והסמל לא נפרדים: באותה שורה עם נקודה כשיש מקום, ואחרת בשורה משלהם
-  if n > 0 then ppl := case when wh = '' then '' when ln <= 18 then ' · ' else '<br>' end || '<span style="white-space:nowrap">' || n || '&nbsp;<img src="https://harpatka.co.il/images/mail-person-v1.png" width="16" height="16" alt="משתתפים" style="display:inline-block;width:16px;height:16px;vertical-align:-3px;border:0"></span>'; end if;
+  if n > 0 then ppl := case when wh = '' then '' when ln <= 18 then '&rlm; · &rlm;' else '<br>' end || '<span style="white-space:nowrap">' || n || '&nbsp;<img src="https://harpatka.co.il/images/mail-person-v1.png" width="16" height="16" alt="משתתפים" style="display:inline-block;width:16px;height:16px;vertical-align:-3px;border:0"></span>'; end if;
   return '<div style="border:1px solid #FFD8AE;border-bottom:4px solid #E5562D;background:#FFFFFF;text-align:center;margin-bottom:18px">'
     || case when img is not null then '<img src="' || __S__.harpatka_pm_esc(img) || '" width="520" alt="" style="display:block;width:100%;max-width:100%;height:auto;border:0">' else '' end
     || '<div style="padding:14px 12px 16px">'
