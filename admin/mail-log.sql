@@ -87,7 +87,7 @@ begin
   if pid is null then return lid; end if;   -- נמען בלי משתתף (חשבון שלא מחובר): נשמר ביומן, ואין כרטיס להערה
   -- ההערה של האירוע שגרם למייל, לפי סדר העדיפות
   if lid is not null then
-    evs := case p_key
+    evs := case when coalesce(p_vars ->> '_ev', '') <> '' then array[p_vars ->> '_ev'] else case p_key
       when 'payment_confirmed' then array['payment_closed', 'alloc_added', 'alloc_changed', 'payment_received']
       when 'payment_partial' then array['payment_due', 'alloc_added', 'payment_received']
       when 'payment_rejected' then array['payment_rejected']
@@ -95,7 +95,7 @@ begin
       when 'meeting_removed' then array['meeting_removed']
       when 'place_saved' then array['free_on']
       when 'meeting_registered' then array['registered', 'reregistered', 'reactivated', 'meeting_linked']
-      else array[]::text[] end;
+      else array[]::text[] end end;   -- _ev: המייל נשלח בגלל אירוע אחר (למשל השלמת פרטים)
     begin
       select n.id into nid from __S__.harpatka_notes n
         where n.participant_id = pid and n.system and n.mail_id is null and n.event_type = any(evs)

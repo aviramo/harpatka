@@ -1,8 +1,9 @@
--- מייל למשתתף ברגע ההרשמה למפגש: נרשמת, ונשאר לשלם (2.11.26). מריצים אחרי mail-log.sql. אידמפוטנטי. להחליף __S__ ב-test או ב-public:
+-- מייל למשתתף על ההרשמה למפגש: נרשמת, ונשאר לשלם (2.11.26). מריצים אחרי mail-log.sql ו-signup-after-details.sql. אידמפוטנטי. להחליף __S__ ב-test או ב-public:
 --   sed 's/__S__/test/g' admin/mail-registered.sql | supabase db query --linked
 --   sed 's/__S__/public/g' admin/mail-registered.sql | supabase db query --linked
--- * נשלח בכל הרשמה של המשתתף עצמו, גם לפני שהשלים פרטים (בלי שם: הפנייה לפי השם בחשבון הגוגל). לא כשמנהל רושם משתתף אחר, לא במפגש שעבר ולא במפגש "לא לתשלום".
--- * טריגר דחוי: רץ בסוף הפעולה, אחרי שהחשבון כבר מחובר, ולכן יש לאן לשלוח. בלי חשבון גוגל: "המייל לא נשלח" בהערת ההרשמה, כמו בכל מייל.
+-- * נשלח רק כשיש פרטים אישיים: בהרשמה עצמה אם כבר יש, ואחרת ברגע שהמשתתף משלים אותם (ואז נקשר להערת ההשלמה). מי שעצר אחרי הטלפון לא מקבל מייל.
+-- * לא כשמנהל פועל על משתתף אחר, לא במפגש שעבר, לא ב"לא לתשלום" ולא כשכבר שולם. פעם אחת לכל רישום.
+-- * טריגרים דחויים: רצים בסוף הפעולה. בלי חשבון גוגל: "המייל לא נשלח" בהערה, כמו בכל מייל.
 -- * harpatka_me_phone: קודם מחברים את החשבון למשתתף, ורק אחר כך נרשמים למפגש.
 insert into __S__.harpatka_mail_templates (key, subject, html) values ('meeting_registered', 'נרשמת למפגש, נשאר לשלם', $tpl$<div dir="rtl" style="direction:rtl;text-align:right;background:#FFFFFF;padding:24px 16px;font-family:Arial,Helvetica,sans-serif;color:#2C231D">
 <div style="max-width:520px;margin:0 auto;background:#FFFFFF;border-top:4px solid #E5562D">
@@ -19,19 +20,20 @@ insert into __S__.harpatka_mail_templates (key, subject, html) values ('meeting_
 </div></div></div>$tpl$)
 on conflict (key) do update set subject = excluded.subject, html = excluded.html;
 
-create or replace function __S__.harpatka_reg_user_mail_fn() returns trigger
-language plpgsql security definer set search_path = __S__, public as $f$
+-- שולח פעם אחת לכל רישום: לא במפגש שעבר, לא ב"לא לתשלום" ולא כשכבר שולם. p_ev: ההערה שאליה המייל נקשר, כשהוא נשלח בגלל אירוע אחר
+create or replace function __S__.harpatka_reg_mail_send(p_pid uuid, p_mid uuid, p_ev text default null)
+returns void language plpgsql security definer set search_path = __S__, public as $f$
 declare
-  mt __S__.harpatka_meetings; v jsonb; gn text; price int; nx jsonb; lft int;
-  em text := lower(coalesce(auth.jwt() ->> 'email', ''));
+  a __S__.harpatka_attendance; mt __S__.harpatka_meetings; v jsonb; price int; nx jsonb; lft int;
   today date := (now() at time zone 'Asia/Jerusalem')::date;
   note text := '';
 begin
-  if coalesce(new.no_pay, false) then return null; end if;
-  if em <> '' and exists (select 1 from public.harpatka_admins a where lower(a.email) = em)
-     and not exists (select 1 from __S__.harpatka_members x where x.user_id = auth.uid() and x.participant_id = new.participant_id) then return null; end if;   -- מנהל שרשם משתתף אחר: בלי מייל
-  select * into mt from __S__.harpatka_meetings where id = new.meeting_id;
-  if not found or mt.meeting_date < today then return null; end if;
+  select * into a from __S__.harpatka_attendance where participant_id = p_pid and meeting_id = p_mid;
+  if not found or coalesce(a.no_pay, false) then return; end if;
+  select * into mt from __S__.harpatka_meetings where id = p_mid;
+  if not found or mt.meeting_date < today then return; end if;
+  if exists (select 1 from __S__.harpatka_payments x where x.participant_id = p_pid and x.meeting_id = p_mid and x.kind = 'payment') then return; end if;
+  if exists (select 1 from __S__.harpatka_mail_log l where l.participant_id = p_pid and l.meeting_id = p_mid and l.tpl = 'meeting_registered' and l.sent_at >= a.created_at) then return; end if;
   lft := mt.meeting_date - today;
   price := __S__.harpatka_meeting_price(mt.price_tiers, lft);
   -- המדרגה הבאה, כדי שהסכום במייל לא יטעה כשהמחיר עולה
@@ -40,21 +42,56 @@ begin
   if nx is not null and (nx ->> 'price')::int > coalesce(price, 0) then
     note := ' המחיר עולה ל-₪' || (nx ->> 'price') || ' ב-' || to_char(mt.meeting_date - (nx ->> 'days')::int, 'FMDD.FMMM') || '.';
   end if;
-  v := __S__.harpatka_mail_common(new.participant_id, new.meeting_id);
-  if v ->> 'hello' = 'שלום,' then   -- עוד לא השלים פרטים: השם מחשבון הגוגל
-    select split_part(btrim(m.google_name), ' ', 1) into gn from __S__.harpatka_members m where m.participant_id = new.participant_id and coalesce(m.google_name, '') <> '' order by (m.status = 'approved') desc limit 1;
-    if coalesce(gn, '') <> '' then v := v || jsonb_build_object('hello', 'שלום ' || gn || ','); end if;
-  end if;
-  perform __S__.harpatka_mail_participant('meeting_registered', new.participant_id, v || jsonb_build_object(
-    'me_link', 'https://harpatka.co.il/me/?m=' || new.meeting_id,
+  v := __S__.harpatka_mail_common(p_pid, p_mid);
+  if p_ev is not null then v := v || jsonb_build_object('_ev', p_ev); end if;
+  perform __S__.harpatka_mail_participant('meeting_registered', p_pid, v || jsonb_build_object(
+    'me_link', 'https://harpatka.co.il/me/?m=' || p_mid,
     'pay_label', case when price is null then 'לתשלום' else 'לתשלום ₪' || price end,
     'price_note', note));
+end $f$;
+revoke all on function __S__.harpatka_reg_mail_send(uuid, uuid, text) from public, anon, authenticated;
+
+-- מנהל שפועל על משתתף אחר (דף הניהול או צפייה כמשתתף): בלי מייל
+create or replace function __S__.harpatka_reg_mail_by_admin(p_pid uuid) returns boolean
+language sql stable security definer set search_path = __S__, public as $f$
+  select lower(coalesce(auth.jwt() ->> 'email', '')) <> ''
+    and exists (select 1 from public.harpatka_admins a where lower(a.email) = lower(auth.jwt() ->> 'email'))
+    and not exists (select 1 from __S__.harpatka_members x where x.user_id = auth.uid() and x.participant_id = p_pid)
+$f$;
+revoke all on function __S__.harpatka_reg_mail_by_admin(uuid) from public, anon, authenticated;
+
+-- הרשמה: כשכבר יש פרטים. בלי פרטים המייל מחכה להשלמה
+create or replace function __S__.harpatka_reg_user_mail_fn() returns trigger
+language plpgsql security definer set search_path = __S__, public as $f$
+declare pa __S__.harpatka_participants;
+begin
+  if __S__.harpatka_reg_mail_by_admin(new.participant_id) then return null; end if;
+  select * into pa from __S__.harpatka_participants where id = new.participant_id;
+  if not found or not __S__.harpatka_details_done(pa.first_name, pa.last_name, pa.age, pa.gender) then return null; end if;
+  perform __S__.harpatka_reg_mail_send(new.participant_id, new.meeting_id);
   return null;
 exception when others then return null;   -- כשל במייל לא מבטל את ההרשמה
 end $f$;
 revoke all on function __S__.harpatka_reg_user_mail_fn() from public, anon, authenticated;
 drop trigger if exists harpatka_reg_user_mail on __S__.harpatka_attendance;
 create constraint trigger harpatka_reg_user_mail after insert on __S__.harpatka_attendance deferrable initially deferred for each row execute function __S__.harpatka_reg_user_mail_fn();
+
+-- השלמת פרטים: מייל על המפגשים העתידיים שהמשתתף כבר רשום אליהם
+create or replace function __S__.harpatka_reg_details_mail_fn() returns trigger
+language plpgsql security definer set search_path = __S__, public as $f$
+declare r record;
+begin
+  if __S__.harpatka_details_done(old.first_name, old.last_name, old.age, old.gender) or not __S__.harpatka_details_done(new.first_name, new.last_name, new.age, new.gender) then return null; end if;
+  if __S__.harpatka_reg_mail_by_admin(new.id) then return null; end if;
+  for r in select a.meeting_id from __S__.harpatka_attendance a where a.participant_id = new.id order by a.created_at loop
+    perform __S__.harpatka_reg_mail_send(new.id, r.meeting_id, 'profile_completed');
+  end loop;
+  return null;
+exception when others then return null;   -- כשל במייל לא מבטל את השמירה
+end $f$;
+revoke all on function __S__.harpatka_reg_details_mail_fn() from public, anon, authenticated;
+drop trigger if exists harpatka_reg_details_mail on __S__.harpatka_participants;
+create constraint trigger harpatka_reg_details_mail after update of first_name, last_name, age, gender on __S__.harpatka_participants deferrable initially deferred for each row execute function __S__.harpatka_reg_details_mail_fn();
 
 -- harpatka_me_phone: חיבור החשבון לפני ההרשמה
 do $do$
