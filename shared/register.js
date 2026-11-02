@@ -31,7 +31,7 @@
         <div data-su="formWrap">
           <div class="su-head">
             <h2 class="su-title" data-meeting-name hidden></h2>
-            <div class="mt-badge" role="note"><b data-meeting-when>המפגש הקרוב</b></div>
+            <div data-meeting-box></div>
           </div>
           <form data-su="form" novalidate class="text-start">
             <input type="text" name="website" data-su="hp" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
@@ -80,10 +80,10 @@
   if (window.REGISTER_MIN !== false) document.documentElement.classList.add('reg-min');
   /* שאלת יציאה מהחשבון: אותה מעטפת פופאפ של ההרשמה (נפתח מלמעלה, פס סגירה בתחתית) */
   const LOGOUT_HTML = `<div id="logoutModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="logoutTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="logoutTtl"></p><a class="su-lgyes" href="__BASE__me/">כניסה לאזור האישי</a><button type="button" class="su-lgno" data-lg="yes">יציאה מהחשבון</button></div></div>`.replace(/__BASE__/g, BASE);
-  const OTHER_HTML = `<div id="otherModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="otherTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="otherTtl">לשלם בדרך אחרת</p><p class="su-lgq">נפתחת שיחת וואטסאפ עם אחד המנחים, וההודעה כבר מוכנה:</p><p class="su-lginfo" id="otherInfo"></p><a class="wacard" id="otherHadar" target="_blank" rel="noopener"><img src="__BASE__images/hadar.jpg" width="52" height="52" alt=""><span class="wat"><b>הדר לוריא</b><small>שיחה בוואטסאפ</small></span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.5c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.6.9 1-3.5-.2-.4C3.2 15.6 2.7 13.8 2.7 12c0-5.1 4.2-9.3 9.3-9.3 2.5 0 4.8 1 6.6 2.7 1.8 1.8 2.7 4.1 2.7 6.6 0 5.2-4.2 9.5-9.3 9.5zM20 4C17.9 1.8 15 .7 12 .7 5.8.7.7 5.8.7 12c0 2 .5 3.9 1.5 5.6L.6 23.4l6-1.6c1.6.9 3.5 1.4 5.4 1.4 6.2 0 11.3-5.1 11.3-11.3 0-3-1.2-5.8-3.3-7.9z"/></svg></a><a class="wacard" id="otherOfir" target="_blank" rel="noopener"><img src="__BASE__images/ofir-v3.jpg" width="52" height="52" alt=""><span class="wat"><b>אופיר אבירם</b><small>שיחה בוואטסאפ</small></span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.5c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.6.9 1-3.5-.2-.4C3.2 15.6 2.7 13.8 2.7 12c0-5.1 4.2-9.3 9.3-9.3 2.5 0 4.8 1 6.6 2.7 1.8 1.8 2.7 4.1 2.7 6.6 0 5.2-4.2 9.5-9.3 9.5zM20 4C17.9 1.8 15 .7 12 .7 5.8.7.7 5.8.7 12c0 2 .5 3.9 1.5 5.6L.6 23.4l6-1.6c1.6.9 3.5 1.4 5.4 1.4 6.2 0 11.3-5.1 11.3-11.3 0-3-1.2-5.8-3.3-7.9z"/></svg></a></div></div>`.replace(/__BASE__/g, BASE);
+  const OTHER_HTML = `<div id="otherModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="otherTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="otherTtl">לשלם בדרך אחרת</p><p class="su-lgq">נפתחת שיחת וואטסאפ עם אחד המנחים, וההודעה כבר מוכנה:</p><div id="otherInfo"></div><a class="wacard" id="otherHadar" target="_blank" rel="noopener"><img src="__BASE__images/hadar.jpg" width="52" height="52" alt=""><span class="wat"><b>הדר לוריא</b><small>שיחה בוואטסאפ</small></span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.5c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.6.9 1-3.5-.2-.4C3.2 15.6 2.7 13.8 2.7 12c0-5.1 4.2-9.3 9.3-9.3 2.5 0 4.8 1 6.6 2.7 1.8 1.8 2.7 4.1 2.7 6.6 0 5.2-4.2 9.5-9.3 9.5zM20 4C17.9 1.8 15 .7 12 .7 5.8.7.7 5.8.7 12c0 2 .5 3.9 1.5 5.6L.6 23.4l6-1.6c1.6.9 3.5 1.4 5.4 1.4 6.2 0 11.3-5.1 11.3-11.3 0-3-1.2-5.8-3.3-7.9z"/></svg></a><a class="wacard" id="otherOfir" target="_blank" rel="noopener"><img src="__BASE__images/ofir-v3.jpg" width="52" height="52" alt=""><span class="wat"><b>אופיר אבירם</b><small>שיחה בוואטסאפ</small></span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.5c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.6.9 1-3.5-.2-.4C3.2 15.6 2.7 13.8 2.7 12c0-5.1 4.2-9.3 9.3-9.3 2.5 0 4.8 1 6.6 2.7 1.8 1.8 2.7 4.1 2.7 6.6 0 5.2-4.2 9.5-9.3 9.5zM20 4C17.9 1.8 15 .7 12 .7 5.8.7.7 5.8.7 12c0 2 .5 3.9 1.5 5.6L.6 23.4l6-1.6c1.6.9 3.5 1.4 5.4 1.4 6.2 0 11.3-5.1 11.3-11.3 0-3-1.2-5.8-3.3-7.9z"/></svg></a></div></div>`.replace(/__BASE__/g, BASE);
   /* חשבון חסום או מנותק: פופאפ מלמעלה (אותה מעטפת) שמסביר שאי אפשר להתחבר דרך החשבון הזה, עם וואטסאפ להדר ולאופיר */
   const BLOCKED_HTML = OTHER_HTML.replace('id="otherModal"', 'id="blockedModal"').replace('aria-labelledby="otherTtl"', 'aria-labelledby="blockedTtl"')
-    .replace('<p class="su-lgwho" id="otherTtl">לשלם בדרך אחרת</p><p class="su-lgq">נפתחת שיחת וואטסאפ עם אחד המנחים, וההודעה כבר מוכנה:</p><p class="su-lginfo" id="otherInfo"></p>',
+    .replace('<p class="su-lgwho" id="otherTtl">לשלם בדרך אחרת</p><p class="su-lgq">נפתחת שיחת וואטסאפ עם אחד המנחים, וההודעה כבר מוכנה:</p><div id="otherInfo"></div>',
       '<p class="su-lgwho" id="blockedTtl">לא ניתן להתחבר דרך החשבון הזה</p><p class="su-lgq">החשבון הזה לא מאושר לכניסה לאתר. לשאלות אפשר לפנות אלינו בוואטסאפ:</p>')
     .replace('id="otherHadar"', 'id="blockedHadar"').replace('id="otherOfir"', 'id="blockedOfir"');
   /* כניסה עם גוגל כשהשכבה הקטנה של גוגל לא יכולה להופיע (למשל בהשהיה של גוגל אחרי שנסגרה): פופאפ קטן בתוך הדף עם הכפתור של גוגל, בלי חלון נפרד */
@@ -489,7 +489,7 @@
     /* משתתף מחובר עם פרטים והדף לא מכיר מפגש (הטעינה נכשלה) אבל השרת כבר רשם אותו למפגש: מציגים את המפגש שנרשם אליו (מצב נרשמתם והתשלום), ולא "השארת פרטים" */
     if (meInfo && meInfo.complete && !(m && m.id)) {
       const reg = (meInfo.meetings || []).filter((y) => y.registered && y.future).sort((a, b) => String(a.date + a.time).localeCompare(String(b.date + b.time)))[0];
-      if (reg) { selMeeting = { id: reg.id, date: reg.date, time: reg.time, name: reg.name || '', city: reg.city || '', place: reg.place || '', tiers: { base: Number(reg.price) || 80, steps: [] } }; showMeeting(selMeeting); m = selMeeting; }
+      if (reg) { selMeeting = { id: reg.id, date: reg.date, time: reg.time, name: reg.name || '', city: reg.city || '', place: reg.place || '', img: reg.img || '', max: reg.max || 0, tiers: { base: Number(reg.price) || 80, steps: [] } }; showMeeting(selMeeting); m = selMeeting; }
     }
     const noMeet = !!(meInfo && meInfo.complete && !(m && m.id));   // פרטים שמורים ואין שום מפגש: אין מה להשאיר ואין שדות, אז גם אין כפתור
     const nmEl = q('nomeet'); if (nmEl) nmEl.hidden = !noMeet;
@@ -788,7 +788,7 @@
     if (m && m.date) { const [, mo, d] = String(m.date).split('-').map(Number), wd = HE_DAYS[new Date(m.date + 'T12:00:00Z').getUTCDay()]; info = 'יום ' + wd + ' ' + d + '.' + mo + (m.time ? ' בשעה ' + m.time : ''); }
     const text = 'היי, אני רוצה להעביר את התשלום בדרך אחרת למפגש ביום ' + info.replace(/^יום /, '');
     const wa = (num) => 'https://wa.me/' + num + '?text=' + encodeURIComponent(text);
-    dlg.querySelector('#otherInfo').textContent = m && m.date ? [(m.name || defMeetingName || ''), CONFIG.meetingLine(m)].filter(Boolean).join(String.fromCharCode(10)) : info;
+    dlg.querySelector('#otherInfo').innerHTML = m && m.date ? CONFIG.meetingBox(Object.assign({}, m, { name: m.name || defMeetingName })) : '';
     dlg.querySelector('#otherHadar').href = wa(CONFIG.whatsappHadar); dlg.querySelector('#otherOfir').href = wa(CONFIG.whatsappOfir);
     openModal(dlg, true);
   }
@@ -922,10 +922,8 @@
   let defMeetingName = '';   // שם ברירת המחדל למפגש (harpatka_public_settings)
   const showMeeting = (m) => {
     setSubmitLabel(m);
-    document.querySelectorAll('.mt-badge').forEach((e) => { e.hidden = !m; });   // אין מפגש: אין שורת תאריך בכותרת
-    { const nm = (m && m.name) || defMeetingName || ''; document.querySelectorAll('[data-meeting-name]').forEach((e) => { e.textContent = nm; e.hidden = !nm; }); }   // כותרת: שם המפגש, ואם אין לו שם: שם ברירת המחדל
+    { const nm = m ? '' : defMeetingName, box = m && m.date ? CONFIG.meetingBox(Object.assign({}, m, { name: m.name || defMeetingName })) : ''; document.querySelectorAll('[data-meeting-name]').forEach((e) => { e.textContent = nm; e.hidden = !nm; }); document.querySelectorAll('[data-meeting-box]').forEach((e) => { if (e.__box !== box) { e.__box = box; e.innerHTML = box; } }); }   // פרטי המפגש במסגרת; אין מפגש: רק שם ברירת המחדל
     if (!m) { document.querySelectorAll('[data-price]').forEach((e) => { e.textContent = priceFor(999, null) + ' ₪'; }); return; }
-    { const when = CONFIG.meetingLine(m); document.querySelectorAll('[data-meeting-when]').forEach((e) => { e.textContent = when; }); }
     document.querySelectorAll('[data-meeting-place]').forEach((e) => { e.textContent = CONFIG.meetingPlace || ''; });
     const left = dayN(m.date) - dayN(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()));
     const price = priceFor(left, m.tiers);
@@ -937,17 +935,18 @@
     const H = { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey };
     try {
       const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
-      const r = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time,price_tiers,name,city,place,type_id&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc&limit=1', { headers: H });
+      const r = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meetings?select=id,meeting_date,meeting_time,price_tiers,name,city,place,type_id,image_url,max_participants&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc&limit=1', { headers: H });
       const rows = r.ok ? await r.json() : [];
       if (r.ok) nearestOk = true;
       if (r.ok && !(rows && rows[0])) nearest = null;   // אין מפגש עתידי
       /* שדה ריק במפגש: הערך של סוג המפגש שלו (31.10.26); מפגש בלי סוג: שם ברירת המחדל הגלובלי, כמו קודם */
       let ty = null;
-      if (rows && rows[0] && rows[0].type_id) { try { const tr = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meeting_types?select=name,city,place,price_tiers&id=eq.' + rows[0].type_id, { headers: H }); ty = tr.ok ? ((await tr.json())[0] || null) : null; } catch (e) {} }
-      if (!ty) try { const sr = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_public_settings?select=key,value&key=eq.default_meeting_name', { headers: H }); const sv = sr.ok ? await sr.json() : []; defMeetingName = String(((sv[0] || {}).value) || '').trim(); } catch (e) {}
-      else defMeetingName = String(ty.name || '').trim();
+      if (rows && rows[0] && rows[0].type_id) { try { const tr = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_meeting_types?select=name,city,place,price_tiers,image_url,max_participants&id=eq.' + rows[0].type_id, { headers: H }); ty = tr.ok ? ((await tr.json())[0] || null) : null; } catch (e) {} }
+      let defImg = '';
+      try { const sr = await fetch(CONFIG.supabaseUrl + '/rest/v1/harpatka_public_settings?select=key,value&key=in.(default_meeting_name,default_meeting_image)', { headers: H }); const sv = sr.ok ? await sr.json() : [], sg = (k) => String(((sv.find((x) => x.key === k) || {}).value) || '').trim(); defImg = sg('default_meeting_image'); if (!ty) defMeetingName = sg('default_meeting_name'); } catch (e) {}
+      if (ty) defMeetingName = String(ty.name || '').trim();
       const tx = (v) => String(v == null ? '' : v).trim();
-      if (rows && rows[0]) nearest = { id: rows[0].id, date: rows[0].meeting_date, time: String(rows[0].meeting_time).slice(0, 5), tiers: normT(rows[0].price_tiers) || (ty && normT(ty.price_tiers)), name: tx(rows[0].name) || tx(ty && ty.name), city: tx(rows[0].city) || tx(ty && ty.city), place: tx(rows[0].place) || tx(ty && ty.place) };
+      if (rows && rows[0]) nearest = { id: rows[0].id, date: rows[0].meeting_date, time: String(rows[0].meeting_time).slice(0, 5), tiers: normT(rows[0].price_tiers) || (ty && normT(ty.price_tiers)), name: tx(rows[0].name) || tx(ty && ty.name), city: tx(rows[0].city) || tx(ty && ty.city), place: tx(rows[0].place) || tx(ty && ty.place), img: tx(rows[0].image_url) || tx(ty && ty.image_url) || defImg, max: Number(rows[0].max_participants) || Number(ty && ty.max_participants) || 0 };
       showMeeting(selMeeting || nearest);
     } catch (e) {}
   };

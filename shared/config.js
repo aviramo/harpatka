@@ -15,6 +15,12 @@ const CONFIG = {
   pixelId: '429806621602468',
   meetingFallback: { date: '2026-10-25', time: '20:00' },   // המפגש הקרוב אם הטעינה מבסיס הנתונים נכשלת
   meetingPlace: 'הרצליה',
-  /* שורת מפגש אחת לכל הפופאפים באתר: "יום שלישי 10.11 · 20:00 · הרצליה · המסילה" (רק מה שהוזן למפגש). שם המפגש מוצג מעליה */
-  meetingLine: (m) => { const [, mo, d] = String(m.date).split('-').map(Number), wd = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'][new Date(m.date + 'T12:00:00Z').getUTCDay()]; return ['יום ' + wd + ' ' + d + '.' + mo, m.time, m.city, m.place].filter(Boolean).join(' · '); },
+  /* פרטי מפגש: רכיב אחד לפופאפי ההרשמה ולאזור האישי (עיצוב: shared/meeting-box.css), באותו מבנה כמו כרטיס המפגש בדף הבית. מציג רק מה שהוזן למפגש. extra: תוכן נוסף בתוך המסגרת */
+  meetingBox: (m, extra) => {
+    const esc = (v) => String(v == null ? '' : v).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const [, mo, d] = String(m.date).split('-').map(Number), wd = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'][new Date(m.date + 'T12:00:00Z').getUTCDay()];
+    const when = 'יום ' + wd + ' ' + d + '.' + mo + (m.time ? ' · ' + String(m.time).slice(0, 5) : ''), where = [m.city, m.place].map((x) => String(x || '').trim()).filter(Boolean).join(' · '), n = Number(m.max) || 0;
+    const ppl = n ? '<span class="mbox-ppl" aria-label="' + n + ' משתתפים" title="' + n + ' משתתפים">' + (where ? '<i aria-hidden="true">·</i>' : '') + '<b aria-hidden="true">' + n + '</b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg></span>' : '';
+    return '<div class="mbox">' + (m.img ? '<img class="mbox-img" src="' + esc(m.img) + '" alt="" decoding="async">' : '') + '<div class="mbox-in">' + (m.name ? '<div class="mbox-name">' + esc(m.name) + '</div>' : '') + '<div class="mbox-when">' + esc(when) + '</div>' + (where || n ? '<div class="mbox-where">' + esc(where) + ppl + '</div>' : '') + (extra || '') + '</div></div>';
+  },
 };
