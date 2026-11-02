@@ -1495,7 +1495,7 @@
       return rev((a, b) => (rk(a) - rk(b)) || byNew(a, b) || byName(a, b));
     }
     if (state.sort === 'pay' && state.filter) {   // תשלום (רק בתוך מפגש): דווח, לתשלום, שולם, חינם (אותו סדר כמו בתפריט הסינון)
-      const o = { w: 0, '0': 1, '1': 2, n: 3, x: 4 };
+      const o = { w: 0, '0': 1, '1': 2, x: 3, n: 4 };
       return rev((a, b) => ((o[payStateOf(a)] ?? 1) - (o[payStateOf(b)] ?? 1)) || byNew(a, b) || byName(a, b));
     }
     if (state.sort === 'pers') {   // התמדה: לפי הציון הממוצע למפגש (אותו דירוג של צ'יף ההתמדה); מי שעוד אין לו נתונים תמיד בסוף, בשני הכיוונים
@@ -4230,7 +4230,7 @@
       return;
     }
     const cur = fstate(kind) || null, lab = FLAB[kind];
-    const opts = [[null, 'all', lab[0]]].concat(kind === 'pay' ? [['w', 'wait', lab[4]], ['0', 'no', lab[2]], ['1', 'yes', lab[1]], ['n', 'fr', lab[3]], ['x', 'fr', lab[5]]]   // תשלום: דווח, לתשלום, שולם, חינם, לא שולם (אותו סדר כמו במיון)
+    const opts = [[null, 'all', lab[0]]].concat(kind === 'pay' ? [['w', 'wait', lab[4]], ['0', 'no', lab[2]], ['1', 'yes', lab[1]], ['x', 'fr', lab[5]], ['n', 'fr', lab[3]]]   // תשלום: דווח, לתשלום, שולם, לא שולם, חינם (אותו סדר כמו במיון)
       : kind === 'bal' ? [['w', 'wait', lab[5]], ['1', 'yes', lab[1]], ['0', 'no', lab[2]], ['n', 'free', lab[3]], ['f', 'fr', lab[4]]] : [['1', 'yes', lab[1]], ['0', 'no', lab[2]]]);
     m.innerHTML = opts.map((o) => UI.fopt(o[0] === null ? '' : o[0], cur === o[0], o[1], fglyph(kind, o[1]), o[2], (FC[kind] || {})[o[0] === null ? '' : o[0]] ?? 0)).join('');
     if (kind === 'pay') {   // בנוסף: סינון לפי דרך התשלום ולפי הסכום ששולם למפגש
