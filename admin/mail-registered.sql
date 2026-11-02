@@ -2,7 +2,7 @@
 --   sed 's/__S__/test/g' admin/mail-registered.sql | supabase db query --linked
 --   sed 's/__S__/public/g' admin/mail-registered.sql | supabase db query --linked
 -- * נשלח רק כשיש פרטים אישיים: בהרשמה עצמה אם כבר יש, ואחרת ברגע שהמשתתף משלים אותם (ואז נקשר להערת ההשלמה). מי שעצר אחרי הטלפון לא מקבל מייל.
--- * לא כשמנהל פועל על משתתף אחר, לא במפגש שעבר, לא ב"לא לתשלום" ולא כשכבר שולם. פעם אחת לכל רישום.
+-- * לא כשמנהל פועל על משתתף אחר (חוץ משיוך מחדש אחרי הסרה, mail-relink.sql), לא במפגש שעבר, לא ב"לא לתשלום" ולא כשכבר שולם. פעם אחת לכל רישום.
 -- * טריגרים דחויים: רצים בסוף הפעולה. בלי חשבון גוגל: "המייל לא נשלח" בהערה, כמו בכל מייל.
 -- * harpatka_me_phone: קודם מחברים את החשבון למשתתף, ורק אחר כך נרשמים למפגש.
 insert into __S__.harpatka_mail_templates (key, subject, html) values ('meeting_registered', 'נרשמת למפגש, נשאר לשלם', $tpl$<div dir="rtl" style="direction:rtl;text-align:right;background:#FFFFFF;padding:24px 16px;font-family:Arial,Helvetica,sans-serif;color:#2C231D">
@@ -67,7 +67,10 @@ create or replace function __S__.harpatka_reg_user_mail_fn() returns trigger
 language plpgsql security definer set search_path = __S__, public as $f$
 declare pa __S__.harpatka_participants;
 begin
-  if __S__.harpatka_reg_mail_by_admin(new.participant_id) then return null; end if;
+  if __S__.harpatka_reg_mail_by_admin(new.participant_id)
+     and not exists (select 1 from __S__.harpatka_notes n where n.participant_id = new.participant_id and n.meeting_id = new.meeting_id and n.event_type = 'meeting_removed') then
+    return null;
+  end if;
   select * into pa from __S__.harpatka_participants where id = new.participant_id;
   if not found or not __S__.harpatka_details_done(pa.first_name, pa.last_name, pa.age, pa.gender) then return null; end if;
   perform __S__.harpatka_reg_mail_send(new.participant_id, new.meeting_id);
