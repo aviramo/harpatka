@@ -3562,6 +3562,7 @@
     viewStack = []; payCtx = null; promoFromPay = null;
     pgCur = pgDeep != null ? pgDeep : 0; pgDeep = null;   // תמיד נפתח על המפגשים (קישור: על הדף שבקישור)
     setPTab(p ? (tab === 'info' ? 'info' : 'main') : 'info', true);
+    meetTop(true);
     if (!p) setTimeout(() => pForm.first_name.focus(), 50);
   }
 
@@ -3595,6 +3596,15 @@
   pgTabs.forEach((t, i) => t.addEventListener('click', () => { pgLock = Date.now() + 500; pgGo(i); }));   // בזמן הגלילה אחרי לחיצה על אטב לא מסמנים דף ביניים
   $('#pTabs').addEventListener('keydown', (e) => { if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return; e.preventDefault(); const i = Math.min(pgTabs.length - 1, Math.max(0, pgCur + (e.key === 'ArrowLeft' ? 1 : -1))); pgLock = Date.now() + 500; pgGo(i); pgTabs[i].focus(); });
   { let w0 = 0; new ResizeObserver(() => { const w = pgBox.clientWidth; if (w && w !== w0) { w0 = w; pgBox.scrollLeft = -pgCur * w; } }).observe(pgBox); }
+  /* המפגש שממנו הגענו בראש הרשימה: גלילה אליו בפתיחה, ומקום בסוף הרשימה כדי שיגיע לראש גם כשיש מעט מפגשים */
+  function meetTop(scroll) {
+    const box = $('#pMeetings'), pg = $('#pgM'), row = box.querySelector('.mrow.hl');
+    box.style.paddingBottom = ''; if (scroll) pg.scrollTop = 0;
+    if (!row || row === box.firstElementChild || !pg.clientHeight) return;
+    const above = row.offsetTop - box.offsetTop, add = pg.querySelector('.maddw'), pad = parseFloat(getComputedStyle(pg).paddingTop) || 0;
+    box.style.paddingBottom = Math.max(0, Math.ceil(pg.clientHeight - pad - (box.offsetHeight - above) - (add ? add.offsetHeight : 0))) + 'px';
+    if (scroll) pg.scrollTop = above;
+  }
   function refreshSheetMeetings() {
     if (!sheet) return;
     renderContact();
@@ -3607,6 +3617,7 @@
       const net = owed - (sheet.id ? creditOf(sheet.id) : 0), bn = $('#pBalN');
       bn.innerHTML = '<bdi dir="ltr">₪' + nfm(Math.abs(net)) + '</bdi>'; }
     box.innerHTML = desc.filter((m) => shown.includes(m) || m.id === sheet.hl).map(meetRow).join('');   // המפגש שממנו הגענו מסומן ברשימה, וכשעוד לא משויך אליו: "שיוך למפגש" במקומו לפי התאריך (לא נספר במונה)
+    meetTop(false);
   }
 
   const meetClick = (e) => {

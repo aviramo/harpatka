@@ -418,6 +418,7 @@
   const AS = (() => { try { const v = new URLSearchParams(location.search).get('as'); return v && /^[0-9a-f-]{36}$/i.test(v) ? v : null; } catch (e) { return null; } })();
   const TOK_KEY = AS ? 'harpatka_admin_session_v2' : ME_KEY;
   window.__meAs = AS;
+  if (AS && CONFIG.viewOnly) CONFIG.viewOnly('[data-su="btn"], [data-su="paycredit"], [data-paybox], .wacard', '#contactModal .su-input');   // צפייה כמשתתף: לקריאה בלבד
   /* צפייה כמשתתף בתוך הפופאפ של דף הניהול (iframe): החלקה למטה כשהדף בראשו מורידה את הפופאפ יחד עם האצבע וסוגרת אותו (כמו האזור האישי).
      לא כשפופאפ פנימי פתוח (הרשמה, אזור אישי), כי שם הגלילה של הדף נעולה */
   if (AS && window.parent !== window) {

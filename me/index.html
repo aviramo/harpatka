@@ -25,7 +25,7 @@
     <button type="button" class="btn ghost" id="otherClose">סגירה</button>
   </dialog>
 </div>
-<script src="../shared/config.js?v=20261103b"></script>
+<script src="../shared/config.js?v=20261103c"></script>
 <script src="../shared/rt.js?v=1"></script>
 <script src="../shared/person-form.js?v=20261103a"></script>
 <script>
@@ -332,6 +332,7 @@
     const q = new URLSearchParams(location.search);
     if (q.get('m')) { keepOpen = q.get('m'); scrollTo = q.get('m'); try { history.replaceState(null, '', location.pathname); } catch (e) {} }   // מדף הבית: פתיחת המפגש שנבחר וגלילה אליו
     try { asId = q.get('as') || sessionStorage.getItem(AS_KEY) || null; sessionStorage.removeItem(AS_KEY); } catch (e) { asId = q.get('as'); }
+    if (asId && CFG.viewOnly) CFG.viewOnly('[data-reg], [data-unreg], [data-paycredit], [data-paynow], .wacard, #saveBtn', '#detBody input, #detBody select');   // צפייה כמשתתף: לקריאה בלבד
     const h = new URLSearchParams(location.hash.replace(/^#/, ''));
     if (h.get('access_token')) { saveSession({ access_token: h.get('access_token'), refresh_token: h.get('refresh_token') }); history.replaceState(null, '', location.pathname + (asId ? '?as=' + encodeURIComponent(asId) : '')); }
     else if (h.get('error_description')) { history.replaceState(null, '', location.pathname); }

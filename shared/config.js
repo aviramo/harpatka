@@ -16,6 +16,23 @@ const CONFIG = {
   meetingFallback: { date: '2026-10-25', time: '20:00' },   // המפגש הקרוב אם הטעינה מבסיס הנתונים נכשלת
   meetingPlace: 'הרצליה',
   /* פרטי מפגש: רכיב אחד לפופאפי ההרשמה ולאזור האישי (עיצוב: shared/meeting-box.css), באותו מבנה כמו כרטיס המפגש בדף הבית. מציג רק מה שהוזן למפגש. extra: תוכן נוסף בתוך המסגרת */
+  /* צפייה כמשתתף מדף הניהול היא לקריאה בלבד: הכול מוצג כמו אצל המשתתף, ורק מה שמשנה משהו חסום. רכיב אחד לדף הבית ולאזור האישי (גם השרת מסרב, admin/view-as-readonly.sql).
+     act: כפתורי הפעולה (מעומעמים, ולחיצה מציגה הודעה קצרה); fields: שדות שאי אפשר להקליד בהם */
+  viewOnly: (act, fields) => {
+    const st = document.createElement('style');
+    st.textContent = act + '{opacity:.45!important;cursor:not-allowed!important}.vo-toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:2147483000;max-width:calc(100vw - 32px);padding:10px 16px;border-radius:4px;background:var(--ink,#2C231D);color:var(--paper,#FFFDF9);font-size:15px;font-weight:600;text-align:center;pointer-events:none}';
+    document.head.appendChild(st);
+    const off = () => document.querySelectorAll(fields).forEach((f) => { if (!f.disabled) f.disabled = true; });
+    off(); new MutationObserver(off).observe(document.documentElement, { childList: true, subtree: true });
+    let t = null, tm = 0;
+    const block = (e) => {
+      if (e.type === 'click' && !(e.target.closest && e.target.closest(act))) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      if (!t) { t = document.createElement('div'); t.className = 'vo-toast'; t.setAttribute('role', 'status'); t.textContent = 'צפייה כמשתתף: אי אפשר לבצע פעולות'; }
+      (document.querySelector('dialog[open]') || document.body).appendChild(t); clearTimeout(tm); tm = setTimeout(() => t.remove(), 2200);
+    };
+    document.addEventListener('click', block, true); document.addEventListener('submit', block, true);
+  },
   meetingBox: (m, extra) => {
     const esc = (v) => String(v == null ? '' : v).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const [, mo, d] = String(m.date).split('-').map(Number), wd = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'][new Date(m.date + 'T12:00:00Z').getUTCDay()];
