@@ -107,7 +107,7 @@
         <div class="mlist mhere" id="pHere" hidden></div>
         <div class="ptabs" id="pTabs" role="tablist" aria-label="הערות ומפגשים">
           <button type="button" role="tab" id="pTabN" aria-controls="pgN" aria-selected="true">הערות</button>
-          <button type="button" role="tab" id="pTabM" aria-controls="pgM" aria-selected="false" tabindex="-1" title="מפגשים"><span class="pmn" id="pMeetN"></span></button>
+          <button type="button" role="tab" id="pTabM" aria-controls="pgM" aria-selected="false" tabindex="-1"><span class="pmn" id="pMeetN"></span></button>
           <span class="ptabi" aria-hidden="true"></span>
         </div>
         <div class="ppager" id="pPager">
@@ -3620,7 +3620,7 @@
     renderContact();
     const box = $('#pMeetings');
     const desc = state.meetings.slice().sort((a, b) => (b.meeting_date + b.meeting_time).localeCompare(a.meeting_date + a.meeting_time)), shown = sheet.id ? desc.filter((m) => linkOf(sheet.id, m.id)) : desc;   // רק מפגשים שהמשתתף משויך אליהם (משתתף חדש: כולם, כדי לשייך)
-    { const t = $('#pTabM'); $('#pMeetN').innerHTML = icon('cal', 'i16') + '<span>' + shown.length + '</span>'; t.setAttribute('aria-label', shown.length + ' מפגשים'); }   // אטב המפגשים: סמל וכמות
+    { const t = $('#pTabM'); $('#pMeetN').innerHTML = 'מפגשים <span>' + shown.length + '</span>'; t.setAttribute('aria-label', shown.length + ' מפגשים'); }   // אטב המפגשים: המילה והכמות
     { const ab = $('#pAddMeet'); if (ab) ab.hidden = !(sheet.id && state.meetings.some((m) => !linkOf(sheet.id, m.id))); }   // שיוך למפגש מהכרטיס
     { /* מספר אחד: יתרה = חוב פחות קרדיט. חוב רק על מפגשים שביקשנו עליהם תשלום ("בטיפול") או שהמשתתף אמר שישלם ("ישלם"); רשום בלבד (חדש) הוא עוד לא חוב */
       const owed = sheet.id ? owedOf(sheet.id) : 0;
