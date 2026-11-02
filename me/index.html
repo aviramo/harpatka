@@ -2,12 +2,13 @@
 <html lang="he" dir="rtl" class="pg-me">
 <head>
 <meta charset="utf-8" />
+<script>try { if (window.self === window.top && !window.opener && !location.hash) { const q = new URLSearchParams(location.search); if (!q.has('as') && !q.has('login')) { document.documentElement.style.visibility = 'hidden'; location.replace('../?me=1' + (q.get('m') ? '&m=' + encodeURIComponent(q.get('m')) : '')); } } } catch (e) {}</script>   <!-- כניסה ישירה ל-/me: דף הבית נטען והאזור האישי עולה עליו -->
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex" />
 <title>האזור האישי | יוצאים להרפתקה</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&family=Rubik:wght@500;700;800&display=block" rel="stylesheet" />
-<link rel="stylesheet" href="../shared/site.css?v=20261101fx" />
+<link rel="stylesheet" href="../shared/site.css?v=20261103a" />
 <script>try { if (window.self !== window.top && /[?&]embed=/.test(location.search)) document.documentElement.classList.add('embed'); } catch (e) {}</script>   <!-- בפופאפ: הרקע הטורקיז כבר בציור הראשון -->
 </head>
 <body>
@@ -344,6 +345,7 @@
     }
     if (session && !asId) await useClaimToken();
     if (!session) { if (q.get('login') && !asId) { if (q.get('back')) { try { sessionStorage.setItem('harpatka_me_back', q.get('back')); } catch (e) {} } goGoogle(); return; } viewLogin(); return; }   // ?login=1 (הקישור מההרשמה): ישר להתחברות עם גוגל, בלי מסך ביניים
+    if (!EMBED && !asId && window.self === window.top && !sessionStorage.getItem('harpatka_me_back')) { location.replace('../?me=1'); return; }   // חזרה מכניסה עם גוגל בלי פופאפ: לדף הבית, והאזור האישי עולה עליו
     load();
   }
   $('#outBtn').onclick = () => { if (EMBED) { if (!asId) clearSession(); try { window.parent.postMessage({ harpatka: 'me-logout' }, location.origin); } catch (e) {} return; } if (!usingAdmin) clearSession(); else { try { sessionStorage.removeItem(AS_KEY); } catch (e) {} } location.href = location.pathname; };

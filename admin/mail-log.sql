@@ -89,6 +89,8 @@ begin
       when 'payment_confirmed' then array['payment_closed', 'alloc_added', 'alloc_changed', 'payment_received']
       when 'payment_partial' then array['payment_due', 'alloc_added', 'payment_received']
       when 'payment_rejected' then array['payment_rejected']
+      when 'payment_refunded' then array['refund']
+      when 'meeting_removed' then array['meeting_removed']
       else array[]::text[] end;
     begin
       select n.id into nid from __S__.harpatka_notes n

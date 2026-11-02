@@ -8,7 +8,7 @@ html { -webkit-tap-highlight-color: transparent; } /* בלי הבהוב הכחו
     --cream:#FFF5E8; --sand:#FFD8AE; --terra:#E5562D; --coral:#FF8A5C; --dusty:#EC7F78;
     --sage:#8DB255; --olive:#4E7D2C; --plum:#9A2D5E; --ink:#2C231D; --paper:#FFFDF9;
     --muted:#4A3D33; --err:#C8411B;
-    --r-lg:32px; --r-md:26px;
+    --r:4px; /* פינות של כל האתר */ --r-lg:var(--r); --r-md:var(--r);
     --shadow-soft:0 34px 70px -44px rgba(44,35,29,.42);
   }
 /* בסיס טיפוגרפי מוגדל לקריאות: 17px במובייל, 18px מטאבלט ומעלה — כל ה-rem (טקסט וריווח) גדלים יחד */
@@ -79,17 +79,17 @@ h1, h2, .balance{ text-wrap:balance; }
 .btn-primary:disabled{ opacity:.55; cursor:default; box-shadow:none; }
 /* ===== נגישות — טבעת פוקוס ברורה לניווט מקלדת, וקישור דילוג לטופס ===== */
 a:focus-visible, button:focus-visible, summary:focus-visible, video:focus-visible{
-    outline:3px solid var(--plum); outline-offset:3px; border-radius:14px;
+    outline:3px solid var(--plum); outline-offset:3px; border-radius:var(--r);
   }
 .skip-link{
     position:absolute; top:-100px; right:1rem; z-index:70;
-    background:var(--ink); color:var(--paper); padding:.7rem 1.2rem; border-radius:999px; font-weight:600;
+    background:var(--ink); color:var(--paper); padding:.7rem 1.2rem; border-radius:var(--r); font-weight:600;
   }
 .skip-link:focus{ top:1rem; }
 .hand{ font-family:"Amatic SC","Assistant",cursive; font-weight:700; letter-spacing:.01em; line-height:1; }
 .sticker{
     position:absolute; z-index:5; background:var(--paper); color:var(--ink);
-    padding:.55rem 1.15rem .7rem; border-radius:18px;
+    padding:.55rem 1.15rem .7rem; border-radius:var(--r);
     box-shadow:0 18px 34px -22px rgba(44,35,29,.55);
     transform:rotate(-4deg);
   }
@@ -190,7 +190,7 @@ details[open] .ans{ max-height:40rem; }
 /* ===== טופס ===== */
 .field{
     background:var(--cream); border:1px solid rgba(78,125,44,.28);
-    color:var(--ink); border-radius:16px; transition:border-color .2s ease, box-shadow .2s ease;
+    color:var(--ink); border-radius:var(--r); transition:border-color .2s ease, box-shadow .2s ease;
     text-align:right; direction:rtl;
     height:3.5rem;   /* גובה אחיד לכל השדות והכפתורים */
   }
@@ -211,7 +211,7 @@ input.field:-webkit-autofill,
 .gender-opt.selected{ border-color:var(--terra) !important; background:rgba(229,86,45,.12); color:#C8411B; box-shadow:0 0 0 2px rgba(229,86,45,.25); }
 .consent-cb{
     appearance:none; -webkit-appearance:none; flex:none; position:relative; cursor:pointer;
-    width:1.4rem; height:1.4rem; border-radius:.45rem;
+    width:1.4rem; height:1.4rem; border-radius:var(--r);
     background:var(--cream); border:1px solid rgba(78,125,44,.4);
     transition:border-color .2s ease, background .2s ease;
   }
@@ -409,7 +409,7 @@ html:not(.vid-pending):where(.pg-home) .hv:not(.closing){ display:none; }
 :where(.pg-home) .h8-lead{ font-size:clamp(1.22rem,4.6vw,1.6rem); line-height:1.45; color:var(--muted); max-width:24em; margin:0 auto .6rem; text-wrap:balance; }
 :where(.pg-home) .h8-small{ font-size:clamp(1.02rem,3.8vw,1.22rem); line-height:1.5; color:var(--muted); margin:0 auto 1.15rem; }
 :where(.pg-home) .h8-pills{ list-style:none; margin:0 auto 1.2rem; padding:0; display:flex; justify-content:center; gap:.45rem; flex-wrap:wrap; }
-:where(.pg-home) .h8-pills li{ display:inline-flex; align-items:center; gap:.4rem; min-height:44px; padding:.3rem .85rem; border-radius:999px; font-weight:700; font-size:1rem; color:var(--ink); background:rgba(141,178,85,.22); }
+:where(.pg-home) .h8-pills li{ display:inline-flex; align-items:center; gap:.4rem; min-height:44px; padding:.3rem .85rem; border-radius:var(--r); font-weight:700; font-size:1rem; color:var(--ink); background:rgba(141,178,85,.22); }
 :where(.pg-home) .h8-pills li svg{ width:22px; height:22px; flex:0 0 auto; color:var(--olive); }
 :where(.pg-home) .h8-pills li.mv{ background:rgba(255,138,92,.22); }
 :where(.pg-home) .h8-pills li.mv svg{ color:var(--terra); }
@@ -425,11 +425,11 @@ html:not(.vid-pending):where(.pg-home) .hv:not(.closing){ display:none; }
 @media (min-width:1024px){ :where(.pg-home) section > .max-w-2xl, :where(.pg-home) section > .max-w-3xl, :where(.pg-home) section > .max-w-4xl, :where(.pg-home) section > .max-w-5xl, :where(.pg-home) section > .max-w-6xl{ max-width:min(1500px,92vw) !important; } }
 /* כפתורים בפינות ישרות (30.10.26) */
 /* כל הכפתורים והשדות בלי פינות מעוגלות (30.10.26): גם בפופאפ ההרשמה (המעטפת המשותפת לא שונתה, הדריסה כאן) */
-:where(.pg-home) .btn-primary, :where(.pg-home) .btn-light, :where(.pg-home) .btn-ghost, :where(.pg-home) .btn-green, :where(.pg-home) .btn-wa-sm, :where(.pg-home) .h8-btn, :where(.pg-home) .mt-cta, :where(.pg-home) [data-updates], :where(.pg-home) [data-wa], :where(.pg-home) #stickyRegBtn, :where(.pg-home) #methodBtn, :where(.pg-home) a[data-contact], :where(.pg-home) button[data-contact], :where(.pg-home) .modal input, :where(.pg-home) .modal select, :where(.pg-home) .modal textarea, :where(.pg-home) .modal button:not(.grab), :where(.pg-home) .modal .wacard, :where(.pg-home) .modal a.su-pay, :where(.pg-home) .modal [data-paybox]{ border-radius:0 !important; }
+:where(.pg-home) .btn-primary, :where(.pg-home) .btn-light, :where(.pg-home) .btn-ghost, :where(.pg-home) .btn-green, :where(.pg-home) .btn-wa-sm, :where(.pg-home) .h8-btn, :where(.pg-home) .mt-cta, :where(.pg-home) [data-updates], :where(.pg-home) [data-wa], :where(.pg-home) #stickyRegBtn, :where(.pg-home) #methodBtn, :where(.pg-home) a[data-contact], :where(.pg-home) button[data-contact], :where(.pg-home) .modal input, :where(.pg-home) .modal select, :where(.pg-home) .modal textarea, :where(.pg-home) .modal button:not(.grab), :where(.pg-home) .modal .wacard, :where(.pg-home) .modal a.su-pay, :where(.pg-home) .modal [data-paybox]{ border-radius:var(--r) !important; }
 /* ===== כרטיסי המפגשים (30.10.26): תמונה למעלה, פס מידע בהיר מתחתיה, כפתור מלא בפינות ישרות ===== */
 :where(.pg-home) .mt-list{ gap:1.1rem; }
-:where(.pg-home) .mt-skel{ border-radius:0; }
-:where(.pg-home) .mt-card{ border-radius:0; color:var(--ink); background:var(--paper); text-align:center; box-shadow:0 22px 44px -28px rgba(44,35,29,.55); border-bottom:5px solid var(--terra); }
+:where(.pg-home) .mt-skel{ border-radius:var(--r); }
+:where(.pg-home) .mt-card{ border-radius:var(--r); color:var(--ink); background:var(--paper); text-align:center; box-shadow:0 22px 44px -28px rgba(44,35,29,.55); border-bottom:5px solid var(--terra); }
 :where(.pg-home) .mt-card::before{ display:none; }
 :where(.pg-home) .mt-bg{ position:relative; inset:auto; z-index:0; display:block; width:100%; height:auto; aspect-ratio:16/8; object-fit:cover; filter:saturate(1.1) contrast(1.02); }
 :where(.pg-home) .mt-in{ min-height:0; padding:1.05rem 1.2rem 1.25rem; gap:.15rem; text-shadow:none; }
@@ -490,7 +490,7 @@ html:not(.vid-pending):where(.pg-home) .hv:not(.closing){ display:none; }
 :where(.pg-home) .mt-more, :where(.pg-home) .mt-more > div, :where(.pg-home) .mt-name, :where(.pg-home) .mt-when, :where(.pg-home) .mt-city, :where(.pg-home) .mt-card::before, :where(.pg-home) #topbar .tb-main{ transition:none !important; }
 /* רווח מתחת לכפתור "להכיר לעומק את שיטת הביודנסה", לפני רצועת המנחים (30.10.26) */
 :where(.pg-home) #method{ padding-bottom:2.8rem !important; }
-:where(.pg-home) #topbar .tb-pill{ border-radius:0 !important; } /* הצ'יף "המפגש הקרוב" בבאנר בלי פינות מעוגלות */
+:where(.pg-home) #topbar .tb-pill{ border-radius:var(--r) !important; } /* הצ'יף "המפגש הקרוב" בבאנר בלי פינות מעוגלות */
 /* גבהים קבועים בפתיחה, כדי שהחלפת הגופנים בטעינה לא תזיז את הטקסט (30.10.26) */
 :where(.pg-home) .h8-hand{ height:calc(2.6rem + 10px + .2rem); line-height:2.6rem; display:block !important; width:fit-content; margin-inline:auto; } /* בלוק ולא inline-block: בלי יישור לקו הבסיס של הגופן, שמשתנה בהחלפת הגופנים */
 :where(.pg-home) .h8-copy > .h8-hwrap{ line-height:0; }
@@ -539,17 +539,17 @@ html:where(.pg-home) .modal-close:focus-visible{ outline-color:var(--terra); }
 html:where(.pg-home) .su-glink, :where(.pg-home) .su-ame{ color:#0A6170; }
 html:where(.pg-home) .mesp{ background:linear-gradient(120deg,#064452 0%,#0A6170 55%,#0F8A93 100%) !important; }
 /* ===== בלי פינות מעוגלות בשום כרטיס או תמונה, וסקשנים עם תמונה לכל הרוחב במובייל (30.10.26) ===== */
-:root:where(.pg-home){ --r-lg:0px; --r-md:0px; }
-:where(.pg-home) .card-soft, :where(.pg-home) .hero-img, :where(.pg-home) .imgframe, :where(.pg-home) .sticker, :where(.pg-home) .mt-card, :where(.pg-home) .mt-skel, :where(.pg-home) #meAreaCard, :where(.pg-home) #register .rounded-\[32px\], :where(.pg-home) .field, :where(.pg-home) details{ border-radius:0 !important; }
-:where(.pg-home) .shape-blob, :where(.pg-home) .shape-blob.t1, :where(.pg-home) .shape-blob.t2, :where(.pg-home) .shape-blob.t3{ border-radius:0 !important; transform:none !important; animation:none !important; }
+:root:where(.pg-home){ --r-lg:var(--r); --r-md:var(--r); }
+:where(.pg-home) .card-soft, :where(.pg-home) .hero-img, :where(.pg-home) .imgframe, :where(.pg-home) .sticker, :where(.pg-home) .mt-card, :where(.pg-home) .mt-skel, :where(.pg-home) #meAreaCard, :where(.pg-home) #register .rounded-\[32px\], :where(.pg-home) .field, :where(.pg-home) details{ border-radius:var(--r) !important; }
+:where(.pg-home) .shape-blob, :where(.pg-home) .shape-blob.t1, :where(.pg-home) .shape-blob.t2, :where(.pg-home) .shape-blob.t3{ border-radius:var(--r) !important; transform:none !important; animation:none !important; }
 :where(.pg-home) .shape-blob img, :where(.pg-home) .shape-blob.t1 img, :where(.pg-home) .shape-blob.t2 img, :where(.pg-home) .shape-blob.t3 img{ transform:none !important; }
 :where(.pg-home) #gaze .relative{ clip-path:inset(-300px 0 0 0) !important; }
-:where(.pg-home) #gaze .relative > .absolute{ border-radius:0 !important; }
+:where(.pg-home) #gaze .relative > .absolute{ border-radius:var(--r) !important; }
 :where(.pg-home) #heroPicWrap > svg{ display:none; }
 /* ===== מי מלווה את המפגשים: רצועה לכל הרוחב, בלי כרטיסים ובלי עיגולים; תמונה מרובעת ליד הטקסט (30.10.26) ===== */
 :where(.pg-home) #facilitators{ background:rgba(255,216,174,.38); padding-top:2.6rem; padding-bottom:2.4rem; margin-top:0; }
 :where(.pg-home) #facilitators article.card-soft{ background:none; box-shadow:none !important; display:grid; grid-template-columns:8.5rem minmax(0,1fr); grid-template-rows:auto 1fr auto; column-gap:1.1rem; text-align:right; padding:1.1rem 0 !important; align-items:start; }
-:where(.pg-home) #facilitators article img{ grid-row:1 / span 2; width:100% !important; height:auto !important; aspect-ratio:4/5; object-fit:cover; border-radius:0 !important; box-shadow:none !important; margin:0 !important; }
+:where(.pg-home) #facilitators article img{ grid-row:1 / span 2; width:100% !important; height:auto !important; aspect-ratio:4/5; object-fit:cover; border-radius:var(--r) !important; box-shadow:none !important; margin:0 !important; }
 :where(.pg-home) #facilitators article h3{ margin:0 0 .35rem; font-size:1.4rem; line-height:1.2; }
 :where(.pg-home) #facilitators article p{ font-size:.98rem; line-height:1.55; margin:0; }
 /* כפתור הוואטסאפ: ירוק, מתחת לתמונה ולטקסט יחד, לכל רוחב השורה */
@@ -618,18 +618,18 @@ html:where(.pg-home) .mesp{ background:linear-gradient(120deg,#064452 0%,#0A6170
 @media print{ :where(.pg-bio) .reveal{ opacity:1 !important; transform:none !important; transition:none !important; } :where(.pg-bio) .grain::before, :where(.pg-bio) .sway, :where(.pg-bio) .no-print{ display:none !important; } :where(.pg-bio) body{ background:#fff; } :where(.pg-bio) .doc-sect{ padding-block:1.4rem; break-inside:avoid-page; } :where(.pg-bio) .shape-blob{ animation:none; } }
 :where(.pg-bio) .btn-primary:disabled{ opacity:.55; cursor:default; box-shadow:none; }
 /* ===== שפה גרפית כמו בעמוד הבית (30.10.26): פלטה חיה, בלי פינות מעוגלות, בלי אנימציות, רצועות צבע לכל הרוחב ===== */
-:root:where(.pg-bio){ --r-lg:0px; --r-md:0px; }
+:root:where(.pg-bio){ --r-lg:var(--r); --r-md:var(--r); }
 :where(.pg-bio) .reveal, :where(.pg-bio) .reveal.in{ opacity:1 !important; transform:none !important; transition:none !important; }
 :where(.pg-bio) main *, :where(.pg-bio) main *::before, :where(.pg-bio) main *::after{ animation:none !important; }
 :where(.pg-bio) .bio-hero{ background:#FFEAD2; padding:2.4rem 0 2.6rem; }
 @media (min-width:768px){ :where(.pg-bio) .bio-hero{ padding:3.4rem 0 3.6rem; } }
-:where(.pg-bio) .card-soft{ background:var(--paper); border:1px solid rgba(44,35,29,.12); border-radius:0 !important; box-shadow:none; }
+:where(.pg-bio) .card-soft{ background:var(--paper); border:1px solid rgba(44,35,29,.12); border-radius:var(--r) !important; box-shadow:none; }
 :where(.pg-bio) .line-card{ border-top:4px solid var(--terra); }
-:where(.pg-bio) .btn-primary, :where(.pg-bio) .btn-light, :where(.pg-bio) .btn-ghost, :where(.pg-bio) .btn-green, :where(.pg-bio) a[data-contact], :where(.pg-bio) button[data-contact]{ border-radius:0 !important; }
+:where(.pg-bio) .btn-primary, :where(.pg-bio) .btn-light, :where(.pg-bio) .btn-ghost, :where(.pg-bio) .btn-green, :where(.pg-bio) a[data-contact], :where(.pg-bio) button[data-contact]{ border-radius:var(--r) !important; }
 :where(.pg-bio) .btn-light{ color:#C8411B; }
 :where(.pg-bio) #research .card-soft p:last-child{ margin-bottom:0; }
 /* פופאפ ההרשמה: אותם שדות וצבעים כמו בעמוד הבית (המעטפת המשותפת לא שונתה) */
-:where(.pg-bio) .modal input, :where(.pg-bio) .modal select, :where(.pg-bio) .modal textarea, :where(.pg-bio) .modal button:not(.grab), :where(.pg-bio) .modal .wacard, :where(.pg-bio) .modal [data-paybox]{ border-radius:0 !important; }
+:where(.pg-bio) .modal input, :where(.pg-bio) .modal select, :where(.pg-bio) .modal textarea, :where(.pg-bio) .modal button:not(.grab), :where(.pg-bio) .modal .wacard, :where(.pg-bio) .modal [data-paybox]{ border-radius:var(--r) !important; }
 
 /* ===================== סוף משותף: פופאפ ההרשמה (המעטפת ב-shared/register.css; כאן ההתאמה לפלטה) ===================== */
 /* שדות הטופס בפופאפ: גבול דק (1px) בגוון ניטרלי, ובפוקוס הגבול בטרקוטה (30.10.26) */
@@ -651,13 +651,13 @@ html .su-lnk{ color:var(--olive); }
 :where(.pg-ads) .ads-sticky .site-top{ position:static; }
 :where(.pg-ads) .searchbar{ display:flex; flex-wrap:nowrap; justify-content:center; align-items:center; gap:.6rem; padding:.7rem 1rem; background:var(--band); border-bottom:1px solid rgba(44,35,29,.1); }
 :where(.pg-ads) .searchbar .box{ position:relative; flex:1 1 auto; min-width:0; max-width:28rem; }
-:where(.pg-ads) .searchbar input{ width:100%; height:2.75rem; padding:0 2.6rem; border:1px solid rgba(44,35,29,.28); border-radius:0; background:var(--paper); color:var(--ink); font:500 1.02rem "Assistant",sans-serif; -webkit-appearance:none; appearance:none; }
+:where(.pg-ads) .searchbar input{ width:100%; height:2.75rem; padding:0 2.6rem; border:1px solid rgba(44,35,29,.28); border-radius:var(--r); background:var(--paper); color:var(--ink); font:500 1.02rem "Assistant",sans-serif; -webkit-appearance:none; appearance:none; }
 :where(.pg-ads) .searchbar input::-webkit-search-cancel-button{ display:none; }
 :where(.pg-ads) .searchbar input::placeholder{ color:rgba(44,35,29,.5); }
 :where(.pg-ads) .searchbar input:focus{ outline:none; border-color:var(--terra); }
 :where(.pg-ads) .searchbar .mag{ position:absolute; top:50%; right:.9rem; transform:translateY(-50%); width:1.2rem; height:1.2rem; color:var(--muted); pointer-events:none; }
 :where(.pg-ads) .searchbar .clr{ position:absolute; top:50%; left:.4rem; transform:translateY(-50%); width:2rem; height:2rem; border:0; background:none; color:var(--muted); font-size:1.4rem; line-height:1; cursor:pointer; }
-:where(.pg-ads) .typesel{ flex:none; width:13rem; height:2.75rem; padding:0 1rem 0 2rem; border:1px solid rgba(44,35,29,.28); border-radius:0; color:var(--ink); font:600 1rem "Assistant",sans-serif; cursor:pointer; appearance:none; -webkit-appearance:none; background:var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234A3D33' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat .65rem center/1.05rem; }
+:where(.pg-ads) .typesel{ flex:none; width:13rem; height:2.75rem; padding:0 1rem 0 2rem; border:1px solid rgba(44,35,29,.28); border-radius:var(--r); color:var(--ink); font:600 1rem "Assistant",sans-serif; cursor:pointer; appearance:none; -webkit-appearance:none; background:var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234A3D33' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat .65rem center/1.05rem; }
 :where(.pg-ads) .typesel:focus{ outline:none; border-color:var(--terra); }
 :where(.pg-ads) .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(16rem,1fr)); align-items:start; gap:1.1rem; padding:1.1rem; }
 @media (max-width:559px){ :where(.pg-ads) .grid{ padding:1rem 0 1.4rem; gap:1.2rem; } }   /* במובייל: כרטיסים לכל רוחב המסך */
@@ -677,14 +677,14 @@ html .su-lnk{ color:var(--olive); }
 :where(.pg-ads) .grid .menu a:hover, :where(.pg-ads) .grid .menu button:hover{ background:var(--band); }
 :where(.pg-ads) .grid .menu svg{ width:1.15rem; height:1.15rem; flex:none; fill:none; stroke:var(--terra); stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
 :where(.pg-ads) .grid .menu hr{ border:0; border-top:1px solid rgba(44,35,29,.12); margin:.3rem .5rem; }
-:where(.pg-ads) .grid .dots:focus-visible, :where(.pg-ads) .grid .menu :focus-visible{ outline:2px solid var(--terra); outline-offset:1px; border-radius:0; }
+:where(.pg-ads) .grid .dots:focus-visible, :where(.pg-ads) .grid .menu :focus-visible{ outline:2px solid var(--terra); outline-offset:1px; border-radius:var(--r); }
 :where(.pg-ads) .grid .media{ position:relative; }
 :where(.pg-ads) .grid img, :where(.pg-ads) .grid video{ width:100%; height:auto; aspect-ratio:4/5; display:block; }
 :where(.pg-ads) .grid .tall img, :where(.pg-ads) .grid .tall video{ aspect-ratio:9/16; }
 :where(.pg-ads) .grid video{ display:none; background:var(--cream) center/cover no-repeat; cursor:pointer; }
 /* מודעה עם סרטון: לחיצה על התמונה מנגנת את הסרטון באותו תא, לחיצה על הסרטון משהה וממשיכה */
 :where(.pg-ads) .grid .has-video img{ cursor:pointer; }
-:where(.pg-ads) .grid .has-video img:focus-visible, :where(.pg-ads) .grid video:focus-visible{ outline:2px solid var(--terra); outline-offset:2px; border-radius:0; }
+:where(.pg-ads) .grid .has-video img:focus-visible, :where(.pg-ads) .grid video:focus-visible{ outline:2px solid var(--terra); outline-offset:2px; border-radius:var(--r); }
 :where(.pg-ads) .grid .playing img{ display:none; }
 :where(.pg-ads) .grid .playing video{ display:block; }
 /* בקרת ניגון בזמן ניגון: סטופ (חזרה לתמונה), השהיה/המשך, מיקום בסרטון וזמן. כמו בכל נגן: משמאל לימין */
@@ -700,9 +700,9 @@ html .su-lnk{ color:var(--olive); }
 :where(.pg-ads) .grid .ctl .seek::-webkit-slider-thumb{ -webkit-appearance:none; width:16px; height:16px; margin-top:-5.5px; background:var(--paper); box-shadow:0 1px 4px rgba(0,0,0,.45); }
 :where(.pg-ads) .grid .ctl .seek::-moz-range-track{ height:5px; background:rgba(255,253,249,.42); }
 :where(.pg-ads) .grid .ctl .seek::-moz-range-progress{ height:5px; background:var(--terra); }
-:where(.pg-ads) .grid .ctl .seek::-moz-range-thumb{ width:16px; height:16px; border:0; border-radius:0; background:var(--paper); box-shadow:0 1px 4px rgba(0,0,0,.45); }
+:where(.pg-ads) .grid .ctl .seek::-moz-range-thumb{ width:16px; height:16px; border:0; border-radius:var(--r); background:var(--paper); box-shadow:0 1px 4px rgba(0,0,0,.45); }
 :where(.pg-ads) .grid .ctl .tm{ flex:none; min-width:2.4rem; color:var(--paper); font:600 .85rem "Rubik","Assistant",sans-serif; font-variant-numeric:tabular-nums; text-align:right; text-shadow:0 1px 3px rgba(0,0,0,.5); }
-:where(.pg-ads) .grid .ctl .cb:focus-visible, :where(.pg-ads) .grid .ctl .seek:focus-visible{ outline:2px solid var(--paper); outline-offset:2px; border-radius:0; }
+:where(.pg-ads) .grid .ctl .cb:focus-visible, :where(.pg-ads) .grid .ctl .seek:focus-visible{ outline:2px solid var(--paper); outline-offset:2px; border-radius:var(--r); }
 :where(.pg-ads) .toast{ position:fixed; left:50%; bottom:1.4rem; transform:translateX(-50%); z-index:50; padding:.7rem 1.15rem; background:var(--ink); color:var(--paper); font:600 1rem "Assistant",sans-serif; box-shadow:0 10px 24px -10px rgba(44,35,29,.6); opacity:0; transition:opacity .2s; pointer-events:none; }
 :where(.pg-ads) .toast.on{ opacity:1; }
 :where(.pg-ads) .none{ padding:2.5rem 1rem; text-align:center; color:var(--muted); font:600 1.1rem "Assistant",sans-serif; }
@@ -799,7 +799,7 @@ html.embed:where(.pg-me) .sect{ color:var(--paper); }
 :where(.pg-me) .row .d{ flex:1; font-weight:700; }
 /* שדות */
 :where(.pg-me) label{ display:block; font-size:14px; color:var(--muted); margin:12px 0 4px; }
-:where(.pg-me) input, :where(.pg-me) select{ width:100%; font:inherit; font-size:17px; padding:11px 14px; border:1px solid rgba(44,35,29,.28); border-radius:0; background:var(--paper); color:var(--ink); }   /* שדות בלבן על כרטיס בבז' */
+:where(.pg-me) input, :where(.pg-me) select{ width:100%; font:inherit; font-size:17px; padding:11px 14px; border:1px solid rgba(44,35,29,.28); border-radius:var(--r); background:var(--paper); color:var(--ink); }   /* שדות בלבן על כרטיס בבז' */
 :where(.pg-me) select{ height:48px; padding:0 14px 0 34px; appearance:none; -webkit-appearance:none; cursor:pointer; text-align:start; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.4l5 5.2 5-5.2z' fill='%234A3D33'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:left 15px center; background-size:12px 8px; }
 :where(.pg-me) input:focus, :where(.pg-me) select:focus{ outline:none; border-color:var(--terra); }
 :where(.pg-me) input.bad, :where(.pg-me) select.bad{ border-color:var(--red); }
@@ -877,3 +877,15 @@ html.embed:where(.pg-me) .sect{ color:var(--paper); }
 :where(.pg-home) #meAreaCard{ display:none; }
 html.gl-on #meAreaCard{ display:block; }
 :where(.pg-me) .crnote{ margin:8px 0; text-align:center; font-size:15px; font-weight:700; line-height:1.45; color:var(--muted); }   /* הערה על הקרדיט ליד כפתור התשלום (1.11.26) */
+
+/* פינות של 4 פיקסל בכל האתר (2.11.26): כפתורים, שדות, תגיות ואריחים, כולם מהמשתנה --r. עיגולים (נקודות, תמונות אנשים) נשארים עיגולים, ומה שנמתח מקצה לקצה במובייל בלי פינות */
+.site-back, .site-home-btn, .skip-link{ border-radius:var(--r); }
+:where(.pg-home) .stuck-tags li, :where(.pg-home) .mt-pastlist, :where(.pg-home) .tb-cta, :where(.pg-home) .h8-frame, :where(.pg-home) #meAreaCard, :where(.pg-home) #session img{ border-radius:var(--r) !important; }
+:where(.pg-home) #register .rounded-\[32px\], :where(.pg-home) #heroPicWrap > .relative, :where(.pg-home) .imgframe.rounded-\[32px\]{ border-radius:var(--r) !important; }
+:where(.pg-ads) .grid .dots, :where(.pg-ads) .grid .menu, :where(.pg-ads) .grid .menu a, :where(.pg-ads) .grid .menu button, :where(.pg-ads) .grid .ctl .cb, :where(.pg-ads) .toast, :where(.pg-ads) .searchbar .clr{ border-radius:var(--r); }
+:where(.pg-me) .top .link, :where(.pg-me) .card, :where(.pg-me) .btn, :where(.pg-me) .chip, :where(.pg-me) .gbtn, :where(.pg-me) .imp, :where(.pg-me) .lgpop, :where(.pg-me) .wacard, :where(.pg-me) #otherDlg, :where(.pg-me) #otherDlg .otherinfo{ border-radius:var(--r); }
+@media (min-width:560px){
+  :where(.pg-ads) .grid figure, :where(.pg-ads) .grid img, :where(.pg-ads) .grid video{ border-radius:var(--r); }
+  :where(.pg-priv) .pv-card, :where(.pg-priv) .pv-tbl{ border-radius:var(--r); }
+}
+@media (max-width:1023px){ :where(.pg-home) #listen .card-soft, :where(.pg-home) #heroPicWrap > .relative, :where(.pg-home) #register .rounded-\[32px\]{ border-radius:0 !important; } }
