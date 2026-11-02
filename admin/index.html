@@ -2922,11 +2922,11 @@
       }, 'שולמו <b>' + ils(ca) + '</b>. <b>' + ils(cd) + '</b> שנשארו לשלם יימחקו, והמפגש ייחשב כשולם.' + (isPast(state.meetings.find((x) => x.id === mid) || {}) ? '' : ' המשתתף יקבל מייל שהתשלום התקבל, אם יש לו חשבון מחובר.'), 'כן, לסגור את התשלום', null, { green: true });
       return;
     }
-    if (to === 'reject') {   // דחיית דיווח: מנקה את הדיווח, מסמנת דחייה (הערת מערכת, מייל למשתתף ושינוי באזור האישי ובדף הבית דרך הטריגר בבסיס הנתונים)
+    if (to === 'reject') {   // דחיית דיווח: מנקה את הדיווח, מסמנת דחייה (הערת מערכת דרך הטריגר בבסיס הנתונים, ושינוי באזור האישי ובדף הבית). בלי מייל למשתתף
       const rl = linkOf(pid, mid), ra = reportedAmt(pid, mid);
       confirmAct('לדחות את הדיווח?', pid, mid, async () => {
-        try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body: { pay_reported_at: null, pay_reported_amount: null, pay_rejected_at: new Date().toISOString() } }); if (rl) { rl.pay_reported_at = null; rl.pay_reported_amount = null; } toast('הדיווח נדחה והמשתתף עודכן'); paintDepLines(); render(); } catch (e) { fail(e); }
-      }, 'המשתתף דיווח ששילם' + (ra ? ' <b>' + ra.trim() + '</b>' : '') + ' ואתם לא מצאתם תשלום. הדיווח יבוטל, המשתתף יקבל מייל (אם יש לו חשבון מחובר) וינוסח באזור האישי ובדף הבית שהדיווח לא אושר.', 'כן, לדחות את הדיווח', null, { danger: true });
+        try { await api(T.a + '?participant_id=eq.' + pid + '&meeting_id=eq.' + mid, { method: 'PATCH', body: { pay_reported_at: null, pay_reported_amount: null, pay_rejected_at: new Date().toISOString() } }); if (rl) { rl.pay_reported_at = null; rl.pay_reported_amount = null; } toast('הדיווח נדחה'); paintDepLines(); render(); } catch (e) { fail(e); }
+      }, 'המשתתף דיווח ששילם' + (ra ? ' <b>' + ra.trim() + '</b>' : '') + ' ואתם לא מצאתם תשלום. הדיווח יבוטל, ובאזור האישי ובדף הבית ייכתב למשתתף שהדיווח לא אושר. לא נשלח על כך מייל.', 'כן, לדחות את הדיווח', null, { danger: true });
       return;
     }
     if (to === 'del') {   // מחיקת הקצאה: אותו תהליך כמו במעבר ללא לתשלום (הכסף נשאר ביתרה של המשתתף), בלי לסמן לא לתשלום

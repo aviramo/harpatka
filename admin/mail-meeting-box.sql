@@ -60,8 +60,8 @@ begin
   end if;
   -- דחיית דיווח תשלום
   select pg_get_functiondef(p.oid) into d from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = '__S__' and p.proname = 'harpatka_att_reject_notify';
-  if position(marker in d) = 0 then
-    if position($s$'meeting', to_char(mt.meeting_date$s$ in d) = 0 then raise exception 'harpatka_att_reject_notify patch did not apply'; end if;
+  -- אחרי mail-drop-rejected.sql אין בפונקציה מייל, ואין מה לתקן
+  if position(marker in d) = 0 and position($s$'meeting', to_char(mt.meeting_date$s$ in d) > 0 then
     execute replace(d, $s$'meeting', to_char(mt.meeting_date$s$, $s$'meeting_block', __S__.harpatka_mail_meeting_box(new.meeting_id), 'meeting', to_char(mt.meeting_date$s$);
   end if;
   -- האזור האישי: תמונה, כמות משתתפים ושדות שריקים במפגש מהסוג
