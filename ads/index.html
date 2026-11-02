@@ -8,7 +8,7 @@
   <link rel="icon" href="../images/favicon-v5.ico" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="../images/favicon-v5-32.png" />
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Assistant:wght@400;500;600;700&display=block" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/site.css?v=20261103a">
+  <link rel="stylesheet" href="../shared/site.css?v=20261103c">
   <script src="../shared/age.js?v=20261031a"></script>
 </head>
 <body>
@@ -22,7 +22,7 @@
   <div class="searchbar">
     <div class="box">
       <svg class="mag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/></svg>
-      <input id="q" type="search" placeholder="חיפוש בטקסט המודעות (בתמונות ובסרטונים)" autocomplete="off" aria-label="חיפוש במודעות" />
+      <input id="q" type="search" placeholder="חיפוש" autocomplete="off" aria-label="חיפוש במודעות" />
       <button type="button" class="clr" id="qClr" aria-label="ניקוי החיפוש" hidden>×</button>
     </div>
     <select id="types" class="typesel" aria-label="סינון לפי סוג">
@@ -97,6 +97,7 @@
       btn.addEventListener('click', () => {
         if (openMore === wrap) { closeMore(); return; }
         closeMore(); wrap.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); openMore = wrap;
+        { const mn = wrap.querySelector('.menu'); mn.style.left = ''; const over = mn.getBoundingClientRect().right - (document.documentElement.clientWidth - 8); if (over > 0) mn.style.left = -over + 'px'; }   // בעמודה הימנית התפריט לא יוצא מהמסך
         if (navigator.share) kinds.forEach(k => getFile(k.url, k.name, k.type).catch(() => {}));   // מוכן לשיתוף
       });
       wrap.appendChild(btn); wrap.appendChild(menu);
