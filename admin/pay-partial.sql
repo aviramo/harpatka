@@ -30,10 +30,7 @@ begin
   if coalesce(current_setting('harpatka.skip_pay_mail', true), '') = '1' then return null; end if;   -- ניצול קרדיט של המשתתף עצמו שולח בעצמו
   select * into a from __S__.harpatka_attendance where participant_id = new.participant_id and meeting_id = new.meeting_id;
   if not found or coalesce(a.no_pay, false) then return null; end if;
-  if coalesce(new.reason, '') like 'partial_due:%' then   -- מנהל רשם תשלום חלקי: מייל על השארית
-    if coalesce(a.pay_due_amount, 0) > 0 then perform __S__.harpatka_pay_mail(new.participant_id, new.meeting_id, true, a.pay_due_amount); end if;
-    return null;
-  end if;
+  if coalesce(new.reason, '') like 'partial_due:%' then return null; end if;   -- תשלום חלקי: בלי מייל
   if a.pay_mail_sent_at is not null or coalesce(a.pay_due_amount, 0) > 0 then return null; end if;
   select coalesce(sum(case when kind = 'payment' then amount when kind = 'credit' or (kind = 'refund' and not coalesce(from_credit, false)) then -amount else 0 end), 0) into net
     from __S__.harpatka_payments where participant_id = new.participant_id and meeting_id = new.meeting_id;

@@ -126,8 +126,7 @@ begin
   rem := due - amt;
   if rem > 0 then update __S__.harpatka_attendance set pay_due_amount = rem where participant_id = pid and meeting_id = p_meeting; end if;
   begin
-    if rem > 0 then perform __S__.harpatka_pay_mail(pid, p_meeting, true, rem);
-    elsif __S__.harpatka_pay_mail(pid, p_meeting) then update __S__.harpatka_attendance set pay_mail_sent_at = now() where participant_id = pid and meeting_id = p_meeting;
+    if rem <= 0 and __S__.harpatka_pay_mail(pid, p_meeting) then update __S__.harpatka_attendance set pay_mail_sent_at = now() where participant_id = pid and meeting_id = p_meeting;
     end if;
   exception when others then null;
   end;
@@ -139,7 +138,7 @@ grant execute on function __S__.harpatka_me_pay_credit(uuid, uuid) to authentica
 -- התבניות (אפשר לערוך בטבלה harpatka_mail_templates; הרצה חוזרת של הקובץ מחזירה לנוסח הזה)
 insert into __S__.harpatka_mail_templates (key, subject, html) values ('payment_confirmed', 'התשלום התקבל, המקום שלך שמור', $h$<div dir="rtl" style="direction:rtl;text-align:right;background:#FFFFFF;padding:24px 16px;font-family:Arial,Helvetica,sans-serif;color:#2C231D">
 <div style="max-width:520px;margin:0 auto;background:#FFFFFF;border-top:4px solid #E5562D">
-<div style="padding:22px 4px 4px"><div style="font-size:14px;font-weight:bold;color:#C8411B"><span style="display:inline-block;width:9px;height:9px;background:#E5562D;margin-left:8px;vertical-align:middle"></span>יוצאים להרפתקה</div><div style="font-size:24px;font-weight:bold;color:#2C231D;margin-top:8px;line-height:1.3">התשלום התקבל</div></div>
+<div style="padding:22px 4px 4px"><div style="font-size:14px;font-weight:bold;color:#C8411B"><span style="display:inline-block;width:9px;height:9px;background:#E5562D;margin-left:8px;vertical-align:middle"></span>יוצאים להרפתקה</div></div>
 <div style="padding:16px 4px 24px">
 <div style="font-size:20px;font-weight:bold;color:#2C231D;margin-bottom:12px">שלום {{first_name}},</div>
 <div style="font-size:16px;line-height:1.6;color:#2C231D;margin-bottom:16px">התשלום התקבל, והמקום שלך במפגש נשמר.</div>
@@ -147,8 +146,8 @@ insert into __S__.harpatka_mail_templates (key, subject, html) values ('payment_
 <div style="font-size:16px;line-height:1.6;color:#2C231D;margin-bottom:18px"><b>שולם:</b> {{paid}}{{{credit_block}}}</div>
 {{{dir_block}}}
 <a href="{{me_link}}" style="display:block;background:#C8411B;color:#ffffff;text-decoration:none;font-weight:bold;font-size:17px;text-align:center;padding:14px 20px;border-radius:0">לאזור האישי</a>
-<div style="font-size:15px;line-height:1.6;color:#4A3D33;margin-top:18px">שאלות או שינויים? אפשר לכתוב לנו בוואטסאפ: <a href="{{wa_hadar}}" style="color:#C8411B;font-weight:bold">הדר</a> · <a href="{{wa_ofir}}" style="color:#C8411B;font-weight:bold">אופיר</a></div>
-<div style="font-size:16px;line-height:1.6;color:#2C231D;margin-top:18px">נתראה,<br>אופיר והדר</div>
+<div style="font-size:15px;line-height:1.6;color:#4A3D33;margin-top:18px">שאלות או שינויים? אפשר לכתוב לנו בוואטסאפ: <span style="white-space:nowrap"><a href="{{wa_hadar}}" style="color:#C8411B;font-weight:bold">הדר</a> · <a href="{{wa_ofir}}" style="color:#C8411B;font-weight:bold">אופיר</a></span></div>
+<div style="font-size:16px;line-height:1.6;color:#2C231D;margin-top:18px">נתראה, אופיר והדר</div>
 </div></div></div>$h$)
 on conflict (key) do update set subject = excluded.subject, html = excluded.html;
 
