@@ -31,6 +31,7 @@
   --agecol: 44px;         /* עמודת תגית הגיל והמגדר בשורת משתתף: גם המונה בשורת הסינון יושב בה, ו"זכר / נקבה" מתחילים בקו של השם */
   --ctl: 44px;             /* גובה שדה וכפתור טקסט (אחד לכל הכפתורים עם מילים) */
   --ib: 40px;              /* כפתור אייקון: ריבוע אחד לכל המערכת (וואטסאפ, חזרה, פרטים, תפריט, חיפוש...) */
+  --r: 3px;                /* רדיוס הפינות של כל דף הניהול */
   --tag: 28px;             /* תגית: גובה אחד לכל התגיות */
   --tag-lg: var(--ib);     /* תגית בכותרת פופאפ, ליד כפתורי האייקון (יתרה, הקצאה, גיל ומגדר) */
   --chip: var(--tag);
@@ -51,7 +52,7 @@
    חריגים מכוונים: מירכוז אנכי שנגזר מגבהים (למשל inset של החיפוש), גיאומטריה של גרפים ומתגים, מקום לאייקון בתוך שדה */
 
 /* ---------- 2. בסיס ---------- */
-*, *::before, *::after { box-sizing: border-box; border-radius: 0 !important; }   /* בלי פינות מעוגלות, גם בסגנונות שהקוד מוסיף */
+*, *::before, *::after { box-sizing: border-box; border-radius: var(--r); }   /* פינות מעוגלות ממש קצת בכל האלמנטים (2.11.26); החריגים בסוף הקובץ */
 html, body { margin: 0; }
 html { scrollbar-width: none; }
 html::-webkit-scrollbar { display: none; }
@@ -553,7 +554,6 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 #pDlg .sheet-head h2 { display: flex; align-items: flex-start; gap: 8px; flex: 1 1 auto; min-width: 0; font-size: 20px; line-height: 25px; padding-top: calc((var(--tag-lg) - 25px) / 2); min-height: var(--tag-lg); }
 #pDlg .sheet-head h2 .tchip { margin-top: calc((var(--tag-lg) - 25px) / -2); }   /* תגית הגיל בגובה הכפתורים, למרות הריפוד של הכותרת */
 #pDlg .sheet-head .tchip { min-width: 0; padding: 0; }
-#pDlg .sheet-head .tchip[style] { padding: 0 8px; }
 #pDlg .sheet-head h2 { gap: 16px; }
 /* שם ארוך: רק השם שובר שורה; התגיות והכפתורים בכותרת (גיל ומגדר, יתרה, פרטים, וואטסאפ) נשארים בגודלם ובמקומם (31.10.26) */
 #pDlg .tname { flex: 1 1 auto; min-width: 0; white-space: normal; overflow-wrap: anywhere; line-height: 25px; }
@@ -671,7 +671,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 #nList .nitem { margin: 0; padding: 0; background: transparent; }
 #nList .nitem + .nitem { border-top: 1px solid var(--surface-2); }
 .nitem.fold { cursor: pointer; }
-.nrow { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+.nrow { display: flex; align-items: flex-end; gap: 8px; padding: 4px 0; }
 .nrow .ntext { flex: 1 1 auto; min-width: 0; margin: 0; padding: 0; line-height: 1; }
 .ntext { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); }
 .ntext.chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
@@ -681,9 +681,8 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .nch.nr { color: var(--red); }
 .nch.nf { color: var(--text-2); }
 .nch.nn { color: var(--text-2); }
-.nch.nago { flex: 0 0 auto; align-self: flex-start; }   /* בשורה הראשונה של ההערה, גם בהערה של כמה שורות */
-.nitem.img .nrow { align-items: flex-start; }
-.nitem.img .nch.nago { align-self: flex-start; display: block; height: var(--tag); line-height: var(--tag); }
+.nch.nago { flex: 0 0 auto; align-self: flex-end; }   /* בתחתית ההערה, גם בהערה של כמה שורות ובתמונה */
+.nitem.img .nch.nago { height: auto; line-height: 16px; }   /* הטקסט עצמו בקו התחתון של התמונה */
 .narw { display: inline-flex; align-items: center; justify-content: center; height: var(--tag); color: var(--text-3); }
 /* לחיצה על הערה: נפתחת מתחתיה שורה, שם · מועד מדויק, מיושרת לימין, עם אנימציית פתיחה וסגירה (גובה ושקיפות; הסגירה מהירה מהפתיחה). הריפוד בתוך הילדים, כי ריפוד על .nmetai לא מתכווץ לאפס */
 .nmeta { display: grid; grid-template-rows: 0fr; opacity: 0; visibility: hidden; transition: grid-template-rows .18s ease-in, opacity .14s ease-in, visibility 0s .18s; }
@@ -692,8 +691,8 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .nmetai > span { min-width: 0; padding-bottom: 8px; }
 .nmeta .ndel { flex: 0 0 auto; width: auto; height: auto; padding: 0 0 8px; font-size: 13px; line-height: 18px; color: var(--red); text-decoration: underline; background: none; }
 @media (prefers-reduced-motion: reduce) { .nmeta, .nitem.open .nmeta { transition: none; } }
-.nimg { display: block; margin-top: 4px; }
-.nimg img { display: block; width: 100%; aspect-ratio: 4 / 1; object-fit: cover; object-position: 50% 85%; min-height: 60px; cursor: zoom-in; }
+.nimg { display: block; width: fit-content; max-width: 100%; min-height: 120px; margin-top: 4px; }   /* התמונה ביחס שלה, בגובה קבוע, מיושרת לימין; הגובה שמור גם בזמן הטעינה */
+.nimg img { display: block; width: auto; height: 120px; max-width: 100%; object-fit: contain; object-position: 100% 50%; cursor: zoom-in; }
 .nimg .nload { padding: 12px 0; color: var(--text-2); font-size: 13px; text-align: center; }
 /* פרטי המשתתף */
 #pTagsField { margin-bottom: 12px; }
@@ -1057,7 +1056,7 @@ html.is-loading .vbar { display: none; }
 #viewMenu .mgc { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 #viewMenu .fsh .mgc { flex: 1 1 auto; margin: 0; }   /* שורת הטוגל והמונה בראש התפריט, בלי כותרת */
 #waMenu .wcap { padding: 8px 12px 4px; font-size: 13px; font-weight: 700; color: var(--text-2); }
-#viewMenu .mc[data-sc] { background: var(--sbg); color: var(--sfg); }   /* דרך הגעה בצבע שלה; נבחרת: מתמלאת בגוון הכהה */
+#viewMenu .mc[data-sc] { background: transparent; color: var(--sfg); }   /* דרך הגעה: בלי רקע, בצבע שלה; נבחרת: מתמלאת בגוון הכהה */
 #viewMenu .mc[data-sc][aria-pressed="true"] { background: var(--sfg); color: var(--bg); }
 #viewMenu .mc.zero { opacity: .45; }
 #viewMenu .fclear { display: block; width: 100%; height: var(--ctl); margin-top: 4px; background: var(--surface-2); color: var(--text); font-weight: 700; }
@@ -1217,3 +1216,14 @@ dialog .dclose { display: none; }
 .dmcur a, .dmcur button { padding: 0; border: 0; background: none; color: var(--text); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
 .dmcur button { color: var(--red); }
 .dmadd:disabled { opacity: .6; }
+
+/* חריגים לרדיוס הפינות: אלמנט עם קו בצד אחד (הקו היה מתעקל בקצוות), שטח מקצה לקצה, ופופאפ שצמוד לקצוות המסך */
+.row, .wrap, .wrap > .vbar, .sheet-head, .finrow, .walrow, .logrow, .bq, .cntmenu .cnr, .setrow, .mtr.mhead, #fMenu .fsep, #viewMenu .vrow, .nform, #nList .nitem, .mmenu button.addm2, .mmenu .maddrow, #setDlg .setfield, .srccard, .tb .tr, #waMenu .wbot, .hsearch, .mwrap > .mlist, .mlist .mrow, .hmi.out, .fsl.hd { border-radius: 0; }
+@media (max-width: 699px) { #mMenu { border-radius: 0; } }   /* במובייל התפריט מקצה לקצה */
+dialog { border-radius: var(--r) var(--r) 0 0; }
+#pDlg, #setDlg, #stDlg, #finDlg, #prDlg, #mDlg, #meDlg { border-radius: 0; }
+@media (min-width: 760px) { dialog:not(.drawer):not(.side):not(#meDlg) { border-radius: var(--r); } }
+/* רצועת המפגשים: האריח והכרטיס האחרון סוגרים את הפינות של הרצועה */
+.mtile { border-radius: 0 var(--r) var(--r) 0; }
+.mwrap:not(:has(.mrow)) .mtile { border-radius: var(--r); }
+.mlist .mrow:last-child { border-radius: var(--r) 0 0 var(--r); }
