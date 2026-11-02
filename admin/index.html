@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104db" />
+  <link rel="stylesheet" href="admin.css?v=20261104dc" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -3790,12 +3790,19 @@
   function meetingFields(p, isType, typOf) {
     const q = (s) => $('#' + p + s), I = (s) => p + s;
     q('MF').innerHTML =
+      '<div class="mfimg" id="' + I('ImgBox') + '">' +
+        '<label class="mfimg-pick" for="' + I('ImgFile') + '" tabindex="0" role="button" id="' + I('ImgPick') + '"><img id="' + I('ImgPrev') + '" alt="" hidden />' +
+          '<span class="mfimg-empty">' + icon('img', 'i22') + '<b>הוספת תמונה</b><small>הרקע של כרטיס המפגש בעמוד הבית</small></span>' +
+          '<span class="mfimg-tag" id="' + I('ImgTag') + '"></span></label>' +
+        '<button type="button" class="mfimg-del" id="' + I('ImgDel') + '" hidden>×</button>' +
+        '<input type="file" id="' + I('ImgFile') + '" accept="image/jpeg,image/png,image/webp" hidden /></div>' +
       (isType ? '' : '<div class="mfrow mfname">') +
       '<label class="field"><span>' + (isType ? 'שם סוג המפגש' : 'שם המפגש') + '</span><input id="' + I('Name') + '" type="text" maxlength="80" autocomplete="off" /></label>' +
       (isType ? '' : '<span id="' + I('TypeSlot') + '"></span></div>') +
       '<div class="mfrow">' +
         (isType ? '' : '<label class="field"><span>תאריך</span><input id="' + I('Date') + '" name="date" type="date" required /></label>') +
-        '<label class="field"><span>שעה</span><input id="' + I('Time') + '" name="time" type="time" /></label></div>' +
+        '<label class="field"><span>שעה</span><input id="' + I('Time') + '" name="time" type="time" /></label>' +
+        '<label class="field"><span>משתתפים</span><input id="' + I('Max') + '" name="max" type="number" inputmode="numeric" min="1" max="500" step="1" /></label></div>' +
       '<div class="mfrow">' +
         '<label class="field"><span>עיר</span><input id="' + I('City') + '" name="city" type="text" maxlength="40" autocomplete="off" /></label>' +
         '<label class="field"><span>מיקום</span><input id="' + I('Place') + '" name="place" type="text" maxlength="60" autocomplete="off" /></label></div>' +
@@ -3804,17 +3811,10 @@
       '<button type="button" class="mtpladd dmadd" id="' + I('DAttach') + '">+ תמונה או סרטון להוראות ההגעה</button><input type="file" id="' + I('DFile') + '" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" hidden />' +
       (isType ? '' : '<div class="mtinh2" id="' + I('TplInh') + '" hidden></div>') + '<div class="mtlist" id="' + I('Tpl') + '"></div>' +
       '<button type="button" class="mtpladd" id="' + I('TplAdd') + '">+ תבנית הודעה</button>' +
-      '<div class="mfrow"><label class="field"><span>כמות משתתפים</span><input id="' + I('Max') + '" name="max" type="number" inputmode="numeric" min="1" max="500" step="1" /></label></div>' +
       '<div class="field"><span>מחירים</span>' +
         (isType ? '' : '<div class="mtinh" id="' + I('TierInh') + '" hidden><span id="' + I('TierInhTxt') + '"></span><button type="button" id="' + I('TierOwn') + '">שינוי למפגש הזה</button></div>') +
         '<div class="mfted" id="' + I('TierEd') + '"><div class="mt2" id="' + I('TierList') + '"></div><div class="mt2add"><button type="button" id="' + I('TierAdd') + '">+ מדרגה</button>' +
         (isType ? '' : '<button type="button" id="' + I('TierReset') + '" hidden>כמו בסוג המפגש</button>') + '</div></div></div>' +
-      '<div class="mfimg" id="' + I('ImgBox') + '">' +
-        '<label class="mfimg-pick" for="' + I('ImgFile') + '" tabindex="0" role="button" id="' + I('ImgPick') + '"><img id="' + I('ImgPrev') + '" alt="" hidden />' +
-          '<span class="mfimg-empty">' + icon('img', 'i22') + '<b>הוספת תמונה</b><small>הרקע של כרטיס המפגש בעמוד הבית</small></span>' +
-          '<span class="mfimg-tag" id="' + I('ImgTag') + '"></span></label>' +
-        '<button type="button" class="mfimg-del" id="' + I('ImgDel') + '" hidden>×</button>' +
-        '<input type="file" id="' + I('ImgFile') + '" accept="image/jpeg,image/png,image/webp" hidden /></div>' +
       '<div class="mtedit" id="' + I('TplEd') + '" hidden>' +
         '<div class="mthead"><button type="button" class="hbtn hback" id="' + I('TplBack') + '" aria-label="חזרה" title="חזרה">' + icon('back') + '</button><b>עריכת תבנית</b></div>' +
         '<label class="field"><span>שם התבנית</span><input type="text" class="mtname" id="' + I('TplName') + '" maxlength="60" autocomplete="off" /></label>' +
@@ -3822,7 +3822,7 @@
         '<div class="emvars" id="' + I('TplVars') + '">' + MSG_VARS.map((v) => '<button type="button" data-v="' + v + '">' + v + '</button>').join('') + '</div>' +
         '<button type="button" class="mtdel" id="' + I('TplDel') + '">מחיקת התבנית</button></div>';
     { const tf = !isType && $('#' + p + 'TypeF'), slot = q('TypeSlot'); if (slot) { if (tf) slot.replaceWith(tf); else slot.remove(); } }   // סוג המפגש באותה שורה עם שם המפגש
-    const F = { te: tierEditor('#' + I('TierList'), '#' + I('TierAdd')), img: { url: null, blob: null, objUrl: null, inh: false }, tiersInh: false };
+    const F = { te: tierEditor('#' + I('TierList'), '#' + I('TierAdd'), () => F.changed()), img: { url: null, blob: null, objUrl: null, inh: false }, tiersInh: false };
     const ty = () => (typOf ? typOf() : null);
     if (isType) q('Time').dataset.noph = '1';   // בסוג המפגש בלי פלייסהולדר
     dtField(q('Time')); if (!isType) dtField(q('Date'));   // תאריך ושעה: הרכיב האחיד (מיושר לימין, פלייסהולדר של הסוג)
@@ -3831,8 +3831,18 @@
     /* תמונה או סרטון בהוראות ההגעה: הקובץ עולה לדלי meeting-media והקישור נכנס לסוף ההוראות, אחרי "לפרטים נוספים:". גם בסוג מפגש וגם במפגש; במפגש שיורש את ההוראות מהסוג (השדה ריק) הצירוף מתחיל מההוראות של הסוג ונהיה שלו */
     F.paintMedia = () => { const m = DMEDIA_RE.exec(q('Dirs').value); q('DCur').hidden = !m; if (m) q('DLink').href = m[1]; };
     /* תבניות הודעה: בטופס רק רשימת שמות; לחיצה על שם פותחת מסך עריכה נפרד באותו פופאפ (שם, נוסח וכפתורי שדות, חץ חזרה).
-       נשמרות בשמירת המפגש / הסוג (saveTemplates); מחיקה מתבצעת רק בשמירה */
+       במפגש או סוג קיימים נשמרות אוטומטית (F.tpl.sync); בחדשים יחד איתם (saveTemplates) */
     const mfBox = q('MF'), tplBox = q('Tpl'), ed = (s) => q('Tpl' + s);
+    /* שמירה אוטומטית של מפגש או סוג שכבר קיימים (F.owner, F.write): בכל שינוי בטופס; בשדות טקסט בעזיבת השדה, ובסגירת הפופאפ גם מה שהוקלד ועוד לא נעזב. שמירה אחת בכל פעם. מפגש או סוג חדשים נוצרים בכפתור */
+    let saving = false, again = false;
+    F.changed = async () => {
+      F.dirty = false; if (!F.write) return;
+      if (saving) { again = true; return; }
+      saving = true;
+      try { do { again = false; await F.write(); } while (again); } finally { saving = false; }
+    };
+    mfBox.addEventListener('input', () => { F.dirty = true; });
+    mfBox.addEventListener('change', (e) => { if (e.target.type !== 'file' && !e.target.closest('#' + I('TierList'))) F.changed(); });
     F.tpl = { rows: [], cur: null };
     F.tpl.rowsOf = (id) => (id ? (isType ? tplsOfType(id) : tplsOfMeeting(id)) : []).map((x) => ({ id: x.id, name: x.name, body: x.body }));
     /* שמירה במסך עריכת תבנית: שומרת רק את התבניות (כשהמפגש או הסוג כבר קיימים; בחדש הן נשמרות יחד איתו) וחוזרת לטופס, בלי לסגור את הפופאפ */
@@ -3853,7 +3863,7 @@
     };
     F.tpl.open = (i) => {
       const r = F.tpl.rows[i]; if (!r) return;
-      F.tpl.cur = i; ed('Name').value = r.name || ''; ed('Body').value = r.body || '';
+      F.tpl.cur = i; ed('Name').value = r.name || ''; ed('Body').value = r.body || ''; ed('Del').dataset.sure = ''; ed('Del').textContent = 'מחיקת התבנית';
       mfBox.classList.add('editing'); ed('Ed').hidden = false; autoGrow(ed('Body')); ed('Ed').scrollIntoView({ block: 'start' });
     };
     F.tpl.close = () => {
@@ -3876,6 +3886,15 @@
       }
       return { rows: out };
     };
+    /* שמירה אוטומטית של התבניות: תבנית חדשה שעוד ריקה או לא מושלמת מחכה (בחזרה מקבלים הודעה); אחרי שמירה השורות מתעדכנות, כדי שתבנית חדשה לא תיווצר פעמיים */
+    F.tpl.sync = async (scope) => {
+      const c = F.tpl.rows[F.tpl.cur]; if (c && !String(c.name || '').trim() && !String(c.body || '').trim()) return;
+      const tr = F.tpl.read(); if (tr.err) return;
+      await saveTemplates(scope, tr.rows);
+      F.tpl.rows = F.tpl.rowsOf(scope.type_id || scope.meeting_id);
+      const r = F.tpl.rows[F.tpl.cur]; if (r) { r.name = ed('Name').value; r.body = ed('Body').value; }
+      if (F.tpl.cur == null) F.tpl.render();
+    };
     F.paintTplInh = () => {   // במפגש: תבניות הסוג (לקריאה בלבד, נערכות בסוג המפגש)
       const box = q('TplInh'); if (!box) return;
       const t = ty(), l = t ? tplsOfType(t.id) : [];
@@ -3889,8 +3908,20 @@
       const ta = ed('Body'), a = ta.selectionStart == null ? ta.value.length : ta.selectionStart, b = ta.selectionEnd == null ? a : ta.selectionEnd;
       ta.setRangeText(v.dataset.v, a, b, 'end'); r.body = ta.value; autoGrow(ta); ta.focus();
     });
-    ed('Back').addEventListener('click', () => F.tpl.close());
-    ed('Del').addEventListener('click', () => { if (F.tpl.cur != null) F.tpl.rows.splice(F.tpl.cur, 1); F.tpl.close(); });
+    ed('Back').addEventListener('click', () => {
+      const r = F.tpl.rows[F.tpl.cur];
+      if (r && F.owner && F.owner()) {   // נשמר אוטומטית: תבנית ריקה יורדת, ותבנית לא מושלמת נשארת פתוחה עם הודעה
+        if (!String(r.name || '').trim() && !String(r.body || '').trim()) { F.tpl.rows.splice(F.tpl.cur, 1); F.tpl.close(); if (r.id) F.changed(); return; }
+        const tr = F.tpl.read(); if (tr.err) { toast(tr.err); if (tr.open) tr.open(); return; }
+        F.tpl.close(); F.changed(); return;
+      }
+      F.tpl.close();
+    });
+    ed('Del').addEventListener('click', () => {
+      const r = F.tpl.rows[F.tpl.cur], btn = ed('Del');
+      if (r && r.id && F.owner && F.owner() && btn.dataset.sure !== '1') { btn.dataset.sure = '1'; btn.textContent = 'בטוח? לחיצה נוספת מוחקת'; return; }   // נמחקת מיד, יחד עם סימוני השליחה שלה
+      if (F.tpl.cur != null) F.tpl.rows.splice(F.tpl.cur, 1); F.tpl.close(); F.changed();
+    });
     q('TplAdd').addEventListener('click', () => F.tpl.add());
     F.paintImg = () => {
       const t = ty(), inh = !!(t && F.img.inh), own = inh ? '' : (F.img.objUrl || F.img.url || '');
@@ -3923,7 +3954,7 @@
     };
     /* מילוי: src = מפגש או סוג; inh = השדות שנלקחים מהסוג (מוצגים ריקים) */
     F.fill = (src, inh) => {
-      const s = src || {}, h = inh || new Set(), t = ty(), v = (k, x) => (t && h.has(k)) ? '' : x;
+      F.dirty = false; const s = src || {}, h = inh || new Set(), t = ty(), v = (k, x) => (t && h.has(k)) ? '' : x;
       q('Name').value = v('name', s.name || ''); q('Time').value = v('meeting_time', s.meeting_time ? String(s.meeting_time).slice(0, 5) : '');
       q('Place').value = v('place', s.place || ''); q('City').value = v('city', s.city || ''); q('Dirs').value = v('directions', s.directions || '');
       q('Max').value = v('max_participants', s.max_participants == null ? '' : s.max_participants);
@@ -3954,11 +3985,12 @@
     F.imageUrl = async () => {
       const t = ty();
       if (t && F.img.inh) return { url: t.image_url || null, inh: true };
-      return { url: F.img.blob ? await uploadMeetingImage(F.img.blob) : (F.img.url || null), inh: false };
+      if (F.img.blob) { const b = F.img.blob, url = await uploadMeetingImage(b); F.img.url = url; if (F.img.blob === b) F.img.blob = null; }   // עולה פעם אחת גם כשהשמירה חוזרת
+      return { url: F.img.url || null, inh: false };
     };
     q('Dirs').addEventListener('input', () => { F.grow(); F.paintMedia(); });
     q('DAttach').addEventListener('click', () => q('DFile').click());
-    q('DDel').addEventListener('click', () => { q('Dirs').value = q('Dirs').value.replace(DMEDIA_RE, '').trimEnd(); F.grow(); F.paintMedia(); });
+    q('DDel').addEventListener('click', () => { q('Dirs').value = q('Dirs').value.replace(DMEDIA_RE, '').trimEnd(); F.grow(); F.paintMedia(); F.changed(); });
     q('DFile').addEventListener('change', async (e) => {
       const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
       const btn = q('DAttach'), t0 = btn.textContent; btn.disabled = true; btn.textContent = 'מעלה…';
@@ -3968,20 +4000,20 @@
         base = base.replace(DMEDIA_RE, '').trimEnd();
         const next = (base ? base + '\n\n' : '') + 'לפרטים נוספים: ' + url;
         if (next.length > 800) { toast('ההוראות ארוכות מדי עם הקישור, צריך לקצר את הטקסט'); }
-        else { q('Dirs').value = next; F.grow(); F.paintMedia(); }
+        else { q('Dirs').value = next; F.grow(); F.paintMedia(); F.changed(); }
       } catch (err) { toast(err.message || 'העלאת הקובץ נכשלה'); }
       btn.disabled = false; btn.textContent = t0;
     });
     q('ImgPick').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); q('ImgFile').click(); } });
     q('ImgFile').addEventListener('change', async (e) => {
       const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
-      try { const b = await compressMeetingImage(f); if (F.img.objUrl) URL.revokeObjectURL(F.img.objUrl); F.img = { url: null, blob: b, objUrl: URL.createObjectURL(b), inh: false }; F.paintImg(); }
+      try { const b = await compressMeetingImage(f); if (F.img.objUrl) URL.revokeObjectURL(F.img.objUrl); F.img = { url: null, blob: b, objUrl: URL.createObjectURL(b), inh: false }; F.paintImg(); F.changed(); }
       catch (err) { toast(err.message || 'לא ניתן לקרוא את התמונה'); }
     });
-    q('ImgDel').addEventListener('click', () => { if (F.img.objUrl) URL.revokeObjectURL(F.img.objUrl); F.img = { url: null, blob: null, objUrl: null, inh: !!ty() }; F.paintImg(); });   // עם סוג: חוזרים לתמונה של הסוג
+    q('ImgDel').addEventListener('click', () => { if (F.img.objUrl) URL.revokeObjectURL(F.img.objUrl); F.img = { url: null, blob: null, objUrl: null, inh: !!ty() }; F.paintImg(); F.changed(); });   // עם סוג: חוזרים לתמונה של הסוג
     if (!isType) {
-      q('TierOwn').addEventListener('click', () => { F.tiersInh = false; F.te.t = tiersOf(ty()); F.te.render(); F.paintTiers(); });   // מתחילים מהמחירים של הסוג
-      q('TierReset').addEventListener('click', () => { F.tiersInh = true; F.paintTiers(); });
+      q('TierOwn').addEventListener('click', () => { F.tiersInh = false; F.te.t = tiersOf(ty()); F.te.render(); F.paintTiers(); F.changed(); });   // מתחילים מהמחירים של הסוג
+      q('TierReset').addEventListener('click', () => { F.tiersInh = true; F.paintTiers(); F.changed(); });
     }
     return F;
   }
@@ -4026,7 +4058,7 @@
     fillTypeSel(tid);
     fillMeetingForm(m);
     $('#mTitle').textContent = m ? 'עריכת מפגש' : 'מפגש חדש';
-    $('#mSubmit').textContent = m ? 'שמירה' : 'יצירת מפגש';
+    $('#mSubmit').hidden = !!m; $('#mSubmit').textContent = 'יצירת מפגש';   // מפגש קיים נשמר אוטומטית
     $('#mDelete').hidden = !m;
     { const linked = !!(m && state.att.some((x) => x.meeting_id === m.id)); $('#mDelete').classList.toggle('locked', linked); $('#mDelete').title = linked ? 'לא ניתן למחוק מפגש שמשויכים אליו משתתפים' : ''; }
     mDlg.showModal();
@@ -4037,31 +4069,42 @@
   /* שדה מרובה שורות: מתחיל בשורה אחת ומתרחב לפי הטקסט */
   function autoGrow(ta) { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight + 2, 260) + 'px'; }
 
-  mForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (mf.tpl.cur != null) { await mf.tpl.saveBack(editingMeeting && editingMeeting.id); return; }   // במסך עריכת תבנית: שומרים תבנית וחוזרים לטופס
-    /* שדה ריק עם סוג = "כמו בסוג": נשמר הערך של הסוג ונרשם ב-inherit; שדה מלא = ערך משלו */
+  /* גוף הבקשה מהטופס, או null (עם הודעה). שדה ריק עם סוג = "כמו בסוג": נשמר הערך של הסוג ונרשם ב-inherit; שדה מלא = ערך משלו */
+  async function meetingBody() {
     const date = $('#mDate').value;
-    if (!date) { $('#mDate').focus(); toast('חסר תאריך'); return; }
-    const r = mf.read(); if (r.err) { toast(r.err); if (r.el) r.el.focus(); return; }
-    const tr = mf.tpl.read(); if (tr.err) { toast(tr.err); if (tr.open) tr.open(); return; }   // תבניות הודעה: שם ונוסח לכל תבנית
+    if (!date) { $('#mDate').focus(); toast('חסר תאריך'); return null; }
+    const r = mf.read(); if (r.err) { toast(r.err); if (r.el) r.el.focus(); return null; }
     const body = Object.assign({ meeting_date: date }, r.body), inherit = r.inherit;
     try { const im = await mf.imageUrl(); body.image_url = im.url; if (im.inh) inherit.push('image_url'); }
-    catch (err) { toast(err.message || 'העלאת התמונה נכשלה'); return; }
+    catch (err) { toast(err.message || 'העלאת התמונה נכשלה'); return null; }
     if (state.mtypes.length) { body.type_id = $('#mType').value || firstTypeId(); body.inherit = inherit; }   // סוג המפגש, והשדות שנלקחים ממנו
+    return body;
+  }
+  mf.owner = () => editingMeeting ? { meeting_id: editingMeeting.id } : null;
+  mf.write = async () => {
+    if (!editingMeeting) return;
+    const m = editingMeeting, body = await meetingBody(); if (!body) return;
+    try {
+      await api(T.m + '?id=eq.' + m.id, { method: 'PATCH', body, ui: false });
+      Object.assign(m, body); { const live = state.meetings.find((x) => x.id === m.id); if (live && live !== m) Object.assign(live, body); }
+      await mf.tpl.sync({ meeting_id: m.id });
+      sortMeetings(); render();
+    } catch (err) { fail(err); }
+  };
+  mForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (editingMeeting) { const a = document.activeElement; if (a && a.blur) a.blur(); return; }   // מפגש קיים נשמר אוטומטית: אנטר רק עוזב את השדה
+    if (mf.tpl.cur != null) { await mf.tpl.saveBack(null); return; }   // מפגש חדש, במסך עריכת תבנית: חוזרים לטופס (התבניות נשמרות יחד איתו)
+    const body = await meetingBody(); if (!body) return;
+    const tr = mf.tpl.read(); if (tr.err) { toast(tr.err); if (tr.open) tr.open(); return; }   // תבניות הודעה: שם ונוסח לכל תבנית
     const btn = $('#mSubmit'); btn.disabled = true;
     try {
-      if (editingMeeting) {
-        await api(T.m + '?id=eq.' + editingMeeting.id, { method: 'PATCH', body });
-        Object.assign(editingMeeting, body);
-      } else {
-        const [m] = await api(T.m, { method: 'POST', body, prefer: 'return=representation' });
-        state.meetings.push(m);
-        state.filter = m.id;
-        editingMeeting = m;
-      }
-      await saveTemplates({ meeting_id: editingMeeting.id }, tr.rows);
-      sortMeetings(); mDlg.close(); render();
+      const [m] = await api(T.m, { method: 'POST', body, prefer: 'return=representation' });
+      state.meetings.push(m);
+      state.filter = m.id;
+      editingMeeting = m;
+      await saveTemplates({ meeting_id: m.id }, tr.rows);
+      mf.dirty = false; sortMeetings(); mDlg.close(); render();
     } catch (err) { fail(err); }
     btn.disabled = false;
   });
@@ -4076,13 +4119,13 @@
       await api(T.m + '?id=eq.' + m.id, { method: 'DELETE' });
       state.meetings = state.meetings.filter((x) => x !== m);
       state.att = state.att.filter((a) => a.meeting_id !== m.id);
-      state.filter = null; mDlg.close(); render();
+      state.filter = null; mf.dirty = false; mDlg.close(); render();
     } catch (err) { fail(err); }
   });
 
   /* ---------- אירועים כלליים ---------- */
   pDlg.addEventListener('close', () => { sheet = null; openPid = null; syncUrl(); });
-  mDlg.addEventListener('close', syncUrl);
+  mDlg.addEventListener('close', () => { if (mf.dirty) mf.changed(); syncUrl(); });
   pForm.phone.addEventListener('input', () => badPhone(false));
 
   { const q = $('#q'); q.addEventListener('focus', () => { q.placeholder = 'חיפוש או הוספת משתתף'; }); q.addEventListener('blur', () => { q.placeholder = 'חיפוש'; }); }   // בשורה הצרה רק "חיפוש"; בפוקוס התיבה נפתחת ומוצג הטקסט המלא
@@ -4435,18 +4478,26 @@
   $('#pmMenuBtn').addEventListener('click', () => openSetRoot('pm'));
 
   /* ---------- סוגי מפגשים: עריכה בתוך ההגדרות (מסך הסוג, ומתוכו הסטטוסים וההודעה שלו); כל שינוי נשמר מיד ---------- */
-  async function saveType(id, patch, okMsg) {
+  async function saveType(id, patch, okMsg, quiet) {
     const t = typeById(id); if (!t) return false;
     const prev = Object.assign({}, t); Object.assign(t, patch);
     render(); if (sheet && sheet.id && pDlg.open) refreshSheetMeetings();
-    try { await api(T.mt + '?id=eq.' + id, { method: 'PATCH', body: patch }); if (okMsg) toast(okMsg); return true; }
+    try { await api(T.mt + '?id=eq.' + id, Object.assign({ method: 'PATCH', body: patch }, quiet ? { ui: false } : {})); if (okMsg) toast(okMsg); return true; }
     catch (err) { Object.assign(t, prev); render(); if (setView === 'tydet') renderTyDelete(); fail(err); return false; }
   }
-  /* שם הסוג ופרטי ברירת המחדל נשמרים בכפתור "שמירה" (כמו בעריכת מפגש); הטופס מתמלא פעם אחת בפתיחה, כך שמעבר לסטטוסים או להודעה וחזרה לא מוחק שינויים שעוד לא נשמרו.
+  /* שם הסוג ופרטי ברירת המחדל נשמרים אוטומטית (כמו בעריכת מפגש); הטופס מתמלא פעם אחת בפתיחה.
      סוג חדש (tyNew) נוצר רק בלחיצה על "יצירת סוג מפגש"; עד אז אין לו סטטוסים, הודעה וסימון הגעה */
   let tyNew = null, tyFormFor = null;
   const tyCur = () => tyId ? typeById(tyId) : tyNew;
   const tyF = meetingFields('ty', true, null);   // אותו אלמנט כמו בעריכת מפגש
+  tyF.owner = () => tyId ? { type_id: tyId } : null;
+  tyF.write = async () => {
+    const id = tyId; if (!id) return;
+    const r = tyF.read(); if (r.err) { toast(r.err); if (r.el) r.el.focus(); return; }
+    const body = r.body;
+    try { body.image_url = (await tyF.imageUrl()).url; } catch (err) { toast(err.message || 'העלאת התמונה נכשלה'); return; }
+    if (await saveType(id, body, '', true)) { try { await tyF.tpl.sync({ type_id: id }); } catch (err) { fail(err); } }
+  };
   const fillTypeForm = (t) => tyF.fill(t, null);
   /* כפתור "מחיקת סוג מפגש" בתחתית הטופס: מוצג רק כשיש יותר מסוג אחד, ומעומעם כשלמפגשי הסוג משויכים משתתפים */
   function renderTyDelete() {
@@ -4461,7 +4512,7 @@
     const t = tyCur(); if (!t) return;
     const key = tyId || 'new';
     if (tyFormFor !== key) { tyFormFor = key; fillTypeForm(t); }
-    $('#tySave').textContent = tyId ? 'שמירה' : 'יצירת סוג מפגש';
+    $('#tySave').hidden = !!tyId; $('#tySave').textContent = 'יצירת סוג מפגש';   // סוג קיים נשמר אוטומטית
     renderTyDelete();
   }
   function openTypeEditor(id) {
@@ -4480,21 +4531,14 @@
     const ae = document.activeElement; if (ae && ae.closest && ae.closest('#setDlg')) ae.blur();
   }
   $('#tySave').addEventListener('click', async () => {
-    const t = tyCur(); if (!t) return;
-    if (tyF.tpl.cur != null) { await tyF.tpl.saveBack(tyId); return; }   // במסך עריכת תבנית: שומרים תבנית וחוזרים לטופס
+    const t = tyCur(); if (!t || tyId) return;
+    if (tyF.tpl.cur != null) { await tyF.tpl.saveBack(null); return; }   // סוג חדש, במסך עריכת תבנית: חוזרים לטופס (התבניות נשמרות יחד איתו)
     const r = tyF.read(); if (r.err) { toast(r.err); if (r.el) r.el.focus(); return; }
     const tr = tyF.tpl.read(); if (tr.err) { toast(tr.err); if (tr.open) tr.open(); return; }   // תבניות הודעה: שם ונוסח לכל תבנית
     const body = r.body;
     const btn = $('#tySave'); btn.disabled = true;
     try { body.image_url = (await tyF.imageUrl()).url; }
     catch (err) { btn.disabled = false; toast(err.message || 'העלאת התמונה נכשלה'); return; }
-    if (tyId) {   // עריכה: שמירה וסגירה (כמו עריכת מפגש)
-      const ok = await saveType(tyId, body, 'הפרטים נשמרו');
-      if (ok) { try { await saveTemplates({ type_id: tyId }, tr.rows); } catch (err) { btn.disabled = false; fail(err); return; } }
-      btn.disabled = false;
-      if (ok) { tyFormFor = null; $('#setDlg').close(); }
-      return;
-    }
     /* יצירה: הסוג נשמר והפופאפ נסגר; סטטוסים לסוג החדש נערכים מאייקון העריכה בפס הסטטוסים */
     ['event_open', 'event_msg'].forEach((k) => { if (tyNew[k] != null) body[k] = tyNew[k]; });
     body.sort = Math.max(0, ...state.mtypes.map((x) => x.sort || 0)) + 1;
@@ -4503,7 +4547,7 @@
       if (n && !typeById(n.id)) state.mtypes.push(n);
       await saveTemplates({ type_id: n.id }, tr.rows);
       tyNew = null; tyId = stType = n.id; tyFormFor = null;
-      render(); $('#setDlg').close(); toast('סוג המפגש נוצר');
+      tyF.dirty = false; render(); $('#setDlg').close(); toast('סוג המפגש נוצר');
     } catch (err) { fail(err); }
     btn.disabled = false;
   });
@@ -4526,7 +4570,7 @@
       if (ms.some((m) => m.id === state.filter)) state.filter = null;
       state.mtypes = state.mtypes.filter((x) => x !== t); state.statuses = state.statuses.filter((s) => s.type_id !== t.id); state.mstatuses = state.mstatuses.filter((s) => s.type_id !== t.id); state.pstatuses = state.pstatuses.filter((s) => s.type_id !== t.id);
       if (state.mtype === t.id) state.mtype = null;
-      applyStatuses(); $('#setDlg').close(); render(); toast('סוג המפגש נמחק');
+      tyF.dirty = false; applyStatuses(); $('#setDlg').close(); render(); toast('סוג המפגש נמחק');
     } catch (err) { fail(err); }
   });
   /* ניהול סטטוסים בתוך פופאפ ההגדרות (מסך עם חץ חזרה) */
@@ -4733,7 +4777,7 @@
   };
   [$('#setSrc'), $('#prForm')].forEach((box) => { box.addEventListener('change', srcChange); box.addEventListener('click', srcClick); });
   $('#srcPrAdd').addEventListener('click', () => openNewPromoter());
-  $('#setDlg').addEventListener('close', () => { setRoot = 'main'; showSetView('main'); tyId = null; stType = null; tyNew = null; tyFormFor = null; syncUrl(); });
+  $('#setDlg').addEventListener('close', () => { if (tyF.dirty) tyF.changed(); setRoot = 'main'; showSetView('main'); tyId = null; stType = null; tyNew = null; tyFormFor = null; syncUrl(); });
   $('#stBoth').addEventListener('change', (e) => {
     const ps = e.target.closest('.stpts'); if (ps) { saveStatus(ps.dataset.pts, { points: Math.max(-5, Math.min(5, Math.round(Number(ps.value) || 0))) }); return; }   // ציון התמדה
     const inp = e.target.closest('.stname'); if (!inp) return;

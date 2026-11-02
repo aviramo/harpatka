@@ -116,7 +116,8 @@
     lockPage();
     /* הפוקוס עובר לקופסת הפופאפ (בלי טבעת פוקוס מכוערת על כפתור הסגירה) */
     /* פתיחה על ידי המשתמש (לחיצה על כפתור): הפוקוס עובר לשדה השם והמקלדת עולה. בכניסה ישירה ל-/register/ בלי פוקוס אוטומטי */
-    const f = (!noFocus && m.querySelector('[data-autofocus]')) || m.querySelector('.modal-box');
+    const tel = m.id === 'contactModal' && document.documentElement.classList.contains('reg-phone') ? m.querySelector('input[type="tel"]') : null;   // שלב הטלפון: תמיד בשדה הטלפון, והמקלדת עולה
+    const f = tel || (!noFocus && m.querySelector('[data-autofocus]')) || m.querySelector('.modal-box');
     if (f) {
       if (f.matches('.modal-box')) f.setAttribute('tabindex', '-1');
       /* שדה השם מקבל פוקוס רק אחרי שהמגירה סיימה לרדת: אם המקלדת עולה בזמן שהטופס עוד מחוץ למסך, הדפדפן (אנדרואיד) מזיז את הדף והחלק העליון נחתך. ב-iOS חייבים מיד (בתוך הלחיצה) */
@@ -519,7 +520,8 @@
   let phoneMode = false;   // מחוברים עם גוגל, אין משתתף מקושר: פופאפ ההרשמה במצב הזנת טלפון בלבד
   let createdHere = false;   // המשתתף נוצר בהרשמה הזו (בשלב הטלפון): RegistrationValue נשלח כשהגיל ידוע, בהשלמת הפרטים
   function setPhoneMode(on) {
-    phoneMode = !!on; document.documentElement.classList.toggle('reg-phone', phoneMode);
+    const was = phoneMode; phoneMode = !!on; document.documentElement.classList.toggle('reg-phone', phoneMode);
+    if (phoneMode && !was) { const m = document.getElementById('contactModal'), t = m && !m.hidden && m.querySelector('input[type="tel"]'); if (t) try { t.focus({ preventScroll: true }); } catch (e) {} }   // נכנסו עם גוגל מתוך הפופאפ: עוברים לשדה הטלפון
   }
   /* שם להצגה של המשתתף המחובר: שם פרטי ומשפחה, ואם עוד לא השלים פרטים: הטלפון */
   const meDisplay = () => meInfo ? ((meInfo.first + ' ' + meInfo.last).trim() || meInfo.phone || '') : '';
@@ -708,7 +710,7 @@
       if (pending === 'reg') setTimeout(() => openReg(true, takeRegMeeting()), 300);   // נכנסו עם גוגל מתוך הרשמה: פופאפ ההרשמה של המפגש שנבחר, במצב מחובר
     } else if (d && d.status === 'noauth') { window.__meAdmin = false; clearMeName(); if (!AS) setTimeout(gsiLoad, 800); }   // אורח (גם אחרי שהחיבור פג): השכבה של גוגל נטענת מראש
     else if (d && d.status === 'blocked' && !AS) showBlocked();   // החשבון נחסם או נותק (גם בזמן אמת, וגם מיד אחרי כניסה): ניתוק ופופאפ הסבר
-    else { clearMeName(); applyMemberMode(); if (pending === 'reg' && !AS) setTimeout(() => openReg(true, takeRegMeeting()), 300); }   // מחובר לגוגל אבל אין משתתף מקושר: פופאפ ההרשמה עם הטלפון בלבד (מחבר או יוצר משתתף ונרשם באותו צעד)
+    else { clearMeName(); applyMemberMode(); if (!meSheet && !AS && GL && loggedIn()) setTimeout(() => { try { openMeArea('', true); } catch (e) {} }, 1500); if (pending === 'reg' && !AS) setTimeout(() => openReg(true, takeRegMeeting()), 300); }   // מחובר לגוגל אבל אין משתתף מקושר: פופאפ ההרשמה עם הטלפון בלבד (מחבר או יוצר משתתף ונרשם באותו צעד)
   });
   /* דפדפן פנימי של אפליקציה (פייסבוק, אינסטגרם ועוד, לשם מגיעים מהמודעות): גוגל חוסם שם כל כניסה עם גוגל, ולכן שם האתר מתנהג כאילו הכניסה כבויה: ההרשמה בטופס הרגיל */
   const INAPP = /FBAN|FBAV|FB_IAB|FBIOS|Instagram|Line\/|MicroMessenger|TikTok|musical_ly|BytedanceWebview|Snapchat|LinkedInApp|; wv\)/i.test(navigator.userAgent || '');
@@ -841,6 +843,8 @@
     if (preload) return;
     meSheet.hidden = false; lockPage();
     requestAnimationFrame(() => requestAnimationFrame(() => meSheet.classList.add('open')));
+    { const fr = meSheet.querySelector('iframe'), fp = () => { try { if (!meSheet.hidden && fr.contentWindow.harpatkaFocusPhone) fr.contentWindow.harpatkaFocusPhone(); } catch (e) {} };   // שלב הטלפון: הפוקוס בשדה והמקלדת עולה; באייפון רק מיד בתוך הלחיצה, ובשאר אחרי שהפופאפ סיים לעלות
+      if (/iP(hone|ad|od)/.test(navigator.userAgent)) fp(); else setTimeout(fp, 380); }
     if (!meSheetPush && !EMB) { try { history.pushState({ meSheet: 1 }, ''); meSheetPush = true; } catch (e) {} }
   }
   document.addEventListener('click', (e) => {   // קישור לאזור האישי (כרטיס האזור האישי, כפתור המפגש, קישורי ההרשמה): פותחים את הפופאפ במקום לעבור לדף

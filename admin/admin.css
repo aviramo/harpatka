@@ -656,7 +656,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .mlist .mrow .mmoney.mplus { display: flex; align-items: center; justify-content: center; color: var(--text); text-decoration: none; }   /* עוד לא משויך: פלוס במקום התשלום, כמו באריח */
 .more { display: block; width: 100%; height: var(--ctl); margin: 4px 0 8px; border: 1px solid transparent; background: var(--surface-2); color: var(--text); font-weight: 600; font-size: 15px; }
 /* הערה חדשה: שדה וצירוף צילום מסך */
-#pDelete { background: transparent; }   /* מחיקת משתתף: בלי רקע, רק הטקסט האדום; רקע אדום בהיר בריחוף ובלחיצה */
+#pDelete { background: transparent; border-color: transparent; }   /* מחיקת משתתף: בלי רקע, רק הטקסט האדום; רקע אדום בהיר בריחוף ובלחיצה */
 #pDelete:active { background: var(--red-bg); }
 @media (hover: hover) { #pDelete:hover { background: var(--red-bg); } }
 .nform { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 12px; border-bottom: 1px solid var(--line-2); }   /* הערה חדשה: בלי מסגרת, קו תחתון אחד לכל הרוחב, שכולל גם את כפתור התמונה (1.11.26) */
@@ -687,7 +687,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 /* לחיצה על הערה: נפתחת מתחתיה שורה, שם · מועד מדויק, מיושרת לימין, עם אנימציית פתיחה וסגירה (גובה ושקיפות; הסגירה מהירה מהפתיחה). הריפוד בתוך הילדים, כי ריפוד על .nmetai לא מתכווץ לאפס */
 .nmeta { display: grid; grid-template-rows: 0fr; opacity: 0; visibility: hidden; transition: grid-template-rows .18s ease-in, opacity .14s ease-in, visibility 0s .18s; }
 .nitem.open .nmeta { grid-template-rows: 1fr; opacity: 1; visibility: visible; transition: grid-template-rows .26s ease-out, opacity .22s ease-out .04s, visibility 0s; }
-.nmetai { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; min-height: 0; overflow: hidden; color: var(--text-2); font-size: 13px; font-weight: 400; line-height: 18px; }
+.nmetai { display: flex; justify-content: flex-start; align-items: flex-start; gap: 8px; min-height: 0; overflow: hidden; color: var(--text-2); font-size: 13px; font-weight: 400; line-height: 18px; }
 .nmetai > span { min-width: 0; padding-bottom: 8px; }
 .nmeta .ndel { flex: 0 0 auto; width: auto; height: auto; padding: 0 0 8px; font-size: 13px; line-height: 18px; color: var(--red); text-decoration: underline; background: none; }
 @media (prefers-reduced-motion: reduce) { .nmeta, .nitem.open .nmeta { transition: none; } }
@@ -756,13 +756,17 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 
 /* 6.3 עריכת מפגש */
 /* פרטי מפגש: אותו אלמנט בעריכת מפגש ובפרטי סוג המפגש (31.10.26): בלי כותרות סעיפים, שדות בשתי עמודות */
+/* טופס מפגש וסוג מפגש: רקע אפור כדי שהשדות הלבנים יבלטו; מה שהיה אפור בתוך הטופס (כפתורים, אריח התמונה) נהיה לבן */
+#mDlg, #setDlg:has(#setTyDet:not([hidden])) { background: var(--surface-2); }
+#mForm, #setTyDet { --surface: var(--bg); --surface-2: var(--bg); }
 .mf .mfrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mf .mfrow:has(> :nth-child(3)) { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 1fr); }   /* במפגש: תאריך, שעה וכמות משתתפים באותה שורה */
 .mf .mfrow:has(> [hidden]) { grid-template-columns: 1fr; }   /* שורה שאחד השדות בה מוסתר (למשל סוג מפגש כשאין סוגים): השדה הנותר לכל הרוחב */
 .mf textarea { min-height: calc(26px * 3 + 18px); }
 .mf .mfted[hidden] { display: none; }
 /* תמונה: אריח אחד ביחס 4:1 (כמו בעמוד הבית). ריק: מסגרת מקווקוות ו"הוספת תמונה"; עם תמונה: התמונה, תגית "החלפת תמונה" ו-× להסרה על התמונה עצמה */
 .mfimg { position: relative; margin-bottom: 12px; }
-.mfimg-pick { position: relative; display: grid; place-items: center; aspect-ratio: 4 / 1; min-height: 88px; overflow: hidden; border: 1px dashed var(--line-2); background: var(--surface); color: var(--text-2); cursor: pointer; }
+.mfimg-pick { position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 4 / 1; min-height: 88px; overflow: hidden; border: 1px dashed var(--line-2); background: var(--surface); color: var(--text-2); cursor: pointer; }
 .mfimg-pick img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .mfimg-pick img[hidden] { display: none; }
 .mfimg.has .mfimg-pick { border: 1px solid var(--line); }
@@ -782,8 +786,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .mimgbtns button { color: var(--text-2); }
 #mImgPrev, #setMImgPrev, #tyImgPrev { display: block; width: 100%; aspect-ratio: 4 / 1; object-fit: cover; margin: 0 0 12px; border: 1px solid var(--line); background: var(--surface); }
 .mt2 { padding: 0; }
-.mt2row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; font-weight: 600; color: var(--text-2); }
-.mt2row:last-child { border-bottom: 0; }
+.mt2row { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 14px; font-weight: 600; color: var(--text-2); }
 .mt2row .mtp { display: flex; align-items: center; gap: 4px; direction: ltr; }
 .mt2row .mtp input { width: 72px; height: 40px; padding: 0 4px; text-align: center; font-size: 17px; font-weight: 800; }
 .mt2row .mtp b { font-size: 16px; color: var(--text); }
@@ -806,10 +809,10 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 /* סוגי מפגשים בראש תפריט המפגשים: אותן שורות, ושורת ההוספה מפרידה מרשימת המפגשים */
 .mmenu button.addm2.addt { margin: 0 0 8px; border-bottom: 1px solid var(--line); }
 /* הוספת סוג מפגש / מפגש בתפריט המפגשים (31.10.26): רק כפתור פלוס, בעמודת העיפרון (אותו כפתור אייקון), בכתום של המפגשים */
-.mmenu .maddrow { display: flex; column-gap: 4px; min-height: 46px; font-size: 15.5px; cursor: pointer; -webkit-tap-highlight-color: transparent; }   /* כל השורה לחיצה: השם בימין והפלוס מיד אחריו */
+.mmenu .maddrow { display: flex; align-items: center; column-gap: 4px; min-height: 46px; font-size: 15.5px; cursor: pointer; -webkit-tap-highlight-color: transparent; }   /* כל השורה לחיצה: השם בימין והפלוס מיד אחריו */
 .mmenu .maddrow.addt { margin-bottom: 8px; border-bottom: 1px solid var(--line); }
 .mmenu .maddrow:not(.addt) { margin-top: 0; }   /* בלי קו בין המפגש האחרון לפלוס */
-.mmenu .medit.madd { width: var(--tag); color: var(--text); }
+.mmenu button.medit.madd { width: 20px; padding: 0; border: 0; color: var(--text); }   /* הסמל של 20px עם שוליים פנימיים של 4px: בעין 8px מהטקסט */
 .mmenu .medit.madd svg { stroke-width: 2.4; }
 .mmenu .mtop { position: sticky; top: 0; z-index: 1; margin: -8px -8px 8px; padding: 8px 8px 4px; background: var(--bg); }   /* בלי קו בין "כל המשתתפים" לסוג הראשון (31.10.26). "כל המשתתפים" בראש התפריט, מעל סוגי המפגשים, וקבוע בזמן גלילה */
 
