@@ -799,6 +799,7 @@
   let meSheet = null, meSheetPush = false;
   function closeMeSheet(fromPop) {
     if (!meSheet || meSheet.hidden) return;
+    try { const f = meSheet.querySelector('iframe'), ae = f && f.contentDocument && f.contentDocument.activeElement; if (ae && ae.blur) ae.blur(); if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}   // המקלדת נסגרת: הפוקוס היה בשדה בתוך המסגרת, והמסגרת נשארת חיה מוסתרת
     meSheet.classList.remove('open'); unlockPage();
     if (meSheetPush && !fromPop) { meSheetPush = false; try { history.back(); } catch (e) {} } else meSheetPush = false;
     const sh = meSheet; setTimeout(() => { sh.hidden = true; }, 340);
