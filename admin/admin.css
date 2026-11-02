@@ -186,6 +186,7 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 .metric[aria-pressed="true"] { border-color: var(--text); }   /* כרטיס שמסנן: קו כהה */
 /* קבוצת כרטיסים: רשת של שניים (בכספים, ביתרה, בסטטיסטיקות) או שלושה (שורה תחתונה, נושא) */
 .finsum, .walsum, .prsum, .stkpis { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.walsum .metric:not(.pos):not(.neg):not(.yel) { background: var(--surface); border-color: transparent; }   /* יתרה ותשלומים: סכום אפס ברקע אפור חלש, בלי מסגרת */
 /* סיכום הכספים והיתרה: בלי אפור, כל כרטיס ברקע בהיר בצבע שלו. כרטיס שמסנן מסומן במסגרת */
 .stbottom, .topic .tnums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .stbottom { margin-bottom: 24px; }
@@ -626,10 +627,9 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .mtadd::before { content: ""; position: absolute; inset: -12px -2px -5px; }
 .mtadd[hidden] { display: none; }
 .mtadd svg, .mlist .mrow .mmoney.mplus svg { position: relative; top: -1px; width: 16px; height: 16px; margin: 0; stroke-width: 2.4; }   /* כמו סמל היומן; מורם בפיקסל כי מרכז האותיות בשורת התשלום גבוה ממרכז השורה */
-/* אפקט הלחיצה על כל האריח (לא רק על הפלוס): ריחוף בעכבר ולחיצה בנגיעה, כשאפשר לשייך למפגש (1.11.26) */
+/* כל האריח לחיץ (לא רק הפלוס), כשאפשר לשייך למפגש. ריחוף בעכבר בלבד, בלי אפקט לחיצה */
 .mtile:has(.mtadd:not([hidden])) { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 @media (hover: hover) { .mtile:has(.mtadd:not([hidden])):hover { background: var(--line); } }
-.mtile:has(.mtadd:not([hidden])):active { background: var(--line-2); }
 .mwrap:has(.mtile:not([hidden])) > .mlist { margin-inline-start: 0; margin-inline-end: calc(var(--gut) * -1); padding-inline-start: 0; scroll-padding-inline-start: 0; }   /* הרצועה מתחילה בקצה האריח (בלי חפיפה) */   /* הרצועה מתחילה אחרי האריח וממשיכה עד הקצה השמאלי של המסך */
 /* רצועת המפגשים: כרטיס לכל מפגש (תאריך, סטטוס, תשלום) */
 .mlist { display: flex; gap: 8px; overflow-x: auto; overflow-y: hidden; margin: 0 calc(var(--gut) * -1) 12px; padding: 4px var(--gut); scroll-padding-inline: var(--gut); scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scrollbar-width: none; }
@@ -672,7 +672,9 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .nprev img { width: 60px; height: 60px; object-fit: cover; border: 1px solid var(--line); }
 .nprev button { position: absolute; top: -7px; inset-inline-start: -7px; width: 22px; height: 22px; background: var(--text); color: #fff; font-size: 15px; line-height: 1; }
 /* רשימת ההערות: שורות צפופות עם קו דק כמעט בלתי נראה ביניהן */
-#nList .nitem { margin: 0; padding: 0; background: transparent; }
+#nList .nitem { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; margin: 0; padding: 0; background: transparent; }   /* הזמן שעבר בעמודה משלו, צמוד לתחתית ההערה: כשהשורה נפתחת הוא יורד איתה באותה אנימציה, ונשאר בשורה אחת עם השם והמועד */
+.nitem > .nrow { grid-column: 1; grid-row: 1; }
+.nitem > .nmeta { grid-column: 1; grid-row: 2; }
 #nList .nitem + .nitem { border-top: 1px solid var(--surface-2); }
 .nitem.fold { cursor: pointer; }
 .nrow { display: flex; align-items: flex-end; gap: 8px; padding: 4px 0; }
@@ -694,16 +696,17 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .nch.nr { color: var(--red); }
 .nch.nf { color: var(--text-2); }
 .nch.nn { color: var(--text-2); }
-.nch.nago { flex: 0 0 auto; align-self: flex-end; }   /* בתחתית ההערה, גם בהערה של כמה שורות ובתמונה */
-.nitem.img .nch.nago { height: auto; line-height: 16px; }   /* הטקסט עצמו בקו התחתון של התמונה */
+.nch.nago { grid-column: 2; grid-row: 1 / 3; align-self: end; margin-bottom: 4px; }   /* בתחתית ההערה, גם בהערה של כמה שורות ובתמונה */
+.nitem.img .nch.nago { height: auto; line-height: 16px; transition: margin-bottom .18s ease-in; }   /* הטקסט עצמו בקו התחתון של התמונה */
+.nitem.img.open .nch.nago { margin-bottom: 10px; transition: margin-bottom .26s ease-out; }   /* פתוחה: בשורה של השם והמועד */
 .narw { display: inline-flex; align-items: center; justify-content: center; height: var(--tag); color: var(--text-3); }
 /* לחיצה על הערה: נפתחת מתחתיה שורה, שם · מועד מדויק, מיושרת לימין, עם אנימציית פתיחה וסגירה (גובה ושקיפות; הסגירה מהירה מהפתיחה). הריפוד בתוך הילדים, כי ריפוד על .nmetai לא מתכווץ לאפס */
 .nmeta { display: grid; grid-template-rows: 0fr; opacity: 0; visibility: hidden; transition: grid-template-rows .18s ease-in, opacity .14s ease-in, visibility 0s .18s; }
 .nitem.open .nmeta { grid-template-rows: 1fr; opacity: 1; visibility: visible; transition: grid-template-rows .26s ease-out, opacity .22s ease-out .04s, visibility 0s; }
-.nmetai { display: flex; justify-content: flex-start; align-items: flex-start; gap: 8px; min-height: 0; overflow: hidden; color: var(--text-2); font-size: 13px; font-weight: 400; line-height: 18px; }
+.nmetai { display: flex; justify-content: flex-start; align-items: flex-start; gap: 8px; min-height: 0; overflow: hidden; color: var(--text-2); font-size: 13px; font-weight: 400; line-height: 20px; }
 .nmetai > span { min-width: 0; padding-bottom: 8px; }
-.nmeta .ndel { flex: 0 0 auto; width: auto; height: auto; padding: 0 0 8px; font-size: 13px; line-height: 18px; color: var(--red); text-decoration: underline; background: none; }
-@media (prefers-reduced-motion: reduce) { .nmeta, .nitem.open .nmeta { transition: none; } }
+.nmeta .ndel { flex: 0 0 auto; width: auto; height: auto; padding: 0 0 8px; font-size: 13px; line-height: 20px; color: var(--red); text-decoration: underline; background: none; }
+@media (prefers-reduced-motion: reduce) { .nmeta, .nitem.open .nmeta, .nitem.img .nch.nago { transition: none; } }
 .nimg { display: block; width: fit-content; max-width: 100%; min-height: 120px; margin-top: 4px; }   /* התמונה ביחס שלה, בגובה קבוע, מיושרת לימין; הגובה שמור גם בזמן הטעינה */
 .nimg img { display: block; width: auto; height: 120px; max-width: 100%; object-fit: contain; object-position: 100% 50%; cursor: zoom-in; }
 .nimg .nload { padding: 12px 0; color: var(--text-2); font-size: 13px; text-align: center; }
