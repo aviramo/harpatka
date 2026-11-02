@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104du" />
+  <link rel="stylesheet" href="admin.css?v=20261104dv" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -176,6 +176,7 @@
       <div class="ppanel" data-panel="credit" hidden>
         <div class="payrow">
           <label class="field"><span>סכום (₪)</span><input form="pForm" name="pay_refund" type="number" inputmode="decimal" min="0" step="10" /></label>
+          <label class="field" id="refundMSelF"><span>דרך העברה</span><select id="refundMSel"></select></label>
           <button class="btn danger paygo" id="creditRefundBtn" type="button">החזרת כסף</button>
         </div>
       </div>
@@ -2344,8 +2345,9 @@
   const pkgUnit = (pid) => { const d = state.payments.filter((x) => x.participant_id === pid && x.kind === 'deposit' && x.pkg_n > 0).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))[0]; return d ? Math.round(Number(d.amount) / Number(d.pkg_n)) : 0; };
   const pkgNetFor = (pid, mid) => state.payments.filter((x) => x.participant_id === pid && x.meeting_id === mid && x.pkg).reduce((s, x) => s + (x.kind === 'payment' ? 1 : x.kind === 'credit' ? -1 : 0), 0);
   const expectedPrice = (pid, m, iso) => (pkgLeft(pid) > 0 && pkgUnit(pid) ? pkgUnit(pid) : defaultPrice(m, iso));
+  const payMethodOpts = () => state.payMethods.map((x) => '<option value="' + esc(x.key) + '">' + esc(x.name) + '</option>').join('');
   async function addPayRecord(pid, mid, kind, amount, promoterId, commission, fromCredit, method, methodNote, pkgMeta) {
-    const body = { participant_id: pid, meeting_id: mid || null, kind, from_credit: !!fromCredit, amount: Number(amount) || 0, promoter_id: promoterId || null, commission: commission != null && commission !== '' ? Number(commission) : null, author_name: authorName(), method: (kind === 'payment' || kind === 'deposit') ? (method || null) : null, method_note: (kind === 'payment' || kind === 'deposit') ? (methodNote || null) : null };
+    const body = { participant_id: pid, meeting_id: mid || null, kind, from_credit: !!fromCredit, amount: Number(amount) || 0, promoter_id: promoterId || null, commission: commission != null && commission !== '' ? Number(commission) : null, author_name: authorName(), method: (kind === 'payment' || kind === 'deposit' || kind === 'refund') ? (method || null) : null, method_note: (kind === 'payment' || kind === 'deposit' || kind === 'refund') ? (methodNote || null) : null };
     if (pkgMeta) Object.assign(body, pkgMeta); else if (kind === 'credit' && mid && pkgNetFor(pid, mid) > 0) body.pkg = true;   // זיכוי של הקצאה מחבילה מחזיר מפגש לחבילה
     const [row] = await api(T.pay, { method: 'POST', body, prefer: 'return=representation' });
     if (row && !state.payments.some((x) => x.id === row.id)) state.payments.push(row);
@@ -3018,8 +3020,7 @@
     $('#depPkgLbl').textContent = m ? 'על כמה מפגשים' : 'חבילה'; f.pay_pkg.options[0].textContent = m ? '1' : '—';
     $('#depQuick').innerHTML = (() => { const q = quickPrices(m), l = m && linkOf(pid, m.id), r = l && l.pay_reported_at && Number(l.pay_reported_amount) > 0 ? Number(l.pay_reported_amount) : 0; return r && !q.includes(r) ? [r].concat(q) : q; })().map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
     $('#depQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) { f.pay_dep.value = b.dataset.q; paintPkg(); } };
-    const METH = state.payMethods.map((x) => [x.key, x.name]);
-    f.pay_depm.innerHTML = METH.map((x) => '<option value="' + esc(x[0]) + '">' + esc(x[1]) + '</option>').join('') + '<option value="other">אחר</option>'; f.pay_depm.value = METH.length ? METH[0][0] : 'other';
+    f.pay_depm.innerHTML = payMethodOpts() + '<option value="other">אחר</option>'; f.pay_depm.value = state.payMethods.length ? state.payMethods[0].key : 'other';
     const isFree = () => { const pp = state.participants.find((x) => x.id === pid), lk = m && linkOf(pid, m.id); return !!(m && pp && lk && noPayOf(pp, lk)); };
     const crAvail = () => m ? Math.max(0, creditOf(pid)) : 0;
     const needNow = () => oweOf(pid, m) || suggestPrice(pid, m);
@@ -3046,7 +3047,7 @@
         f.pay_dep.max = String(crAvail()); return;
       }
       sheet.depCr = false; f.pay_dep.removeAttribute('max');
-      $('#depMethods').innerHTML = ''; $('#depMSel').innerHTML = METH.map((x) => '<option value="' + esc(x[0]) + '">' + esc(x[1]) + '</option>').join(''); $('#depMSel').value = f.pay_depm.value;
+      $('#depMethods').innerHTML = ''; $('#depMSel').innerHTML = payMethodOpts(); $('#depMSel').value = f.pay_depm.value;
       pkgF.hidden = false; $('#depOtherField').hidden = free || f.pay_depm.value !== 'other';
     };
     $('#depMSel').onchange = () => { const v = $('#depMSel').value; if (v === '__cr') return; f.pay_depm.value = v; f.pay_depm.onchange(); };
@@ -3138,7 +3139,7 @@
     allocMount('credit'); $('#pAllocChip').hidden = true;
     $('#allocTitle').innerHTML = 'החזרת כסף <span class="tsubname">· ' + esc(pp.name) + '</span>';
     { const sub = $('#pViewSub'); sub.innerHTML = 'ללא קשר למפגש'; sub.classList.add('bold'); sub.hidden = false; }
-    pForm.pay_refund.value = cr; pForm.pay_refund.max = cr; payCtx = null;
+    pForm.pay_refund.value = cr; pForm.pay_refund.max = cr; payCtx = null; $('#refundMSel').innerHTML = payMethodOpts();
     /* אי אפשר להחזיר יותר מהיתרה: הכפתור כבוי כשהסכום ריק, אפס או גדול מהיתרה הנוכחית (מתעדכן גם בזמן אמת) */
     const refundOk = () => { const a = parseFloat(pForm.pay_refund.value); return a > 0 && a <= Math.max(0, creditOf(pid)) + 0.001; };
     sheet.refundSync = () => { $('#creditRefundBtn').disabled = !refundOk(); };
@@ -3146,7 +3147,7 @@
     $('#creditRefundBtn').onclick = async () => {
       if (!refundOk()) return;
       const amt = parseFloat(pForm.pay_refund.value);
-      try { await addPayRecord(pid, null, 'refund', amt, null, null, true); toast('הוחזרו ₪' + nfm(amt) + ' למשתתף'); allocDlg.close(); } catch (err) { fail(err); }
+      try { await addPayRecord(pid, null, 'refund', amt, null, null, true, $('#refundMSel').value); toast('הוחזרו ₪' + nfm(amt) + ' למשתתף'); allocDlg.close(); } catch (err) { fail(err); }
     };
     allocDlg.showModal(); if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   }
