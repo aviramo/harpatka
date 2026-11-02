@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104dj" />
+  <link rel="stylesheet" href="admin.css?v=20261104dk" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -4155,14 +4155,14 @@
   $('#q').addEventListener('keydown', (e) => { if (e.key === 'Escape') $('#qClear').click(); });
   $('#q').addEventListener('input', (e) => { state.q = e.target.value; renderList(); syncUrl(); });
 
-  $('#mMenu').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-filter], [data-mt]')) { e.preventDefault(); const d = e.target.dataset, sel = d.mt ? '[data-mt="' + d.mt + '"]' : '[data-filter="' + d.filter + '"]'; e.target.click(); const again = $('#mMenu').querySelector(sel); if (again) again.focus(); } });   // התפריט צויר מחדש: הפוקוס נשאר על אותה שורה
+  $('#mMenu').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-filter], [data-mt]')) { e.preventDefault(); const d = e.target.dataset, sel = d.mt ? '[data-mt="' + d.mt + '"]' : '[data-filter="' + d.filter + '"]'; e.target.click(); const again = $('#mMenu').hidden ? $('#mSel') : $('#mMenu').querySelector(sel); if (again) again.focus(); } });   // התפריט צויר מחדש: הפוקוס נשאר על אותה שורה
   $('#mMenu').addEventListener('click', (e) => {
     if (e.target.closest('#addMeeting')) { closeMSel(); return openMeeting(null); }
     if (e.target.closest('#addType')) { closeMSel(); return createType(); }
     const et = e.target.closest('[data-edit-t]');
     if (et) { closeMSel(); return openTypeEditor(et.dataset.editT); }
-    const ty = e.target.closest('[data-mt]');
-    if (ty) { allChosen(false); state.mtype = ty.dataset.mt; state.filter = null; render(); return; }   // בחירת סוג: תצוגה כמו "כל המשתתפים" מסוננת לסוג, והתפריט מציג רק את המפגשים שלו
+    { const picked = e.target.closest('[data-filter], [data-mt]'); if (picked && !e.target.closest('[data-edit-t], [data-edit-m]') && picked.getAttribute('aria-checked') === 'true') { closeMSel(); return; } }   // לחיצה נוספת על מה שכבר נבחר סוגרת את התפריט
+    const ty = e.target.closest('[data-mt]');    if (ty) { allChosen(false); state.mtype = ty.dataset.mt; state.filter = null; render(); return; }   // בחירת סוג: תצוגה כמו "כל המשתתפים" מסוננת לסוג, והתפריט מציג רק את המפגשים שלו
     const ed = e.target.closest('[data-edit-m]');
     if (ed) { closeMSel(); return openMeeting(ed.dataset.editM); }
     const c = e.target.closest('[data-filter]');
