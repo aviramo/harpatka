@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104eo" />
+  <link rel="stylesheet" href="admin.css?v=20261104ep" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -3604,13 +3604,20 @@
     pgPages.forEach((d, k) => { d.inert = k !== i; });   // הדף שלא מוצג לא מקבל פוקוס
     if (ch) { try { syncUrl(); } catch (e) {} }
   }
-  function pgApply() { if (sheet && !sheet.id) { pgBox.scrollLeft = 0; pgPages[3].inert = false; return; } pgBox.scrollLeft = -pgCur * pgBox.clientWidth; $('#pTabs').style.setProperty('--pg', pgCur); pgMark(pgCur); }
+  function pgInd(p) {   // המחוון בדיוק מתחת לטקסט של הטאב, ובהחלקה נע ומשנה רוחב יחד עם הגלילה
+    const box = $('#pTabs'), w = pgBox.clientWidth; if (!w || !box.offsetParent) return;
+    if (p == null) p = Math.abs(pgBox.scrollLeft) / w;
+    const a = Math.min(pgTabs.length - 1, Math.floor(p)), b = Math.min(pgTabs.length - 1, a + 1), t = Math.min(1, p - a), o = box.getBoundingClientRect().left, ra = pgTabs[a].getBoundingClientRect(), rb = pgTabs[b].getBoundingClientRect(), ind = box.querySelector('.ptabi');
+    ind.style.width = (ra.width + (rb.width - ra.width) * t) + 'px'; ind.style.transform = 'translateX(' + (ra.left + (rb.left - ra.left) * t - o) + 'px)';
+  }
+  function pgApply() { if (sheet && !sheet.id) { pgBox.scrollLeft = 0; pgPages[3].inert = false; return; } pgBox.scrollLeft = -pgCur * pgBox.clientWidth; pgInd(pgCur); pgMark(pgCur); }
   function pgGo(i) { pgBox.scrollTo({ left: -i * pgBox.clientWidth, behavior: reducedMotion() ? 'auto' : 'smooth' }); pgMark(i); }
   let pgLock = 0;
-  pgBox.addEventListener('scroll', () => { const w = pgBox.clientWidth; if (!w || (sheet && !sheet.id)) return; const p = Math.abs(pgBox.scrollLeft) / w; $('#pTabs').style.setProperty('--pg', p); if (Date.now() > pgLock) { const i = Math.round(p); if (i !== pgCur) pgMark(i); } }, { passive: true });
+  pgBox.addEventListener('scroll', () => { const w = pgBox.clientWidth; if (!w || (sheet && !sheet.id)) return; const p = Math.abs(pgBox.scrollLeft) / w; pgInd(p); if (Date.now() > pgLock) { const i = Math.round(p); if (i !== pgCur) pgMark(i); } }, { passive: true });
   pgTabs.forEach((t, i) => t.addEventListener('click', () => { pgLock = Date.now() + 500; pgGo(i); }));   // בזמן הגלילה אחרי לחיצה על אטב לא מסמנים דף ביניים
   $('#pTabs').addEventListener('keydown', (e) => { if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return; e.preventDefault(); const i = Math.min(pgTabs.length - 1, Math.max(0, pgCur + (e.key === 'ArrowLeft' ? 1 : -1))); pgLock = Date.now() + 500; pgGo(i); pgTabs[i].focus(); });
-  { let w0 = 0; new ResizeObserver(() => { const w = pgBox.clientWidth; if (w && w !== w0) { w0 = w; pgBox.scrollLeft = -pgCur * w; } }).observe(pgBox); }
+  { let w0 = 0; new ResizeObserver(() => { const w = pgBox.clientWidth; if (w && w !== w0) { w0 = w; pgBox.scrollLeft = -pgCur * w; } pgInd(); }).observe(pgBox); }
+  { const ro = new ResizeObserver(() => pgInd()); pgTabs.forEach((t) => ro.observe(t)); }   // המונה או הגופן שינו את רוחב הטאב
   function refreshSheetMeetings() {
     if (!sheet) return;
     renderContact();
