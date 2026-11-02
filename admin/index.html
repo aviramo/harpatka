@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104da" />
+  <link rel="stylesheet" href="admin.css?v=20261104db" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1647,6 +1647,7 @@
 
   const kpi = (v, label, sub, tone) => UI.metric(label, v, { sub, tone: tone === 'good' ? 'pos' : tone === 'bad' ? 'neg' : tone === 'warn' ? 'yel' : '' });
   const sec = (title, hint, body) => '<section class="stsec"><h3>' + title + '</h3>' + (hint ? '<p class="sthint">' + hint + '</p>' : '') + body + '</section>';
+  const bars = (rows) => '<div class="bars">' + rows + '</div>';   // כל הסרגלים בקבוצה באותו רוחב: העמודה של הערך לפי הערך הרחב ביותר
   const barRow = (label, n, total, color, extra) => { const w = total ? Math.round(n / total * 100) : 0; return '<div class="brow"><span class="bl">' + label + '</span><span class="bt"><i style="width:' + w + '%;background:' + color + '"></i></span><span class="bv"><b>' + n + '</b>' + (total ? ' · ' + w + '%' : '') + (extra ? ' · ' + extra : '') + '</span></div>'; };
   const colsChart = (items, color, dense) => { const max = Math.max(1, ...items.map((i) => i.v)); return '<div class="cols' + (dense ? ' dense' : '') + '">' + items.map((i) => '<div class="col">' + (dense ? '' : '<span class="cv">' + (i.v || '') + '</span>') + '<i style="height:' + Math.round(i.v / max * 72) + 'px;background:' + (i.color || color) + '"></i><span class="cl">' + i.l + '</span></div>').join('') + '</div>'; };
   const median = (a) => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y), h = s.length >> 1; return s.length % 2 ? s[h] : (s[h - 1] + s[h]) / 2; };
@@ -1691,7 +1692,7 @@
     const money = part('הכנסה לפי מפגש', '<p class="sthint">לפי התשלום ששויך לכל מפגש. הפקדות ויתרות שלא שויכו למפגש לא נספרות בטבלה, אבל נכללות בהכנסה הכוללת</p>' + tbl(['מפגש', 'נרשמו', 'שילמו', 'הכנסה', 'מגמה'], pm.map((r, k) => [dlab(r.m), r.regs, r.paid + '/' + (r.regs - r.ex), ilsB(r.rev), k ? trend(r.rev, pm[k - 1].rev) : '—']))) +
       part('כל המשתתפים לפי תשלום', '<p class="sthint">' + n + ' משתתפים במערכת, מהם ' + noMeetingN + ' שלא שויכו לאף מפגש</p><div class="stkpis">' + kpi(payers.length, 'שילמו', Ps(payers.length, cohort.length) + ' מהמשתתפים', 'good') + kpi(unpaidP.length, 'עוד לא שילמו', '', unpaidP.length ? 'warn' : '') + kpi(freeP.length, 'חינם', 'לא משלמים על המפגש') + kpi(credHold.length, 'עם קרדיט פתוח', ilsB(credit), credHold.length ? 'warn' : '') + '</div>') +
       part('סיכום', tbl(['מדד', 'ערך'], [['הכנסה נטו ממשתתפים (אחרי החזרים)', ilsB(cash)], ['הכנסות אחרות', ilsB(incOther)], ['הוצאות (כולל תשלומים לדרכי הגעה)', ilsB(expAll)], ['רווח', sgn(profit)], ['המרה לתשלום (מכלל המשתתפים)', Ps(payers.length, cohort.length)], ['ממוצע לשולם', payers.length ? ilsB(Math.round(cash / payers.length)) : '—'], ['הוחזר', ilsB(refunds)], ['קרדיט פתוח', '<bdi dir="ltr" class="cyel">₪' + nfm(credit) + '</bdi>']])) +
-      (() => { const byM = {}; state.payments.forEach((x) => { const v = cashOf(x); if (!v) return; const k = ilDay(x.created_at || new Date().toISOString()).slice(0, 7); byM[k] = (byM[k] || 0) + v; }); const ks = Object.keys(byM).sort(), mx = Math.max(1, ...ks.map((k) => byM[k])); return ks.length > 1 ? part('הכנסה לפי חודש', ks.map((k) => barRow(k.slice(5) + '/' + k.slice(2, 4), byM[k], mx, 'var(--green)', ilsB(byM[k]))).join('')) : ''; })();
+      (() => { const byM = {}; state.payments.forEach((x) => { const v = cashOf(x); if (!v) return; const k = ilDay(x.created_at || new Date().toISOString()).slice(0, 7); byM[k] = (byM[k] || 0) + v; }); const ks = Object.keys(byM).sort(), mx = Math.max(1, ...ks.map((k) => byM[k])); return ks.length > 1 ? part('הכנסה לפי חודש', bars(ks.map((k) => barRow(k.slice(5) + '/' + k.slice(2, 4), byM[k], mx, 'var(--green)', ilsB(byM[k]))).join(''))) : ''; })();
 
     // ----- דרכי הגעה -----
     const src = (p) => channelOf(p) ? 'promo' : String(p.source || '').startsWith('site') ? 'site' : 'other';
@@ -1721,9 +1722,9 @@
     const bucket = (lo, hi) => ages.filter((a) => a >= lo && a <= hi).length;
     const convBy = (pred) => { const ls = people.filter((q) => pred(q) && !isFreeP(q)); return { n: ls.length, paid: ls.filter((q) => paidBy.get(q.id) > 0).length }; };
     const cM = convBy((q) => q.gender === 'male'), cF = convBy((q) => q.gender === 'female');
-    const demo = part('מגדר', barRow('נקבה', female.length, people.length, 'var(--red)') + barRow('זכר', male.length, people.length, 'var(--sky)') + (noG ? barRow('לא צוין', noG, people.length, 'var(--text-3)') : '') +
+    const demo = part('מגדר', bars(barRow('נקבה', female.length, people.length, 'var(--red)') + barRow('זכר', male.length, people.length, 'var(--sky)') + (noG ? barRow('לא צוין', noG, people.length, 'var(--text-3)') : '')) +
         tbl(['המרה לתשלום', 'ערך'], [['נקבה', Ps(cF.paid, cF.n)], ['זכר', Ps(cM.paid, cM.n)]])) +
-      part('גילאים', AGE_B.map((g, i) => barRow(g[1], bucket(g[2], Math.min(g[3], 120)), ages.length, i === 0 ? 'var(--text-3)' : i === 3 ? 'var(--yellow)' : 'var(--orange)')).join('') + '<p class="stline">בטווח היעד ' + ageText('range') + ': <b>' + Ps(target.length, ages.length) + '</b> · גיל ממוצע <b>' + avgAge.toFixed(1) + '</b>' + (people.length - ages.length ? ' · ' + (people.length - ages.length) + ' בלי גיל' : '') + '</p>') +
+      part('גילאים', bars(AGE_B.map((g, i) => barRow(g[1], bucket(g[2], Math.min(g[3], 120)), ages.length, i === 0 ? 'var(--text-3)' : i === 3 ? 'var(--yellow)' : 'var(--orange)')).join('')) + '<p class="stline">בטווח היעד ' + ageText('range') + ': <b>' + Ps(target.length, ages.length) + '</b> · גיל ממוצע <b>' + avgAge.toFixed(1) + '</b>' + (people.length - ages.length ? ' · ' + (people.length - ages.length) + ' בלי גיל' : '') + '</p>') +
       part('חדשים וחוזרים', tbl(['מפגש', 'חדשים', 'חוזרים', 'מגמה'], pm.map((r, k) => [dlab(r.m), r.news, r.ret, k ? trend(r.news + r.ret, pm[k - 1].news + pm[k - 1].ret) : '—'])));
 
     // ----- מסך ראשי: שורה תחתונה לכל נושא -----
@@ -4608,16 +4609,16 @@
     const used = !isNew && (state.participants.some((q) => q.promoter_id === x.id) || state.payments.some((q) => q.promoter_id === x.id) || state.participants.some((q) => x.code && q.source_code === x.code));
     const bal = isNew ? 0 : ledgerOf(x.id).balance;
     return '<div class="srccard" data-w="' + w + '">' +
-      '<div class="srctop"><input class="stname" data-f="name" value="' + esc(x.name) + '" maxlength="24" placeholder="שם דרך ההגעה" aria-label="שם דרך ההגעה" style="' + nameStyle(x.color || 'red') + '" />' +
-      (used || isNew ? '' : '<button type="button" class="stdel" data-sdel="' + w + '" aria-label="מחיקה" title="מחיקה">×</button>') + colDot(x.color || 'red', w) + '</div>' +
       '<div class="srcgrid">' +
+        '<label class="srcfld"><small>שם</small><input class="stname" data-f="name" value="' + esc(x.name) + '" maxlength="24" placeholder="שם דרך ההגעה" aria-label="שם דרך ההגעה" style="' + nameStyle(x.color || 'red') + '" /></label>' +
         '<label class="srcfld"><small>קוד בקישור <bdi dir="ltr">?s=</bdi></small><span class="srcin" dir="ltr"><input class="codein" data-f="code" value="' + esc(x.code || '') + '" maxlength="6" placeholder="—" aria-label="קוד בקישור" autocapitalize="off" autocomplete="off" />' + (isNew ? '' : '<button type="button" class="cpbtn" data-copylink="' + esc(x.code || '') + '" aria-label="העתקת הקישור" title="העתקת הקישור">' + icon('copy', 'i18') + '</button>') + '</span></label>' +
+        '<div class="srcfld"><small>צבע</small><span class="srccol">' + colDot(x.color || 'red', w) + (used || isNew ? '' : '<button type="button" class="stdel" data-sdel="' + w + '" aria-label="מחיקה" title="מחיקה">×</button>') + '</span></div>' +
         '<label class="srcfld"><small>סוג עלות</small><select class="srcsel" data-f="cost_type" aria-label="סוג העלות"><option value="lead"' + (fp ? '' : ' selected') + '>עלות לליד</option><option value="pay"' + (fp ? ' selected' : '') + '>עלות מהתשלום</option></select></label>' +
-        '<label class="srcfld"><small>' + (fp ? 'סכום או אחוז' : 'כמה עולה ליד') + '</small><span class="srcin">' +
+        '<label class="srcfld srcamt"><small>' + (fp ? 'סכום או אחוז' : 'כמה עולה ליד') + '</small><span class="srcin">' +
           (fp ? '<select class="ratetype" data-f="rate_type" aria-label="סוג"><option value="fixed"' + (x.rate_type !== 'percent' ? ' selected' : '') + '>₪</option><option value="percent"' + (x.rate_type === 'percent' ? ' selected' : '') + '>%</option></select>' : '<i>₪</i>') +
           '<input class="codein ratein" data-f="rate" type="number" inputmode="decimal" min="0" value="' + (isNew && !Number(x.rate) ? '' : Number(x.rate || 0)) + '" placeholder="0" aria-label="עלות" /></span></label>' +
-      '</div>' +
-      (isNew ? '' : '<button type="button" class="prsettle" data-settle="' + x.id + '"><span>התחשבנות</span><b class="' + (bal > 0 ? 'owe' : 'ok') + '">' + (bal > 0 ? 'יתרה ₪' + nfm(bal) : 'מסולק ✓') + '</b></button>') + '</div>';
+        (isNew ? '' : '<div class="srcfld"><small>התחשבנות</small><button type="button" class="prsettle" data-settle="' + x.id + '" aria-label="התחשבנות"><b class="' + (bal > 0 ? 'owe' : 'ok') + '">' + (bal > 0 ? '₪' + nfm(bal) : 'מסולק ✓') + '</b></button></div>') +
+      '</div></div>';
   }
   function renderSources() { $('#srcPrList').innerHTML = state.promoters.map((x) => srcCard(x, 'pr:' + x.id)).join('') || '<p class="mnone">אין דרכי הגעה</p>'; }
   /* דרכי תשלום: רשימה שהמנהל מגדיר (שם לכל דרך); מוצגת כצ'יפים בקבלת תשלום */
