@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104gy" />
+  <link rel="stylesheet" href="admin.css?v=20261104gz" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -2262,7 +2262,7 @@
     const l = linkOf(pid, mId), cur = linkStatus(l), list = statusList(typeIdOf(state.meetings.find((x) => x.id === mId)));
     if (l && !list.length) { openStatusSettings(); return; }   // אין עדיין תגיות לסוג המפגש: ישר להגדרת התגיות
     menu.innerHTML = (l ? '' : '<div class="qtop"><button type="button" role="menuitem" class="qi tone-gray" data-qk="__link" aria-pressed="false">שיוך למפגש</button></div>') +
-      list.map((s) => '<button type="button" role="menuitem" class="qi ' + s.key + '" data-qk="' + s.key + '" aria-pressed="' + (s.key === cur) + '">' + esc(s.label) + UI.fdot('st') + '</button>').join('');
+      list.map((s) => { const on = s.key === cur; return '<button type="button" role="menuitem" class="qi ' + s.key + '" data-qk="' + s.key + '" aria-pressed="' + on + '"' + (on ? ' aria-label="הסרת התגית ' + esc(s.label) + '" title="הסרת התגית"' : '') + '>' + esc(s.label) + (on ? icon('close', 'i14') : '') + '</button>'; }).join('');   // על התגית הנבחרת ✕: לחיצה עליה מסירה אותה
     menu.className = 'qmenu qlist'; menu.style.width = ''; menu.hidden = false;   // כל פריט בשורה משלו, מיושר לימין עם הכותרת, והרוחב לפי התוכן
     const r = anchor.getBoundingClientRect(), mh = menu.offsetHeight;
     let left = menuX(menu, anchor), top = r.bottom + 8;
