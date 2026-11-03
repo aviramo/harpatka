@@ -102,6 +102,17 @@
     } catch (e) {}
   }
 
+  /* סגירת המקלדת עם סגירת פופאפ: מקלדת שנפתחה ב-virtualKeyboard.show לא נסגרת מ-blur בלבד. עובד גם על שדה בתוך מסגרת (האזור האישי) */
+  function blurKeyboard(input) {
+    if (!input) return;
+    try {
+      var w = input.ownerDocument.defaultView, vk = w && w.navigator.virtualKeyboard, can = vk && vk.hide && 'virtualKeyboardPolicy' in input;
+      if (can) { input.virtualKeyboardPolicy = 'manual'; vk.hide(); }
+      input.blur();
+      if (can) input.virtualKeyboardPolicy = '';
+    } catch (e) {}
+  }
+
   window.normPhone = normPhone;
-  window.PersonForm = { html: html, err: err, bind: bind, read: read, validate: validate, serverError: serverError, fill: fill, setErr: setErr, clearAll: clearAll, focusKeyboard: focusKeyboard, normPhone: normPhone, MSG: MSG };
+  window.PersonForm = { html: html, err: err, bind: bind, read: read, validate: validate, serverError: serverError, fill: fill, setErr: setErr, clearAll: clearAll, focusKeyboard: focusKeyboard, blurKeyboard: blurKeyboard, normPhone: normPhone, MSG: MSG };
 })();

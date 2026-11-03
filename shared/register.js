@@ -168,6 +168,7 @@
     if (open && modalHist) { modalHist = false; closeModal(open, true); }
   });
   function closeModal(m, fromPop){
+    try { const a = document.activeElement; if (a && m.contains(a) && a.matches('input, select, textarea')) PersonForm.blurKeyboard(a); } catch (e) {}
     if (m.id === 'contactModal') {
       if (modalHist && !fromPop) { skipPop = true; try { history.back(); } catch (e) { skipPop = false; modalHist = false; regUrl(false); } }
       else regUrl(false);
@@ -799,7 +800,7 @@
   let meSheet = null, meSheetPush = false;
   function closeMeSheet(fromPop) {
     if (!meSheet || meSheet.hidden) return;
-    try { const f = meSheet.querySelector('iframe'), ae = f && f.contentDocument && f.contentDocument.activeElement; if (ae && ae.blur) ae.blur(); if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}   // המקלדת נסגרת: הפוקוס היה בשדה בתוך המסגרת, והמסגרת נשארת חיה מוסתרת
+    try { const f = meSheet.querySelector('iframe'), ae = f && f.contentDocument && f.contentDocument.activeElement; if (ae && ae !== f.contentDocument.body) PersonForm.blurKeyboard(ae); if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}   // המקלדת נסגרת: הפוקוס היה בשדה בתוך המסגרת, והמסגרת נשארת חיה מוסתרת
     meSheet.classList.remove('open'); unlockPage();
     if (meSheetPush && !fromPop) { meSheetPush = false; try { history.back(); } catch (e) {} } else meSheetPush = false;
     const sh = meSheet; setTimeout(() => { sh.hidden = true; }, 340);
@@ -836,6 +837,7 @@
         if (e.origin !== location.origin || !e.data || !meSheet || meSheet.hidden) return;
         const t = e.data.harpatka, d = Math.max(0, Number(e.data.dy) || 0);
         if (t === 'me-drag') { p.style.transition = 'none'; p.style.transform = 'translateY(' + d + 'px)'; }
+        else if (t === 'me-close') closeMeSheet();   // Esc כשהפוקוס בתוך המסגרת
         else if (t === 'me-drag-end') { p.style.transition = ''; p.style.transform = ''; if (d > 110) closeMeSheet(); }
       });
       window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout' && AS) { closeMeSheet(); if (window.top !== window) { try { parent.postMessage({ harpatka: 'me-logout' }, location.origin); } catch (er) {} } else location.href = location.pathname; return; } if (e.origin === location.origin && e.data && e.data.harpatka === 'me-logout') { try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {} meInfo = null; window.__meName = null; window.__meAdmin = false; applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {} meSheet.dataset.k = ''; closeMeSheet(); gsiNoAuto(); gsiLoad(); } });   // יציאה: מנתקים וסוגרים את הפופאפ, בלי לרענן את הדף

@@ -28,7 +28,7 @@
 </div>
 <script src="../shared/config.js?v=20261103c"></script>
 <script src="../shared/rt.js?v=1"></script>
-<script src="../shared/person-form.js?v=20261103c"></script>
+<script src="../shared/person-form.js?v=20261103d"></script>
 <script>
 (() => {
   const DB = {
@@ -136,6 +136,7 @@
      אחר כך האזור האישי נטען, וכשחסרים פרטים כרטיס "הפרטים שלי" נפתח מעצמו להשלמה. טלפון של משתתף שכבר מחובר לחשבון אחר: לא נשמר (והמנהלים מקבלים מייל) */
   /* שלב הטלפון: הפוקוס בשדה והמקלדת עולה. בפופאפ של דף הבית רק כשהוא פתוח (טעינה מוקדמת מוסתרת לא מקפיצה מקלדת), ובפתיחה דף הבית קורא לזה; פעם אחת, כדי שרענון לא יקפיץ שוב את המקלדת */
   let phoneFocused = false;
+  if (EMBED) document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { try { parent.postMessage({ harpatka: 'me-close' }, location.origin); } catch (x) {} } });   // Esc כשהפוקוס בתוך הפופאפ סוגר אותו
   window.harpatkaFocusPhone = () => { const i = $('#sph'); if (!i) return; phoneFocused = true; try { window.focus(); PersonForm.focusKeyboard(i); } catch (e) {} };
   function viewSignup(phone) {
     app.innerHTML = '<div class="card"><h2>מה מספר הטלפון שלכם?</h2><p class="muted" style="margin:0">אם כבר נרשמתם אצלנו בעבר, נמצא אתכם לפי המספר</p>' +
