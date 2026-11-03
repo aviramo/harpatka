@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104fj" />
+  <link rel="stylesheet" href="admin.css?v=20261104fk" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -479,7 +479,7 @@
     warn: ['s', '<path d="M12 4 2.5 20h19z"/><path d="M12 10v4.5"/><path d="M12 17.5h.01"/>'],   // אזהרה
     sun: ['s', '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/>'],   // מצב בהיר
     moon: ['s', '<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>'],   // מצב כהה
-    filterx: ['s', '<path d="M4 5h16l-6.5 7.5V18l-3 1.5v-7z"/><path d="m16.5 15.5 4 4m0-4-4 4"/>'],
+    filterx: ['s', '<path d="M4 5h16l-6.5 7.5V18l-3 1.5v-7z"/><path d="M3 3l18 18"/>'],   // המשפך עם אלכסון של מחיקה, בלי רווח סביב האלכסון: בגודל קטן רווח שובר את צורת המשפך
     spark: ['f', '<path d="M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"/>'],
     stats: ['s', '<path d="M5 20V11M12 20V4M19 20v-6"/>'],
     swap: ['s', '<path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"/>'],
@@ -1338,7 +1338,7 @@
   /* בזמן חיפוש טקסט, סינוני המגדר והתשלום מושהים (כדי למצוא מישהו בוודאות); הם נשמרים ב-state וחוזרים כשהחיפוש נסגר */
   const effGender = () => state.q.trim() ? null : state.gender;
   /* סינונים נוספים (תפריט ⋯ משמאל לצ'יפי המגדר): דרך הגעה וקבוצת גיל; מושהים בזמן חיפוש כמו שאר הסינונים */
-  const AGE_MID = Math.floor((AGE_MIN + AGE_MAX) / 2), AGE_B = [['u', 'עד ' + (AGE_MIN - 1), 0, AGE_MIN - 1], ['lo', AGE_MIN + ' עד ' + AGE_MID, AGE_MIN, AGE_MID], ['hi', (AGE_MID + 1) + ' עד ' + AGE_MAX, AGE_MID + 1, AGE_MAX], ['o', (AGE_MAX + 1) + ' ומעלה', AGE_MAX + 1, 200]];   // קבוצות הגיל לפי טווח היעד (shared/age.js)
+  const AGE_MID = Math.floor((AGE_MIN + AGE_MAX) / 2), AGE_B = [['u', '18–' + (AGE_MIN - 1), 0, AGE_MIN - 1], ['lo', AGE_MIN + '–' + AGE_MID, AGE_MIN, AGE_MID], ['hi', (AGE_MID + 1) + '–' + AGE_MAX, AGE_MID + 1, AGE_MAX], ['o', (AGE_MAX + 1) + ' ומעלה', AGE_MAX + 1, 200]];   // קבוצות הגיל לפי טווח היעד (shared/age.js)
   const moreOk = (p) => { if (state.q.trim()) return true; if (state.loginF && loginOf(p) !== state.loginF) return false; if (state.srcF) { const c = channelOf(p); if (state.srcF === '__none' ? !!c : !(c && c.id === state.srcF)) return false; } if (state.ageF) { const b = AGE_B.find((x) => x[0] === state.ageF), a = shownAge(p); if (b && (a == null || a < b[2] || a > b[3])) return false; } return true; };
   const moreOn = () => !state.q.trim() && !!(state.srcF || state.ageF || state.loginF);
   const payKeys = (s) => s ? String(s).split(',').filter(Boolean) : [];   // סינון סטטוסים מרובה: state.pay הוא מפתחות מופרדים בפסיק
