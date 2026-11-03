@@ -777,7 +777,6 @@
   }
   /* פופאפ האזור האישי: עולה מלמטה ומציג את דף האזור האישי (me/?embed=1) בתוך iframe, בלי לעבור לדף אחר. סגירה: גרירה למטה או לחיצה על הפס, לחיצה בחוץ, Esc וכפתור "חזרה" */
   /* מנהל: דף הניהול שומר את החיבור במפתח משלו, ולכן מעתיקים אליו את החיבור של דף הבית ועוברים אליו (בלי להתחבר שוב) */
-  function goAdmin() { try { const s = localStorage.getItem(ME_KEY); if (s) localStorage.setItem('harpatka_admin_session_v2', s); } catch (e) {} location.href = BASE + 'admin/'; }
   let meSheet = null, meSheetPush = false;
   function closeMeSheet(fromPop) {
     if (!meSheet || meSheet.hidden) return;
