@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104gm" />
+  <link rel="stylesheet" href="admin.css?v=20261104gn" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -221,6 +221,23 @@
       <iframe id="mailFrame" title="המייל שנשלח" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" hidden></iframe>
     </div>
   </dialog>
+  <dialog id="ppDlg" aria-labelledby="ppTitle">
+    <div class="sheet">
+      <div class="sheet-head"><h2 id="ppTitle">רישום תשלום</h2></div>
+      <form id="ppForm" novalidate>
+        <div class="two">
+          <label class="field"><span>תאריך</span><input name="date" type="date" /></label>
+          <label class="field"><span>שולם דרך מי</span><select name="by"></select></label>
+        </div>
+        <label class="field"><span>הערה (אופציונלי)</span><input placeholder=" " name="note" maxlength="120" autocomplete="off" /></label>
+        <div class="payrow">
+          <label class="field"><span>סכום (₪)</span><input placeholder=" " name="amount" type="number" inputmode="decimal" min="0" step="10" /></label>
+          <label class="field" id="ppMSelF"><span>דרך תשלום</span><select name="method" aria-label="דרך תשלום"></select></label>
+          <button class="btn success paygo" type="submit">תשלום</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
   <dialog id="allocDlg" aria-labelledby="allocTitle">
     <div class="sheet" id="allocSheet">
       <div class="sheet-head" id="allocHead"><h2 id="allocTitle">תשלום</h2></div>
@@ -343,17 +360,7 @@
       <div id="prList" class="ppanel"></div>
       <div id="prDetail" class="ppanel" hidden>
         <div class="prsum" id="prSum"></div>
-        <button type="button" class="prnew" id="ppOpen">+ רישום תשלום לדרך הגעה</button>
-        <form id="ppForm" novalidate hidden>
-          <div class="two">
-            <label class="field"><span>סכום ששולם (₪)</span><input placeholder=" " name="amount" type="number" inputmode="decimal" min="0" step="any" /></label>
-            <label class="field"><span>תאריך</span><input name="date" type="date" /></label>
-          </div>
-          <label class="field"><span>שולם דרך מי</span><select name="by"></select></label>
-          <label class="field"><span>הערה (אופציונלי)</span><input placeholder=" " name="note" maxlength="120" autocomplete="off" /></label>
-          <button class="btn" type="submit">שמירת תשלום</button>
-          <button class="btn ghost" id="ppCancel" type="button" style="color:var(--muted)">ביטול</button>
-        </form>
+        <div class="payact" style="margin:12px 0 4px"><button class="btn success" id="ppOpen" type="button">רישום תשלום</button></div>
         <div class="clabel" id="prBroughtLbl"></div>
         <div id="prBrought"></div>
         <div class="clabel">תנועות (מהחדשה לישנה)</div>
@@ -2188,7 +2195,7 @@
     const x0 = promoterOf(id), rate = x0 ? Number(x0.rate) : 0, byLead = !!(x0 && !x0.cost_from_payment && !x0.cost_total && rate > 0);
     if (x0 && x0.cost_total) {   // עלות כללית: אין יתרה. כל תשלום מוצג עם התקופה שהוא מכסה והעלות לליד שנגזרת ממנו
       const P = costPeriods(id), mine = state.promoPays.filter((x) => x.promoter_id === id).slice().sort((a, b) => String(b.paid_at).localeCompare(String(a.paid_at)) || String(b.created_at).localeCompare(String(a.created_at)));
-      const rowsT = mine.map((x) => { const r = P.periods.find((q) => q.to === x.paid_at), per = r ? (r.from ? 'מאז ' + dayMon(r.from) + ' · ' : '') + r.leads + ' לידים' + (r.per != null ? ' · ' + perLeadTxt(r.per) + ' לליד' : '') : ''; return { kind: 'p', date: x.paid_at, amount: -Number(x.amount), who: 'תשלום לדרך הגעה', sub: [x.by_email ? 'שולם דרך ' + finName(x.by_email) : '', x.note || '', per].filter(Boolean).join(' · '), id: x.id, key: x.id }; });
+      const rowsT = mine.map((x) => { const r = P.periods.find((q) => q.to === x.paid_at), per = r ? (r.from ? 'מאז ' + dayMon(r.from) + ' · ' : '') + r.leads + ' לידים' + (r.per != null ? ' · ' + perLeadTxt(r.per) + ' לליד' : '') : ''; return { kind: 'p', date: x.paid_at, amount: -Number(x.amount), who: 'תשלום לדרך הגעה', sub: [methodName(x), x.by_email ? 'שולם דרך ' + finName(x.by_email) : '', x.note || '', per].filter(Boolean).join(' · '), id: x.id, key: x.id }; });
       const paidT = mine.reduce((t, x) => t + Number(x.amount), 0);
       return { rows: rowsT, accrued: paidT, paid: paidT, balance: 0, total: P };
     }
@@ -2197,7 +2204,7 @@
     const leadsAll = byLead ? srcLeads(id) : [], leadsNew = leadsAll.filter((q) => String(q.created_at || '') > lastTs);
     const leadRow = (n) => ({ kind: 'c', date: todayISO(), amount: n * rate, who: 'עלות לידים', sub: n + ' לידים × ₪' + rate, key: 'leads' });
     const accNew = acc.filter((r) => !lastTs || String(r.ts || '') > lastTs).concat(leadsNew.length ? [leadRow(leadsNew.length)] : []);
-    const lastRow = lp ? [{ kind: 'p', date: lp.paid_at, amount: -Number(lp.amount), who: 'תשלום לדרך הגעה', sub: ((lp.by_email ? 'שולם דרך ' + finName(lp.by_email) : '') + (lp.by_email && lp.note ? ' · ' : '') + (lp.note || '')), id: lp.id, key: lp.id }] : [];
+    const lastRow = lp ? [{ kind: 'p', date: lp.paid_at, amount: -Number(lp.amount), who: 'תשלום לדרך הגעה', sub: [methodName(lp), lp.by_email ? 'שולם דרך ' + finName(lp.by_email) : '', lp.note || ''].filter(Boolean).join(' · '), id: lp.id, key: lp.id }] : [];
     const rows = accNew.concat(lastRow).sort((a, b) => String(a.date).localeCompare(String(b.date)) || (a.kind === 'c' ? -1 : 1)); { let run3 = 0; rows.forEach((r) => { if (r.kind !== 'p') run3 += r.amount; r.bal = run3; }); }
     const accrued = acc.reduce((s, r) => s + r.amount, 0) + leadsAll.length * rate, paid = myPays.reduce((s, x) => s + Number(x.amount), 0);
     return { rows: rows.reverse(), accrued, paid, balance: accNew.reduce((s, r) => s + r.amount, 0) };
@@ -2212,12 +2219,12 @@
   function show(view) {
     const forward = RANK[view] > RANK[prView]; prView = view;
     ['#prList', '#prDetail', '#prForm'].forEach((s) => { const d = $(s), on = s === view; d.hidden = !on; d.classList.remove('enter-l', 'enter-r'); if (on && !reducedMotion()) { void d.offsetWidth; d.classList.add(forward ? 'enter-l' : 'enter-r'); } });
-    $('#prArrow').hidden = view === '#prList'; navSync($('#prDlg')); syncUrl();
+    $('#prArrow').hidden = view !== '#prForm'; navSync($('#prDlg')); syncUrl();   // בהתחשבנות בלי חץ: סוגרים בהחלקה, בלחיצה בחוץ או בחזרה בדפדפן
   }
   function showPromoterDetail(id) {
     prCur = id; const x = promoterOf(id); if (!x) return showPromoterList();
     const L = ledgerOf(id);
-    $('#prTitle').textContent = x.name;
+    $('#prTitle').textContent = 'התחשבנות · ' + x.name;
     const lastP = L.total && L.total.periods[L.total.periods.length - 1];
     $('#prSum').innerHTML = L.total ? UI.metric('עלות לליד בתקופה האחרונה', lastP && lastP.per != null ? perLeadTxt(lastP.per) : '—', { sub: lastP ? ils(lastP.amount) + ' · ' + lastP.leads + ' לידים' : 'עוד לא נרשם תשלום' }) + UI.metric('לידים מאז ההתחשבנות האחרונה', L.total.openLeads, { sub: L.total.openFrom ? 'מאז ' + dayMon(L.total.openFrom) : '' })
       : UI.metric(L.balance > 0 ? 'יתרה לתשלום לדרך הגעה' : 'מסולק', ils(Math.max(L.balance, 0)), { tone: L.balance > 0 ? 'neg' : 'pos', cls: 'wide' });
@@ -2231,7 +2238,6 @@
     const stOf = (q) => { const ls = linksOf(q.id); if (ls.some((l) => l.paid && !l.exempt)) return ['paid', 'שילם']; if (ls.some((l) => linkStatus(l) === 'requested')) return ['requested', 'בטיפול']; if (ls.some((l) => l.exempt)) return ['exempt', 'לא לתשלום']; return ls.length ? ['unpaid', 'חדש'] : ['none', 'ללא מפגש']; };
     $('#prBroughtLbl').textContent = 'משתתפים שהגיעו דרך ' + x.name + ' (' + brought.length + ', ' + brought.filter((q) => stOf(q)[0] === 'paid').length + ' שילמו)';
     $('#prBrought').innerHTML = brought.length ? brought.map((q) => { const s = stOf(q); return '<div class="bq"><span class="n">' + esc(q.name) + '</span>' + UI.tag(s[1], 'pst ' + s[0]) + '</div>'; }).join('') : '<p class="mnone">עוד אין משתתפים עם דרך ההגעה הזה. בוחרים דרך הגעה באייקון המגפון בכותרת הפופאפ של המשתתף</p>';
-    $('#ppForm').hidden = true; $('#ppOpen').hidden = false;
     show('#prDetail');
   }
   /* דרך הגעה חדשה: אותו כרטיס בדיוק כמו ברשימת דרכי ההגעה (srcCard). במסך דרכי ההגעה היא נוספת לרשימה ונשמרת כשמקלידים שם; משדה "מקור" של משתתף: בטופס עם שמירה */
@@ -2286,20 +2292,27 @@
     } catch (err) { fail(err); }
   });
   /* תשלום לדרך הגעה: סכום (ברירת מחדל: היתרה), תאריך והערה */
+  /* רישום תשלום לדרך הגעה: פופאפ מלמטה בגובה התוכן, ואישור לפני הרישום, כמו תשלום של משתתף. דרך תשלום שיש לה "הקופה של" קובעת גם מי שילם */
+  const ppByFromMethod = () => { const f = $('#ppForm'), pm = state.payMethods.find((m) => m.key === f.method.value); if (pm && pm.owner_email) { if (![...f.by.options].some((o) => o.value === pm.owner_email)) f.by.insertAdjacentHTML('beforeend', '<option value="' + esc(pm.owner_email) + '">' + esc(finName(pm.owner_email)) + '</option>'); f.by.value = pm.owner_email; } };
   $('#ppOpen').addEventListener('click', () => {
-    const f = $('#ppForm'), L = ledgerOf(prCur);
+    const f = $('#ppForm'), L = ledgerOf(prCur), x = promoterOf(prCur);
+    $('#ppTitle').textContent = 'רישום תשלום · ' + (x ? x.name : '');
     f.amount.value = L.balance > 0 ? L.balance : ''; f.date.value = todayISO(); f.note.value = '';
     f.by.innerHTML = '<option value="">לא הוגדר</option>' + finAdmins().map((e2) => '<option value="' + esc(e2) + '">' + esc(finName(e2)) + '</option>').join(''); f.by.value = emailOf() || '';
-    f.hidden = false; $('#ppOpen').hidden = true; setTimeout(() => f.amount.focus(), 50);
+    f.method.innerHTML = payMethodOpts(); ppByFromMethod();
+    $('#ppDlg').showModal();
+    const ae = document.activeElement; if (ae && ae.closest && ae.closest('#ppDlg')) ae.blur();   // בלי מקלדת בפתיחה
   });
-  $('#ppCancel').addEventListener('click', () => { $('#ppForm').hidden = true; $('#ppOpen').hidden = false; });
-  $('#ppForm').addEventListener('submit', async (e) => {
+  $('#ppForm').method.addEventListener('change', ppByFromMethod);
+  $('#ppForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    const f = e.target, amount = parseFloat(f.amount.value);
+    const f = e.target, amount = parseFloat(f.amount.value), x = promoterOf(prCur), pm = state.payMethods.find((m) => m.key === f.method.value);
     if (!(amount > 0)) { f.amount.focus(); return; }
-    const body = { promoter_id: prCur, amount, paid_at: f.date.value || todayISO(), note: f.note.value.trim() || null, by_email: f.by.value || null };
-    try { const [row] = await api(T.pp, { method: 'POST', body, prefer: 'return=representation' }); if (row && !state.promoPays.some((q) => q.id === row.id)) state.promoPays.push(row); toast('התשלום נרשם'); showPromoterDetail(prCur); }
-    catch (err) { fail(err); }
+    const body = { promoter_id: prCur, amount, paid_at: f.date.value || todayISO(), note: f.note.value.trim() || null, by_email: f.by.value || null, method: f.method.value || null };
+    confirmAct('אישור תשלום לדרך הגעה', null, null, async () => {
+      try { const [row] = await api(T.pp, { method: 'POST', body, prefer: 'return=representation' }); if (row && !state.promoPays.some((q) => q.id === row.id)) state.promoPays.push(row); $('#ppDlg').close(); toast('התשלום נרשם'); showPromoterDetail(prCur); }
+      catch (err) { fail(err); }
+    }, (x ? 'אל: <b>' + esc(x.name) + '</b><br>' : '') + 'סכום: <b>' + ils(amount) + '</b>' + (pm ? '<br>דרך: <b>' + esc(pm.name) + '</b>' : ''), 'אישור תשלום', null, { plain: true, green: true });
   });
   $('#prMoves').addEventListener('click', (e) => {
     const d = e.target.closest('[data-delpay]'); if (!d || !confirm('למחוק את התשלום לדרך הגעה?')) return;
