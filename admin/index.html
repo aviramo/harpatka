@@ -2234,7 +2234,7 @@
       '<div class="wr"><span class="wamt' + (r.kind === 'p' ? ' up' : r.kind === 'r' ? ' down' : '') + '"><bdi dir="ltr">' + (r.amount > 0 ? '+' : '−') + '₪' + nfm(Math.abs(r.amount)) + '</bdi></span>' +
       (r.kind === 'p' ? '<button type="button" class="ndel" data-delpay="' + r.id + '" aria-label="מחיקת תשלום">מחיקה</button>' : '<small>יתרה ' + balAfter(r.bal) + '</small>') + '</div></div>').join('') : '<p class="mnone">' + (L.total ? 'אחרי רישום תשלום תופיע כאן העלות לליד של התקופה שמאז ההתחשבנות הקודמת' : 'עוד אין תנועות. עמלה נרשמת אוטומטית כשמסמנים תשלום של משתתף שהביא דרך ההגעה') + '</p>';
     /* משתתפים שהגיעו דרך דרך ההגעה, ומי שילם ומי לא */
-    const brought = state.participants.filter((q) => q.promoter_id === id).sort((a, b) => a.name.localeCompare(b.name, 'he'));
+    const brought = srcLeads(id).slice().sort((a, b) => a.name.localeCompare(b.name, 'he'));   // גם מי שהגיע מקישור של מודעה
     const stOf = (q) => { const ls = linksOf(q.id); if (ls.some((l) => l.paid && !l.exempt)) return ['paid', 'שילם']; if (ls.some((l) => linkStatus(l) === 'requested')) return ['requested', 'בטיפול']; if (ls.some((l) => l.exempt)) return ['exempt', 'לא לתשלום']; return ls.length ? ['unpaid', 'חדש'] : ['none', 'ללא מפגש']; };
     $('#prBroughtLbl').textContent = 'משתתפים שהגיעו דרך ' + x.name + ' (' + brought.length + ', ' + brought.filter((q) => stOf(q)[0] === 'paid').length + ' שילמו)';
     $('#prBrought').innerHTML = brought.length ? brought.map((q) => { const s = stOf(q); return '<div class="bq"><span class="n">' + esc(q.name) + '</span>' + UI.tag(s[1], 'pst ' + s[0]) + '</div>'; }).join('') : '<p class="mnone">עוד אין משתתפים עם דרך ההגעה הזה. בוחרים דרך הגעה באייקון המגפון בכותרת הפופאפ של המשתתף</p>';
@@ -2336,7 +2336,7 @@
     const f = pForm, alloc = Math.max(0, allocatedOf(pid, mid)), price = m ? expectedPrice(pid, m) : PRICE_EARLY;
     f.pay_amount.value = opts && opts.amount != null ? opts.amount : (alloc > 0 ? alloc : price);
     /* דרך ההגעה שייך למשתתף: העמלה מחושבת על התשלום הראשון שמתקבל (הפקדה או תשלום ישיר), לפי התעריף */
-    const prId = (p && p.promoter_id) || l.promoter_id || '', pr = promoterOf(prId);
+    const pr = (p && channelOf(p)) || promoterOf(l.promoter_id);   // גם מי שהגיע מקישור של מודעה, בלי בחירה ידנית
     const isFirst = !state.payments.some((x) => x.participant_id === pid && (x.kind === 'deposit' || (x.kind === 'payment' && !x.from_credit && x.meeting_id && x.meeting_id !== mid))), commPr = (isFirst || commOnEvery(pr)) ? pr : null;
     $('#payQuick').innerHTML = quickPrices(m).map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
     f.pay_method.value = l.pay_method || 'paybox'; f.pay_method_note.value = l.pay_method_note || '';
@@ -3351,8 +3351,8 @@
       try { await addPayRecord(pid, sheet.depMid, 'payment', use, null, null, true, null, null, dueMeta); setDue(sheet.depMid); toast('שולם ₪' + nfm(use) + ' מהיתרה'); sheet.depCr = false; payDone(); } catch (err) { fail(err); }
       return;
     }
-    const p = state.participants.find((x) => x.id === pid), pr = p && promoterOf(p.promoter_id);
-    /* עמלה לדרך הגעה: על התשלום הראשון של המשתתף (הפקדה או תשלום ישיר) */
+    const p = state.participants.find((x) => x.id === pid), pr = p && channelOf(p);
+    /* עמלה לדרך הגעה: על התשלום הראשון של המשתתף (הפקדה או תשלום ישיר). דרך ההגעה גם כשהיא נגזרת מהקוד בקישור, ולא רק כשנבחרה ידנית */
     const isFirst = !state.payments.some((x) => x.participant_id === pid && (x.kind === 'deposit' || (x.kind === 'payment' && !x.from_credit && x.meeting_id)));
     const payCm = pr && (isFirst || commOnEvery(pr)), cm = payCm ? calcCommission(pr, amt) : null, method = f.pay_depm.value, mnote = method === 'other' ? f.pay_depn.value.trim().slice(0, 60) : '';
     const pk = parseInt(f.pay_pkg.value, 10), pkgMeta = pk >= 2 ? { pkg_n: pk } : null;
