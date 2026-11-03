@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104fk" />
+  <link rel="stylesheet" href="admin.css?v=20261104fo" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -316,7 +316,6 @@
         <button type="button" class="btn ghost" id="pmAdd">+ דרך תשלום חדשה</button>
       </div>
       <div id="setSrc" hidden>
-        <p class="sthint" style="margin:0 0 12px">כל דרך הגעה (פייסבוק, קרן, חבר מביא חבר) עם שם, צבע, קוד משלה בקישור <bdi dir="ltr">harpatka.co.il/?s=<b>קוד</b></bdi> ועלות לליד. ההתחשבנות בכפתור בכל כרטיס</p>
         <div id="srcPrList"></div>
         <button type="button" class="btn ghost" id="srcPrAdd">+ דרך הגעה חדשה</button>
       </div>
@@ -1338,7 +1337,7 @@
   /* בזמן חיפוש טקסט, סינוני המגדר והתשלום מושהים (כדי למצוא מישהו בוודאות); הם נשמרים ב-state וחוזרים כשהחיפוש נסגר */
   const effGender = () => state.q.trim() ? null : state.gender;
   /* סינונים נוספים (תפריט ⋯ משמאל לצ'יפי המגדר): דרך הגעה וקבוצת גיל; מושהים בזמן חיפוש כמו שאר הסינונים */
-  const AGE_MID = Math.floor((AGE_MIN + AGE_MAX) / 2), AGE_B = [['u', '18–' + (AGE_MIN - 1), 0, AGE_MIN - 1], ['lo', AGE_MIN + '–' + AGE_MID, AGE_MIN, AGE_MID], ['hi', (AGE_MID + 1) + '–' + AGE_MAX, AGE_MID + 1, AGE_MAX], ['o', (AGE_MAX + 1) + ' ומעלה', AGE_MAX + 1, 200]];   // קבוצות הגיל לפי טווח היעד (shared/age.js)
+  const AGE_MID = Math.floor((AGE_MIN + AGE_MAX) / 2), AGE_B = [['u', '18–' + (AGE_MIN - 1), 0, AGE_MIN - 1], ['lo', AGE_MIN + '–' + AGE_MID, AGE_MIN, AGE_MID], ['hi', (AGE_MID + 1) + '–' + AGE_MAX, AGE_MID + 1, AGE_MAX], ['o', '\u2066' + (AGE_MAX + 1) + '+\u2069', AGE_MAX + 1, 200]];   // קבוצות הגיל לפי טווח היעד (shared/age.js)
   const moreOk = (p) => { if (state.q.trim()) return true; if (state.loginF && loginOf(p) !== state.loginF) return false; if (state.srcF) { const c = channelOf(p); if (state.srcF === '__none' ? !!c : !(c && c.id === state.srcF)) return false; } if (state.ageF) { const b = AGE_B.find((x) => x[0] === state.ageF), a = shownAge(p); if (b && (a == null || a < b[2] || a > b[3])) return false; } return true; };
   const moreOn = () => !state.q.trim() && !!(state.srcF || state.ageF || state.loginF);
   const payKeys = (s) => s ? String(s).split(',').filter(Boolean) : [];   // סינון סטטוסים מרובה: state.pay הוא מפתחות מופרדים בפסיק
@@ -1478,14 +1477,14 @@
     $('#facets').classList.toggle('searching', !!q);
     $('#facets').innerHTML = '';   // המגדר והסטטוס עברו לפס הצ'יפים (#stStrip)
     /* כל הסטטוסים (בתוך מפגש) או התגיות (בתצוגת הכל) כצ'יפים מעל הסינונים, ממורכזים ועוברים שורה: לחיצה מסננת (בחירה מרובה) */
-    const gchip = (g, label, cls) => { const n = nG(g), sym = g === 'male' || g === 'female'; return '<button type="button" class="stc ' + cls + (n || eg === g ? '' : ' zero') + '" data-stg="' + g + '" aria-pressed="' + (eg === g) + '" title="' + label + '" aria-label="' + label + ' ' + n + '">' + (sym ? icon(g, 'i16') : label) + ' <small>' + n + '</small>' + UI.fdot(eg === g && 'ink') + '</button>'; };   // זכר / נקבה כסמל (♂ / ♀) ולא כמילה
+    const gchip = (g, label, cls) => { const n = nG(g), sym = g === 'male' || g === 'female'; return '<button type="button" class="stc ' + cls + (n || eg === g ? '' : ' zero') + '" data-stg="' + g + '" aria-pressed="' + (eg === g) + '" title="' + label + '" aria-label="' + label + ' ' + n + '">' + (sym ? '<span class="gsym">' + icon(g, 'i16') + UI.fdot(eg === g && 'ink') + '</span>' : label) + ' <small>' + n + '</small>' + (sym ? '' : UI.fdot(eg === g && 'ink')) + '</button>'; };   // זכר / נקבה כסמל (♂ / ♀) ולא כמילה
     const anyF = !!(eg || effPaidF() || effSent() || effBal() || effAttF() || moreOn());
     const gHtml = state.showGender ? gchip('male', 'זכר', 'gm') + gchip('female', 'נקבה', 'gf') + (eg === 'none' ? gchip('none', 'ללא מגדר', 'gm') : '') : '';   // זכר / נקבה עם הכמויות בשורת הסינון והמיון (ליד תגית הסינון), תמיד כשהטוגל "מגדר" דולק (גם כשברשימה רק גברים או רק נשים)
     const evOn = !!(state.filter && sentView(state.meetings.find((x) => x.id === state.filter)));   // סינון השליחה מוצג כשהטוגל דולק (גם כשאף אחד עוד לא זכאי)
     const paidN = (v) => base.filter((p) => genOk(p) && sentOk(p) && matchPay(p, epk) && payF(p, v)).length;
     const pchip = (v, label, cls) => { const n = paidN(v); return '<button type="button" class="stc ' + cls + (n ? '' : ' zero') + '" data-stp="' + v + '" aria-pressed="' + (state.paidF === v && !!state.filter) + '">' + label + ' <small>' + n + '</small></button>'; };
     const editLink = '<button type="button" class="qeditlink" data-qedit="' + (state.filter ? 'meeting' : 'participant') + '" style="margin:0">' + icon('edit', 'i14') + ' עריכה</button>';
-    $('#stStrip').style.setProperty('--nd', String(Math.max(2, String(state.participants.length).length)));
+    { const nd = String(Math.max(2, String(state.participants.length).length)); $('#stStrip').style.setProperty('--nd', nd); $('#listTags').style.setProperty('--nd', nd); }
     { const lc = $('#listCount'); lc.textContent = state.listCnt == null ? '' : state.listCnt; }
     const filtHtml = '<button type="button" class="hfilt all" id="filtBtn" aria-haspopup="menu" aria-expanded="' + !$('#viewMenu').hidden + '" aria-label="סינון ותצוגה' + (panelOn() ? ' (יש סינון פעיל)' : '') + '" title="סינון ותצוגה">' + icon('filter') + UI.fdot(panelOn() && 'ink') + '</button>';
     const sortHtml = '<button type="button" class="hfilt all" id="sortBtnH" aria-haspopup="menu" aria-expanded="' + !$('#sortMenu').hidden + '" aria-label="מיון הרשימה" title="מיון: ' + (SORTS.find((x) => x[0] === state.sort) || SORTS[0])[1] + (state.sortDir === 'asc' ? ' (הפוך)' : '') + '">' + icon('sort') + UI.fdot((state.sort !== 'new' || state.sortDir === 'asc') && 'ink') + '</button>';
@@ -1515,7 +1514,7 @@
     const sentN = (v) => base.filter((p) => { if (!genOk(p) || !paidOk(p) || !matchPay(p, epk)) return false; return sentMatch(p.id, linkOf(p.id, state.filter), v); }).length;
     $('#listPay').innerHTML = state.filter && state.showPay ? fbtn('pay', (state.paidF === '1' || state.paidF === '0' || state.paidF === 'n' || state.paidF === 'w' || /^[am][A-Za-z0-9_]+$/.test(state.paidF || '')) ? state.paidF : null, paidN('1'), paidN('0')) : '';
     { const ws = waSelected(); if (state.waSent && !waFilter() && !document.documentElement.classList.contains('is-loading')) waSetFilter('');   // כפתור הוואטסאפ בעמודה האחרונה: בחירת תבנית הודעה לקישורי הוואטסאפ ברשימה
-      $('#listWa').innerHTML = '<button type="button" class="hfilt wabtn" id="waBtn" aria-haspopup="menu" aria-expanded="false" aria-label="בחירת הודעה לוואטסאפ' + (ws ? ': ' + esc(ws.name) : '') + '" title="' + (ws ? 'הודעה: ' + esc(ws.name) : 'הודעה לוואטסאפ: ריקה') + '">' + (ws ? PIN_ICON : WA_ICON) + UI.fdot(waFilter() === '1' ? 'green' : waFilter() === '0' ? 'red' : '') + '</button>'; }
+      $('#listWa').innerHTML = '<button type="button" class="hfilt wabtn' + (ws ? '' : ' waem') + '" id="waBtn" aria-haspopup="menu" aria-expanded="false" aria-label="בחירת הודעה לוואטסאפ' + (ws ? ': ' + esc(ws.name) : '') + '" title="' + (ws ? 'הודעה: ' + esc(ws.name) : 'הודעה לוואטסאפ: ריקה') + '">' + (ws ? PIN_ICON : WA_ICON) + UI.fdot(waFilter() === '1' ? 'green' : waFilter() === '0' ? 'red' : '') + '</button>'; }
     $('#listSent').innerHTML = evOn ? fbtn('sent', effSent(), sentN('1'), sentN('0')) : '';
     $('#listBal').innerHTML = !state.filter && state.showPay ? fbtn('bal', effBal(), '', '') : '';
     $('#listAtt').innerHTML = !state.filter && state.showAtt !== false ? '<button type="button" class="hfilt ' + (() => { const k = effAttF(), o = k && ATT_OPTS_F.find((x) => x[0] === k); return !o ? 'all' : attCls(o[2]); })() + '" data-fk="att" aria-haspopup="menu" aria-label="סינון לפי התמדה" title="סינון לפי התמדה והגעה (לחיצה לפתיחת תפריט)">' + (() => { const k = effAttF(), o = k && ATT_OPTS_F.find((x) => x[0] === k); return o ? ATT_GLYPH[o[3]]() + UI.fdot({ g: 'green', y: 'yellow', r: 'red' }[o[2]] || 'gray') : PERSIST_ICON; })() + '</button>' : '';
@@ -4352,7 +4351,7 @@
     /* "תצוגה": מגדר, תשלום / יתרה, שליחת פרטי המפגש, הגעה / התמדה כתגיות (כמו "דרך הגעה"); תגית מסומנת = מוצג ברשימה או בשורת הסינון */
     /* בלי שורת מונה בראש התפריט (31.10.26): התפריט נפתח מתחת לשורת הסינון, והמונה שבה נשאר גלוי */
     let h = moreSecs();
-    if (panelOn() || state.gender) h += '<button type="button" class="fclear" data-fclear="1">ניקוי סינונים</button>';
+    if (filtersOn()) h = '<button type="button" class="fclear" data-fclear="1" aria-label="ניקוי סינונים" title="ניקוי סינונים">' + icon('filterx', 'i18') + '</button>' + h;   // בפינה השמאלית העליונה של התפריט
     $('#viewMenu').innerHTML = h;
   }
   /* סינון לפי העמודות (תשלום, שליחת פרטי המפגש, הגעה; בתצוגה הכללית יתרה והתמדה): אייקון מעל כל עמודה, לחיצה פותחת תפריט עם המצבים, אייקוניהם והכמות; הבחירה מבצעת את הסינון */
@@ -4418,6 +4417,7 @@
     });    placeGen(br);
   }
   window.addEventListener('resize', alignFilters);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(alignFilters);
   /* תפריט הסינון והתצוגה: תפריט צף רגיל, מיושר לקצה הימני של כפתור הסינון, בלי הכהיית הדף */
   const noMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const closeView = () => {

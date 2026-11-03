@@ -1080,6 +1080,9 @@ html.is-loading .hgrp { visibility: hidden; }
 :is(#filtBtn, #sortBtnH) { width: var(--tag); min-width: var(--tag); height: var(--tag); padding: 0; border: 0; background: transparent; color: var(--text); }   /* סינון ומיון: סמל בלבד, בלי רקע אפור */
 #listTags.vbar .stc:not([aria-pressed="true"]) { background: transparent; }
 .vbar .listcount { flex: 0 0 var(--agecol); min-width: var(--agecol); box-sizing: border-box; padding-inline-start: 5px; text-align: start; font-weight: 800; color: var(--text); }   /* המונה באותה עמודה ובאותו רוחב של תגית הגיל, וקצהו הימני בקו אחד עם קצה הגיל (אותם 5px מהקצה) */
+#listClu .gsym { position: relative; display: inline-grid; place-items: center; width: 16px; height: 16px; flex: none; }
+#listClu .gsym .fdot { right: -3px; bottom: -3px; }   /* אותו מרחק מהסמל כמו בשאר הסינונים: 8px ימינה ו-8px למטה ממרכז הסמל */
+#listClu .stc small { min-width: calc(var(--nd, 2) * 1ch); font-variant-numeric: tabular-nums; }   /* רוחב קבוע למונה: הסינונים לא זזים כשהמספרים משתנים */
 #listClu .stc { padding-inline: 4px; }   /* ריפוד פנימי קטן לזכר / נקבה בשורת הסינון (הרווחים ביניהם שווים: #listMid) */
 :is(#filtBtn, #sortBtnH) svg { width: 16px; height: 16px; }
 html.is-loading .vbar { display: none; }
@@ -1094,7 +1097,9 @@ html.is-loading .vbar { display: none; }
 #viewMenu .mc[data-sc] { background: transparent; color: var(--sfg); }   /* דרך הגעה: בלי רקע, בצבע שלה; נבחרת: מתמלאת בגוון הכהה */
 #viewMenu .mc[data-sc][aria-pressed="true"] { background: var(--sfg); color: var(--bg); }
 #viewMenu .mc.zero { opacity: .45; }
-#viewMenu .fclear { display: block; width: 100%; height: var(--ctl); margin-top: 4px; background: var(--surface-2); color: var(--text); font-weight: 700; }
+#viewMenu .fclear { position: absolute; top: 0; left: 0; display: grid; place-items: center; width: 44px; height: 44px; background: transparent; color: var(--text); }   /* ניקוי סינונים: סמל בפינה השמאלית העליונה, הסמל עצמו בקו של ריפוד התפריט */
+@media (hover: hover) { #viewMenu .fclear:hover { background: var(--surface); } }
+#viewMenu .fclear:active { background: var(--surface); }
 
 /* ---------- סמל המצב ליד השם: צמוד למילה האחרונה ובגובה הטקסט, כחלק מהשורה ---------- */
 .row .nm .name .nwrap { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }   /* המילה האחרונה והסמל יחידה אחת: הסמל ממורכז אנכית מול שורת הטקסט של המילה */
@@ -1276,6 +1281,12 @@ dialog { border-radius: var(--r) var(--r) 0 0; }
 /* סינון פעיל בשורת הסינון (2.11.26): נקודה בצבע התואם, רכיב אחד (UI.fdot) לתשלום, יתרה, התמדה, שליחה, וואטסאפ, מגדר, סינון ומיון. זכר / נקבה בלי מילוי; אייקוני העמודות נשארים עם הרקע של המצב */
 #listTags .hfilt, #listTags .stc { position: relative; }
 #listTags .hfilt[data-fk] { background: transparent; color: var(--text-2); }   /* אייקוני הסינון שמעל העמודות: בלי רקע ובלי צבע על הסמל, והמצב רק בנקודה. בשורות ובתפריט שנפתח הרקעים נשארים */
+/* שורת הסינון: כל הסמלים באותו גודל נראה (12 עד 13 פיקסל) והנקודה 8px ימינה ו-8px למטה ממרכז הסמל. הגודל של כל סמל נקבע לפי הצורה שלו, כי באותו ריבוע חלקן גדולות מאחרות */
+#listTags .hfilt[data-fk], #waBtn { border: 0; }
+#listTags .hfilt[data-fk="pay"], #listTags .hfilt[data-fk="bal"] { font-size: 16px; padding-bottom: 1px; }
+#waBtn.waem svg { width: 14px; height: 14px; }
+#filtBtn svg { width: 17px; height: 17px; }
+#listClu .stc.gf .ic { width: 15px; height: 15px; }
 #listTags .stc[aria-pressed="true"] { background: transparent; border-color: transparent; color: var(--text); }
 .fdot { position: absolute; right: 3px; bottom: 3px; width: 6px; height: 6px; border-radius: 50%; box-shadow: 0 0 0 1px var(--bg); pointer-events: none; }
 .fdot.ink { background: var(--text); }
