@@ -122,7 +122,7 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 /* 3.3 תגית: אובייקט אחד לכל התגיות במערכת (סטטוסים, תגיות, מגדר וגיל, סכומים ותשלום, תאריכי מפגש, הערות מערכת, ספירות, סינון).
    גובה אחד (28px), גבול אחד (1px, שקוף או צבעוני), שורת טקסט אחת בגובה התגית: הטקסט במרכז האופקי ובמרכז האנכי,
    וכשאין מקום הוא נחתך ב-"…". כל סוג תגית מגדיר רק צבע; הגודל הגדול (40px) רק בכותרת פופאפ, ליד כפתורי האייקון */
-.tg, .stc, .ptag, .pay, .pst, .sopt, .nch, .paychip, .tchip, .cst, .gst, .frec, .hcount, .trend, .row .meta .age, .mlist .mrow .mlabel, .mlist .mrow .mmoney, #viewMenu .mc, #waMenu .wseg .stc, .qmenu .qi[data-qk], .qmenu .qi[data-qm], .qmenu .qi[data-sf], .qmenu .qi[data-at], .emvars button, .metchips button {
+.tg, .stc, .ptag, .pay, .pst, .sopt, .nch, .paychip, .tchip, .cst, .gst, .frec, .hcount, .trend, .row .meta .age, .mlist .mrow .mlabel, .mlist .mrow .mmoney, #viewMenu .mc, .qmenu .qi[data-qk], .qmenu .qi[data-qm], .qmenu .qi[data-sf], .qmenu .qi[data-at], .emvars button, .metchips button {
   display: inline-block; vertical-align: middle; box-sizing: border-box; height: var(--tag); min-width: 0; max-width: 100%; margin: 0; padding: 0 8px;
   border: 1px solid transparent; background: var(--surface-2); color: var(--text-2);
   font-family: var(--font); font-size: 14px; font-weight: 600; font-style: normal; line-height: calc(var(--tag) - 2px);
@@ -146,9 +146,9 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 #editMenu { min-width: 190px; }
 #editMenu button { justify-content: flex-start; text-align: right; }   /* הטקסט צמוד לסמל מימין (במקום להידחף לשמאל ב-space-between) */
 .stc[aria-pressed="true"], .qmenu .qi[aria-pressed="true"], .sopt[aria-pressed="true"] { border-color: currentColor; }
-.stc.tagc:not(.editc), .stc.gall, .stc.gm, .stc.gf, #viewMenu .mc, #waMenu .wseg .stc, .metchips button { background: transparent; color: var(--text); border-color: transparent; }   /* צ'יף לבחירה: רקע רק למה שמסומן (2.11.26) */
-@media (hover: hover) { :is(.stc.tagc:not(.editc), .stc.gall, .stc.gm, .stc.gf, #viewMenu .mc, #waMenu .wseg .stc, .metchips button):not([aria-pressed="true"]):hover { background: var(--surface-2); } }
-:is(.stc.tagc:not(.editc), .stc.gall, .stc.gm, .stc.gf, #viewMenu .mc, #waMenu .wseg .stc, .metchips button):not([aria-pressed="true"]):active { background: var(--surface-2); }
+.stc.tagc:not(.editc), .stc.gall, .stc.gm, .stc.gf, #viewMenu .mc, .metchips button { background: transparent; color: var(--text); border-color: transparent; }   /* צ'יף לבחירה: רקע רק למה שמסומן (2.11.26) */
+@media (hover: hover) { :is(.stc.tagc:not(.editc), .stc.gall, .stc.gm, .stc.gf, #viewMenu .mc, .metchips button):not([aria-pressed="true"]):hover { background: var(--surface-2); } }
+:is(.stc.tagc:not(.editc), .stc.gall, .stc.gm, .stc.gf, #viewMenu .mc, .metchips button):not([aria-pressed="true"]):active { background: var(--surface-2); }
 .emvars button { background: var(--surface-2); color: var(--text); border-color: transparent; }
 .stc.tagc[aria-pressed="true"], .stc.gall[aria-pressed="true"], .stc.gm[aria-pressed="true"], .stc.gf[aria-pressed="true"], #viewMenu .mc[aria-pressed="true"], .pstchips .sopt[aria-pressed="true"], .metchips button[aria-pressed="true"] { background: var(--text); border-color: var(--text); color: #fff; }
 .stc[aria-pressed="true"] small, #viewMenu .mc[aria-pressed="true"] small { color: inherit; opacity: .8; }
@@ -1179,8 +1179,10 @@ dialog .dclose { display: none; }
 #waMenu .wmn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #waMenu .wmi small { color: var(--text-2); font-size: 12px; font-weight: 600; white-space: nowrap; }
 .hfilt.wabtn { position: relative; }
-#waMenu .wseg { display: flex; justify-content: flex-end; gap: 8px; padding: 8px 0 4px; }   /* שלוש תגיות רגילות (אובייקט התגית, .stc.tagc) בשורה אחת, ברוחב לפי התוכן, צמודות לקצה השמאלי של השורות (flex-end ב-RTL = שמאל), לא למקום הטקסט */
-#waMenu .wseg .stc { width: auto; min-height: 0; }   /* מבטל את רוחב ומינימום הגובה של כפתור תפריט */
+#waMenu .wseg { display: grid; padding: 4px 0; }   /* הכל / נשלח / לא נשלח זה מתחת לזה: שורות של התפריט, הטקסט בקו של שם התבנית */
+#waMenu .wdot { display: grid; place-items: center; width: 18px; height: 18px; flex: none; }   /* עמודת הסמלים של התפריט: הנקודה של הבחירה (UI.fdot) בקו של הסמלים */
+#waMenu .wdot .fdot { position: static; width: 8px; height: 8px; box-shadow: none; }
+#waMenu .wsf.zero { color: var(--text-2); }
 #waMenu .wbot { margin-top: 4px; border-top: 1px solid var(--line); }   /* הקו האופקי: מתחתיו סינון השליחה (כשנבחרה תבנית) והוספת תבנית */
 #waMenu .wadd { font-weight: 700; }
 /* התבנית שנבחרה: במקום ה-✓ עיפרון שפותח את עריכת ההודעה; שורה וכפתור נפרדים, כדי ששטח הלחיצה של העיפרון לא יבחר שוב את התבנית */
@@ -1310,8 +1312,5 @@ dialog { border-radius: var(--r) var(--r) 0 0; }
 #qMenu.qlist .qi[aria-pressed="true"] { border-color: transparent; }
 #qMenu.qlist .qi .fdot { display: none; }
 #qMenu.qlist .qi[aria-pressed="true"] .fdot { display: block; }
-/* תפריט הוואטסאפ, הכל / נשלח / לא נשלח: הנבחר לא משנה רקע, ויש לו נקודה (שחור, ירוק, אדום) */
-#waMenu .wseg .stc { position: relative; }
-#waMenu .wseg .stc[aria-pressed="true"] { background: transparent; border-color: transparent; color: var(--text); }
 /* מייל שלא נשלח כי למשתתף אין חשבון גוגל: צהוב. תקלה אמיתית נשארת אדומה */
 .nmail.bad.noacc, .mailbad.noacc { color: var(--yellow); }

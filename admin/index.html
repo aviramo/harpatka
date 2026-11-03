@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104fi" />
+  <link rel="stylesheet" href="admin.css?v=20261104fj" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1240,7 +1240,7 @@
     const lastOfType = (tid) => state.meetings.reduce((mx, m) => typeIdOf(m) === tid ? Math.max(mx, Date.parse(m.meeting_date + 'T' + String(m.meeting_time || '00:00').slice(0, 5)) || 0) : mx, -1);
     const typesByLast = state.mtypes.map((t, i) => ({ t, i, k: lastOfType(t.id) })).sort((x, y) => (y.k - x.k) || (x.i - y.i)).map((x) => x.t);
     const types = state.mtypes.length ? typesByLast.map((t) => '<div class="mtr mrow2 mtyrow" role="menuitemradio" tabindex="0" data-mt="' + t.id + '" aria-checked="' + (state.mtype === t.id && !state.filter) + '"><span>' + esc(t.name || 'ללא שם') + '</span>' + mcell(state.meetings.filter((m) => typeIdOf(m) === t.id).length, 'cal') + mcell(pOfType(t.id), 'user') +
-        '<button type="button" class="medit" data-edit-t="' + t.id + '" aria-label="עריכת סוג המפגש" title="עריכת סוג המפגש">' + EDIT_ICON + '</button></div>').join('') +
+        (state.mtype === t.id && !state.filter ? '<button type="button" class="medit" data-edit-t="' + t.id + '" aria-label="עריכת סוג המפגש" title="עריכת סוג המפגש">' + EDIT_ICON + '</button>' : '<span></span>') + '</div>').join('') +
       '<div class="mtr maddrow addt" id="addType"><span>סוג מפגש חדש</span><button type="button" role="menuitem" class="medit madd" aria-label="סוג מפגש חדש">' + icon('plus') + '</button></div>' : '';   // השם בימין והפלוס מיד אחריו, וכל השורה לחיצה
     const shownM = state.meetings.filter((m) => !state.mtype || typeIdOf(m) === state.mtype);
     /* "כל המשתתפים" ראשון: רמה מעל סוגי המפגשים והמפגשים */
@@ -1250,7 +1250,7 @@
       shownM.map((m) => {
         const ls = state.att.filter((a) => a.meeting_id === m.id), isNext = nextM === m;
         return '<div class="mtr mrow2' + (isPast(m) ? ' past' : '') + (isNext ? ' next' : '') + '" role="menuitemradio" tabindex="0" data-filter="' + m.id + '" aria-checked="' + (state.filter === m.id) + '"><span>' + dayTime(m) + '</span><span></span>' + mcell(ls.length, 'reg') +
-          '<button type="button" class="medit" data-edit-m="' + m.id + '" aria-label="עריכת מפגש" title="עריכת מפגש">' + EDIT_ICON + '</button></div>';
+          (state.filter === m.id ? '<button type="button" class="medit" data-edit-m="' + m.id + '" aria-label="עריכת מפגש" title="עריכת מפגש">' + EDIT_ICON + '</button>' : '<span></span>') + '</div>';
       }).join('') +
       '<div class="mtr maddrow" id="addMeeting"><span>מפגש חדש</span><button type="button" role="menuitem" class="medit madd" aria-label="מפגש חדש">' + icon('plus') + '</button></div>';
     if (!$('#mMenu').hidden) placeMSel();   // התפריט נשאר פתוח בבחירה: הכותרת משנה רוחב והוא נשאר צמוד אליה
@@ -4450,7 +4450,7 @@
   function renderWaMenu() {
     const sel = waSelected(), f = waFilter(), item = (id, ic, name, tag, on) => '<button type="button" role="menuitemradio" data-wt="' + esc(id) + '" aria-checked="' + on + '"><span class="wmi">' + ic + '<span class="wmn">' + esc(name) + '</span>' + (tag ? '<small>' + esc(tag) + '</small>' : '') + '</span></button>';
     /* מתחת לקו: סינון לפי שליחה (רק כשנבחרה תבנית, לא בהודעה ריקה) ואחריו הוספת תבנית */
-    const cn = sel ? waCounts() : null, seg = sel ? '<div class="wseg" role="group" aria-label="סינון הרשימה לפי שליחה של התבנית שנבחרה" title="מציג ברשימה את כולם, רק מי שנשלחה לו התבנית שנבחרה, או רק מי שלא">' + [['', 'הכל'], ['1', 'נשלח'], ['0', 'לא נשלח']].map((o) => '<button type="button" class="stc tagc' + (cn[o[0]] || f === o[0] ? '' : ' zero') + '" data-wsf="' + o[0] + '" aria-pressed="' + (f === o[0]) + '">' + o[1] + ' <small>' + cn[o[0]] + '</small>' + UI.fdot(f === o[0] && (o[0] === '1' ? 'green' : o[0] === '0' ? 'red' : 'ink')) + '</button>').join('') + '</div>' : '', bot = seg + addRows();
+    const cn = sel ? waCounts() : null, seg = sel ? '<div class="wseg" role="group" aria-label="סינון הרשימה לפי שליחה של התבנית שנבחרה" title="מציג ברשימה את כולם, רק מי שנשלחה לו התבנית שנבחרה, או רק מי שלא">' + [['', 'הכל'], ['1', 'נשלח'], ['0', 'לא נשלח']].map((o) => '<button type="button" class="wsf' + (cn[o[0]] || f === o[0] ? '' : ' zero') + '" data-wsf="' + o[0] + '" aria-pressed="' + (f === o[0]) + '"><span class="wmi"><span class="wdot">' + UI.fdot(f === o[0] && (o[0] === '1' ? 'green' : o[0] === '0' ? 'red' : 'ink')) + '</span><span class="wmn">' + o[1] + ' <small>' + cn[o[0]] + '</small></span></span></button>').join('') + '</div>' : '', bot = seg + addRows();
     $('#waMenu').innerHTML = item('', WA_ICON, 'הודעה ריקה', '', !sel) +
       waList().map((x) => { const on = !!sel && sel.id === x.id, b = item(x.id, PIN_ICON, x.name || 'ללא שם', x.tag || '', on); return on ? '<div class="wrow">' + b + '<button type="button" class="wedit" role="menuitem" data-wedit="' + esc(x.id) + '" title="עריכת ההודעה" aria-label="עריכת ההודעה">' + icon('edit', 'i18') + '</button></div>' : b; }).join('') +
       (bot ? '<div class="wbot">' + bot + '</div>' : '');
