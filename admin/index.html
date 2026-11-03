@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104gh" />
+  <link rel="stylesheet" href="admin.css?v=20261104gi" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -4000,6 +4000,7 @@
       document.execCommand('insertHTML', false, html); sync();
     };
     ta.tokInsert = (v) => put(chip(v));
+    ta.tokLock = (on) => { ed.contentEditable = on ? 'false' : 'true'; ed.classList.toggle('locked', on); ed.setAttribute('aria-disabled', on ? 'true' : 'false'); };   // שדה נעול: אי אפשר לכתוב בו ואין בו סמן
     /* מחיקה לאחור כשהסמן מיד אחרי תווית: התווית נמחקת בלחיצה אחת, גם עם הסימן הבלתי נראה שאחריה */
     const delChip = () => {
       const s = getSelection(); if (!s.rangeCount || !s.isCollapsed) return false;
@@ -4508,6 +4509,10 @@
   const tplW = (n) => $('#wt' + n);
   $('#tplFields').innerHTML = tplFieldsHtml((n) => 'wt' + n);
   tokenField(tplW('TplBody'), MSG_TOK); keepCaret(tplW('TplVars'));
+  /* תבנית בלי שם לא נשמרת, ולכן קודם השם ורק אחריו ההודעה: כך לא כותבים הודעה ארוכה שתאבד בסגירה */
+  const tplLockSync = () => { const lock = !tplW('TplName').value.trim(), b = tplW('TplBody'); b.tokLock(lock); b.setAttribute('placeholder', lock ? 'כדי לכתוב את ההודעה, קודם נותנים שם לתבנית' : ' '); tplW('TplVars').querySelectorAll('button').forEach((x) => { x.disabled = lock; }); };
+  tplW('TplName').addEventListener('input', tplLockSync);
+  $('#wtTplBodyEd').addEventListener('click', () => { if (!tplW('TplName').value.trim()) tplW('TplName').focus(); });
   const tplRowsOf = (e) => (e.scope.type_id ? tplsOfType(e.scope.type_id) : tplsOfMeeting(e.scope.meeting_id)).map((r) => ({ id: r.id, name: r.name, body: r.body }));
   function openTplPop(id, o) {
     o = o || {};
@@ -4518,7 +4523,7 @@
     const v = t || o.row || {}, isNew = !v.name && !v.body;
     $('#tplTitle').textContent = ty && ty.name ? ty.name : 'תבנית הודעה';
     $('#tplIntro').textContent = o.draft ? (o.draft === tyF ? 'ההודעה תישמר כשסוג המפגש ייווצר' : 'ההודעה תישמר כשהמפגש ייווצר') : m ? 'ההודעה שייכת למפגש ' + dm(m) + ' בלבד' : 'ההודעה שייכת לסוג המפגש, וחלה על כל המפגשים שלו';
-    tplW('TplName').value = v.name || ''; tplW('TplBody').value = v.body || '';
+    tplW('TplName').value = v.name || ''; tplW('TplBody').value = v.body || ''; tplLockSync();
     const del = tplW('TplDel'); del.dataset.sure = ''; del.textContent = 'מחיקת התבנית'; del.hidden = isNew;
     $('#tplDlg').showModal();
     if (isNew) tplW('TplName').focus();   // תבנית חדשה: מוכנה לכתיבה
@@ -4872,7 +4877,7 @@
     /* ציון התמדה: בחירה פשוטה בין מינוס 5 ל-5 (רק לסטטוס במפגש ואחרי המפגש) */
     const ptsSel = (s) => '<select class="stpts" data-pts="' + s.key + '" aria-label="ציון התמדה" title="ציון התמדה">' + [5, 4, 3, 2, 1, 0, -1, -2, -3, -4, -5].map((n) => '<option value="' + n + '"' + (Number(s.points || 0) === n ? ' selected' : '') + '>' + (n > 0 ? '+' + n : n) + '</option>').join('') + '</select>';
     /* שם הסטטוס בצבע שלו; ניטרלי ותגית (בלי צבע): שדה לבן עם מסגרת, כי אפור רק בכפתורים */
-    const nameStyle = (s) => (noCol || s.color === 'neutral') ? 'background:transparent;color:' + (noCol ? 'var(--text)' : 'var(--gray)') + ';box-shadow:inset 0 -1px 0 var(--line-2)' : 'background:' + (PALETTE[s.color] || PALETTE.sky)[0] + ';color:' + (PALETTE[s.color] || PALETTE.sky)[1];
+    const nameStyle = (s) => 'color:' + (noCol ? 'var(--text)' : s.color === 'neutral' ? 'var(--gray)' : (PALETTE[s.color] || PALETTE.sky)[1]);   // שדה רגיל: קו תחתון, והצבע של הסטטוס בטקסט בלבד
     const mkRows = (arr, pts) => arr.map((s) => (s.key === sys)
       ? '<div class="strow locked" data-k="' + s.key + '">' +
       '<span class="stlockic" title="המיקום קבוע: תמיד ראשון">' + icon('lock', 'i18') + '</span>' +
