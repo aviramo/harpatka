@@ -1233,7 +1233,7 @@
         return;
       }
       urlReady = true;
-      render(); refreshOpenSheet();
+      render(); refreshOpenSheet(); refreshSources();
     } catch (err) {
       console.error(err);
       if (silent) return;   // רענון שקט שנכשל: משאירים את מה שמוצג
@@ -2291,7 +2291,7 @@
   function showPromoterList() { prCur = null; if ($('#prDlg').open) $('#prDlg').close(); }   // אין מסך רשימה: ההתחשבנות נפתחת מכרטיס דרך ההגעה בהגדרות, וחזרה סוגרת
   /* הוספת דרך הגעה מתוך שדה בחירה (משתתף / תשלום): פותח את טופס דרך ההגעה, ואחרי שמירה בוחר אותו בשדה */
   function openNewPromoter(cb) { prAfterSave = cb || null; showPromoterForm(); $('#prDlg').showModal(); }
-  $('#prDlg').addEventListener('close', () => { prAfterSave = null; });
+  $('#prDlg').addEventListener('close', () => { prAfterSave = null; refreshSources(); });   // חזרה מההתחשבנות: הסכום לתשלום בכרטיס מתעדכן
   $('#prList').addEventListener('click', (e) => { if (e.target.closest('#prNew')) return showPromoterForm(); const r = e.target.closest('[data-pr]'); if (r) showPromoterDetail(r.dataset.pr); });
   $('#prList').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[data-pr]')) { e.preventDefault(); showPromoterDetail(e.target.dataset.pr); } });
   $('#prArrow').addEventListener('click', () => { prAfterSave = null; showPromoterList(); });
@@ -5008,6 +5008,8 @@
       '</div></div>';
   }
   function renderSources() { $('#srcPrList').innerHTML = state.promoters.map((x) => srcCard(x, 'pr:' + x.id)).join('') || '<p class="mnone">אין דרכי הגעה</p>'; }
+  /* מסך דרכי ההגעה הפתוח מתעדכן אחרי תשלום ובזמן אמת, אבל לא באמצע הקלדה בכרטיס */
+  function refreshSources() { if (!$('#setDlg').open || setView !== 'src') return; const ae = document.activeElement; if (ae && $('#srcPrList').contains(ae) && ae.matches('input, select')) return; renderSources(); }
   /* דרכי תשלום: רשימה שהמנהל מגדיר (שם לכל דרך); מוצגת כצ'יפים בקבלת תשלום */
   function renderPm() {
     $('#pmList').innerHTML = state.payMethods.map((x) => '<div class="pmrow" data-k="' + esc(x.key) + '">' + '<button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר">' + icon('grip', 'i18') + '</button>' + '<input class="pmname" value="' + esc(x.name) + '" maxlength="20" aria-label="שם דרך התשלום" />' + '<select class="pmown" aria-label="הקופה של" title="הקופה של: מי מקבל את הכסף בדרך הזאת"><option value="">הקופה של…</option>' + finAdmins().map((e) => '<option value="' + esc(e) + '"' + (x.owner_email === e ? ' selected' : '') + '>' + esc(finName(e)) + '</option>').join('') + '</select>' + (state.payMethods.length > 1 ? '<button type="button" class="stdel" data-pdel="' + esc(x.key) + '" aria-label="מחיקה" title="מחיקה">×</button>' : '') + '</div>').join('');
