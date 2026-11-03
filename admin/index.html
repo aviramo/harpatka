@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104gl" />
+  <link rel="stylesheet" href="admin.css?v=20261104gm" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -208,9 +208,10 @@
   <!-- פופאפ הקצאה: עולה מלמטה מעל כרטיס המשתתף (או לבד כשנפתח מהרשימה). מסך ההקצאה עצמו, הצ'יף והשורה השנייה עוברים אליו בפתיחה וחוזרים לכרטיס בסגירה (allocMount / allocUnmount) -->
   <dialog id="tplDlg" aria-labelledby="tplTitle">
     <div class="sheet">
-      <div class="sheet-head"><h2 id="tplTitle">תבנית הודעה</h2></div>
+      <div class="sheet-head"><button type="button" class="hbtn hback" id="tplArrow" aria-label="חזרה" title="חזרה" hidden><svg data-i="back"></svg></button><h2 id="tplTitle">תבנית הודעה</h2><button type="button" class="hbtn" id="tplView" aria-label="צפייה בהודעה עם נתונים לדוגמה" title="צפייה בהודעה עם נתונים לדוגמה"><svg data-i="eye"></svg></button></div>
       <p class="sthint stintro" id="tplIntro"></p>
       <div class="mtedit" id="tplFields"></div>
+      <div class="tplprev" id="tplPrev" hidden></div>
     </div>
   </dialog>
   <dialog id="mailDlg" aria-labelledby="mailTitle">
@@ -522,13 +523,14 @@
     else { menu.style.maxHeight = Math.floor(above) + 'px'; menu.style.top = minTop + 'px'; }
   }
   const NAV = { stack: [], ignore: 0, fromPop: false };
-  const NAV_BACK = { pDlg: '#pBack', setDlg: '#setBack', prDlg: '#prArrow', finDlg: '#finArrow' };
+  const NAV_BACK = { pDlg: '#pBack', setDlg: '#setBack', prDlg: '#prArrow', finDlg: '#finArrow', tplDlg: '#tplArrow' };
   const navDepthOf = (d) => {
     try {
       if (d.id === 'pDlg') return (sheet && sheet.id && pTab !== 'main') ? Math.max(1, viewStack.filter((x) => x !== 'main').length + 1) : 0;
       if (d.id === 'setDlg') return setIsRoot(setView) ? 0 : setView === 'del' ? (setRoot === 'st' || setRoot === 'src' ? 1 : 2) : 1;   // עריכת סוג מפגש נפתחת מתפריט המפגשים: מסך הסוג הוא הראשי, והסטטוסים וההודעה שלו מסכי משנה
       if (d.id === 'finDlg') return finV === 'main' ? 0 : 1;
       if (d.id === 'prDlg') return RANK[prView] || 0;
+      if (d.id === 'tplDlg') return $('#tplPrev').hidden ? 0 : 1;
     } catch (e) {}
     return 0;
   };
@@ -566,7 +568,7 @@
   let deep = null;
   try {
     const sp = new URLSearchParams(location.search);
-    if (['m', 'p', 'pay', 'at', 'pd', 'sv', 'bl', 'tg', 'tga', 'q', 'em', 'g', 's', 'st', 'pt', 'bd', 'pm', 'set', 'stv', 'pr', 'fin', 'sc', 'ag', 'lg', 'up', 'af', 'se', 'sp', 'sa', 'mt', 'tpl'].some((k) => sp.get(k))) { deep = { tpl: sp.get('tpl'), up: sp.get('up'), mt: sp.get('mt'), m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), at: sp.get('at'), pd: sp.get('pd'), sv: sp.get('sv'), bl: sp.get('bl'), tg: sp.get('tg'), tga: sp.get('tga'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g'), s: sp.get('s'), st: sp.get('st'), pt: sp.get('pt'), bd: sp.get('bd'), pm: sp.get('pm'), set: sp.get('set'), stv: sp.get('stv'), pr: sp.get('pr'), fin: sp.get('fin'), sc: sp.get('sc'), ag: sp.get('ag'), lg: sp.get('lg'), ml: sp.get('ml'), se: sp.get('se'), sp: sp.get('sp'), sa: sp.get('sa'), af: sp.get('af') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
+    if (['m', 'p', 'pay', 'at', 'pd', 'sv', 'bl', 'tg', 'tga', 'q', 'em', 'g', 's', 'st', 'pt', 'bd', 'pm', 'set', 'stv', 'pr', 'fin', 'sc', 'ag', 'lg', 'up', 'af', 'se', 'sp', 'sa', 'mt', 'tpl'].some((k) => sp.get(k))) { deep = { tplv: sp.get('tplv'), tpl: sp.get('tpl'), up: sp.get('up'), mt: sp.get('mt'), m: sp.get('m'), p: sp.get('p'), pay: sp.get('pay'), at: sp.get('at'), pd: sp.get('pd'), sv: sp.get('sv'), bl: sp.get('bl'), tg: sp.get('tg'), tga: sp.get('tga'), q: sp.get('q'), em: sp.get('em'), g: sp.get('g'), s: sp.get('s'), st: sp.get('st'), pt: sp.get('pt'), bd: sp.get('bd'), pm: sp.get('pm'), set: sp.get('set'), stv: sp.get('stv'), pr: sp.get('pr'), fin: sp.get('fin'), sc: sp.get('sc'), ag: sp.get('ag'), lg: sp.get('lg'), ml: sp.get('ml'), se: sp.get('se'), sp: sp.get('sp'), sa: sp.get('sa'), af: sp.get('af') }; sessionStorage.setItem('harpatka_deep', JSON.stringify(deep)); }
     else { deep = JSON.parse(sessionStorage.getItem('harpatka_deep') || 'null'); }
   } catch (e) {}
   const $ = (s) => document.querySelector(s);
@@ -594,7 +596,7 @@
     if ($('#prDlg').open && prCur) sp.set('pr', prCur);
     if (mDlg.open) sp.set('em', editingMeeting ? editingMeeting.id : 'new');   // עריכת מפגש או מפגש חדש
     if ($('#bdDlg').open) sp.set('bd', '1');
-    if ($('#tplDlg').open && tplEd && tplEd.id) sp.set('tpl', tplEd.id);   // עריכת תבנית הודעה
+    if ($('#tplDlg').open && tplEd && tplEd.id) { sp.set('tpl', tplEd.id); if (!$('#tplPrev').hidden) sp.set('tplv', '1'); }   // עריכת תבנית הודעה, והצפייה בה
     if ($('#stDlg').open) { sp.set('st', '1'); if (stPg.cur) sp.set('stv', ST_IDS[stPg.cur]); }
     if ($('#finDlg').open) sp.set('fin', finV === 'log' ? 'log' : finV === 'settle' ? 'settle' : finV === 'form' ? (finEdit && finEdit.id ? 'edit-' + finEdit.type + '-' + finEdit.id : 'new-' + ((finEdit && finEdit.kind) || 'expense')) : '1');   // כל שלב בכספים: ראשי, יומן, התחשבנות, טופס חדש או עריכה
     const s = sp.toString();
@@ -1187,7 +1189,7 @@
           if (d.ml) openMail(d.ml);
           if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
         }
-        else if (d.tpl && state.tpls.some((x) => x.id === d.tpl)) openTplPop(d.tpl);
+        else if (d.tpl && state.tpls.some((x) => x.id === d.tpl)) { openTplPop(d.tpl); if (d.tplv) tplShowPrev(true); }
         else if (d.em === 'new') openMeeting(null);
         else if (d.em && state.meetings.some((x) => x.id === d.em)) openMeeting(d.em);
         else if (d.set || d.pr) {
@@ -4531,7 +4533,25 @@
   $('#tplFields').innerHTML = tplFieldsHtml((n) => 'wt' + n);
   tokenField(tplW('TplBody'), MSG_TOK); keepCaret(tplW('TplVars'));
   /* תבנית בלי שם לא נשמרת, ולכן קודם השם ורק אחריו ההודעה: כך לא כותבים הודעה ארוכה שתאבד בסגירה */
-  const tplLockSync = () => { const lock = !tplW('TplName').value.trim(), b = tplW('TplBody'); b.tokLock(lock); b.setAttribute('placeholder', lock ? 'כדי לכתוב את ההודעה, קודם נותנים שם לתבנית' : ' '); tplW('TplVars').querySelectorAll('button').forEach((x) => { x.disabled = lock; }); };
+  const tplLockSync = () => { const lock = !tplW('TplName').value.trim(), b = tplW('TplBody'); b.tokLock(lock); b.setAttribute('placeholder', lock ? 'כדי לכתוב את ההודעה, קודם נותנים שם לתבנית' : ' '); tplW('TplVars').querySelectorAll('button').forEach((x) => { x.disabled = lock; }); tplViewSync(); };
+  const tplViewSync = () => { $('#tplView').disabled = !tplW('TplBody').value.trim(); };
+  tplW('TplBody').addEventListener('input', tplViewSync);
+  /* צפייה בהודעה: הנוסח שבשדה, גם לפני שנשמר, עם נתוני מפגש ומשתתף אקראי. מסך בתוך הפופאפ, עם חץ חזרה. המפגש: של התבנית; בתבנית של סוג: הקרוב של הסוג, ובלעדיו האחרון שלו */
+  const tplPrevMeeting = (e) => { const sc = (e && e.scope) || {}, own = sc.meeting_id && state.meetings.find((x) => x.id === sc.meeting_id); if (own) return own; const pool = state.meetings.filter((m) => !sc.type_id || typeIdOf(m) === sc.type_id).sort((a, b) => (a.meeting_date + a.meeting_time).localeCompare(b.meeting_date + b.meeting_time)); return pool.find((m) => !isPast(m)) || pool[pool.length - 1] || null; };
+  function tplShowPrev(on) {
+    const box = $('#tplPrev');
+    if (on) {
+      const ae = document.activeElement; if (ae && ae.blur) ae.blur();   // סוגר את המקלדת
+      const people = state.participants.filter((p) => p.active !== false && String(p.first_name || '').trim()), p = people[Math.floor(Math.random() * people.length)] || null, m = tplPrevMeeting(tplEd);
+      box.textContent = fillMsg(tplW('TplBody').value, m, p);
+      if (tplEd) tplEd.intro = $('#tplIntro').textContent;
+      $('#tplIntro').textContent = 'דוגמה עם ' + (p ? p.name : 'משתתף') + (m ? ' ומפגש ' + dm(m) : '');
+    } else if (tplEd && tplEd.intro != null) { $('#tplIntro').textContent = tplEd.intro; tplEd.intro = null; }
+    box.hidden = !on; $('#tplFields').hidden = on; $('#tplArrow').hidden = !on; $('#tplView').hidden = on;
+    if ($('#tplDlg').open) { navSync($('#tplDlg')); syncUrl(); }
+  }
+  $('#tplView').addEventListener('click', () => tplShowPrev(true));
+  $('#tplArrow').addEventListener('click', () => tplShowPrev(false));
   tplW('TplName').addEventListener('input', tplLockSync);
   $('#wtTplBodyEd').addEventListener('click', () => { if (!tplW('TplName').value.trim()) tplW('TplName').focus(); });
   const tplRowsOf = (e) => (e.scope.type_id ? tplsOfType(e.scope.type_id) : tplsOfMeeting(e.scope.meeting_id)).map((r) => ({ id: r.id, name: r.name, body: r.body }));
@@ -4540,6 +4560,7 @@
     const t = id ? state.tpls.find((x) => x.id === id) : null; if (id && !t) return;
     const scope = t ? (t.type_id ? { type_id: t.type_id } : { meeting_id: t.meeting_id }) : o.scope || null;
     const m = scope && scope.meeting_id ? state.meetings.find((x) => x.id === scope.meeting_id) : null, ty = scope ? typeById(scope.type_id || (m && typeIdOf(m))) : null;
+    tplShowPrev(false);
     tplEd = { id: id || null, scope, draft: o.draft || null, row: o.row || null };
     const v = t || o.row || {}, isNew = !v.name && !v.body;
     $('#tplTitle').textContent = ty && ty.name ? ty.name : 'תבנית הודעה';
@@ -4612,7 +4633,16 @@
   /* חזרה בדפדפן במצב חיפוש פתוח (בפוקוס או עם טקסט) סוגרת את החיפוש ומנקה אותו */
   const searchNav = { id: 'search', close() { const i = NAV.stack.findIndex((x) => x.d === searchNav); if (i >= 0) NAV.stack.splice(i, 1); const q = $('#q'); q.value = ''; state.q = ''; q.blur(); renderList(); syncUrl(); } };
   const searchOpen = () => { const q = $('#q'); return document.activeElement === q || !!q.value; };
+  /* באנדרואיד: חזרה סוגרת את החיפוש דרך CloseWatcher, בלי רשומת היסטוריה. רשומה גורמת לדפדפן להציג אנימציה של כל הדף חוזר אחורה, גם כשרק החיפוש נסגר */
+  const SEARCH_CW = 'CloseWatcher' in window && /Android/i.test(navigator.userAgent);
+  let searchCW = null;
   function syncSearchNav() {
+    if (SEARCH_CW) {
+      const on = searchOpen();
+      if (on && !searchCW) { searchCW = new CloseWatcher(); searchCW.onclose = () => { searchCW = null; searchNav.close(); }; }
+      else if (!on && searchCW) { const w = searchCW; searchCW = null; w.onclose = null; w.destroy(); }
+      return;
+    }
     const has = NAV.stack.some((x) => x.d === searchNav), open = searchOpen();
     if (open && !has) navOpen(searchNav); else if (!open && has) navClose(searchNav);
   }
