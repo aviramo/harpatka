@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104jk" />
+  <link rel="stylesheet" href="admin.css?v=20261104jl" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -4145,11 +4145,12 @@
      לכל נושא כותרת עם טוגל תצוגה ("בשורה" / "ברשימה") ומתחתיה האפשרויות כתגיות עם הכמות; לחיצה נוספת על תגית נבחרת מבטלת אותה */
   const fsec = (title, body, extra) => '<div class="fsec"><div class="fsh"><b>' + title + '</b>' + (extra || '') + '</div>' + (body ? '<div class="mgc">' + body + '</div>' : '') + '</div>';
   const fedit = (what, label) => '<button type="button" class="fedit" data-fedit="' + what + '" aria-label="' + label + '" title="' + label + '">' + icon('edit') + '</button>';   // סמל עריכה בכותרת של קבוצה
+  const DEFCOL = { gen: 'neutral', upd: 'sky', tag: 'neutral', src: 'neutral', login: 'amber', age: 'green' };   // צבע ברירת מחדל לכל קטגוריה בתפריט הסינון
   const FK = { gen: 'gender', upd: 'updF', tag: 'pay', src: 'srcF', login: 'loginF', age: 'ageF' };   // סוג הסינון בפאנל ← השדה ב-state
   function moreSecs() {
     const scope = state.participants.filter((p) => (state.filter ? linkOf(p.id, state.filter) : p.active !== false) && mtypeOk(p));
     const cnt = (f) => scope.filter(f).length;
-    const chip = (kind, val, label, n, col) => { const on = payKeys(state[FK[kind]]).includes(val), pc = col && PALETTE[col]; return '<button type="button" class="mc' + (n || on ? '' : ' zero') + '"' + (pc ? ' data-sc="1" style="--sbg:' + pc[0] + ';--sfg:' + pc[1] + '"' : '') + ' data-mk="' + kind + '" data-mv="' + esc(val) + '" aria-pressed="' + on + '">' + (kind === 'age' ? '<bdi dir="ltr">' + esc(label) + '</bdi>' : esc(label)) + ' <small>' + n + '</small>' + UI.fdot(on && (pc ? 'sc' : 'ink')) + '</button>'; };
+    const chip = (kind, val, label, n, col) => { const on = payKeys(state[FK[kind]]).includes(val), pc = PALETTE[col || DEFCOL[kind]]; return '<button type="button" class="mc' + (n || on ? '' : ' zero') + '"' + (pc ? ' data-sc="1" style="--sbg:' + pc[0] + ';--sfg:' + pc[1] + '"' : '') + ' data-mk="' + kind + '" data-mv="' + esc(val) + '" aria-pressed="' + on + '">' + (kind === 'age' ? '<bdi dir="ltr">' + esc(label) + '</bdi>' : esc(label)) + ' <small>' + n + '</small></button>'; };
     return '' +
       fsec('עדכון אחרון', UPD_B.map((b) => chip('upd', b[0], b[1], cnt((p) => updWithin(p.id, b[2])))).join('')) +
       fsec('דרך הגעה', chip('src', '__none', 'ללא דרך הגעה', cnt((p) => !channelAt(p, state.filter))) + state.promoters.map((x) => chip('src', x.id, x.name, cnt((p) => (channelAt(p, state.filter) || {}).id === x.id), x.color || 'red')).join('') , fedit('src', 'עריכת דרכי הגעה')) +
@@ -4163,7 +4164,6 @@
     const m = curMeeting();
     /* בלי שורת מונה בראש התפריט (31.10.26): התפריט נפתח מתחת לשורת הסינון, והמונה שבה נשאר גלוי */
     let h = moreSecs();
-    if (filtersOn()) h = '<button type="button" class="fclear" data-fclear="1" aria-label="ניקוי סינונים" title="ניקוי סינונים">' + icon('filterx', 'i18') + '</button>' + h;   // בפינה השמאלית העליונה של התפריט
     $('#viewMenu').innerHTML = h;
   }
   /* סינון לפי העמודות (תשלום, שליחת פרטי המפגש; בתצוגה הכללית יתרה): אייקון מעל כל עמודה, לחיצה פותחת תפריט עם המצבים, אייקוניהם והכמות; הבחירה מבצעת את הסינון */
