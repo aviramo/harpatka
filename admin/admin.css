@@ -612,22 +612,23 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .pstchips .sopt { color: var(--text); }
 /* אריח בצד ימין של רצועת המפגשים (1.11.26; לפי הסקיל ui-ux-pro-max: שטח לחיצה 44px ומעלה, תווית נגישה לכפתור הסמל, מצב ריחוף ולחיצה): מלבן אחד, למעלה מונה המפגשים עם סמל יומן, ומתחתיו פלוס גדול ("שיוך למפגש"); בלי תת כותרת. בגובה כרטיס מפגש */
 /* שורת מפגש בכרטיס המשתתף (2.11.26): אותו רכיב בדף המפגשים ובמפגש שממנו הגענו. העמודות ברוחב קבוע, כך שהסטטוס והתשלום מיושרים בין השורות */
-.mlist .mrow { display: grid; grid-template-columns: minmax(0, 1fr) 84px 76px var(--ind); column-gap: 8px; align-items: center; min-height: var(--ctl); border-bottom: 1px solid var(--surface-2); background: transparent; }
+.mlist { display: grid; grid-template-columns: minmax(0, 1fr) auto auto var(--ind); }   /* רוחב עמודות הסטטוס והתשלום לפי התגית הרחבה ביותר, כך שהתגיות מיושרות בין השורות ולא נחתכות */
+.mlist .mrow { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; column-gap: 8px; align-items: center; min-height: var(--ctl); border-bottom: 1px solid var(--surface-2); background: transparent; }
 .mlist .mrow:last-child { border-bottom: 0; }
 .mwhen { min-width: 0; display: flex; align-items: baseline; gap: 8px; }   /* תאריך ושם בשורה אחת; שם ארוך נחתך */
 .mlist .mrow .mlabel { flex: 0 0 auto; width: auto; height: auto; padding: 0; border: 0; background: transparent; color: var(--text); font-weight: 500; line-height: 20px; }
 .mnm { flex: 0 1 auto; min-width: 0; overflow: hidden; color: var(--text-2); font-size: 13px; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; }
 .mtm { flex: 0 0 auto; color: var(--text-2); font-size: 13px; line-height: 18px; }
 .mlist .mrow.hl { margin-inline: calc(var(--gut) * -1); padding-inline: var(--gut); background: var(--surface); }   /* המפגש שממנו הגענו: לכל הרוחב ובלי הדגשות, כמו משתתף מסומן ברשימה (.row.last) */
-.mlist .mrow .pay { position: relative; width: 100%; padding: 0; background: transparent; border-color: transparent; overflow: visible; }   /* הצבע מהסטטוס עצמו (applyStatuses), בלי רקע */
-.mlist .mrow .pay.none { background: transparent; color: var(--text-2); }
+.mlist .mrow .pay { position: relative; justify-self: start; overflow: visible; }   /* רכיב התגית, כמו בלוח המשתתפים; הצבע מהסטטוס עצמו (applyStatuses) */
+.mlist .mrow .pay.none { background: var(--surface-2); color: var(--text-2); }
 .mlist .mrow .mline { display: contents; }
-.mlist .mrow .mmoney { position: relative; width: 100%; padding: 0; background: transparent; overflow: visible; }
+.mlist .mrow .mmoney { position: relative; justify-self: start; overflow: visible; }
 .mlist .mrow .pay::before, .mlist .mrow .mmoney::before { content: ""; position: absolute; inset: -8px 0; }   /* שטח לחיצה של 44px */
-.mlist .mrow .mmoney.has { color: var(--green); }
-.mlist .mrow .mmoney.wait { color: var(--yellow); }
-.mlist .mrow .mmoney.free { background: transparent; color: var(--text-2); }
-.mlist .mrow .mmoney:not(.has):not(.wait):not(.free):not(.mplus) { color: var(--red); }   /* לתשלום או נשאר לשלם */
+.mlist .mrow .mmoney.has { background: var(--green-bg); color: var(--green); }
+.mlist .mrow .mmoney.wait { background: var(--yellow-bg); color: var(--yellow); }
+.mlist .mrow .mmoney.free { background: var(--surface-2); color: var(--text-2); }
+.mlist .mrow .mmoney:not(.has):not(.wait):not(.free):not(.mplus) { background: var(--red-bg); color: var(--red); }   /* לתשלום או נשאר לשלם */
 /* אטבים. המחוון עוקב אחרי הגלילה של הפייג'ר */
 .ptabs { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); margin-inline: calc(var(--gut) * -1); border-bottom: 1px solid var(--line); }   /* ארבעה טאבים ברוחב שווה, מקצה לקצה של המסך */
 .ptabs [role="tab"] { display: flex; align-items: center; justify-content: center; height: var(--ctl); padding: 0; border: 0; background: none; color: var(--text-2); font-size: 15px; font-weight: 700; white-space: nowrap; cursor: pointer; }
