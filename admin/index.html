@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104ic" />
+  <link rel="stylesheet" href="admin.css?v=20261104id" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -34,6 +34,7 @@
         </div>
         <div class="hgrp">
         <button type="button" class="hicon nextm" id="nextMBtn" hidden><svg data-i="calnext"></svg></button>   <!-- קיצור דרך למפגש הקרוב, מימין לכפתור התפריט -->
+        <div id="listMore"></div>   <!-- סינון: מימין למיון -->
         <button type="button" class="hicon" id="sortBtnH" aria-haspopup="menu" aria-expanded="false" aria-label="מיון הרשימה" title="מיון הרשימה"><svg data-i="sort"></svg></button>   <!-- מימין לכפתור התפריט -->
         <div class="hicons">
           <button type="button" class="hicon" id="menuBtn" aria-label="תפריט" title="תפריט" aria-haspopup="menu" aria-expanded="false"><svg data-i="grid"></svg><span class="bdbadge" id="menuBadge" hidden></span></button>
@@ -67,7 +68,7 @@
           <input id="q" type="search" placeholder="חיפוש" autocomplete="off" aria-label="חיפוש או הוספת משתתף" />
           <button type="button" class="sclear" id="qClear" aria-label="ניקוי החיפוש" tabindex="-1">×</button>
         </label>
-      <div class="astrip" id="activeStrip" role="group" aria-label="סינונים פעילים" hidden></div><div class="lbend" id="listWa"></div><div class="lbend" id="listPay"></div><div class="lbend" id="listSent"></div><div class="lbend" id="listBal"></div><div class="lbend" id="listMore"></div>
+      <div class="astrip" id="activeStrip" role="group" aria-label="סינונים פעילים" hidden></div><div class="lbend" id="listWa"></div><div class="lbend" id="listPay"></div><div class="lbend" id="listSent"></div><div class="lbend" id="listBal"></div>
     </div>
     <ul class="list" id="list"></ul>
     <div class="addbox" id="addBox"></div>
@@ -1437,7 +1438,7 @@
     const paidN = (v) => base.filter((p) => genOk(p) && sentOk(p) && matchPay(p, epk) && payF(p, v)).length;
     { const nd = String(Math.max(2, String(state.participants.length).length)); $('#listTags').style.setProperty('--nd', nd); }
     { const lc = $('#listCount'); lc.textContent = state.listCnt == null ? '' : state.listCnt; }
-    const filtHtml = '<button type="button" class="hfilt all" id="filtBtn" aria-haspopup="menu" aria-expanded="' + !$('#viewMenu').hidden + '" aria-label="סינון ותצוגה' + (panelOn() ? ' (יש סינון פעיל)' : '') + '" title="סינון ותצוגה">' + icon('dots') + UI.fdot(panelOn() && 'ink') + '</button>';
+    const filtHtml = '<button type="button" class="hfilt all" id="filtBtn" aria-haspopup="menu" aria-expanded="' + !$('#viewMenu').hidden + '" aria-label="סינון ותצוגה' + (panelOn() ? ' (יש סינון פעיל)' : '') + '" title="סינון ותצוגה">' + icon('filter') + UI.fdot(panelOn() && 'ink') + '</button>';
     { const sb = $('#sortBtnH'), sd = state.sort !== 'new' || state.sortDir === 'asc'; sb.innerHTML = icon('sort') + UI.fdot(sd && 'ink'); sb.setAttribute('aria-expanded', String(!$('#sortMenu').hidden)); sb.title = 'מיון: ' + (SORTS.find((x) => x[0] === state.sort) || SORTS[0])[1] + (state.sortDir === 'asc' ? ' (הפוך)' : ''); }
     $('#listMore').innerHTML = filtHtml; paintActive();   // שלוש נקודות מימין לסינון ה-₪; המגדר בתוך התפריט
     ['#listWa', '#listPay', '#listSent', '#listBal'].forEach((q) => { $(q).innerHTML = ''; });   // אייקוני הסינון של העמודות (תשלום, שליחה, הגעה / יתרה, ), מיושרים מעל העמודות שלהן
@@ -4215,10 +4216,9 @@
   /* אייקוני הסינון מיושרים מעל העמודות שלהם ברשימה (₪, שליחה, יתרה) */
   /* שלוש הנקודות (הסינון) מימין לימני באייקוני העמודות, ברווח של 8 פיקסל */
   function placeGen(br) {
-    const bar = $('#listTags'), mo = $('#listMore'); let mx = -1;
+    const bar = $('#listTags'); let mx = -1;
     bar.querySelectorAll('.lbend:not(#listMore) > *').forEach((e) => { const r = e.getBoundingClientRect(); if (r.width) mx = Math.max(mx, r.right - br.left); });
-    mo.style.left = mx < 0 ? '' : Math.round(mx + 8) + 'px';
-    const st = $('#activeStrip'), mr = mo.firstElementChild && mo.firstElementChild.getBoundingClientRect(); if (st && mr && mr.width) st.style.left = Math.round(mr.right - br.left + 8) + 'px';
+    const st = $('#activeStrip'); if (st) st.style.left = mx < 0 ? '' : Math.round(mx + 8) + 'px';   // הסטריפ נגמר 8px מאייקוני העמודות
   }
   function alignFilters() {
     const bar = $('#listTags'); if (!bar) return; const br = bar.getBoundingClientRect();
