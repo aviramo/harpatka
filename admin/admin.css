@@ -286,8 +286,8 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 .qmenu .qedit, .qeditlink { display: flex; align-items: center; justify-content: center; gap: 8px; height: 32px; background: transparent; color: var(--text-2); font-size: 13px; font-weight: 600; }
 
 /* 3.10 שורת רשימה (שטוחה): תנועות, יומנים, שורות הגדרה */
-.finrow, .walrow, .logrow, .bq, .cntmenu .cnr, .setrow { border-bottom: 1px solid var(--line); }
-.finrow:last-child, .walrow:last-child, .logrow:last-child, .bq:last-child { border-bottom: 0; }
+.finrow, .walrow, .logrow, .cntmenu .cnr, .setrow { border-bottom: 1px solid var(--line); }
+.finrow:last-child, .walrow:last-child, .logrow:last-child { border-bottom: 0; }
 
 /* 3.11 גוונים (מחלקות שמתווספות לכל רכיב: צבע רקע וטקסט מהפלטה) */
 .tone-green { background: var(--green-bg) !important; color: var(--green) !important; }
@@ -739,6 +739,8 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .walrow .wl b { font-size: 15.5px; font-weight: 600; }
 .walrow .wl small { font-size: 13px; color: var(--text-2); }
 .walrow .wamt { font-weight: 800; font-size: 16.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.walrow.prtotal .wl b { font-weight: 800; }   /* סך הכול בסוף התנועות: שווה ליתרה */
+.prsum > .metric:not(.wide) { display: grid; grid-row: span 3; grid-template-rows: subgrid; row-gap: 4px; justify-items: start; }   /* שני האריחים: הכותרות, המספרים ושורות המשנה על אותם קווים, גם כשכותרת עוברת שורה */
 .walrow:has(.wr) { align-items: flex-start; }   /* הסכום בשורה של השם, גם כשהפרטים עוברים שורה */
 .walrow .wr { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }   /* טור שמאלי בהתחשבנות דרך הגעה: הסכום, ומתחתיו היתרה אחרי התנועה או מחיקת התשלום */
 .walrow .wr small { font-size: 13px; color: var(--text-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -905,8 +907,6 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .prearn { text-align: left; font-size: 17px; font-weight: 800; line-height: 1.1; color: var(--text); }
 .prearn small { display: block; margin: 0; font-size: 12px; font-weight: 600; color: var(--text-2); }
 .prok { color: var(--green); font-weight: 800; font-size: 14.5px; }
-.bq { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 0; }
-.bq .n { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .pst { background: var(--red-bg); color: var(--red); }
 .pst.none { background: var(--surface-2); color: var(--text-2); }
 
@@ -1262,7 +1262,7 @@ dialog .dclose { display: none; }
 .dmadd:disabled { opacity: .6; }
 
 /* חריגים לרדיוס הפינות: אלמנט עם קו בצד אחד (הקו היה מתעקל בקצוות), שטח מקצה לקצה, ופופאפ שצמוד לקצוות המסך */
-.row, .wrap, .wrap > .vbar, .sheet-head, .finrow, .walrow, .logrow, .bq, .cntmenu .cnr, .setrow, .mtr.mhead, #fMenu .fsep, #viewMenu .vrow, .nform, #nList .nitem, .ptabs, .ptabi, .mmenu button.addm2, .mmenu .maddrow, #setDlg .setfield, .srccard, .tb .tr, #waMenu .wbot, .hsearch, .mlist .mrow, .hmi.out, .fsl.hd, .tokf, .nform textarea, .srccard .codein, .srccard .ratetype, #listTags .hsearch input { border-radius: 0; }
+.row, .wrap, .wrap > .vbar, .sheet-head, .finrow, .walrow, .logrow, .cntmenu .cnr, .setrow, .mtr.mhead, #fMenu .fsep, #viewMenu .vrow, .nform, #nList .nitem, .ptabs, .ptabi, .mmenu button.addm2, .mmenu .maddrow, #setDlg .setfield, .srccard, .tb .tr, #waMenu .wbot, .hsearch, .mlist .mrow, .hmi.out, .fsl.hd, .tokf, .nform textarea, .srccard .codein, .srccard .ratetype, #listTags .hsearch input { border-radius: 0; }
 @media (max-width: 699px) { #mMenu { border-radius: 0; } }   /* במובייל התפריט מקצה לקצה */
 dialog { border-radius: var(--r) var(--r) 0 0; }
 #pDlg, #setDlg, #stDlg, #finDlg, #prDlg, #mDlg, #meDlg { border-radius: 0; }
