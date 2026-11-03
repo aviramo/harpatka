@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104gs" />
+  <link rel="stylesheet" href="admin.css?v=20261104gt" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -951,6 +951,7 @@
   const sortMeetings = () => state.meetings.sort((a, b) => (b.meeting_date + b.meeting_time).localeCompare(a.meeting_date + a.meeting_time));   // מהחדש לישן
 
   const linksOf = (pid) => state.att.filter((a) => a.participant_id === pid);
+  const meetCountOf = (p) => { const ls = linksOf(p.id); return state.mtype ? ls.filter((l) => { const m = state.meetings.find((x) => x.id === l.meeting_id); return m && typeIdOf(m) === state.mtype; }).length : ls.length; };   // בסוג מפגש: רק המפגשים של הסוג
   const linkOf = (pid, mid) => state.att.find((a) => a.participant_id === pid && a.meeting_id === mid);
 
   let toastTimer;
@@ -1570,7 +1571,7 @@
   }
 
   /* מיון הרשימה */
-  const SORTS = [['new', 'הרשמה', 'מהחדש לישן', 'מהישן לחדש'], ['upd', 'עדכון', 'מהעדכני לישן', 'מהישן לעדכני'], ['pers', 'התמדה', 'מהגבוהה לנמוכה', 'מהנמוכה לגבוהה'], ['status', 'סטטוס', 'לפי סדר הסטטוסים בסוג המפגש', 'בסדר הפוך', true], ['pay', 'תשלום', 'דווח, לתשלום, שולם, לא לתשלום', 'בסדר הפוך', true]];   // סטטוס (רק בתוך מפגש): לפי סדר הסטטוסים של סוג המפגש (סטטוס הרשמה ואחריו סטטוס מפגש, כמו בפס הצ'יפים)   // הרשמה: לפי מועד ההרשמה; עדכון: לפי הפעולה האחרונה שבוצעה על המשתתף
+  const SORTS = [['new', 'הרשמה', 'מהחדש לישן', 'מהישן לחדש'], ['upd', 'עדכון', 'מהעדכני לישן', 'מהישן לעדכני'], ['meet', 'כמות מפגשים', 'מהרב למעט', 'מהמעט לרב', false, true], ['pers', 'התמדה', 'מהגבוהה לנמוכה', 'מהנמוכה לגבוהה'], ['status', 'סטטוס', 'לפי סדר הסטטוסים בסוג המפגש', 'בסדר הפוך', true], ['pay', 'תשלום', 'דווח, לתשלום, שולם, לא לתשלום', 'בסדר הפוך', true]];   // סטטוס (רק בתוך מפגש): לפי סדר הסטטוסים של סוג המפגש (סטטוס הרשמה ואחריו סטטוס מפגש, כמו בפס הצ'יפים)   // הרשמה: לפי מועד ההרשמה; עדכון: לפי הפעולה האחרונה שבוצעה על המשתתף
   function sortCmp() {
     const byNew = (a, b) => String(b.created_at || '').localeCompare(String(a.created_at || ''));
     const byName = (a, b) => a.name.localeCompare(b.name, 'he');
@@ -1585,6 +1586,10 @@
     if (state.sort === 'pay' && state.filter) {   // תשלום (רק בתוך מפגש): דווח, לתשלום, שולם, לא לתשלום (אותו סדר כמו בתפריט הסינון)
       const o = { w: 0, '0': 1, '1': 2, n: 3 };
       return rev((a, b) => ((o[payStateOf(a)] ?? 1) - (o[payStateOf(b)] ?? 1)) || byNew(a, b) || byName(a, b));
+    }
+    if (state.sort === 'meet' && !state.filter) {   // כמות מפגשים (רק בכל המשתתפים ובסוג מפגש): מי שלא משויך לאף מפגש תמיד בסוף, בשני הכיוונים
+      const n = new Map(state.participants.map((p) => [p.id, meetCountOf(p)]));
+      return (a, b) => { const x = n.get(a.id) || 0, y = n.get(b.id) || 0; if (!x || !y) return !x && !y ? byName(a, b) : !x ? 1 : -1; return (asc ? x - y : y - x) || byName(a, b); };
     }
     if (state.sort === 'pers') {   // התמדה: לפי הציון הממוצע למפגש (אותו דירוג של צ'יף ההתמדה); מי שעוד אין לו נתונים תמיד בסוף, בשני הכיוונים
       const by = attCtx().by, none = (x) => !x || !x.total;
@@ -1605,7 +1610,7 @@
   function renderSort() {
     
     
-    $('#sortMenu').innerHTML = SORTS.filter((s) => !s[4] || state.filter).map((s) => { const on = state.sort === s[0], t = on ? s[1] + ', ' + (state.sortDir === 'asc' ? s[3] : s[2]) + ' (לחיצה נוספת הופכת את הסדר)' : s[1]; return '<button type="button" role="menuitemradio" data-sort="' + s[0] + '" aria-checked="' + on + '" title="' + esc(t) + '"' + (on ? ' aria-label="' + esc(t) + '"' : '') + '><span>' + s[1] + '</span>' + (on ? '<span class="sdir" aria-hidden="true">' + icon(state.sortDir === 'asc' ? 'sup' : 'sdown', 'i16') + '</span>' : '') + '</button>'; }).join('');
+    $('#sortMenu').innerHTML = SORTS.filter((s) => (!s[4] || state.filter) && (!s[5] || !state.filter)).map((s) => { const on = state.sort === s[0], t = on ? s[1] + ', ' + (state.sortDir === 'asc' ? s[3] : s[2]) + ' (לחיצה נוספת הופכת את הסדר)' : s[1]; return '<button type="button" role="menuitemradio" data-sort="' + s[0] + '" aria-checked="' + on + '" title="' + esc(t) + '"' + (on ? ' aria-label="' + esc(t) + '"' : '') + '><span>' + s[1] + '</span>' + (on ? '<span class="sdir" aria-hidden="true">' + icon(state.sortDir === 'asc' ? 'sup' : 'sdown', 'i16') + '</span>' : '') + '</button>'; }).join('');
   }
   const closeSort = () => { $('#sortMenu').hidden = true; const b = $('#sortBtnH'); if (b) b.setAttribute('aria-expanded', 'false'); };   // התפריט הצף (מועבר ל-body) נפתח מכפתור המיון בכותרת
   document.body.appendChild($('#sortMenu'));
@@ -1687,7 +1692,9 @@
       if (state.showPay && state.filter && linkOf(p.id, state.filter)) { const al = allocatedOf(p.id, state.filter), mt = state.meetings.find((x) => x.id === state.filter), lk = linkOf(p.id, state.filter), need = mt ? (pkgNetFor(p.id, state.filter) > 0 ? al : expectedPrice(p.id, mt, ilDay(lk.created_at || new Date().toISOString()))) : 0;
         if (noPayOf(p, lk)) payIc = '<span class="payic free" title="לא לתשלום">₪</span>';
         else payIc = reportedOf(p.id, state.filter) ? '<span class="payic wait" title="דווח' + reportedAmt(p.id, state.filter) + (al > 0 ? ' (שולם ₪' + nfm(al) + ')' : '') + ': המשתתף דיווח ששילם, ממתין לאימות">₪</span>' : dueOf(p.id, state.filter) > 0 ? '<span class="payic" title="שולם ₪' + nfm(al) + ', נשאר לשלם ₪' + nfm(dueOf(p.id, state.filter)) + '">₪</span>' : al <= 0 ? '<span class="payic" title="לתשלום">₪</span>' : '<span class="payic ok" title="שולם ₪' + nfm(al) + '">₪</span>'; }   // אין "שולם חלקית": יש כסף שהוקצה למפגש = שולם   // סמל תשלום (לפי רשומות התשלום, לא לפי סטטוס) מימין לסטטוס
+      let mcntHtml = '';
       if (!state.filter) {
+        { const n = meetCountOf(p); if (n) mcntHtml = '<span class="mcnt" title="משויך ל' + (n === 1 ? 'מפגש אחד' : '-' + n + ' מפגשים') + '">' + icon('cal', 'i14') + n + '</span>'; }   // בלי שיוך: התא ריק, והעמודה נשמרת
         const pr = persist(p), rate = pr.total ? pr.score / pr.total : 0, st = attCtx().by[p.id] || { cls: 'n', rank: 0, n: 0 }, cls = st.cls;
         const fut = linksOf(p.id).filter((l) => { const m = state.meetings.find((x) => x.id === l.meeting_id); return m && !started(m); }).length;   // מפגשים עתידיים שהמשתתף רשום אליהם נספרים במכנה; הצבע נקבע רק לפי מפגשים שהתחילו
         if (state.showAtt !== false) tags = UI.tag('<bdi dir="ltr">' + (pr.score > 0 ? '+' : '') + pr.score + '</bdi>', 'ptag cnt ' + cls, { title: 'ציון התמדה ' + pr.score + (pr.total ? ' ב-' + pr.total + ' מפגשים (ממוצע ' + (Math.round(rate * 10) / 10) + ' למפגש), דירוג ' + st.rank + ' מתוך ' + st.n : '') + (fut ? '. ' + fut + ' מפגשים עתידיים' : '') });
@@ -1699,7 +1706,7 @@
           '<div class="nm"><span class="name' + nameCls(p) + '" dir="rtl">' + nameMark(p) + '</span>' + '</div>' +   // רק השם מבודד (שם באנגלית לא הופך את השורה), וסמל החשבון תמיד משמאל לשם
           (true ? '<div class="meta">' + (true ? '<span class="age' + (originOf(p, state.filter) ? ' ' + originOf(p, state.filter).kind : '') + '"' + originAttr(p, state.filter) + ' title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi dir="rtl">' + (age != null ? age : (p.gender ? '' : '—')) + (age != null || !p.gender ? ' ' : '') + '<b class="gl">' + (p.gender ? icon(p.gender === 'male' ? 'male' : 'female', 'i14') : '<span class="ic i14 ph" aria-hidden="true"></span>') + '</b>' + '</bdi></span>' : '') + '<span class="sidewrap">' + side + tags + payIc + '</span>' + '</div>' : '') +
           // הערה אחרונה וסימון צירוף תמונה לא מוצגים ברשימה (הערות רק בכרטיס המשתתף)
-          evc +
+          evc + mcntHtml +
           (!state.filter && state.showPay ? (() => { const b = Math.round(creditOf(p.id) * 100) / 100; const fa = b === 0 && freeAll(p); return '<span class="balic ' + (b > 0 ? 'pos' : b < 0 ? 'neg' : fa ? 'fr' : 'zero') + '" title="' + (b > 0 ? 'זכאי: יתרה לטובתו ₪' + nfm(b) : b < 0 ? 'חייב: יתרת חובה ₪' + nfm(-b) : fa ? 'לא לתשלום: בכל המפגשים שנרשם אליהם' : 'מאוזן') + '">₪</span>'; })() : '') +
         '</div>' +
       '</li>';
