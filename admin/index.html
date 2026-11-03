@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104hb" />
+  <link rel="stylesheet" href="admin.css?v=20261104hc" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1380,8 +1380,6 @@
   const stMatch = (p, key) => state.filter ? linkStatus(linkOf(p.id, state.filter)) === key : linksOf(p.id).some((l) => { if (linkStatus(l) !== key) return false; if (!state.mtype) return true; const m = state.meetings.find((x) => x.id === l.meeting_id); return !!m && typeIdOf(m) === state.mtype; });   // במפגש: התגית בו; בסוג מפגש: במפגשים של הסוג; בכל המשתתפים: בכל מפגש
   const filtersOn = () => !!(effPay() || effGender() || effPaidF() || effSent() || effBal() || moreOn() || waFilter());
   const clearFilters = () => { state.pay = null; state.gender = null; state.paidF = null; state.sent = null; state.bal = null; state.srcF = null; state.ageF = null; state.loginF = null; state.updF = null; waSetFilter(''); };   // כל הסינונים, בלי המיון
-  /* המונה בשורת הסינון רק כשמוצג חלק מהרשימה (חיפוש או סינון): בלי סינון הכמות בכותרת */
-  const paintCount = () => { const lc = $('#listCount'); if (lc) lc.textContent = ((state.q.trim() || filtersOn()) && state.listCnt != null) ? state.listCnt : ''; };
   function renderFacets() {
     $('#clearFBtn').hidden = !filtersOn();
     normFilter();
@@ -1407,10 +1405,10 @@
     const evOn = !!(state.filter && sentView(state.meetings.find((x) => x.id === state.filter)));   // סינון השליחה מוצג כשהטוגל דולק (גם כשאף אחד עוד לא זכאי)
     const paidN = (v) => base.filter((p) => genOk(p) && sentOk(p) && matchPay(p, epk) && payF(p, v)).length;
     { const nd = String(Math.max(2, String(state.participants.length).length)); $('#stStrip').style.setProperty('--nd', nd); $('#listTags').style.setProperty('--nd', nd); }
-    paintCount();
+    { const lc = $('#listCount'); lc.textContent = state.listCnt == null ? '' : state.listCnt; }
     const filtHtml = '<button type="button" class="hfilt all" id="filtBtn" aria-haspopup="menu" aria-expanded="' + !$('#viewMenu').hidden + '" aria-label="סינון ותצוגה' + (panelOn() ? ' (יש סינון פעיל)' : '') + '" title="סינון ותצוגה">' + icon('filter') + UI.fdot(panelOn() && 'ink') + '</button>';
     const sortHtml = '<button type="button" class="hfilt all" id="sortBtnH" aria-haspopup="menu" aria-expanded="' + !$('#sortMenu').hidden + '" aria-label="מיון הרשימה" title="מיון: ' + (SORTS.find((x) => x[0] === state.sort) || SORTS[0])[1] + (state.sortDir === 'asc' ? ' (הפוך)' : '') + '">' + icon('sort') + UI.fdot((state.sort !== 'new' || state.sortDir === 'asc') && 'ink') + '</button>';
-    $('#listClu').innerHTML = '<span class="ltools">' + filtHtml + sortHtml + '</span>' + (gHtml ? '<span class="lgen">' + gHtml + '</span>' : '');   // קבוצות: הכלים (עם החיפוש) מימין, המגדר משמאלם, ואייקוני העמודות מעל העמודות שלהן
+    $('#listClu').innerHTML = filtHtml + sortHtml + gHtml;   // מימין לשמאל: סינון, מיון, זכר, נקבה (צמודים לאייקוני הסינון של העמודות)
     ['#listWa', '#listPay', '#listSent', '#listBal'].forEach((q) => { $(q).innerHTML = ''; });   // אייקוני הסינון של העמודות (תשלום, שליחה, הגעה / יתרה, ), מיושרים מעל העמודות שלהן
     {   /* ספירה לכל אפשרות בתפריטי הסינון של העמודות: כמה משתתפים יוצגו אם בוחרים אותה (שאר הסינונים והחיפוש נשמרים) */
       const mid = state.filter, lk = (p) => linkOf(p.id, mid);
@@ -1522,7 +1520,7 @@
     $('#addBox').innerHTML = q ? '<button type="button" class="newbtn" id="addNew" aria-label="הוספת משתתף חדש: ' + esc(state.q.trim()) + '" title="הוספת משתתף חדש"><span class="tg ico plus" aria-hidden="true">+</span><b dir="auto">' + esc(state.q.trim()) + '</b></button>' : '';   // מנותק מהרשימה, מתחתיה
     const hasNew = !!q;
 
-    state.listCnt = String(rows.length + others.length); paintCount();   // מספר הרשומות המוצגות כרגע
+    state.listCnt = String(rows.length + others.length); { const lc = $('#listCount'); if (lc) lc.textContent = state.listCnt; }   // מספר הרשומות המוצגות כרגע (בשורת הסינון, מימין, ובתפריט הסינון בשורת "תצוגה")
     if (!rows.length && !others.length) {
       $('#list').innerHTML = '';   // רשימה ריקה: בלי הודעות (נשאר רק "הוספת משתתף חדש" בחיפוש)
       requestAnimationFrame(alignFilters);
@@ -4185,11 +4183,16 @@
     closeF(); render(); syncUrl();
   });
   /* אייקוני הסינון מיושרים מעל העמודות שלהם ברשימה (₪, שליחה, יתרה) */
-  /* הקבוצות בשורת הסינון נגמרות 16 פיקסל לפני הימני באייקוני העמודות, שממוקמים מעל העמודות שלהם */
+  /* החיפוש, הסינון, המיון וזכר / נקבה זורמים בשורה אחת מהמונה שמימין, וצמודים מימין לאייקוני הסינון של העמודות: הריפוד השמאלי של השורה = הקצה הימני של הימני באייקונים (וואטסאפ, תשלום, יתרה, , הגעה) + 8px (הרווח הסטנדרטי) */
   function placeGen(br) {
     const bar = $('#listTags'); let mx = -1;
     bar.querySelectorAll('.lbend > *').forEach((e) => { const r = e.getBoundingClientRect(); if (r.width) mx = Math.max(mx, r.right - br.left); });
-    bar.style.paddingLeft = mx < 0 ? '' : Math.round(mx + 16) + 'px';
+    if (mx < 0) { bar.style.paddingLeft = ''; return; }   // אין אייקוני עמודות: הסמלים מתפרשים על כל הרוחב
+    /* רווחים שווים בין כל הסמלים ברצף אחד: חיפוש, סינון, מיון, זכר, נקבה, ואייקוני העמודות. R = הקצה הימני של סמל החיפוש (הקצה השמאלי של המונה), w = סכום רוחבי חמשת הסמלים; g = הרווח; הצביר מתחיל g אחרי הימני באייקוני העמודות */
+    const cnt = $('#listCount').getBoundingClientRect(), tagW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tag')) || 28;
+    const w = tagW + [...document.querySelectorAll('#listClu > *')].reduce((a, e) => a + e.getBoundingClientRect().width, 0), n = 1 + document.querySelectorAll('#listClu > *').length;
+    const g = Math.max(4, ((cnt.left - br.left) - mx - w) / n);
+    bar.style.paddingLeft = Math.round(mx + g) + 'px';
   }
   function alignFilters() {
     const bar = $('#listTags'); if (!bar) return; const br = bar.getBoundingClientRect();
