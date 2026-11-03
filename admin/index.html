@@ -306,7 +306,8 @@
       <div id="setMain">
         <div class="setgrp">
           <label class="field"><span>השם שלי במערכת</span><input placeholder=" " class="setinp" id="setSender" maxlength="20" autocomplete="off" aria-label="שם השולח בהודעות" /></label>
-          <div class="field"><span>חשבון גוגל מחובר</span><div class="setval" id="setMail" dir="ltr" aria-label="חשבון הגוגל שאיתו מחוברים לדף הניהול"></div></div>   <!-- לקריאה בלבד: החשבון שאיתו נכנסו, בלי שדה לעריכה -->
+          <div class="field"><span>חשבון גוגל מחובר</span><div class="setval" id="setMail" dir="ltr" aria-label="חשבון הגוגל שאיתו מחוברים לדף הניהול"></div></div>
+          <label class="field" id="setWaF" hidden><span>וואטסאפ להתקשרות עם משתתפים</span><select id="setWaApp"><option value="biz">וואטסאפ ביזנס</option><option value="reg">וואטסאפ רגיל</option></select></label>   <!-- לקריאה בלבד: החשבון שאיתו נכנסו, בלי שדה לעריכה -->
         </div>
       </div>
       <!-- עריכת סוג מפגש: נפתח ישר על הטופס (כמו עריכת מפגש): שם הסוג והפרטים שמפגש חדש מהסוג מקבל; נשמר בכפתור (בסוג חדש: יצירה), ומחיקה בתחתית -->
@@ -817,13 +818,19 @@
   }
   /* קישור לשיחת וואטסאפ (31.10.26): במחשב ישר לאפליקציית וואטסאפ (whatsapp://, בלי לשונית של wa.me בדפדפן); בטלפון wa.me, שנפתח ישר באפליקציה */
   const WA_DESK = !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches) && !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  /* בחירת האפליקציה ב"החשבון שלי", לכל מנהל. אנדרואיד: intent עם package, וכשהאפליקציה לא מותקנת wa.me פותח את האחרת; ברירת מחדל ביזנס. אייפון: ביזנס ב-whatsapp-smb:// (לא מתועד רשמית), רגיל ב-wa.me כמו קודם; ברירת מחדל רגיל, כי אפליקציה שלא מותקנת נותנת שם שגיאה. במחשב אין דרך לבחור */
+  const WA_ANDROID = /Android/i.test(navigator.userAgent), WA_IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1), WA_PKG = { biz: 'com.whatsapp.w4b', reg: 'com.whatsapp' };
+  const waApp = () => { const c = state.viewScopes._g; return c && (c.waApp === 'reg' || c.waApp === 'biz') ? c.waApp : (WA_IOS ? 'reg' : 'biz'); };
   function waLink(phone, text) {
     let n = digits(phone);
     if (!n) return null;
     if (n.startsWith('0')) n = '972' + n.slice(1);
     else if (n.length === 9) n = '972' + n;
     const t = text ? encodeURIComponent(text) : '';
-    return WA_DESK ? 'whatsapp://send?phone=' + n + (t ? '&text=' + t : '') : 'https://wa.me/' + n + (t ? '?text=' + t : '');
+    const web = 'https://wa.me/' + n + (t ? '?text=' + t : ''), q = 'send?phone=' + n + (t ? '&text=' + t : '');
+    if (WA_ANDROID) return 'intent://' + q + '#Intent;scheme=whatsapp;package=' + WA_PKG[waApp()] + ';S.browser_fallback_url=' + encodeURIComponent(web) + ';end';
+    if (WA_IOS) return waApp() === 'biz' ? 'whatsapp-smb://' + q : web;
+    return WA_DESK ? 'whatsapp://' + q : web;
   }
   const waTgt = (href) => /^https?:/.test(href || '') ? ' target="_blank" rel="noopener"' : '';   // קישור אינטרנט בלשונית חדשה; קישור לאפליקציה בלי לשונית
 
@@ -4799,7 +4806,9 @@
     const em = emailOf();
     $('#setMail').textContent = em;   // החשבון המחובר, לקריאה בלבד (בשאר הממשק המנהל מזוהה בשם שהגדיר)
     { const si = $('#setSender'); if (document.activeElement !== si) si.value = senderName(); }
+    $('#setWaF').hidden = !(WA_ANDROID || WA_IOS); $('#setWaApp').value = waApp();   // רק בטלפון אפשר לבחור בין האפליקציות
   }
+  $('#setWaApp').addEventListener('change', (e) => { (state.viewScopes._g || (state.viewScopes._g = {})).waApp = e.target.value; saveViewPrefs(); render(); });
   /* שם ותמונת ברירת המחדל למפגש עברו לסוג המפגש (31.10.26): מפגש חדש מקבל את השם והתמונה של הסוג שלו; ההגדרות הכלליות הישנות (harpatka_public_settings) נשארו בבסיס הנתונים בלי עריכה */
   $('#setSender').addEventListener('change', async () => {
     const em = emailOf(), v = $('#setSender').value.trim().slice(0, 20), prev = state.prefs[em];
