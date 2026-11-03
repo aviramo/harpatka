@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104hj" />
+  <link rel="stylesheet" href="admin.css?v=20261104hk" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -439,6 +439,7 @@
     edit: ['s', '<path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17z"/><path d="M14 7l3 3"/>'],
     plus: ['s', '<path d="M12 5v14"/><path d="M5 12h14"/>'],
     enter: ['s', '<path d="M4 12h11M11 7l5 5-5 5M20 5v14"/>'],
+    eyeoff: ['s', '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/>'],
     eye: ['s', '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'],
     free: ['s', '<circle cx="12" cy="12" r="8.5"/><path d="M6 18L18 6"/>'],
     gear: ['s', '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'],
@@ -1322,6 +1323,7 @@
   ['showPay', 'showGender'].forEach((prop) => Object.defineProperty(state, prop, { get: () => true, set() {}, enumerable: true }));   // תשלום ומגדר מוצגים תמיד (31.10.26)
   [['showSent', 'sent']].forEach(([prop, key]) => Object.defineProperty(state, prop, { get() { const c = state.viewScopes[viewKey()]; return c && c[key] !== undefined && c[key] !== null ? c[key] : viewDef()[key]; }, set(v) { viewCtx()[key] = v; }, enumerable: true }));
   /* המיון (1.11.26): הגדרה אחת לכל התצוגות, ברמת החשבון (לכל מנהל בנפרד, בכל מכשיר); נשמר ב-view_scopes._g.sort, ולכן לא בכתובת */
+  Object.defineProperty(state, 'genPin', { get() { const c = state.viewScopes._g; return !!(c && c.genPin); }, set(v) { (state.viewScopes._g || (state.viewScopes._g = {})).genPin = !!v; }, enumerable: true });   // מגדר קבוע בסטריפ: ברמת המנהל, לא בכתובת
   Object.defineProperty(state, 'sortDir', { get() { const c = state.viewScopes._g; return c && c.sortDir === 'asc' ? 'asc' : 'desc'; }, set(v) { (state.viewScopes._g || (state.viewScopes._g = {})).sortDir = v === 'asc' ? 'asc' : 'desc'; }, enumerable: true });   // כיוון המיון: desc = ברירת המחדל של כל מיון (חדש, עדכני,  גבוהה קודם), asc = הפוך; לחיצה נוספת על המיון שנבחר הופכת
   Object.defineProperty(state, 'sort', { get() { const c = state.viewScopes._g; return c && c.sort && c.sort !== 'pers' ? c.sort : 'new'; }, set(v) { (state.viewScopes._g || (state.viewScopes._g = {})).sort = v; }, enumerable: true });
   function applyViewPrefs() { const pr = state.prefs[emailOf()] || {}; state.viewScopes = (pr.view_scopes && typeof pr.view_scopes === 'object') ? JSON.parse(JSON.stringify(pr.view_scopes)) : {}; }
@@ -1389,7 +1391,7 @@
     const scope = state.participants.filter((p) => (state.filter ? linkOf(p.id, state.filter) : p.active !== false) && mtypeOk(p));
     const add = (text, n, field, val, col) => out.push({ text, n, field, val, col });
     payKeys(effPay()).forEach((k) => add(k === '__none' ? 'ללא תגית' : STATUS_LABEL[k] || k, scope.filter((p) => stMatch(p, k)).length, 'pay', k, (state.statuses.find((x) => x.key === k) || {}).color));
-    payKeys(effGender()).forEach((g) => add(g === 'male' ? 'זכר' : g === 'female' ? 'נקבה' : 'ללא מגדר', scope.filter((p) => (p.gender || 'none') === g).length, 'gender', g));
+    { const gs = payKeys(effGender()), list = state.genPin ? ['male', 'female'].concat(gs.includes('none') ? ['none'] : []) : gs; list.forEach((g) => { add(g === 'male' ? 'זכר' : g === 'female' ? 'נקבה' : 'ללא מגדר', scope.filter((p) => (p.gender || 'none') === g).length, 'gender', g); out[out.length - 1].sel = gs.includes(g); }); }   // מגדר קבוע (עין פתוחה): תמיד בסטריפ, מסומן רק מה שנבחר
     const fc = (k, v) => (FC[k] || {})[v];
     const pf = effPaidF(); if (pf) add(/^a\d/.test(pf) ? '₪' + nfm(Number(pf.slice(1))) : pf[0] === 'm' ? ((state.payMethods.find((x) => x.key === pf.slice(1)) || {}).name || pf.slice(1)) : FLAB.pay[{ 1: 1, 0: 2, n: 3, w: 4, l: 5, r: 6, u: 7 }[pf]], /^[am]\d|^m/.test(pf) ? null : fc('pay', pf), 'paidF', pf);
     const bf = effBal(); if (bf) add(FLAB.bal[{ 1: 1, 0: 2, n: 3, f: 4, w: 5 }[bf]], fc('bal', bf), 'bal', bf);
@@ -1404,7 +1406,7 @@
   function paintActive() {
     const box = $('#activeStrip'); if (!box) return;
     AF = activeFilters(); box.hidden = !AF.length;
-    box.innerHTML = AF.map((f, i) => UI.tag('<span>' + (f.field === 'ageF' ? 'גיל <bdi dir="ltr">' + esc(f.text.slice(4)) + '</bdi>' : esc(f.text)) + '</span>' + (f.n == null ? '' : ' <small>' + f.n + '</small>') + icon('close', 'i14'), 'afc', Object.assign({ 'data-af': i }, f.col && PALETTE[f.col] ? { style: 'background:' + PALETTE[f.col][0] + ';color:' + PALETTE[f.col][1] } : {}, { 'aria-label': 'ביטול הסינון: ' + esc(f.text), title: 'ביטול הסינון' }), 'button')).join('');
+    box.innerHTML = AF.map((f, i) => UI.tag('<span>' + (f.field === 'ageF' ? 'גיל <bdi dir="ltr">' + esc(f.text.slice(4)) + '</bdi>' : esc(f.text)) + '</span>' + (f.n == null ? '' : ' <small>' + f.n + '</small>') + (f.sel === false ? '' : icon('close', 'i14')), 'afc' + (f.sel === false ? ' off' : ''), Object.assign({ 'data-af': i, 'aria-pressed': f.sel == null ? null : String(f.sel) }, f.col && PALETTE[f.col] ? { style: 'background:' + PALETTE[f.col][0] + ';color:' + PALETTE[f.col][1] } : {}, { 'aria-label': 'ביטול הסינון: ' + esc(f.text), title: 'ביטול הסינון' }), 'button')).join('');
   }
 
   function renderFacets() {
@@ -4162,7 +4164,7 @@
     const scope = state.participants.filter((p) => (state.filter ? linkOf(p.id, state.filter) : p.active !== false) && mtypeOk(p));
     const cnt = (f) => scope.filter(f).length;
     const chip = (kind, val, label, n, col) => { const on = payKeys(state[FK[kind]]).includes(val), pc = col && PALETTE[col]; return '<button type="button" class="mc' + (n || on ? '' : ' zero') + '"' + (pc ? ' data-sc="1" style="--sbg:' + pc[0] + ';--sfg:' + pc[1] + '"' : '') + ' data-mk="' + kind + '" data-mv="' + esc(val) + '" aria-pressed="' + on + '">' + (kind === 'age' ? '<bdi dir="ltr">' + esc(label) + '</bdi>' : esc(label)) + ' <small>' + n + '</small>' + UI.fdot(on && (pc ? 'sc' : 'ink')) + '</button>'; };
-    return fsec('מגדר', ['none', 'male', 'female'].map((g) => chip('gen', g, g === 'none' ? 'ללא מגדר' : g === 'male' ? 'זכר' : 'נקבה', cnt((p) => (p.gender || 'none') === g))).join('')) +
+    return fsec('מגדר', ['none', 'male', 'female'].map((g) => chip('gen', g, g === 'none' ? 'ללא מגדר' : g === 'male' ? 'זכר' : 'נקבה', cnt((p) => (p.gender || 'none') === g))).join(''), '<button type="button" class="fedit" data-fgenpin aria-pressed="' + state.genPin + '" aria-label="' + (state.genPin ? 'המגדר מוצג תמיד בסטריפ, לחיצה להסתרה' : 'להציג את המגדר תמיד בסטריפ') + '" title="' + (state.genPin ? 'מוצג תמיד בסטריפ' : 'להציג תמיד בסטריפ') + '">' + icon(state.genPin ? 'eye' : 'eyeoff') + '</button>') +
       fsec('עדכון אחרון', UPD_B.map((b) => chip('upd', b[0], b[1], cnt((p) => updWithin(p.id, b[2])))).join('')) +
       fsec('תגיות', chip('tag', '__none', 'ללא תגית', cnt((p) => stMatch(p, '__none'))) + statusList(state.filter ? undefined : state.mtype || null).map((s) => chip('tag', s.key, s.label, cnt((p) => stMatch(p, s.key)), s.color)).join(''), fedit('tag', 'עריכת תגיות')) +
       fsec('דרך הגעה', chip('src', '__none', 'ללא דרך הגעה', cnt((p) => !channelAt(p, state.filter))) + state.promoters.map((x) => chip('src', x.id, x.name, cnt((p) => (channelAt(p, state.filter) || {}).id === x.id), x.color || 'red')).join('') , fedit('src', 'עריכת דרכי הגעה')) +
@@ -4258,7 +4260,7 @@
   };
   $('#listTags').addEventListener('click', listTagsClick);
   $('#activeStrip').addEventListener('click', (e) => { const b = e.target.closest('[data-af]'), f = b && AF[+b.dataset.af]; if (!f) return; const cur = payKeys(state[f.field === 'wa' ? 'waSent' : f.field]);
-    if (f.field === 'wa') waSetFilter(''); else if (['paidF', 'bal', 'sent'].includes(f.field)) state[f.field] = null; else state[f.field] = cur.filter((x) => x !== f.val).join(',') || null;
+    if (f.field === 'gender' && f.sel === false) state.gender = cur.concat(f.val).join(','); else if (f.field === 'wa') waSetFilter(''); else if (['paidF', 'bal', 'sent'].includes(f.field)) state[f.field] = null; else state[f.field] = cur.filter((x) => x !== f.val).join(',') || null;
     render(); syncUrl(); });   // כפתור הסינון בשורת החיפוש, וגם אייקוני העמודות והמגדר בשורת הסינון
   /* עמודת הסימון (העמודה האחרונה ברשימה, והתפריט שלה בשורת הסינון): הודעה ריקה, תבניות הודעה (הסוג ואחריהן המפגש) ובתוך מפגש גם הגיע / לא הגיע.
      הבחירה נשמרת לכל תצוגה: בהודעה, קישור הוואטסאפ של כל משתתף ברשימה נפתח עם ההודעה המוכנה; בהגעה, בכל שורה הסימון של מי הגיע ומי לא */
@@ -4403,6 +4405,7 @@
     const mk = e.target.closest('[data-mk]');
     if (mk) { const f = FK[mk.dataset.mk], v = mk.dataset.mv; if (f) { const cur = payKeys(state[f]); state[f] = (cur.includes(v) ? cur.filter((x) => x !== v) : cur.concat(v)).join(',') || null; } syncUrl(); return after(); }
     if (e.target.closest('[data-fclear]')) { clearFilters(); return after(); }
+    if (e.target.closest('[data-fgenpin]')) { state.genPin = !state.genPin; saveViewPrefs(); render(); renderViewMenu(); return; }
     const ed = e.target.closest('[data-fedit]'); if (ed) { closeView(); if (ed.dataset.fedit === 'src') openSetRoot('src'); else openStatusSettings(); }
   });
   /* חזרה בדפדפן במצב חיפוש פתוח (בפוקוס או עם טקסט) סוגרת את החיפוש ומנקה אותו */
