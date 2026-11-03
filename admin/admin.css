@@ -139,11 +139,6 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 .tg.ico svg { width: 16px; height: 16px; margin: 0; }
 /* מצבים */
 .stc.zero { opacity: .5; }
-.stc.editc { width: var(--tag); min-width: var(--tag); padding: 0; justify-content: center; }
-.stc.editc { background: transparent; border-color: transparent; color: var(--text-2); }   /* בלי רקע (1.11.26) */
-.ststrip .stlast { display: inline-flex; align-items: center; gap: 0; }
-.ststrip > .stc.editc { margin-inline-start: -5px; }   /* אייקון העריכה לבדו (בלי סטטוסים): קצה העיפרון הנראה בקו הימני של המונה והטקסט */   /* הסטטוס האחרון ואייקון העריכה צמודים, בלי רווח ביניהם, ולא נפרדים בשבירת שורה */
-@media (hover: hover) { .stc.editc:hover { background: var(--surface-2); } }   /* אייקון העריכה בסוף פס הסטטוסים: תגית מרובעת עם סמל בלבד (1.11.26) */
 .stc[aria-pressed="true"], .qmenu .qi[aria-pressed="true"], .sopt[aria-pressed="true"] { border-color: currentColor; }
 .stc.gall, .stc.gm, .stc.gf, #viewMenu .mc, .metchips button { background: transparent; color: var(--text); border-color: transparent; }   /* צ'יף לבחירה: רקע רק למה שמסומן (2.11.26) */
 @media (hover: hover) { :is(.stc.gall, .stc.gm, .stc.gf, #viewMenu .mc, .metchips button):not([aria-pressed="true"]):hover { background: var(--surface-2); } }
@@ -314,7 +309,7 @@ body.locked .wrap, body.locked #statsBtn { display: none !important; }
 .wrap > .list::-webkit-scrollbar { display: none; }
 .wrap > .list:empty { display: none; }
 .wrap > .addbox { flex: 0 0 auto; }
-body:has(#status .empty) .ststrip, body:has(#status .empty) .vbar { display: none; }
+body:has(#status .empty) .vbar { display: none; }
 
 /* כותרת: בורר המפגש מימין, כפתורי תצוגה, מיון ותפריט משמאל */
 .title-row { position: relative; height: 56px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 0 var(--gut); }
@@ -364,8 +359,6 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -.01em; line-
 .mmenu button.addm2 { display: block; width: 100%; min-height: 46px; margin-top: 4px; padding: 0 12px; border-top: 1px solid var(--line); color: var(--text); font-weight: 700; text-align: right; }
 
 /* פס הסינון: סטטוסים (בתוך מפגש) או תגיות (בתצוגת הכל), בשורות */
-.ststrip { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 8px; padding: 0 var(--gut) 12px; }
-.ststrip:empty { display: none; }
 
 /* שורת הסינונים מעל הטבלה (כמו כותרת טבלה): חיפוש, הכל / ז / נ / ⋯, ואייקוני סינון מעל העמודות */
 /* חיפוש: סגור הוא תגית אייקון (ריבוע בגובה התגית, גבול מתאר), ונפתח לכל רוחב השורה באותו גובה */
@@ -1068,6 +1061,11 @@ html.is-loading .vbar { display: none; }
 #viewMenu .fclear { position: absolute; top: 0; left: 0; display: grid; place-items: center; width: 44px; height: 44px; background: transparent; color: var(--text); }   /* ניקוי סינונים: סמל בפינה השמאלית העליונה, הסמל עצמו בקו של ריפוד התפריט */
 @media (hover: hover) { #viewMenu .fclear:hover { background: var(--surface); } }
 #viewMenu .fclear:active { background: var(--surface); }
+#viewMenu .fedit { position: relative; flex: none; display: grid; place-items: center; width: var(--tag); height: var(--tag); padding: 0; background: transparent; color: var(--text-2); }   /* עריכת תגיות, בכותרת של קבוצת התגיות */
+#viewMenu .fedit::before { content: ""; position: absolute; inset: -8px; }   /* שטח לחיצה של 44px */
+#viewMenu .fedit svg { width: 18px; height: 18px; }
+@media (hover: hover) { #viewMenu .fedit:hover { background: var(--surface); } }
+#viewMenu .fedit:active { background: var(--surface); }
 
 /* ---------- סמל המצב ליד השם: צמוד למילה האחרונה ובגובה הטקסט, כחלק מהשורה ---------- */
 .row .nm .name .nwrap { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }   /* המילה האחרונה והסמל יחידה אחת: הסמל ממורכז אנכית מול שורת הטקסט של המילה */
@@ -1250,7 +1248,6 @@ dialog { border-radius: var(--r) var(--r) 0 0; }
 .fdot.red { background: var(--red); }
 .fdot.gray { background: var(--text-3); }
 /* פס הסטטוסים והתגיות: הנבחר לא משנה רקע, ויש לו נקודה (של סטטוס בצבע שלו, מ-applyStatuses; של תגית בשחור) */
-.ststrip .stc { position: relative; }
 /* תפריט הסינון: הנבחר לא משנה רקע, ויש לו נקודה (דרך הגעה בצבע שלה, והשאר בשחור) */
 #viewMenu .mc { position: relative; }
 #viewMenu .mc[aria-pressed="true"] { background: transparent; border-color: transparent; color: var(--text); }
