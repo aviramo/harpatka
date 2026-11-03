@@ -37,20 +37,20 @@
             <input type="text" name="website" data-su="hp" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
             <div class="su-fold"><div>
               <div class="su-grid">
-                <div class="su-cell">${PersonForm.html('first', { id: 'cmFirst', cls: 'su-input', autofocus: true })}</div>
-                <div class="su-cell">${PersonForm.html('last', { id: 'cmLast', cls: 'su-input' })}</div>
+                <div class="su-cell">${PersonForm.html('first', { id: 'cmFirst', autofocus: true })}</div>
+                <div class="su-cell">${PersonForm.html('last', { id: 'cmLast' })}</div>
                 <div class="su-cell su-wide">${PersonForm.err('name', 'su-err')}</div>
                 <div class="su-cell">
-                  ${PersonForm.html('phone', { id: 'cmPhone', cls: 'su-input text-end' })}
+                  ${PersonForm.html('phone', { id: 'cmPhone' })}
                   ${PersonForm.err('phone', 'su-err')}
                 </div>
                 <div class="su-cell su-ag">
                   <div class="su-cell">
-                    ${PersonForm.html('age', { id: 'cmAge', cls: 'su-input' })}
+                    ${PersonForm.html('age', { id: 'cmAge' })}
                     ${PersonForm.err('age', 'su-err')}
                   </div>
                   <div class="su-cell">
-                    ${PersonForm.html('gender', { id: 'cmGender', cls: 'su-input su-select' })}
+                    ${PersonForm.html('gender', { id: 'cmGender' })}
                     ${PersonForm.err('gender', 'su-err')}
                   </div>
                 </div>
@@ -418,7 +418,7 @@
   const AS = (() => { try { const v = new URLSearchParams(location.search).get('as'); return v && /^[0-9a-f-]{36}$/i.test(v) ? v : null; } catch (e) { return null; } })();
   const TOK_KEY = AS ? 'harpatka_admin_session_v2' : ME_KEY;
   window.__meAs = AS;
-  if (AS && CONFIG.viewOnly) CONFIG.viewOnly('[data-su="btn"], [data-su="paycredit"], [data-paybox], .wacard', '#contactModal .su-input');   // צפייה כמשתתף: לקריאה בלבד
+  if (AS && CONFIG.viewOnly) CONFIG.viewOnly('[data-su="btn"], [data-su="paycredit"], [data-paybox], .wacard', '#contactModal .pf-input');   // צפייה כמשתתף: לקריאה בלבד
   /* צפייה כמשתתף בתוך הפופאפ של דף הניהול (iframe): החלקה למטה כשהדף בראשו מורידה את הפופאפ יחד עם האצבע וסוגרת אותו (כמו האזור האישי).
      לא כשפופאפ פנימי פתוח (הרשמה, אזור אישי), כי שם הגלילה של הדף נעולה */
   if (AS && window.parent !== window) {

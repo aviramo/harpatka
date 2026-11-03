@@ -9,7 +9,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700;800&family=Rubik:wght@500;700;800&display=block" rel="stylesheet" />
 <link rel="stylesheet" href="../shared/meeting-box.css?v=2" />
-<link rel="stylesheet" href="../shared/site.css?v=20261103v" />
+<link rel="stylesheet" href="../shared/person-form.css?v=1" />
+<link rel="stylesheet" href="../shared/site.css?v=20261103w" />
 <script>try { if (window.self !== window.top && /[?&]embed=/.test(location.search)) document.documentElement.classList.add('embed'); } catch (e) {}</script>   <!-- בפופאפ: הרקע הטורקיז כבר בציור הראשון -->
 </head>
 <body>
@@ -27,7 +28,7 @@
 </div>
 <script src="../shared/config.js?v=20261103c"></script>
 <script src="../shared/rt.js?v=1"></script>
-<script src="../shared/person-form.js?v=20261103a"></script>
+<script src="../shared/person-form.js?v=20261103b"></script>
 <script>
 (() => {
   const DB = {
@@ -116,7 +117,7 @@
     if (!note) { viewSignup(''); return; }   // חשבון גוגל בלי משתתף מקושר: ישר לטופס הפרטים (יוצר משתתף, או מחבר משתתף קיים לפי הטלפון)
     const adm = '';
     app.innerHTML = adm + '<div class="card"><h2>חיבור לחשבון</h2><p class="muted" style="margin:0">הזינו את הטלפון שבו נרשמתם למפגש כדי לחבר אליו את חשבון הגוגל. החיבור מאושר על ידינו ואז האזור האישי נפתח</p>' + (note ? '<p class="msg bad">' + esc(note) + '</p>' : '') +
-      '<label for="ph">טלפון</label><input id="ph" type="tel" inputmode="tel" autocomplete="tel" placeholder="05XXXXXXXX" dir="ltr" style="text-align:right" /><button type="button" class="btn" id="claimBtn">שליחה</button><div class="msg" id="cm"></div></div>';
+      PersonForm.html('phone', { id: 'ph' }) + '<button type="button" class="btn" id="claimBtn">שליחה</button><div class="msg" id="cm"></div></div>';
     $('#claimBtn').onclick = async () => {
       const b = $('#claimBtn'); b.disabled = true;
       try {
@@ -138,7 +139,7 @@
   window.harpatkaFocusPhone = () => { const i = $('#sph'); if (!i) return; phoneFocused = true; try { window.focus(); PersonForm.focusKeyboard(i); } catch (e) {} };
   function viewSignup(phone) {
     app.innerHTML = '<div class="card"><h2>מה מספר הטלפון שלכם?</h2><p class="muted" style="margin:0">אם כבר נרשמתם אצלנו בעבר, נמצא אתכם לפי המספר</p>' +
-      PersonForm.html('phone', { id: 'sph', label: true, value: phone || '', attr: 'style="text-align:right"' }) + PersonForm.err('phone') +
+      PersonForm.html('phone', { id: 'sph', value: phone || '' }) + PersonForm.err('phone') +
       '<button type="button" class="btn" id="sgBtn">המשך</button><div class="msg" id="sgm"></div></div>';
     PersonForm.bind(app);
     { let sh = null; try { sh = EMBED && window.frameElement ? window.frameElement.closest('.mesheet') : null; } catch (e) {} if (!phoneFocused && (!sh || !sh.hidden)) setTimeout(window.harpatkaFocusPhone, EMBED ? 380 : 0); }
@@ -205,9 +206,9 @@
     const noName = !String(p.first_name || '').trim() || !String(p.last_name || '').trim(), gnm = noName ? googleName() : {};   // עוד בלי פרטים (נוצר מטלפון בלבד): השם מחשבון הגוגל כהצעה
     const req = !p.gender || p.age == null || noName;   // חסרים פרטים: מבחינת המשתתף הוא עוד לא רשום; רואים רק את השלמת הפרטים (בלי המפגשים) עד שממלאים
     const missing = req || keepDetOpen;   // חסר פרט חובה: הכרטיס נפתח מעצמו
-    h += '<div class="card" id="detCard"><button type="button" class="dethead" id="detHead" aria-expanded="' + missing + '" aria-controls="detBody"><h2>' + (req ? 'השלמת פרטים' : 'הפרטים שלי') + '</h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="detfold' + (missing ? ' open' : '') + '" id="detBody"><div><div class="two"><div>' + PersonForm.html('first', { id: 'fn', label: true, value: p.first_name || gnm.first }) + '</div><div>' + PersonForm.html('last', { id: 'ln', label: true, value: p.last_name || gnm.last }) + '</div></div>' + PersonForm.err('name') +
-      PersonForm.html('phone', { id: 'ph2', label: true, value: String(p.phone || '').replace(/^\+972/, '0'), attr: 'style="text-align:right"' }) + PersonForm.err('phone') +
-      '<div class="two"><div>' + PersonForm.html('age', { id: 'ag', label: true, value: p.age }) + PersonForm.err('age') + '</div><div>' + PersonForm.html('gender', { id: 'gn', label: true, value: gv }) + PersonForm.err('gender') + '</div></div>' +
+    h += '<div class="card" id="detCard"><button type="button" class="dethead" id="detHead" aria-expanded="' + missing + '" aria-controls="detBody"><h2>' + (req ? 'השלמת פרטים' : 'הפרטים שלי') + '</h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="detfold' + (missing ? ' open' : '') + '" id="detBody"><div><div class="two"><div>' + PersonForm.html('first', { id: 'fn', value: p.first_name || gnm.first }) + '</div><div>' + PersonForm.html('last', { id: 'ln', value: p.last_name || gnm.last }) + '</div></div>' + PersonForm.err('name') +
+      PersonForm.html('phone', { id: 'ph2', value: String(p.phone || '').replace(/^\+972/, '0') }) + PersonForm.err('phone') +
+      '<div class="two"><div>' + PersonForm.html('age', { id: 'ag', value: p.age }) + PersonForm.err('age') + '</div><div>' + PersonForm.html('gender', { id: 'gn', value: gv }) + PersonForm.err('gender') + '</div></div>' +
       '<button type="button" class="btn" id="saveBtn">שמירה</button><div class="msg" id="sm"></div></div></div></div>';
     if (!req) h += meetHtml;   // "הפרטים שלי" ראשון, ומתחתיו רשימת המפגשים (רק אחרי שהפרטים הושלמו)
     keepOpenSet = new Set(); keepDetOpen = false;

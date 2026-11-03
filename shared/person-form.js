@@ -29,20 +29,20 @@
     return '';
   }
 
-  /* html(kind, opts): kind = first | last | phone | age | gender.
-     opts: id (מזהה האלמנט), cls (מחלקת השדה), selCls (מחלקות הרשימה), label (true: תווית מעל השדה, אחרת פלייסהולדר),
-           value (ערך התחלתי), attr (תכונות נוספות), autofocus */
+  /* html(kind, opts): kind = first | last | phone | age | gender. שדה אחד בכל האתר: קו תחתון ותווית צפה (העיצוב ב-shared/person-form.css).
+     opts: id (מזהה האלמנט), value (ערך התחלתי), attr (תכונות נוספות), autofocus */
   function html(kind, o) {
     o = o || {};
-    var id = o.id || ('pf' + kind), cls = o.cls || '', ph = LABEL[kind], v = o.value == null ? '' : o.value;
-    var lab = o.label ? '<label for="' + id + '">' + ph + '</label>' : '';
-    var common = ' id="' + id + '" data-pf="' + kind + '" name="' + NAME[kind] + '" autocomplete="' + AC[kind] + '" aria-label="' + ph + '" required' + (o.autofocus ? ' data-autofocus' : '') + (o.attr ? ' ' + o.attr : '');
+    var id = o.id || ('pf' + kind), v = o.value == null ? '' : o.value, ctl;
+    var common = ' id="' + id + '" data-pf="' + kind + '" name="' + NAME[kind] + '" autocomplete="' + AC[kind] + '" class="pf-input" required' + (o.autofocus ? ' data-autofocus' : '') + (o.attr ? ' ' + o.attr : '');
     if (kind === 'gender') {
-      return lab + '<select' + common + ' class="' + esc(o.selCls || cls) + '"><option value=""' + (v ? '' : ' selected') + ' disabled>' + (o.label ? 'בחירה' : ph) + '</option><option value="male"' + (v === 'male' ? ' selected' : '') + '>זכר</option><option value="female"' + (v === 'female' ? ' selected' : '') + '>נקבה</option></select>';
+      ctl = '<select' + common + '><option value=""' + (v ? '' : ' selected') + ' disabled hidden></option><option value="male"' + (v === 'male' ? ' selected' : '') + '>זכר</option><option value="female"' + (v === 'female' ? ' selected' : '') + '>נקבה</option></select>';
+    } else {
+      var type = kind === 'phone' ? 'tel' : kind === 'age' ? 'number' : 'text';
+      var extra = kind === 'phone' ? ' inputmode="tel" dir="ltr" maxlength="24"' : kind === 'age' ? ' inputmode="numeric" min="18" max="99"' : ' maxlength="40"';
+      ctl = '<input type="' + type + '"' + common + extra + ' placeholder=" "' + (v !== '' ? ' value="' + esc(v) + '"' : '') + '>';
     }
-    var type = kind === 'phone' ? 'tel' : kind === 'age' ? 'number' : 'text';
-    var extra = kind === 'phone' ? ' inputmode="tel" dir="ltr" maxlength="24"' : kind === 'age' ? ' inputmode="numeric" min="18" max="99"' : ' maxlength="40"';
-    return lab + '<input type="' + type + '"' + common + extra + ' class="' + esc(cls) + '"' + (o.label ? '' : ' placeholder="' + ph + '"') + (v !== '' ? ' value="' + esc(v) + '"' : '') + '>';
+    return '<label class="pf-field" for="' + id + '"><span>' + LABEL[kind] + '</span>' + ctl + '</label>';
   }
   /* הודעת שגיאה: name (לשני שמות), phone, age, gender */
   function err(kind, cls) { return '<div data-pf-err="' + kind + '" class="' + (cls || 'pf-err') + '" role="alert"></div>'; }
