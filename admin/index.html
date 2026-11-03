@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104jf" />
+  <link rel="stylesheet" href="admin.css?v=20261104jg" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -4168,7 +4168,7 @@
     const opts = [[null, 'all', lab[0]]].concat(kind === 'pay' ? [['w', 'wait', lab[4]], ['0', 'no', lab[2]], ['l', 'later', lab[5]], ['1', 'yes', lab[1]], ['n', 'fr', lab[3]]]   // תשלום: דווח, לתשלום, תשלום בהמשך, שולם, לא לתשלום (אותו סדר כמו במיון)
       : kind === 'bal' ? [['w', 'wait', lab[5]], ['1', 'yes', lab[1]], ['0', 'no', lab[2]], ['n', 'free', lab[3]], ['f', 'fr', lab[4]]] : [['1', 'yes', lab[1]], ['0', 'no', lab[2]]]);
     const foptOf = (o) => UI.fopt(o[0] === null ? '' : o[0], cur === o[0], o[1], o[3] || fglyph(kind, o[1]), o[2], (FC[kind] || {})[o[0] === null ? '' : o[0]] ?? 0);
-    m.innerHTML = foptOf(opts[0]) + (kind === 'pay' ? [['r', 'yes', lab[6], icon('check')], ['u', 'no', lab[7], icon('close')]].map(foptOf).join('') + '<div class="fsep" role="separator"></div>' : '') + opts.slice(1).map(foptOf).join('');   // תשלום: קודם החלוקה הגדולה (משוריינים), ומתחת המצבים בפירוט
+    m.innerHTML = foptOf(opts[0]) + opts.slice(1).map(foptOf).join('');   // תשלום: קודם החלוקה הגדולה (משוריינים), ומתחת המצבים בפירוט
     if (kind === 'pay') {   // בנוסף: סינון לפי דרך התשלום ולפי הסכום ששולם למפגש
       const pmc = FC.payMeth || {}, pks = state.payMethods.filter((pm) => pmc[pm.key]);
       if (pks.length) m.innerHTML += '<div class="fsep" role="separator"></div>' + pks.map((pm) => UI.fopt('m' + esc(pm.key), cur === 'm' + pm.key, 'yes', '₪', esc(pm.name), pmc[pm.key])).join('');
