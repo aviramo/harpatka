@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104jg" />
+  <link rel="stylesheet" href="admin.css?v=20261104ji" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1233,9 +1233,18 @@
     }
     const fxw = (txt, n) => '<span class="fx"><span>' + txt + ' <small>' + n + '</small></span><span class="ph" aria-hidden="true">' + txt + ' <small>' + w + '</small></span></span>';
     h += btn('male', '', gk.includes('male'), fxw('גברים', men)) + btn('female', '', gk.includes('female'), fxw('נשים', wom));
+    const pk = payKeys(state.pay);   // תגיות שקיימות: אחרי הנשים; המונה לפי הרשימה, בלי הסינון של התגית עצמה
+    statusList(state.filter ? undefined : state.mtype || null).forEach((t) => {
+      const n = pool.filter((p) => paidOk(p) && genOk(p) && stMatch(p, t.key)).length, pc = PALETTE[t.color] || PALETTE.neutral;
+      h += '<button type="button" class="stc tagc' + (n ? '' : ' zero') + '" data-ct="' + esc(t.key) + '" data-sc="1" style="--sbg:' + pc[0] + ';--sfg:' + pc[1] + '" aria-pressed="' + pk.includes(t.key) + '">' + fxw(esc(t.label), n) + '</button>';
+    });
+    h += '<button type="button" class="stc tagc editc" data-edit-tags aria-label="עריכת תגיות" title="עריכת תגיות">' + icon('edit') + '</button>';   // כניסה לעריכת התגיות (קודם בכותרת הקבוצה בתפריט הסינון)
     el.innerHTML = h;
   }
   $('#chipRow').addEventListener('click', (e) => {
+    if (e.target.closest('[data-edit-tags]')) { openStatusSettings(); return; }
+    const t = e.target.closest('[data-ct]');
+    if (t) { const k = t.dataset.ct; state.pay = payKeys(state.pay).includes(k) ? null : k; render(); return; }   // תגית אחת בכל פעם
     const b = e.target.closest('[data-cr]'); if (!b) return; const k = b.dataset.cr;
     if (k === 'res') state.paidF = state.paidF === 'r' ? 'u' : state.paidF === 'u' ? null : 'r';   // הכל ← משוריינים ← לא משוריינים ← הכל
     else state.gender = payKeys(state.gender).includes(k) ? null : k;
@@ -4140,9 +4149,8 @@
     const scope = state.participants.filter((p) => (state.filter ? linkOf(p.id, state.filter) : p.active !== false) && mtypeOk(p));
     const cnt = (f) => scope.filter(f).length;
     const chip = (kind, val, label, n, col) => { const on = payKeys(state[FK[kind]]).includes(val), pc = col && PALETTE[col]; return '<button type="button" class="mc' + (n || on ? '' : ' zero') + '"' + (pc ? ' data-sc="1" style="--sbg:' + pc[0] + ';--sfg:' + pc[1] + '"' : '') + ' data-mk="' + kind + '" data-mv="' + esc(val) + '" aria-pressed="' + on + '">' + (kind === 'age' ? '<bdi dir="ltr">' + esc(label) + '</bdi>' : esc(label)) + ' <small>' + n + '</small>' + UI.fdot(on && (pc ? 'sc' : 'ink')) + '</button>'; };
-    return fsec('מגדר', ['none', 'male', 'female'].map((g) => chip('gen', g, g === 'none' ? 'ללא מגדר' : g === 'male' ? 'זכר' : 'נקבה', cnt((p) => (p.gender || 'none') === g))).join(''), '<button type="button" class="fedit" data-fgenpin aria-pressed="' + state.genPin + '" aria-label="' + (state.genPin ? 'המגדר מוצג תמיד בסטריפ, לחיצה להסתרה' : 'להציג את המגדר תמיד בסטריפ') + '" title="' + (state.genPin ? 'מוצג תמיד בסטריפ' : 'להציג תמיד בסטריפ') + '">' + icon(state.genPin ? 'eye' : 'eyeoff') + '</button>') +
+    return '' +
       fsec('עדכון אחרון', UPD_B.map((b) => chip('upd', b[0], b[1], cnt((p) => updWithin(p.id, b[2])))).join('')) +
-      fsec('תגיות', chip('tag', '__none', 'ללא תגית', cnt((p) => stMatch(p, '__none'))) + statusList(state.filter ? undefined : state.mtype || null).map((s) => chip('tag', s.key, s.label, cnt((p) => stMatch(p, s.key)), s.color)).join(''), fedit('tag', 'עריכת תגיות')) +
       fsec('דרך הגעה', chip('src', '__none', 'ללא דרך הגעה', cnt((p) => !channelAt(p, state.filter))) + state.promoters.map((x) => chip('src', x.id, x.name, cnt((p) => (channelAt(p, state.filter) || {}).id === x.id), x.color || 'red')).join('') , fedit('src', 'עריכת דרכי הגעה')) +
       fsec('גיל', AGE_B.map((b) => chip('age', b[0], b[1], cnt((p) => { const a = shownAge(p); return a != null && a >= b[2] && a <= b[3]; }))).join('')) +
       fsec('אזור אישי', [['yes', 'רשומים'], ['no', 'לא רשומים'], ['blocked', 'חסומים']].map((o) => chip('login', o[0], o[1], cnt((p) => loginOf(p) === o[0]))).join(''));
