@@ -236,7 +236,6 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 .two { display: grid; grid-template-columns: 1fr 110px; gap: 8px; }
 #ppForm .two, #finForm .two { grid-template-columns: 1fr 1fr; }
 .three { display: grid; grid-template-columns: calc((100% - 16px) / 3) 64px minmax(0, 1fr); gap: 8px; }   /* טלפון ברוחב שם פרטי (שליש מהשורה שמעל), גיל 64px, דרך הגעה כל השאר */
-.three .field input, .three .field select { padding-inline-start: 8px; }
 .name-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; align-items: end; }   /* שם פרטי, שם משפחה ומגדר: שלושה שדות ברוחב שווה */
 .name-row .two { display: contents; }
 .name-row .field { min-width: 0; }
@@ -761,7 +760,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .payrow { display: flex; gap: 8px; align-items: flex-end; }
 .payrow .field { flex: 1 1 0; min-width: 0; margin-bottom: 8px; }
 #depFields .payrow #depMSelF, .payrow #refundMSelF { flex: 1.7 1 0; min-width: 0; }
-.payrow .paygo { flex: 0 0 auto; width: auto; height: var(--ctl); padding: 0 20px; margin: 0 0 8px; }
+.payrow .paygo { flex: 0 0 auto; width: auto; height: var(--fld); padding: 0 20px; margin: 0 0 8px; }
 .payfield { flex: 0 0 8.2rem; }
 .pquick { display: flex; gap: 16px; margin: -4px 0 12px; font-size: 14px; color: var(--text-2); align-items: baseline; }
 .pquick::before { content: 'הצעות:'; }
@@ -777,9 +776,6 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 
 /* 6.3 עריכת מפגש */
 /* פרטי מפגש: אותו אלמנט בעריכת מפגש ובפרטי סוג המפגש (31.10.26): בלי כותרות סעיפים, שדות בשתי עמודות */
-/* טופס מפגש וסוג מפגש: רקע אפור כדי שהשדות הלבנים יבלטו; מה שהיה אפור בתוך הטופס (כפתורים, אריח התמונה) נהיה לבן */
-#mDlg, #setDlg:has(#setTyDet:not([hidden])) { background: var(--surface-2); }
-#mForm, #setTyDet { --surface: var(--bg); --surface-2: var(--bg); }
 .mf .mfrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .mf .mfrow:has(> :nth-child(3)) { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) minmax(0, 1fr); }   /* במפגש: תאריך, שעה וכמות משתתפים באותה שורה */
 .mf .mfrow:has(> [hidden]) { grid-template-columns: 1fr; }   /* שורה שאחד השדות בה מוסתר (למשל סוג מפגש כשאין סוגים): השדה הנותר לכל הרוחב */
@@ -880,7 +876,7 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .pmrow .pmown { flex: 0 0 124px; width: 124px; height: 32px; font-size: 14px; }
 #stListAfter { margin-bottom: 4px; }
 /* דרך הגעה: כרטיס עם שם, צבע, סוג עלות, קוד וסכום, והתחשבנות */
-.srccard { --namh: 42px; padding: 12px 0; background: transparent; border: 0; }   /* בלי רקע ובלי קווים בין דרכי ההגעה */
+.srccard { --namh: var(--fld); padding: 12px 0; background: transparent; border: 0; }   /* בלי רקע ובלי קווים בין דרכי ההגעה */
 #prNewCard .srccard { padding-top: 0; }
 /* שתי שורות על אותן עמודות: שם, קוד וצבע; סוג עלות (תפריט של מערכת ההפעלה), עלות והתחשבנות */
 .srccard .srcgrid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) 78px; gap: 8px; }
@@ -1326,3 +1322,42 @@ dialog { border-radius: var(--r) var(--r) 0 0; }
 #qMenu.qlist .qi[aria-pressed="true"] .fdot { display: block; }
 /* מייל שלא נשלח כי למשתתף אין חשבון גוגל: צהוב. תקלה אמיתית נשארת אדומה */
 .nmail.bad.noacc, .mailbad.noacc { color: var(--yellow); }
+
+/* שדה עם התווית בתוך המסגרת (3.11.26): התווית תמיד גלויה, בלי שורה נפרדת מעל, וכל שורת שדות קצרה ב-20 פיקסל. רכיב אחד: כל <label class="field"><span>תווית</span><input|select|textarea></label> */
+:root { --fld: 46px; }
+.field { position: relative; margin-bottom: 8px; }
+.field:has(> input, > select, > textarea, > .dtbox, > .setval) > span:first-child { position: absolute; z-index: 1; top: 3px; inset-inline: 0 -33%; margin: 0; font-size: 16px; line-height: 22px; font-weight: 400; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; transform: scale(.75); transform-origin: 100% 0; transition: transform .16s ease-out, color .16s ease-out; }
+/* תווית צפה: שדה ריק בלי פוקוס, והשם יושב על הקו בדיוק במקום הטקסט; בפוקוס או כשיש ערך הוא עולה למעלה בקטן. בתזוזה בלבד (transform), בלי לשנות את הפריסה */
+.field:has(> :is(input, textarea):is([placeholder=" "], [data-hint]):placeholder-shown:not(:focus)) > span:first-child { transform: translateY(16px); inset-inline-end: 0; }
+.field > :is(input, textarea)[data-hint]:not(:focus)::placeholder { color: transparent; }
+.field:focus-within > span:first-child { color: var(--text); }
+.field > input, .field > select, .field > textarea { transition: border-color .16s ease-out; }
+@media (prefers-reduced-motion: reduce) { .field > span:first-child, .field > input, .field > select, .field > textarea { transition: none !important; } }
+.field > input, .field > select, .field > .dtbox > input, #finForm .field > select { height: var(--fld); }
+.field > input:not([type="date"], [type="time"]) { padding-block: 19px 3px; line-height: 22px; }
+.field > select, #finForm .field > select { padding-block: 19px 3px; line-height: 22px; }
+.field > textarea { min-height: var(--fld); padding-block: 19px 3px; line-height: 22px; }
+.field .dtbox .dtv { top: 16px; }
+.field > .setval { min-height: var(--fld); padding: 20px 0 3px; background: transparent; line-height: 22px; text-align: right; }
+/* כרטיס דרך הגעה: אותו מראה */
+.srccard .srcfld { position: relative; display: block; }
+.srccard .srcfld > small { position: absolute; z-index: 1; top: 5px; inset-inline: 0; font-size: 12px; font-weight: 400; line-height: 14px; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+.srccard .stname { height: var(--fld); padding: 19px 0 3px; line-height: 22px; }
+.srccard .srcsel { height: var(--fld); padding-block: 19px 3px; }
+.srccard .srcin { height: var(--fld); padding: 18px 0 2px; }
+.srccard .cpbtn { width: 24px; height: 24px; background: transparent; }
+.srccard .srccol { height: var(--fld); }
+.srccard .prsettle { height: var(--fld); padding-top: 16px; }
+/* בלי מסגרת ובלי רקע: קו תחתון בלבד, כהה בפוקוס (3.11.26), כמו שורת ההערה החדשה. הטקסט והתווית בקו של כותרת הפופאפ. בלי פינות, כי הקו רק בצד אחד */
+.field input, .field select, .field textarea, #finForm select, .setinp, .pmname, .pmown, .mt2row input, .mt2row select, .dline input, .srccard .srcin, .srccard .srcsel, .srccard .stname { border: 0; border-bottom: 1px solid var(--line-2); border-radius: 0; background-color: transparent; padding-inline: 0; }
+.field select, #finForm select, .pmown, .mt2row select, .srccard .srcsel { padding-inline: 0 20px; background-position: left 2px center; }
+.field input[type="date"], .field input[type="time"] { padding: 0 0 0 20px; background-position: left 2px center; }
+.dtbox .dtv { right: 0; left: 20px; }
+/* בלי מסגרות צריך יותר אוויר בין השדות באותה שורה */
+.two, .three, .name-row, .mf .mfrow, .payrow, .srccard .srcgrid { column-gap: 12px; }
+.three { grid-template-columns: calc((100% - 24px) / 3) 56px minmax(0, 1fr); }
+/* החץ של רשימה נפתחת, תאריך ושעה בקו של הטקסט ולא באמצע השדה */
+.field > select, #finForm .field > select, .srccard .srcsel { background-position: left 2px bottom 10px; }
+.field input[type="date"], .field input[type="time"] { background-position: left 2px bottom 12px; }   /* מספרים יושבים גבוה יותר מאותיות עבריות */
+/* בקוביות הממולאות (צבע, התחשבנות) התווית לא צמודה לקצה */
+.srccard .srcfld:has(> .srccol, > .prsettle) > small { inset-inline: 9px; }
