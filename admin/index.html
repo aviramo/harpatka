@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104hk" />
+  <link rel="stylesheet" href="admin.css?v=20261104hm" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1391,7 +1391,7 @@
     const scope = state.participants.filter((p) => (state.filter ? linkOf(p.id, state.filter) : p.active !== false) && mtypeOk(p));
     const add = (text, n, field, val, col) => out.push({ text, n, field, val, col });
     payKeys(effPay()).forEach((k) => add(k === '__none' ? 'ללא תגית' : STATUS_LABEL[k] || k, scope.filter((p) => stMatch(p, k)).length, 'pay', k, (state.statuses.find((x) => x.key === k) || {}).color));
-    { const gs = payKeys(effGender()), list = state.genPin ? ['male', 'female'].concat(gs.includes('none') ? ['none'] : []) : gs; list.forEach((g) => { add(g === 'male' ? 'זכר' : g === 'female' ? 'נקבה' : 'ללא מגדר', scope.filter((p) => (p.gender || 'none') === g).length, 'gender', g); out[out.length - 1].sel = gs.includes(g); }); }   // מגדר קבוע (עין פתוחה): תמיד בסטריפ, מסומן רק מה שנבחר
+    { const gs = payKeys(effGender()), list = state.genPin ? ['male', 'female'].concat(gs.includes('none') ? ['none'] : []) : gs; list.forEach((g) => { add(g === 'male' ? 'זכר' : g === 'female' ? 'נקבה' : 'ללא מגדר', scope.filter((p) => (p.gender || 'none') === g).length, 'gender', g); out[out.length - 1].sel = gs.includes(g); out[out.length - 1].pin = state.genPin; }); }   // מגדר קבוע (עין פתוחה): תמיד בסטריפ, מסומן רק מה שנבחר
     const fc = (k, v) => (FC[k] || {})[v];
     const pf = effPaidF(); if (pf) add(/^a\d/.test(pf) ? '₪' + nfm(Number(pf.slice(1))) : pf[0] === 'm' ? ((state.payMethods.find((x) => x.key === pf.slice(1)) || {}).name || pf.slice(1)) : FLAB.pay[{ 1: 1, 0: 2, n: 3, w: 4, l: 5, r: 6, u: 7 }[pf]], /^[am]\d|^m/.test(pf) ? null : fc('pay', pf), 'paidF', pf);
     const bf = effBal(); if (bf) add(FLAB.bal[{ 1: 1, 0: 2, n: 3, f: 4, w: 5 }[bf]], fc('bal', bf), 'bal', bf);
@@ -1406,7 +1406,7 @@
   function paintActive() {
     const box = $('#activeStrip'); if (!box) return;
     AF = activeFilters(); box.hidden = !AF.length;
-    box.innerHTML = AF.map((f, i) => UI.tag('<span>' + (f.field === 'ageF' ? 'גיל <bdi dir="ltr">' + esc(f.text.slice(4)) + '</bdi>' : esc(f.text)) + '</span>' + (f.n == null ? '' : ' <small>' + f.n + '</small>') + (f.sel === false ? '' : icon('close', 'i14')), 'afc' + (f.sel === false ? ' off' : ''), Object.assign({ 'data-af': i, 'aria-pressed': f.sel == null ? null : String(f.sel) }, f.col && PALETTE[f.col] ? { style: 'background:' + PALETTE[f.col][0] + ';color:' + PALETTE[f.col][1] } : {}, { 'aria-label': 'ביטול הסינון: ' + esc(f.text), title: 'ביטול הסינון' }), 'button')).join('');
+    box.innerHTML = AF.map((f, i) => UI.tag('<span>' + (f.field === 'gender' && f.val !== 'none' ? icon(f.val, 'i14') : f.field === 'ageF' ? 'גיל <bdi dir="ltr">' + esc(f.text.slice(4)) + '</bdi>' : esc(f.text)) + '</span>' + (f.n == null ? '' : ' <small>' + f.n + '</small>') + (f.pin ? '' : icon('close', 'i14')), 'afc' + (f.sel === false ? ' off' : ''), Object.assign({ 'data-af': i, 'aria-pressed': f.sel == null ? null : String(f.sel) }, f.col && PALETTE[f.col] ? { style: 'background:' + PALETTE[f.col][0] + ';color:' + PALETTE[f.col][1] } : {}, { 'aria-label': (f.pin ? (f.sel ? 'ביטול הבחירה: ' : 'סינון לפי ') : 'ביטול הסינון: ') + esc(f.text), title: f.pin ? (f.sel ? 'ביטול הבחירה' : 'סינון') : 'ביטול הסינון' }), 'button')).join('');
   }
 
   function renderFacets() {
