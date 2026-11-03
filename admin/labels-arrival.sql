@@ -4,9 +4,12 @@
 --
 -- מי הגיע: מי שהיה בסטטוס "הגיע", וגם מי שהיה בסטטוס "יצא" (הגיע ויצא). "שוריין" לא אומר שהגיע.
 -- תגית אחת לכל שיוך (status_key): נשארות רק "בטיפול" ו"יצא". שוריין, חדש והגיע נמחקים, ומי שהיה בהם נשאר בלי תגית.
+-- תשלום בהמשך (pay_later_at): המשתתף משוריין למפגש, והתשלום נשאר פתוח.
 -- העמודות הישנות (paid, will_pay, maybe, exempt, meeting_key, during_key, after_key, points, status_lead, tags) נשארות בלי שימוש.
 
 begin;
+
+alter table __S__.harpatka_attendance add column if not exists pay_later_at timestamptz;
 
 do $$
 begin
@@ -60,6 +63,10 @@ begin
       perform __S__.harpatka_sys_note(new.participant_id, case when coalesce(new.no_pay, false) then 'המפגש ' || __S__.harpatka_meeting_short(new.meeting_id) || ' סומן לא לתשלום' else 'חזרה לתשלום למפגש ' || __S__.harpatka_meeting_short(new.meeting_id) end,
         case when coalesce(new.no_pay, false) then 'free_on' else 'free_off' end, new.meeting_id);
     end if;
+    if (old.pay_later_at is null) <> (new.pay_later_at is null) and not (new.pay_later_at is null and coalesce(new.no_pay, false)) then   -- מעבר ל"לא לתשלום" כבר נרשם בהערה משלו
+      perform __S__.harpatka_sys_note(new.participant_id, case when new.pay_later_at is not null then 'המפגש ' || __S__.harpatka_meeting_short(new.meeting_id) || ' סומן תשלום בהמשך' else 'בוטל תשלום בהמשך למפגש ' || __S__.harpatka_meeting_short(new.meeting_id) end,
+        case when new.pay_later_at is not null then 'pay_later_on' else 'pay_later_off' end, new.meeting_id);
+    end if;
     if (old.details_sent_at is null) <> (new.details_sent_at is null) then
       perform __S__.harpatka_sys_note(new.participant_id, case when new.details_sent_at is not null then 'נשלחו פרטי הערב (וואטסאפ) למפגש ' else 'סימון שליחת פרטי הערב בוטל למפגש ' end || __S__.harpatka_meeting_short(new.meeting_id),
         case when new.details_sent_at is not null then 'details_sent' else 'details_unsent' end, new.meeting_id);
@@ -72,7 +79,7 @@ exception when others then return coalesce(new, old);
 end $function$;
 
 drop trigger if exists harpatka_att_notes on __S__.harpatka_attendance;
-create trigger harpatka_att_notes after insert or delete or update of status_key, attended, details_sent_at, no_pay on __S__.harpatka_attendance
+create trigger harpatka_att_notes after insert or delete or update of status_key, attended, details_sent_at, no_pay, pay_later_at on __S__.harpatka_attendance
   for each row execute function __S__.harpatka_att_notes();
 
 commit;
