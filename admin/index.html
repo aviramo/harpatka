@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104iq" />
+  <link rel="stylesheet" href="admin.css?v=20261104iz" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -61,6 +61,7 @@
     </header>
 
     <div id="status"></div>
+    <div class="chiprow" id="chipRow" role="group" aria-label="סינון מהיר: משוריינים, גברים ונשים"></div>
     <div class="vbar" id="listTags" role="group" aria-label="חיפוש, סינון ומיון">   <!-- שורה אחת: מונה הרשומות (מימין, בעמודת הגיל), תיבת החיפוש, הסינון, המיון, זכר / נקבה (צמודים לאייקוני הסינון של העמודות), ואייקוני העמודות עצמם (נקבעים ב-JS מעל העמודות שלהם) -->
       <div class="listcount" id="listCount" aria-live="polite" title="מספר הרשומות המוצגות"></div>
       <label class="search hsearch" title="חיפוש או הוספת משתתף">
@@ -1217,7 +1218,27 @@
   }
 
   /* ---------- רינדור ---------- */
-  function render() { mtSet = null; renderChips(); renderSort(); renderList();  syncUrl(); requestAnimationFrame(alignFilters); }   // בתוך מפגש מוסיפים דרך החיפוש
+  /* שורת צ'יפים מהירים בין הכותרת לשורת הסינונים: משוריינים (שלושה מצבים: הכל, משוריינים, לא משוריינים; רק בתוך מפגש), גברים ונשים, עם מונים */
+  function renderChipRow() {
+    const el = $('#chipRow'); if (!el) return;
+    const scope = state.participants.filter((p) => (state.filter ? linkOf(p.id, state.filter) : p.active !== false) && mtypeOk(p));
+    const men = scope.filter((p) => p.gender === 'male').length, wom = scope.filter((p) => p.gender === 'female').length, gk = payKeys(state.gender);
+    const btn = (key, cls, on, inner) => '<button type="button" class="stc tagc ' + cls + '" data-cr="' + key + '" aria-pressed="' + on + '">' + inner + '</button>';
+    let h = '';
+    if (state.filter) {
+      const res = scope.filter((p) => reservedOf(p.id, state.filter)).length, f = state.paidF, st = f === 'r' ? 1 : f === 'u' ? 2 : 0;
+      h += btn('res', st === 2 ? 'neg' : '', st > 0, (st === 2 ? 'לא משוריינים' : 'משוריינים') + ' <small>' + (st === 2 ? scope.length - res : res) + '</small>');
+    }
+    h += btn('male', '', gk.includes('male'), 'גברים <small>' + men + '</small>') + btn('female', '', gk.includes('female'), 'נשים <small>' + wom + '</small>');
+    el.innerHTML = h;
+  }
+  $('#chipRow').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-cr]'); if (!b) return; const k = b.dataset.cr;
+    if (k === 'res') state.paidF = state.paidF === 'r' ? 'u' : state.paidF === 'u' ? null : 'r';   // הכל ← משוריינים ← לא משוריינים ← הכל
+    else state.gender = payKeys(state.gender).includes(k) ? null : k;
+    render();
+  });
+  function render() { mtSet = null; renderChips(); renderChipRow(); renderSort(); renderList();  syncUrl(); requestAnimationFrame(alignFilters); }   // בתוך מפגש מוסיפים דרך החיפוש
 
   /* בורר המפגש בכותרת (במקום שורת התגיות): כל המשתתפים, מפגש אחד לסינון, או יצירת מפגש */
   function renderChips() {
