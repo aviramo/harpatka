@@ -12,7 +12,7 @@ begin
   if not found then return 'not_found'; end if;
   if p_to is null then
     if exists (select 1 from __S__.harpatka_participants where promoter_id = p_from or (f.code is not null and source_code = f.code) or (f.code = 'p' and source = 'site-ad' and source_code is null and promoter_id is null))
-      or exists (select 1 from __S__.harpatka_attendance where promoter_id = p_from)
+      or exists (select 1 from __S__.harpatka_attendance where promoter_id = p_from or source_promoter_id = p_from)
       or exists (select 1 from __S__.harpatka_payments where promoter_id = p_from)
       or exists (select 1 from __S__.harpatka_promoter_payments where promoter_id = p_from) then
       return 'has_links';
@@ -25,6 +25,7 @@ begin
       set promoter_id = p_to, source_code = case when source_code = f.code then t.code else source_code end
       where promoter_id = p_from or (f.code is not null and source_code = f.code) or (f.code = 'p' and source = 'site-ad' and source_code is null and promoter_id is null);
     update __S__.harpatka_attendance set promoter_id = p_to where promoter_id = p_from;
+    update __S__.harpatka_attendance set source_promoter_id = p_to where source_promoter_id = p_from;
     update __S__.harpatka_payments set promoter_id = p_to where promoter_id = p_from;
     update __S__.harpatka_promoter_payments set promoter_id = p_to where promoter_id = p_from;
   end if;

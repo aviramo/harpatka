@@ -886,8 +886,11 @@
   /* דרכי הגעה: ערוצי פרסום ממומן (קוד משלהם בקישור ?s=<code>, שם וצבע) ודרכי הגעה (שם, צבע ועמלה). הצבע מופיע בתגית הגיל ברשימה ובכותרת הפופאפ */
   const adCodeOf = (p) => p.source_code || (p.source === 'site-ad' ? 'p' : null);
   const channelOf = (p) => promoterOf(p.promoter_id) || (adCodeOf(p) ? state.promoters.find((x) => x.code === adCodeOf(p)) : null) || null;   // דרך ההגעה של המשתתף: לפי בחירה, אחרת לפי הקוד בקישור
-  const originOf = (p) => { const x = channelOf(p); if (x) return { kind: 'pr', name: x.name, color: x.color || 'red' }; return adCodeOf(p) ? { kind: 'ad', name: 'פרסום', color: 'sky' } : null; };
-  const originAttr = (p) => { const o = originOf(p); if (!o) return ''; const c = PALETTE[o.color] || PALETTE.sky; return ' style="color:' + c[1] + '"'; };   // צבע דרך ההגעה: בטקסט בלבד, בלי רקע
+  /* דרך ההגעה למפגש מסוים: נשמרת לכל הרשמה (source_promoter_id). בתוך מפגש הצבע והסינון לפי ההרשמה למפגש הזה, ובשאר התצוגות לפי הדרך שבה המשתתף הגיע בפעם הראשונה */
+  const channelAt = (p, mid) => { if (!mid) return channelOf(p); const l = linkOf(p.id, mid); return (l && promoterOf(l.source_promoter_id)) || null; };
+  const originOf = (p, mid) => { const x = channelAt(p, mid); if (x) return { kind: 'pr', name: x.name, color: x.color || 'red' }; return !mid && adCodeOf(p) ? { kind: 'ad', name: 'פרסום', color: 'sky' } : null; };
+  const firstArrive = (pid) => { if (state.att.some((l) => l.participant_id === pid)) return {}; const p = state.participants.find((x) => x.id === pid), x = p && channelOf(p); return x ? { source_promoter_id: x.id } : {}; };   // ההרשמה הראשונה מקבלת את דרך ההגעה של המשתתף (כמו הטריגר, כדי שהצבע יופיע מיד)
+  const originAttr = (p, mid) => { const o = originOf(p, mid); if (!o) return ''; const c = PALETTE[o.color] || PALETTE.sky; return ' style="color:' + c[1] + '"'; };   // צבע דרך ההגעה: בטקסט בלבד, בלי רקע
   const promoterOf = (id) => state.promoters.find((x) => x.id === id);
   const rateLabel = (pr) => pr ? (pr.cost_from_payment ? (pr.rate_type === 'percent' ? Number(pr.rate) + '% מהתשלום' : '₪' + Number(pr.rate) + ' מהתשלום') : '₪' + Number(pr.rate) + ' לליד') : '';
   const calcCommission = (pr, amount) => { if (!pr || !pr.cost_from_payment) return '';   // עלות לליד: אין עמלה על התשלום
@@ -1120,7 +1123,7 @@
       const [p, m, a, nn, prs, pps, pays, sts, pfs, pms, pubs, fin0, finr0, fintr0, mem0, mts, tpls0, sent0] = await Promise.all([
         api(T.p + '?select=*'),
         api(T.m + '?select=*'),
-        api(T.a + '?select=meeting_key,participant_id,meeting_id,paid,pay_requested_at,status_key,created_at,exempt,attended,paid_amount,promoter_id,commission,paid_at,details_sent_at,will_pay,maybe,no_pay,pay_reported_at,pay_reported_amount,pay_due_amount,pay_closed_at'),
+        api(T.a + '?select=meeting_key,participant_id,meeting_id,paid,pay_requested_at,status_key,created_at,exempt,attended,paid_amount,promoter_id,commission,paid_at,details_sent_at,will_pay,maybe,no_pay,pay_reported_at,pay_reported_amount,pay_due_amount,pay_closed_at,source_promoter_id'),
         api(T.n + '?select=id,participant_id,body,author_email,author_name,created_at,has_image,system,event_type,old_status,new_status,meeting_id,meeting_short,status_label,status_color,amount,mail_id,mail_failed,mail_noaddr&order=created_at.desc'),
         api(T.pr + '?select=*&order=name.asc'),
         api(T.pp + '?select=*&order=paid_at.desc'),
@@ -1352,7 +1355,7 @@
   };
   const UPD_B = [['h', 'שעה', 36e5], ['d', 'יום', 864e5], ['w', 'שבוע', 7 * 864e5], ['m', 'חודש', 30 * 864e5]];   // סינון "עדכון אחרון": בשעה, ביום, בשבוע ובחודש האחרונים
   const updWithin = (id, ms) => { const t = Date.parse(lastUpd(id)); return !isNaN(t) && Date.now() - t <= ms; };
-  const moreOk = (p) => { if (state.q.trim()) return true; if (state.updF) { const u = UPD_B.find((x) => x[0] === state.updF); if (u && !updWithin(p.id, u[2])) return false; } if (state.loginF && loginOf(p) !== state.loginF) return false; if (state.srcF) { const c = channelOf(p); if (state.srcF === '__none' ? !!c : !(c && c.id === state.srcF)) return false; } if (state.ageF) { const b = AGE_B.find((x) => x[0] === state.ageF), a = shownAge(p); if (b && (a == null || a < b[2] || a > b[3])) return false; } return true; };
+  const moreOk = (p) => { if (state.q.trim()) return true; if (state.updF) { const u = UPD_B.find((x) => x[0] === state.updF); if (u && !updWithin(p.id, u[2])) return false; } if (state.loginF && loginOf(p) !== state.loginF) return false; if (state.srcF) { const c = channelAt(p, state.filter); if (state.srcF === '__none' ? !!c : !(c && c.id === state.srcF)) return false; } if (state.ageF) { const b = AGE_B.find((x) => x[0] === state.ageF), a = shownAge(p); if (b && (a == null || a < b[2] || a > b[3])) return false; } return true; };
   const moreOn = () => !state.q.trim() && !!(state.updF || state.srcF || state.ageF || state.loginF);
   const payKeys = (s) => s ? String(s).split(',').filter(Boolean) : [];   // סינון סטטוסים מרובה: state.pay הוא מפתחות מופרדים בפסיק
   /* סינון בתוך מפגש: איחוד (אחד מהסטטוסים). בתצוגת הכל: חיתוך (כל התגיות שנבחרו יחד) */
@@ -1665,7 +1668,7 @@
         (wa ? UI.tag(wsel ? (wsent ? icon('check') : PIN_ICON) : WA_ICON, 'ico rowwa' + (wsent ? ' sent' : ''), Object.assign({ href: wa }, /^https?:/.test(wa) ? { target: '_blank', rel: 'noopener' } : {}, wsel ? { 'data-wsend': p.id } : {}, { 'aria-label': 'וואטסאפ ל' + esc(p.name) + (wsent ? ', ההודעה נשלחה' : ''), title: wsel ? esc(wsent ? 'נשלחה ההודעה "' + wsel.name + '" · ' + fmtDT(wsent.sent_at) + ' · לחיצה לביטול הסימון' : 'וואטסאפ עם ההודעה: ' + wsel.name) : 'וואטסאפ' }), 'a') : UI.tag(WA_ICON, 'ico rowwa nophone', { role: 'img', 'aria-label': 'אין טלפון', title: 'אין טלפון' })) +
         '<div class="main' + ' hasw' + (anyEv ? ' ev' : '') + (!state.filter && state.showPay ? ' bl' + (state.showAtt === false ? ' nosum' : '') : '') + '" role="button" tabindex="0" data-edit="' + p.id + '">' +
           '<div class="nm"><span class="name' + nameCls(p) + '" dir="rtl">' + nameMark(p) + '</span>' + '</div>' +   // רק השם מבודד (שם באנגלית לא הופך את השורה), וסמל החשבון תמיד משמאל לשם
-          (true ? '<div class="meta">' + (true ? '<span class="age' + (originOf(p) ? ' ' + originOf(p).kind : '') + '"' + originAttr(p) + ' title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi dir="rtl">' + (age != null ? age : (p.gender ? '' : '—')) + (age != null || !p.gender ? ' ' : '') + '<b class="gl">' + (p.gender ? icon(p.gender === 'male' ? 'male' : 'female', 'i14') : '<span class="ic i14 ph" aria-hidden="true"></span>') + '</b>' + '</bdi></span>' : '') + '<span class="sidewrap">' + side + tags + payIc + '</span>' + '</div>' : '') +
+          (true ? '<div class="meta">' + (true ? '<span class="age' + (originOf(p, state.filter) ? ' ' + originOf(p, state.filter).kind : '') + '"' + originAttr(p, state.filter) + ' title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi dir="rtl">' + (age != null ? age : (p.gender ? '' : '—')) + (age != null || !p.gender ? ' ' : '') + '<b class="gl">' + (p.gender ? icon(p.gender === 'male' ? 'male' : 'female', 'i14') : '<span class="ic i14 ph" aria-hidden="true"></span>') + '</b>' + '</bdi></span>' : '') + '<span class="sidewrap">' + side + tags + payIc + '</span>' + '</div>' : '') +
           // הערה אחרונה וסימון צירוף תמונה לא מוצגים ברשימה (הערות רק בכרטיס המשתתף)
           evc +
           (!state.filter && state.showPay ? (() => { const b = Math.round(creditOf(p.id) * 100) / 100; const fa = b === 0 && freeAll(p); return '<span class="balic ' + (b > 0 ? 'pos' : b < 0 ? 'neg' : fa ? 'fr' : 'zero') + '" title="' + (b > 0 ? 'זכאי: יתרה לטובתו ₪' + nfm(b) : b < 0 ? 'חייב: יתרת חובה ₪' + nfm(-b) : fa ? 'לא לתשלום: בכל המפגשים שנרשם אליהם' : 'מאוזן') + '">₪</span>'; })() : '') +
@@ -1841,7 +1844,7 @@
     const noCh = Object.assign(funnelOf(allP.filter((q) => !channelOf(q))), { name: 'אורגני', cm: 0 });
     const chRows = proRows.concat(noCh.leads ? [noCh] : []);
     const proOwed = sum(proRows, (r) => Math.max(0, r.bal)), proInc = sum(proRows, (r) => r.inc), proCost = sum(proRows, (r) => r.cm), proLeads = sum(proRows, (r) => r.leads), proPaid = sum(proRows, (r) => r.paid);
-    const srcCount = (r, k) => links.filter((l) => l.meeting_id === r.m.id && src(l.p) === k).length;
+    const srcCount = (r, k) => links.filter((l) => l.meeting_id === r.m.id && (promoterOf(l.source_promoter_id) ? 'promo' : src(l.p) === 'promo' ? 'site' : src(l.p)) === k).length;   // לפי ההרשמה למפגש הזה
     // מתי נרשמים: כמה ימים לפני המפגש, באיזה יום ובאיזו שעה (שעון ישראל), כדי לתזמן מודעות ופוסטים
     const LEAD = [['<bdi dir="ltr">15+</bdi>', 15, 1e4], ['<bdi dir="ltr">8–14</bdi>', 8, 14], ['<bdi dir="ltr">4–7</bdi>', 4, 7], ['<bdi dir="ltr">2–3</bdi>', 2, 3], ['יום לפני', 1, 1], ['ביום', -1e4, 0]];
     const leadDays = links.filter((l) => l.created_at).map((l) => daysTo(l.m, ilDay(l.created_at)));
@@ -2129,7 +2132,7 @@
   }
   async function setLinkedWithStatus(pid, mid, st) {
     if (linkOf(pid, mid)) { setPayStatus(pid, mid, st); return; }
-    const row = Object.assign({ participant_id: pid, meeting_id: mid }, statusBody(st));
+    const row = Object.assign({ participant_id: pid, meeting_id: mid }, statusBody(st), firstArrive(pid));
     const h = pendBegin(pid, mid, statusBody(st), row);
     state.att.push(row); render(); refreshSheetMeetings();
     try { await api(T.a, { method: 'POST', body: row, prefer: 'resolution=ignore-duplicates' }); pendDone(h); }
@@ -2360,7 +2363,7 @@
     const l = linkOf(pid, mid), prevKey = l ? (l.meeting_key || null) : null, next = prevKey === key ? null : key, body = { meeting_key: next };
     if (!l) {
       if (!next) return;
-      const row = Object.assign({ participant_id: pid, meeting_id: mid, paid: false }, body), h = pendBegin(pid, mid, body, row);
+      const row = Object.assign({ participant_id: pid, meeting_id: mid, paid: false }, body, firstArrive(pid)), h = pendBegin(pid, mid, body, row);
       state.att.push(row); refresh();
       try { await api(T.a, { method: 'POST', body: { participant_id: pid, meeting_id: mid, paid: false, meeting_key: next }, prefer: 'resolution=ignore-duplicates' }); pendDone(h); toast('סטטוס מפגש: ' + STATUS_LABEL[next] + ' (לא היה משויך למפגש)'); }
       catch (err) { pendFail(h); state.att = state.att.filter((x) => x !== row); refresh(); fail(err); }
@@ -2504,7 +2507,7 @@
 
   async function setLinked(pid, mid, on, mode) {
     if (on) {
-      const row = { participant_id: pid, meeting_id: mid, paid: false };
+      const row = Object.assign({ participant_id: pid, meeting_id: mid, paid: false }, firstArrive(pid));
       state.att.push(row); render(); refreshSheetMeetings();
       try { await api(T.a, { method: 'POST', body: row, prefer: 'resolution=ignore-duplicates' }); }
       catch (err) { state.att = state.att.filter((a) => a !== row); render(); refreshSheetMeetings(); fail(err); return; }
@@ -3398,9 +3401,10 @@
     const p = state.participants.find((x) => x.id === (sheet && sheet.id)); if (!p) return;
     const prev = { promoter_id: p.promoter_id || null, source: p.source, source_code: p.source_code || null };
     const next = { promoter_id: id || null, source: adCodeOf(p) ? 'site' : p.source, source_code: null };
-    Object.assign(p, next); setTitle(p); render();
+    const first = state.att.filter((l) => l.participant_id === p.id).sort((a, b) => String(a.created_at || '~').localeCompare(String(b.created_at || '~')))[0], prevF = first ? first.source_promoter_id : null;   // בבסיס הנתונים זה נעשה בטריגר
+    Object.assign(p, next); if (first) first.source_promoter_id = id || null; setTitle(p); render();
     try { await api(T.p + '?id=eq.' + p.id, { method: 'PATCH', body: next }); toast(id ? 'דרך ההגעה עודכנה' : 'דרך ההגעה הוסרה'); }
-    catch (err) { Object.assign(p, prev); setTitle(p); render(); fail(err); }
+    catch (err) { Object.assign(p, prev); if (first) first.source_promoter_id = prevF; setTitle(p); render(); fail(err); }
   }
   $('#pPromoOpts').addEventListener('click', (e) => { const b = e.target.closest('[data-pp]'); if (!b) return; setParticipantPromoter(b.dataset.pp); afterPromoPick(); });
   $('#pPromoNew').addEventListener('click', () => openNewPromoter((row) => { setParticipantPromoter(row.id); afterPromoPick(); }));
@@ -3625,7 +3629,7 @@
     if (!p) { h.textContent = 'משתתף חדש'; $('#pTagSlot').innerHTML = ''; return; }
     $('#pTagSlot').innerHTML = tagMark(p, 'i18', true);   // סמל התגית והמונה: בשורת הכפתורים
     const age = shownAge(p);
-    const o = originOf(p), cls = o ? ' ' + o.kind : '';   // צבע התגית לפי דרך ההגעה (צבע שנבחר בהגדרות)
+    const o = originOf(p, sheet && sheet.hl), cls = o ? ' ' + o.kind : '';   // צבע התגית לפי דרך ההגעה (צבע שנבחר בהגדרות)
     const src = o ? (o.kind === 'pr' ? ' · דרך הגעה: ' : ' · פרסום: ') + o.name : '';
     h.title = src.replace(' · ', '');
     h.innerHTML = (age != null || p.gender ? '<span class="tchip' + cls + '"' + originAttr(p) + '><bdi dir="rtl">' + (age != null ? age : '') + (age != null ? ' ' : '') + '<b>' + (p.gender ? icon(p.gender === 'male' ? 'male' : 'female', 'i16') : '<span class="ic i16 ph" aria-hidden="true"></span>') + '</b>' + '</bdi></span>' : '') + '<span class="tname' + nameCls(p) + '" dir="rtl"><bdi>' + esc(p.name) + '</bdi></span>';
@@ -3833,7 +3837,7 @@
         toast('המשתתף הלא פעיל חזר להיות פעיל'); pDlg.close(); load(true); btn.disabled = false; return;
       }
       state.participants.push(p);
-      const rows = [...sheet.links].map(([mid, paid]) => ({ participant_id: p.id, meeting_id: mid, paid: !!paid }));
+      const rows = [...sheet.links].map(([mid, paid]) => Object.assign({ participant_id: p.id, meeting_id: mid, paid: !!paid }, firstArrive(p.id)));
       if (rows.length) { await api(T.a, { method: 'POST', body: rows }); state.att.push(...rows); }
       pDlg.close(); render(); toast('✓ ' + p.name + ' ברשימה');
     } catch (err) { fail(err); }
@@ -4355,7 +4359,7 @@
     const cnt = (f) => scope.filter(f).length;
     const chip = (kind, val, label, n, col) => { const on = state[FK[kind]] === val, pc = col && PALETTE[col]; return '<button type="button" class="mc' + (n || on ? '' : ' zero') + '"' + (pc ? ' data-sc="1" style="--sbg:' + pc[0] + ';--sfg:' + pc[1] + '"' : '') + ' data-mk="' + kind + '" data-mv="' + esc(val) + '" aria-pressed="' + on + '">' + esc(label) + ' <small>' + n + '</small>' + UI.fdot(on && (pc ? 'sc' : 'ink')) + '</button>'; };
     return fsec('עדכון אחרון', UPD_B.map((b) => chip('upd', b[0], b[1], cnt((p) => updWithin(p.id, b[2])))).join('')) +
-      fsec('דרך הגעה', state.promoters.map((x) => chip('src', x.id, x.name, cnt((p) => (channelOf(p) || {}).id === x.id), x.color || 'red')).join('') + chip('src', '__none', 'ללא דרך הגעה', cnt((p) => !channelOf(p)))) +
+      fsec('דרך הגעה', state.promoters.map((x) => chip('src', x.id, x.name, cnt((p) => (channelAt(p, state.filter) || {}).id === x.id), x.color || 'red')).join('') + chip('src', '__none', 'ללא דרך הגעה', cnt((p) => !channelAt(p, state.filter)))) +
       fsec('גיל', AGE_B.map((b) => chip('age', b[0], b[1], cnt((p) => { const a = shownAge(p); return a != null && a >= b[2] && a <= b[3]; }))).join('')) +
       fsec('אזור אישי', [['yes', 'רשומים'], ['no', 'לא רשומים'], ['blocked', 'חסומים']].map((o) => chip('login', o[0], o[1], cnt((p) => loginOf(p) === o[0]))).join(''));
   }
@@ -4999,7 +5003,7 @@
   function askSrcDelete(id) {
     const x = promoterOf(id); if (!x) return;
     const ps = state.participants.filter((q) => q.promoter_id === x.id || (x.code && q.source_code === x.code) || (x.code === 'p' && q.source === 'site-ad' && !q.source_code && !q.promoter_id));
-    const money = state.payments.some((q) => q.promoter_id === x.id) || state.att.some((q) => q.promoter_id === x.id) || state.promoPays.some((q) => q.promoter_id === x.id);
+    const money = state.payments.some((q) => q.promoter_id === x.id) || state.att.some((q) => q.promoter_id === x.id || q.source_promoter_id === x.id) || state.promoPays.some((q) => q.promoter_id === x.id);
     const others = state.promoters.filter((o) => o.id !== x.id), nm = '<b>"' + esc(x.name) + '"</b>', who = ps.length === 1 ? 'משתתף אחד שקשור' : '<b>' + ps.length + '</b> משתתפים שקשורים';
     const linked = ps.length ? 'יש ' + who + ' לדרך ההגעה ' + nm + '.' : 'יש תשלומים שקשורים לדרך ההגעה ' + nm + '.';
     $('#setDelText').innerHTML = !ps.length && !money ? 'למחוק את דרך ההגעה ' + nm + '?' : !others.length ? linked + ' זו דרך ההגעה היחידה, ולכן צריך קודם להוסיף דרך הגעה אחרת' : linked + ' לאיזו דרך הגעה להעביר אותם?';

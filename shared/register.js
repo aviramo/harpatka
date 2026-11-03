@@ -736,7 +736,7 @@
     btn.disabled = true; btn.textContent = 'שולחים...';
     const ob = meOptimistic(m.id, { registered: true }), rel = HRT.busy(btn);
     try {
-      const r = await meRpc('harpatka_me_register', { p_meeting: m.id });
+      const r = PAID ? await meRpc('harpatka_me_register_src', { p_meeting: m.id, p_src: 'p' }) : await meRpc('harpatka_me_register', { p_meeting: m.id });   // הגיעו ממודעה: נרשם על ההרשמה למפגש הזה
       if (r !== 'registered' && r !== 'exists') throw new Error('register failed');
       ob.done(); rel();
       const mine = meInfo.meetings.find((x) => x.id === m.id);
