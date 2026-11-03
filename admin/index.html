@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104jd" />
+  <link rel="stylesheet" href="admin.css?v=20261104je" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1220,14 +1220,17 @@
   /* שורת צ'יפים מהירים בין הכותרת לשורת הסינונים: משוריינים (שלושה מצבים: הכל, משוריינים, לא משוריינים; רק בתוך מפגש), גברים ונשים, עם מונים */
   function renderChipRow() {
     const el = $('#chipRow'); if (!el) return;
-    const scope = state.participants.filter((p) => (state.filter ? linkOf(p.id, state.filter) : p.active !== false) && mtypeOk(p));
-    const men = scope.filter((p) => p.gender === 'male').length, wom = scope.filter((p) => p.gender === 'female').length, gk = payKeys(state.gender);
+    /* המונים לפי הרשימה: כל הסינונים הפעילים חוץ מהסינון של אותו צ'יף עצמו (משוריינים: מכבד מגדר; גברים ונשים: מכבדים משוריינים) */
+    const pool = poolP(), epk = payKeys(effPay()), eg = effGender(), gk = payKeys(state.gender), common = (p) => sentOk(p) && matchPay(p, epk);
+    const genOk = (p) => !eg || payKeys(eg).includes(p.gender || 'none');
+    const men = pool.filter((p) => common(p) && paidOk(p) && p.gender === 'male').length, wom = pool.filter((p) => common(p) && paidOk(p) && p.gender === 'female').length;
+    const scope = pool;
     const btn = (key, cls, on, inner) => '<button type="button" class="stc tagc ' + cls + '" data-cr="' + key + '" aria-pressed="' + on + '">' + inner + '</button>';
     let h = '';
     if (state.filter) {
-      const res = scope.filter((p) => reservedOf(p.id, state.filter)).length, f = state.paidF, st = f === 'r' ? 1 : f === 'u' ? 2 : 0;
-      const w = String(scope.length);   // רוחב קבוע: מקום שמור לטקסט הרחב ביותר (לא משוריינים + המספר הגדול ביותר)
-      h += btn('res', st === 2 ? 'neg' : '', st > 0, '<span class="fx"><span>' + (st === 2 ? 'לא משוריינים' : 'משוריינים') + ' <small>' + (st === 2 ? scope.length - res : res) + '</small></span><span class="ph" aria-hidden="true">לא משוריינים <small>' + w + '</small></span></span>');
+      const f = state.paidF, st = f === 'r' ? 1 : f === 'u' ? 2 : 0, ok = pool.filter((p) => common(p) && genOk(p)), res = ok.filter((p) => reservedOf(p.id, state.filter)).length, unres = ok.length - res;
+      const w = String(state.participants.length);   // רוחב קבוע: מקום שמור לטקסט הרחב ביותר (לא משוריינים + המספר הגדול ביותר)
+      h += btn('res', st === 2 ? 'neg' : '', st > 0, '<span class="fx"><span>' + (st === 2 ? 'לא משוריינים' : 'משוריינים') + ' <small>' + (st === 2 ? unres : res) + '</small></span><span class="ph" aria-hidden="true">לא משוריינים <small>' + w + '</small></span></span>');
     }
     h += btn('male', '', gk.includes('male'), 'גברים <small>' + men + '</small>') + btn('female', '', gk.includes('female'), 'נשים <small>' + wom + '</small>');
     el.innerHTML = h;
@@ -1238,7 +1241,7 @@
     else state.gender = payKeys(state.gender).includes(k) ? null : k;
     render();
   });
-  function render() { mtSet = null; renderChips(); renderChipRow(); renderSort(); renderList();  syncUrl(); requestAnimationFrame(alignFilters); }   // בתוך מפגש מוסיפים דרך החיפוש
+  function render() { mtSet = null; renderChips(); renderSort(); renderList();  syncUrl(); requestAnimationFrame(alignFilters); }   // בתוך מפגש מוסיפים דרך החיפוש
 
   /* בורר המפגש בכותרת (במקום שורת התגיות): כל המשתתפים, מפגש אחד לסינון, או יצירת מפגש */
   function renderChips() {
@@ -1411,10 +1414,10 @@
   const filtersOn = () => !!(effPay() || effGender() || effPaidF() || effSent() || effBal() || moreOn() || waFilter());
   const clearFilters = () => { state.pay = null; state.gender = null; state.paidF = null; state.sent = null; state.bal = null; state.srcF = null; state.ageF = null; state.loginF = null; state.updF = null; waSetFilter(''); };   // כל הסינונים, בלי המיון
 
-  function renderFacets() {
-    normFilter();
-    const q = state.q.trim().toLowerCase(), qd = digits(q), eg = effGender(), ep = effPay();
-    const base = state.participants.filter((p) => {
+  /* המשתתפים בתצוגה לפני סינוני הצ'יפים והעמודות: מפגש, סוג מפגש, מחוקים, "עוד" (דרך הגעה, גיל, אזור אישי) והחיפוש */
+  const poolP = () => {
+    const q = state.q.trim().toLowerCase(), qd = digits(q);
+    return state.participants.filter((p) => {
       if (state.filter && !linkOf(p.id, state.filter)) return false;
       if (!mtypeOk(p)) return false;
       if (!state.filter && p.active === false && !q) return false;   // מחוקים: רק בחיפוש טקסט פעיל
@@ -1422,6 +1425,11 @@
       if (!q) return true;
       return qMatch(p, q, qd);
     });
+  };
+  function renderFacets() {
+    normFilter();
+    const q = state.q.trim().toLowerCase(), qd = digits(q), eg = effGender(), ep = effPay();
+    const base = poolP();
     const epk = payKeys(ep), payOk = (p) => paidOk(p) && matchPay(p, epk);
     const genOk = (p) => !eg || payKeys(eg).includes(p.gender || 'none');
     $('#facets').classList.toggle('searching', !!q);
@@ -1521,7 +1529,7 @@
     if (!q) return true;
     return qMatch(p, q, qd);
   }
-  function renderList() {
+  function renderList() { renderChipRow();
     updMap = null;
     normFilter();
     renderFacets();
