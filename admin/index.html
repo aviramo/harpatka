@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104gi" />
+  <link rel="stylesheet" href="admin.css?v=20261104gj" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -892,7 +892,7 @@
   const firstArrive = (pid) => { if (state.att.some((l) => l.participant_id === pid)) return {}; const p = state.participants.find((x) => x.id === pid), x = p && channelOf(p); return x ? { source_promoter_id: x.id } : {}; };   // ההרשמה הראשונה מקבלת את דרך ההגעה של המשתתף (כמו הטריגר, כדי שהצבע יופיע מיד)
   const originAttr = (p, mid) => { const o = originOf(p, mid); if (!o) return ''; const c = PALETTE[o.color] || PALETTE.sky; return ' style="color:' + c[1] + '"'; };   // צבע דרך ההגעה: בטקסט בלבד, בלי רקע
   const promoterOf = (id) => state.promoters.find((x) => x.id === id);
-  const rateLabel = (pr) => pr ? (pr.cost_from_payment ? (pr.rate_type === 'percent' ? Number(pr.rate) + '% מהתשלום' : '₪' + Number(pr.rate) + ' מהתשלום') : '₪' + Number(pr.rate) + ' לליד') : '';
+  const rateLabel = (pr) => pr ? (pr.cost_total ? 'עלות כללית' : pr.cost_from_payment ? (pr.rate_type === 'percent' ? Number(pr.rate) + '% מהתשלום' : '₪' + Number(pr.rate) + ' מהתשלום') : '₪' + Number(pr.rate) + ' לליד') : '';
   const calcCommission = (pr, amount) => { if (!pr || !pr.cost_from_payment) return '';   // עלות לליד: אין עמלה על התשלום
     const v = pr.rate_type === 'percent' ? Math.round((Number(amount) || 0) * Number(pr.rate)) / 100 : Number(pr.rate); return Number.isFinite(v) ? v : ''; };
   /* עמלה מתשלום: אחוז = על כל תשלום; ₪ קבוע = פעם אחת למשתתף (בתשלום הראשון) */
@@ -1840,7 +1840,7 @@
     const src = (p) => channelOf(p) ? 'promo' : String(p.source || '').startsWith('site') ? 'site' : 'other';
     const cameSet = new Set(cameP.map((p) => p.id));
     const funnelOf = (ps) => ({ leads: ps.length, reg: ps.filter((q) => linksOf(q.id).length).length, paid: ps.filter((q) => paidBy.get(q.id) > 0).length, came: ps.filter((q) => cameSet.has(q.id)).length, inc: sum(ps, (q) => paidBy.get(q.id)) });
-    const proRows = state.promoters.map((x) => { const L = ledgerOf(x.id), recs = state.payments.filter((q) => q.promoter_id === x.id), f = funnelOf(srcLeads(x.id)), cm = (!x.cost_from_payment ? f.leads * Number(x.rate || 0) : 0) + sum(recs, (q) => (q.kind === 'payment' ? 1 : -1) * (Number(q.commission) || 0)); return Object.assign(f, { x, cm, bal: L.balance, name: esc(x.name) }); }).sort((a, b) => (b.inc - b.cm) - (a.inc - a.cm));
+    const proRows = state.promoters.map((x) => { const L = ledgerOf(x.id), recs = state.payments.filter((q) => q.promoter_id === x.id), f = funnelOf(srcLeads(x.id)), cm = x.cost_total ? L.paid : (!x.cost_from_payment ? f.leads * Number(x.rate || 0) : 0) + sum(recs, (q) => (q.kind === 'payment' ? 1 : -1) * (Number(q.commission) || 0)); return Object.assign(f, { x, cm, bal: L.balance, name: esc(x.name) }); }).sort((a, b) => (b.inc - b.cm) - (a.inc - a.cm));
     const noCh = Object.assign(funnelOf(allP.filter((q) => !channelOf(q))), { name: 'אורגני', cm: 0 });
     const chRows = proRows.concat(noCh.leads ? [noCh] : []);
     const proOwed = sum(proRows, (r) => Math.max(0, r.bal)), proInc = sum(proRows, (r) => r.inc), proCost = sum(proRows, (r) => r.cm), proLeads = sum(proRows, (r) => r.leads), proPaid = sum(proRows, (r) => r.paid);
@@ -1858,12 +1858,15 @@
     const dayParts = [['בוקר', '06:00–12:00', win(6, 12)], ['צהריים', '12:00–18:00', win(12, 18)], ['ערב', '18:00–23:00', win(18, 23)], ['לילה', '23:00–06:00', win(23, 24) + win(0, 6)]], dayMax = Math.max(...dayParts.map((x) => x[2]));
     const hoursPart = hrsTotal ? '<p class="sthint">באיזו שעה ביום</p>' + colsChart(hrs.map((v, h) => ({ l: h % 3 === 0 ? String(h) : '', v, color: h === peak ? 'var(--orange)' : 'var(--blue)' })), 'var(--blue)', true) +
       kpis(...dayParts.map((x) => kpi(Ps(x[2], hrsTotal), x[0] + ' <bdi dir="ltr">' + x[1] + '</bdi>', x[2] + ' הרשמות', x[2] === dayMax ? 'good' : ''))) : '';
+    /* עלות כללית: העלות לליד של כל תקופה, מהחדשה לישנה; בראש התקופה הפתוחה שמאז ההתחשבנות האחרונה */
+    const costParts = state.promoters.filter((x) => x.cost_total).map((x) => { const P = costPeriods(x.id), rows = P.periods.slice().reverse().map((r) => [r.from ? dayMon(r.from) + ' עד ' + dayMon(r.to) : 'עד ' + dayMon(r.to), ilsB(r.amount), r.leads, r.per != null ? '<bdi dir="ltr">' + perLeadTxt(r.per) + '</bdi>' : '—']); if (P.openLeads || !rows.length) rows.unshift([P.openFrom ? 'מאז ' + dayMon(P.openFrom) : 'עד עכשיו', '—', P.openLeads, '—']); return part('עלות לליד · ' + esc(x.name), tbl(['תקופה', 'שולם', 'לידים', 'לליד'], rows)); }).join('');
     const promo = part('האם הפרסום משתלם', kpis(
         kpi(proPaid ? ilsB(proCost / proPaid) : '—', 'עלות למשלם', proLeads ? 'ליד עולה ' + ilsB(proCost / proLeads) : ''),
         kpi(proPaid ? ilsB(proInc / proPaid) : '—', 'משלם מכניס בממוצע', proPaid + ' משלמים מתוך ' + proLeads + ' לידים'),
         kpi(ilsB(proInc), 'הכנסה דרך דרכי הגעה', Ps(proInc, cash) + ' מההכנסה'),
         kpi(ilsB(proCost), 'עלות דרכי הגעה', proOwed ? ilsB(proOwed) + ' נשאר לשלם' : '', proOwed ? 'warn' : '')
       )) +
+      costParts +
       part('מה מביא אנשים', tbl(['דרך הגעה', 'לידים', 'נרשמו', 'שילמו', 'הגיעו'], chRows.map((r) => [r.name, r.leads, r.reg, r.paid + pctS(r.paid, r.leads), r.came]))) +
       part('מה משתלם', tbl(['דרך הגעה', 'הכנסה', 'עלות', 'נטו', 'למשלם'], chRows.map((r) => [r.name, ilsB(r.inc), ilsB(r.cm), sgn(r.inc - r.cm), r.paid && r.cm ? ilsB(r.cm / r.paid) : '—']))) +
       ((leadPart || wdPart || hoursPart) ? part('מתי נרשמים', leadPart + wdPart + hoursPart) : '') +
@@ -2163,6 +2166,15 @@
   const fmtD = (iso) => { if (!iso) return ''; const [y, m, d] = String(iso).slice(0, 10).split('-'); return Number(d) + '.' + Number(m) + '.' + y.slice(2); };
   const ils = (n) => '<bdi dir="ltr">₪' + nfm(n) + '</bdi>';   // בלי היפוך סימן השקל בטקסט מימין לשמאל
   /* תנועות דרך ההגעה: עמלות שנצברו (חיובי, אנחנו חייבים) ותשלומים אליו (שלילי), עם יתרה מצטברת */
+  /* עלות כללית: כל תשלום לדרך ההגעה הוא העלות של התקופה שמאז ההתחשבנות הקודמת, והעלות לליד היא הסכום חלקי הלידים שנרשמו בתקופה. תשלומים באותו יום הם תקופה אחת */
+  const dayMon = (iso) => { const [, m, d] = String(iso).slice(0, 10).split('-').map(Number); return d + '.' + m; };
+  const perLeadTxt = (v) => '₪' + (Math.round(v * 10) / 10).toLocaleString('en-US');
+  function costPeriods(id) {
+    const days = {}; state.promoPays.filter((x) => x.promoter_id === id).forEach((x) => { days[x.paid_at] = (days[x.paid_at] || 0) + Number(x.amount); });
+    const leads = srcLeads(id).map((q) => ilDay(q.created_at)); let prev = '';
+    const periods = Object.keys(days).sort().map((d) => { const n = leads.filter((l) => l > prev && l <= d).length, r = { from: prev, to: d, amount: days[d], leads: n, per: n ? days[d] / n : null }; prev = d; return r; });
+    return { periods, openFrom: prev, openLeads: leads.filter((l) => l > prev).length };
+  }
   function ledgerOf(id) {
     const acc = state.payments.filter((x) => x.promoter_id === id && x.commission != null && Number(x.commission) > 0).map((x) => {
       const pp = state.participants.find((q) => q.id === x.participant_id), m = state.meetings.find((q) => q.id === x.meeting_id), isR = x.kind === 'refund' || x.kind === 'credit';
@@ -2170,7 +2182,13 @@
     });
     const pays = state.promoPays.filter((x) => x.promoter_id === id).map((x) => ({ kind: 'p', date: x.paid_at, amount: -Number(x.amount), who: 'תשלום לדרך הגעה', sub: x.note || '', id: x.id, key: x.id }));
     /* ההתחשבנות מהתשלום האחרון ואילך: מה שלפניו נחשב מסולק, בלי חשיבות להיסטוריה. יתרה = עמלות ולידים שנוצרו אחרי התשלום האחרון (accrued / paid הם סכומים כוללים, לסטטיסטיקה) */
-    const x0 = promoterOf(id), rate = x0 ? Number(x0.rate) : 0, byLead = !!(x0 && !x0.cost_from_payment && rate > 0);
+    const x0 = promoterOf(id), rate = x0 ? Number(x0.rate) : 0, byLead = !!(x0 && !x0.cost_from_payment && !x0.cost_total && rate > 0);
+    if (x0 && x0.cost_total) {   // עלות כללית: אין יתרה. כל תשלום מוצג עם התקופה שהוא מכסה והעלות לליד שנגזרת ממנו
+      const P = costPeriods(id), mine = state.promoPays.filter((x) => x.promoter_id === id).slice().sort((a, b) => String(b.paid_at).localeCompare(String(a.paid_at)) || String(b.created_at).localeCompare(String(a.created_at)));
+      const rowsT = mine.map((x) => { const r = P.periods.find((q) => q.to === x.paid_at), per = r ? (r.from ? 'מאז ' + dayMon(r.from) + ' · ' : '') + r.leads + ' לידים' + (r.per != null ? ' · ' + perLeadTxt(r.per) + ' לליד' : '') : ''; return { kind: 'p', date: x.paid_at, amount: -Number(x.amount), who: 'תשלום לדרך הגעה', sub: [x.by_email ? 'שולם דרך ' + finName(x.by_email) : '', x.note || '', per].filter(Boolean).join(' · '), id: x.id, key: x.id }; });
+      const paidT = mine.reduce((t, x) => t + Number(x.amount), 0);
+      return { rows: rowsT, accrued: paidT, paid: paidT, balance: 0, total: P };
+    }
     const myPays = state.promoPays.filter((x) => x.promoter_id === id).slice().sort((a, b) => String(b.created_at || b.paid_at).localeCompare(String(a.created_at || a.paid_at)));
     const lp = myPays[0], lastTs = lp ? String(lp.created_at || (lp.paid_at + 'T23:59:59')) : '';
     const leadsAll = byLead ? srcLeads(id) : [], leadsNew = leadsAll.filter((q) => String(q.created_at || '') > lastTs);
@@ -2197,12 +2215,14 @@
     prCur = id; const x = promoterOf(id); if (!x) return showPromoterList();
     const L = ledgerOf(id);
     $('#prTitle').textContent = x.name;
-    $('#prSum').innerHTML = UI.metric(L.balance > 0 ? 'יתרה לתשלום לדרך הגעה' : 'מסולק', ils(Math.max(L.balance, 0)), { tone: L.balance > 0 ? 'neg' : 'pos', cls: 'wide' });
+    const lastP = L.total && L.total.periods[L.total.periods.length - 1];
+    $('#prSum').innerHTML = L.total ? UI.metric('עלות לליד בתקופה האחרונה', lastP && lastP.per != null ? perLeadTxt(lastP.per) : '—', { sub: lastP ? ils(lastP.amount) + ' · ' + lastP.leads + ' לידים' : 'עוד לא נרשם תשלום' }) + UI.metric('לידים מאז ההתחשבנות האחרונה', L.total.openLeads, { sub: L.total.openFrom ? 'מאז ' + dayMon(L.total.openFrom) : '' })
+      : UI.metric(L.balance > 0 ? 'יתרה לתשלום לדרך הגעה' : 'מסולק', ils(Math.max(L.balance, 0)), { tone: L.balance > 0 ? 'neg' : 'pos', cls: 'wide' });
     /* תנועה: אותה שורה כמו בהיסטוריית התשלומים (walrow): מימין מי, ומתחתיו מתי ופרטים; משמאל הסכום, ומתחתיו היתרה אחרי התנועה או מחיקת התשלום */
     const balAfter = (n) => '<bdi dir="ltr">' + (n < 0 ? '−' : '') + '₪' + nfm(Math.abs(n)) + '</bdi>';
     $('#prMoves').innerHTML = L.rows.length ? L.rows.map((r) => '<div class="walrow"><div class="wl"><b>' + esc(r.who) + '</b><small>' + fmtD(r.date) + (r.sub ? ' · ' + esc(r.sub) : '') + '</small></div>' +
       '<div class="wr"><span class="wamt' + (r.kind === 'p' ? ' up' : r.kind === 'r' ? ' down' : '') + '"><bdi dir="ltr">' + (r.amount > 0 ? '+' : '−') + '₪' + nfm(Math.abs(r.amount)) + '</bdi></span>' +
-      (r.kind === 'p' ? '<button type="button" class="ndel" data-delpay="' + r.id + '" aria-label="מחיקת תשלום">מחיקה</button>' : '<small>יתרה ' + balAfter(r.bal) + '</small>') + '</div></div>').join('') : '<p class="mnone">עוד אין תנועות. עמלה נרשמת אוטומטית כשמסמנים תשלום של משתתף שהביא דרך ההגעה</p>';
+      (r.kind === 'p' ? '<button type="button" class="ndel" data-delpay="' + r.id + '" aria-label="מחיקת תשלום">מחיקה</button>' : '<small>יתרה ' + balAfter(r.bal) + '</small>') + '</div></div>').join('') : '<p class="mnone">' + (L.total ? 'אחרי רישום תשלום תופיע כאן העלות לליד של התקופה שמאז ההתחשבנות הקודמת' : 'עוד אין תנועות. עמלה נרשמת אוטומטית כשמסמנים תשלום של משתתף שהביא דרך ההגעה') + '</p>';
     /* משתתפים שהגיעו דרך דרך ההגעה, ומי שילם ומי לא */
     const brought = state.participants.filter((q) => q.promoter_id === id).sort((a, b) => a.name.localeCompare(b.name, 'he'));
     const stOf = (q) => { const ls = linksOf(q.id); if (ls.some((l) => l.paid && !l.exempt)) return ['paid', 'שילם']; if (ls.some((l) => linkStatus(l) === 'requested')) return ['requested', 'בטיפול']; if (ls.some((l) => l.exempt)) return ['exempt', 'לא לתשלום']; return ls.length ? ['unpaid', 'חדש'] : ['none', 'ללא מפגש']; };
@@ -2219,7 +2239,7 @@
   }
   function newPrDraft() {
     const used = new Set(state.promoters.map((s) => s.code).filter(Boolean)), code = 'abcdefghijklmnopqrstuvwxyz'.split('').find((c) => !used.has(c)) || null;
-    prCur = null; prDraft = { name: '', rate_type: 'fixed', rate: 0, color: 'red', code, cost_on_lead: true, cost_from_payment: false };
+    prCur = null; prDraft = { name: '', rate_type: 'fixed', rate: 0, color: 'red', code, cost_on_lead: true, cost_from_payment: false, cost_total: false };
   }
   function dropSrcDraft() { srcDraftOn = false; const b = $('#srcPrDraft'); if (b) b.innerHTML = ''; }
   function startSrcDraft() {
@@ -4881,14 +4901,14 @@
     const mkRows = (arr, pts) => arr.map((s) => (s.key === sys)
       ? '<div class="strow locked" data-k="' + s.key + '">' +
       '<span class="stlockic" title="המיקום קבוע: תמיד ראשון">' + icon('lock', 'i18') + '</span>' +
-      '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם סטטוס המערכת" style="' + nameStyle(s) + '" />' +
       '<button type="button" class="swcur" data-c="' + s.color + '" aria-haspopup="menu" aria-label="צבע: ' + (PALETTE[s.color] || PALETTE.sky)[2] + ' (לחיצה לשינוי)" title="שינוי צבע" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + '"></button>' +
+      '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם סטטוס המערכת" style="' + nameStyle(s) + '" />' +
       (pts ? ptsSel(s) : '<span class="stspacer" style="flex-basis:30px" aria-hidden="true"></span>') +
       '<small class="stcap">סטטוס מערכת: ברירת המחדל בשיוך משתתף למפגש</small></div>'
       : '<div class="strow' + (s._d ? ' draft' : '') + '" data-k="' + s.key + '"' + (s._d ? ' data-draft="1"' : '') + '>' +
       '<button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר"' + (s._d ? ' disabled' : '') + '>' + icon('grip', 'i18') + '</button>' +
-      '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם הסטטוס"' + (s._d ? ' placeholder="' + (noCol ? 'שם התגית' : 'שם הסטטוס') + '" autocomplete="off" enterkeyhint="done"' : '') + ' style="' + nameStyle(s) + '" />' +
       (noCol ? '' : '<button type="button" class="swcur" data-c="' + s.color + '" aria-haspopup="menu" aria-label="צבע: ' + (PALETTE[s.color] || PALETTE.sky)[2] + ' (לחיצה לשינוי)" title="שינוי צבע" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + '"></button>') +
+      '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם הסטטוס"' + (s._d ? ' placeholder="' + (noCol ? 'שם התגית' : 'שם הסטטוס') + '" autocomplete="off" enterkeyhint="done"' : '') + ' style="' + nameStyle(s) + '" />' +
  (pts ? ptsSel(s) : '') + (s._d ? '<button type="button" class="stdel" data-dcancel="1" aria-label="ביטול" title="ביטול">×</button>' : s.key !== SYSTEM_STATUS ? '<button type="button" class="stdel" data-del="' + s.key + '" aria-label="מחיקת הסטטוס" title="מחיקת הסטטוס">×</button>' : '') + '</div>').join('');
     const dRow = { key: stDraft ? stDraft.key : '', label: '', color: 'neutral', points: 0, _d: true };
     $('#stList').innerHTML = mkRows(stDraft && stDraft.kind !== 'meeting' ? list.concat([dRow]) : list);
@@ -4911,18 +4931,18 @@
   const nameStyle = (c) => 'color:' + (PALETTE[c] || PALETTE.sky)[1];   // שם דרך ההגעה: בלי רקע, הצבע בטקסט
   /* כרטיס דרך הגעה: הרכיב היחיד, ברשימה (w = 'pr:<מזהה>') וביצירה (w = 'new': בלי מחיקה, העתקת קישור והתחשבנות, כי עוד לא קיימת) */
   function srcCard(x, w) {
-    const isNew = w === 'new', fp = !!x.cost_from_payment;
+    const isNew = w === 'new', ct = !!x.cost_total, fp = !ct && !!x.cost_from_payment;
     const bal = isNew ? 0 : ledgerOf(x.id).balance;
     return '<div class="srccard" data-w="' + w + '">' +
       '<div class="srcgrid">' +
         '<label class="srcfld"><small>שם</small><input class="stname" data-f="name" value="' + esc(x.name) + '" maxlength="24" aria-label="שם דרך ההגעה" style="' + nameStyle(x.color || 'red') + '" /></label>' +
         '<label class="srcfld"><small>קוד בקישור <bdi dir="ltr">?s=</bdi></small><span class="srcin" dir="ltr"><input class="codein" data-f="code" value="' + esc(x.code || '') + '" maxlength="6" placeholder="—" aria-label="קוד בקישור" autocapitalize="off" autocomplete="off" />' + (isNew ? '' : '<button type="button" class="cpbtn" data-copylink="' + esc(x.code || '') + '" aria-label="העתקת הקישור" title="העתקת הקישור">' + icon('copy', 'i18') + '</button>') + '</span></label>' +
         '<div class="srcfld srccolf"><span class="srccol">' + colDot(x.color || 'red', w) + (isNew ? '' : '<button type="button" class="stdel" data-sdel="' + w + '" aria-label="מחיקת דרך ההגעה" title="מחיקת דרך ההגעה">×</button>') + '</span></div>' +
-        '<label class="srcfld"><small>סוג עלות</small><select class="srcsel" data-f="cost_type" aria-label="סוג העלות"><option value="lead"' + (fp ? '' : ' selected') + '>עלות לליד</option><option value="pay"' + (fp ? ' selected' : '') + '>עלות מהתשלום</option></select></label>' +
-        '<label class="srcfld srcamt"><small>' + (fp ? 'סכום או אחוז' : 'כמה עולה ליד') + '</small><span class="srcin">' +
+        '<label class="srcfld' + (ct ? ' wide2' : '') + '"><small>סוג עלות</small><select class="srcsel" data-f="cost_type" aria-label="סוג העלות"><option value="lead"' + (fp || ct ? '' : ' selected') + '>עלות לליד</option><option value="pay"' + (fp ? ' selected' : '') + '>עלות מהתשלום</option><option value="total"' + (ct ? ' selected' : '') + '>עלות כללית</option></select></label>' +
+        (ct ? '' : '<label class="srcfld srcamt"><small>' + (fp ? 'סכום או אחוז' : 'כמה עולה ליד') + '</small><span class="srcin">' +
           (fp ? '<select class="ratetype" data-f="rate_type" aria-label="סוג"><option value="fixed"' + (x.rate_type !== 'percent' ? ' selected' : '') + '>₪</option><option value="percent"' + (x.rate_type === 'percent' ? ' selected' : '') + '>%</option></select>' : '<i>₪</i>') +
-          '<input class="codein ratein" data-f="rate" type="number" inputmode="decimal" min="0" value="' + (isNew && !Number(x.rate) ? '' : Number(x.rate || 0)) + '" placeholder="0" aria-label="עלות" /></span></label>' +
-        (isNew ? '' : '<div class="srcfld"><small>התחשבנות</small><button type="button" class="prsettle" data-settle="' + x.id + '" aria-label="התחשבנות"><b class="' + (bal > 0 ? 'owe' : 'ok') + '">' + (bal > 0 ? '₪' + nfm(bal) : 'מסולק ✓') + '</b></button></div>') +
+          '<input class="codein ratein" data-f="rate" type="number" inputmode="decimal" min="0" value="' + (isNew && !Number(x.rate) ? '' : Number(x.rate || 0)) + '" placeholder="0" aria-label="עלות" /></span></label>') +
+        (isNew ? '' : ct ? '<div class="srcfld"><button type="button" class="prsettle plain" data-settle="' + x.id + '"><b>התחשבנות</b></button></div>' : '<div class="srcfld"><small>התחשבנות</small><button type="button" class="prsettle" data-settle="' + x.id + '" aria-label="התחשבנות"><b class="' + (bal > 0 ? 'owe' : 'ok') + '">' + (bal > 0 ? '₪' + nfm(bal) : 'מסולק ✓') + '</b></button></div>') +
       '</div></div>';
   }
   function renderSources() { $('#srcPrList').innerHTML = state.promoters.map((x) => srcCard(x, 'pr:' + x.id)).join('') || '<p class="mnone">אין דרכי הגעה</p>'; }
@@ -5037,8 +5057,9 @@
     if (f === 'name') { const v = inp.value.trim().slice(0, 24); if (!v) { if (w === 'new') prDraft.name = ''; else renderSources(); return; } if (w === 'new' && srcDraftOn) { commitSrcDraft(v); return; } saveSrc(w, { name: v }); }
     else if (f === 'code') { const v = inp.value.trim().toLowerCase(); if (v && (!/^[a-z0-9]{1,6}$/.test(v) || state.promoters.some((s) => s !== tg.row && s.code === v))) { toast('קוד לא תקין או כבר קיים'); if (w === 'new') renderPrDraft(); else renderSources(); return; } saveSrc(w, { code: v || null }); }
     else if (f === 'cost_type') {
-      const toPay = inp.value === 'pay', c = w === 'new' ? null : costRateFor(tg.row, toPay);
-      saveSrc(w, Object.assign(toPay ? { cost_from_payment: true, cost_on_lead: false } : { cost_from_payment: false, cost_on_lead: true, rate_type: 'fixed' }, c ? { rate: c.rate } : {}));
+      const v = inp.value, toPay = v === 'pay', c = w === 'new' || v === 'total' || tg.row.cost_total ? null : costRateFor(tg.row, toPay);   // עלות כללית: בלי המרה; העלות הקודמת נשארת שמורה אם יחזרו אליה
+      saveSrc(w, Object.assign(v === 'total' ? { cost_total: true, cost_from_payment: false, cost_on_lead: false } : toPay ? { cost_total: false, cost_from_payment: true, cost_on_lead: false } : { cost_total: false, cost_from_payment: false, cost_on_lead: true, rate_type: 'fixed' }, c ? { rate: c.rate } : {}));
+      if (v === 'total' && w !== 'new') toast('את הסכום רושמים בהתחשבנות');
       if (c) toast('₪' + c.rate + (toPay ? ' למשלם' : ' לליד') + ': ' + c.L + ' לידים, ' + c.P + ' שילמו');
     }
     else if (f === 'rate_type') saveSrc(w, { rate_type: inp.value });
