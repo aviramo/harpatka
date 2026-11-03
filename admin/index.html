@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104gc" />
+  <link rel="stylesheet" href="admin.css?v=20261104gh" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -143,7 +143,7 @@
         <div class="gacc" id="pGoogle" hidden></div>
         <div class="note" id="pRegLine" style="color:var(--muted);font-size:14px;margin:0 0 12px"></div>
         <button class="btn ghost danger" id="pDelete" type="button">מחיקת משתתף</button>
-        <button class="btn" id="pRestore" type="button" hidden>החזרה לפעילות</button>
+        <button class="btn ghost" id="pRestore" type="button" hidden>החזרה לפעילות</button>
           </section>
         </div>
       </div>
@@ -313,6 +313,7 @@
       </div>
       <div id="setSrc" hidden>
         <div id="srcPrList"></div>
+        <div id="srcPrDraft"></div>
         <button type="button" class="btn ghost" id="srcPrAdd">+ דרך הגעה חדשה</button>
       </div>
       <div id="setDel" hidden>
@@ -524,7 +525,7 @@
   const navDepthOf = (d) => {
     try {
       if (d.id === 'pDlg') return (sheet && sheet.id && pTab !== 'main') ? Math.max(1, viewStack.filter((x) => x !== 'main').length + 1) : 0;
-      if (d.id === 'setDlg') return setIsRoot(setView) ? 0 : setView === 'del' ? (setRoot === 'st' ? 1 : 2) : 1;   // עריכת סוג מפגש נפתחת מתפריט המפגשים: מסך הסוג הוא הראשי, והסטטוסים וההודעה שלו מסכי משנה
+      if (d.id === 'setDlg') return setIsRoot(setView) ? 0 : setView === 'del' ? (setRoot === 'st' || setRoot === 'src' ? 1 : 2) : 1;   // עריכת סוג מפגש נפתחת מתפריט המפגשים: מסך הסוג הוא הראשי, והסטטוסים וההודעה שלו מסכי משנה
       if (d.id === 'finDlg') return finV === 'main' ? 0 : 1;
       if (d.id === 'prDlg') return RANK[prView] || 0;
     } catch (e) {}
@@ -587,7 +588,7 @@
     if (state.loginF) sp.set('lg', state.loginF);
     if (state.q.trim()) sp.set('q', state.q.trim());
     if (openPid) { sp.set('p', openPid); if (pTab && pTab !== 'main' && pTab !== 'contact' && pTab !== 'meets' && pTab !== 'deposit') { sp.set('pt', pTab); } if (sheet && sheet.mailId && document.getElementById('mailDlg').open) sp.set('ml', sheet.mailId); if (pTab === 'main' && PG.cur) sp.set('pg', PG_IDS[PG.cur]); }
-    if ($('#setDlg').open) sp.set('set', setView === 'main' ? '1' : setView === 'tydet' ? 'tydet:' + (tyId || '') : (setView === 'st' || setView === 'del') ? ((stScope === 'meeting' ? 'st:' : 'tag:') + (stType || '')) : setView === 'em' ? 'em:' + (stType || '') : setView);   // סוג מפגש: עריכת הסוג, הסטטוסים וההודעה שלו
+    if ($('#setDlg').open) sp.set('set', setView === 'main' ? '1' : setView === 'tydet' ? 'tydet:' + (tyId || '') : (setView === 'del' && setRoot === 'src') ? 'src' : (setView === 'st' || setView === 'del') ? ((stScope === 'meeting' ? 'st:' : 'tag:') + (stType || '')) : setView === 'em' ? 'em:' + (stType || '') : setView);   // סוג מפגש: עריכת הסוג, הסטטוסים וההודעה שלו
     if ($('#prDlg').open && prCur) sp.set('pr', prCur);
     if (mDlg.open) sp.set('em', editingMeeting ? editingMeeting.id : 'new');   // עריכת מפגש או מפגש חדש
     if ($('#bdDlg').open) sp.set('bd', '1');
@@ -2142,7 +2143,7 @@
 
   /* סימון הגעה למפגש (זמן אמת: מעדכן מיד, נשמר ומתעדכן אצל כולם) */
   /* דרכי הגעה: רשימה עם יתרה, דף התחשבנות לכל דרך הגעה (עמלות שנצברו מול תשלומים לדרך הגעה), הוספה, עריכה ומחיקה */
-  let prDraft = null, prAfterSave = null, prCur = null;
+  let prDraft = null, prAfterSave = null, prCur = null, srcDraftOn = false;   // srcDraftOn: דרך הגעה חדשה בתוך מסך דרכי ההגעה (לא בפופאפ נפרד)
   const fmtD = (iso) => { if (!iso) return ''; const [y, m, d] = String(iso).slice(0, 10).split('-'); return Number(d) + '.' + Number(m) + '.' + y.slice(2); };
   const ils = (n) => '<bdi dir="ltr">₪' + nfm(n) + '</bdi>';   // בלי היפוך סימן השקל בטקסט מימין לשמאל
   /* תנועות דרך ההגעה: עמלות שנצברו (חיובי, אנחנו חייבים) ותשלומים אליו (שלילי), עם יתרה מצטברת */
@@ -2194,15 +2195,35 @@
     $('#ppForm').hidden = true; $('#ppOpen').hidden = false;
     show('#prDetail');
   }
-  /* דרך הגעה חדשה: אותו כרטיס בדיוק כמו ברשימת דרכי ההגעה (srcCard), והיא נשמרת רק בלחיצה על שמירה */
+  /* דרך הגעה חדשה: אותו כרטיס בדיוק כמו ברשימת דרכי ההגעה (srcCard). במסך דרכי ההגעה היא נוספת לרשימה ונשמרת כשמקלידים שם; משדה "מקור" של משתתף: בטופס עם שמירה */
   function renderPrDraft() {
-    const box = $('#prNewCard'), nm = box.querySelector('[data-f="name"]'), rt = box.querySelector('[data-f="rate"]');   // ציור מחדש לא מוחק מה שהוקלד ועוד לא נשמר
+    const box = srcDraftOn ? $('#srcPrDraft') : $('#prNewCard'), nm = box.querySelector('[data-f="name"]'), rt = box.querySelector('[data-f="rate"]');   // ציור מחדש לא מוחק מה שהוקלד ועוד לא נשמר
     if (nm) prDraft.name = nm.value; if (rt) prDraft.rate = Math.max(0, Number(rt.value) || 0);
     box.innerHTML = srcCard(prDraft, 'new');
   }
-  function showPromoterForm() {
+  function newPrDraft() {
     const used = new Set(state.promoters.map((s) => s.code).filter(Boolean)), code = 'abcdefghijklmnopqrstuvwxyz'.split('').find((c) => !used.has(c)) || null;
     prCur = null; prDraft = { name: '', rate_type: 'fixed', rate: 0, color: 'red', code, cost_on_lead: true, cost_from_payment: false };
+  }
+  function dropSrcDraft() { srcDraftOn = false; const b = $('#srcPrDraft'); if (b) b.innerHTML = ''; }
+  function startSrcDraft() {
+    if (!srcDraftOn) { newPrDraft(); srcDraftOn = true; prDraft.rate = 0; renderPrDraft(); }
+    const n = $('#srcPrDraft .stname'); if (n) { n.focus(); n.scrollIntoView({ block: 'nearest' }); }
+  }
+  async function commitSrcDraft(name) {
+    const box = $('#srcPrDraft'), rt = box.querySelector('[data-f="rate"]'); if (rt) prDraft.rate = Math.max(0, Number(rt.value) || 0);
+    const body = Object.assign({}, prDraft, { name });
+    try {
+      const [row] = await api(T.pr, { method: 'POST', body, prefer: 'return=representation' });
+      if (row && !promoterOf(row.id)) state.promoters.push(row);
+      const a = document.activeElement, fo = box.contains(a) ? a.dataset.f : null;   // המשתמש כבר עבר לשדה אחר בכרטיס: נשאר באותו שדה
+      dropSrcDraft(); renderSources(); render();
+      if (row && fo) { const f2 = document.querySelector('#srcPrList [data-w="pr:' + row.id + '"] [data-f="' + fo + '"]'); if (f2) f2.focus(); }
+      toast('דרך ההגעה נוספה');
+    } catch (err) { fail(err); }
+  }
+  function showPromoterForm() {
+    dropSrcDraft(); newPrDraft();
     renderPrDraft(); show('#prForm'); $('#prTitle').textContent = 'דרך הגעה חדשה';
     setTimeout(() => { const n = document.querySelector('#prNewCard .stname'); if (n) n.focus(); }, 50);
   }
@@ -3494,7 +3515,7 @@
         const ae = document.activeElement, typing = ae && (ae.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) && ae.type !== 'file';
         const kb = typing ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0;
         document.querySelectorAll('dialog[open]').forEach((d) => {
-          const full = ['pDlg', 'setDlg', 'stDlg', 'prDlg', 'finDlg'].includes(d.id) && !(d.id === 'pDlg' && d.classList.contains('newp')) && !(d.id === 'setDlg' && ['main', 'pm', 'src'].includes(setView));   // פופאפים בגובה מלא: ממלאים בדיוק את האזור שמעל המקלדת, בלי רווח למעלה
+          const full = ['pDlg', 'setDlg', 'stDlg', 'prDlg', 'finDlg'].includes(d.id) && !(d.id === 'pDlg' && d.classList.contains('newp')) && !(d.id === 'setDlg' && ['main', 'pm', 'src', 'del'].includes(setView));   // פופאפים בגובה מלא: ממלאים בדיוק את האזור שמעל המקלדת, בלי רווח למעלה
           if (kb > 80) { d.style.marginBottom = kb + 'px'; d.style.maxHeight = Math.round(vv.height - (full ? 0 : 12)) + 'px'; if (full) d.style.height = Math.round(vv.height) + 'px'; }
           else { d.style.marginBottom = ''; d.style.maxHeight = ''; d.style.height = ''; }
         });
@@ -3676,9 +3697,9 @@
       return '<div class="mrow' + (on ? ' on' : '') + (sheet.hl === m.id ? ' hl' : '') + '" data-mrow="' + m.id + '">' +
         '<div class="mwhen">' + UI.tag(dmShort(m), 'mlabel') + '<span class="mtm">' + esc(String(m.meeting_time || '').slice(0, 5)) + '</span>' + (meetName(m) ? '<span class="mnm">' + esc(meetName(m)) + '</span>' : '') + '</div>' +
         '<button type="button" class="pay ' + (on ? st : 'none') + '" data-mp="' + m.id + '" title="' + (on ? 'שינוי סטטוס' : 'לא משויך למפגש') + '">' + (on ? esc(STATUS_LABEL[st]) : 'שיוך למפגש') + '</button>' +
-        '<div class="mline">' + (sheet.id && !on ? '<button type="button" class="mmoney mplus" data-mp="' + m.id + '" aria-label="שיוך למפגש" title="שיוך למפגש">' + icon('plus') + '</button>' : sheet.id ? '<button type="button" class="mmoney' + (reportedOf(sheet.id, m.id) ? ' wait' : dueOf(sheet.id, m.id) > 0 ? '' : allocatedOf(sheet.id, m.id) > 0 ? ' has' : freeL ? ' free' : '') + '" data-mm="' + m.id + '"' + (on ? '' : ' hidden') + ' title="תשלום למפגש">' + (reportedOf(sheet.id, m.id) ? 'דווח' + reportedAmt(sheet.id, m.id) : dueOf(sheet.id, m.id) > 0 ? 'נשאר ₪' + nfm(dueOf(sheet.id, m.id)) : allocatedOf(sheet.id, m.id) > 0 ? '₪' + nfm(allocatedOf(sheet.id, m.id)) : freeL ? 'לא לתשלום' : 'לתשלום') + '</button>' : '') +
+        '<div class="mline">' + (sheet.id && !on ? '<span></span>' : sheet.id ? '<button type="button" class="mmoney' + (reportedOf(sheet.id, m.id) ? ' wait' : dueOf(sheet.id, m.id) > 0 ? '' : allocatedOf(sheet.id, m.id) > 0 ? ' has' : freeL ? ' free' : '') + '" data-mm="' + m.id + '"' + (on ? '' : ' hidden') + ' title="תשלום למפגש">' + (reportedOf(sheet.id, m.id) ? 'דווח' + reportedAmt(sheet.id, m.id) : dueOf(sheet.id, m.id) > 0 ? 'נשאר ₪' + nfm(dueOf(sheet.id, m.id)) : allocatedOf(sheet.id, m.id) > 0 ? '₪' + nfm(allocatedOf(sheet.id, m.id)) : freeL ? 'לא לתשלום' : 'לתשלום') + '</button>' : '') +
         '</div>' +
-        (sheet.id && on ? '<button type="button" class="munl" data-mun="' + m.id + '" aria-label="הסרה מהמפגש" title="הסרה מהמפגש">' + icon('close', 'i16') + '</button>' : '<span></span>') +
+        (!sheet.id ? '<span></span>' : on ? '<button type="button" class="munl" data-mun="' + m.id + '" aria-label="הסרה מהמפגש" title="הסרה מהמפגש">' + icon('close', 'i16') + '</button>' : '<button type="button" class="munl madd" data-mp="' + m.id + '" aria-label="שיוך למפגש" title="שיוך למפגש">' + icon('plus', 'i16') + '</button>') +
       '</div>';
   };
   /* פייג'ר בכרטיס המשתתף: מפגשים (מימין, הכרטיס תמיד נפתח עליו), יתרה, הערות ופרטים. החלקה עם הצמדה, והאטבים והמחוון עוקבים אחרי הגלילה. בלי רשומות היסטוריה: "חזרה" סוגרת את הכרטיס */
@@ -3713,7 +3734,8 @@
   const meetClick = (e) => {
     const un = e.target.closest('[data-mun]');   // הסרה מהמפגש: בדיוק אותה פעולה כמו "הסרה מהמפגש" בתפריט הסטטוס
     if (un) { confirmLink(sheet.id, un.dataset.mun, false); return; }
-    const mm = e.target.closest('[data-mm]'), pay = e.target.closest('[data-mp]');   // רק לחיצה על הסטטוס פותחת את תפריט הסטטוס
+    const rw = sheet.id ? e.target.closest('.mrow:not(.on)') : null;   // עוד לא משויך: כל השורה פותחת את תפריט הסטטוסים, מיושר ל"שיוך למפגש"
+    const mm = e.target.closest('[data-mm]'), pay = rw ? rw.querySelector('.pay') : e.target.closest('[data-mp]');   // משויך: רק לחיצה על הסטטוס
     if (mm) {
       if (sheet.id) openPayFor(sheet.id, mm.dataset.mm);   // כפתור ה-₪ בכרטיס המפגש: פופאפ הקצאה שעולה מלמטה מעל הכרטיס (הכרטיס לא משתנה)
     } else if (pay) {
@@ -4802,8 +4824,9 @@
   const allSt = () => state.statuses.concat(state.mstatuses, state.pstatuses);
   function showSetView(v) {
     setView = v; if (v !== 'st') stDraft = null;
+    if (v !== 'src') dropSrcDraft();
     $('#setMain').hidden = v !== 'main'; $('#setTyDet').hidden = v !== 'tydet'; $('#setSt').hidden = v !== 'st'; $('#setDel').hidden = v !== 'del'; $('#setSrc').hidden = v !== 'src'; $('#setPm').hidden = v !== 'pm'; $('#setEm').hidden = v !== 'em'; $('#setBack').hidden = setIsRoot(v);   // המסך שהפופאפ נפתח עליו, וסוג חדש (מסך הפרטים הוא הראשי): אין לאן לחזור
-    $('#setTitle').textContent = v === 'tydet' ? (tyId ? 'עריכת סוג מפגש' : 'סוג מפגש חדש') : v === 'st' ? ((typeById(stType) || typeById(firstTypeId()) || {}).name || (stScope === 'meeting' ? 'סטטוסים' : 'תגיות')) : v === 'del' ? 'מחיקת סטטוס' : v === 'src' ? 'דרכי הגעה' : v === 'pm' ? 'דרכי תשלום' : v === 'em' ? 'הודעה לפני המפגש' : 'החשבון שלי';
+    $('#setTitle').textContent = v === 'tydet' ? (tyId ? 'עריכת סוג מפגש' : 'סוג מפגש חדש') : v === 'st' ? ((typeById(stType) || typeById(firstTypeId()) || {}).name || (stScope === 'meeting' ? 'סטטוסים' : 'תגיות')) : v === 'del' ? (setRoot === 'src' ? 'מחיקת דרך הגעה' : 'מחיקת סטטוס') : v === 'src' ? 'דרכי הגעה' : v === 'pm' ? 'דרכי תשלום' : v === 'em' ? 'הודעה לפני המפגש' : 'החשבון שלי';
     if (v === 'src') renderSources();
     if (v === 'pm') renderPm();
     if (v === 'tydet') renderTyDet();
@@ -4858,7 +4881,7 @@
     try { await api(T.st + '?key=eq.' + key, { method: 'PATCH', body: patch }); }
     catch (err) { Object.assign(s, prev); applyStatuses(); renderStSettings(); render(); fail(err); }
   }
-  $('#setBack').addEventListener('click', () => showSetView(setView === 'del' ? 'st' : (tyId && setView === 'em') ? 'tydet' : setRoot));   // מחיקת סטטוס חוזרת לסטטוסים, והודעה לפני המפגש לעריכת הסוג
+  $('#setBack').addEventListener('click', () => showSetView(setView === 'del' ? (setRoot === 'src' ? 'src' : 'st') : (tyId && setView === 'em') ? 'tydet' : setRoot));   // מחיקת סטטוס חוזרת לסטטוסים, והודעה לפני המפגש לעריכת הסוג
   /* הגדרות תשלומים: מדרגות מחיר לפי ימים שנותרו עד המפגש */
   /* דרכי הגעה בהגדרות: ערוצי פרסום ממומן (שם, צבע, קוד) ודרכי הגעה (שם, צבע, עמלה), בעיצוב דומה לסטטוסים */
   const colDot = (c, who) => '<button type="button" class="swcur" data-who="' + who + '" data-c="' + c + '" aria-haspopup="menu" aria-label="צבע" title="שינוי צבע" style="background:' + (PALETTE[c] || PALETTE.sky)[0] + '"></button>';
@@ -4866,13 +4889,12 @@
   /* כרטיס דרך הגעה: הרכיב היחיד, ברשימה (w = 'pr:<מזהה>') וביצירה (w = 'new': בלי מחיקה, העתקת קישור והתחשבנות, כי עוד לא קיימת) */
   function srcCard(x, w) {
     const isNew = w === 'new', fp = !!x.cost_from_payment;
-    const used = !isNew && (state.participants.some((q) => q.promoter_id === x.id) || state.payments.some((q) => q.promoter_id === x.id) || state.participants.some((q) => x.code && q.source_code === x.code));
     const bal = isNew ? 0 : ledgerOf(x.id).balance;
     return '<div class="srccard" data-w="' + w + '">' +
       '<div class="srcgrid">' +
-        '<label class="srcfld"><small>שם</small><input class="stname" data-f="name" value="' + esc(x.name) + '" maxlength="24" placeholder="שם דרך ההגעה" aria-label="שם דרך ההגעה" style="' + nameStyle(x.color || 'red') + '" /></label>' +
+        '<label class="srcfld"><small>שם</small><input class="stname" data-f="name" value="' + esc(x.name) + '" maxlength="24" aria-label="שם דרך ההגעה" style="' + nameStyle(x.color || 'red') + '" /></label>' +
         '<label class="srcfld"><small>קוד בקישור <bdi dir="ltr">?s=</bdi></small><span class="srcin" dir="ltr"><input class="codein" data-f="code" value="' + esc(x.code || '') + '" maxlength="6" placeholder="—" aria-label="קוד בקישור" autocapitalize="off" autocomplete="off" />' + (isNew ? '' : '<button type="button" class="cpbtn" data-copylink="' + esc(x.code || '') + '" aria-label="העתקת הקישור" title="העתקת הקישור">' + icon('copy', 'i18') + '</button>') + '</span></label>' +
-        '<div class="srcfld"><small>צבע</small><span class="srccol">' + colDot(x.color || 'red', w) + (used || isNew ? '' : '<button type="button" class="stdel" data-sdel="' + w + '" aria-label="מחיקה" title="מחיקה">×</button>') + '</span></div>' +
+        '<div class="srcfld srccolf"><span class="srccol">' + colDot(x.color || 'red', w) + (isNew ? '' : '<button type="button" class="stdel" data-sdel="' + w + '" aria-label="מחיקת דרך ההגעה" title="מחיקת דרך ההגעה">×</button>') + '</span></div>' +
         '<label class="srcfld"><small>סוג עלות</small><select class="srcsel" data-f="cost_type" aria-label="סוג העלות"><option value="lead"' + (fp ? '' : ' selected') + '>עלות לליד</option><option value="pay"' + (fp ? ' selected' : '') + '>עלות מהתשלום</option></select></label>' +
         '<label class="srcfld srcamt"><small>' + (fp ? 'סכום או אחוז' : 'כמה עולה ליד') + '</small><span class="srcin">' +
           (fp ? '<select class="ratetype" data-f="rate_type" aria-label="סוג"><option value="fixed"' + (x.rate_type !== 'percent' ? ' selected' : '') + '>₪</option><option value="percent"' + (x.rate_type === 'percent' ? ' selected' : '') + '>%</option></select>' : '<i>₪</i>') +
@@ -4959,6 +4981,26 @@
     try { const [r] = await api(T.pm, { method: 'POST', body: row, prefer: 'return=representation' }); state.payMethods.push(r || row); renderPm(); const inp = document.querySelector('#pmList [data-k="' + key + '"] .pmname'); if (inp) { inp.focus(); inp.select(); } }
     catch (err) { fail(err); }
   });
+  /* מחיקת דרך הגעה: מסך בתוך הפופאפ. יש מקושרים: בוחרים לאן להעביר אותם, והכול עובר ונמחק בטרנזקציה אחת (harpatka_promoter_replace) */
+  function askSrcDelete(id) {
+    const x = promoterOf(id); if (!x) return;
+    const ps = state.participants.filter((q) => q.promoter_id === x.id || (x.code && q.source_code === x.code) || (x.code === 'p' && q.source === 'site-ad' && !q.source_code && !q.promoter_id));
+    const money = state.payments.some((q) => q.promoter_id === x.id) || state.att.some((q) => q.promoter_id === x.id) || state.promoPays.some((q) => q.promoter_id === x.id);
+    const others = state.promoters.filter((o) => o.id !== x.id), nm = '<b>"' + esc(x.name) + '"</b>', who = ps.length === 1 ? 'משתתף אחד שקשור' : '<b>' + ps.length + '</b> משתתפים שקשורים';
+    const linked = ps.length ? 'יש ' + who + ' לדרך ההגעה ' + nm + '.' : 'יש תשלומים שקשורים לדרך ההגעה ' + nm + '.';
+    $('#setDelText').innerHTML = !ps.length && !money ? 'למחוק את דרך ההגעה ' + nm + '?' : !others.length ? linked + ' זו דרך ההגעה היחידה, ולכן צריך קודם להוסיף דרך הגעה אחרת' : linked + ' לאיזו דרך הגעה להעביר אותם?';
+    $('#setDelOpts').innerHTML = !ps.length && !money ? '<button type="button" class="btn danger" data-to="">מחיקה</button>' : others.map((o) => '<button type="button" class="sopt" data-to="' + o.id + '" style="' + nameStyle(o.color || 'red') + '">' + esc(o.name) + '</button>').join('');
+    $('#setDelOpts').onclick = async (ev) => {
+      const b = ev.target.closest('[data-to]'); if (!b || b.disabled) return; b.disabled = true;
+      try {
+        const r = await api('rpc/harpatka_promoter_replace', { method: 'POST', body: { p_from: x.id, p_to: b.dataset.to || null } });
+        if (r !== 'ok') { toast('דרך ההגעה לא נמחקה, אפשר לנסות שוב'); b.disabled = false; return; }
+        toast(b.dataset.to ? 'הועברו ל"' + (promoterOf(b.dataset.to) || {}).name + '" ודרך ההגעה נמחקה' : 'דרך ההגעה נמחקה');
+        state.promoters = state.promoters.filter((o) => o.id !== x.id); showSetView('src'); load(true);
+      } catch (err) { b.disabled = false; fail(err); }
+    };
+    showSetView('del');
+  }
   const srcTarget = (w) => ({ tbl: T.pr, row: w === 'new' ? prDraft : promoterOf(w.slice(3)), kind: 'pr' });
   async function saveSrc(w, patch) {
     const tg = srcTarget(w); if (!tg.row) return;
@@ -4969,7 +5011,7 @@
   }
   const srcChange = (e) => {
     const inp = e.target.closest('[data-f]'); if (!inp) return; const row = inp.closest('[data-w]'); if (!row) return; const w = row.dataset.w, f = inp.dataset.f, tg = srcTarget(w);
-    if (f === 'name') { const v = inp.value.trim().slice(0, 24); if (!v) { if (w === 'new') prDraft.name = ''; else renderSources(); return; } saveSrc(w, { name: v }); }
+    if (f === 'name') { const v = inp.value.trim().slice(0, 24); if (!v) { if (w === 'new') prDraft.name = ''; else renderSources(); return; } if (w === 'new' && srcDraftOn) { commitSrcDraft(v); return; } saveSrc(w, { name: v }); }
     else if (f === 'code') { const v = inp.value.trim().toLowerCase(); if (v && (!/^[a-z0-9]{1,6}$/.test(v) || state.promoters.some((s) => s !== tg.row && s.code === v))) { toast('קוד לא תקין או כבר קיים'); if (w === 'new') renderPrDraft(); else renderSources(); return; } saveSrc(w, { code: v || null }); }
     else if (f === 'cost_type') {
       const toPay = inp.value === 'pay', c = w === 'new' ? null : costRateFor(tg.row, toPay);
@@ -4983,16 +5025,11 @@
     const cur = e.target.closest('.swcur'); if (cur) { const w = cur.dataset.who, tg = srcTarget(w); if (tg.row) openColorMenu(w, cur, tg.row.color || (tg.kind === 'ad' ? 'sky' : 'red'), (c) => saveSrc(w, { color: c })); return; }
     const cp0 = e.target.closest('[data-copylink]'); if (cp0) { e.preventDefault(); const c0 = cp0.dataset.copylink; if (!c0) { toast('אין קוד לדרך ההגעה הזו'); return; } const url0 = 'https://harpatka.co.il/?s=' + c0; (navigator.clipboard ? navigator.clipboard.writeText(url0) : Promise.reject()).then(() => toast('הקישור הועתק'), () => { prompt('העתיקו את הקישור', url0); }); return; }
     const st0 = e.target.closest('[data-settle]'); if (st0) { showPromoterDetail(st0.dataset.settle); $('#prDlg').showModal(); return; }   // ההתחשבנות דרך דרכי ההגעה
-    const d = e.target.closest('[data-sdel]'); if (d) {
-      const w = d.dataset.sdel, tg = srcTarget(w); if (!tg.row) return;
-      const prevP = state.promoters; state.promoters = state.promoters.filter((x) => x !== tg.row); renderSources(); render();
-      try { await api(tg.tbl + '?id=eq.' + tg.row.id, { method: 'DELETE' }); }
-      catch (err) { state.promoters = prevP; renderSources(); render(); fail(err); }
-      return;
-    }
+    const d = e.target.closest('[data-sdel]'); if (d) { askSrcDelete(d.dataset.sdel.slice(3)); return; }
   };
   [$('#setSrc'), $('#prForm')].forEach((box) => { box.addEventListener('change', srcChange); box.addEventListener('click', srcClick); });
-  $('#srcPrAdd').addEventListener('click', () => openNewPromoter());
+  $('#srcPrAdd').addEventListener('click', startSrcDraft);
+  $('#srcPrDraft').addEventListener('focusout', () => setTimeout(() => { if (!srcDraftOn) return; const b = $('#srcPrDraft'), n = b.querySelector('[data-f="name"]'), m = $('#colMenu'); if (n && !n.value.trim() && !b.contains(document.activeElement) && !(m && !m.hidden)) dropSrcDraft(); }, 150));   // יצאו בלי שם: הכרטיס נעלם, ושום דבר לא נשמר
   $('#setDlg').addEventListener('close', () => { if (tyF.dirty) tyF.changed(); setRoot = 'main'; showSetView('main'); tyId = null; stType = null; tyNew = null; tyFormFor = null; syncUrl(); });
   $('#stBoth').addEventListener('change', (e) => {
     const ps = e.target.closest('.stpts'); if (ps) { saveStatus(ps.dataset.pts, { points: Math.max(-5, Math.min(5, Math.round(Number(ps.value) || 0))) }); return; }   // ציון התמדה

@@ -6,7 +6,7 @@
   var LABEL = { first: 'שם פרטי', last: 'שם משפחה', phone: 'טלפון', age: 'גיל', gender: 'מגדר' };
   var AC = { first: 'given-name', last: 'family-name', phone: 'tel', age: 'off', gender: 'sex' };
   var NAME = { first: 'given-name', last: 'family-name', phone: 'tel', age: 'age', gender: 'sex' };
-  var MSG = { name: 'נא למלא שם פרטי ושם משפחה', phone: 'מספר לא תקין', age: 'גיל לא תקין (18 עד 99)', gender: 'נא לבחור מגדר' };
+  var MSG = { name: 'נא למלא שם פרטי ושם משפחה', phone: 'מספר לא תקין', age: 'גיל לא תקין', gender: 'נא לבחור מגדר' };
   var ERR_FOR = { first: 'name', last: 'name', phone: 'phone', age: 'age', gender: 'gender' };
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
