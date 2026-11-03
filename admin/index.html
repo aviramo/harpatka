@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104fw" />
+  <link rel="stylesheet" href="admin.css?v=20261104fx" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -4071,12 +4071,13 @@
       const r = F.tpl.rows[F.tpl.cur]; if (r) { r.name = ed('Name').value; r.body = ed('Body').value; }
       if (F.tpl.cur == null) F.tpl.render();
     };
-    F.paintTplInh = () => {   // במפגש: תבניות הסוג (לקריאה בלבד, נערכות בסוג המפגש)
+    F.paintTplInh = () => {   // במפגש: תבניות הסוג. אותה שורה כמו תבנית של המפגש, ולחיצה פותחת את פופאפ עריכת ההודעה
       const box = q('TplInh'); if (!box) return;
       const t = ty(), l = t ? tplsOfType(t.id) : [];
-      box.hidden = !l.length; box.innerHTML = l.length ? '<small>תבניות מהסוג (נערכות בסוג המפגש):</small>' + l.map((x) => '<span>' + esc(x.name) + '</span>').join('') : '';
+      box.hidden = !l.length; box.innerHTML = l.length ? '<small>תבניות של סוג המפגש</small>' + l.map((x) => '<button type="button" class="mtitem" data-tplpop="' + esc(x.id) + '"><span>' + esc(x.name) + '</span>' + icon('go', 'i18') + '</button>').join('') : '';
     };
     tplBox.addEventListener('click', (e) => { const b = e.target.closest('.mtitem'); if (b) F.tpl.open(Number(b.dataset.i)); });
+    if (q('TplInh')) q('TplInh').addEventListener('click', (e) => { const b = e.target.closest('[data-tplpop]'); if (b) openTplPop(b.dataset.tplpop); });
     ed('Name').addEventListener('input', () => { const r = F.tpl.rows[F.tpl.cur]; if (r) r.name = ed('Name').value; });
     ed('Body').addEventListener('input', () => { const r = F.tpl.rows[F.tpl.cur]; if (r) r.body = ed('Body').value; autoGrow(ed('Body')); });
     ed('Vars').addEventListener('click', (e) => {
@@ -4508,7 +4509,7 @@
     const name = tplW('TplName').value.trim(), body = tplW('TplBody').value.replace(/\s+$/, '');
     if (t.name === name && t.body === body) return;
     if (!name || !body) { toast(!name ? 'חסר שם לתבנית, השינוי לא נשמר' : 'חסר נוסח לתבנית, השינוי לא נשמר'); return; }
-    try { await saveTemplates(e.scope, tplRowsOf(e).map((r) => r.id === e.id ? { id: r.id, name, body } : r)); render(); toast('ההודעה נשמרה'); }
+    try { await saveTemplates(e.scope, tplRowsOf(e).map((r) => r.id === e.id ? { id: r.id, name, body } : r)); render(); mf.paintTplInh(); toast('ההודעה נשמרה'); }
     catch (err) { fail(err); }
   }
   tplW('TplName').addEventListener('change', () => tplPopSave(tplEd));
@@ -4519,7 +4520,7 @@
     const e = tplEd, del = tplW('TplDel'); if (!e) return;
     if (del.dataset.sure !== '1') { del.dataset.sure = '1'; del.textContent = 'בטוח? לחיצה נוספת מוחקת'; return; }   // נמחקת מיד, יחד עם סימוני השליחה שלה
     tplEd = null; $('#tplDlg').close();
-    try { await saveTemplates(e.scope, tplRowsOf(e).filter((r) => r.id !== e.id)); render(); toast('התבנית נמחקה'); }
+    try { await saveTemplates(e.scope, tplRowsOf(e).filter((r) => r.id !== e.id)); render(); mf.paintTplInh(); toast('התבנית נמחקה'); }
     catch (err) { fail(err); }
   });
   $('#tplDlg').addEventListener('close', () => { const e = tplEd; tplEd = null; tplPopSave(e); });
