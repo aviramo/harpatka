@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104gp" />
+  <link rel="stylesheet" href="admin.css?v=20261104gq" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1251,7 +1251,7 @@
     const nextM = state.meetings.filter((m) => !isPast(m)).sort((a, b) => (a.meeting_date + a.meeting_time).localeCompare(b.meeting_date + b.meeting_time))[0] || null;   // המפגש הקרוב: מודגש בתפריט
     /* סוגי מפגשים מעל רשימת המפגשים, באותה צורה: בחירת סוג מציגה רק את המפגשים שלו (לחיצה נוספת מבטלת), עיפרון לעריכת הסוג, והוספת סוג */
     /* בלי שורות כותרת ובלי עמודת התשלום (31.10.26): ליד כל מספר סמל קטן שאומר מה הוא סופר (מפגשים, משתתפים או נרשמו) */
-    const MCI = { cal: [icon('cal', 'i14'), 'מפגשים'], user: [icon('user', 'i14'), 'משתתפים'], reg: [icon('user', 'i14'), 'נרשמו'] };
+    const MCI = { cal: [icon('cal', 'i14'), 'מפגשים'], user: [icon('user', 'i14'), 'משתתפים'], reg: [icon('user', 'i14'), 'נרשמו'], paid: ['₪', 'נסגר התשלום'] };
     /* "כל המשתתפים" וסוגי המפגשים (31.10.26): שני מספרים, מפגשים (יומן) ומשתתפים (אדם); המשתתפים באותה עמודה כמו "נרשמו" של המפגשים.
        בסוג: המשתתפים הפעילים שמשויכים לאחד המפגשים שלו */
     const actP = state.participants.filter((x) => x.active !== false);
@@ -1272,7 +1272,7 @@
       types +
       shownM.map((m) => {
         const ls = state.att.filter((a) => a.meeting_id === m.id), isNext = nextM === m;
-        return '<div class="mtr mrow2' + (isPast(m) ? ' past' : '') + (isNext ? ' next' : '') + '" role="menuitemradio" tabindex="0" data-filter="' + m.id + '" aria-checked="' + (state.filter === m.id) + '"><span>' + dayTime(m) + '</span><span></span>' + mcell(ls.length, 'reg') +
+        return '<div class="mtr mrow2' + (isPast(m) ? ' past' : '') + (isNext ? ' next' : '') + '" role="menuitemradio" tabindex="0" data-filter="' + m.id + '" aria-checked="' + (state.filter === m.id) + '"><span>' + dayTime(m) + '</span>' + mcell(ls.filter((l) => allocatedOf(l.participant_id, m.id) > 0 && !(dueOf(l.participant_id, m.id) > 0)).length, 'paid') + mcell(ls.length, 'reg') +
           (state.filter === m.id ? '<button type="button" class="medit" data-edit-m="' + m.id + '" aria-label="עריכת מפגש" title="עריכת מפגש">' + EDIT_ICON + '</button>' : '<span></span>') + '</div>';
       }).join('') +
       '<div class="mtr maddrow" id="addMeeting"><span>מפגש חדש</span><button type="button" role="menuitem" class="medit madd" aria-label="מפגש חדש">' + icon('plus') + '</button></div>';
