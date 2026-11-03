@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104fy" />
+  <link rel="stylesheet" href="admin.css?v=20261104gc" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -100,7 +100,6 @@
       </div>
       <p id="pViewSub" class="pviewsub" hidden></p>
       <div class="ppanel" data-panel="main">
-        <div id="pTagsSlot" hidden></div>
         <div class="ptabs" id="pTabs" role="tablist" aria-label="הערות ומפגשים">
           <button type="button" role="tab" id="pTabM" aria-controls="pgM" aria-selected="false" tabindex="-1"><span class="pmn" id="pMeetN"></span></button>
           <button type="button" role="tab" id="pTabW" aria-controls="pgW" aria-selected="false" tabindex="-1"><span class="pmn">יתרה <span id="pBalN"></span></span></button>
@@ -140,9 +139,6 @@
           <label class="field"><span>טלפון</span><input placeholder=" " name="phone" type="tel" inputmode="tel" maxlength="20" autocomplete="off" /></label>
           <label class="field"><span>גיל</span><input placeholder=" " name="age" type="number" inputmode="numeric" min="18" max="99" /></label>
           <label class="field"><span>מקור</span><select name="promoter_sel" id="pPromoSel"></select></label>
-        </div>
-        <div class="two" style="grid-template-columns:1fr">
-          <span id="pTagsHome" hidden></span><div class="field" id="pTagsField"><span>תגיות</span><div class="pstchips" id="pStatusChips" role="group" aria-label="תגיות"></div></div>
         </div>
         <div class="gacc" id="pGoogle" hidden></div>
         <div class="note" id="pRegLine" style="color:var(--muted);font-size:14px;margin:0 0 12px"></div>
@@ -1616,7 +1612,7 @@
       others.sort((a, b) => a.name.localeCompare(b.name, 'he'));
     }
     const newBtn = '';
-    $('#addBox').innerHTML = q ? '<button type="button" class="newbtn" id="addNew"><span class="tg ico plus" aria-hidden="true">+</span><span>הוספת משתתף חדש</span><b>' + esc(state.q.trim()) + '</b></button>' : '';   // מנותק מהרשימה, מתחתיה
+    $('#addBox').innerHTML = q ? '<button type="button" class="newbtn" id="addNew" aria-label="הוספת משתתף חדש: ' + esc(state.q.trim()) + '" title="הוספת משתתף חדש"><span class="tg ico plus" aria-hidden="true">+</span><b dir="auto">' + esc(state.q.trim()) + '</b></button>' : '';   // מנותק מהרשימה, מתחתיה
     const hasNew = !!q;
 
     state.listCnt = String(rows.length + others.length); { const lc = $('#listCount'); if (lc) lc.textContent = state.listCnt; }   // מספר הרשומות המוצגות כרגע (בשורת הסינון, מימין, ובתפריט הסינון בשורת "תצוגה")
@@ -2413,21 +2409,9 @@
   async function toggleTag(pid, key) {
     const p = state.participants.find((x) => x.id === pid); if (!p) return;
     const prev = p.tags || [], has = prev.includes(key), next = has ? prev.filter((k) => k !== key) : prev.concat(key);
-    p.tags = next; render(); if (sheet && sheet.id === pid) { fillPStatusSel(p); setTitle(p); }
+    p.tags = next; render(); if (sheet && sheet.id === pid) setTitle(p);
     try { await api(T.p + '?id=eq.' + pid, { method: 'PATCH', body: { tags: next } }); }
-    catch (err) { p.tags = prev; render(); if (sheet && sheet.id === pid) { fillPStatusSel(p); setTitle(p); } fail(err); }
-  }
-  function placeTagsField() {
-    const f = $('#pTagsField'), slot = $('#pTagsSlot'), home = $('#pTagsHome'); if (!f || !slot || !home) return;
-    slot.hidden = true;
-    if (sheet && sheet.id) { f.hidden = true; return; }   // משתתף קיים: בלי רשימת תגיות בכרטיס; התגיות נבחרות מהסמל בכותרת (1.11.26)
-    f.hidden = false; if (f.previousElementSibling !== home) home.after(f);
-  }
-  function fillPStatusSel(p) {
-    const box = $('#pStatusChips'); if (!box) return;
-    placeTagsField();
-    const cur = new Set(p ? ptagsOf(p) : (sheet && sheet.newTags ? [...sheet.newTags] : []));   // משתתף חדש: התוויות נבחרות מראש ונשמרות ביצירה
-    box.innerHTML = pstatusList().slice().reverse().map((s) => '<button type="button" role="checkbox" class="sopt ' + s.key + '" data-ps="' + s.key + '" aria-pressed="' + cur.has(s.key) + '">' + esc(s.label) + '</button>').join('') || '<span class="sthint" style="margin:0">אין תגיות. אפשר להוסיף בעריכה</span>';
+    catch (err) { p.tags = prev; render(); if (sheet && sheet.id === pid) setTitle(p); fail(err); }
   }
   function openStatusFilterMenu(anchor) {
     const menu = $('#qMenu'), eg = effGender();
@@ -2740,13 +2724,13 @@
      תבנית = שם ונוסח עם שדות; של סוג מפגש (לכל מפגשיו) או של מפגש אחד (בנוסף לאלה של הסוג). בעמודת הוואטסאפ של הרשימה בוחרים תבנית,
      וקישור הוואטסאפ של כל משתתף ברשימה נפתח עם ההודעה המוכנה. שדות: {שם} (שם פרטי), {תאריך}, {מקום} (עיר ומיקום), {הוראות הגעה}, {התכנסות}, {התחלה}, {סיום} */
   const MSG_VARS = ['{שם}', '{תאריך}', '{מקום}', '{הוראות הגעה}', '{התכנסות}', '{התחלה}', '{סיום}'];
+  const MSG_TOK = { re: /\{(?:שם|תאריך|מקום|הוראות הגעה|מיקום|התכנסות|התחלה|סיום)\}/g, label: (v) => v === '{מיקום}' ? 'הוראות הגעה' : v.slice(1, -1), max: 2000 };   // {מיקום}: השם הישן של הוראות הגעה
   /* שדות עריכת תבנית הודעה: רכיב אחד, בטופס מפגש וסוג מפגש ובפופאפ שנפתח מתפריט הוואטסאפ */
   const tplFieldsHtml = (I) =>
     '<label class="field"><span>שם התבנית</span><input placeholder=" " type="text" class="mtname" id="' + I('TplName') + '" maxlength="60" autocomplete="off" /></label>' +
-    '<label class="field"><span>נוסח ההודעה</span><textarea placeholder=" " class="mtbody" id="' + I('TplBody') + '" rows="1" maxlength="2000"></textarea></label>' +
-    '<div class="emvars" id="' + I('TplVars') + '">' + MSG_VARS.map((v) => '<button type="button" data-v="' + v + '">' + v + '</button>').join('') + '</div>' +
+    '<div class="field"><span>נוסח ההודעה</span><textarea placeholder=" " class="mtbody" id="' + I('TplBody') + '" rows="1"></textarea></div>' +
+    '<div class="emvars" id="' + I('TplVars') + '">' + MSG_VARS.map((v) => '<button type="button" data-v="' + v + '">' + MSG_TOK.label(v) + '</button>').join('') + '</div>' +
     '<button type="button" class="mtdel" id="' + I('TplDel') + '">מחיקת התבנית</button>';
-  const insertMsgVar = (ta, v) => { const a = ta.selectionStart == null ? ta.value.length : ta.selectionStart, b = ta.selectionEnd == null ? a : ta.selectionEnd; ta.setRangeText(v, a, b, 'end'); autoGrow(ta); ta.focus(); };
   const DAY_FULL = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
   function fillMsg(tpl, m, p) {   // רכיב אחד: גם ההודעה לפני המפגש וגם תבניות הוואטסאפ
     let t = String(tpl || '');
@@ -3447,7 +3431,7 @@
     const unlock = () => { if (!document.querySelector('dialog[open]:not(.side)')) root.classList.remove('dlg-lock'); };   // הכרטיס שבצד הרשימה לא נועל את הדף
     /* דסקטופ רחב (מ-1024px, 31.10.26): כרטיס המשתתף נפתח בצד הרשימה ולא כפופאפ: דיאלוג לא מודלי, הרשימה נשארת פעילה (גלילה, חיפוש ומעבר למשתתף אחר) */
     const sideMQ = window.matchMedia ? window.matchMedia('(min-width: 1024px)') : null;
-    const side = (d) => d.id === 'pDlg' && !!(sideMQ && sideMQ.matches);
+    const side = (d) => d.id === 'pDlg' && !!(sideMQ && sideMQ.matches) && !!(sheet && sheet.id);   // משתתף חדש: פופאפ רגיל, לא כרטיס בצד
     const rawShowNM = proto.show;
     /* דסקטופ (31.10.26): הגדרות, סטטיסטיקות וכספים (וההתחשבנות שנפתחת מההגדרות) נפתחים כפאנל מצד שמאל שמחליק ימינה, ולא כחלון במרכז; נסגרים בכפתור X, בלחיצה בחוץ או ב-Escape */
     const DRAWERS = ['setDlg', 'stDlg', 'finDlg', 'prDlg'];
@@ -3507,10 +3491,10 @@
     if (vv) {
       const fit = () => {
         /* בלי שדה בפוקוס אין מקלדת: מאפסים גם אם אירוע הסגירה של המקלדת לא הגיע (אחרת הפופאפ נשאר מכווץ) */
-        const ae = document.activeElement, typing = ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) && ae.type !== 'file';
+        const ae = document.activeElement, typing = ae && (ae.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) && ae.type !== 'file';
         const kb = typing ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0;
         document.querySelectorAll('dialog[open]').forEach((d) => {
-          const full = ['pDlg', 'setDlg', 'stDlg', 'prDlg', 'finDlg'].includes(d.id) && !(d.id === 'setDlg' && ['main', 'pm', 'src'].includes(setView));   // פופאפים בגובה מלא: ממלאים בדיוק את האזור שמעל המקלדת, בלי רווח למעלה
+          const full = ['pDlg', 'setDlg', 'stDlg', 'prDlg', 'finDlg'].includes(d.id) && !(d.id === 'pDlg' && d.classList.contains('newp')) && !(d.id === 'setDlg' && ['main', 'pm', 'src'].includes(setView));   // פופאפים בגובה מלא: ממלאים בדיוק את האזור שמעל המקלדת, בלי רווח למעלה
           if (kb > 80) { d.style.marginBottom = kb + 'px'; d.style.maxHeight = Math.round(vv.height - (full ? 0 : 12)) + 'px'; if (full) d.style.height = Math.round(vv.height) + 'px'; }
           else { d.style.marginBottom = ''; d.style.maxHeight = ''; d.style.height = ''; }
         });
@@ -3531,7 +3515,7 @@
       if (DRAWERS.includes(d.id)) { const h = d.querySelector('.sheet-head'); if (h) { const x = document.createElement('button'); x.type = 'button'; x.className = 'hbtn dclose'; x.setAttribute('aria-label', 'סגירה'); x.title = 'סגירה'; x.innerHTML = icon('close'); x.addEventListener('click', () => d.close()); h.appendChild(x); } }   // כפתור סגירה לפאנל מצד שמאל (מוצג רק בדסקטופ)
       const g = document.createElement('div'); g.className = 'grab'; g.innerHTML = '<i></i>'; g.setAttribute('aria-hidden', 'true');
       d.insertBefore(g, d.firstChild);
-      d.addEventListener('close', () => { navClose(d); unlock(); setTimeout(() => { try { syncUrl(); } catch (e) {} }, 0); });   // סגירה שלא עברה דרך close שלנו (form method=dialog, או הדפדפן סוגר דיאלוג בלחיצה על "חזרה" כשאי אפשר לבטל): מחזירים את רשומת ההיסטוריה שנוספה בפתיחה, אחרת המחסנית של "חזרה" מתמלאת
+      d.addEventListener('close', () => { if (d.open) return; navClose(d); unlock(); setTimeout(() => { try { syncUrl(); } catch (e) {} }, 0); });   // סגירה שלא עברה דרך close שלנו (form method=dialog, או הדפדפן סוגר דיאלוג בלחיצה על "חזרה" כשאי אפשר לבטל): מחזירים את רשומת ההיסטוריה שנוספה בפתיחה, אחרת המחסנית של "חזרה" מתמלאת
       d.addEventListener('cancel', (e) => {   // (אירוע cancel של שדה קובץ שבתוך הפופאפ, למשל סגירת בורר התמונות בלי בחירה, עולה בבועה אל הדיאלוג; מתעלמים ממנו, אחרת הפופאפ נסגר) Escape או כפתור "חזרה" של הדפדפן/אנדרואיד (Chrome סוגר דיאלוג מודלי לפני ההיסטוריה): בתוך מסך משנה חוזרים צעד אחד כמו בחץ שבפופאפ, ורק במסך הראשי סוגרים
         if (e.target !== d) return;
         e.preventDefault();
@@ -3655,13 +3639,14 @@
   window.addEventListener('click', () => { if (lastPid) { lastPid = null; markSel(); } }, true);   // לחיצה, לא נגיעה: גלילה ברשימה לא מבטלת את הסימון
   function openParticipant(id, tab, fromEl) {
     const p = id ? state.participants.find((x) => x.id === id) : null;
+    if (!p && pDlg.open && pDlg._side) pDlg.close();   // כרטיס פתוח בצד הרשימה: נסגר, והמשתתף החדש נפתח כפופאפ
     sheet = p ? { id: p.id, hl: state.filter || null } : { id: null, links: new Map(state.filter ? [[state.filter, false]] : []) };
     pForm.reset();
     { const nm = p ? splitName(p) : ['', '']; pForm.first_name.value = nm[0]; pForm.last_name.value = nm[1]; }
     pForm.phone.value = p ? localPhone(p.phone) : '';
     pForm.age.value = p ? (shownAge(p) ?? '') : '';
     pForm.gender.value = p && p.gender ? p.gender : '';
-    fillPromoSel(p); fillPStatusSel(p);
+    fillPromoSel(p);
     setTitle(p);
     $('#pRegLine').textContent = p && regDate(p) ? ('תאריך הרשמה: ' + regDateTime(p) + (p.source === 'site' ? ' (דרך האתר)' : adCodeOf(p) ? ' (דרך האתר, ' + ((channelOf(p) || {}).name || 'פרסום') + ')' : '')) : '';
     renderContact(); loadGoogleAcc(p);
@@ -3693,6 +3678,7 @@
         '<button type="button" class="pay ' + (on ? st : 'none') + '" data-mp="' + m.id + '" title="' + (on ? 'שינוי סטטוס' : 'לא משויך למפגש') + '">' + (on ? esc(STATUS_LABEL[st]) : 'שיוך למפגש') + '</button>' +
         '<div class="mline">' + (sheet.id && !on ? '<button type="button" class="mmoney mplus" data-mp="' + m.id + '" aria-label="שיוך למפגש" title="שיוך למפגש">' + icon('plus') + '</button>' : sheet.id ? '<button type="button" class="mmoney' + (reportedOf(sheet.id, m.id) ? ' wait' : dueOf(sheet.id, m.id) > 0 ? '' : allocatedOf(sheet.id, m.id) > 0 ? ' has' : freeL ? ' free' : '') + '" data-mm="' + m.id + '"' + (on ? '' : ' hidden') + ' title="תשלום למפגש">' + (reportedOf(sheet.id, m.id) ? 'דווח' + reportedAmt(sheet.id, m.id) : dueOf(sheet.id, m.id) > 0 ? 'נשאר ₪' + nfm(dueOf(sheet.id, m.id)) : allocatedOf(sheet.id, m.id) > 0 ? '₪' + nfm(allocatedOf(sheet.id, m.id)) : freeL ? 'לא לתשלום' : 'לתשלום') + '</button>' : '') +
         '</div>' +
+        (sheet.id && on ? '<button type="button" class="munl" data-mun="' + m.id + '" aria-label="הסרה מהמפגש" title="הסרה מהמפגש">' + icon('close', 'i16') + '</button>' : '<span></span>') +
       '</div>';
   };
   /* פייג'ר בכרטיס המשתתף: מפגשים (מימין, הכרטיס תמיד נפתח עליו), יתרה, הערות ופרטים. החלקה עם הצמדה, והאטבים והמחוון עוקבים אחרי הגלילה. בלי רשומות היסטוריה: "חזרה" סוגרת את הכרטיס */
@@ -3725,6 +3711,8 @@
   }
 
   const meetClick = (e) => {
+    const un = e.target.closest('[data-mun]');   // הסרה מהמפגש: בדיוק אותה פעולה כמו "הסרה מהמפגש" בתפריט הסטטוס
+    if (un) { confirmLink(sheet.id, un.dataset.mun, false); return; }
     const mm = e.target.closest('[data-mm]'), pay = e.target.closest('[data-mp]');   // רק לחיצה על הסטטוס פותחת את תפריט הסטטוס
     if (mm) {
       if (sheet.id) openPayFor(sheet.id, mm.dataset.mm);   // כפתור ה-₪ בכרטיס המפגש: פופאפ הקצאה שעולה מלמטה מעל הכרטיס (הכרטיס לא משתנה)
@@ -3756,11 +3744,6 @@
   /* עריכה: שמירה אוטומטית של כל שדה ששונה */
   let savedTimer;
   $('#pDlg').addEventListener('click', (e) => { const ed = e.target.closest('.qeditlink[data-qedit]'); if (ed) openStatusSettings(ed.dataset.qedit); });
-  $('#pStatusChips').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-ps]'); if (!b || !sheet) return;
-    if (!sheet.id) { sheet.newTags = sheet.newTags || new Set(); const k = b.dataset.ps; sheet.newTags.has(k) ? sheet.newTags.delete(k) : sheet.newTags.add(k); fillPStatusSel(null); return; }
-    toggleTag(sheet.id, b.dataset.ps);
-  });
   pForm.addEventListener('change', async (e) => {
     if (e.target.name === 'promoter_sel') {
       const v = e.target.value;
@@ -3806,7 +3789,7 @@
     const btn = $('#pSubmit'); btn.disabled = true;
     try {
       let p;
-      try { [p] = await api(T.p, { method: 'POST', body: Object.assign({ ...v, age_set_at: todayISO() }, (() => { const ps = sheet.promoSel || ''; return Object.assign(ps ? { promoter_id: ps } : {}, sheet.newTags && sheet.newTags.size ? { tags: [...sheet.newTags] } : {}); })()), prefer: 'return=representation' }); }
+      try { [p] = await api(T.p, { method: 'POST', body: Object.assign({ ...v, age_set_at: todayISO() }, sheet.promoSel ? { promoter_id: sheet.promoSel } : {}), prefer: 'return=representation' }); }
       catch (err) {
         /* הטלפון קיים אצל משתתף לא פעיל: מחזירים אותו להיות פעיל (בלי לעדכן את שאר השדות) */
         const norm = v.phone.replace(/^0/, '+972').replace(/[^+\d]/g, '');
@@ -3880,7 +3863,9 @@
       im.src = url;
     });
   }
-  const DMEDIA_RE = /\n*לפרטים נוספים:\s*(https?:\/\/\S+)\s*$/;   // שורת הקובץ המצורף בסוף הוראות ההגעה
+  const DMEDIA_URL = /https?:\/\/\S*\/meeting-media\/\S+/g, DMEDIA_LINE = /\n*לפרטים נוספים:\s*https?:\/\/\S*\/meeting-media\/\S+/g;   // הקובץ המצורף בהוראות ההגעה: הקישור נשמר בטקסט ובשדה מוצג כתווית
+  const dmOf = (v) => (String(v || '').match(DMEDIA_URL) || [])[0] || null;
+  const DIR_TOK = { re: DMEDIA_URL, label: () => 'מדיה', max: 800 };   // תמונה או סרטון
   async function uploadMeetingMedia(file) {
     const isImg = /^image\//.test(file.type), isVid = /^video\/(mp4|quicktime|webm)$/.test(file.type);
     if (!isImg && !isVid) throw new Error('אפשר לצרף תמונה (JPG, PNG, WebP) או סרטון (MP4, MOV, WebM)');
@@ -3941,6 +3926,70 @@
      inp.dataset.ph = פלייסהולדר (למשל השעה של סוג המפגש), ואחרי שינוי שלו קוראים ל-inp.dtPaint(); בלי ערך ובלי פלייסהולדר: "בחירת תאריך" / "בחירת שעה" באפור.
      גם השמה ישירה ל-value (מהקוד) מעדכנת את התצוגה */
   const DT_VAL = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+  /* שדה טקסט עם תוויות: רכיב אחד לנוסח תבנית הודעה ולהוראות הגעה. ה-textarea נשאר מקור הערך (מוסתר; הקוד קורא וכותב value כרגיל, ובערך נשמר {שם} או הקישור), ומעליו אזור עריכה שבו כל שדה מוצג כתווית, בלי סוגריים ובלי קישור.
+     o.re: מה שמוצג כתווית (ביטוי גלובלי); o.label(ערך): הטקסט של התווית; o.max: אורך מקסימלי. ta.tokInsert(ערך) משתיל תווית במקום הסמן */
+  const TOK_VAL = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
+  function tokenField(ta, o) {
+    const ZW = '​', ed = document.createElement('div'), lab = ta.parentNode.querySelector(':scope > span');
+    ed.className = 'tokf'; ed.id = ta.id + 'Ed'; ed.contentEditable = 'true'; ed.dir = 'rtl'; ed.setAttribute('role', 'textbox'); ed.setAttribute('aria-multiline', 'true');
+    if (lab) { lab.id = ta.id + 'Lab'; ed.setAttribute('aria-labelledby', lab.id); }
+    ta.classList.add('tokta'); ta.after(ed);
+    const chip = (v) => '<span class="tok" contenteditable="false" data-v="' + esc(v) + '">' + esc(o.label(v)) + '</span>' + ZW;   // סימן בלתי נראה אחרי התווית: כדי שאפשר יהיה להעמיד אחריה את הסמן (לא נשמר)
+    const plain = (s) => esc(s).replace(/\n/g, '<br>');
+    const toHtml = (s) => { let h = '', i = 0; for (const m of String(s).matchAll(o.re)) { h += plain(s.slice(i, m.index)) + chip(m[0]); i = m.index + m[0].length; } return h + plain(s.slice(i)); };
+    const read = (root) => {
+      let s = '';
+      const walk = (n) => n.childNodes.forEach((c) => {
+        if (c.nodeType === 3) s += c.data.replace(/​/g, '').replace(/ /g, ' ');
+        else if (c.nodeType !== 1) return;
+        else if (c.dataset.v != null) s += c.dataset.v;
+        else if (c.tagName === 'BR') s += '\n';
+        else { if (/^(DIV|P)$/.test(c.tagName) && s && !s.endsWith('\n')) s += '\n'; walk(c); }
+      });
+      walk(root); return s.replace(/\n$/, '');   // <br> אחרון הוא רק מקום לסמן
+    };
+    const sync = () => { const v = read(ed), ch = TOK_VAL.get.call(ta) !== v; ed.classList.toggle('isempty', !v); if (ch) { TOK_VAL.set.call(ta, v); ta.dispatchEvent(new Event('input', { bubbles: true })); } };
+    const paintPh = () => { ed.dataset.ph = String(ta.getAttribute('placeholder') || '').trim().replace(o.re, (m) => o.label(m)); ed.toggleAttribute('data-hint', ta.hasAttribute('data-hint')); };
+    Object.defineProperty(ta, 'value', { configurable: true, get() { return TOK_VAL.get.call(this); }, set(x) { const v = String(x == null ? '' : x); TOK_VAL.set.call(this, v); ed.innerHTML = toHtml(v); ed.classList.toggle('isempty', !v); } });
+    new MutationObserver(paintPh).observe(ta, { attributes: true, attributeFilter: ['placeholder', 'data-hint'] });
+    let saved = null, was = '';
+    document.addEventListener('selectionchange', () => { const s = getSelection(); if (s && s.rangeCount && ed.contains(s.anchorNode)) saved = s.getRangeAt(0).cloneRange(); });
+    const put = (html) => {
+      ed.focus();
+      const s = getSelection();
+      if (saved && ed.contains(saved.startContainer)) { s.removeAllRanges(); s.addRange(saved); } else { s.selectAllChildren(ed); s.collapseToEnd(); }
+      document.execCommand('insertHTML', false, html); sync();
+    };
+    ta.tokInsert = (v) => put(chip(v));
+    /* מחיקה לאחור כשהסמן מיד אחרי תווית: התווית נמחקת בלחיצה אחת, גם עם הסימן הבלתי נראה שאחריה */
+    const delChip = () => {
+      const s = getSelection(); if (!s.rangeCount || !s.isCollapsed) return false;
+      const n = s.anchorNode, off = s.anchorOffset; let prev;
+      if (n.nodeType === 3) { if (n.data.slice(0, off).replace(/​/g, '')) return false; prev = n.previousSibling; } else prev = n.childNodes[off - 1] || null;
+      while (prev && prev.nodeType === 3 && !prev.data.replace(/​/g, '')) prev = prev.previousSibling;
+      if (!prev || prev.nodeType !== 1 || prev.dataset.v == null) return false;
+      const r = document.createRange(); r.setStartBefore(prev); r.setEnd(n, off); s.removeAllRanges(); s.addRange(r); document.execCommand('delete'); sync(); return true;
+    };
+    ed.addEventListener('beforeinput', (e) => {
+      const t = e.inputType || '';
+      if (/^format/.test(t)) { e.preventDefault(); return; }
+      if (t === 'insertParagraph' || t === 'insertLineBreak') { e.preventDefault(); document.execCommand('insertLineBreak'); sync(); return; }
+      if (t === 'deleteContentBackward' && delChip()) { e.preventDefault(); return; }
+      if (o.max && /^insert/.test(t) && e.cancelable && read(ed).length + String(e.data || '').length > o.max) e.preventDefault();
+    });
+    ed.addEventListener('input', (e) => { e.stopPropagation(); sync(); });
+    ed.addEventListener('focus', () => { was = TOK_VAL.get.call(ta); });
+    ed.addEventListener('blur', () => { if (TOK_VAL.get.call(ta) !== was) ta.dispatchEvent(new Event('change', { bubbles: true })); });
+    ed.addEventListener('paste', (e) => { e.preventDefault(); document.execCommand('insertHTML', false, toHtml((e.clipboardData.getData('text/plain') || '').replace(/\r/g, ''))); sync(); });
+    ed.addEventListener('drop', (e) => e.preventDefault());
+    const clip = () => { const box = document.createElement('div'); box.append(getSelection().getRangeAt(0).cloneContents()); return read(box); };
+    ed.addEventListener('copy', (e) => { e.preventDefault(); e.clipboardData.setData('text/plain', clip()); });
+    ed.addEventListener('cut', (e) => { e.preventDefault(); e.clipboardData.setData('text/plain', clip()); document.execCommand('delete'); sync(); });
+    ed.classList.add('isempty'); paintPh();
+    return ta;
+  }
+  /* התוויות שמתחת לשדה: לחיצה לא לוקחת את הפוקוס מהשדה, כדי שהתווית תיכנס במקום הסמן */
+  const keepCaret = (box) => box.addEventListener('mousedown', (e) => { if (e.target.closest('[data-v]')) e.preventDefault(); });
   function dtField(inp) {
     if (!inp || inp.dtPaint) return inp;
     const box = document.createElement('span'); box.className = 'dtbox';
@@ -3984,9 +4033,9 @@
       '<div class="mfrow">' +
         '<label class="field"><span>עיר</span><input placeholder=" " id="' + I('City') + '" name="city" type="text" maxlength="40" autocomplete="off" /></label>' +
         '<label class="field"><span>מיקום</span><input placeholder=" " id="' + I('Place') + '" name="place" type="text" maxlength="60" autocomplete="off" /></label></div>' +
-      '<label class="field"><span>הוראות הגעה</span><textarea placeholder=" " id="' + I('Dirs') + '" name="directions" rows="1" maxlength="800"></textarea></label>' +
-      '<div class="dmcur" id="' + I('DCur') + '" hidden><span>קובץ מצורף בסוף ההוראות:</span><a id="' + I('DLink') + '" target="_blank" rel="noopener">פתיחה</a><button type="button" id="' + I('DDel') + '">הסרה</button></div>' +
-      '<button type="button" class="mtpladd dmadd" id="' + I('DAttach') + '">+ תמונה או סרטון להוראות ההגעה</button><input type="file" id="' + I('DFile') + '" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" hidden />' +
+      '<div class="field"><span>הוראות הגעה</span><textarea placeholder=" " id="' + I('Dirs') + '" name="directions" rows="1"></textarea></div>' +
+      '<div class="dmcur" id="' + I('DCur') + '" hidden><div class="emvars"><button type="button" id="' + I('DTag') + '" data-v=""></button></div><a id="' + I('DLink') + '" target="_blank" rel="noopener">פתיחה</a><button type="button" id="' + I('DDel') + '">הסרה</button></div>' +
+      '<button type="button" class="mtpladd dmadd" id="' + I('DAttach') + '">+ מדיה</button><input type="file" id="' + I('DFile') + '" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" hidden />' +
       (isType ? '' : '<div class="mtinh2" id="' + I('TplInh') + '" hidden></div>') + '<div class="mtlist" id="' + I('Tpl') + '"></div>' +
       '<button type="button" class="mtpladd" id="' + I('TplAdd') + '">+ תבנית הודעה</button>' +
       '<div class="field"><span>מחירים</span>' +
@@ -3999,9 +4048,9 @@
     if (isType) q('Time').dataset.noph = '1';   // בסוג המפגש בלי פלייסהולדר
     dtField(q('Time')); if (!isType) dtField(q('Date'));   // תאריך ושעה: הרכיב האחיד (מיושר לימין, פלייסהולדר של הסוג)
     F.q = q;
-    F.grow = () => autoGrow(q('Dirs'));
+    tokenField(q('Dirs'), DIR_TOK); keepCaret(q('DCur'));
     /* תמונה או סרטון בהוראות ההגעה: הקובץ עולה לדלי meeting-media והקישור נכנס לסוף ההוראות, אחרי "לפרטים נוספים:". גם בסוג מפגש וגם במפגש; במפגש שיורש את ההוראות מהסוג (השדה ריק) הצירוף מתחיל מההוראות של הסוג ונהיה שלו */
-    F.paintMedia = () => { const m = DMEDIA_RE.exec(q('Dirs').value); q('DCur').hidden = !m; if (m) q('DLink').href = m[1]; };
+    F.paintMedia = () => { const cur = dmOf(q('Dirs').value); if (cur) F.dMedia = cur; const u = F.dMedia; q('DCur').hidden = !u; if (u) { q('DLink').href = u; q('DTag').dataset.v = u; q('DTag').textContent = DIR_TOK.label(u); } };
     /* תבניות הודעה: בטופס רק רשימת שמות; לחיצה על שם, או "+ תבנית הודעה", פותחת את פופאפ עריכת ההודעה (openTplPop), אותו פופאפ בכל המקומות.
        במפגש או סוג קיימים הפופאפ שומר ישירות; בחדשים השורות מחכות כאן (F.tpl.rows) ונשמרות כשיוצרים אותם */
     const mfBox = q('MF'), tplBox = q('Tpl');
@@ -4058,13 +4107,13 @@
       setPh(q('Max'), t && t.max_participants != null ? String(t.max_participants) : '', 'ללא הגבלה');
       setPh(q('Dirs'), t && t.directions, 'כתובת, קומה, חנייה, ואיך מגיעים בתחבורה ציבורית');
       q('Time').dataset.ph = t && t.meeting_time ? String(t.meeting_time).slice(0, 5) : ''; q('Time').dtPaint();
-      F.paintTiers(); F.paintImg(); F.grow(); F.paintMedia(); F.paintTplInh();
+      F.paintTiers(); F.paintImg(); F.paintMedia(); F.paintTplInh();
     };
     /* מילוי: src = מפגש או סוג; inh = השדות שנלקחים מהסוג (מוצגים ריקים) */
     F.fill = (src, inh) => {
       F.dirty = false; const s = src || {}, h = inh || new Set(), t = ty(), v = (k, x) => (t && h.has(k)) ? '' : x;
       q('Name').value = v('name', s.name || ''); q('Time').value = v('meeting_time', s.meeting_time ? String(s.meeting_time).slice(0, 5) : '');
-      q('Place').value = v('place', s.place || ''); q('City').value = v('city', s.city || ''); q('Dirs').value = v('directions', s.directions || '');
+      q('Place').value = v('place', s.place || ''); q('City').value = v('city', s.city || ''); F.dMedia = null; q('Dirs').value = v('directions', s.directions || '');
       q('Max').value = v('max_participants', s.max_participants == null ? '' : s.max_participants);
       F.tiersInh = !!t && h.has('price_tiers'); F.te.t = tiersOf(F.tiersInh ? t : s); F.te.render();
       if (F.img.objUrl) URL.revokeObjectURL(F.img.objUrl);
@@ -4096,19 +4145,19 @@
       if (F.img.blob) { const b = F.img.blob, url = await uploadMeetingImage(b); F.img.url = url; if (F.img.blob === b) F.img.blob = null; }   // עולה פעם אחת גם כשהשמירה חוזרת
       return { url: F.img.url || null, inh: false };
     };
-    q('Dirs').addEventListener('input', () => { F.grow(); F.paintMedia(); });
+    q('Dirs').addEventListener('input', () => F.paintMedia());
     q('DAttach').addEventListener('click', () => q('DFile').click());
-    q('DDel').addEventListener('click', () => { q('Dirs').value = q('Dirs').value.replace(DMEDIA_RE, '').trimEnd(); F.grow(); F.paintMedia(); F.changed(); });
+    q('DTag').addEventListener('click', () => { if (!dmOf(q('Dirs').value)) q('Dirs').tokInsert(F.dMedia); });   // התווית כבר בטקסט: לא נכנסת פעמיים
+    q('DDel').addEventListener('click', () => { F.dMedia = null; q('Dirs').value = q('Dirs').value.replace(DMEDIA_LINE, '').replace(DMEDIA_URL, '').trimEnd(); F.paintMedia(); F.changed(); });
     q('DFile').addEventListener('change', async (e) => {
       const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
       const btn = q('DAttach'), t0 = btn.textContent; btn.disabled = true; btn.textContent = 'מעלה…';
       try {
         const url = await uploadMeetingMedia(f);
         let base = q('Dirs').value; if (!base.trim() && !isType && ty() && ty().directions) base = ty().directions;   // יורש מהסוג: מתחילים מההוראות של הסוג
-        base = base.replace(DMEDIA_RE, '').trimEnd();
-        const next = (base ? base + '\n\n' : '') + 'לפרטים נוספים: ' + url;
-        if (next.length > 800) { toast('ההוראות ארוכות מדי עם הקישור, צריך לקצר את הטקסט'); }
-        else { q('Dirs').value = next; F.grow(); F.paintMedia(); F.changed(); }
+        const next = dmOf(base) ? base.replace(DMEDIA_URL, () => url) : (base.trimEnd() ? base.trimEnd() + '\n\n' : '') + 'לפרטים נוספים: ' + url;   // צירוף נוסף מחליף את הקודם, באותו מקום בטקסט
+        if (next.length > 800) { toast('ההוראות ארוכות מדי עם הקובץ, צריך לקצר את הטקסט'); }
+        else { F.dMedia = url; q('Dirs').value = next; F.paintMedia(); F.changed(); }
       } catch (err) { toast(err.message || 'העלאת הקובץ נכשלה'); }
       btn.disabled = false; btn.textContent = t0;
     });
@@ -4172,7 +4221,6 @@
     { const linked = !!(m && state.att.some((x) => x.meeting_id === m.id)); $('#mDelete').classList.toggle('locked', linked); $('#mDelete').title = linked ? 'לא ניתן למחוק מפגש שמשויכים אליו משתתפים' : ''; }
     mDlg.showModal();
     if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();   // בלי פוקוס אוטומטי: המקלדת לא עולה בפתיחה
-    mf.grow();
     syncUrl();
   }
   /* שדה מרובה שורות: מתחיל בשורה אחת ומתרחב לפי הטקסט */
@@ -4230,7 +4278,7 @@
   });
 
   /* ---------- אירועים כלליים ---------- */
-  pDlg.addEventListener('close', () => { lastPid = sheet && sheet.id || null; sheet = null; openPid = null; syncUrl(); markSel(); });
+  pDlg.addEventListener('close', () => { if (pDlg.open) return; lastPid = sheet && sheet.id || null; sheet = null; openPid = null; syncUrl(); markSel(); });   // האירוע מגיע אחרי הסגירה: אם הפופאפ כבר נפתח מחדש (משתתף חדש מעל כרטיס שבצד), לא מאפסים אותו
   mDlg.addEventListener('close', () => { if (mf.dirty) mf.changed(); syncUrl(); });
   pForm.phone.addEventListener('input', () => badPhone(false));
 
@@ -4419,6 +4467,7 @@
   let tplEd = null;
   const tplW = (n) => $('#wt' + n);
   $('#tplFields').innerHTML = tplFieldsHtml((n) => 'wt' + n);
+  tokenField(tplW('TplBody'), MSG_TOK); keepCaret(tplW('TplVars'));
   const tplRowsOf = (e) => (e.scope.type_id ? tplsOfType(e.scope.type_id) : tplsOfMeeting(e.scope.meeting_id)).map((r) => ({ id: r.id, name: r.name, body: r.body }));
   function openTplPop(id, o) {
     o = o || {};
@@ -4431,7 +4480,7 @@
     $('#tplIntro').textContent = o.draft ? (o.draft === tyF ? 'ההודעה תישמר כשסוג המפגש ייווצר' : 'ההודעה תישמר כשהמפגש ייווצר') : m ? 'ההודעה שייכת למפגש ' + dm(m) + ' בלבד' : 'ההודעה שייכת לסוג המפגש, וחלה על כל המפגשים שלו';
     tplW('TplName').value = v.name || ''; tplW('TplBody').value = v.body || '';
     const del = tplW('TplDel'); del.dataset.sure = ''; del.textContent = 'מחיקת התבנית'; del.hidden = isNew;
-    $('#tplDlg').showModal(); autoGrow(tplW('TplBody'));
+    $('#tplDlg').showModal();
     if (isNew) tplW('TplName').focus();   // תבנית חדשה: מוכנה לכתיבה
     else { const ae = document.activeElement; if (ae && ae.closest && ae.closest('#tplDlg')) ae.blur(); }   // בלי מקלדת בפתיחה
     syncUrl();
@@ -4463,8 +4512,7 @@
   }
   tplW('TplName').addEventListener('change', () => tplPopSave(tplEd));
   tplW('TplBody').addEventListener('change', () => tplPopSave(tplEd));
-  tplW('TplBody').addEventListener('input', () => autoGrow(tplW('TplBody')));
-  tplW('TplVars').addEventListener('click', (e) => { const v = e.target.closest('[data-v]'); if (v) insertMsgVar(tplW('TplBody'), v.dataset.v); });
+  tplW('TplVars').addEventListener('click', (e) => { const v = e.target.closest('[data-v]'); if (v) tplW('TplBody').tokInsert(v.dataset.v); });
   tplW('TplDel').addEventListener('click', async () => {
     const e = tplEd, del = tplW('TplDel'); if (!e) return;
     if (del.dataset.sure !== '1') { del.dataset.sure = '1'; del.textContent = 'בטוח? לחיצה נוספת מוחקת'; return; }   // נמחקת מיד, יחד עם סימוני השליחה שלה
