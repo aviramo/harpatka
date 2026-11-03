@@ -51,7 +51,7 @@ begin
   dir_b := __S__.harpatka_mail_directions(p_mid);
   vars := jsonb_build_object('_pid', p_pid, '_mid', p_mid, 'first_name', coalesce(nullif(pa.first_name, ''), pa.name, ''), 'when', whn, 'paid', paid_txt, 'rem', coalesce('₪' || trim_scale(p_rem)::text, ''),
     'name_block', name_b, 'where_block', where_b, 'credit_block', credit_b, 'dir_block', dir_b,
-    'me_link', 'https://harpatka.co.il/me/?m=' || p_mid, 'wa_hadar', 'https://wa.me/972546163012', 'wa_ofir', 'https://wa.me/972587078708');
+    'me_link', 'https://harpatka.co.il/me/?m=' || p_mid) || __S__.harpatka_wa_vars();
   return __S__.harpatka_mail_close(case when p_partial then 'payment_partial' else 'payment_confirmed' end, p_pid, p_mid, vars, em);
 exception when others then
   return false;   -- כשל במייל לא מבטל את התשלום
@@ -137,7 +137,7 @@ insert into __S__.harpatka_mail_templates (key, subject, html) values ('payment_
 <div style="font-size:16px;line-height:1.6;color:#2C231D;margin-bottom:18px"><b>שולם:</b> {{paid}}{{{credit_block}}}</div>
 {{{dir_block}}}
 <a href="{{me_link}}" style="display:block;background:#C8411B;color:#ffffff;text-decoration:none;font-weight:bold;font-size:17px;text-align:center;padding:14px 20px;border-radius:0">לאזור האישי</a>
-<div style="font-size:15px;line-height:1.6;color:#4A3D33;margin-top:18px">שאלות או שינויים? אפשר לכתוב לנו בוואטסאפ: <span style="white-space:nowrap"><a href="{{wa_hadar}}" style="color:#C8411B;font-weight:bold">הדר</a> · <a href="{{wa_ofir}}" style="color:#C8411B;font-weight:bold">אופיר</a></span></div>
+<div style="font-size:15px;line-height:1.6;color:#4A3D33;margin-top:18px">שאלות או שינויים? אפשר לכתוב לנו בוואטסאפ: <a href="{{wa}}" dir="ltr" style="color:#C8411B;font-weight:bold;white-space:nowrap">{{wa_num}}</a></div>
 <div style="font-size:16px;line-height:1.6;color:#2C231D;margin-top:18px">נתראה, אופיר והדר</div>
 </div></div></div>$h$)
 on conflict (key) do update set subject = excluded.subject, html = excluded.html;
@@ -150,7 +150,7 @@ insert into __S__.harpatka_mail_templates (key, subject, html) values ('payment_
 <div style="font-size:16px;line-height:1.6;color:#2C231D;margin-bottom:16px">התקבל {{paid}} על המפגש. נשאר להשלים {{rem}}, והמקום שלך יישמר קבוע רק אחרי השלמת התשלום.</div>
 <div style="border:1px solid #FFD8AE;background:#FFF5E8;padding:14px 16px;margin-bottom:18px">{{{name_block}}}<div style="font-size:19px;font-weight:bold;color:#2C231D">{{when}}</div>{{{where_block}}}</div>
 <a href="{{me_link}}" style="display:block;background:#4E7D2C;color:#ffffff;text-decoration:none;font-weight:bold;font-size:17px;text-align:center;padding:14px 20px;border-radius:0">להשלמת התשלום באזור האישי</a>
-<div style="font-size:15px;line-height:1.6;color:#4A3D33;margin-top:18px">רוצה לשלם בדרך אחרת, או יש שאלה? אפשר לכתוב לנו בוואטסאפ: <a href="{{wa_hadar}}" style="color:#C8411B;font-weight:bold">הדר</a> · <a href="{{wa_ofir}}" style="color:#C8411B;font-weight:bold">אופיר</a></div>
+<div style="font-size:15px;line-height:1.6;color:#4A3D33;margin-top:18px">רוצה לשלם בדרך אחרת, או יש שאלה? אפשר לכתוב לנו בוואטסאפ: <a href="{{wa}}" dir="ltr" style="color:#C8411B;font-weight:bold;white-space:nowrap">{{wa_num}}</a></div>
 <div style="font-size:16px;line-height:1.6;color:#2C231D;margin-top:18px">נתראה,<br>אופיר והדר</div>
 </div></div></div>$h$)
 on conflict (key) do update set subject = excluded.subject, html = excluded.html;

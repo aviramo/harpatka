@@ -1,13 +1,11 @@
-/* הגדרות משותפות לכל העמודים (עמוד הבית, v6, ביודנסה). עמוד יכול לדרוס ערך אחרי טעינת הקובץ, למשל CONFIG.hadarMessage */
+/* הגדרות משותפות לכל העמודים (עמוד הבית, v6, ביודנסה). עמוד יכול לדרוס ערך אחרי טעינת הקובץ, למשל CONFIG.whatsappMessage */
 const CONFIG = {
   googleLogin: true,   // מתג: כניסה עם גוגל לציבור (אזור אישי, "נרשמתם בעבר", זיהוי משתתף מחובר). כבוי זמנית (30.10.26): ההרשמה רגילה עם הפרטים המלאים. להחזרה: true (ואז הגרסה החזרה: git tag google-login-enabled)
   googleClientId: '459432002435-349ppd8r1qqe9tkcdm2v3f6rpp48i1ni.apps.googleusercontent.com',   // מזהה ה-OAuth client של גוגל (ציבורי, אותו אחד ש-Supabase משתמש בו) לשכבת הכניסה של גוגל מעל הדף (One Tap)
   supabaseUrl: 'https://ezakarwqstnldqixgreb.supabase.co',     // Supabase הייעודי של הפרויקט (harpatka_meetings / harpatka_signup)
   supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6YWthcndxc3RubGRxaXhncmViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTA3MzIsImV4cCI6MjEwNjc4NjczMn0.Bg0eFBC4zKjyJc5kBw3wLgSP-PkxLFVv3o7-4YUdq4c',                  // מפתח ציבורי (anon)
-  whatsappOfir: '972587078708',                   // מספר הנייד של אופיר (פורמט בינ"ל, בלי +)
-  whatsappHadar: '972546163012',                  // מספר הנייד של הדר — יעד כל כפתורי "אני רוצה להצטרף"
-  hadarMessage: 'היי הדר, הגעתי אליכם דרך האתר',
-  ofirMessage: 'היי אופיר, הגעתי אליכם דרך האתר',
+  whatsapp: '972552589829',                       // הוואטסאפ העסקי של יוצאים להרפתקה, מספר אחד לשני המנחים (פורמט בינ"ל, בלי +). במיילים: harpatka_wa_vars במסד
+  whatsappMessage: 'היי, הגעתי אליכם דרך האתר',
   updatesGroupLink: 'https://chat.whatsapp.com/HPBClkrbondA3JlQyOvseI',            // קבוצת העדכונים עד גיל 50
   updatesGroup50PlusLink: 'https://chat.whatsapp.com/DB7zVc2NdVXEquZCC6PpUP',      // קבוצת העדכונים גיל 50 ומעלה
   payboxLink: 'https://links.payboxapp.com/zwi4JG24Y6b',
@@ -33,6 +31,8 @@ const CONFIG = {
     };
     document.addEventListener('click', block, true); document.addEventListener('submit', block, true);
   },
+  /* כרטיס שיחה בוואטסאפ אלינו: רכיב אחד לכל הפופאפים (עיצוב: shared/wa-card.css). הקישור נקבע במקום שמשתמש בו, כי הוא תלוי בהודעה */
+  waCard: (base, id) => '<a class="wacard" id="' + id + '" target="_blank" rel="noopener"><span class="waimgs"><img src="' + base + 'images/hadar.jpg" width="52" height="52" alt=""><img src="' + base + 'images/ofir-v3.jpg" width="52" height="52" alt=""></span><span class="wat"><b>הדר ואופיר</b><small>שיחה בוואטסאפ</small></span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.5c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.6.9 1-3.5-.2-.4C3.2 15.6 2.7 13.8 2.7 12c0-5.1 4.2-9.3 9.3-9.3 2.5 0 4.8 1 6.6 2.7 1.8 1.8 2.7 4.1 2.7 6.6 0 5.2-4.2 9.5-9.3 9.5zM20 4C17.9 1.8 15 .7 12 .7 5.8.7.7 5.8.7 12c0 2 .5 3.9 1.5 5.6L.6 23.4l6-1.6c1.6.9 3.5 1.4 5.4 1.4 6.2 0 11.3-5.1 11.3-11.3 0-3-1.2-5.8-3.3-7.9z"/></svg></a>',
   meetingBox: (m, extra) => {
     const esc = (v) => String(v == null ? '' : v).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const [, mo, d] = String(m.date).split('-').map(Number), wd = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'][new Date(m.date + 'T12:00:00Z').getUTCDay()];

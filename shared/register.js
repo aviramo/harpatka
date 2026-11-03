@@ -11,20 +11,9 @@
     <div class="modal-box">
       <button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button>
       <div id="cmChoose" hidden>
-      <h2 id="contactTitle" class="h-sect text-[1.6rem] md:text-[2rem] mb-5">מעדיפים לשלוח הודעה? עם מי תרצו לדבר?</h2>
-      <div class="grid grid-cols-2 gap-3">
-        <a href="#" target="_blank" rel="noopener" data-wa="hadar" class="contact-opt">
-          <img src="__BASE__images/hadar.jpg" width="400" height="400" alt="הדר לוריא">
-          <b>הדר</b>
-          <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.057 0a11.82 11.82 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.477-.913zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>וואטסאפ</span>
-        </a>
-        <a href="#" target="_blank" rel="noopener" data-wa="ofir" class="contact-opt">
-          <img src="__BASE__images/ofir-v3.jpg" width="400" height="400" alt="אופיר אבירם">
-          <b>אופיר</b>
-          <span><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.057 0a11.82 11.82 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.477-.913zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>וואטסאפ</span>
-        </a>
-      </div>
-      <button type="button" id="cmShowForm" class="mt-4 w-full rounded-full px-5 py-3.5 text-[1.05rem] font-bold" style="background:var(--sand);color:var(--ink)">חזרה לשמירת מקום בטופס</button>
+      <h2 id="contactTitle" class="h-sect text-[1.6rem] md:text-[2rem] mb-3">מעדיפים לשלוח הודעה?</h2>
+      ${CONFIG.waCard('__BASE__', 'cmWa')}
+      <button type="button" id="cmShowForm" class="mt-3 w-full rounded-full px-5 py-3.5 text-[1.05rem] font-bold" style="background:var(--sand);color:var(--ink)">חזרה לשמירת מקום בטופס</button>
       <p class="mt-4 text-[.98rem]"><a href="#" target="_blank" rel="noopener" data-updates class="underline underline-offset-4 decoration-2 text-terra font-bold">לא בטוחים עדיין? אפשר להצטרף לקבוצת העדכונים</a></p>
       </div>
       <div id="cmFormView" data-su-root>
@@ -79,12 +68,12 @@
   if (window.REGISTER_MIN !== false) document.documentElement.classList.add('reg-min');
   /* שאלת יציאה מהחשבון: אותה מעטפת פופאפ של ההרשמה (נפתח מלמעלה, פס סגירה בתחתית) */
   const LOGOUT_HTML = `<div id="logoutModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="logoutTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="logoutTtl"></p><a class="su-lgyes" href="__BASE__me/">כניסה לאזור האישי</a><button type="button" class="su-lgno" data-lg="yes">יציאה מהחשבון</button></div></div>`.replace(/__BASE__/g, BASE);
-  const OTHER_HTML = `<div id="otherModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="otherTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="otherTtl">לשלם בדרך אחרת</p><p class="su-lgq">נפתחת שיחת וואטסאפ עם אחד המנחים, וההודעה כבר מוכנה:</p><div id="otherInfo"></div><a class="wacard" id="otherHadar" target="_blank" rel="noopener"><img src="__BASE__images/hadar.jpg" width="52" height="52" alt=""><span class="wat"><b>הדר לוריא</b><small>שיחה בוואטסאפ</small></span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.5c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.6.9 1-3.5-.2-.4C3.2 15.6 2.7 13.8 2.7 12c0-5.1 4.2-9.3 9.3-9.3 2.5 0 4.8 1 6.6 2.7 1.8 1.8 2.7 4.1 2.7 6.6 0 5.2-4.2 9.5-9.3 9.5zM20 4C17.9 1.8 15 .7 12 .7 5.8.7.7 5.8.7 12c0 2 .5 3.9 1.5 5.6L.6 23.4l6-1.6c1.6.9 3.5 1.4 5.4 1.4 6.2 0 11.3-5.1 11.3-11.3 0-3-1.2-5.8-3.3-7.9z"/></svg></a><a class="wacard" id="otherOfir" target="_blank" rel="noopener"><img src="__BASE__images/ofir-v3.jpg" width="52" height="52" alt=""><span class="wat"><b>אופיר אבירם</b><small>שיחה בוואטסאפ</small></span><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.5c-1.7 0-3.4-.5-4.8-1.3l-.3-.2-3.6.9 1-3.5-.2-.4C3.2 15.6 2.7 13.8 2.7 12c0-5.1 4.2-9.3 9.3-9.3 2.5 0 4.8 1 6.6 2.7 1.8 1.8 2.7 4.1 2.7 6.6 0 5.2-4.2 9.5-9.3 9.5zM20 4C17.9 1.8 15 .7 12 .7 5.8.7.7 5.8.7 12c0 2 .5 3.9 1.5 5.6L.6 23.4l6-1.6c1.6.9 3.5 1.4 5.4 1.4 6.2 0 11.3-5.1 11.3-11.3 0-3-1.2-5.8-3.3-7.9z"/></svg></a></div></div>`.replace(/__BASE__/g, BASE);
-  /* חשבון חסום או מנותק: פופאפ מלמעלה (אותה מעטפת) שמסביר שאי אפשר להתחבר דרך החשבון הזה, עם וואטסאפ להדר ולאופיר */
+  const OTHER_HTML = `<div id="otherModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="otherTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="otherTtl">לשלם בדרך אחרת</p><p class="su-lgq">נפתחת שיחת וואטסאפ איתנו, וההודעה כבר מוכנה:</p><div id="otherInfo"></div>${CONFIG.waCard('__BASE__', 'otherWa')}</div></div>`.replace(/__BASE__/g, BASE);
+  /* חשבון חסום או מנותק: פופאפ מלמעלה (אותה מעטפת) שמסביר שאי אפשר להתחבר דרך החשבון הזה, עם וואטסאפ אלינו */
   const BLOCKED_HTML = OTHER_HTML.replace('id="otherModal"', 'id="blockedModal"').replace('aria-labelledby="otherTtl"', 'aria-labelledby="blockedTtl"')
-    .replace('<p class="su-lgwho" id="otherTtl">לשלם בדרך אחרת</p><p class="su-lgq">נפתחת שיחת וואטסאפ עם אחד המנחים, וההודעה כבר מוכנה:</p><div id="otherInfo"></div>',
+    .replace('<p class="su-lgwho" id="otherTtl">לשלם בדרך אחרת</p><p class="su-lgq">נפתחת שיחת וואטסאפ איתנו, וההודעה כבר מוכנה:</p><div id="otherInfo"></div>',
       '<p class="su-lgwho" id="blockedTtl">לא ניתן להתחבר דרך החשבון הזה</p><p class="su-lgq">החשבון הזה לא מאושר לכניסה לאתר. לשאלות אפשר לפנות אלינו בוואטסאפ:</p>')
-    .replace('id="otherHadar"', 'id="blockedHadar"').replace('id="otherOfir"', 'id="blockedOfir"');
+    .replace('id="otherWa"', 'id="blockedWa"');
   /* כניסה עם גוגל כשהשכבה הקטנה של גוגל לא יכולה להופיע (למשל בהשהיה של גוגל אחרי שנסגרה): פופאפ קטן בתוך הדף עם הכפתור של גוגל, בלי חלון נפרד */
   const GLOGIN_HTML = `<div id="gloginModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="gloginTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="gloginTtl">כניסה עם גוגל</p><p class="su-lgq">ממשיכים עם חשבון הגוגל שלכם, בלי סיסמה</p><div class="su-gbtn" id="gloginBtn"></div><a href="#" class="su-galt" id="gloginAlt" hidden>הרשמה בלי חשבון גוגל</a></div></div>`;
   document.body.insertAdjacentHTML('beforeend', MODAL_HTML + LOGOUT_HTML + OTHER_HTML + BLOCKED_HTML + GLOGIN_HTML);
@@ -403,13 +392,9 @@
     if (el) { el.setAttribute('href', CONFIG.updatesGroupLink); el.setAttribute('target', '_blank'); el.setAttribute('rel', 'noopener'); }
   });
 
-  /* ===== CTA ראשי: פותח פופאפ בחירה בין הדר לאופיר; גם כפתורי המנחים בכרטיסים פותחים שיחת וואטסאפ ישירה =====
-     אירוע ההמרה Lead של ה-Pixel נשלח בלחיצה על וואטסאפ של אחד מהם */
-  const waLink = (num, msg) => 'https://wa.me/' + num + '?text=' + encodeURIComponent(msg);
-  const waLinks = { hadar: waLink(CONFIG.whatsappHadar, CONFIG.hadarMessage), ofir: waLink(CONFIG.whatsappOfir, CONFIG.ofirMessage) };
-  document.querySelectorAll('[data-wa]').forEach(el => {
-    el.setAttribute('href', waLinks[el.dataset.wa]);
-  });
+  /* ===== כפתורי וואטסאפ: מספר אחד לשני המנחים (CONFIG.whatsapp), עם הודעה מוכנה ===== */
+  const waHref = 'https://wa.me/' + CONFIG.whatsapp + '?text=' + encodeURIComponent(CONFIG.whatsappMessage);
+  document.querySelectorAll('[data-wa], #cmWa').forEach((el) => el.setAttribute('href', waHref));
   /* ===== משתתף מחובר (חשבון גוגל מהאזור האישי, אותו מפתח session של me/): הרשמה למפגש בלחיצה אחת, בלי הזנת פרטים ===== */
   const ME_KEY = 'harpatka_me_session';
   /* צפייה כמשתתף (מנהל, מהעין בפרטי המשתתף בדף הניהול): /?as=<מזהה המשתתף>. הדף מתנהג כאילו המשתתף מחובר עם גוגל (השם בבאנר, המפגשים, הרשמה ותשלום, האזור האישי),
@@ -773,22 +758,21 @@
     try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (e) {}
     meInfo = null; mePending = null; window.__meAdmin = false; clearMeName(); applyMemberMode(); gsiNoAuto(); gsiLoad();
     const dlg = document.getElementById('blockedModal'); if (!dlg) return;
-    dlg.querySelector('#blockedHadar').href = 'https://wa.me/' + CONFIG.whatsappHadar; dlg.querySelector('#blockedOfir').href = 'https://wa.me/' + CONFIG.whatsappOfir;
+    dlg.querySelector('#blockedWa').href = 'https://wa.me/' + CONFIG.whatsapp;
     let wait = 0;
     try { if (meSheet) { meSheet.dataset.k = ''; if (!meSheet.hidden) { closeMeSheet(); wait = 450; } } } catch (e) {}
     document.querySelectorAll('.modal:not([hidden])').forEach((m) => { if (m !== dlg) { try { closeModal(m); wait = 450; } catch (e) {} } });
     setTimeout(() => openModal(dlg, true), wait);   // אחרי שהפופאפים הקודמים נסגרו (הם חוזרים אחורה בהיסטוריה)
   }
   window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-blocked') showBlocked(); });   // האזור האישי (בפופאפ) גילה שהחשבון חסום
-  /* תשלום בדרך אחרת: פופאפ (אותה מעטפת) עם שיחת וואטסאפ מוכנה להדר או לאופיר, עם פרטי המפגש */
+  /* תשלום בדרך אחרת: פופאפ (אותה מעטפת) עם שיחת וואטסאפ מוכנה אלינו, עם פרטי המפגש */
   function openOtherPay(m) {
     const dlg = document.getElementById('otherModal'); if (!dlg) return;
     let info = 'המפגש הקרוב';
     if (m && m.date) { const [, mo, d] = String(m.date).split('-').map(Number), wd = HE_DAYS[new Date(m.date + 'T12:00:00Z').getUTCDay()]; info = 'יום ' + wd + ' ' + d + '.' + mo + (m.time ? ' בשעה ' + m.time : ''); }
     const text = 'היי, אני רוצה להעביר את התשלום בדרך אחרת למפגש ביום ' + info.replace(/^יום /, '');
-    const wa = (num) => 'https://wa.me/' + num + '?text=' + encodeURIComponent(text);
     dlg.querySelector('#otherInfo').innerHTML = m && m.date ? CONFIG.meetingBox(Object.assign({}, m, { name: m.name || defMeetingName })) : '';
-    dlg.querySelector('#otherHadar').href = wa(CONFIG.whatsappHadar); dlg.querySelector('#otherOfir').href = wa(CONFIG.whatsappOfir);
+    dlg.querySelector('#otherWa').href = 'https://wa.me/' + CONFIG.whatsapp + '?text=' + encodeURIComponent(text);
     openModal(dlg, true);
   }
   /* פופאפ האזור האישי: עולה מלמטה ומציג את דף האזור האישי (me/?embed=1) בתוך iframe, בלי לעבור לדף אחר. סגירה: גרירה למטה או לחיצה על הפס, לחיצה בחוץ, Esc וכפתור "חזרה" */

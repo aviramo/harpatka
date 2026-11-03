@@ -16,7 +16,7 @@ insert into __S__.harpatka_mail_templates (key, subject, html) values ('meeting_
 {{{credit_block}}}
 <a href="{{me_link}}" style="display:block;background:#4E7D2C;color:#ffffff;text-decoration:none;font-weight:bold;font-size:17px;text-align:center;padding:14px 20px;border-radius:0">{{pay_label}}</a>
 <div style="font-size:15px;line-height:1.6;color:#4A3D33;text-align:center;margin-top:10px">ברגע שנקבל את התשלום,<br>{{pay_after}}</div>
-<div style="font-size:15px;line-height:1.6;color:#4A3D33;margin-top:18px">שאלות או שינויים? אפשר לכתוב לנו בוואטסאפ: <span style="white-space:nowrap"><a href="{{wa_hadar}}" style="color:#C8411B;font-weight:bold">הדר</a> · <a href="{{wa_ofir}}" style="color:#C8411B;font-weight:bold">אופיר</a></span></div>
+<div style="font-size:15px;line-height:1.6;color:#4A3D33;margin-top:18px">שאלות או שינויים? אפשר לכתוב לנו בוואטסאפ: <a href="{{wa}}" dir="ltr" style="color:#C8411B;font-weight:bold;white-space:nowrap">{{wa_num}}</a></div>
 <div style="font-size:16px;line-height:1.6;color:#2C231D;margin-top:18px">נתראה, אופיר והדר</div>
 </div></div></div>$tpl$)
 on conflict (key) do update set subject = excluded.subject, html = excluded.html;
