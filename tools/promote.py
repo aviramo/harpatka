@@ -1,15 +1,11 @@
 """העברת סביבת הבדיקות לסביבת האמת. מ-1.11.26 כל בקשה עולה לאמת מיד אחרי tools/stage.py (לבקשת בעל האתר: "תעלה תמיד את הכל לסביבת אמת מכאן").
 
-שימוש:  python tools/backup-prod.py   (קודם: גיבוי נתוני האמת ותוכנית רולבק, כלל קבוע מ-31.10.26)
-        python tools/promote.py
-  0. שינויי בסיס נתונים (קבצי SQL שהשתנו): מסרב להעלות בלי גיבוי של public שנעשה ב-6 השעות האחרונות, על אותו קומיט שרץ עכשיו באמת.
-     שינויי תצוגה בלבד (בלי SQL): בלי גיבוי ובלי תוכנית רולבק, מעלים ישר אחרי האישור (כלל מ-31.10.26).
-     הוספת עמודות בלבד (קובץ SQL שכולו add column): גם בלי גיבוי (כלל מ-2.11.26).
+שימוש:  python tools/promote.py
+  גיבוי ותוכנית רולבק רק בפעולה מסוכנת (כלל מ-3.11.26, ראו CLAUDE.md): הכלי לא דורש אותם. כשעשו גיבוי של האמת על הקומיט הנוכחי, הוא רושם בו לאיזה קומיט עלה.
   1. בודק שאין שינויים לא שמורים בענף staging (חוץ מסרטוני מודעות), ושסביבת הבדיקות פורסמה (tools/stage.py).
   2. main <- staging, דחיפה ל-origin main בלי לעבור ענף: האתר האמיתי (harpatka.co.il) מתעדכן.
   3. מסנכרן את staging עם main, כך ששתי הסביבות זהות.
   4. מדפיס את קבצי ה-SQL שהשתנו בדרך: הם הורצו רק על סכמת test, וצריך להריץ אותם גם על public.
-  רולבק של נתונים לא מוחק מה שנכנס אחרי ההעלאה (ראו tools/restore-prod.py): אחרי הרצת ה-SQL על public מצלמים python tools/backup-prod.py --after.
 """
 import os, pathlib, subprocess, sys
 
@@ -35,42 +31,21 @@ if unsaved:   # לא עוצר: עולה רק מה שנשמר, והעריכות �
     print('שימו לב: עריכות שלא נשמרו ולכן לא עולות (אם הן שלכם: קודם tools/stage.py):\n' + unsaved)
 run('git', 'fetch', '-q', 'origin')
 
-# כלל קבוע (31.10.26): שינוי שנוגע בבסיס הנתונים (קבצי SQL) לא עולה בלי גיבוי נתוני האמת ותוכנית רולבק על המצב הנוכחי של האמת.
-# שינויי תצוגה בלבד (בלי SQL) עולים ישר אחרי האישור, בלי גיבוי (לבקשת בעל האתר: "לא צריך להחמיר יותר מדי").
-import datetime, json, re
-
-def only_adds_columns(files):
-    # קובץ SQL שכל מה שהוא עושה הוא הוספת עמודות: בלי גיבוי ובלי תוכנית רולבק (לבקשת בעל האתר, 2.11.26). בכל ספק: לא
-    for f in files:
-        try:
-            txt = re.sub(r'--[^\n]*', '', (ROOT / f).read_text(encoding='utf-8'))
-        except Exception:
-            return False
-        for st in (x.strip() for x in txt.split(';')):
-            if st and not re.fullmatch(r"(?is)alter\s+table\s+\S+\s+add\s+column\s+(if\s+not\s+exists\s+)?[^,]+(,\s*add\s+column\s+(if\s+not\s+exists\s+)?[^,]+)*|notify\s+pgrst\s*,\s*'reload schema'", st):
-                return False
-    return True
+# גיבוי לא חובה (3.11.26, לבקשת בעל האתר). אם נעשה גיבוי לפעולה מסוכנת, מסמנים בו לאיזה קומיט עלה
+import datetime, json
 
 sql = run('git', 'diff', '--name-only', 'origin/main...staging', '--', '*.sql', out=True)
 prod = run('git', 'rev-parse', 'origin/main', out=True)
 backup = None
-if sql and only_adds_columns(sql.split()):
-    print('הוספת עמודות בלבד: בלי גיבוי')
-elif sql:
-    for d in sorted((ROOT.parent / 'harpatka-backups').glob('*-prod'), reverse=True):
-        try:
-            m = json.loads((d / '_manifest.json').read_text(encoding='utf-8'))
-        except Exception:
-            continue
-        age = datetime.datetime.now().astimezone() - datetime.datetime.fromisoformat(m['created_at'])
-        if m.get('schema') == 'public' and m.get('prod_commit') == prod and age < datetime.timedelta(hours=6) and (d / 'ROLLBACK.md').exists():
-            backup = d
-            break
-    if not backup:
-        sys.exit('יש שינויי SQL ואין גיבוי עדכני של האמת על הקומיט ' + prod[:7] + ': קודם python tools/backup-prod.py')
-    print('גיבוי ותוכנית רולבק: ' + str(backup))
-else:
-    print('שינויי תצוגה בלבד (בלי SQL): בלי גיבוי')
+for d in sorted((ROOT.parent / 'harpatka-backups').glob('*-prod'), reverse=True):
+    try:
+        m = json.loads((d / '_manifest.json').read_text(encoding='utf-8'))
+    except Exception:
+        continue
+    age = datetime.datetime.now().astimezone() - datetime.datetime.fromisoformat(m['created_at'])
+    if m.get('schema') == 'public' and m.get('prod_commit') == prod and age < datetime.timedelta(hours=6) and (d / 'ROLLBACK.md').exists():
+        backup = d
+        break
 
 # בלי checkout: כמה שיחות והרינדור עובדים על אותה תיקייה, ומעבר ענף היה מחליף להם קבצים תוך כדי עבודה
 if run('git', 'merge-base', '--is-ancestor', 'origin/main', 'staging', check=False) == 0:
@@ -97,10 +72,7 @@ if backup:
     m['promoted_at'] = datetime.datetime.now().astimezone().isoformat(timespec='seconds')
     mf.write_text(json.dumps(m, ensure_ascii=False, indent=1), encoding='utf-8')
     print('לחזרה אחורה: ' + str(backup / 'ROLLBACK.md'))
-    afters = [d for d in (ROOT.parent / 'harpatka-backups').glob('*-prod-after') if d.name > backup.name]
-    if not afters:
-        print('שימו לב: לא צולם צילום "אחרי" (python tools/backup-prod.py --after, מיד אחרי הרצת ה-SQL על public). בלעדיו רולבק של נתונים לא יכול להבדיל בין שינוי של ההעלאה לעריכות של משתמשים, ולכן לא ייגע בשורות קיימות.')
 else:
     print('לחזרה אחורה (קוד בלבד): git revert של הקומיט בענף main')
 if sql:
-    print('קבצי SQL שהורצו רק על test וצריך להריץ גם על public:\n  ' + sql.replace('\n', '\n  '))
+    print('קבצי SQL שהשתנו, לוודא שהורצו גם על public:\n  ' + sql.replace('\n', '\n  '))
