@@ -70,7 +70,6 @@
                 <a href="#" target="_blank" rel="noopener" data-paybox class="btn-primary rounded-full px-8 py-4 text-[1.2rem] block text-center w-full">לתשלום <span data-price>80 ₪</span> בפייבוקס</a>
                 <div class="su-paylinks" data-su="paylinks"><button type="button" class="su-lnk" data-su="other">רוצים לשלם בדרך אחרת?</button></div>
               </div></div>
-              <div class="su-reported" data-su="reported" hidden>התשלום ממתין לאישור שלנו</div>
             </div></div>
           </form>
         </div>
@@ -266,7 +265,6 @@
         }
         if (r !== 'ok' && r !== 'reported' && r !== 'already') throw new Error('report failed');
         if (ob) ob.done();
-        const done = q('reported'); if (done) done.hidden = false;   // כפתור התשלום נשאר (אם לחצו ולא שילמו בפועל, אפשר לחזור וללחוץ שוב); מתחתיו "התשלום ממתין לאישור שלנו"
         if (meInfo) meLoader.reload(0);
       } catch (e) { if (ob) ob.fail(); }   // הדיווח נכשל: הכפתור נשאר, ולחיצה נוספת מנסה שוב
       reporting = false;
@@ -485,7 +483,7 @@
   let NOTE0 = null;
   function applyRegState(m) {
     const root = contactModal; if (!root) return;
-    const q = (k) => root.querySelector('[data-su="' + k + '"]'), btn = q('btn'), after = q('after'), note = root.querySelector('.su-paynote'), fold = q('payfold'), rep = q('reported');
+    const q = (k) => root.querySelector('[data-su="' + k + '"]'), btn = q('btn'), after = q('after'), note = root.querySelector('.su-paynote'), fold = q('payfold');
     if (!btn || !after || !note) return;
     if (NOTE0 == null) NOTE0 = note.innerHTML;
     /* משתתף מחובר עם פרטים והדף לא מכיר מפגש (הטעינה נכשלה) אבל השרת כבר רשם אותו למפגש: מציגים את המפגש שנרשם אליו (מצב נרשמתם והתשלום), ולא "השארת פרטים" */
@@ -505,7 +503,7 @@
       btn.hidden = noMeet;
       return;
     }
-    const paid = Number(x.paid) > 0, free = !!x.free, reported = !!x.reported;
+    const paid = Number(x.paid) > 0, free = !!x.free;
     /* קרדיט (בלשון המשתתף): יש קרדיט = כפתור אחד בלבד, תשלום מהקרדיט עד המקסימום שלו. רק אחרי שהשתמשו בו, ואם נשארה שארית (due) או שאין קרדיט, מופיע הכפתור של פייבוקס */
     const price = Number(x.price) || 0, credit = Math.max(0, Number(meInfo.credit) || 0), rem = (paid && Number(x.due) > 0) ? Number(x.due) : 0;
     const useCr = !paid && !free && credit > 0 && price > 0, crFull = useCr && credit >= price, payAmt = rem || price;
@@ -517,9 +515,8 @@
     btn.hidden = true;
     root.querySelectorAll('.su-fold:not(.su-after)').forEach((f) => f.classList.add('shut'));
     after.classList.remove('shut');
-    note.innerHTML = '<span class="su-regd">נרשמתם למפגש</span>' + (free ? 'המפגש בשבילכם ללא תשלום' : (paid && !rem) ? (x.pay_mail ? 'התשלום התקבל, ופרטי המפגש' + (String(x.directions || '').trim() ? ' והוראות ההגעה' : '') + ' נשלחו אליכם במייל. נתראה!' : 'התשלום התקבל. נתראה!') : reported ? 'התשלום ממתין לאישור שלנו' : 'המקום יישמר קבוע רק לאחר תשלום');   // "נרשמתם למפגש" בשורה משלו בכתום, והמצב מתחתיו
-    if (fold) fold.hidden = (paid && !rem) || free;   // כפתור התשלום נשאר עד שהתשלום באמת התקבל, גם אחרי דיווח (אולי לחצו ולא שילמו בפועל)
-    if (rep) rep.hidden = true;   // "ממתין לאישור" כבר כתוב בהודעה שמעל
+    note.innerHTML = '<span class="su-regd">נרשמתם למפגש</span>' + (free ? 'המפגש בשבילכם ללא תשלום' : (paid && !rem) ? (x.pay_mail ? 'התשלום התקבל, ופרטי המפגש' + (String(x.directions || '').trim() ? ' והוראות ההגעה' : '') + ' נשלחו אליכם במייל. נתראה!' : 'התשלום התקבל. נתראה!') : 'המקום יישמר קבוע רק לאחר תשלום');   // "נרשמתם למפגש" בשורה משלו בכתום, והמצב מתחתיו
+    if (fold) fold.hidden = (paid && !rem) || free;   // כפתור התשלום נשאר עד שהתשלום באמת התקבל. הדיווח על תשלום מוצג רק בדף הניהול; המשתתף רואה הכול כאילו לא לחץ
   }
   let phoneMode = false;   // מחוברים עם גוגל, אין משתתף מקושר: פופאפ ההרשמה במצב הזנת טלפון בלבד
   let createdHere = false;   // המשתתף נוצר בהרשמה הזו (בשלב הטלפון): RegistrationValue נשלח כשהגיל ידוע, בהשלמת הפרטים

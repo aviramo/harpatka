@@ -165,7 +165,7 @@
     }
   </script>
 
-  <link rel="stylesheet" href="../shared/site.css?v=20261103w">
+  <link rel="stylesheet" href="../shared/site.css?v=20261103x">
   <script>
     /* סרטון פתיחה: אם הדפדפן מאפשר, מסתירים את ההזמנה (בלי להזיז את הדף) עד שהסרטון נגמר; רשת ביטחון אחרי 9 שניות */
     (function(){
@@ -179,7 +179,7 @@
       } catch(e){}
     })();
   </script>
-  <link rel="stylesheet" href="../shared/register.css?v=20261103d">
+  <link rel="stylesheet" href="../shared/register.css?v=20261103e">
 </head>
 
 <body class="grain">
@@ -833,14 +833,14 @@
           /* משתתף מחובר שכבר רשום למפגש: הכפתור מציג את המצב (נרשמתם, שולם, דווח...) ולחיצה מובילה לאזור האישי על אותו מפגש */
           const more = mk('div', 'mt-more'), box = mk('div'), paid = Number(st.paid) > 0, free = !!st.free, due = paid ? Number(st.due) || 0 : 0, canPay = !free && (!paid || due > 0);
           const amt = due > 0 ? Math.round(due) : st.price;   // יתרה אחרי קרדיט: הסכום שנשאר לשלם, אחרת מחיר המפגש
-          const txt = free ? 'נרשמתם · לא לתשלום' : !canPay ? 'נרשמתם · שולם ₪' + Math.round(st.paid) : st.reported ? 'נרשמתם · התשלום ממתין לאישור' : 'נרשמתם · תשלום' + (amt ? ' ₪' + amt : '');
+          const txt = free ? 'נרשמתם · לא לתשלום' : !canPay ? 'נרשמתם · שולם ₪' + Math.round(st.paid) : 'נרשמתם · תשלום' + (amt ? ' ₪' + amt : '');
           const b = mk('a', 'mt-cta ' + (canPay ? 'topay' : 'settled'), txt);   // אפשר לשלם: ירוק, כמו כפתור התשלום בפופאפ; אין מה לשלם (שולם או לא לתשלום): אפור
           b.href = '#'; b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); reg(m); });   // גם אחרי דיווח: הפופאפ עם כפתור התשלום (נשאר עד שהתשלום באמת התקבל)   // בהמתנה לאישור דיווח: לא נפתח פופאפ   // פותח את פופאפ התשלום של המפגש (הפופאפ במצב "נרשמתם")
-          const sp = !paid && !free && !st.reported ? tierSplit(m, m.tiers, today) : null;   // עוד לא שילם: מדרגות המחיר, כי המחיר יכול לעלות (יתרה אחרי קרדיט לא תלויה במדרגות)
+          const sp = !paid && !free ? tierSplit(m, m.tiers, today) : null;   // עוד לא שילם: מדרגות המחיר, כי המחיר יכול לעלות (יתרה אחרי קרדיט לא תלויה במדרגות)
           if (sp) { const pb = fill(mkBox(), sp.past, 'done'); if (!pb.hidden) box.append(pb); }
           box.append(b);
           if (sp) { const fb = fill(mkBox(), sp.future, 'fut'); if (!fb.hidden) box.append(fb); }
-          if (canPay && !st.reported) box.append(mk('div', 'mt-note', 'כדי שנוכל לשמור לכם את המקום, צריך להשלים את התשלום. עד אז המקום עוד לא סגור'));   // נרשם ולא שילם ולא דיווח: המקום נשמר רק עם תשלום
+          if (canPay) box.append(mk('div', 'mt-note', 'כדי שנוכל לשמור לכם את המקום, צריך להשלים את התשלום. עד אז המקום עוד לא סגור'));   // נרשם ולא שילם ולא דיווח: המקום נשמר רק עם תשלום
           more.append(box); inn.append(more);
           c.style.cursor = 'pointer'; c.addEventListener('click', () => reg(m));
         } else if (!past) {
@@ -1158,6 +1158,6 @@
 </script>
   <script src="../shared/rt.js?v=1"></script>
   <script src="../shared/person-form.js?v=20261103d"></script>
-  <script src="../shared/register.js?v=20261103m"></script>
+  <script src="../shared/register.js?v=20261103n"></script>
 </body>
 </html>
