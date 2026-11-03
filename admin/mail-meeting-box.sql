@@ -3,6 +3,7 @@
 --   sed 's/__S__/public/g' admin/mail-meeting-box.sql | supabase db query --linked
 -- * harpatka_mail_meeting_box: תמונה, שם, מועד ושורת עיר, מיקום וכמות משתתפים. כל שדה ריק במפגש נלקח מסוג המפגש.
 -- * נקודות כמו באתר, בין התאריך לשעה ובין העיר, המיקום והכמות. במייל אי אפשר לדעת אם שורה נשברת, ולכן הגדלים נבחרו כך שהשורות ייכנסו, גם בטקסט מוגדל פי 1.4 (Gmail בטלפון), ושורת המיקום נשברת מראש לפי אורך, ואז בלי נקודה בנקודת השבירה.
+-- * התמונה ביחס 2:1 כמו בכרטיס המפגש באתר, באותה גזירה (מהמרכז). Gmail לא תומך ב-object-fit, ולכן החיתוך נעשה בשרת התמונות של Supabase (render/image). 640x320 כי השרת לא מגדיל תמונה, וכך גם תמונה נמוכה (למשל 1254x322) יוצאת 2:1 בדיוק; format=origin כדי שתישאר JPEG ולא WebP, שאפליקציות מייל לא מציגות.
 -- * סימן כיוון (&rlm;) סביב הנקודות: מיקום באנגלית (Guna House) לא הופך את סדר העיר, המיקום והכמות.
 -- * סמל המשתתפים הוא תמונה (images/mail-person-v1.png), כי Gmail מסיר SVG. טורקיז, כי תמונה לא מתהפכת במצב כהה. כשתמונות חסומות ייתכן שיוצג רק המספר, כי התמונה קטנה והטקסט החלופי נחתך.
 -- * בלי שכפול: שם שזהה לכותרת המייל ("יוצאים להרפתקה") לא מוצג שוב, והמועד הוסר מהמשפט במייל דחיית התשלום.
@@ -20,6 +21,7 @@ begin
   nm := coalesce(nullif(trim(mt.name), ''), trim(ty.name), '');
   if nm = 'יוצאים להרפתקה' then nm := ''; end if;   -- כבר בכותרת המייל
   img := coalesce(nullif(trim(mt.image_url), ''), nullif(trim(ty.image_url), ''), (select nullif(trim(s.value), '') from __S__.harpatka_public_settings s where s.key = 'default_meeting_image'));
+  if position('/storage/v1/object/public/' in img) > 0 then img := replace(img, '/storage/v1/object/public/', '/storage/v1/render/image/public/') || '?width=640&height=320&resize=cover&format=origin&quality=90'; end if;
   n := coalesce(mt.max_participants, ty.max_participants);
   ct := coalesce(nullif(trim(mt.city), ''), nullif(trim(ty.city), ''), ''); pl := coalesce(nullif(trim(mt.place), ''), nullif(trim(ty.place), ''), ''); ln := char_length(ct) + char_length(pl);
   -- עיר ומיקום בשורה אחת עם נקודה, ובמיקום ארוך כל אחד בשורה משלו
@@ -27,7 +29,7 @@ begin
   -- הכמות והסמל לא נפרדים: באותה שורה עם נקודה כשיש מקום, ואחרת בשורה משלהם
   if n > 0 then ppl := case when wh = '' then '' when ln <= 18 then '&rlm; · &rlm;' else '<br>' end || '<span style="white-space:nowrap">' || n || '&nbsp;<img src="https://harpatka.co.il/images/mail-person-v1.png" width="16" height="16" alt="משתתפים" style="display:inline-block;width:16px;height:16px;vertical-align:-3px;border:0"></span>'; end if;
   return '<div style="border:1px solid #FFD8AE;border-bottom:4px solid #E5562D;background:#FFFFFF;text-align:center;margin-bottom:18px">'
-    || case when img is not null then '<img src="' || __S__.harpatka_pm_esc(img) || '" width="520" alt="" style="display:block;width:100%;max-width:100%;height:auto;border:0">' else '' end
+    || case when img is not null then '<img src="' || __S__.harpatka_pm_esc(img) || '" width="520" height="260" alt="" style="display:block;width:100%;max-width:100%;height:auto;border:0">' else '' end
     || '<div style="padding:14px 12px 16px">'
     || case when nm <> '' then '<div style="font-size:15px;font-weight:bold;color:#C8411B;margin-bottom:4px">' || __S__.harpatka_pm_esc(nm) || '</div>' else '' end
     || '<div style="font-size:19px;line-height:1.25;font-weight:bold;color:#2C231D">יום ' || days[extract(dow from mt.meeting_date)::int + 1] || ' ' || to_char(mt.meeting_date, 'FMDD.FMMM') || ' · ' || to_char(mt.meeting_time, 'HH24:MI') || '</div>'
