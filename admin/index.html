@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104jc" />
+  <link rel="stylesheet" href="admin.css?v=20261104jd" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1226,7 +1226,8 @@
     let h = '';
     if (state.filter) {
       const res = scope.filter((p) => reservedOf(p.id, state.filter)).length, f = state.paidF, st = f === 'r' ? 1 : f === 'u' ? 2 : 0;
-      h += btn('res', st === 2 ? 'neg' : '', st > 0, (st === 2 ? 'לא משוריינים' : 'משוריינים') + ' <small>' + (st === 2 ? scope.length - res : res) + '</small>');
+      const w = String(scope.length);   // רוחב קבוע: מקום שמור לטקסט הרחב ביותר (לא משוריינים + המספר הגדול ביותר)
+      h += btn('res', st === 2 ? 'neg' : '', st > 0, '<span class="fx"><span>' + (st === 2 ? 'לא משוריינים' : 'משוריינים') + ' <small>' + (st === 2 ? scope.length - res : res) + '</small></span><span class="ph" aria-hidden="true">לא משוריינים <small>' + w + '</small></span></span>');
     }
     h += btn('male', '', gk.includes('male'), 'גברים <small>' + men + '</small>') + btn('female', '', gk.includes('female'), 'נשים <small>' + wom + '</small>');
     el.innerHTML = h;
