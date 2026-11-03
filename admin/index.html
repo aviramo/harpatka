@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104gj" />
+  <link rel="stylesheet" href="admin.css?v=20261104gl" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -482,6 +482,7 @@
     tag: ['s', '<path d="M3 12V4h8l9 9-8 8z"/><circle cx="8" cy="9" r="1.3"/>'],
     usercheck: ['s', '<circle cx="10" cy="8" r="4"/><path d="M3 21c0-4.4 3.1-7 7-7 1.3 0 2.5.3 3.5.8"/><path d="M15.5 18l2.2 2.2L22 15.8"/>'],
     userx: ['s', '<circle cx="10" cy="8" r="4"/><path d="M3 21c0-4.4 3.1-7 7-7 1.3 0 2.5.3 3.5.8"/><path d="M16 16l5 5M21 16l-5 5"/>'],
+    unlink: ['s', '<path d="M18.84 12.25l1.72-1.71a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M5.17 11.75l-1.71 1.71a5 5 0 0 0 7.07 7.07l1.71-1.71"/><path d="M8 2v3M2 8h3M16 19v3M19 16h3"/>'],   // ניתוק חשבון גוגל
     ban: ['s', '<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>'],   // חשבון גוגל חסום
     male: ['s', '<circle cx="10" cy="14" r="5.5"/><path d="M14 10l6-6M15 4h5v5"/>'],   // סמל זכר (♂), בתגית הגיל והמגדר
     female: ['s', '<circle cx="12" cy="9" r="5.5"/><path d="M12 14.5V21M9 18h6"/>'],   // סמל נקבה (♀)
@@ -2458,7 +2459,7 @@
     menu.style.maxHeight = ''; menu.hidden = false;
     const ar = anchor.getBoundingClientRect();
     const hr = host.getBoundingClientRect();
-    menu.style.maxWidth = 'none'; menu.style.width = hr.width + 'px'; menu.style.left = hr.left + 'px';   // לכל רוחב המסך (בדסקטופ: רוחב הכרטיס)
+    menu.style.maxWidth = 'none'; menu.style.width = (hr.width - 16) + 'px'; menu.style.left = (hr.left + 8) + 'px';   // כל הרוחב עם 8 פיקסל מכל צד, כמו שאר התפריטים (בדסקטופ: רוחב הכרטיס)
     placeMenuV(menu, ar.top, ar.bottom);   // הכפתור בתחתית (הרבה מפגשים): נפתח כלפי מעלה
     menu.onclick = (e) => { const b = e.target.closest('[data-am]'); if (!b) return; closeQ(); setLinkedWithStatus(pid, b.dataset.am, 'unpaid'); const m = state.meetings.find((x) => x.id === b.dataset.am); toast('שויך למפגש' + (m ? ' ' + dmShort(m) : '')); };
   });
@@ -3870,11 +3871,11 @@
     if (!p || !p.id) return;
     let rows = []; try { rows = await api('harpatka_members?select=user_id,email,status&participant_id=eq.' + p.id + '&status=neq.removed&order=created_at.desc', { ui: false }); } catch (e) { return; }
     if (!sheet || sheet.id !== p.id || !rows.length) return;
-    box.innerHTML = '<div class="glab">חשבון גוגל מחובר</div>' + rows.map((m) => {
-      const st = m.status === 'approved' ? ['מחובר', ''] : m.status === 'blocked' ? ['חסום', 'blk'] : m.status === 'removed' ? ['מנותק', 'off'] : ['ממתין לאישור', 'off'];
-      return '<div data-uid="' + esc(m.user_id) + '"><div class="grow"><span class="gem">' + esc(m.email || 'ללא מייל') + '</span>' + UI.tag(st[0], 'gst ' + st[1]) + '</div><div class="gbtns">'
-        + (m.status === 'approved' ? '<button type="button" data-ga="removed">ניתוק</button>' : m.status === 'blocked' ? '' : '<button type="button" data-ga="approved">חיבור מחדש</button>')
-        + (m.status === 'blocked' ? '<button type="button" data-ga="approved">ביטול חסימה</button>' : '<button type="button" class="gred" data-ga="blocked">חסימה</button>') + '</div></div>';
+    const gaBtn = (to, ic, label, cls) => '<button type="button" class="gico' + (cls ? ' ' + cls : '') + '" data-ga="' + to + '" aria-label="' + label + '" title="' + label + '">' + icon(ic, 'i18') + '</button>';
+    box.innerHTML = rows.map((m) => {
+      const st = m.status === 'approved' ? ['חשבון גוגל מחובר', ''] : m.status === 'blocked' ? ['חשבון גוגל חסום', 'blk'] : ['חשבון גוגל ממתין לאישור', ''];
+      return '<div class="grow" data-uid="' + esc(m.user_id) + '"><div class="gtxt"><small class="' + st[1] + '">' + st[0] + '</small><span class="gem">' + esc(m.email || 'ללא מייל') + '</span></div>'
+        + (m.status === 'blocked' ? gaBtn('approved', 'check', 'ביטול החסימה') : (m.status === 'approved' ? gaBtn('removed', 'unlink', 'ניתוק החשבון') : gaBtn('approved', 'check', 'חיבור מחדש')) + gaBtn('blocked', 'ban', 'חסימת החשבון', 'gred')) + '</div>';
     }).join('');
     box.hidden = false;
   }
@@ -3896,7 +3897,7 @@
       await api(T.p + '?id=eq.' + p.id, { method: 'PATCH', body: { active: false } });
       p.active = false;   // נשאר ב-state (מפגשים, הערות, היסטוריה); מוסתר רק ברשימת כל המשתתפים
       if (state.inactiveNames) state.inactiveNames.set(p.id, p.name);
-      pDlg.close(); render(); toast('הוסר');
+      $('#pDelete').hidden = true; $('#pRestore').hidden = false; setTitle(p); render(); toast('הוסר');   // הכרטיס נשאר פתוח באותו מקום, ובמקום המחיקה "החזרה לפעילות"
     } catch (err) { fail(err); }
   }
   $('#pRestore').addEventListener('click', () => {   // משתתף מחוק חוזר להיות פעיל: חוזר לרשימת כל המשתתפים ולסינונים (הערת מערכת נרשמת בטריגר)
@@ -4942,7 +4943,7 @@
         (ct ? '' : '<label class="srcfld srcamt"><small>' + (fp ? 'סכום או אחוז' : 'כמה עולה ליד') + '</small><span class="srcin">' +
           (fp ? '<select class="ratetype" data-f="rate_type" aria-label="סוג"><option value="fixed"' + (x.rate_type !== 'percent' ? ' selected' : '') + '>₪</option><option value="percent"' + (x.rate_type === 'percent' ? ' selected' : '') + '>%</option></select>' : '<i>₪</i>') +
           '<input class="codein ratein" data-f="rate" type="number" inputmode="decimal" min="0" value="' + (isNew && !Number(x.rate) ? '' : Number(x.rate || 0)) + '" placeholder="0" aria-label="עלות" /></span></label>') +
-        (isNew ? '' : ct ? '<div class="srcfld"><button type="button" class="prsettle plain" data-settle="' + x.id + '"><b>התחשבנות</b></button></div>' : '<div class="srcfld"><small>התחשבנות</small><button type="button" class="prsettle" data-settle="' + x.id + '" aria-label="התחשבנות"><b class="' + (bal > 0 ? 'owe' : 'ok') + '">' + (bal > 0 ? '₪' + nfm(bal) : 'מסולק ✓') + '</b></button></div>') +
+        (isNew ? '' : '<div class="srcfld">' + (!ct && bal > 0 ? '<small>לתשלום</small>' : '') + '<button type="button" class="prsettle" data-settle="' + x.id + '" aria-label="' + esc('התחשבנות עם ' + x.name + ': ' + (ct ? 'תשלומים' : bal > 0 ? nfm(bal) + ' שקלים לתשלום' : 'מסולק')) + '"><b' + (ct ? '' : ' class="' + (bal > 0 ? 'owe' : 'ok') + '"') + '>' + (ct ? 'תשלומים' : bal > 0 ? '₪' + nfm(bal) : 'מסולק') + '</b>' + icon('next', 'i14') + '</button></div>') +
       '</div></div>';
   }
   function renderSources() { $('#srcPrList').innerHTML = state.promoters.map((x) => srcCard(x, 'pr:' + x.id)).join('') || '<p class="mnone">אין דרכי הגעה</p>'; }

@@ -259,7 +259,7 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 .vsw.on::after { transform: translateX(-18px); }
 
 /* 3.8 פאנל: קבוצת תוכן באפור בהיר, בלי מסגרת. שורות בתוכו עם קו מפריד */
-.gacc, .bdc, .prrow, .ins, .dline { background: transparent; border: 1px solid var(--line); }
+.bdc, .prrow, .ins, .dline { background: transparent; border: 1px solid var(--line); }
 .stsec, .tb, .cwhy { background: transparent; border: 0; }
 
 /* 3.9 שכבה צפה (תפריט): לבן, גבול דק, צל אחד. כל התפריטים בדף */
@@ -717,16 +717,6 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .nimg .nload { padding: 12px 0; color: var(--text-2); font-size: 13px; text-align: center; }
 /* פרטי המשתתף */
 #pTagsField { margin-bottom: 12px; }
-.gacc { margin: 0 0 12px; padding: 12px; }
-.gacc .glab { margin-bottom: 4px; font-size: 12.5px; font-weight: 700; color: var(--text-2); }
-.gacc .grow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.gacc .gem { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; direction: ltr; text-align: right; font-size: 15px; font-weight: 600; }
-.gacc .gst { background: var(--green-bg); color: var(--green); }
-.gacc .gst.off { background: var(--surface-2); color: var(--text-2); }
-.gacc .gst.blk { background: var(--red-bg); color: var(--red); }
-.gacc .gbtns { display: flex; gap: 8px; margin-top: 12px; }
-.gacc .gbtns button { flex: 1; height: var(--ctl); border: 1px solid transparent; background: var(--surface-2); color: var(--text); font-weight: 600; font-size: 14.5px; }
-.gacc .gbtns button.gred { border-color: var(--red-bg); background: var(--red-bg); color: var(--red); }
 #pRegLine { margin: 0 0 12px; color: var(--text-2); font-size: 14px; }
 /* בחירת סטטוס ודרך הגעה (מסכי משנה) */
 .sopts { display: grid; gap: 8px; margin-bottom: 8px; }
@@ -895,7 +885,11 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 .srccard .srcin .codein:focus, .srccard .srcin .ratein:focus { outline: none; }
 .srccard .srcin .ratetype { flex: 0 0 auto; width: auto; height: 32px; padding: 0 0 0 16px; border: 0; background-color: transparent; background-position: left 2px center; background-size: 9px 6px; }
 .srccard .cpbtn { flex: 0 0 auto; width: 30px; height: 30px; display: grid; place-items: center; background: var(--surface); color: var(--text-2); }
-.srccard .prsettle { display: grid; place-items: center; width: 100%; height: var(--namh); padding: 0 4px; background: var(--surface-2); font-size: 14px; white-space: nowrap; color: var(--text); }
+.srccard .prsettle { display: flex; align-items: center; justify-content: space-between; gap: 2px; width: 100%; height: var(--fld); padding: 19px 0 3px; border: 0; border-bottom: 1px solid var(--line-2); border-radius: 0; background: transparent; font-size: 16px; line-height: 22px; white-space: nowrap; color: var(--text); cursor: pointer; }   /* כמו שדה: קו תחתון בלי רקע, והחץ אומר שנכנסים למסך */
+.srccard .prsettle b { font-weight: 400; }
+.srccard .prsettle .ic { flex: 0 0 auto; color: var(--text-2); transform: scaleX(-1); }
+@media (hover: hover) { .srccard .prsettle:hover { border-bottom-color: var(--text); } }
+.srccard .prsettle:active { opacity: .6; }
 .srccard .prsettle b.owe { color: var(--red); }
 .srccard .prsettle b.ok { color: var(--green); }
 
@@ -1245,9 +1239,9 @@ dialog .dclose { display: none; }
 /* תווית "מפגשים" משמאל למפגש הכי ישן (1.11.26): טיפוגרפיה של כותרת הכרטיס (20px) באפור, ממורכזת אנכית ברצועה, עם רווח אופקי */
 /* תפריט "שיוך למפגש": ארוך מדי = גלילה פנימית (הגובה המרבי נקבע ב-placeMenuV); ליד המועד שם המפגש, שנחתך ב-"..." כשהוא ארוך (1.11.26) */
 #qMenu.am { overflow-y: auto; overscroll-behavior: contain; }
-#qMenu.am { display: grid; grid-template-columns: max-content max-content minmax(0, 1fr); row-gap: 8px; align-content: start; border-inline: 0; border-radius: 0; }   /* שלוש עמודות משותפות לכל השורות (subgrid): התאריכים, השעות והשמות כל אחד על אותו קו אנכי */
-#qMenu.am .qi { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; justify-content: normal; column-gap: 4px; min-width: 0; padding: 0 calc(var(--gut) - 8px); text-align: start; }   /* הכול מיושר לימין והרוחב לפי התוכן (השורה הרחבה ביותר קובעת) */
-#qMenu.am .qhd { grid-column: 1 / -1; padding: 4px calc(var(--gut) - 8px) 0; text-align: start; }   /* תת הכותרת "שיוך למפגש": בקו של הטקסט בשורות */
+#qMenu.am { display: grid; grid-template-columns: max-content max-content minmax(0, 1fr); row-gap: 8px; align-content: start; }   /* שלוש עמודות משותפות לכל השורות (subgrid): התאריכים, השעות והשמות כל אחד על אותו קו אנכי */
+#qMenu.am .qi { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; align-items: center; justify-content: normal; column-gap: 4px; min-width: 0; padding: 0 8px; text-align: start; }   /* הכול מיושר לימין והרוחב לפי התוכן (השורה הרחבה ביותר קובעת) */
+#qMenu.am .qhd { grid-column: 1 / -1; padding: 4px 8px 0; text-align: start; }   /* תת הכותרת "שיוך למפגש": בקו של הטקסט בשורות */
 #qMenu.am .amd, #qMenu.am .amh { text-align: start; font-variant-numeric: tabular-nums; }
 #qMenu.am .amh::before, #qMenu.am .amn::before { content: "·"; margin-inline-end: 4px; }   /* נקודה מפרידה עם רווחים קטנים משני הצדדים (4px), והעמודות עדיין על אותו קו */
 #qMenu.am .amn { min-width: 0; overflow: hidden; text-overflow: ellipsis; text-align: start; color: var(--text-2); font-weight: 500; }
@@ -1346,7 +1340,6 @@ dialog { border-radius: var(--r) var(--r) 0 0; }
 .srccard .srcin { height: var(--fld); padding: 18px 0 2px; }
 .srccard .cpbtn { width: 24px; height: 24px; background: transparent; }
 .srccard .srccol { height: var(--fld); }
-.srccard .prsettle { height: var(--fld); padding-top: 16px; }
 /* בלי מסגרת ובלי רקע: קו תחתון בלבד, כהה בפוקוס (3.11.26), כמו שורת ההערה החדשה. הטקסט והתווית בקו של כותרת הפופאפ. בלי פינות, כי הקו רק בצד אחד */
 .field input, .field select, .field textarea, #finForm select, .setinp, .pmname, .pmown, .mt2row input, .mt2row select, .dline input, .srccard .srcin, .srccard .srcsel, .srccard .stname, .strow .stname, .strow .stpts { border: 0; border-bottom: 1px solid var(--line-2); border-radius: 0; background-color: transparent; padding-inline: 0; }
 .field select, #finForm select, .pmown, .mt2row select, .srccard .srcsel { padding-inline: 0 20px; background-position: left 2px center; }
@@ -1360,7 +1353,7 @@ dialog { border-radius: var(--r) var(--r) 0 0; }
 .field > select, #finForm .field > select, .srccard .srcsel { background-position: left 2px bottom 10px; }
 .field input[type="date"], .field input[type="time"] { background-position: left 2px bottom 12px; }   /* מספרים יושבים גבוה יותר מאותיות עבריות */
 /* בקוביות הממולאות (צבע, התחשבנות) התווית לא צמודה לקצה */
-.srccard .srcfld:has(> .srccol, > .prsettle) > small { inset-inline: 9px; }
+.srccard .srcfld:has(> .srccol) > small { inset-inline: 9px; }
 
 /* שדה טקסט עם תוויות (tokenField): נוסח תבנית הודעה והוראות הגעה. אותו מראה כמו שאר השדות: קו תחתון ותווית צפה; מתחיל בשורה אחת וגדל עם ההקלדה */
 .field > textarea.tokta { display: none; }
@@ -1419,10 +1412,22 @@ dialog { border-radius: var(--r) var(--r) 0 0; }
 /* דרך הגעה בעלות כללית: בלי שדה עלות, וסוג העלות תופס גם את המקום שלו. בכפתור ההתחשבנות רק המילה */
 .srccard .srcfld.wide2 { grid-column: span 2; }
 .srccard[data-w="new"] .srcfld.wide2 { grid-column: 1 / -1; }
-.srccard .prsettle.plain { padding-top: 0; }
 /* שורת סטטוס: הצבע לפני השם */
 .strow { grid-template-columns: 28px var(--tag) minmax(0, 1fr) 56px 28px; }
 .strow .swcur { grid-column: 2; }
 .strow .stname { grid-column: 3; }
 .strow .stcap { grid-column: 3 / -1; }
 .strow:not(:has(.swcur)) .stname { grid-column: 2 / 5; }
+
+/* חשבון גוגל בפרטי המשתתף: שורה אחת כמו שדה, בלי מלבן. המצב כתוב בתווית, והפעולות סמלים */
+.gacc { margin: 0 0 8px; }
+.gacc .grow { display: flex; align-items: center; gap: 16px; min-height: var(--fld); border-bottom: 1px solid var(--line-2); }
+.gacc .gtxt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; padding-top: 3px; }
+.gacc small { font-size: 12px; line-height: 16px; color: var(--text-2); }
+.gacc small.blk { color: var(--red); }
+.gacc .gem { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: ltr; text-align: right; font-size: 16px; line-height: 22px; }
+.gacc .gico { position: relative; flex: 0 0 28px; display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; background: transparent; color: var(--text-2); cursor: pointer; }
+.gacc .gico::after { content: ""; position: absolute; inset: -8px; }   /* שטח לחיצה של 44px */
+.gacc .gico.gred { color: var(--red); }
+.gacc .gico:active { opacity: .6; }
+.gacc, .gacc .grow { border-radius: 0; }
