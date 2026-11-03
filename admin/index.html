@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104hz" />
+  <link rel="stylesheet" href="admin.css?v=20261104ia" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1385,7 +1385,7 @@
   const filtersOn = () => !!(effPay() || effGender() || effPaidF() || effSent() || effBal() || moreOn() || waFilter());
   const clearFilters = () => { state.pay = null; state.gender = null; state.paidF = null; state.sent = null; state.bal = null; state.srcF = null; state.ageF = null; state.loginF = null; state.updF = null; waSetFilter(''); };   // כל הסינונים, בלי המיון
   /* סטריפ הסינונים הפעילים (בשורת הסינון, בין המונה לשלוש הנקודות): צ'יף לכל ערך שסומן, עם מונה (כמה משתתפים מתאימים לו) ו-✕ שמבטל רק אותו. סינון חדש נכנס לכאן */
-  let AF = [];
+  let AF = [], afOrder = [];   // afOrder: סדר הוספת הסינונים (הישן ראשון במערך)
   const activeFilters = () => {
     const out = []; if (state.q.trim()) return out;   // בזמן חיפוש הסינונים מושהים
     const scope = state.participants.filter((p) => (state.filter ? linkOf(p.id, state.filter) : p.active !== false) && mtypeOk(p));
@@ -1402,7 +1402,9 @@
     payKeys(state.loginF).forEach((k) => add('אזור אישי: ' + ({ yes: 'רשומים', no: 'לא רשומים', blocked: 'חסומים' }[k] || ''), scope.filter((p) => loginOf(p) === k).length, 'loginF', k));
     const wf = waFilter(); if (wf) add(attMode() ? (wf === '1' ? 'הגיע' : 'לא הגיע') : (wf === '1' ? 'נשלח' : 'לא נשלח'), null, 'wa', wf);
     const SC = { paidF: { 1: 'green', 0: 'red', n: 'neutral', w: 'amber', l: 'sky', r: 'green', u: 'red' }, bal: { 1: 'amber', 0: 'red', n: 'neutral', f: 'neutral', w: 'amber' }, sent: { 1: 'green', 0: 'red' }, wa: { 1: 'green', 0: 'red' } };   // כל תווית סינון ברקע של המצב שלה
-    if (state.genPin) out.sort((x, y) => (y.field === 'gender') - (x.field === 'gender'));   // עין פקוחה: תוויות המגדר תמיד ראשונות
+    /* סדר הצ'יפים: לפי הסימון, החדש ראשון; עין פקוחה: תוויות המגדר ראשונות */
+    const keys = out.map((f) => f.field + ':' + f.val); afOrder = afOrder.filter((k) => keys.includes(k)); keys.forEach((k) => { if (!afOrder.includes(k)) afOrder.push(k); });
+    out.sort((x, y) => (state.genPin ? (y.field === 'gender') - (x.field === 'gender') : 0) || afOrder.indexOf(y.field + ':' + y.val) - afOrder.indexOf(x.field + ':' + x.val));
     out.forEach((f) => { if (!f.col && SC[f.field]) f.col = SC[f.field][f.val] || (f.field === 'paidF' ? 'green' : null); });
     return out;
   };
