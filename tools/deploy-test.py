@@ -20,9 +20,9 @@ def run(*a, cwd=None):
     return subprocess.run(a, cwd=cwd or OUT, check=True, capture_output=True, text=True).stdout
 
 
-def build_test_admin():
+def build_test_admin(srcdir='admin'):
     """דף הניהול של הבדיקות, נגזר מ-admin/index.html ו-admin/admin.css: סכמת test בבקשות וב-realtime, פס "סביבת בדיקות", כותרת וקיזוז גובה."""
-    src = ROOT / 'admin' / 'index.html'
+    src = ROOT / srcdir / 'index.html'
     t = src.read_text(encoding='utf-8').replace('\r\n', '\n')
     css_src = src.parent / 'admin.css'
     css = css_src.read_text(encoding='utf-8').replace('\r\n', '\n') if css_src.exists() else None
@@ -72,11 +72,14 @@ for d in DIRS:
     shutil.copytree(ROOT / d, OUT / d, ignore=shutil.ignore_patterns('*.sql', '.DS_Store'))
 for f in FILES:
     shutil.copy2(ROOT / f, OUT / f)
-(OUT / 'admin').mkdir()
-_admin_html, _admin_css = build_test_admin()
-(OUT / 'admin' / 'index.html').write_text(_admin_html, encoding='utf-8', newline='\n')
-if _admin_css is not None:
-    (OUT / 'admin' / 'admin.css').write_text(_admin_css, encoding='utf-8', newline='\n')
+for _d in ('admin', 'admin1'):   # admin1: עותק עבודה מקומי (ב-.gitignore), רק בבדיקות
+    if _d == 'admin1' and not (ROOT / 'admin1' / 'index.html').exists():
+        continue
+    (OUT / _d).mkdir()
+    _admin_html, _admin_css = build_test_admin(_d)
+    (OUT / _d / 'index.html').write_text(_admin_html, encoding='utf-8', newline='\n')
+    if _admin_css is not None:
+        (OUT / _d / 'admin.css').write_text(_admin_css, encoding='utf-8', newline='\n')
 shutil.copy2(ROOT / 'tools' / 'test-site-env.js', OUT / 'shared' / 'env.js')
 
 # כניסה עם גוגל לציבור: בפרודקשן כבויה (shared/config.js: googleLogin false). לפיתוח מחדש: קודם רק בבדיקות. True = בעותק של הבדיקות הכניסה פעילה (האמת לא משתנה)
@@ -115,7 +118,7 @@ def adapt(path, inject_env):
 
 for p in OUT.rglob('*.html'):
     rel = p.relative_to(OUT).as_posix()
-    adapt(p, inject_env=(rel != 'admin/index.html'))
+    adapt(p, inject_env=(rel not in ('admin/index.html', 'admin1/index.html')))
 
 # 4. בדיקה שלא נשאר מעקב
 bad = [p.relative_to(OUT).as_posix() for p in OUT.rglob('*.html')
