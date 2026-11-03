@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104fx" />
+  <link rel="stylesheet" href="admin.css?v=20261104fy" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -528,14 +528,13 @@
   const navDepthOf = (d) => {
     try {
       if (d.id === 'pDlg') return (sheet && sheet.id && pTab !== 'main') ? Math.max(1, viewStack.filter((x) => x !== 'main').length + 1) : 0;
-      if (d.id === 'mDlg') return d.querySelector('.mf.editing') ? 1 : 0;   // עריכת תבנית הודעה היא מסך משנה
-      if (d.id === 'setDlg') return (setView === 'tydet' && d.querySelector('.mf.editing')) ? 1 : setIsRoot(setView) ? 0 : setView === 'del' ? (setRoot === 'st' ? 1 : 2) : 1;   // עריכת סוג מפגש נפתחת מתפריט המפגשים: מסך הסוג הוא הראשי, והסטטוסים וההודעה שלו מסכי משנה
+      if (d.id === 'setDlg') return setIsRoot(setView) ? 0 : setView === 'del' ? (setRoot === 'st' ? 1 : 2) : 1;   // עריכת סוג מפגש נפתחת מתפריט המפגשים: מסך הסוג הוא הראשי, והסטטוסים וההודעה שלו מסכי משנה
       if (d.id === 'finDlg') return finV === 'main' ? 0 : 1;
       if (d.id === 'prDlg') return RANK[prView] || 0;
     } catch (e) {}
     return 0;
   };
-  const navBackBtn = (d) => { const e = d.querySelector && d.querySelector('.mf.editing .mthead .hback'); if (e) return e; const k = NAV_BACK[d.id]; return k ? $(k) : null; };   // החץ של המסך שמוצג עכשיו
+  const navBackBtn = (d) => { const k = NAV_BACK[d.id]; return k ? $(k) : null; };   // החץ של המסך שמוצג עכשיו
   const navOpen = (d) => { NAV.stack.push({ d, sub: 0 }); try { history.pushState({ nav: 1 }, ''); } catch (e) {} };
   function navSync(d) {
     const t0 = NAV.stack.find((x) => x.d === d); if (!t0) return;
@@ -596,7 +595,7 @@
     if ($('#prDlg').open && prCur) sp.set('pr', prCur);
     if (mDlg.open) sp.set('em', editingMeeting ? editingMeeting.id : 'new');   // עריכת מפגש או מפגש חדש
     if ($('#bdDlg').open) sp.set('bd', '1');
-    if ($('#tplDlg').open && tplEd) sp.set('tpl', tplEd.id);   // עריכת תבנית הודעה
+    if ($('#tplDlg').open && tplEd && tplEd.id) sp.set('tpl', tplEd.id);   // עריכת תבנית הודעה
     if ($('#stDlg').open) { sp.set('st', '1'); if (stPg.cur) sp.set('stv', ST_IDS[stPg.cur]); }
     if ($('#finDlg').open) sp.set('fin', finV === 'log' ? 'log' : finV === 'settle' ? 'settle' : finV === 'form' ? (finEdit && finEdit.id ? 'edit-' + finEdit.type + '-' + finEdit.id : 'new-' + ((finEdit && finEdit.kind) || 'expense')) : '1');   // כל שלב בכספים: ראשי, יומן, התחשבנות, טופס חדש או עריכה
     const s = sp.toString();
@@ -3993,10 +3992,7 @@
       '<div class="field"><span>מחירים</span>' +
         (isType ? '' : '<div class="mtinh" id="' + I('TierInh') + '" hidden><span id="' + I('TierInhTxt') + '"></span><button type="button" id="' + I('TierOwn') + '">שינוי למפגש הזה</button></div>') +
         '<div class="mfted" id="' + I('TierEd') + '"><div class="mt2" id="' + I('TierList') + '"></div><div class="mt2add"><button type="button" id="' + I('TierAdd') + '">+ מדרגה</button>' +
-        (isType ? '' : '<button type="button" id="' + I('TierReset') + '" hidden>כמו בסוג המפגש</button>') + '</div></div></div>' +
-      '<div class="mtedit" id="' + I('TplEd') + '" hidden>' +
-        '<div class="mthead"><button type="button" class="hbtn hback" id="' + I('TplBack') + '" aria-label="חזרה" title="חזרה">' + icon('back') + '</button><b>עריכת תבנית</b></div>' +
-        tplFieldsHtml(I) + '</div>';
+        (isType ? '' : '<button type="button" id="' + I('TierReset') + '" hidden>כמו בסוג המפגש</button>') + '</div></div></div>';
     { const tf = !isType && $('#' + p + 'TypeF'), slot = q('TypeSlot'); if (slot) { if (tf) slot.replaceWith(tf); else slot.remove(); } }   // סוג המפגש באותה שורה עם שם המפגש
     const F = { te: tierEditor('#' + I('TierList'), '#' + I('TierAdd'), () => F.changed()), img: { url: null, blob: null, objUrl: null, inh: false }, tiersInh: false };
     const ty = () => (typOf ? typOf() : null);
@@ -4006,9 +4002,9 @@
     F.grow = () => autoGrow(q('Dirs'));
     /* תמונה או סרטון בהוראות ההגעה: הקובץ עולה לדלי meeting-media והקישור נכנס לסוף ההוראות, אחרי "לפרטים נוספים:". גם בסוג מפגש וגם במפגש; במפגש שיורש את ההוראות מהסוג (השדה ריק) הצירוף מתחיל מההוראות של הסוג ונהיה שלו */
     F.paintMedia = () => { const m = DMEDIA_RE.exec(q('Dirs').value); q('DCur').hidden = !m; if (m) q('DLink').href = m[1]; };
-    /* תבניות הודעה: בטופס רק רשימת שמות; לחיצה על שם פותחת מסך עריכה נפרד באותו פופאפ (שם, נוסח וכפתורי שדות, חץ חזרה).
-       במפגש או סוג קיימים נשמרות אוטומטית (F.tpl.sync); בחדשים יחד איתם (saveTemplates) */
-    const mfBox = q('MF'), tplBox = q('Tpl'), ed = (s) => q('Tpl' + s);
+    /* תבניות הודעה: בטופס רק רשימת שמות; לחיצה על שם, או "+ תבנית הודעה", פותחת את פופאפ עריכת ההודעה (openTplPop), אותו פופאפ בכל המקומות.
+       במפגש או סוג קיימים הפופאפ שומר ישירות; בחדשים השורות מחכות כאן (F.tpl.rows) ונשמרות כשיוצרים אותם */
+    const mfBox = q('MF'), tplBox = q('Tpl');
     /* שמירה אוטומטית של מפגש או סוג שכבר קיימים (F.owner, F.write): בכל שינוי בטופס; בשדות טקסט בעזיבת השדה, ובסגירת הפופאפ גם מה שהוקלד ועוד לא נעזב. שמירה אחת בכל פעם. מפגש או סוג חדשים נוצרים בכפתור */
     let saving = false, again = false;
     F.changed = async () => {
@@ -4019,86 +4015,20 @@
     };
     mfBox.addEventListener('input', () => { F.dirty = true; });
     mfBox.addEventListener('change', (e) => { if (e.target.type !== 'file' && !e.target.closest('#' + I('TierList'))) F.changed(); });
-    F.tpl = { rows: [], cur: null };
-    F.tpl.rowsOf = (id) => (id ? (isType ? tplsOfType(id) : tplsOfMeeting(id)) : []).map((x) => ({ id: x.id, name: x.name, body: x.body }));
-    /* שמירה במסך עריכת תבנית: שומרת רק את התבניות (כשהמפגש או הסוג כבר קיימים; בחדש הן נשמרות יחד איתו) וחוזרת לטופס, בלי לסגור את הפופאפ */
-    F.tpl.saveBack = async (ownerId) => {
-      if (F.tpl.busy) return;
-      const cur = F.tpl.rows[F.tpl.cur];
-      if (cur && !String(cur.name || '').trim() && !String(cur.body || '').trim()) { toast('חסר שם לתבנית'); ed('Name').focus(); return; }
-      const tr = F.tpl.read(); if (tr.err) { toast(tr.err); if (tr.open) tr.open(); return; }
-      F.tpl.busy = true;
-      try {
-        if (ownerId) { await saveTemplates(isType ? { type_id: ownerId } : { meeting_id: ownerId }, tr.rows); F.tpl.rows = F.tpl.rowsOf(ownerId); }
-        F.tpl.close(); toast('התבנית נשמרה');
-      } catch (err) { fail(err); }
-      F.tpl.busy = false;
-    };
+    F.tpl = { rows: [], ownerId: null };
+    F.tpl.scope = () => F.tpl.ownerId ? (isType ? { type_id: F.tpl.ownerId } : { meeting_id: F.tpl.ownerId }) : null;
+    F.tpl.list = () => F.tpl.ownerId ? (isType ? tplsOfType(F.tpl.ownerId) : tplsOfMeeting(F.tpl.ownerId)) : F.tpl.rows;
     F.tpl.render = () => {
-      tplBox.innerHTML = F.tpl.rows.map((r, i) => '<button type="button" class="mtitem" data-i="' + i + '"><span>' + esc(r.name || 'תבנית חדשה') + '</span>' + icon('go', 'i18') + '</button>').join('');
-    };
-    F.tpl.open = (i) => {
-      const r = F.tpl.rows[i]; if (!r) return;
-      F.tpl.cur = i; ed('Name').value = r.name || ''; ed('Body').value = r.body || ''; ed('Del').dataset.sure = ''; ed('Del').textContent = 'מחיקת התבנית';
-      mfBox.classList.add('editing'); ed('Ed').hidden = false; autoGrow(ed('Body')); ed('Ed').scrollIntoView({ block: 'start' }); navSync(mfBox.closest('dialog'));
-    };
-    F.tpl.close = () => {
-      F.tpl.cur = null; mfBox.classList.remove('editing'); ed('Ed').hidden = true; F.tpl.render(); navSync(mfBox.closest('dialog'));
-      tplBox.scrollIntoView({ block: 'start' });
-    };
-    F.tpl.add = () => {   // תבנית חדשה ישר במסך העריכה, מוכנה לכתיבה
-      F.tpl.rows.push({ id: null, name: '', body: '' }); F.tpl.render(); F.tpl.open(F.tpl.rows.length - 1);
-      ed('Name').focus();
-    };
-    /* לשמירה: { rows } (בלי שורות ריקות, לפי הסדר), או { err, open } (פותח את התבנית שחסר בה משהו) */
-    F.tpl.read = () => {
-      const raw = F.tpl.rows, out = [];
-      for (let i = 0; i < raw.length; i++) {
-        const nm = String(raw[i].name || '').trim().slice(0, 60), bd = String(raw[i].body || '').trim();
-        if (!nm && !bd) continue;
-        if (!nm) return { err: 'חסר שם לתבנית', open: () => { F.tpl.open(i); ed('Name').focus(); } };
-        if (!bd) return { err: 'חסר נוסח לתבנית "' + nm + '"', open: () => { F.tpl.open(i); ed('Body').focus(); } };
-        out.push({ id: raw[i].id, name: nm, body: String(raw[i].body).replace(/\s+$/, '').slice(0, 2000) });
-      }
-      return { rows: out };
-    };
-    /* שמירה אוטומטית של התבניות: תבנית חדשה שעוד ריקה או לא מושלמת מחכה (בחזרה מקבלים הודעה); אחרי שמירה השורות מתעדכנות, כדי שתבנית חדשה לא תיווצר פעמיים */
-    F.tpl.sync = async (scope) => {
-      const c = F.tpl.rows[F.tpl.cur]; if (c && !String(c.name || '').trim() && !String(c.body || '').trim()) return;
-      const tr = F.tpl.read(); if (tr.err) return;
-      await saveTemplates(scope, tr.rows);
-      F.tpl.rows = F.tpl.rowsOf(scope.type_id || scope.meeting_id);
-      const r = F.tpl.rows[F.tpl.cur]; if (r) { r.name = ed('Name').value; r.body = ed('Body').value; }
-      if (F.tpl.cur == null) F.tpl.render();
+      tplBox.innerHTML = F.tpl.list().map((r, i) => '<button type="button" class="mtitem" data-i="' + i + '"><span>' + esc(r.name || 'תבנית חדשה') + '</span>' + icon('go', 'i18') + '</button>').join('');
     };
     F.paintTplInh = () => {   // במפגש: תבניות הסוג. אותה שורה כמו תבנית של המפגש, ולחיצה פותחת את פופאפ עריכת ההודעה
       const box = q('TplInh'); if (!box) return;
       const t = ty(), l = t ? tplsOfType(t.id) : [];
       box.hidden = !l.length; box.innerHTML = l.length ? '<small>תבניות של סוג המפגש</small>' + l.map((x) => '<button type="button" class="mtitem" data-tplpop="' + esc(x.id) + '"><span>' + esc(x.name) + '</span>' + icon('go', 'i18') + '</button>').join('') : '';
     };
-    tplBox.addEventListener('click', (e) => { const b = e.target.closest('.mtitem'); if (b) F.tpl.open(Number(b.dataset.i)); });
+    tplBox.addEventListener('click', (e) => { const b = e.target.closest('.mtitem'), r = b && F.tpl.list()[Number(b.dataset.i)]; if (!r) return; if (r.id) openTplPop(r.id); else openTplPop(null, { draft: F, row: r }); });
     if (q('TplInh')) q('TplInh').addEventListener('click', (e) => { const b = e.target.closest('[data-tplpop]'); if (b) openTplPop(b.dataset.tplpop); });
-    ed('Name').addEventListener('input', () => { const r = F.tpl.rows[F.tpl.cur]; if (r) r.name = ed('Name').value; });
-    ed('Body').addEventListener('input', () => { const r = F.tpl.rows[F.tpl.cur]; if (r) r.body = ed('Body').value; autoGrow(ed('Body')); });
-    ed('Vars').addEventListener('click', (e) => {
-      const v = e.target.closest('[data-v]'), r = F.tpl.rows[F.tpl.cur]; if (!v || !r) return;
-      insertMsgVar(ed('Body'), v.dataset.v); r.body = ed('Body').value;
-    });
-    ed('Back').addEventListener('click', () => {
-      const r = F.tpl.rows[F.tpl.cur];
-      if (r && F.owner && F.owner()) {   // נשמר אוטומטית: תבנית ריקה יורדת, ותבנית לא מושלמת נשארת פתוחה עם הודעה
-        if (!String(r.name || '').trim() && !String(r.body || '').trim()) { F.tpl.rows.splice(F.tpl.cur, 1); F.tpl.close(); if (r.id) F.changed(); return; }
-        const tr = F.tpl.read(); if (tr.err) { toast(tr.err); if (tr.open) tr.open(); return; }
-        F.tpl.close(); F.changed(); return;
-      }
-      F.tpl.close();
-    });
-    ed('Del').addEventListener('click', () => {
-      const r = F.tpl.rows[F.tpl.cur], btn = ed('Del');
-      if (r && r.id && F.owner && F.owner() && btn.dataset.sure !== '1') { btn.dataset.sure = '1'; btn.textContent = 'בטוח? לחיצה נוספת מוחקת'; return; }   // נמחקת מיד, יחד עם סימוני השליחה שלה
-      if (F.tpl.cur != null) F.tpl.rows.splice(F.tpl.cur, 1); F.tpl.close(); F.changed();
-    });
-    q('TplAdd').addEventListener('click', () => F.tpl.add());
+    q('TplAdd').addEventListener('click', () => { const sc = F.tpl.scope(); if (sc) { openTplPop(null, { scope: sc }); return; } const row = { id: null, name: '', body: '' }; F.tpl.rows.push(row); F.tpl.render(); openTplPop(null, { draft: F, row }); });
     F.paintImg = () => {
       const t = ty(), inh = !!(t && F.img.inh), own = inh ? '' : (F.img.objUrl || F.img.url || '');
       const shown = own || (t ? (inh ? t.image_url || '' : '') : (isType ? '' : defMeetingImage()));
@@ -4139,7 +4069,7 @@
       F.tiersInh = !!t && h.has('price_tiers'); F.te.t = tiersOf(F.tiersInh ? t : s); F.te.render();
       if (F.img.objUrl) URL.revokeObjectURL(F.img.objUrl);
       F.img = { url: s.image_url || null, blob: null, objUrl: null, inh: !!t && h.has('image_url') };
-      F.tpl.rows = F.tpl.rowsOf(s.id); F.tpl.cur = null; mfBox.classList.remove('editing'); ed('Ed').hidden = true; F.tpl.render(); navSync(mfBox.closest('dialog'));
+      F.tpl.rows = []; F.tpl.ownerId = s.id || null; F.tpl.render();
       F.paint();
     };
     /* קריאה לשמירה: { body, inherit } או { err, el }. במפגש עם סוג שדה ריק נרשם ב-inherit ומקבל את ערך הסוג */
@@ -4210,6 +4140,7 @@
     let made = [];
     if (fresh.length) made = (await api(T.tpl, { method: 'POST', body: fresh.map((f) => Object.assign({ name: f.r.name, body: f.r.body, sort: f.i }, scope)), prefer: 'return=representation' })) || [];
     state.tpls = state.tpls.filter((x) => x[key] !== sid || keep.has(x.id)).concat(made);
+    return made;
   }
 
   /* עריכת מפגש: בלי טבלת סוגים, ההתנהגות הישנה (מהמפגש האחרון) */
@@ -4265,23 +4196,20 @@
     try {
       await api(T.m + '?id=eq.' + m.id, { method: 'PATCH', body, ui: false });
       Object.assign(m, body); { const live = state.meetings.find((x) => x.id === m.id); if (live && live !== m) Object.assign(live, body); }
-      await mf.tpl.sync({ meeting_id: m.id });
       sortMeetings(); render();
     } catch (err) { fail(err); }
   };
   mForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (editingMeeting) { const a = document.activeElement; if (a && a.blur) a.blur(); return; }   // מפגש קיים נשמר אוטומטית: אנטר רק עוזב את השדה
-    if (mf.tpl.cur != null) { await mf.tpl.saveBack(null); return; }   // מפגש חדש, במסך עריכת תבנית: חוזרים לטופס (התבניות נשמרות יחד איתו)
     const body = await meetingBody(); if (!body) return;
-    const tr = mf.tpl.read(); if (tr.err) { toast(tr.err); if (tr.open) tr.open(); return; }   // תבניות הודעה: שם ונוסח לכל תבנית
     const btn = $('#mSubmit'); btn.disabled = true;
     try {
       const [m] = await api(T.m, { method: 'POST', body, prefer: 'return=representation' });
       state.meetings.push(m);
       state.filter = m.id;
       editingMeeting = m;
-      await saveTemplates({ meeting_id: m.id }, tr.rows);
+      await saveTemplates({ meeting_id: m.id }, mf.tpl.rows);
       mf.dirty = false; sortMeetings(); mDlg.close(); render();
     } catch (err) { fail(err); }
     btn.disabled = false;
@@ -4478,39 +4406,60 @@
   function refreshWa() {
     renderWaMenu(); render(); const nb = $('#waBtn'); if (nb) { nb.setAttribute('aria-expanded', 'true'); placeWa(nb); }
   }
-  /* הוספת תבנית: במפגש נבחר נפתחת עריכת המפגש (תבנית של המפגש), אחרת עריכת סוג המפגש (תבנית של הסוג), עם שורה חדשה מוכנה לכתיבה */
+  /* הוספת תבנית: אותו פופאפ עריכת הודעה, לתבנית חדשה של המפגש או של סוג המפגש */
   function waAddTemplate(kind) {
     const m = state.filter && state.meetings.find((x) => x.id === state.filter);
     closeWa();
-    if (m && kind === 'meeting') { openMeeting(m.id); mf.tpl.add(); return; }
+    if (m && kind === 'meeting') { openTplPop(null, { scope: { meeting_id: m.id } }); return; }
     const tid = m ? typeIdOf(m) : state.mtype;
     if (!tid || !typeById(tid)) { toast('אין סוג מפגש להוספת תבנית'); return; }
-    openTypeEditor(tid); tyFormFor = null; showSetView('tydet'); tyF.tpl.add();
+    openTplPop(null, { scope: { type_id: tid } });
   }
   /* עריכת תבנית הודעה בפופאפ עצמאי (העיפרון בתפריט הוואטסאפ): בראש שם סוג המפגש, ומתחתיו השדות. נשמר אוטומטית, גם בעזיבת שדה וגם בסגירה; בלי שם או נוסח לא נשמר */
   let tplEd = null;
   const tplW = (n) => $('#wt' + n);
   $('#tplFields').innerHTML = tplFieldsHtml((n) => 'wt' + n);
   const tplRowsOf = (e) => (e.scope.type_id ? tplsOfType(e.scope.type_id) : tplsOfMeeting(e.scope.meeting_id)).map((r) => ({ id: r.id, name: r.name, body: r.body }));
-  function openTplPop(id) {
-    const t = state.tpls.find((x) => x.id === id); if (!t) return;
-    const m = t.meeting_id ? state.meetings.find((x) => x.id === t.meeting_id) : null, ty = typeById(t.type_id || (m && typeIdOf(m)));
-    tplEd = { id, scope: t.type_id ? { type_id: t.type_id } : { meeting_id: t.meeting_id } };
+  function openTplPop(id, o) {
+    o = o || {};
+    const t = id ? state.tpls.find((x) => x.id === id) : null; if (id && !t) return;
+    const scope = t ? (t.type_id ? { type_id: t.type_id } : { meeting_id: t.meeting_id }) : o.scope || null;
+    const m = scope && scope.meeting_id ? state.meetings.find((x) => x.id === scope.meeting_id) : null, ty = scope ? typeById(scope.type_id || (m && typeIdOf(m))) : null;
+    tplEd = { id: id || null, scope, draft: o.draft || null, row: o.row || null };
+    const v = t || o.row || {}, isNew = !v.name && !v.body;
     $('#tplTitle').textContent = ty && ty.name ? ty.name : 'תבנית הודעה';
-    $('#tplIntro').textContent = m ? 'ההודעה שייכת למפגש ' + dm(m) + ' בלבד' : 'ההודעה שייכת לסוג המפגש, וחלה על כל המפגשים שלו';
-    tplW('TplName').value = t.name || ''; tplW('TplBody').value = t.body || '';
-    const del = tplW('TplDel'); del.dataset.sure = ''; del.textContent = 'מחיקת התבנית';
+    $('#tplIntro').textContent = o.draft ? (o.draft === tyF ? 'ההודעה תישמר כשסוג המפגש ייווצר' : 'ההודעה תישמר כשהמפגש ייווצר') : m ? 'ההודעה שייכת למפגש ' + dm(m) + ' בלבד' : 'ההודעה שייכת לסוג המפגש, וחלה על כל המפגשים שלו';
+    tplW('TplName').value = v.name || ''; tplW('TplBody').value = v.body || '';
+    const del = tplW('TplDel'); del.dataset.sure = ''; del.textContent = 'מחיקת התבנית'; del.hidden = isNew;
     $('#tplDlg').showModal(); autoGrow(tplW('TplBody'));
-    const ae = document.activeElement; if (ae && ae.closest && ae.closest('#tplDlg')) ae.blur();   // בלי מקלדת בפתיחה
+    if (isNew) tplW('TplName').focus();   // תבנית חדשה: מוכנה לכתיבה
+    else { const ae = document.activeElement; if (ae && ae.closest && ae.closest('#tplDlg')) ae.blur(); }   // בלי מקלדת בפתיחה
     syncUrl();
   }
-  async function tplPopSave(e) {
-    const t = e && state.tpls.find((x) => x.id === e.id); if (!t) return;
-    const name = tplW('TplName').value.trim(), body = tplW('TplBody').value.replace(/\s+$/, '');
-    if (t.name === name && t.body === body) return;
-    if (!name || !body) { toast(!name ? 'חסר שם לתבנית, השינוי לא נשמר' : 'חסר נוסח לתבנית, השינוי לא נשמר'); return; }
-    try { await saveTemplates(e.scope, tplRowsOf(e).map((r) => r.id === e.id ? { id: r.id, name, body } : r)); render(); mf.paintTplInh(); toast('ההודעה נשמרה'); }
-    catch (err) { fail(err); }
+  const tplRefresh = () => { render(); mf.tpl.render(); mf.paintTplInh(); tyF.tpl.render(); };   // הרשימה ברקע וגם רשימות התבניות בטופס המפגש והסוג
+  /* שמירה אחת בכל פעם: עזיבת שדה וסגירה מיד אחריה לא יוצרות את התבנית פעמיים */
+  function tplPopSave(e, closing) {
+    if (!e) return;
+    const name = tplW('TplName').value.trim().slice(0, 60), body = tplW('TplBody').value.replace(/\s+$/, '').slice(0, 2000);
+    e.p = (e.p || Promise.resolve()).then(() => tplPopRun(e, name, body, closing));
+  }
+  async function tplPopRun(e, name, body, closing) {
+    const missing = !name ? 'חסר שם לתבנית, השינוי לא נשמר' : 'חסר נוסח לתבנית, השינוי לא נשמר';
+    if (e.draft) {   // מפגש או סוג שעוד לא נוצרו: השורה נשמרת יחד איתם
+      if (name && body) { e.row.name = name; e.row.body = body; }
+      else if (closing) { if (name || body) toast(missing); if (!e.row.name) { const rows = e.draft.tpl.rows, i = rows.indexOf(e.row); if (i >= 0) rows.splice(i, 1); } }
+      e.draft.tpl.render(); return;
+    }
+    const t = e.id && state.tpls.find((x) => x.id === e.id);
+    if (e.id && !t) return;
+    if (t && t.name === name && t.body === body) return;
+    if (!t && !name && !body) return;
+    if (!name || !body) { if (t || closing) toast(missing); return; }
+    try {
+      const rows = tplRowsOf(e), made = await saveTemplates(e.scope, t ? rows.map((r) => r.id === e.id ? { id: r.id, name, body } : r) : rows.concat({ id: null, name, body }));
+      if (!t && made[0]) { e.id = made[0].id; if (tplEd === e) { tplW('TplDel').hidden = false; syncUrl(); } }
+      tplRefresh(); toast('ההודעה נשמרה');
+    } catch (err) { fail(err); }
   }
   tplW('TplName').addEventListener('change', () => tplPopSave(tplEd));
   tplW('TplBody').addEventListener('change', () => tplPopSave(tplEd));
@@ -4520,10 +4469,13 @@
     const e = tplEd, del = tplW('TplDel'); if (!e) return;
     if (del.dataset.sure !== '1') { del.dataset.sure = '1'; del.textContent = 'בטוח? לחיצה נוספת מוחקת'; return; }   // נמחקת מיד, יחד עם סימוני השליחה שלה
     tplEd = null; $('#tplDlg').close();
-    try { await saveTemplates(e.scope, tplRowsOf(e).filter((r) => r.id !== e.id)); render(); mf.paintTplInh(); toast('התבנית נמחקה'); }
+    if (e.draft) { const rows = e.draft.tpl.rows, i = rows.indexOf(e.row); if (i >= 0) rows.splice(i, 1); e.draft.tpl.render(); return; }
+    if (e.p) await e.p;
+    if (!e.id) return;
+    try { await saveTemplates(e.scope, tplRowsOf(e).filter((r) => r.id !== e.id)); tplRefresh(); toast('התבנית נמחקה'); }
     catch (err) { fail(err); }
   });
-  $('#tplDlg').addEventListener('close', () => { const e = tplEd; tplEd = null; tplPopSave(e); });
+  $('#tplDlg').addEventListener('close', () => { const e = tplEd; tplEd = null; tplPopSave(e, true); });
   $('#waMenu').addEventListener('click', (e) => {
     const we = e.target.closest('[data-wedit]');
     if (we) { closeWa(); openTplPop(we.dataset.wedit); return; }
@@ -4713,7 +4665,7 @@
     const r = tyF.read(); if (r.err) { toast(r.err); if (r.el) r.el.focus(); return; }
     const body = r.body;
     try { body.image_url = (await tyF.imageUrl()).url; } catch (err) { toast(err.message || 'העלאת התמונה נכשלה'); return; }
-    if (await saveType(id, body, '', true)) { try { await tyF.tpl.sync({ type_id: id }); } catch (err) { fail(err); } }
+    await saveType(id, body, '', true);
   };
   const fillTypeForm = (t) => tyF.fill(t, null);
   /* כפתור "מחיקת סוג מפגש" בתחתית הטופס: מוצג רק כשיש יותר מסוג אחד, ומעומעם כשלמפגשי הסוג משויכים משתתפים */
@@ -4749,9 +4701,7 @@
   }
   $('#tySave').addEventListener('click', async () => {
     const t = tyCur(); if (!t || tyId) return;
-    if (tyF.tpl.cur != null) { await tyF.tpl.saveBack(null); return; }   // סוג חדש, במסך עריכת תבנית: חוזרים לטופס (התבניות נשמרות יחד איתו)
     const r = tyF.read(); if (r.err) { toast(r.err); if (r.el) r.el.focus(); return; }
-    const tr = tyF.tpl.read(); if (tr.err) { toast(tr.err); if (tr.open) tr.open(); return; }   // תבניות הודעה: שם ונוסח לכל תבנית
     const body = r.body;
     const btn = $('#tySave'); btn.disabled = true;
     try { body.image_url = (await tyF.imageUrl()).url; }
@@ -4762,7 +4712,7 @@
     try {
       const [n] = await api(T.mt, { method: 'POST', body, prefer: 'return=representation' });
       if (n && !typeById(n.id)) state.mtypes.push(n);
-      await saveTemplates({ type_id: n.id }, tr.rows);
+      await saveTemplates({ type_id: n.id }, tyF.tpl.rows);
       tyNew = null; tyId = stType = n.id; tyFormFor = null;
       tyF.dirty = false; render(); $('#setDlg').close(); toast('סוג המפגש נוצר');
     } catch (err) { fail(err); }
