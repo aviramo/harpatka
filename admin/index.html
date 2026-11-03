@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104hp" />
+  <link rel="stylesheet" href="admin.css?v=20261104hq" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1401,6 +1401,8 @@
     payKeys(state.ageF).forEach((k) => { const b = AGE_B.find((x) => x[0] === k); if (b) add('גיל ' + b[1], scope.filter((p) => { const a = shownAge(p); return a != null && a >= b[2] && a <= b[3]; }).length, 'ageF', k); });
     payKeys(state.loginF).forEach((k) => add('אזור אישי: ' + ({ yes: 'רשומים', no: 'לא רשומים', blocked: 'חסומים' }[k] || ''), scope.filter((p) => loginOf(p) === k).length, 'loginF', k));
     const wf = waFilter(); if (wf) add(attMode() ? (wf === '1' ? 'הגיע' : 'לא הגיע') : (wf === '1' ? 'נשלח' : 'לא נשלח'), null, 'wa', wf);
+    const SC = { paidF: { 1: 'green', 0: 'red', n: 'neutral', w: 'amber', l: 'sky', r: 'green', u: 'red' }, bal: { 1: 'amber', 0: 'red', n: 'neutral', f: 'neutral', w: 'amber' }, sent: { 1: 'green', 0: 'red' }, wa: { 1: 'green', 0: 'red' } };   // כל תווית סינון ברקע של המצב שלה
+    out.forEach((f) => { if (!f.col && SC[f.field]) f.col = SC[f.field][f.val] || (f.field === 'paidF' ? 'green' : null); });
     return out;
   };
   function paintActive() {
