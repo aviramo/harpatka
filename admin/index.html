@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104hd" />
+  <link rel="stylesheet" href="admin.css?v=20261104he" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -26,7 +26,11 @@
   <div class="wrap">
     <header class="top">
       <div class="title-row">
-        
+        <label class="search hsearch" title="חיפוש או הוספת משתתף">
+          <svg data-i="search" class="i16"></svg>
+          <input id="q" type="search" placeholder="חיפוש" autocomplete="off" aria-label="חיפוש או הוספת משתתף" />
+          <button type="button" class="sclear" id="qClear" aria-label="ניקוי החיפוש" tabindex="-1">×</button>
+        </label>
         <div class="msel">
           <h1><button type="button" id="mSel" aria-haspopup="menu" aria-expanded="false"><span class="mldg" aria-hidden="true">טוען<b>.</b><b>.</b><b>.</b></span><span id="mSelTxt">הכל</span><span id="mSelN" class="mseln"></span><svg data-i="chev"></svg></button></h1>
           
@@ -35,6 +39,7 @@
         <div class="hgrp">
         <button type="button" class="hicon nextm" id="clearFBtn" aria-label="איפוס כל הסינונים" title="איפוס כל הסינונים" hidden><svg data-i="filterx"></svg></button>   <!-- מוצג רק כשיש סינון פעיל; המיון לא מתאפס -->
         <button type="button" class="hicon nextm" id="nextMBtn" hidden><svg data-i="calnext"></svg></button>   <!-- קיצור דרך למפגש הקרוב, מימין לכפתור התפריט -->
+        <button type="button" class="hicon" id="sortBtnH" aria-haspopup="menu" aria-expanded="false" aria-label="מיון הרשימה" title="מיון הרשימה"><svg data-i="sort"></svg></button>   <!-- מימין לכפתור התפריט -->
         <div class="hicons">
           <button type="button" class="hicon" id="menuBtn" aria-label="תפריט" title="תפריט" aria-haspopup="menu" aria-expanded="false"><svg data-i="grid"></svg><span class="bdbadge" id="menuBadge" hidden></span></button>
           <div class="hmenu" id="hMenu" role="menu" hidden>
@@ -62,15 +67,7 @@
     <div id="status"></div>
     <div class="vbar" id="listTags" role="group" aria-label="חיפוש, סינון ומיון">   <!-- שורה אחת: מונה הרשומות (מימין, בעמודת הגיל), תיבת החיפוש, הסינון, המיון, זכר / נקבה (צמודים לאייקוני הסינון של העמודות), ואייקוני העמודות עצמם (נקבעים ב-JS מעל העמודות שלהם) -->
       <div class="listcount" id="listCount" aria-live="polite" title="מספר הרשומות המוצגות"></div>
-      <div class="lmid" id="listMid">   <!-- חיפוש, סינון, מיון, זכר, נקבה: ברווחים שווים ביניהם, מהמונה (מימין) עד אייקוני העמודות (משמאל) -->
-        <label class="search hsearch" title="חיפוש או הוספת משתתף">
-          <svg data-i="search" class="i16"></svg>
-          <input id="q" type="search" placeholder="חיפוש" autocomplete="off" aria-label="חיפוש או הוספת משתתף" />
-          <button type="button" class="sclear" id="qClear" aria-label="ניקוי החיפוש" tabindex="-1">×</button>
-        </label>
-        <div class="lclu" id="listClu"></div>
-      </div>
-      <div class="lbend" id="listWa"></div><div class="lbend" id="listPay"></div><div class="lbend" id="listSent"></div><div class="lbend" id="listBal"></div>
+      <div class="lbend" id="listWa"></div><div class="lbend" id="listPay"></div><div class="lbend" id="listSent"></div><div class="lbend" id="listBal"></div><div class="lbend" id="listMore"></div>
     </div>
     <ul class="list" id="list"></ul>
     <div class="addbox" id="addBox"></div>
@@ -1401,9 +1398,9 @@
     const paidN = (v) => base.filter((p) => genOk(p) && sentOk(p) && matchPay(p, epk) && payF(p, v)).length;
     { const nd = String(Math.max(2, String(state.participants.length).length)); $('#listTags').style.setProperty('--nd', nd); }
     { const lc = $('#listCount'); lc.textContent = state.listCnt == null ? '' : state.listCnt; }
-    const filtHtml = '<button type="button" class="hfilt all" id="filtBtn" aria-haspopup="menu" aria-expanded="' + !$('#viewMenu').hidden + '" aria-label="סינון ותצוגה' + (panelOn() ? ' (יש סינון פעיל)' : '') + '" title="סינון ותצוגה">' + icon('filter') + UI.fdot(panelOn() && 'ink') + '</button>';
-    const sortHtml = '<button type="button" class="hfilt all" id="sortBtnH" aria-haspopup="menu" aria-expanded="' + !$('#sortMenu').hidden + '" aria-label="מיון הרשימה" title="מיון: ' + (SORTS.find((x) => x[0] === state.sort) || SORTS[0])[1] + (state.sortDir === 'asc' ? ' (הפוך)' : '') + '">' + icon('sort') + UI.fdot((state.sort !== 'new' || state.sortDir === 'asc') && 'ink') + '</button>';
-    $('#listClu').innerHTML = filtHtml + sortHtml + gHtml;   // מימין לשמאל: סינון, מיון, זכר, נקבה (צמודים לאייקוני הסינון של העמודות)
+    const filtHtml = '<button type="button" class="hfilt all" id="filtBtn" aria-haspopup="menu" aria-expanded="' + !$('#viewMenu').hidden + '" aria-label="סינון ותצוגה' + (panelOn() ? ' (יש סינון פעיל)' : '') + '" title="סינון ותצוגה">' + icon('dots') + UI.fdot(panelOn() && 'ink') + '</button>';
+    { const sb = $('#sortBtnH'), sd = state.sort !== 'new' || state.sortDir === 'asc'; sb.innerHTML = icon('sort') + UI.fdot(sd && 'ink'); sb.setAttribute('aria-expanded', String(!$('#sortMenu').hidden)); sb.title = 'מיון: ' + (SORTS.find((x) => x[0] === state.sort) || SORTS[0])[1] + (state.sortDir === 'asc' ? ' (הפוך)' : ''); }
+    $('#listMore').innerHTML = filtHtml;   // שלוש נקודות מימין לסינון ה-₪; המגדר בתוך התפריט
     ['#listWa', '#listPay', '#listSent', '#listBal'].forEach((q) => { $(q).innerHTML = ''; });   // אייקוני הסינון של העמודות (תשלום, שליחה, הגעה / יתרה, ), מיושרים מעל העמודות שלהן
     {   /* ספירה לכל אפשרות בתפריטי הסינון של העמודות: כמה משתתפים יוצגו אם בוחרים אותה (שאר הסינונים והחיפוש נשמרים) */
       const mid = state.filter, lk = (p) => linkOf(p.id, mid);
@@ -1473,7 +1470,7 @@
   }
   const closeSort = () => { $('#sortMenu').hidden = true; const b = $('#sortBtnH'); if (b) b.setAttribute('aria-expanded', 'false'); };   // התפריט הצף (מועבר ל-body) נפתח מכפתור המיון בכותרת
   document.body.appendChild($('#sortMenu'));
-  $('#listTags').addEventListener('click', (e) => { const b = e.target.closest('#sortBtnH'); if (!b) return; e.stopPropagation(); const m = $('#sortMenu'); if (!m.hidden) { closeSort(); return; } m.hidden = false; b.setAttribute('aria-expanded', 'true'); const r = b.getBoundingClientRect(); m.style.left = menuX(m, b) + 'px'; m.style.top = (r.bottom + 8) + 'px'; });   // תפריט המיון מיושר לקצה הימני של התגית שלו
+  $('#sortBtnH').addEventListener('click', (e) => { const b = e.currentTarget; e.stopPropagation(); const m = $('#sortMenu'); if (!m.hidden) { closeSort(); return; } m.hidden = false; b.setAttribute('aria-expanded', 'true'); const r = b.getBoundingClientRect(); m.style.left = menuX(m, b) + 'px'; m.style.top = (r.bottom + 8) + 'px'; });   // תפריט המיון מיושר לקצה הימני של התגית שלו
   $('#sortMenu').addEventListener('click', (e) => { const b = e.target.closest('[data-sort]'); if (!b) return; if (b.dataset.sort === state.sort) state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc'; else { state.sort = b.dataset.sort; state.sortDir = 'desc'; closeSort(); } render(); saveViewPrefs(); });   // לחיצה נוספת על המיון שנבחר: סדר הפוך והתפריט נשאר פתוח (לראות את הכיוון משתנה); בחירת מיון אחר סוגרת אותו
   document.addEventListener('click', (e) => { if (e.target.isConnected && !e.target.closest('#sortMenu, #sortBtnH')) closeSort(); });   // (isConnected: לחיצה על אפשרות שהתפריט צייר מחדש כבר לא בדף, ואינה לחיצה בחוץ)
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSort(); });
@@ -4130,12 +4127,13 @@
      לכל נושא כותרת עם טוגל תצוגה ("בשורה" / "ברשימה") ומתחתיה האפשרויות כתגיות עם הכמות; לחיצה נוספת על תגית נבחרת מבטלת אותה */
   const fsec = (title, body, extra) => '<div class="fsec"><div class="fsh"><b>' + title + '</b>' + (extra || '') + '</div>' + (body ? '<div class="mgc">' + body + '</div>' : '') + '</div>';
   const fedit = (what, label) => '<button type="button" class="fedit" data-fedit="' + what + '" aria-label="' + label + '" title="' + label + '">' + icon('edit') + '</button>';   // סמל עריכה בכותרת של קבוצה
-  const FK = { upd: 'updF', tag: 'pay', src: 'srcF', login: 'loginF', age: 'ageF' };   // סוג הסינון בפאנל ← השדה ב-state
+  const FK = { gen: 'gender', upd: 'updF', tag: 'pay', src: 'srcF', login: 'loginF', age: 'ageF' };   // סוג הסינון בפאנל ← השדה ב-state
   function moreSecs() {
     const scope = state.participants.filter((p) => (state.filter ? linkOf(p.id, state.filter) : p.active !== false) && mtypeOk(p));
     const cnt = (f) => scope.filter(f).length;
     const chip = (kind, val, label, n, col) => { const on = state[FK[kind]] === val, pc = col && PALETTE[col]; return '<button type="button" class="mc' + (n || on ? '' : ' zero') + '"' + (pc ? ' data-sc="1" style="--sbg:' + pc[0] + ';--sfg:' + pc[1] + '"' : '') + ' data-mk="' + kind + '" data-mv="' + esc(val) + '" aria-pressed="' + on + '">' + (kind === 'age' ? '<bdi dir="ltr">' + esc(label) + '</bdi>' : esc(label)) + ' <small>' + n + '</small>' + UI.fdot(on && (pc ? 'sc' : 'ink')) + '</button>'; };
-    return fsec('עדכון אחרון', UPD_B.map((b) => chip('upd', b[0], b[1], cnt((p) => updWithin(p.id, b[2])))).join('')) +
+    return fsec('מגדר', ['male', 'female'].map((g) => chip('gen', g, g === 'male' ? 'זכר' : 'נקבה', cnt((p) => p.gender === g))).join('')) +
+      fsec('עדכון אחרון', UPD_B.map((b) => chip('upd', b[0], b[1], cnt((p) => updWithin(p.id, b[2])))).join('')) +
       fsec('תגיות', statusList(state.filter ? undefined : state.mtype || null).map((s) => chip('tag', s.key, s.label, cnt((p) => stMatch(p, s.key)), s.color)).join(''), fedit('tag', 'עריכת תגיות')) +
       fsec('דרך הגעה', state.promoters.map((x) => chip('src', x.id, x.name, cnt((p) => (channelAt(p, state.filter) || {}).id === x.id), x.color || 'red')).join('') + chip('src', '__none', 'ללא דרך הגעה', cnt((p) => !channelAt(p, state.filter))), fedit('src', 'עריכת דרכי הגעה')) +
       fsec('גיל', AGE_B.map((b) => chip('age', b[0], b[1], cnt((p) => { const a = shownAge(p); return a != null && a >= b[2] && a <= b[3]; }))).join('')) +
@@ -4143,7 +4141,7 @@
   }
   const curMeeting = () => state.meetings.find((x) => x.id === state.filter) || null;
   /* יש סינון פעיל שלא רואים בשורת הסינון (כל מה שבפאנל חוץ ממגדר שמוצג בשורה): נקודה בתגית הסינון */
-  const panelOn = () => !!(state.pay || state.updF || state.srcF || state.ageF || state.loginF || (state.gender && !state.showGender));   // סינוני העמודות (תשלום, שליחה, יתרה) נראים באייקונים שמעל העמודות ולא נספרים כאן
+  const panelOn = () => !!(state.pay || state.updF || state.srcF || state.ageF || state.loginF || state.gender);   // סינוני העמודות (תשלום, שליחה, יתרה) נראים באייקונים שמעל העמודות ולא נספרים כאן
   function renderViewMenu() {
     const m = curMeeting();
     /* בלי שורת מונה בראש התפריט (31.10.26): התפריט נפתח מתחת לשורת הסינון, והמונה שבה נשאר גלוי */
@@ -4177,16 +4175,11 @@
     closeF(); render(); syncUrl();
   });
   /* אייקוני הסינון מיושרים מעל העמודות שלהם ברשימה (₪, שליחה, יתרה) */
-  /* החיפוש, הסינון, המיון וזכר / נקבה זורמים בשורה אחת מהמונה שמימין, וצמודים מימין לאייקוני הסינון של העמודות: הריפוד השמאלי של השורה = הקצה הימני של הימני באייקונים (וואטסאפ, תשלום, יתרה, , הגעה) + 8px (הרווח הסטנדרטי) */
+  /* שלוש הנקודות (הסינון) מימין לימני באייקוני העמודות, ברווח של 8 פיקסל */
   function placeGen(br) {
-    const bar = $('#listTags'); let mx = -1;
-    bar.querySelectorAll('.lbend > *').forEach((e) => { const r = e.getBoundingClientRect(); if (r.width) mx = Math.max(mx, r.right - br.left); });
-    if (mx < 0) { bar.style.paddingLeft = ''; return; }   // אין אייקוני עמודות: הסמלים מתפרשים על כל הרוחב
-    /* רווחים שווים בין כל הסמלים ברצף אחד: חיפוש, סינון, מיון, זכר, נקבה, ואייקוני העמודות. R = הקצה הימני של סמל החיפוש (הקצה השמאלי של המונה), w = סכום רוחבי חמשת הסמלים; g = הרווח; הצביר מתחיל g אחרי הימני באייקוני העמודות */
-    const cnt = $('#listCount').getBoundingClientRect(), tagW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tag')) || 28;
-    const w = tagW + [...document.querySelectorAll('#listClu > *')].reduce((a, e) => a + e.getBoundingClientRect().width, 0), n = 1 + document.querySelectorAll('#listClu > *').length;
-    const g = Math.max(4, ((cnt.left - br.left) - mx - w) / n);
-    bar.style.paddingLeft = Math.round(mx + g) + 'px';
+    const bar = $('#listTags'), mo = $('#listMore'); let mx = -1;
+    bar.querySelectorAll('.lbend:not(#listMore) > *').forEach((e) => { const r = e.getBoundingClientRect(); if (r.width) mx = Math.max(mx, r.right - br.left); });
+    mo.style.left = mx < 0 ? '' : Math.round(mx + 8) + 'px';
   }
   function alignFilters() {
     const bar = $('#listTags'); if (!bar) return; const br = bar.getBoundingClientRect();
