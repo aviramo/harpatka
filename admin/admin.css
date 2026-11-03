@@ -188,9 +188,6 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 .finsum, .walsum, .prsum, .stkpis { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
 .walsum .metric:not(.pos):not(.neg):not(.yel) { background: var(--surface); border-color: transparent; }   /* יתרה ותשלומים: סכום אפס ברקע אפור חלש, בלי מסגרת */
 /* סיכום הכספים והיתרה: בלי אפור, כל כרטיס ברקע בהיר בצבע שלו. כרטיס שמסנן מסומן במסגרת */
-.stbottom, .topic .tnums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.stbottom { margin-bottom: 24px; }
-.stbottom { margin-bottom: 12px; }
 
 /* 3.4 מחוון מצב (ריבוע 28px): הגעה ✓, שליחת פרטים, תשלום ₪, יתרה ₪; ברשימה, בסינון ובתפריט הסינון */
 .row .evc, .row .payic, .row .balic, .hfilt {
@@ -264,7 +261,7 @@ dialog::-webkit-scrollbar, dialog *::-webkit-scrollbar { display: none; width: 0
 
 /* 3.8 פאנל: קבוצת תוכן באפור בהיר, בלי מסגרת. שורות בתוכו עם קו מפריד */
 .gacc, .bdc, .prrow, .ins, .dline { background: transparent; border: 1px solid var(--line); }
-.topic, .stsec, .tb, .cwhy { background: transparent; border: 0; }
+.stsec, .tb, .cwhy { background: transparent; border: 0; }
 
 /* 3.9 שכבה צפה (תפריט): לבן, גבול דק, צל אחד. כל התפריטים בדף */
 .qmenu, .sortmenu, .hmenu, #fMenu, #viewMenu, #moreMenu, #finPerMenu, .colmenu, .attmenu {
@@ -958,11 +955,16 @@ html.dlg-lock { overflow: hidden; overscroll-behavior: none; }
 
 /* 6.7 סטטיסטיקות */
 .stsheet { padding-top: 28px; }
-.topic { display: block; width: 100%; margin-bottom: 24px; padding: 0; text-align: right; }
-.topic .th { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: var(--tag); margin-bottom: 8px; }
-.topic .thr { display: flex; align-items: center; gap: 8px; }
-.topic .th b { font-size: 18px; font-weight: 800; }
-.topic .tmore { color: var(--text-2); font-weight: 600; font-size: 14px; white-space: nowrap; }
+/* סטטיסטיקות בארבעה אטבים, אותו פייג'ר כמו בכרטיס המשתתף. בכל דף הגלילה האנכית שלו */
+#stDlg { overflow: hidden; }
+#stDlg .sheet { display: flex; flex-direction: column; height: 100%; min-height: 0; padding-bottom: 0; }
+#stDlg .sheet-head { flex: 0 0 auto; margin-bottom: 8px; }
+#stBody { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+#stBody > .ptabs { flex: 0 0 auto; }
+#stBody > .ppager { flex: 1 1 auto; min-height: 0; }
+#stPager .cols + .sthint { margin-top: 16px; }
+#stPager .cols + .stkpis { margin-top: 12px; }
+#stPager .ppage { display: block; overflow-y: auto; overscroll-behavior-y: contain; padding-top: 16px; padding-bottom: var(--safe-b); }
 .trend { font-weight: 700; }
 .trend i { font-style: normal; font-size: 11px; margin-inline-end: 4px; }
 .trend.up { background: var(--green-bg); color: var(--green); }
@@ -1141,14 +1143,8 @@ dialog .dclose { display: none; }
   .finsum .metric.wide { grid-column: auto; }
   .fincmds .btn { flex: 0 0 200px; }
   .stkpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  #stBody .ppanel[data-sp="main"]:not([hidden]) { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: stretch; }   /* שלושת הנושאים זה לצד זה */
-  #stBody .ppanel[data-sp="main"] > :not(.topic) { grid-column: 1 / -1; }
-  #stBody .ppanel[data-sp="main"] .stbottom { margin-bottom: 0; }
-  #stBody .topic { margin-bottom: 0; display: flex; flex-direction: column; }
-  #stBody .topic .tnums { grid-template-columns: minmax(0, 1fr); }
-  #stBody .topic .tmore { margin-top: auto; padding-top: 8px; }
-  #stBody .ppanel[data-sp]:not([data-sp="main"]):not([hidden]) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; align-items: start; }   /* פירוט: שני טורים */
-  #stBody .ppanel[data-sp]:not([data-sp="main"]) > :not(.stp), #stBody .stp:has(.tr > span:nth-child(5)), #stBody .stp:has(.stkpis) { grid-column: 1 / -1; }   /* כרטיסי סיכום, הסברים וטבלאות רחבות לכל הרוחב */
+  #stPager .ppage:not(.empty1) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; align-content: start; align-items: start; }   /* פירוט: שני טורים */
+  #stPager .ppage > :not(.stp), #stPager .stp:has(.tr > span:nth-child(5)), #stPager .stp:has(.stkpis) { grid-column: 1 / -1; }   /* כרטיסי סיכום, הסברים וטבלאות רחבות לכל הרוחב */
 }
 
 /* ---------- דסקטופ רחב: הקו שבין הרשימה לכרטיס ניתן לגרירה (31.10.26) ---------- */
