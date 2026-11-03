@@ -198,9 +198,11 @@
       /* אותו רכיב כמו בפופאפים ובדף הבית, עם המצב והתשלום בתוך המסגרת. מפגש שעבר: בלי תמונה ובלי כמות משתתפים */
       return '<div class="mtg" data-mid="' + m.id + '">' + CFG.meetingBox(m.future ? m : Object.assign({}, m, { max: 0 }), '<div class="mts">' + att + pay + '</div>' + (foot ? '<div class="mtfoot">' + foot + '</div>' : '')) + '</div>';
     };
-    // רק המפגשים שנרשמתי אליהם (מהחדש לישן); הרשמה למפגש חדש נעשית מדף הבית
-    const mine = ordered.filter((m) => m.registered);
-    const meetHtml = mine.length ? mine.map(rowHtml).join('') : '<div class="card"><p class="muted" style="margin:0">עוד לא נרשמתם לאף מפגש</p></div>';
+    /* מפגש עתידי שעוד לא נרשמו אליו: אותו רכיב, עם כפתור הרשמה ומחיר המפגש */
+    const regRow = (m) => { const price = Number(m.price) || 0; return '<div class="mtg" data-mid="' + m.id + '">' + CFG.meetingBox(m, '<div class="mtfoot"><button type="button" class="btn" data-reg="' + m.id + '">הרשמה' + (price ? ' · ' + ils(price) : '') + '</button><div class="msg" data-rm="' + m.id + '"></div></div>') + '</div>'; };
+    /* הסדר: המפגשים הקרובים שנרשמו אליהם (שם יש תשלום לטפל בו), אחריהם מפגשים שאפשר להירשם אליהם מהקרוב לרחוק, ובסוף מפגשים שעברו */
+    const rows = upcoming.filter((m) => m.registered).map(rowHtml).concat(upcoming.filter((m) => !m.registered).reverse().map(regRow), ordered.filter((m) => m.registered && !m.future).map(rowHtml));
+    const meetHtml = rows.length ? rows.join('') : '<div class="card"><p class="muted" style="margin:0">עוד לא נקבע מפגש קרוב</p></div>';
 
     const gv = p.gender || '';
     const noName = !String(p.first_name || '').trim() || !String(p.last_name || '').trim(), gnm = noName ? googleName() : {};   // עוד בלי פרטים (נוצר מטלפון בלבד): השם מחשבון הגוגל כהצעה
@@ -218,7 +220,8 @@
     app.querySelectorAll('[data-reg]').forEach((rb) => { rb.onclick = async () => {
       const id = rb.dataset.reg, msg = app.querySelector('[data-rm="' + id + '"]'); rb.disabled = true;
       const ob = meOpt(id, { registered: true }), rel = HRT.busy(rb);
-      try { const r = await rpc('harpatka_me_register', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {})); rel(); if (r === 'registered' || r === 'exists') { ob.done(); keepOpen = id; load(); } else { ob.fail(); toast(msg, 'אי אפשר להירשם למפגש הזה', true); rb.disabled = false; } }
+      let fromAd = false; try { fromAd = !imp && sessionStorage.getItem('harpatka_s') === 'p'; } catch (e) {}   // הגיעו ממודעה: נרשם על ההרשמה למפגש הזה, כמו בדף הבית
+      try { const r = await rpc(fromAd ? 'harpatka_me_register_src' : 'harpatka_me_register', Object.assign({ p_meeting: id }, fromAd ? { p_src: 'p' } : {}, imp ? { p_as: asId } : {})); rel(); if (r === 'registered' || r === 'exists') { ob.done(); keepOpen = id; load(); } else { ob.fail(); toast(msg, 'אי אפשר להירשם למפגש הזה', true); rb.disabled = false; } }
       catch (e) { rel(); ob.fail(); toast(msg, 'משהו השתבש, אפשר לנסות שוב', true); rb.disabled = false; }
     }; });
     app.querySelectorAll('[data-unreg]').forEach((ub) => { ub.onclick = async () => {   // שני שלבים: לחיצה ראשונה מבקשת אישור
