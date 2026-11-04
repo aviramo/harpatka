@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104kc" />
+  <link rel="stylesheet" href="admin.css?v=20261104kd" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -3865,11 +3865,11 @@
         '<label class="field"><span>מיקום</span><input placeholder=" " id="' + I('Place') + '" name="place" type="text" maxlength="60" autocomplete="off" /></label></div>' +
       '<div class="field"><span>הוראות הגעה</span><textarea placeholder=" " id="' + I('Dirs') + '" name="directions" rows="1"></textarea></div>' +
       '<div class="dmcur" id="' + I('DCur') + '"><div class="emvars" id="' + I('DTagW') + '" hidden><button type="button" id="' + I('DTag') + '" data-v=""></button></div><a id="' + I('DLink') + '" target="_blank" rel="noopener" hidden>פתיחה</a><button type="button" id="' + I('DDel') + '" hidden>הסרה</button>' +
-      '<button type="button" class="mtpladd dmadd" id="' + I('DAttach') + '">+ מדיה</button></div><input type="file" id="' + I('DFile') + '" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" hidden />' +
+      '<button type="button" class="mtpladd dmadd" id="' + I('DAttach') + '">הוספת מדיה</button></div><input type="file" id="' + I('DFile') + '" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" hidden />' +
       (isType ? '' : '<div class="mtinh2" id="' + I('TplInh') + '" hidden></div>') + '<div class="mtlist" id="' + I('Tpl') + '"></div>' +
-      '<button type="button" class="mtpladd" id="' + I('TplAdd') + '">הוספה</button>' +
-      '<div class="field"><span class="mtl">מחירים' + (isType ? '' : '<button type="button" class="lnk" id="' + I('TierReset') + '" hidden>כמו בסוג המפגש</button>') + '</span>' +
-        (isType ? '' : '<div class="mtinh" id="' + I('TierInh') + '" hidden><span id="' + I('TierInhTxt') + '"></span><button type="button" id="' + I('TierOwn') + '">שינוי למפגש הזה</button></div>') +
+      '<button type="button" class="mtpladd" id="' + I('TplAdd') + '">הוספת הודעה</button>' +
+      '<div class="field"><span class="mtl">מחירים' + (isType ? '' : '<button type="button" class="lnk" id="' + I('TierOwn') + '" hidden>שינוי למפגש הזה</button><button type="button" class="lnk" id="' + I('TierReset') + '" hidden>כמו בסוג המפגש</button>') + '</span>' +
+        (isType ? '' : '<div class="mtinh" id="' + I('TierInh') + '" hidden><span id="' + I('TierInhTxt') + '"></span></div>') +
         '<div class="mfted" id="' + I('TierEd') + '"><div class="mt2" id="' + I('TierList') + '"></div><div class="mt2add"><button type="button" id="' + I('TierAdd') + '">הוספת מדרגה</button></div></div></div>';
     { const tf = !isType && $('#' + p + 'TypeF'), slot = q('TypeSlot'); if (slot) { if (tf) slot.replaceWith(tf); else slot.remove(); } }   // סוג המפגש באותה שורה עם שם המפגש
     const F = { te: tierEditor('#' + I('TierList'), '#' + I('TierAdd'), () => F.changed()), img: { url: null, blob: null, objUrl: null, inh: false }, tiersInh: false };
@@ -3879,7 +3879,7 @@
     F.q = q;
     tokenField(q('Dirs'), DIR_TOK); keepCaret(q('DCur'));
     /* תמונה או סרטון בהוראות ההגעה: הקובץ עולה לדלי meeting-media והקישור נכנס לסוף ההוראות, אחרי "לפרטים נוספים:". גם בסוג מפגש וגם במפגש; במפגש שיורש את ההוראות מהסוג (השדה ריק) הצירוף מתחיל מההוראות של הסוג ונהיה שלו */
-    F.paintMedia = () => { const cur = dmOf(q('Dirs').value); if (cur) F.dMedia = cur; const u = F.dMedia; q('DTagW').hidden = q('DLink').hidden = q('DDel').hidden = !u; if (!q('DAttach').disabled) q('DAttach').textContent = u ? 'החלפה' : '+ מדיה'; if (u) { q('DLink').href = u; q('DTag').dataset.v = u; q('DTag').textContent = DIR_TOK.label(u); } };
+    F.paintMedia = () => { const cur = dmOf(q('Dirs').value); if (cur) F.dMedia = cur; const u = F.dMedia; q('DTagW').hidden = q('DLink').hidden = q('DDel').hidden = !u; if (!q('DAttach').disabled) q('DAttach').textContent = u ? 'החלפה' : 'הוספת מדיה'; if (u) { q('DLink').href = u; q('DTag').dataset.v = u; q('DTag').textContent = DIR_TOK.label(u); } };
     /* תבניות הודעה: בטופס רק רשימת שמות; לחיצה על שם, או "+ תבנית הודעה", פותחת את פופאפ עריכת ההודעה (openTplPop), אותו פופאפ בכל המקומות.
        במפגש או סוג קיימים הפופאפ שומר ישירות; בחדשים השורות מחכות כאן (F.tpl.rows) ונשמרות כשיוצרים אותם */
     const mfBox = q('MF'), tplBox = q('Tpl');
@@ -3921,7 +3921,7 @@
     F.paintTiers = () => {
       if (isType) return;
       const t = ty(), inh = !!(t && F.tiersInh);
-      q('TierInh').hidden = !inh; q('TierEd').hidden = inh; q('TierReset').hidden = !t;
+      q('TierInh').hidden = !inh; q('TierEd').hidden = inh; q('TierOwn').hidden = !inh; q('TierReset').hidden = inh || !t;   // ליד הכותרת רק קישור אחד
       if (inh) q('TierInhTxt').textContent = tiersText(t);
     };
     /* פלייסהולדרים: הערכים של הסוג (במפגש עם סוג), אחרת דוגמה */
