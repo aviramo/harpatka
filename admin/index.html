@@ -1724,7 +1724,16 @@
     if (nx) {
       const left = daysTo(nx), open = nxL.filter((l) => !l.no_pay && !(allocOf(l) > 0)), rep = open.filter((l) => l.pay_reported_at), un = open.filter((l) => !l.pay_reported_at);
       const prevM = pm.filter((r) => r.m.id !== nx.id && isPast(r.m)).slice(-1)[0];
-      const pace = prevM ? links.filter((l) => l.meeting_id === prevM.m.id && l.created_at && daysTo(prevM.m, ilDay(l.created_at)) >= left).length : null;
+      /* מתי המקום נסגר (שוריין): לא לתשלום = בהרשמה, תשלום בהמשך = ברגע שסומן, ואחרת בהקצאת התשלום האחרונה למפגש */
+      const reservedAt = (l) => {
+        if (!reservedOf(l.participant_id, l.meeting_id)) return null;
+        if (l.no_pay) return l.created_at;
+        if (laterOf(l.participant_id, l.meeting_id)) return l.pay_later_at;
+        const ts = state.payments.filter((x) => x.participant_id === l.participant_id && x.meeting_id === l.meeting_id && x.kind === 'payment' && x.created_at).map((x) => x.created_at).sort();
+        return ts.length ? ts[ts.length - 1] : l.created_at;
+      };
+      const nxRes = nxL.filter((l) => reservedOf(l.participant_id, l.meeting_id)).length;
+      const pace = prevM ? links.filter((l) => { const at = l.meeting_id === prevM.m.id && reservedAt(l); return at && daysTo(prevM.m, ilDay(at)) >= left; }).length : null;
       nextPart = part('המפגש הקרוב · ' + dlab(nx), kpis(
         kpi(nxL.length, 'נרשמו', left > 1 ? 'עוד ' + left + ' ימים' : left === 1 ? 'מחר' : 'היום'),
         kpi(nxR.paid, 'שילמו', Ps(nxR.paid, nxL.length - nxR.ex) + (nxR.ex ? ' · ועוד ' + nxR.ex + ' לא לתשלום' : ''), nxR.paid ? 'good' : ''),
@@ -1732,7 +1741,7 @@
         kpi(rep.length, 'דיווחו וממתינים לאישור', rep.length ? ilsB(owed(rep)) : '', rep.length ? 'warn' : ''),
         kpi(nxR.women, 'נקבה', Ps(nxR.women, nxL.length)),
         kpi(nxR.men, 'זכר', Ps(nxR.men, nxL.length))
-      ) + (prevM ? '<p class="stline">באותו שלב לפני המפגש של ' + dlab(prevM.m) + ' נרשמו <b>' + pace + '</b>, ועכשיו <b>' + nxL.length + '</b> ' + trend(nxL.length, pace) + '</p>' : ''));
+      ) + (prevM ? '<p class="stline">באותו שלב לפני המפגש של ' + dlab(prevM.m) + ' שוריינו <b>' + pace + '</b>, ועכשיו <b>' + nxRes + '</b> ' + trend(nxRes, pace) + '</p>' : ''));
     }
     const everLinked = allP.filter((p) => linksOf(p.id).length);
     const funnel = part('איפה נושרים', '<p class="sthint">מכל מי שהשאיר פרטים ועד מי שחזר למפגש נוסף</p>' + bars(
