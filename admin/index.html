@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104kd" />
+  <link rel="stylesheet" href="admin.css?v=20261104ke" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1237,7 +1237,9 @@
       const n = pool.filter((p) => paidOk(p) && genOk(p) && stMatch(p, t.key)).length, pc = PALETTE[t.color] || PALETTE.neutral;
       h += '<button type="button" class="stc tagc' + (n ? '' : ' zero') + '" data-ct="' + esc(t.key) + '" data-sc="1" style="--sbg:' + pc[0] + ';--sfg:' + pc[1] + '" aria-pressed="' + pk.includes(t.key) + '">' + fxw(esc(t.label), n) + '</button>';
     });
-    h += '<button type="button" class="stc tagc editc" data-edit-tags aria-label="עריכת תגיות" title="עריכת תגיות">' + icon('edit') + '</button>';   // כניסה לעריכת התגיות (קודם בכותרת הקבוצה בתפריט הסינון)
+    const edit = '<button type="button" class="stc tagc editc" data-edit-tags aria-label="עריכת תגיות" title="עריכת תגיות">' + icon('edit') + '</button>';
+    const lastI = h.lastIndexOf('<button');   // אילוץ: העיפרון לא נשאר לבד בשורה, הצ'יף האחרון והעיפרון תמיד יחד
+    h = lastI < 0 ? edit : h.slice(0, lastI) + '<span class="stlast">' + h.slice(lastI) + edit + '</span>';   // כניסה לעריכת התגיות (קודם בכותרת הקבוצה בתפריט הסינון)
     el.innerHTML = h;
   }
   $('#chipRow').addEventListener('click', (e) => {
