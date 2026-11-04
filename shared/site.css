@@ -493,7 +493,7 @@ html:not(.vid-pending):where(.pg-home) .hv:not(.closing){ display:none; }
 :where(.pg-home, .pg-bio) .sx-end{ font-family:"Rubik",sans-serif; font-weight:600; font-size:clamp(1.15rem,4.6vw,1.4rem); line-height:1.4; color:var(--ink); margin:0 0 .5rem; }
 :where(.pg-home, .pg-bio) .sx-cta{ font-family:"Rubik",sans-serif; font-weight:700; font-size:clamp(1.2rem,4.8vw,1.45rem); color:var(--terra); margin:0; }
 /* ===== בלי אנימציות בדף (30.10.26): הכול במקום מההתחלה, גלילה רגילה. נשארו רק פעולות (פתיחת פופאפ, צמצום הבאנר בגלילה) ===== */
-:where(.pg-home) .reveal, :where(.pg-home) .reveal.in{ opacity:1 !important; transform:none !important; transition:none !important; }
+:where(.pg-home) .reveal:where(:not(html.hero-motion #invite *)), :where(.pg-home) .reveal.in:where(:not(html.hero-motion #invite *)){ opacity:1 !important; transform:none !important; transition:none !important; }
 :where(.pg-home) [data-parallax]{ transform:none !important; }
 :where(.pg-home) #invite *, :where(.pg-home) #invite *::before, :where(.pg-home) #invite *::after, :where(.pg-home) main *, :where(.pg-home) main *::before, :where(.pg-home) main *::after, :where(.pg-home) footer *, :where(.pg-home) #topbar *{ animation:none !important; }
 :where(.pg-home) .mt-more, :where(.pg-home) .mt-more > div, :where(.pg-home) .mt-name, :where(.pg-home) .mt-when, :where(.pg-home) .mt-city, :where(.pg-home) .mt-card::before, :where(.pg-home) #topbar .tb-main{ transition:none !important; }
@@ -1108,4 +1108,108 @@ html.gl-on #meAreaCard{ display:block; }
 @media (min-width: 1024px) {
   :where(.pg-home) .h8-photo { margin: 0; width: min(100%, 70vh, 640px); justify-self: center; }
   :where(.pg-home) .h8-frame { width: 100%; height: auto; aspect-ratio: 1 / 1; }
+}
+
+/* ===== אפקט תנועה רך בפתיח =====
+   לפי ui-ux-pro-max: הפתיח נכנס בעדינות ברצף אחד (טקסט, שביל, סרטים, אור), ועוד שתי תנועות רקע איטיות מאוד (נשימת התמונה, זזה קלה של הכתמים). רק transform ו-opacity (ושרטוט קו), ו-prefers-reduced-motion מכובד.
+   פעיל רק כש-html מקבל class "hero-motion" (קבוע ב-index.html וב-v10/index.html; הכותרת והסרטים מופעלים גם ב-shared/hero-motion.js). להסרת האפקט כולו: להסיר את ה-class. ה-!important וה-#invite נחוצים כי בדף יש כלל (עם #invite) ששובת כל אנימציה בפתיח. */
+@media (prefers-reduced-motion: no-preference) {
+  /* 1. הטקסט נכנס בעדינות, בלוק אחרי בלוק */
+  html.hero-motion #invite .h8-copy > * { animation: h8up .9s cubic-bezier(.22, .8, .3, 1) both !important; }
+  html.hero-motion #invite .h8-copy > *:nth-child(1) { animation-delay: .05s !important; }
+  html.hero-motion #invite .h8-copy > *:nth-child(2) { animation-delay: .25s !important; }
+  html.hero-motion #invite .h8-copy > *:nth-child(3) { animation-delay: .45s !important; }
+  html.hero-motion #invite .h8-copy > *:nth-child(4) { animation-delay: .65s !important; }
+  /* 2. הקו הירוק שמתחת ל"יוצאים להרפתקה" נמשך, והניצוצות נשרטטים */
+  html.hero-motion #invite .h8-hand svg path { stroke-dasharray: 150; animation: h8draw .9s ease-out .5s both !important; }
+  html.hero-motion #invite .h8-spark path { stroke-dasharray: 22; animation: h8sdraw .5s ease-out both !important; }
+  html.hero-motion #invite .h8-spark.s1 path:nth-child(1) { animation-delay: 0.55s !important; }
+  html.hero-motion #invite .h8-spark.s1 path:nth-child(2) { animation-delay: 0.65s !important; }
+  html.hero-motion #invite .h8-spark.s1 path:nth-child(3) { animation-delay: 0.75s !important; }
+  html.hero-motion #invite .h8-spark.s2 path:nth-child(1) { animation-delay: 0.85s !important; }
+  html.hero-motion #invite .h8-spark.s2 path:nth-child(2) { animation-delay: 0.95s !important; }
+  html.hero-motion #invite .h8-spark.s2 path:nth-child(3) { animation-delay: 1.05s !important; }
+  html.hero-motion #invite .h8-spark.s3 path:nth-child(1) { animation-delay: 1.15s !important; }
+  html.hero-motion #invite .h8-spark.s3 path:nth-child(2) { animation-delay: 1.25s !important; }
+  html.hero-motion #invite .h8-spark.s3 path:nth-child(3) { animation-delay: 1.35s !important; }
+  /* 3. שביל התנועה על התמונה: הנקודות נוצרות מימין לשמאל, התחנות צפות פנימה, המילים נכנסות, והסרטים נכנסים בדהייה */
+  html.hero-motion #invite .h8t-dots circle { transform-box: fill-box; transform-origin: center; animation: h8dot .5s ease-out both !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(1) { animation-delay: 1.00s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(2) { animation-delay: 1.03s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(3) { animation-delay: 1.06s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(4) { animation-delay: 1.09s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(5) { animation-delay: 1.12s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(6) { animation-delay: 1.15s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(7) { animation-delay: 1.18s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(8) { animation-delay: 1.21s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(9) { animation-delay: 1.24s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(10) { animation-delay: 1.27s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(11) { animation-delay: 1.30s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(12) { animation-delay: 1.33s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(13) { animation-delay: 1.36s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(14) { animation-delay: 1.39s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(15) { animation-delay: 1.42s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(16) { animation-delay: 1.45s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(17) { animation-delay: 1.48s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(18) { animation-delay: 1.51s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(19) { animation-delay: 1.54s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(20) { animation-delay: 1.57s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(21) { animation-delay: 1.60s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(22) { animation-delay: 1.63s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(23) { animation-delay: 1.66s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(24) { animation-delay: 1.69s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(25) { animation-delay: 1.72s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(26) { animation-delay: 1.75s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(27) { animation-delay: 1.78s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(28) { animation-delay: 1.81s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(29) { animation-delay: 1.84s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(30) { animation-delay: 1.87s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(31) { animation-delay: 1.90s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(32) { animation-delay: 1.93s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(33) { animation-delay: 1.96s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(34) { animation-delay: 1.99s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(35) { animation-delay: 2.02s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(36) { animation-delay: 2.05s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(37) { animation-delay: 2.08s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(38) { animation-delay: 2.11s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(39) { animation-delay: 2.14s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(40) { animation-delay: 2.17s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(41) { animation-delay: 2.20s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(42) { animation-delay: 2.23s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(43) { animation-delay: 2.26s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(44) { animation-delay: 2.29s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(45) { animation-delay: 2.32s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(46) { animation-delay: 2.35s !important; }
+  html.hero-motion #invite .h8t-dots circle:nth-child(47) { animation-delay: 2.38s !important; }
+  html.hero-motion #invite .h8t-n { transform-box: fill-box; transform-origin: center; animation: h8pop .9s cubic-bezier(.2, .9, .3, 1.2) both !important; }
+  html.hero-motion #invite .h8t-n:nth-of-type(2) { animation-delay: 1.20s !important; }
+  html.hero-motion #invite .h8t-n:nth-of-type(3) { animation-delay: 1.50s !important; }
+  html.hero-motion #invite .h8t-n:nth-of-type(4) { animation-delay: 1.85s !important; }
+  html.hero-motion #invite .h8t-n:nth-of-type(5) { animation-delay: 2.40s !important; }
+  html.hero-motion #invite .h8t-w text { animation: h8wd .9s ease-out both !important; }
+  html.hero-motion #invite .h8t-w text:nth-child(1) { animation-delay: 1.40s !important; }
+  html.hero-motion #invite .h8t-w text:nth-child(2) { animation-delay: 1.70s !important; }
+  html.hero-motion #invite .h8t-w text:nth-child(3) { animation-delay: 2.05s !important; }
+  html.hero-motion #invite .h8t-w text:nth-child(4) { animation-delay: 2.60s !important; }
+  /* 4. תנועות רקע איטיות מאוד: התמונה נושמת, והכתמים בפינות זזים מעט */
+  html.hero-motion #invite .h8-media { animation: h8kb 28s ease-in-out infinite alternate !important; transform-origin: 55% 50%; }
+  html.hero-motion #invite .h8-blob-tl, html.hero-motion #invite .h8-blob-tr, html.hero-motion #invite .h8-blob-br { animation: h8blob 18s ease-in-out infinite alternate !important; }
+  html.hero-motion #invite .h8-blob-tr { animation-delay: -6s !important; }
+  html.hero-motion #invite .h8-blob-br { animation-delay: -12s !important; }
+  @keyframes h8up { from { opacity: 0; translate: 0 12px; } to { opacity: 1; translate: 0 0; } }
+  @keyframes h8draw { from { stroke-dashoffset: 150; opacity: 0; } 12% { opacity: 1; } to { stroke-dashoffset: 0; opacity: 1; } }
+  @keyframes h8sdraw { from { stroke-dashoffset: 22; opacity: 0; } 15% { opacity: 1; } to { stroke-dashoffset: 0; opacity: 1; } }
+  @keyframes h8kb { from { scale: 1; translate: 0 0; } to { scale: 1.06; translate: -1.2% -.8%; } }
+  @keyframes h8dot { from { opacity: 0; scale: .2; } to { opacity: 1; scale: 1; } }
+  @keyframes h8pop { from { opacity: 0; scale: .45; } to { opacity: 1; scale: 1; } }
+  @keyframes h8wd { from { opacity: 0; translate: 0 12px; } to { opacity: 1; translate: 0 0; } }
+  @keyframes h8blob { from { translate: 0 0; } to { translate: 12px 9px; } }
+  /* 5. הכותרת: האותיות נכנסות בגל זורם מימין לשמאל (נחתכות לאותיות ב-tools/hero-motion.js), והכותרת כולה לא נכנסת פעם נוספת */
+  html.hero-motion #invite .h8-copy > *:nth-child(2) { animation: none !important; }
+  html.hero-motion #invite .h8-h1 .hw { display: inline-block; white-space: nowrap; }
+  html.hero-motion #invite .h8-h1 .hl { display: inline-block; animation: h8letter .95s cubic-bezier(.2, .85, .25, 1.2) both !important; animation-delay: calc(.2s + var(--i) * .045s) !important; }
+  /* 6. אור חם שוטף את התמונה פעם אחת, מימין לשמאל, אחרי שהשביל נבנה */
+  html.hero-motion #invite .h8-frame::after { content: ""; position: absolute; inset: -12% -45%; z-index: 3; pointer-events: none; mix-blend-mode: soft-light; background: linear-gradient(105deg, transparent 38%, rgba(255, 246, 228, .85) 50%, transparent 62%); translate: 60% 0; animation: h8sweep 3s ease-in-out 3.8s both !important; }
+  @keyframes h8letter { from { opacity: 0; translate: 0 .42em; } 55% { opacity: 1; } to { opacity: 1; translate: 0 0; } }
+  @keyframes h8sweep { from { translate: 60% 0; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } to { translate: -60% 0; opacity: 0; } }
 }
