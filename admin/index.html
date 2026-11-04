@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104js" />
+  <link rel="stylesheet" href="admin.css?v=20261104jt" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -4183,6 +4183,10 @@
       if (pks.length) m.innerHTML += '<div class="fsep" role="separator"></div>' + pks.map((pm) => UI.fopt('m' + esc(pm.key), cur === 'm' + pm.key, 'yes', '₪', esc(pm.name), pmc[pm.key])).join('');
       const am = FC.payAmts || {}, ks = Object.keys(am).map(Number).sort((a, b) => b - a);
       if (ks.length) m.innerHTML += '<div class="fsep" role="separator"></div>' + ks.map((a) => UI.fopt('a' + a, cur === 'a' + a, 'yes', '₪', '₪' + nfm(a), am[a])).join('');
+    }
+    if (kind === 'pay' && (state.paidF === 'r' || state.paidF === 'u')) {   // כשמסומן הצ'יף "משוריינים" / "לא משוריינים": המצבים שהוא כולל מסומנים בנקודה
+      const inc = state.paidF === 'r' ? ['1', 'n', 'l'] : ['0', 'w'], tone = state.paidF === 'r' ? 'green' : 'red';
+      m.querySelectorAll('.fopt').forEach((b) => { if (inc.includes(b.dataset.fv)) b.querySelector('.hfilt').insertAdjacentHTML('beforeend', UI.fdot(tone)); });
     }
     m.dataset.kind = kind; m.hidden = false; place();
   }
