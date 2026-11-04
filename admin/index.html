@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104kb" />
+  <link rel="stylesheet" href="admin.css?v=20261104kc" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -4162,11 +4162,9 @@
   function renderViewMenu() {
     const m = curMeeting();
     /* בלי שורת מונה בראש התפריט (31.10.26): התפריט נפתח מתחת לשורת הסינון, והמונה שבה נשאר גלוי */
-    const cols = moreSecs(), rowsN = Math.max(...cols.map((c) => c.items.length));
-    let h = cols.map((c) => '<div class="fsh"><b>' + c.t + '</b></div>').join('');
-    for (let r = 0; r < rowsN; r++) h += cols.map((c) => c.items[r] || '<span class="fcell"></span>').join('');
-    $('#viewMenu').style.gridTemplateColumns = 'repeat(' + cols.length + ', minmax(0, 1fr))';
-    $('#viewMenu').innerHTML = h;
+    const cols = moreSecs();   // 2x2: שתי קבוצות בשורה, כל אחת עם הכותרת והתוויות שלה זו מתחת לזו
+    $('#viewMenu').style.gridTemplateColumns = '';
+    $('#viewMenu').innerHTML = cols.map((c) => '<div class="fsec"><div class="fsh"><b>' + c.t + '</b></div><div class="mgc">' + c.items.join('') + '</div></div>').join('');
   }
   /* סינון לפי העמודות (תשלום, שליחת פרטי המפגש; בתצוגה הכללית יתרה): אייקון מעל כל עמודה, לחיצה פותחת תפריט עם המצבים, אייקוניהם והכמות; הבחירה מבצעת את הסינון */
   let FC = {};   // ספירות לתפריטי הסינון, מתעדכן ב-renderFacets
