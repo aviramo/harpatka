@@ -992,3 +992,31 @@ html.gl-on #meAreaCard{ display:block; }
 :where(.pg-home) .sx-close .sx-end.hand{ font-family:"Amatic SC","Assistant",cursive; font-weight:700; font-size:clamp(1.9rem,7.6vw,2.4rem); line-height:1.15; color:#C8411B; letter-spacing:.01em; }   /* "כי לפעמים תנועה קטנה..." בכתב יד, כמו "שרוצים להכיר אנשים חדשים" */
 :where(.pg-home) #stuck .h8-pills{ margin-bottom:1.9rem; }   /* רווח בין התגיות לפסקה הראשונה */
 :where(.pg-home) .step-wide img[src*="step3-group"]{ object-position:50% 62%; }   /* שלב 3: הרוקדים בחזית */
+
+/* הכפתור הקבוע בתחתית פותח פופאפ מלמטה: הרשמה למפגש וקבוצת וואטסאפ */
+.cta-sheet { border: 0; padding: 0; margin: auto 0 0; width: 100%; max-width: 560px; background: var(--paper); color: var(--ink); border-radius: var(--r) var(--r) 0 0; box-shadow: 0 -10px 30px rgba(44, 35, 29, .18); }
+
+.cta-sheet::backdrop { background: rgba(44, 35, 29, .45); }
+.cta-sheet[open] { animation: ctaUp .28s cubic-bezier(.2, .8, .2, 1); }
+@keyframes ctaUp { from { transform: translateY(100%); } to { transform: none; } }   /* עולה מלמטה, כמו פופאפ בדף הניהול (בלי שקיפות) */
+@keyframes ctaDown { from { transform: none; } to { transform: translateY(100%); } }
+.cta-sheet.closing { animation: ctaDown .2s cubic-bezier(.4, 0, .8, .6) forwards; }
+.cta-sheet[open]::backdrop { animation: ctaFade .24s ease-out; }
+.cta-sheet.closing::backdrop { opacity: 0; transition: opacity .2s; }
+@keyframes ctaFade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .cta-sheet[open], .cta-sheet.closing, .cta-sheet[open]::backdrop { animation: none; } }
+.cta-sheet .cs-grab { display: grid; place-items: center; height: 28px; }
+.cta-sheet .cs-grab i { width: 40px; height: 4px; background: rgba(44, 35, 29, .25); }
+.cta-sheet .cs-body { display: flex; flex-direction: column; gap: 12px; padding: 4px 20px calc(24px + env(safe-area-inset-bottom)); }
+.cta-sheet .cs-btn { display: block; width: 100%; text-align: center; padding: 16px; font-size: 1.15rem; font-weight: 700; border: 0; cursor: pointer; }
+
+/* דסקטופ: כמו שאר הפופאפים של האתר: במרכז המסך, בלי פס גרירה, נפתח בדהייה והגדלה קלה */
+@keyframes ctaPop { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes ctaPopOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(.97); } }
+@media (min-width: 760px) {
+  .cta-sheet { margin: auto; max-width: 440px; border-radius: var(--r); }
+  .cta-sheet .cs-grab { display: none; }
+  .cta-sheet .cs-body { padding-top: 24px; }
+  .cta-sheet[open] { animation: ctaPop .18s ease-out; }
+  .cta-sheet.closing { animation: ctaPopOut .16s ease-in forwards; }
+}

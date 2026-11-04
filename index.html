@@ -164,7 +164,7 @@
     }
   </script>
 
-  <link rel="stylesheet" href="shared/site.css?v=20261104h">
+  <link rel="stylesheet" href="shared/site.css?v=20261104k">
   <script>
     /* סרטון פתיחה: אם הדפדפן מאפשר, מסתירים את ההזמנה (בלי להזיז את הדף) עד שהסרטון נגמר; רשת ביטחון אחרי 9 שניות */
     (function(){
@@ -567,6 +567,7 @@
   </footer>
 
   <!-- כפתור הרשמה קבוע בתחתית המסך (לבקשת המשתמש 20.10.26; מחליף את כפתורי ההרשמה שהיו בתוך הדף) -->
+  <dialog id="ctaSheet" class="cta-sheet" aria-label="איך מצטרפים"><div class="cs-grab"><i></i></div><div class="cs-body"><button type="button" class="btn-primary cs-btn" id="csReg">הרשמה למפגש</button><a href="#" target="_blank" rel="noopener" data-updates class="btn-green cs-btn" id="csWa">עדכונים בוואטסאפ</a></div></dialog>
   <div id="stickyReg" class="cta-off fixed inset-x-0 bottom-0 z-40 px-5 pt-5 pointer-events-none" style="padding-bottom:calc(.9rem + env(safe-area-inset-bottom));background:linear-gradient(to top, rgba(255,245,232,.97) 55%, rgba(255,245,232,0))">
     <a href="#" target="_blank" rel="noopener" data-contact class="btn-primary rounded-full pointer-events-auto block mx-auto w-full max-w-[24rem] text-center py-4 text-[1.2rem] font-bold" id="stickyRegBtn" style="box-shadow:0 10px 24px -8px rgba(200,65,27,.55)">הרשמה למפגש</a>
   </div>
@@ -902,15 +903,49 @@
             if (future.length > 1) [...list.querySelectorAll('.mt-card:not(.is-past)')].forEach(c => io.observe(c));
           } }
         const sb = el('stickyRegBtn'), tc = el('tbCta'), stxt = future.length ? 'הרשמה למפגש ' + short(dayN(future[0].date)) : 'השארת פרטים';   // עם התאריך: ברור לאיזה מפגש נרשמים
-        if (sb) sb.textContent = stxt; if (tc) tc.textContent = stxt;
+        if (sb) { sb.dataset.reg = stxt; sb.textContent = 'להצטרפות'; } if (tc) tc.textContent = 'להצטרפות';   // הכפתור פותח בחירה: הרשמה למפגש או קבוצת וואטסאפ (הנוסח של ההרשמה נשמר ל-data-reg)
         /* הכפתור הקבוע מוסתר בטעינה ועולה (באנימציה) רק כשברור שיש למה להירשם: אורח מיד, ומשתתף מחובר רק אחרי שמצב ההרשמות שלו נטען.
            משתתף מחובר שכבר רשום לכל המפגשים (או שאין מפגש): אין מה להירשם אליו, ולכן בלי הכפתור הקבוע */
         { const sr2 = el('stickyReg');
           let sess = false; try { sess = !!localStorage.getItem('harpatka_me_session') || /[?&]as=/.test(location.search); } catch (e) {}
           const known = !sess || !!(window.HarpatkaMe && HarpatkaMe.ready);
           const need = known && (!window.__meName || future.some(m => { const st = window.HarpatkaMe ? HarpatkaMe.get(m.id) : null; return !(st && st.registered); }));
-          if (sr2) sr2.classList.toggle('cta-off', !need); if (tc) tc.hidden = !need; }
+          if (sr2) sr2.classList.toggle('cta-off', !known); if (tc) tc.hidden = !known;   // למטה תמיד יש כפתור (מוסתר רק עד שברור מי המשתתף)
+          /* אין מה להירשם אליו (או אין מפגש): הכפתור הופך לעדכונים בוואטסאפ, ישר לקבוצה */
+          const wa = !need, link = (window.CONFIG && CONFIG.updatesGroupLink) || '#';
+          [sb, tc].forEach((x) => { if (!x) return; x.dataset.mode = wa ? 'wa' : ''; if (wa) { x.href = link; x.target = '_blank'; x.rel = 'noopener'; x.textContent = 'עדכונים בוואטסאפ'; } else { x.href = '#'; x.removeAttribute('target'); x.textContent = 'להצטרפות'; } }); }
       };
+      /* הכפתור הקבוע למטה פותח פופאפ מלמטה עם שתי אפשרויות: הרשמה למפגש וקבוצת וואטסאפ */
+      { const sb = document.getElementById('stickyRegBtn'), sh = document.getElementById('ctaSheet');
+        if (sb && sh) {
+          /* נעילת מסך כשהפופאפ עולה: הדף מאחור לא זז (כמו פופאפ ההרשמה), והגלילה חוזרת בדיוק למקומה בסגירה */
+          const slideClose = (after) => {   // סגירה באנימציה (יורד למטה), כמו בדף הניהול
+            if (!sh.open || sh.classList.contains('closing')) return;
+            const fin = () => { sh.classList.remove('closing'); pendingAfter = after || null; sh.close(); };
+            if (matchMedia('(prefers-reduced-motion:reduce)').matches) { fin(); return; }
+            sh.classList.add('closing'); setTimeout(fin, 210);
+          };
+          sh.addEventListener('cancel', (e) => { e.preventDefault(); slideClose(); });   // Esc / חזרה: גם הם עם אנימציה
+          let lockY = 0, pendingAfter = null;   // אותה נעילה כמו בפופאפ ההרשמה (html.modal-lock): ההדר נשאר במצבו והגלילה חוזרת בדיוק למקומה
+          const lockCta = () => { lockY = window.scrollY || document.documentElement.scrollTop || 0; document.body.style.top = (-lockY) + 'px'; document.documentElement.classList.add('modal-lock'); };
+          sh.addEventListener('close', () => { document.documentElement.classList.remove('modal-lock'); document.body.style.top = ''; window.scrollTo({ top: lockY, left: 0, behavior: 'instant' }); const fn = pendingAfter; pendingAfter = null; if (fn) fn(); });   // הפעולה שאחרי הסגירה (גלילה לפופאפ הרשמה) רק אחרי שהגלילה חזרה למקומה
+          sb.addEventListener('click', (e) => { if (window.__ctaBypass) { window.__ctaBypass = false; return; } if (sb.dataset.mode === 'wa') { e.stopImmediatePropagation(); return; } e.preventDefault(); e.stopImmediatePropagation(); document.getElementById('csReg').textContent = window.__mtMulti ? 'הרשמה למפגש' : (sb.dataset.reg || 'הרשמה למפגש');  if (!sh.open) { lockCta(); sh.showModal(); } }, true);   // כמה מפגשים עתידיים: בלי לציין איזה, והלחיצה גוללת אליהם
+          document.getElementById('csReg').addEventListener('click', () => { slideClose(() => { window.__ctaBypass = true; sb.click(); }); });
+          document.getElementById('csWa').addEventListener('click', () => slideClose());
+          sh.addEventListener('click', (e) => { if (e.target === sh) slideClose(); });   // לחיצה על הרקע
+          /* גרירה למטה: הפופאפ יורד עם האצבע ונסגר מעבר ל-90px (או בהחלקה מהירה), אחרת חוזר למקומו */
+          let y0 = null, t0 = 0, dy = 0;
+          const reduce = () => matchMedia('(prefers-reduced-motion:reduce)').matches;
+          sh.addEventListener('touchstart', (e) => { y0 = e.touches[0].clientY; t0 = Date.now(); dy = 0; sh.style.transition = 'none'; }, { passive: true });
+          sh.addEventListener('touchmove', (e) => { if (y0 == null) return; dy = Math.max(0, e.touches[0].clientY - y0); sh.style.transform = 'translateY(' + dy + 'px)'; }, { passive: true });
+          const end = () => {
+            if (y0 == null) return; const fast = dy > 30 && dy / Math.max(1, Date.now() - t0) > .5; y0 = null;
+            sh.style.transition = reduce() ? 'none' : 'transform .2s ease-out';
+            if (dy > 90 || fast) { sh.style.transform = 'translateY(100%)'; setTimeout(() => { sh.close(); sh.style.transform = ''; sh.style.transition = ''; }, reduce() ? 0 : 200); }
+            else { sh.style.transform = ''; setTimeout(() => { sh.style.transition = ''; }, 220); }
+          };
+          sh.addEventListener('touchend', end); sh.addEventListener('touchcancel', end);
+        } }
       { const sb = document.getElementById('stickyRegBtn');
         if (sb) sb.addEventListener('click', (e) => {
           if (!window.__mtMulti) return;   // מפגש אחד או אין: הפופאפ כרגיל
