@@ -1723,7 +1723,6 @@
     let nextPart = '';
     if (nx) {
       const left = daysTo(nx), open = nxL.filter((l) => !l.no_pay && !(allocOf(l) > 0)), rep = open.filter((l) => l.pay_reported_at), un = open.filter((l) => !l.pay_reported_at);
-      const prevM = pm.filter((r) => r.m.id !== nx.id && isPast(r.m)).slice(-1)[0];
       /* מתי המקום נסגר (שוריין): לא לתשלום = בהרשמה, תשלום בהמשך = ברגע שסומן, ואחרת בהקצאת התשלום האחרונה למפגש */
       const reservedAt = (l) => {
         if (!reservedOf(l.participant_id, l.meeting_id)) return null;
@@ -1735,13 +1734,16 @@
       const nxRes = nxL.filter((l) => reservedOf(l.participant_id, l.meeting_id)).length;
       /* מתי המשתתף שילם לראשונה על המפגש */
       const payAt = (l) => { const ts = state.payments.filter((x) => x.participant_id === l.participant_id && x.meeting_id === l.meeting_id && x.kind === 'payment' && x.created_at).map((x) => x.created_at).sort(); return ts[0] || null; };
-      /* כמה היו במפגש הקודם באותו שלב: לפי המועד שבו כל אחד נרשם, שילם או שוריין, כשנשארו לפחות אותם ימים עד המפגש */
-      const thenN = (when) => links.filter((l) => { if (!prevM || l.meeting_id !== prevM.m.id) return false; const at = when(l); return at && daysTo(prevM.m, ilDay(at)) >= left; }).length;
-      const cmpRows = prevM ? [
-        ['נרשמים', thenN((l) => l.created_at), nxL.length],
-        ['משלמים', thenN((l) => allocOf(l) > 0 ? payAt(l) : null), nxL.filter((l) => allocOf(l) > 0).length],
-        ['משוריינים', thenN(reservedAt), nxRes]
-      ].map(([lab, a, b]) => [lab, a, '<b>' + b + '</b>', a > 0 ? trend(b, a) : '—']) : [];
+      /* כמה היו בכל מפגש קודם באותו שלב: לפי המועד שבו כל אחד נרשם, שילם או שוריין, כשנשארו לפחות אותם ימים עד המפגש. מושווים לממוצע של כל המפגשים שהתקיימו */
+      const prevMs = pm.filter((r) => r.m.id !== nx.id && isPast(r.m)).map((r) => r.m);
+      const thenN = (m, when) => links.filter((l) => { if (l.meeting_id !== m.id) return false; const at = when(l); return at && daysTo(m, ilDay(at)) >= left; }).length;
+      const avgN = (when) => prevMs.length ? prevMs.reduce((a, m) => a + thenN(m, when), 0) / prevMs.length : 0;
+      const f1 = (v) => String(Math.round(v * 10) / 10);
+      const cmpRows = prevMs.length ? [
+        ['נרשמים', avgN((l) => l.created_at), nxL.length],
+        ['משלמים', avgN((l) => allocOf(l) > 0 ? payAt(l) : null), nxL.filter((l) => allocOf(l) > 0).length],
+        ['משוריינים', avgN(reservedAt), nxRes]
+      ].map(([lab, a, b]) => [lab, f1(a), '<b>' + b + '</b>', a > 0 ? trend(b, a) : '—']) : [];
       nextPart = part('המפגש הקרוב · ' + dlab(nx), kpis(
         kpi(nxL.length, 'נרשמו', left > 1 ? 'עוד ' + left + ' ימים' : left === 1 ? 'מחר' : 'היום'),
         kpi(nxR.paid, 'שילמו', Ps(nxR.paid, nxL.length - nxR.ex) + (nxR.ex ? ' · ועוד ' + nxR.ex + ' לא לתשלום' : ''), nxR.paid ? 'good' : ''),
@@ -1749,7 +1751,7 @@
         kpi(rep.length, 'דיווחו וממתינים לאישור', rep.length ? ilsB(owed(rep)) : '', rep.length ? 'warn' : ''),
         kpi(nxR.women, 'נקבה', Ps(nxR.women, nxL.length)),
         kpi(nxR.men, 'זכר', Ps(nxR.men, nxL.length))
-      ) + (prevM ? '<p class="sthint">השוואה לאותו שלב במפגש ' + dlab(prevM.m) + ' (' + (left > 1 ? left + ' ימים לפני המפגש' : left === 1 ? 'יום לפני המפגש' : 'ביום המפגש') + ')</p>' + tbl(['', dlab(prevM.m) + ' אז', dlab(nx) + ' עכשיו', 'שינוי'], cmpRows) : ''));
+      ) + (prevMs.length ? '<p class="sthint">השוואה לממוצע המפגשים הקודמים באותו שלב (' + (left > 1 ? left + ' ימים לפני המפגש' : left === 1 ? 'יום לפני המפגש' : 'ביום המפגש') + ')</p>' + tbl(['', 'ממוצע ' + prevMs.length + (prevMs.length === 1 ? ' מפגש' : ' מפגשים'), dlab(nx) + ' עכשיו', 'שינוי'], cmpRows) : ''));
     }
     const everLinked = allP.filter((p) => linksOf(p.id).length);
     const funnel = part('איפה נושרים', '<p class="sthint">מכל מי שהשאיר פרטים ועד מי שחזר למפגש נוסף</p>' + bars(
