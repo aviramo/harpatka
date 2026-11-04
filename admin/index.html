@@ -40,7 +40,7 @@
             <button type="button" role="menuitem" class="hmi" id="bdBtn" hidden><svg data-i="chat"></svg><span>התחברויות ללוח</span><span class="bdbadge" id="bdBadge" hidden></span></button>
             <button type="button" role="menuitem" class="hmi" id="statsBtn"><svg data-i="stats"></svg><span>סטטיסטיקות</span></button>
             <button type="button" role="menuitem" class="hmi" id="moneyBtn"><svg data-i="money"></svg><span>כספים</span></button>
-            <button type="button" role="menuitem" class="hmi" id="srcMenuBtn"><svg data-i="enter"></svg><span>דרכי הגעה</span></button>
+            <button type="button" role="menuitem" class="hmi" id="srcMenuBtn"><svg data-i="enter"></svg><span>שיווק ממומן</span></button>
             <button type="button" role="menuitem" class="hmi" id="pmMenuBtn"><svg data-i="card"></svg><span>דרכי תשלום</span></button>
             <button type="button" role="menuitem" class="hmi" id="setBtn"><svg data-i="user"></svg><span>החשבון שלי</span></button>
             <button type="button" role="menuitem" class="hmi out" id="signOut"><svg data-i="logout"></svg><span>יציאה</span></button>
@@ -173,7 +173,7 @@
       </div>
       <div class="ppanel" data-panel="promoter" hidden>
         <div class="sopts" id="pPromoOpts"></div>
-        <button type="button" class="prnew" id="pPromoNew">+ דרך הגעה חדשה</button>
+        <button type="button" class="prnew" id="pPromoNew">+ שיווק ממומן חדש</button>
       </div>
       <div class="ppanel" data-panel="credit" hidden>
         <div class="payrow">
@@ -252,7 +252,7 @@
         <div class="ptabs" id="stTabs" role="tablist" aria-label="נושאי הסטטיסטיקות">
           <button type="button" role="tab" id="stTabM" aria-controls="stPgM" aria-selected="true" tabindex="0">מפגשים</button>
           <button type="button" role="tab" id="stTabF" aria-controls="stPgF" aria-selected="false" tabindex="-1">כספים</button>
-          <button type="button" role="tab" id="stTabP" aria-controls="stPgP" aria-selected="false" tabindex="-1">דרכי הגעה</button>
+          <button type="button" role="tab" id="stTabP" aria-controls="stPgP" aria-selected="false" tabindex="-1">שיווק ממומן</button>
           <button type="button" role="tab" id="stTabA" aria-controls="stPgA" aria-selected="false" tabindex="-1">קהל</button>
           <span class="ptabi" aria-hidden="true"></span>
         </div>
@@ -318,7 +318,7 @@
       <div id="setSrc" hidden>
         <div id="srcPrList"></div>
         <div id="srcPrDraft"></div>
-        <button type="button" class="btn ghost" id="srcPrAdd">+ דרך הגעה חדשה</button>
+        <button type="button" class="btn ghost" id="srcPrAdd">+ שיווק ממומן חדש</button>
       </div>
       <div id="setDel" hidden>
         <p id="setDelText" style="margin:0 0 16px;line-height:1.55"></p>
@@ -336,7 +336,7 @@
 
   <dialog id="prDlg" aria-labelledby="prTitle" style="max-width:480px">
     <div class="sheet">
-      <div class="sheet-head"><button type="button" class="hbtn hback" id="prArrow" aria-label="חזרה" title="חזרה" hidden><svg data-i="back"></svg></button><h2 id="prTitle">דרכי הגעה</h2></div>
+      <div class="sheet-head"><button type="button" class="hbtn hback" id="prArrow" aria-label="חזרה" title="חזרה" hidden><svg data-i="back"></svg></button><h2 id="prTitle">שיווק ממומן</h2></div>
       <div id="prList" class="ppanel"></div>
       <div id="prDetail" class="ppanel" hidden>
         <div class="prsum" id="prSum"></div>
@@ -884,7 +884,7 @@
   const defaultPrice = (m, iso) => priceForDays(daysTo(m, iso), m);
   /* קרדיט משתתף: סכומים שנשארו אצלנו בביטול בלי החזר כסף, פחות מה ששימש לתשלום חדש */
   const creditOf = (pid) => state.payments.filter((x) => x.participant_id === pid).reduce((s, x) => s + ((x.kind === 'credit' || x.kind === 'deposit') ? Number(x.amount) : ((x.kind === 'payment' || x.kind === 'refund') && x.from_credit ? -Number(x.amount) : 0)), 0);
-  /* דרכי הגעה: ערוצי פרסום ממומן (קוד משלהם בקישור ?s=<code>, שם וצבע) ודרכי הגעה (שם, צבע ועמלה). הצבע מופיע בתגית הגיל ברשימה ובכותרת הפופאפ */
+  /* שיווק ממומן: ערוצי פרסום ממומן (קוד משלהם בקישור ?s=<code>, שם וצבע) ושיווק ממומן (שם, צבע ועמלה). הצבע מופיע בתגית הגיל ברשימה ובכותרת הפופאפ */
   const adCodeOf = (p) => p.source_code || (p.source === 'site-ad' ? 'p' : null);
   const channelOf = (p) => promoterOf(p.promoter_id) || (adCodeOf(p) ? state.promoters.find((x) => x.code === adCodeOf(p)) : null) || null;   // דרך ההגעה של המשתתף: לפי בחירה, אחרת לפי הקוד בקישור
   /* דרך ההגעה למפגש מסוים: נשמרת לכל הרשמה (source_promoter_id). בתוך מפגש הצבע והסינון לפי ההרשמה למפגש הזה, ובשאר התצוגות לפי הדרך שבה המשתתף הגיע בפעם הראשונה */
@@ -896,11 +896,11 @@
   const calcCommission = () => '';   // העלות לא נחרטת על התשלום: היא מחושבת לפי התעריף הנוכחי על מה שעוד לא הוסדר (payCostOf)
   /* עמלה מתשלום: אחוז = על כל תשלום; ₪ קבוע = פעם אחת למשתתף (בתשלום הראשון) */
   const commOnEvery = (pr) => !!(pr && pr.cost_from_payment && pr.rate_type === 'percent');
-  /* כסף שהמשתתף שילם בפועל (בלי הקצאות מהיתרה, פחות החזרים), והלידים של דרך הגעה */
+  /* כסף שהמשתתף שילם בפועל (בלי הקצאות מהיתרה, פחות החזרים), והלידים של שיווק ממומן */
   const cashOf = (x) => (((x.kind === 'payment' || x.kind === 'deposit') && !x.from_credit) ? Number(x.amount) : x.kind === 'refund' ? -Number(x.amount) : 0);
   const netPaid = (pid) => state.payments.filter((x) => x.participant_id === pid).reduce((s, x) => s + cashOf(x), 0);
   const srcLeads = (id) => state.participants.filter((q) => (channelOf(q) || {}).id === id);
-  /* עלות מהתשלום של דרך הגעה, על התשלומים שמאז ההתחשבנות האחרונה ולפי התעריף הנוכחי, כך ששינוי תעריף חל על כל מה שעוד לא הוסדר. אחוז: מכל תשלום (החזר מקטין). ₪ קבוע: פעם אחת למשתתף, על התשלום הראשון, אם לא הוחזר */
+  /* עלות מהתשלום של שיווק ממומן, על התשלומים שמאז ההתחשבנות האחרונה ולפי התעריף הנוכחי, כך ששינוי תעריף חל על כל מה שעוד לא הוסדר. אחוז: מכל תשלום (החזר מקטין). ₪ קבוע: פעם אחת למשתתף, על התשלום הראשון, אם לא הוחזר */
   function payCostOf(id, lastTs, rate, pct) {
     const out = [];
     srcLeads(id).forEach((q) => {
@@ -1321,7 +1321,7 @@
   /* מונים וסינון: גברים/נשים ושילמו/טרם שילמו. כל מונה סופר לפי הסינון האחר והחיפוש, כך שהמספר הוא בדיוק מה שיוצג בלחיצה */
   /* בזמן חיפוש טקסט, סינוני המגדר והתשלום מושהים (כדי למצוא מישהו בוודאות); הם נשמרים ב-state וחוזרים כשהחיפוש נסגר */
   const effGender = () => state.q.trim() ? null : state.gender;
-  /* סינונים נוספים (תפריט ⋯ משמאל לצ'יפי המגדר): דרך הגעה וקבוצת גיל; מושהים בזמן חיפוש כמו שאר הסינונים */
+  /* סינונים נוספים (תפריט ⋯ משמאל לצ'יפי המגדר): שיווק ממומן וקבוצת גיל; מושהים בזמן חיפוש כמו שאר הסינונים */
   const AGE_MID = Math.floor((AGE_MIN + AGE_MAX) / 2), AGE_B = [['u', '⁦' + (AGE_MIN - 1) + '-⁩', 0, AGE_MIN - 1], ['lo', AGE_MIN + '–' + AGE_MID, AGE_MIN, AGE_MID], ['hi', (AGE_MID + 1) + '–' + AGE_MAX, AGE_MID + 1, AGE_MAX], ['o', '\u2066' + (AGE_MAX + 1) + '+\u2069', AGE_MAX + 1, 200]];   // קבוצות הגיל לפי טווח היעד (shared/age.js)
   /* העדכון האחרון של משתתף: הפעולה האחרונה עליו (הרשמה, שיוך או שינוי במפגש, הגעה, שליחת פרטים, דיווח, תשלום או הערה, גם הערות מערכת). רכיב אחד למיון ולסינון; מחושב פעם אחת לכל ציור של הרשימה */
   let updMap = null;
@@ -1421,7 +1421,7 @@
   const stMatch = (p, key) => key === '__none' ? (state.filter ? !linkStatus(linkOf(p.id, state.filter)) : !linksOf(p.id).some((l) => linkStatus(l))) : state.filter ? linkStatus(linkOf(p.id, state.filter)) === key : linksOf(p.id).some((l) => { if (linkStatus(l) !== key) return false; if (!state.mtype) return true; const m = meetOf(l.meeting_id); return !!m && typeIdOf(m) === state.mtype; });   // במפגש: התגית בו; בסוג מפגש: במפגשים של הסוג; בכל המשתתפים: בכל מפגש
   const clearFilters = () => { state.pay = null; state.gender = null; state.paidF = null; state.sent = null; state.bal = null; state.srcF = null; state.ageF = null; state.loginF = null; state.updF = null; waSetFilter(''); };   // כל הסינונים, בלי המיון
 
-  /* המשתתפים בתצוגה לפני סינוני הצ'יפים והעמודות: מפגש, סוג מפגש, מחוקים, "עוד" (דרך הגעה, גיל, אזור אישי) והחיפוש */
+  /* המשתתפים בתצוגה לפני סינוני הצ'יפים והעמודות: מפגש, סוג מפגש, מחוקים, "עוד" (שיווק ממומן, גיל, אזור אישי) והחיפוש */
   const poolP = () => {
     const q = state.q.trim().toLowerCase(), qd = digits(q);
     return state.participants.filter((p) => {
@@ -1653,7 +1653,7 @@
     return T;
   }
 
-  /* סטטיסטיקות בארבעה אטבים. מה שבעל העסק רוצה לדעת: מה מצב המפגש הקרוב ואיפה נושרים (מפגשים), האם זה משתלם ומה הכסף שעוד בדרך (כספים), מה שווה לקדם ומתי (דרכי הגעה), ומי מגיע וחוזר (קהל) */
+  /* סטטיסטיקות בארבעה אטבים. מה שבעל העסק רוצה לדעת: מה מצב המפגש הקרוב ואיפה נושרים (מפגשים), האם זה משתלם ומה הכסף שעוד בדרך (כספים), מה שווה לקדם ומתי (שיווק ממומן), ומי מגיע וחוזר (קהל) */
   const ST_IDS = ['meet', 'money', 'promo', 'demo'], stPages = ['#stPgM', '#stPgF', '#stPgP', '#stPgA'].map((x) => $(x));
   const stPg = tabPager($('#stTabs'), $('#stPager'), ['#stTabM', '#stTabF', '#stTabP', '#stTabA'].map((x) => $(x)), stPages);
   function openStats(v) {
@@ -1740,7 +1740,7 @@
         kpi(sgn(profit), 'רווח', '', profit > 0 ? 'good' : profit < 0 ? 'bad' : ''),
         kpi(payers.length ? ilsB(cash / payers.length) : '—', 'הכנסה ממוצעת למשלם', payers.length + ' משלמים')
       )) +
-      (pl.length ? part('רווח לפי מפגש', '<p class="sthint">הוצאות ששויכו למפגש. הוצאות כלליות ותשלומים לדרכי הגעה נספרים רק ברווח הכולל</p>' + tbl(['מפגש', 'הכנסה', 'הוצאות', 'רווח'], pl.map((r) => { const e = expOf(r.m.id); return [dlab(r.m), ilsB(r.rev), ilsB(e), sgn(r.rev - e)]; })) + beLine) : '') +
+      (pl.length ? part('רווח לפי מפגש', '<p class="sthint">הוצאות ששויכו למפגש. הוצאות כלליות ותשלומים לשיווק ממומן נספרים רק ברווח הכולל</p>' + tbl(['מפגש', 'הכנסה', 'הוצאות', 'רווח'], pl.map((r) => { const e = expOf(r.m.id); return [dlab(r.m), ilsB(r.rev), ilsB(e), sgn(r.rev - e)]; })) + beLine) : '') +
       part('כסף שעוד בדרך', tbl(['מדד', 'ערך'], [
         [cnt('נרשמו למפגשים קרובים ועוד לא שילמו', openFuture.length), ilsB(owed(openFuture))],
         [cnt('דיווחו על תשלום וממתינים לאישור', reported.length), ilsB(owed(reported))],
@@ -1754,7 +1754,7 @@
       (methodRows.length ? part('לפי דרך תשלום', bars(methodRows.map((k) => barRow(esc(k), byMethod[k], methodSum, 'var(--green)', '', ilsB(byMethod[k]))).join(''))) : '') +
       (monthKeys.length ? part('לפי חודש', tbl(['חודש', 'הכנסות', 'הוצאות', 'רווח'], monthKeys.map((k) => [k.slice(5) + '/' + k.slice(2, 4), ilsB(months[k].inc), ilsB(months[k].exp), sgn(months[k].inc - months[k].exp)]))) : '');
 
-    // ----- דרכי הגעה: מה משתלם ומתי נרשמים -----
+    // ----- שיווק ממומן: מה משתלם ומתי נרשמים -----
     const src = (p) => channelOf(p) ? 'promo' : String(p.source || '').startsWith('site') ? 'site' : 'other';
     const cameSet = new Set(cameP.map((p) => p.id));
     const funnelOf = (ps) => ({ leads: ps.length, reg: ps.filter((q) => linksOf(q.id).length).length, paid: ps.filter((q) => paidBy.get(q.id) > 0).length, came: ps.filter((q) => cameSet.has(q.id)).length, inc: sum(ps, (q) => paidBy.get(q.id)) });
@@ -1781,14 +1781,14 @@
     const promo = part('האם הפרסום משתלם', kpis(
         kpi(proPaid ? ilsB(proCost / proPaid) : '—', 'עלות למשלם', proLeads ? 'ליד עולה ' + ilsB(proCost / proLeads) : ''),
         kpi(proPaid ? ilsB(proInc / proPaid) : '—', 'משלם מכניס בממוצע', proPaid + ' משלמים מתוך ' + proLeads + ' לידים'),
-        kpi(ilsB(proInc), 'הכנסה דרך דרכי הגעה', Ps(proInc, cash) + ' מההכנסה'),
-        kpi(ilsB(proCost), 'עלות דרכי הגעה', proOwed ? ilsB(proOwed) + ' נשאר לשלם' : '', proOwed ? 'warn' : '')
+        kpi(ilsB(proInc), 'הכנסה דרך שיווק ממומן', Ps(proInc, cash) + ' מההכנסה'),
+        kpi(ilsB(proCost), 'עלות שיווק ממומן', proOwed ? ilsB(proOwed) + ' נשאר לשלם' : '', proOwed ? 'warn' : '')
       )) +
       costParts +
-      part('מה מביא אנשים', tbl(['דרך הגעה', 'לידים', 'נרשמו', 'שילמו', 'הגיעו'], chRows.map((r) => [r.name, r.leads, r.reg, r.paid + pctS(r.paid, r.leads), r.came]))) +
-      part('מה משתלם', tbl(['דרך הגעה', 'הכנסה', 'עלות', 'נטו', 'למשלם'], chRows.map((r) => [r.name, ilsB(r.inc), ilsB(r.cm), sgn(r.inc - r.cm), r.paid && r.cm ? ilsB(r.cm / r.paid) : '—']))) +
+      part('מה מביא אנשים', tbl(['שיווק ממומן', 'לידים', 'נרשמו', 'שילמו', 'הגיעו'], chRows.map((r) => [r.name, r.leads, r.reg, r.paid + pctS(r.paid, r.leads), r.came]))) +
+      part('מה משתלם', tbl(['שיווק ממומן', 'הכנסה', 'עלות', 'נטו', 'למשלם'], chRows.map((r) => [r.name, ilsB(r.inc), ilsB(r.cm), sgn(r.inc - r.cm), r.paid && r.cm ? ilsB(r.cm / r.paid) : '—']))) +
       ((leadPart || wdPart || hoursPart) ? part('מתי נרשמים', leadPart + wdPart + hoursPart) : '') +
-      (pm.length ? part('מקורות לפי מפגש', tbl(['מפגש', 'אתר', 'דרך הגעה', 'אחר'], pmD.map((r) => [dlab(r.m), srcCount(r, 'site'), srcCount(r, 'promo'), srcCount(r, 'other')]))) : '');
+      (pm.length ? part('מקורות לפי מפגש', tbl(['מפגש', 'אתר', 'שיווק ממומן', 'אחר'], pmD.map((r) => [dlab(r.m), srcCount(r, 'site'), srcCount(r, 'promo'), srcCount(r, 'other')]))) : '');
 
     // ----- קהל: מי מגיע, והאם חוזרים -----
     const male = allP.filter((q) => q.gender === 'male'), female = allP.filter((q) => q.gender === 'female'), noG = n - male.length - female.length;
@@ -1825,7 +1825,7 @@
   function finRowsAll() {
     const rows = state.fin.map((x) => ({ kind: x.kind, amount: Number(x.amount), date: x.entry_date, title: x.title, meeting_id: x.meeting_id, id: x.id, rec: null, by: x.by_email }));
     state.finRec.forEach((r) => recOccurrences(r).forEach((d) => rows.push({ kind: r.kind, amount: Number(r.amount), date: d, title: r.title, meeting_id: null, id: r.id, rec: r, by: r.by_email })));
-    state.promoPays.forEach((x) => { const pr = promoterOf(x.promoter_id); rows.push({ kind: 'expense', amount: Number(x.amount), date: String(x.paid_at || '').slice(0, 10), title: 'תשלום ל' + (pr ? pr.name : 'דרך הגעה'), meeting_id: null, id: x.id, rec: null, channel: x.promoter_id, by: x.by_email }); });   // תשלומים לדרכי הגעה נספרים כהוצאה
+    state.promoPays.forEach((x) => { const pr = promoterOf(x.promoter_id); rows.push({ kind: 'expense', amount: Number(x.amount), date: String(x.paid_at || '').slice(0, 10), title: 'תשלום ל' + (pr ? pr.name : 'שיווק ממומן'), meeting_id: null, id: x.id, rec: null, channel: x.promoter_id, by: x.by_email }); });   // תשלומים לשיווק ממומן נספרים כהוצאה
     return rows;
   }
   function finRows() {
@@ -1838,7 +1838,7 @@
     const own = (key) => (state.payMethods.find((m) => m.key === key) || {}).owner_email;
     state.payments.forEach((x) => { const k = ((x.kind === 'payment' || x.kind === 'deposit') && !x.from_credit) ? 1 : x.kind === 'refund' ? -1 : 0; if (!k) return; const o = own(x.method), a = k * Number(x.amount); if (o && A[o]) A[o].part += a; else un.part += a; });
     finRowsAll().filter((x) => !x.channel).forEach((x) => { if (x.by && A[x.by]) A[x.by][x.kind === 'income' ? 'inc' : 'exp'] += x.amount; else un.fin += x.kind === 'income' ? x.amount : -x.amount; });
-    state.promoPays.forEach((x) => { if (x.by_email && A[x.by_email]) A[x.by_email].exp += Number(x.amount); else un.chan += 1; });   // תשלומים לדרכי הגעה: הוצאה של המנהל ששילם
+    state.promoPays.forEach((x) => { if (x.by_email && A[x.by_email]) A[x.by_email].exp += Number(x.amount); else un.chan += 1; });   // תשלומים לשיווק ממומן: הוצאה של המנהל ששילם
     state.finTr.forEach((x) => { if (A[x.from_email]) A[x.from_email].out += Number(x.amount); if (A[x.to_email]) A[x.to_email].inn += Number(x.amount); });
     let total = 0; admins.forEach((e) => { const a = A[e]; a.held = a.part + a.inc - a.exp - a.out + a.inn; total += a.part + a.inc - a.exp; });
     const share = admins.length ? total / admins.length : 0; admins.forEach((e) => { A[e].diff = A[e].held - share; });
@@ -1854,15 +1854,15 @@
     const sg = (v) => Math.round(v) > 0 ? 'cpos' : Math.round(v) < 0 ? 'cneg' : '', ab = (v) => '₪' + nfm(Math.abs(v)), sv = (v) => '<bdi dir="ltr">' + (Math.round(v) > 0 ? '+' : Math.round(v) < 0 ? '-' : '') + ab(v) + '</bdi>'; const rows = finRows(), inc = rows.filter((x) => x.kind === 'income').reduce((s, x) => s + x.amount, 0), exp = rows.filter((x) => x.kind === 'expense').reduce((s, x) => s + x.amount, 0), part = finPartIncome(), expCh = rows.filter((x) => x.channel).reduce((s, x) => s + x.amount, 0), credHolders = [...new Set(state.payments.map((x) => x.participant_id))].map((id) => ({ id, c: Math.round(creditOf(id) * 100) / 100 })).filter((x) => x.c > 0), cred = credHolders.reduce((s, x) => s + x.c, 0), owed = state.promoters.reduce((s, x) => s + Math.max(0, ledgerOf(x.id).balance), 0);
     { const net = part + inc - exp, netTone = Math.round(net) > 0 ? 'pos' : Math.round(net) < 0 ? 'neg' : '';
       $('#finSum').innerHTML = UI.metric('הכנסות ממשתתפים', '₪' + nfm(part), { tone: 'pos' })
-        + UI.metric('הוצאות', '₪' + nfm(exp), { tone: 'neg', sub: expCh ? 'מתוכן דרכי הגעה ₪' + nfm(expCh) : '', a: { 'data-ff': 'expense', role: 'button', tabindex: 0, 'aria-pressed': state.finFilter === 'expense' } })
+        + UI.metric('הוצאות', '₪' + nfm(exp), { tone: 'neg', sub: expCh ? 'מתוכן שיווק ממומן ₪' + nfm(expCh) : '', a: { 'data-ff': 'expense', role: 'button', tabindex: 0, 'aria-pressed': state.finFilter === 'expense' } })
         + UI.metric('הכנסות אחרות', '₪' + nfm(inc), { tone: 'pos', a: { 'data-ff': 'income', role: 'button', tabindex: 0, 'aria-pressed': state.finFilter === 'income' } })
         + (cred > 0 ? UI.metric('קרדיט שמור', '₪' + nfm(cred), { tone: 'yel', sub: credHolders.length + ' משתתפים, טרם נוצל' }) : '')
         + UI.metric('נטו', sv(net), { tone: netTone, cls: 'wide', sub: cred > 0 ? 'נטו אחרי קרדיט שמור: <i class="' + sg(net - cred) + '">' + sv(net - cred) + '</i>' : '' })
-        + (owed > 0 ? '<p class="finowed">עלויות דרכי הגעה שנצברו ועוד לא שולמו: ₪' + nfm(owed) + ' (לא נכללות בהוצאות עד התשלום)</p>' : ''); }
+        + (owed > 0 ? '<p class="finowed">עלויות שיווק ממומן שנצברו ועוד לא שולמו: ₪' + nfm(owed) + ' (לא נכללות בהוצאות עד התשלום)</p>' : ''); }
     $('#finRecLbl').hidden = !state.finRec.length;
     $('#finRec').innerHTML = state.finRec.map((r) => '<button type="button" class="finrow' + (r.active ? '' : ' off') + '" data-frec="' + r.id + '"><span class="ft"><b>' + esc(r.title) + '</b><span>' + PERIODS[r.period] + ' · מ-' + finDmy(r.start_date) + (r.end_date ? ' עד ' + finDmy(r.end_date) : '') + (r.active ? '' : ' · מושהה') + '</span></span><span class="fa ' + (r.kind === 'income' ? 'in' : 'out') + '">₪' + nfm(Number(r.amount)) + '</span></button>').join('');
     const shown = state.finFilter ? rows.filter((x) => x.kind === state.finFilter) : rows;
-    $('#finList').innerHTML = shown.length ? shown.map((x) => { const m = x.meeting_id && meetOf(x.meeting_id); return '<button type="button" class="finrow" ' + (x.channel ? 'data-fch="' + x.channel + '"' : x.rec ? 'data-frec="' + x.id + '"' : 'data-fent="' + x.id + '"') + '><span class="ft"><b>' + esc(x.title) + (x.rec ? UI.tag('מחזורי', 'frec') : '') + (x.channel ? UI.tag('דרך הגעה', 'frec') : '') + '</b><span>' + finDmy(x.date) + ' · ' + (x.channel ? 'לחיצה לפתיחת ההתחשבנות' + (x.by ? ' · דרך ' + esc(finName(x.by)) : '') : (m ? 'מפגש ' + dm(m) : 'כללי') + (x.by ? ' · דרך ' + esc(finName(x.by)) : '')) + '</span></span><span class="fa ' + (x.kind === 'income' ? 'in' : 'out') + '">₪' + nfm(x.amount) + '</span></button>'; }).join('') : '<p class="mnone">עוד אין תנועות' + ((state.finPeriod === 'all' ? '' : state.finPeriod === 'month' ? ' החודש' : ' ב' + finPeriodLabel())) + '</p>';
+    $('#finList').innerHTML = shown.length ? shown.map((x) => { const m = x.meeting_id && meetOf(x.meeting_id); return '<button type="button" class="finrow" ' + (x.channel ? 'data-fch="' + x.channel + '"' : x.rec ? 'data-frec="' + x.id + '"' : 'data-fent="' + x.id + '"') + '><span class="ft"><b>' + esc(x.title) + (x.rec ? UI.tag('מחזורי', 'frec') : '') + (x.channel ? UI.tag('שיווק ממומן', 'frec') : '') + '</b><span>' + finDmy(x.date) + ' · ' + (x.channel ? 'לחיצה לפתיחת ההתחשבנות' + (x.by ? ' · דרך ' + esc(finName(x.by)) : '') : (m ? 'מפגש ' + dm(m) : 'כללי') + (x.by ? ' · דרך ' + esc(finName(x.by)) : '')) + '</span></span><span class="fa ' + (x.kind === 'income' ? 'in' : 'out') + '">₪' + nfm(x.amount) + '</span></button>'; }).join('') : '<p class="mnone">עוד אין תנועות' + ((state.finPeriod === 'all' ? '' : state.finPeriod === 'month' ? ' החודש' : ' ב' + finPeriodLabel())) + '</p>';
   }
   function finView(v) {
     finV = v; $('#finMain').hidden = v !== 'main'; $('#finForm').hidden = v !== 'form'; $('#finLog').hidden = v !== 'log'; $('#finSettle').hidden = v !== 'settle'; $('#finArrow').hidden = v === 'main'; $('#finLogBtn').hidden = v !== 'main'; $('#finSetBtn').hidden = v !== 'main'; $('#finPerBtn').hidden = v !== 'main'; if (typeof closeFinPer === 'function') closeFinPer();
@@ -1891,7 +1891,7 @@
     f.querySelector('[name=date]').closest('label').firstElementChild.textContent = edit.type === 'rec' ? 'מתאריך' : 'תאריך';   // השדה עטוף ב-dtbox (dtField), לכן הכותרת היא הילד הראשון של התווית ולא האח הקודם של השדה
     finView('form');
   }
-  /* תקופה: הכל, החודש, וחודשים קודמים לפי ההיסטוריה (תנועות, תשלומי משתתפים ותשלומי דרכי הגעה); ערך חודש הוא YYYY-MM */
+  /* תקופה: הכל, החודש, וחודשים קודמים לפי ההיסטוריה (תנועות, תשלומי משתתפים ותשלומי שיווק ממומן); ערך חודש הוא YYYY-MM */
   const finMonthLabel = (ym) => { const [y, m] = ym.split('-').map(Number); return new Date(y, m - 1, 1).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' }); };
   const finPeriodList = () => {
     const cur = todayISO().slice(0, 7), ms = new Set();
@@ -1916,7 +1916,7 @@
     const ff = e.target.closest('[data-ff]'); if (ff) { state.finFilter = state.finFilter === ff.dataset.ff ? null : ff.dataset.ff; renderFinance(); return; }
     const a = e.target.closest('[data-fadd]'); if (a) { openFinForm({ kind: a.dataset.fadd }); return; }
     const r = e.target.closest('[data-frec]'); if (r) { openFinForm({ type: 'rec', id: r.dataset.frec }); return; }
-    const ch = e.target.closest('[data-fch]'); if (ch) { showPromoterDetail(ch.dataset.fch); $('#prDlg').showModal(); return; }   // תשלום לדרך הגעה: פותח את ההתחשבנות שלה
+    const ch = e.target.closest('[data-fch]'); if (ch) { showPromoterDetail(ch.dataset.fch); $('#prDlg').showModal(); return; }   // תשלום לשיווק ממומן: פותח את ההתחשבנות שלה
     const x = e.target.closest('[data-fent]'); if (x) openFinForm({ type: 'entry', id: x.dataset.fent });
   });
   $('#finKind').addEventListener('click', (e) => { const b = e.target.closest('[data-fk]'); if (!b) return; $('#finForm').dataset.kind = b.dataset.fk; document.querySelectorAll('#finKind [data-fk]').forEach((q) => q.setAttribute('aria-checked', String(q === b))); });
@@ -1953,7 +1953,7 @@
       '<div class="fsc"><div class="fsl"><span>סך הכל נטו (כולל כל המנהלים)</span>' + cb(S.total) + '</div><div class="fsl hd"><span>חלק של כל מנהל (חלוקה שווה)</span>' + cb(S.share) + '</div></div>' +
       (S.sug.length ? S.sug.map((s) => '<div class="fsug">' + esc(finName(s.from)) + ' מעביר ל' + esc(finName(s.to)) + ' ' + n(s.amount) + '<button type="button" data-ftr="' + esc(s.from) + '|' + esc(s.to) + '|' + s.amount + '">סימון שההעברה בוצעה</button></div>').join('') : '<div class="fsug ok">הכול מסולק ✓</div>') +
       ((S.un.part || S.un.fin) ? '<p class="fsnote">לא נכללו בחלוקה: ' + (S.un.part ? cb(S.un.part) + ' מתשלומי משתתפים בדרכי תשלום ובהחזרים בלי "הקופה של" (להגדרה: הגדרות ← דרכי תשלום)' : '') + (S.un.part && S.un.fin ? ', ' : '') + (S.un.fin ? cb(S.un.fin) + ' מתנועות כספים בלי מנהל' : '') + '.</p>' : '') +
-      (S.un.chan ? '<p class="fsnote">' + S.un.chan + ' תשלומים לדרכי הגעה בלי מנהל לא נכללו בהתחשבנות.</p>' : '') +
+      (S.un.chan ? '<p class="fsnote">' + S.un.chan + ' תשלומים לשיווק ממומן בלי מנהל לא נכללו בהתחשבנות.</p>' : '') +
       (state.finTr.length ? '<div class="clabel">העברות שנרשמו</div>' + state.finTr.map((x) => '<div class="finrow"><span class="ft"><b>' + esc(finName(x.from_email)) + ' ← ' + esc(finName(x.to_email)) + '</b><span>' + finDmy(x.transfer_date) + '</span></span><span class="fa">' + n(Number(x.amount)) + '</span><button type="button" class="stdel" data-ftdel="' + x.id + '" aria-label="מחיקה" title="מחיקה (לחיצה כפולה)">×</button></div>').join('') : '');
   }
   function openFinSettle() { renderFinSettle(); finView('settle'); }
@@ -2050,8 +2050,8 @@
   const confirmLink = (pid, mid, on, after) => (!on && allocatedOf(pid, mid) > 0) ? confirmAct('הסרה מהמפגש', pid, mid, async () => { try { await reduceAlloc(pid, mid, Math.max(0, allocatedOf(pid, mid))); } catch (err) { fail(err); return; } setLinked(pid, mid, false); if (after) after(); }, 'ההקצאה למפגש (<b>' + ils(Math.round(allocatedOf(pid, mid) * 100) / 100) + '</b>) תוסר, והסכום יחזור ליתרה של המשתתף. לא מוחזר כסף.', 'הסר והחזר את הסכום ליתרה', null, { yellow: true }) : confirmAct(on ? 'להוסיף למפגש?' : 'להסיר מהמפגש?', pid, mid, () => { setLinked(pid, mid, on); if (after) after(); });
 
   /* סימון הגעה למפגש (זמן אמת: מעדכן מיד, נשמר ומתעדכן אצל כולם) */
-  /* דרכי הגעה: רשימה עם יתרה, דף התחשבנות לכל דרך הגעה (עמלות שנצברו מול תשלומים לדרך הגעה), הוספה, עריכה ומחיקה */
-  let prDraft = null, prAfterSave = null, prCur = null, srcDraftOn = false;   // srcDraftOn: דרך הגעה חדשה בתוך מסך דרכי ההגעה (לא בפופאפ נפרד)
+  /* שיווק ממומן: רשימה עם יתרה, דף התחשבנות לכל שיווק ממומן (עמלות שנצברו מול תשלומים לשיווק ממומן), הוספה, עריכה ומחיקה */
+  let prDraft = null, prAfterSave = null, prCur = null, srcDraftOn = false;   // srcDraftOn: שיווק ממומן חדש בתוך מסך דרכי ההגעה (לא בפופאפ נפרד)
   const fmtD = (iso) => { if (!iso) return ''; const [y, m, d] = String(iso).slice(0, 10).split('-'); return Number(d) + '.' + Number(m) + '.' + y.slice(2); };
   const ils = (n) => '<bdi dir="ltr">₪' + nfm(n) + '</bdi>';   // בלי היפוך סימן השקל בטקסט מימין לשמאל
   const nfx = (n) => (Math.round(n * 100) / 100).toLocaleString('he-IL');   // בלי עיגול לשקל: בהתחשבנות סכום השורות שווה בדיוק ליתרה, גם בתעריף עם שבר
@@ -2071,7 +2071,7 @@
     if (x0 && x0.cost_total) {   // עלות כללית: אין יתרה. כל תשלום מוצג עם התקופה שהוא מכסה והעלות לליד שנגזרת ממנו
       const P = costPeriods(id), mine = state.promoPays.filter((x) => x.promoter_id === id).slice().sort((a, b) => String(b.paid_at).localeCompare(String(a.paid_at)) || String(b.created_at).localeCompare(String(a.created_at)));
       const opened = srcLeads(id).filter((q) => ilDay(q.created_at) > P.openFrom).sort(newestFirst).map((q) => ({ kind: 'l', date: ilDay(q.created_at), amount: null, who: q.name, sub: '', key: q.id }));
-      const rowsT = mine.map((x) => { const r = P.periods.find((q) => q.to === x.paid_at), per = r ? (r.from ? 'מאז ' + dayMon(r.from) + ' · ' : '') + r.leads + ' לידים' + (r.per != null ? ' · ' + perLeadTxt(r.per) + ' לליד' : '') : ''; return { kind: 'p', date: x.paid_at, amount: -Number(x.amount), who: 'תשלום לדרך הגעה', sub: [methodName(x), x.by_email ? 'שולם דרך ' + finName(x.by_email) : '', x.note || '', per].filter(Boolean).join(' · '), id: x.id, key: x.id }; });
+      const rowsT = mine.map((x) => { const r = P.periods.find((q) => q.to === x.paid_at), per = r ? (r.from ? 'מאז ' + dayMon(r.from) + ' · ' : '') + r.leads + ' לידים' + (r.per != null ? ' · ' + perLeadTxt(r.per) + ' לליד' : '') : ''; return { kind: 'p', date: x.paid_at, amount: -Number(x.amount), who: 'תשלום לשיווק ממומן', sub: [methodName(x), x.by_email ? 'שולם דרך ' + finName(x.by_email) : '', x.note || '', per].filter(Boolean).join(' · '), id: x.id, key: x.id }; });
       const paidT = mine.reduce((t, x) => t + Number(x.amount), 0);
       return { rows: opened, pays: rowsT, accrued: paidT, paid: paidT, balance: 0, total: P, lastTs: '' };
     }
@@ -2081,7 +2081,7 @@
     const costRows = x0 && x0.cost_from_payment ? payCostOf(id, lastTs, rate, x0.rate_type === 'percent').map((c) => { const m = meetOf(c.r.meeting_id), isR = cashOf(c.r) < 0; return { kind: isR ? 'r' : 'c', date: ilDay(c.r.created_at), ts: c.r.created_at, amount: c.amount, who: c.q.name, sub: (isR ? 'החזר · ' : '') + (m ? 'מפגש ' + meetingLabel(m).split(' · ')[0] + ' · ' : '') + (isR ? 'הוחזר ' : 'שילם ') + nfm(Math.abs(cashOf(c.r))), key: c.r.id }; }) : [];   // מחושב לפי התעריף הנוכחי
     const accNew = costRows.concat(leadsNew.map((q) => ({ kind: 'c', date: ilDay(q.created_at), ts: q.created_at, amount: rate, who: q.name, sub: 'ליד', key: q.id }))).sort((a, b) => String(a.ts).localeCompare(String(b.ts)));
     { let run3 = 0; accNew.forEach((r) => { run3 += r.amount; r.bal = run3; }); }
-    const payRows = myPays.map((x) => ({ kind: 'p', date: x.paid_at, amount: -Number(x.amount), who: 'תשלום לדרך הגעה', sub: [methodName(x), x.by_email ? 'שולם דרך ' + finName(x.by_email) : '', x.note || ''].filter(Boolean).join(' · '), id: x.id, key: x.id }));
+    const payRows = myPays.map((x) => ({ kind: 'p', date: x.paid_at, amount: -Number(x.amount), who: 'תשלום לשיווק ממומן', sub: [methodName(x), x.by_email ? 'שולם דרך ' + finName(x.by_email) : '', x.note || ''].filter(Boolean).join(' · '), id: x.id, key: x.id }));
     const paid = myPays.reduce((s, x) => s + Number(x.amount), 0), balance = accNew.reduce((s, r) => s + r.amount, 0);
     return { rows: accNew.slice().reverse(), pays: payRows, accrued: paid + balance, paid, balance, lastTs };
   }
@@ -2099,7 +2099,7 @@
     $('#prTitle').textContent = 'התחשבנות · ' + x.name;
     const lastP = L.total && L.total.periods[L.total.periods.length - 1];
     $('#prSum').innerHTML = L.total ? UI.metric('עלות לליד בתקופה האחרונה', lastP && lastP.per != null ? perLeadTxt(lastP.per) : '—', { sub: lastP ? ils(lastP.amount) + ' · ' + lastP.leads + ' לידים' : 'עוד לא נרשם תשלום' }) + UI.metric('לידים בתקופה הנוכחית', L.total.openLeads, { sub: L.total.openFrom ? 'מאז ' + dayMon(L.total.openFrom) : '' })
-      : UI.metric(L.balance > 0 ? 'יתרה לתשלום לדרך הגעה' : 'מסולק', '<bdi dir="ltr">₪' + nfx(Math.max(L.balance, 0)) + '</bdi>', { tone: L.balance > 0 ? 'neg' : 'pos', cls: 'wide' });
+      : UI.metric(L.balance > 0 ? 'יתרה לתשלום לשיווק ממומן' : 'מסולק', '<bdi dir="ltr">₪' + nfx(Math.max(L.balance, 0)) + '</bdi>', { tone: L.balance > 0 ? 'neg' : 'pos', cls: 'wide' });
     /* תנועה: אותה שורה כמו בהיסטוריית התשלומים (walrow): מימין מי, ומתחתיו מתי ופרטים; משמאל הסכום, ומתחתיו היתרה אחרי התנועה או מחיקת התשלום. בעלות כללית לליד אין סכום */
     const shek = (n) => '<bdi dir="ltr">' + (n < 0 ? '−' : '') + '₪' + nfx(Math.abs(n)) + '</bdi>';
     const moveRow = (r) => '<div class="walrow"><div class="wl"><b>' + esc(r.who) + '</b><small>' + fmtD(r.date) + (r.sub ? ' · ' + esc(r.sub) : '') + '</small></div>' + (r.amount == null ? '' :
@@ -2111,7 +2111,7 @@
     $('#prPays').innerHTML = L.pays.map(moveRow).join('');
     show('#prDetail');
   }
-  /* דרך הגעה חדשה: אותו כרטיס בדיוק כמו ברשימת דרכי ההגעה (srcCard). במסך דרכי ההגעה היא נוספת לרשימה ונשמרת כשמקלידים שם; משדה "מקור" של משתתף: בטופס עם שמירה */
+  /* שיווק ממומן חדש: אותו כרטיס בדיוק כמו ברשימת דרכי ההגעה (srcCard). במסך דרכי ההגעה היא נוספת לרשימה ונשמרת כשמקלידים שם; משדה "מקור" של משתתף: בטופס עם שמירה */
   function renderPrDraft() {
     const box = srcDraftOn ? $('#srcPrDraft') : $('#prNewCard'), nm = box.querySelector('[data-f="name"]'), rt = box.querySelector('[data-f="rate"]');   // ציור מחדש לא מוחק מה שהוקלד ועוד לא נשמר
     if (nm) prDraft.name = nm.value; if (rt) prDraft.rate = Math.max(0, Number(rt.value) || 0);
@@ -2140,11 +2140,11 @@
   }
   function showPromoterForm() {
     dropSrcDraft(); newPrDraft();
-    renderPrDraft(); show('#prForm'); $('#prTitle').textContent = 'דרך הגעה חדשה';
+    renderPrDraft(); show('#prForm'); $('#prTitle').textContent = 'שיווק ממומן חדש';
     setTimeout(() => { const n = document.querySelector('#prNewCard .stname'); if (n) n.focus(); }, 50);
   }
   function showPromoterList() { prCur = null; if ($('#prDlg').open) $('#prDlg').close(); }   // אין מסך רשימה: ההתחשבנות נפתחת מכרטיס דרך ההגעה בהגדרות, וחזרה סוגרת
-  /* הוספת דרך הגעה מתוך שדה בחירה (משתתף / תשלום): פותח את טופס דרך ההגעה, ואחרי שמירה בוחר אותו בשדה */
+  /* הוספת שיווק ממומן מתוך שדה בחירה (משתתף / תשלום): פותח את טופס דרך ההגעה, ואחרי שמירה בוחר אותו בשדה */
   function openNewPromoter(cb) { prAfterSave = cb || null; showPromoterForm(); $('#prDlg').showModal(); }
   $('#prDlg').addEventListener('close', () => { prAfterSave = null; refreshSources(); });   // חזרה מההתחשבנות: הסכום לתשלום בכרטיס מתעדכן
   $('#prList').addEventListener('click', (e) => { if (e.target.closest('#prNew')) return showPromoterForm(); const r = e.target.closest('[data-pr]'); if (r) showPromoterDetail(r.dataset.pr); });
@@ -2162,8 +2162,8 @@
       if (cb && row) cb(row); toast('דרך ההגעה נוספה');
     } catch (err) { fail(err); }
   });
-  /* תשלום לדרך הגעה: סכום (ברירת מחדל: היתרה), תאריך והערה */
-  /* רישום תשלום לדרך הגעה: פופאפ מלמטה בגובה התוכן, ואישור לפני הרישום, כמו תשלום של משתתף. דרך תשלום שיש לה "הקופה של" קובעת גם מי שילם */
+  /* תשלום לשיווק ממומן: סכום (ברירת מחדל: היתרה), תאריך והערה */
+  /* רישום תשלום לשיווק ממומן: פופאפ מלמטה בגובה התוכן, ואישור לפני הרישום, כמו תשלום של משתתף. דרך תשלום שיש לה "הקופה של" קובעת גם מי שילם */
   const ppByFromMethod = () => { const f = $('#ppForm'), pm = state.payMethods.find((m) => m.key === f.method.value); if (pm && pm.owner_email) { if (![...f.by.options].some((o) => o.value === pm.owner_email)) f.by.insertAdjacentHTML('beforeend', '<option value="' + esc(pm.owner_email) + '">' + esc(finName(pm.owner_email)) + '</option>'); f.by.value = pm.owner_email; } };
   $('#ppOpen').addEventListener('click', () => {
     const f = $('#ppForm'), L = ledgerOf(prCur), x = promoterOf(prCur);
@@ -2180,13 +2180,13 @@
     const f = e.target, amount = parseFloat(f.amount.value), x = promoterOf(prCur), pm = state.payMethods.find((m) => m.key === f.method.value);
     if (!(amount > 0)) { f.amount.focus(); return; }
     const body = { promoter_id: prCur, amount, paid_at: f.date.value || todayISO(), note: f.note.value.trim() || null, by_email: f.by.value || null, method: f.method.value || null };
-    confirmAct('אישור תשלום לדרך הגעה', null, null, async () => {
+    confirmAct('אישור תשלום לשיווק ממומן', null, null, async () => {
       try { const [row] = await api(T.pp, { method: 'POST', body, prefer: 'return=representation' }); if (row && !state.promoPays.some((q) => q.id === row.id)) state.promoPays.push(row); $('#ppDlg').close(); toast('התשלום נרשם'); showPromoterDetail(prCur); }
       catch (err) { fail(err); }
     }, (x ? 'אל: <b>' + esc(x.name) + '</b><br>' : '') + 'סכום: <b>' + ils(amount) + '</b>' + (pm ? '<br>דרך: <b>' + esc(pm.name) + '</b>' : ''), 'אישור תשלום', null, { plain: true, green: true });
   });
   $('#prPays').addEventListener('click', (e) => {
-    const d = e.target.closest('[data-delpay]'); if (!d || !confirm('למחוק את התשלום לדרך הגעה?')) return;
+    const d = e.target.closest('[data-delpay]'); if (!d || !confirm('למחוק את התשלום לשיווק ממומן?')) return;
     const id = d.dataset.delpay, prev = state.promoPays;
     state.promoPays = state.promoPays.filter((q) => q.id !== id); showPromoterDetail(prCur);
     api(T.pp + '?id=eq.' + id, { method: 'DELETE' }).catch((err) => { state.promoPays = prev; showPromoterDetail(prCur); fail(err); });
@@ -2777,7 +2777,7 @@
   /* מסך אחד: ראשי (וואטסאפ וחיוג, מפגשים אחרונים, הערות) או פרטים (אייקון בכותרת; חץ חזרה בתוכו) */
   let pTab = 'main';
   const reducedMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const SUBVIEW = { deposit: 'קבלת תשלום', pay: 'תשלום למפגש', promoter: 'דרך הגעה', refund: 'ביטול תשלום', credit: 'החזרת קרדיט', zikuy: 'זיכוי' };
+  const SUBVIEW = { deposit: 'קבלת תשלום', pay: 'תשלום למפגש', promoter: 'שיווק ממומן', refund: 'ביטול תשלום', credit: 'החזרת קרדיט', zikuy: 'זיכוי' };
   let viewStack = [], payCtx = null;
   function setPTab(tab, instant) {
     if ((tab === 'info' || tab === 'wallet') && sheet && sheet.id) PG.mark(tab === 'info' ? 3 : 1);   // פרטים ויתרה הם דפים בפייג'ר
@@ -3119,7 +3119,7 @@
       return;
     }
     const p = partOf(pid), pr = p && channelOf(p);
-    /* עמלה לדרך הגעה: על התשלום הראשון של המשתתף (הפקדה או תשלום ישיר). דרך ההגעה גם כשהיא נגזרת מהקוד בקישור, ולא רק כשנבחרה ידנית */
+    /* עמלה לשיווק ממומן: על התשלום הראשון של המשתתף (הפקדה או תשלום ישיר). דרך ההגעה גם כשהיא נגזרת מהקוד בקישור, ולא רק כשנבחרה ידנית */
     const isFirst = !state.payments.some((x) => x.participant_id === pid && (x.kind === 'deposit' || (x.kind === 'payment' && !x.from_credit && x.meeting_id)));
     const payCm = pr && (isFirst || commOnEvery(pr)), cm = payCm ? calcCommission(pr, amt) : null, method = f.pay_depm.value, mnote = method === 'other' ? f.pay_depn.value.trim().slice(0, 60) : '';
     const pk = parseInt(f.pay_pkg.value, 10), pkgMeta = pk >= 2 ? { pkg_n: pk } : null;
@@ -3167,7 +3167,7 @@
     const run = async (kind) => {
       const mid = sel.value, alloc = allocatedOf(pid, mid), amt = Math.min(parseFloat(pForm.pay_zk.value) || 0, alloc);
       if (!(amt > 0)) { pForm.pay_zk.focus(); return; }
-      const l = linkOf(pid, mid), full = amt >= alloc;   // עמלת דרך הגעה מתבטלת רק בזיכוי מלא
+      const l = linkOf(pid, mid), full = amt >= alloc;   // עמלת שיווק ממומן מתבטלת רק בזיכוי מלא
       try {
         await addPayRecord(pid, mid, kind, amt, full && l ? l.promoter_id : null, full && l ? l.commission : null);
         toast(kind === 'credit' ? 'זוכו ₪' + nfm(amt) + ' ליתרה' : 'הוחזרו ₪' + nfm(amt) + ' למשתתף');
@@ -3179,13 +3179,13 @@
   });
   /* החזרת כסף מהיתרה (רשומת החזר מהיתרה) */
   $('#walRefund').addEventListener('click', openRefundPop);
-  /* דרך הגעה הוא ברמת המשתתף: אייקון בכותרת (מואר כשיש דרך הגעה) פותח בחירת דרך הגעה */
+  /* שיווק ממומן הוא ברמת המשתתף: אייקון בכותרת (מואר כשיש שיווק ממומן) פותח בחירת שיווק ממומן */
   let promoFromPay = null;
   function afterPromoPick() {
     if (promoFromPay) { const c = promoFromPay; promoFromPay = null; viewStack = ['main']; payCtx = { pid: c.pid, mid: c.mid }; openPayView(c.pid, c.mid, { keep: true, amount: c.amount }); }
     else toMain();
   }
-  /* "פייסבוק" הוא עוד דרך הגעה בלי עמלות: מסמן את המשתתף כממומן (source=site-ad) ומנקה דרך הגעה; בחירה אחרת מוציאה מהממומן */
+  /* "פייסבוק" הוא עוד שיווק ממומן בלי עמלות: מסמן את המשתתף כממומן (source=site-ad) ומנקה שיווק ממומן; בחירה אחרת מוציאה מהממומן */
   async function setParticipantPromoter(id) {
     const p = state.participants.find((x) => x.id === (sheet && sheet.id)); if (!p) return;
     const prev = { promoter_id: p.promoter_id || null, source: p.source, source_code: p.source_code || null };
@@ -3418,25 +3418,25 @@
     if (!p) { h.textContent = 'משתתף חדש'; return; }
     const age = shownAge(p);
     const o = originOf(p, sheet && sheet.hl), cls = o ? ' ' + o.kind : '';   // צבע התגית לפי דרך ההגעה (צבע שנבחר בהגדרות)
-    const src = o ? (o.kind === 'pr' ? ' · דרך הגעה: ' : ' · פרסום: ') + o.name : '';
+    const src = o ? (o.kind === 'pr' ? ' · שיווק ממומן: ' : ' · פרסום: ') + o.name : '';
     h.title = src.replace(' · ', '');
     h.innerHTML = (age != null || p.gender ? '<span class="tchip' + cls + '"' + originAttr(p) + '><bdi dir="rtl">' + (age != null ? age : '') + (age != null ? ' ' : '') + '<b>' + (p.gender ? icon(p.gender === 'male' ? 'male' : 'female', 'i16') : '<span class="ic i16 ph" aria-hidden="true"></span>') + '</b>' + '</bdi></span>' : '') + '<span class="tname' + nameCls(p) + '" dir="rtl"><bdi>' + esc(p.name) + '</bdi></span>';
     /* סמל המצב (מחובר לחשבון, חסום, מחוק) בטאב הפרטים */
     { const mk = stMark(p), tm = $('#pTabMark'); tm.innerHTML = mk ? icon(mk.k, 'i14') : ''; tm.className = 'ptm' + (mk && mk.red ? ' red' : ''); tm.title = mk ? mk.t : ''; }
     { const ca = $('#pCall'), tl = telLink(p.phone); ca.hidden = !(pTab === 'main' && tl); if (tl) ca.href = tl; }   // הטלפון השתנה: החיוג מתעדכן
   }
-  /* בחירת דרך הגעה במשתתף (לשונית הפרטים): ללא / פרסום בפייסבוק (בלי עמלה) / דרכי הגעה / דרך הגעה חדשה */
+  /* בחירת שיווק ממומן במשתתף (לשונית הפרטים): ללא / פרסום בפייסבוק (בלי עמלה) / שיווק ממומן / שיווק ממומן חדש */
   function fillPromoSel(p) {
     const sel = $('#pPromoSel'); if (!sel) return;
-    sel.innerHTML = '<option value="">ללא</option>' + state.promoters.map((x) => '<option value="' + x.id + '">' + esc(x.name) + '</option>').join('') + '<option value="__new">+ דרך הגעה חדשה</option>';
+    sel.innerHTML = '<option value="">ללא</option>' + state.promoters.map((x) => '<option value="' + x.id + '">' + esc(x.name) + '</option>').join('') + '<option value="__new">+ שיווק ממומן חדש</option>';
     sel.value = p ? ((channelOf(p) || {}).id || '') : (sheet && sheet.promoSel) || '';
     tintPromoSel();
   }
-  /* שדה המקור בצבע של דרך ההגעה שנבחרה (כמו תגית הגיל): רקע וטקסט מהפלטה; בלי דרך הגעה או בלי צבע: שדה רגיל */
+  /* שדה המקור בצבע של דרך ההגעה שנבחרה (כמו תגית הגיל): רקע וטקסט מהפלטה; בלי שיווק ממומן או בלי צבע: שדה רגיל */
   function tintPromoSel() {
     const sel = $('#pPromoSel'); if (!sel) return;
     const o = state.promoters.find((x) => x.id === sel.value), c = o && o.color ? (PALETTE[o.color] || null) : null;
-    sel.style.color = c ? c[1] : ''; sel.style.fontWeight = c ? '700' : '';   // דרך הגעה: בלי רקע, רק הטקסט בצבע שלה
+    sel.style.color = c ? c[1] : ''; sel.style.fontWeight = c ? '700' : '';   // שיווק ממומן: בלי רקע, רק הטקסט בצבע שלה
   }
   /* דסקטופ רחב (31.10.26): רוחב הרשימה ניתן לשינוי בגרירת הקו שבינה לבין הכרטיס (#splitHandle), בחצים במקלדת, ולחיצה כפולה מחזירה לברירת המחדל; נשמר בדפדפן הזה */
   (function () {
@@ -3835,7 +3835,7 @@
     inp.dtPaint = paint; paint();
     return inp;
   }
-  document.querySelectorAll('.field input[type="date"], .field input[type="time"]').forEach(dtField);   // השדות שכבר בדף (טופס הכספים, תשלום לדרך הגעה)
+  document.querySelectorAll('.field input[type="date"], .field input[type="time"]').forEach(dtField);   // השדות שכבר בדף (טופס הכספים, תשלום לשיווק ממומן)
 
   /* ---------- פרטי מפגש: אלמנט אחד לעריכת מפגש ולפרטי ברירת המחדל של סוג מפגש (31.10.26) ----------
      סדר (בלי כותרות סעיפים): שם, תאריך ושעה, עיר ומיקום, הוראות הגעה מרובות שורות, תבניות הודעה, כמות משתתפים, מחירים, תמונה.
@@ -4151,7 +4151,7 @@
     const chip = (kind, val, label, n, col) => { const on = payKeys(state[FK[kind]]).includes(val), pc = PALETTE[col || DEFCOL[kind]]; return '<button type="button" class="mc' + (n || on ? '' : ' zero') + '"' + (pc ? ' data-sc="1" style="--sbg:' + pc[0] + ';--sfg:' + pc[1] + '"' : '') + ' data-mk="' + kind + '" data-mv="' + esc(val) + '" aria-pressed="' + on + '">' + (kind === 'age' ? '<bdi dir="ltr">' + esc(label) + '</bdi>' : esc(label)) + ' <small>' + n + '</small></button>'; };
     return [   // עמודות הגריד: כותרת ותוויות
       { t: 'עדכון אחרון', items: UPD_B.map((b) => chip('upd', b[0], b[1], cnt((p) => updWithin(p.id, b[2])))) },
-      { t: 'דרך הגעה', items: [chip('src', '__none', 'ללא דרך הגעה', cnt((p) => !channelAt(p, state.filter)))].concat(state.promoters.map((x) => chip('src', x.id, x.name, cnt((p) => (channelAt(p, state.filter) || {}).id === x.id), x.color || 'red'))) },
+      { t: 'שיווק ממומן', items: [chip('src', '__none', 'ללא שיווק ממומן', cnt((p) => !channelAt(p, state.filter)))].concat(state.promoters.map((x) => chip('src', x.id, x.name, cnt((p) => (channelAt(p, state.filter) || {}).id === x.id), x.color || 'red'))) },
       { t: 'גיל', items: AGE_B.map((b) => chip('age', b[0], b[1], cnt((p) => { const a = shownAge(p); return a != null && a >= b[2] && a <= b[3]; }))) },
       { t: 'אזור אישי', items: [['yes', 'רשומים'], ['no', 'לא רשומים'], ['blocked', 'חסומים']].map((o) => chip('login', o[0], o[1], cnt((p) => loginOf(p) === o[0]))) },
     ];
@@ -4584,7 +4584,7 @@
   });
   /* ניהול התגיות בתוך פופאפ ההגדרות */
   /* stType = סוג המפגש שהתגיות וההודעה שלו נערכים; tyId = הסוג שנפתח לעריכה מתפריט המפגשים */
-  let setView = 'main', stType = null, tyId = null, setRoot = 'main';   // setRoot: המסך שהפופאפ נפתח עליו (החשבון שלי, או דרכי הגעה / דרכי תשלום / תגיות מהתפריט הראשי)
+  let setView = 'main', stType = null, tyId = null, setRoot = 'main';   // setRoot: המסך שהפופאפ נפתח עליו (החשבון שלי, או שיווק ממומן / דרכי תשלום / תגיות מהתפריט הראשי)
   const setIsRoot = (v) => v === setRoot || v === 'main' || v === 'tydet';   // עריכת סוג מפגש היא מסך ראשי (נפתח ישר על הטופס): אין לאן לחזור
   function openSetRoot(v) {
     setRoot = v;
@@ -4596,7 +4596,7 @@
     setView = v; if (v !== 'st') stDraft = null;
     if (v !== 'src') dropSrcDraft();
     $('#setMain').hidden = v !== 'main'; $('#setTyDet').hidden = v !== 'tydet'; $('#setSt').hidden = v !== 'st'; $('#setDel').hidden = v !== 'del'; $('#setSrc').hidden = v !== 'src'; $('#setPm').hidden = v !== 'pm'; $('#setEm').hidden = v !== 'em'; $('#setBack').hidden = setIsRoot(v);   // המסך שהפופאפ נפתח עליו, וסוג חדש (מסך הפרטים הוא הראשי): אין לאן לחזור
-    $('#setTitle').textContent = v === 'tydet' ? (tyId ? 'עריכת סוג מפגש' : 'סוג מפגש חדש') : v === 'st' ? ((typeById(stType) || typeById(firstTypeId()) || {}).name || 'תגיות') : v === 'del' ? (setRoot === 'src' ? 'מחיקת דרך הגעה' : 'מחיקת תגית') : v === 'src' ? 'דרכי הגעה' : v === 'pm' ? 'דרכי תשלום' : v === 'em' ? 'הודעה לפני המפגש' : 'החשבון שלי';
+    $('#setTitle').textContent = v === 'tydet' ? (tyId ? 'עריכת סוג מפגש' : 'סוג מפגש חדש') : v === 'st' ? ((typeById(stType) || typeById(firstTypeId()) || {}).name || 'תגיות') : v === 'del' ? (setRoot === 'src' ? 'מחיקת שיווק ממומן' : 'מחיקת תגית') : v === 'src' ? 'שיווק ממומן' : v === 'pm' ? 'דרכי תשלום' : v === 'em' ? 'הודעה לפני המפגש' : 'החשבון שלי';
     if (v === 'src') renderSources();
     if (v === 'pm') renderPm();
     if (v === 'tydet') renderTyDet();
@@ -4631,10 +4631,10 @@
   }
   $('#setBack').addEventListener('click', () => showSetView(setView === 'del' ? (setRoot === 'src' ? 'src' : 'st') : (tyId && setView === 'em') ? 'tydet' : setRoot));   // מחיקת תגית חוזרת לתגיות, והודעה לפני המפגש לעריכת הסוג
   /* הגדרות תשלומים: מדרגות מחיר לפי ימים שנותרו עד המפגש */
-  /* דרכי הגעה בהגדרות: ערוצי פרסום ממומן (שם, צבע, קוד) ודרכי הגעה (שם, צבע, עמלה), בעיצוב דומה לתגיות */
+  /* שיווק ממומן בהגדרות: ערוצי פרסום ממומן (שם, צבע, קוד) ושיווק ממומן (שם, צבע, עמלה), בעיצוב דומה לתגיות */
   const colDot = (c, who) => '<button type="button" class="swcur" data-who="' + who + '" data-c="' + c + '" aria-haspopup="menu" aria-label="צבע" title="שינוי צבע" style="background:' + (PALETTE[c] || PALETTE.sky)[0] + '"></button>';
   const nameStyle = (c) => 'color:' + (PALETTE[c] || PALETTE.sky)[1];   // שם דרך ההגעה: בלי רקע, הצבע בטקסט
-  /* כרטיס דרך הגעה: הרכיב היחיד, ברשימה (w = 'pr:<מזהה>') וביצירה (w = 'new': בלי מחיקה, העתקת קישור והתחשבנות, כי עוד לא קיימת) */
+  /* כרטיס שיווק ממומן: הרכיב היחיד, ברשימה (w = 'pr:<מזהה>') וביצירה (w = 'new': בלי מחיקה, העתקת קישור והתחשבנות, כי עוד לא קיימת) */
   function srcCard(x, w) {
     const isNew = w === 'new', ct = !!x.cost_total, fp = !ct && !!x.cost_from_payment;
     const bal = isNew ? 0 : ledgerOf(x.id).balance;
@@ -4650,7 +4650,7 @@
         (isNew ? '' : '<div class="srcfld">' + (!ct && bal > 0 ? '<small>לתשלום</small>' : '') + '<button type="button" class="prsettle" data-settle="' + x.id + '" aria-label="' + esc('התחשבנות עם ' + x.name + ': ' + (ct ? 'תשלומים' : bal > 0 ? nfx(bal) + ' שקלים לתשלום' : 'מסולק')) + '"><b' + (ct ? '' : ' class="' + (bal > 0 ? 'owe' : 'ok') + '"') + '>' + (ct ? 'תשלומים' : bal > 0 ? '₪' + nfx(bal) : 'מסולק') + '</b>' + icon('next', 'i14') + '</button></div>') +
       '</div></div>';
   }
-  function renderSources() { $('#srcPrList').innerHTML = state.promoters.map((x) => srcCard(x, 'pr:' + x.id)).join('') || '<p class="mnone">אין דרכי הגעה</p>'; }
+  function renderSources() { $('#srcPrList').innerHTML = state.promoters.map((x) => srcCard(x, 'pr:' + x.id)).join('') || '<p class="mnone">אין שיווק ממומן</p>'; }
   /* מסך דרכי ההגעה הפתוח מתעדכן אחרי תשלום ובזמן אמת, אבל לא באמצע הקלדה בכרטיס */
   function refreshSources() { if (!$('#setDlg').open || setView !== 'src') return; const ae = document.activeElement; if (ae && $('#srcPrList').contains(ae) && ae.matches('input, select')) return; renderSources(); }
   /* דרכי תשלום: רשימה שהמנהל מגדיר (שם לכל דרך); מוצגת כצ'יפים בקבלת תשלום */
@@ -4731,14 +4731,14 @@
     try { const [r] = await api(T.pm, { method: 'POST', body: row, prefer: 'return=representation' }); state.payMethods.push(r || row); renderPm(); const inp = document.querySelector('#pmList [data-k="' + key + '"] .pmname'); if (inp) { inp.focus(); inp.select(); } }
     catch (err) { fail(err); }
   });
-  /* מחיקת דרך הגעה: מסך בתוך הפופאפ. יש מקושרים: בוחרים לאן להעביר אותם, והכול עובר ונמחק בטרנזקציה אחת (harpatka_promoter_replace) */
+  /* מחיקת שיווק ממומן: מסך בתוך הפופאפ. יש מקושרים: בוחרים לאן להעביר אותם, והכול עובר ונמחק בטרנזקציה אחת (harpatka_promoter_replace) */
   function askSrcDelete(id) {
     const x = promoterOf(id); if (!x) return;
     const ps = state.participants.filter((q) => q.promoter_id === x.id || (x.code && q.source_code === x.code) || (x.code === 'p' && q.source === 'site-ad' && !q.source_code && !q.promoter_id));
     const money = state.payments.some((q) => q.promoter_id === x.id) || state.att.some((q) => q.promoter_id === x.id || q.source_promoter_id === x.id) || state.promoPays.some((q) => q.promoter_id === x.id);
     const others = state.promoters.filter((o) => o.id !== x.id), nm = '<b>"' + esc(x.name) + '"</b>', who = ps.length === 1 ? 'משתתף אחד שקשור' : '<b>' + ps.length + '</b> משתתפים שקשורים';
     const linked = ps.length ? 'יש ' + who + ' לדרך ההגעה ' + nm + '.' : 'יש תשלומים שקשורים לדרך ההגעה ' + nm + '.';
-    $('#setDelText').innerHTML = !ps.length && !money ? 'למחוק את דרך ההגעה ' + nm + '?' : !others.length ? linked + ' זו דרך ההגעה היחידה, ולכן צריך קודם להוסיף דרך הגעה אחרת' : linked + ' לאיזו דרך הגעה להעביר אותם?';
+    $('#setDelText').innerHTML = !ps.length && !money ? 'למחוק את דרך ההגעה ' + nm + '?' : !others.length ? linked + ' זו דרך ההגעה היחידה, ולכן צריך קודם להוסיף שיווק ממומן אחרת' : linked + ' לאיזה שיווק ממומן להעביר אותם?';
     $('#setDelOpts').innerHTML = !ps.length && !money ? '<button type="button" class="btn danger" data-to="">מחיקה</button>' : others.map((o) => '<button type="button" class="sopt" data-to="' + o.id + '" style="' + nameStyle(o.color || 'red') + '">' + esc(o.name) + '</button>').join('');
     $('#setDelOpts').onclick = async (ev) => {
       const b = ev.target.closest('[data-to]'); if (!b || b.disabled) return; b.disabled = true;
