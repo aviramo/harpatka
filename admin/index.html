@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104ol" />
+  <link rel="stylesheet" href="admin.css?v=20261104om" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -3316,8 +3316,11 @@
       this.animate([{ transform: 'translateY(' + y + 'px)' }, { transform: 'none' }], { duration: 340, easing: 'cubic-bezier(.22,.8,.2,1)' });
       backdrop(this, 0, 1, 340);
     };
+    /* סגירת פופאפ סוגרת גם את המקלדת (virtualKeyboard.hide, כי blur לבדו לא תמיד סוגר מקלדת שנפתחה בפקודה) */
+    const hideKb = () => { try { const a = document.activeElement; if (!a || a === document.body || !a.matches || !a.matches('input, textarea, select, [contenteditable]')) return; const vk = navigator.virtualKeyboard, can = vk && vk.hide && 'virtualKeyboardPolicy' in a; if (can) { a.virtualKeyboardPolicy = 'manual'; vk.hide(); } a.blur(); if (can) a.virtualKeyboardPolicy = ''; } catch (e) {} };
     proto.close = function (rv, from) {
       if (!this.open || this._closing) return;
+      hideKb();
       navClose(this);
       if (this._side) {   // כרטיס בצד הרשימה: נסגר מיד, והאזור חוזר להודעה "בחרו משתתף"
         this._side = false; this.classList.remove('side'); this.getAnimations().forEach((a) => a.cancel());

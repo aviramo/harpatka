@@ -156,7 +156,7 @@
     if (open && modalHist) { modalHist = false; closeModal(open, true); }
   });
   function closeModal(m, fromPop){
-    try { const a = document.activeElement; if (a && m.contains(a) && a.matches('input, select, textarea')) PersonForm.blurKeyboard(a); } catch (e) {}
+    try { const a = document.activeElement; if (a && a.matches && a.matches('input, select, textarea')) PersonForm.blurKeyboard(a); else if (navigator.virtualKeyboard && navigator.virtualKeyboard.hide) navigator.virtualKeyboard.hide(); } catch (e) {}   // סגירת פופאפ סוגרת גם את המקלדת (גם כשהפוקוס כבר לא בשדה)
     if (m.id === 'contactModal') {
       if (modalHist && !fromPop) { skipPop = true; try { history.back(); } catch (e) { skipPop = false; modalHist = false; regUrl(false); } }
       else regUrl(false);
