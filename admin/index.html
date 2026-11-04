@@ -933,7 +933,7 @@
   const sortMeetings = () => state.meetings.sort(meetDesc);   // מהחדש לישן
 
   const linksOf = (pid) => state.att.filter((a) => a.participant_id === pid);
-  const meetCountOf = (p) => { const ls = linksOf(p.id); return state.mtype ? ls.filter((l) => { const m = meetOf(l.meeting_id); return m && typeIdOf(m) === state.mtype; }).length : ls.length; };   // בסוג מפגש: רק המפגשים של הסוג
+  const meetCountOf = (p) => { const ls = linksOf(p.id).filter((l) => l.attended); return state.mtype ? ls.filter((l) => { const m = meetOf(l.meeting_id); return m && typeIdOf(m) === state.mtype; }).length : ls.length; };   // רק מפגשים שהגיע אליהם; בסוג מפגש: רק של הסוג
   const linkOf = (pid, mid) => state.att.find((a) => a.participant_id === pid && a.meeting_id === mid);
 
   let toastTimer;
@@ -1581,7 +1581,7 @@
         if (noPayOf(p, lk)) payIc = '<span class="payic free" title="לא לתשלום">₪</span>';
         else payIc = reportedOf(p.id, state.filter) ? '<span class="payic wait" title="דווח' + reportedAmt(p.id, state.filter) + (al > 0 ? ' (שולם ₪' + nfm(al) + ')' : '') + ': המשתתף דיווח ששילם, ממתין לאימות">₪</span>' : laterOf(p.id, state.filter) ? '<span class="payic later" title="תשלום בהמשך, משוריין למפגש' + (al > 0 ? ' (שולם ₪' + nfm(al) + ', נשאר ₪' + nfm(dueOf(p.id, state.filter)) + ')' : '') + '">₪</span>' : dueOf(p.id, state.filter) > 0 ? '<span class="payic" title="שולם ₪' + nfm(al) + ', נשאר לשלם ₪' + nfm(dueOf(p.id, state.filter)) + '">₪</span>' : al <= 0 ? '<span class="payic" title="לתשלום">₪</span>' : '<span class="payic ok" title="שולם ₪' + nfm(al) + '">₪</span>'; }   // אין "שולם חלקית": יש כסף שהוקצה למפגש = שולם   // סמל תשלום (לפי רשומות התשלום, לא לפי תגית) מימין לתגית
       let mcntHtml = '';
-      if (!state.filter) { const n = meetCountOf(p); if (n) mcntHtml = '<span class="mcnt" title="משויך ל' + (n === 1 ? 'מפגש אחד' : '-' + n + ' מפגשים') + '">' + icon('cal', 'i14') + n + '</span>'; }   // בלי שיוך: התא ריק, והעמודה נשמרת
+      if (!state.filter) { const n = meetCountOf(p); if (n) mcntHtml = '<span class="mcnt" title="הגיע ל' + (n === 1 ? 'מפגש אחד' : '-' + n + ' מפגשים') + '">' + icon('cal', 'i14') + n + '</span>'; }   // בלי שיוך: התא ריק, והעמודה נשמרת
       const evc = evCircle(p);
       return '<li class="row">' +
         (attM ? attTag(p) : wa ? UI.tag(wsel ? (wsent ? icon('check') : PIN_ICON) : WA_ICON, 'ico rowwa' + (wsent ? ' sent' : ''), Object.assign({ href: wa }, /^https?:/.test(wa) ? { target: '_blank', rel: 'noopener' } : {}, wsel ? { 'data-wsend': p.id } : {}, { 'aria-label': 'וואטסאפ ל' + esc(p.name) + (wsent ? ', ההודעה נשלחה' : ''), title: wsel ? esc(wsent ? 'נשלחה ההודעה "' + wsel.name + '" · ' + fmtDT(wsent.sent_at) + ' · לחיצה לביטול הסימון' : 'וואטסאפ עם ההודעה: ' + wsel.name) : 'וואטסאפ' }), 'a') : UI.tag(WA_ICON, 'ico rowwa nophone', { role: 'img', 'aria-label': 'אין טלפון', title: 'אין טלפון' })) +
