@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104jx" />
+  <link rel="stylesheet" href="admin.css?v=20261104jy" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -3864,8 +3864,8 @@
         '<label class="field"><span>עיר</span><input placeholder=" " id="' + I('City') + '" name="city" type="text" maxlength="40" autocomplete="off" /></label>' +
         '<label class="field"><span>מיקום</span><input placeholder=" " id="' + I('Place') + '" name="place" type="text" maxlength="60" autocomplete="off" /></label></div>' +
       '<div class="field"><span>הוראות הגעה</span><textarea placeholder=" " id="' + I('Dirs') + '" name="directions" rows="1"></textarea></div>' +
-      '<div class="dmcur" id="' + I('DCur') + '" hidden><div class="emvars"><button type="button" id="' + I('DTag') + '" data-v=""></button></div><a id="' + I('DLink') + '" target="_blank" rel="noopener">פתיחה</a><button type="button" id="' + I('DDel') + '">הסרה</button></div>' +
-      '<button type="button" class="mtpladd dmadd" id="' + I('DAttach') + '">+ מדיה</button><input type="file" id="' + I('DFile') + '" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" hidden />' +
+      '<div class="dmcur" id="' + I('DCur') + '"><div class="emvars" id="' + I('DTagW') + '" hidden><button type="button" id="' + I('DTag') + '" data-v=""></button></div><a id="' + I('DLink') + '" target="_blank" rel="noopener" hidden>פתיחה</a><button type="button" id="' + I('DDel') + '" hidden>הסרה</button>' +
+      '<button type="button" class="mtpladd dmadd" id="' + I('DAttach') + '">+ מדיה</button></div><input type="file" id="' + I('DFile') + '" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" hidden />' +
       (isType ? '' : '<div class="mtinh2" id="' + I('TplInh') + '" hidden></div>') + '<div class="mtlist" id="' + I('Tpl') + '"></div>' +
       '<button type="button" class="mtpladd" id="' + I('TplAdd') + '">+ תבנית הודעה</button>' +
       '<div class="field"><span>מחירים</span>' +
@@ -3880,7 +3880,7 @@
     F.q = q;
     tokenField(q('Dirs'), DIR_TOK); keepCaret(q('DCur'));
     /* תמונה או סרטון בהוראות ההגעה: הקובץ עולה לדלי meeting-media והקישור נכנס לסוף ההוראות, אחרי "לפרטים נוספים:". גם בסוג מפגש וגם במפגש; במפגש שיורש את ההוראות מהסוג (השדה ריק) הצירוף מתחיל מההוראות של הסוג ונהיה שלו */
-    F.paintMedia = () => { const cur = dmOf(q('Dirs').value); if (cur) F.dMedia = cur; const u = F.dMedia; q('DCur').hidden = !u; if (u) { q('DLink').href = u; q('DTag').dataset.v = u; q('DTag').textContent = DIR_TOK.label(u); } };
+    F.paintMedia = () => { const cur = dmOf(q('Dirs').value); if (cur) F.dMedia = cur; const u = F.dMedia; q('DTagW').hidden = q('DLink').hidden = q('DDel').hidden = !u; if (!q('DAttach').disabled) q('DAttach').textContent = u ? 'החלפה' : '+ מדיה'; if (u) { q('DLink').href = u; q('DTag').dataset.v = u; q('DTag').textContent = DIR_TOK.label(u); } };
     /* תבניות הודעה: בטופס רק רשימת שמות; לחיצה על שם, או "+ תבנית הודעה", פותחת את פופאפ עריכת ההודעה (openTplPop), אותו פופאפ בכל המקומות.
        במפגש או סוג קיימים הפופאפ שומר ישירות; בחדשים השורות מחכות כאן (F.tpl.rows) ונשמרות כשיוצרים אותם */
     const mfBox = q('MF'), tplBox = q('Tpl');
@@ -3989,7 +3989,7 @@
         if (next.length > 800) { toast('ההוראות ארוכות מדי עם הקובץ, צריך לקצר את הטקסט'); }
         else { F.dMedia = url; q('Dirs').value = next; F.paintMedia(); F.changed(); }
       } catch (err) { toast(err.message || 'העלאת הקובץ נכשלה'); }
-      btn.disabled = false; btn.textContent = t0;
+      btn.disabled = false; btn.textContent = t0; F.paintMedia();
     });
     q('ImgPick').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); q('ImgFile').click(); } });
     q('ImgFile').addEventListener('change', async (e) => {
