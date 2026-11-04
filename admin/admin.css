@@ -967,7 +967,7 @@ html.is-loading .hgrp { visibility: hidden; }
 #listTags .hsearch input { display: block; border: 0; background: transparent; font-size: 16px; color: var(--text);}
 #listTags .hsearch input:focus { outline: none; }
 #listTags .hsearch input::placeholder { color: var(--text-3); text-overflow: ellipsis; }
-#listTags .hsearch input:placeholder-shown:not(:focus) { padding-left: 9px; text-overflow: ellipsis; }   /* כשהשדה ריק ולא בפוקוס אין איקס, ולכן לא שומרים לו מקום: הטקסט "חיפוש או הוספת משתתף" לא נחתך בשדה צר (31.10.26) */
+#listTags .hsearch input:placeholder-shown:not(:focus) { text-overflow: ellipsis; }   /* כשהשדה ריק ולא בפוקוס אין איקס, ולכן לא שומרים לו מקום: הטקסט "חיפוש או הוספת משתתף" לא נחתך בשדה צר (31.10.26) */
 
 /* ---------- שורת הסינון והמיון: שתי תגיות (סינון, מיון); נקודה = יש סינון שלא רואים בשורה / מיון שאינו ברירת המחדל ---------- */
 .vbar { position: relative; display: flex; align-items: center; gap: 8px; padding: 0 var(--gut); }
@@ -1444,7 +1444,7 @@ html.is-loading .hsearch { visibility: hidden; }
 .chiprow .stc[aria-pressed="true"] { background: var(--surface-2); color: var(--text); border-color: var(--text); }
 .chiprow .stc[data-cr="res"][aria-pressed="true"] { background: var(--green-bg); color: var(--green); border-color: var(--green); }
 .chiprow .stc.neg[aria-pressed="true"] { background: var(--red-bg); color: var(--red); border-color: var(--red); }
-.chiprow .stc[data-cr="male"][aria-pressed="true"], .chiprow .stc[data-cr="female"][aria-pressed="true"] { background: var(--sky-bg); color: var(--sky); border-color: var(--sky); }
+.chiprow .stc[data-cr="male"][aria-pressed="true"], .chiprow .stc[data-cr="female"][aria-pressed="true"] { background: var(--surface-2); color: var(--text); border-color: var(--text); }   /* גברים ונשים מסומנים: נשארים באפור (מסגרת כהה), לא כחול */
 .chiprow .stc[data-sc][aria-pressed="true"] { background: var(--sbg); color: var(--sfg); border-color: var(--sfg); }
 .chiprow .stc[data-cr="res"] { background: var(--green-bg); color: var(--green); }   /* משוריינים: תמיד בירוק; מסומן: גם מסגרת ירוקה */
 #fMenu .fopt .hfilt { position: relative; }
@@ -1479,7 +1479,7 @@ html.is-loading .hsearch { visibility: hidden; }
 .mlist .mrow.hl .mdt, .mlist .mrow.hl .mnm { font-weight: 800; color: var(--text); }   /* המפגש הנבחר: התאריך והשם מודגשים */
 .row .mcnt2 { display: none; }
 /* רשימת המשתתפים בגריד של כרטיסים: כמה שנכנס ברוחב ומילוי הרוחב (בטלפון שתי עמודות), כמו המפגשים בכרטיס המשתתף */
-  .wrap > .list { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 8px; padding: 8px var(--gut) var(--safe-b); align-items: stretch; }
+  .wrap > .list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; padding: 8px var(--gut) var(--safe-b); align-items: stretch; }
   .wrap > .list .group, .wrap > .list .empty { grid-column: 1 / -1; }
   .wrap > .list > .row { padding: 8px; border: 1px solid var(--line); border-radius: var(--r); background: transparent; }   /* ריפוד קבוע בכל הצדדים */
   .wrap > .list .row .main { display: flex; flex-wrap: wrap; align-items: center; align-content: flex-start; justify-content: flex-start; gap: 4px; min-height: 0; padding: 0; }   /* שורה ראשונה: מגדר, גיל ושם. שורה שנייה: כל השאר, מיושר לימין */
@@ -1498,3 +1498,79 @@ html.is-loading .hsearch { visibility: hidden; }
 .wrap > .list .row .main::before { content: ""; order: 0; flex: 0 0 100%; height: 0; }   /* שבירת שורה: מגדר, גיל ושם בשורה הראשונה, כל השאר בשנייה */
 .wrap > .list .row .main .nm .name, .wrap > .list .row .main .age { margin: 0; }
 .wrap > .list .row .main .sidewrap { flex-direction: row-reverse; gap: 4px; }   /* בכרטיס: קודם התשלום (מימין) ומשמאלו התגית */
+.wrap > .list { background: var(--surface); }   /* מתחת לקו: רקע אפור בהיר, והכרטיסים לבנים ובולטים */
+.wrap > .list > .row { background: var(--bg); }
+.wrap > .list > .row.last, .wrap > .list > .row.sel { background: var(--surface-2); }
+.chiprow .stc.pt-ok[aria-pressed="true"] { background: var(--green-bg); color: var(--green); border-color: var(--green); }   /* צ'יף תשלומים: הרקע בצבע הערך שנבחר */
+.chiprow .stc.pt-no[aria-pressed="true"] { background: var(--red-bg); color: var(--red); border-color: var(--red); }
+.chiprow .stc.pt-wait[aria-pressed="true"] { background: var(--yellow-bg); color: var(--yellow); border-color: var(--yellow); }
+.chiprow .stc.pt-later[aria-pressed="true"] { background: var(--sky-bg); color: var(--sky); border-color: var(--sky); }
+.chiprow .stc.pt-free[aria-pressed="true"] { background: var(--surface-2); color: var(--text-2); border-color: var(--text-2); }
+.wrap > .list { flex: 1 1 auto; }   /* הרקע האפור של הרשימה ממלא את המסך עד התחתית */
+.wrap > .list:has(~ .addbox:not(:empty)) { flex: 0 1 auto; }
+.wrap > .addbox:empty { display: none; }
+.wrap > .addbox:not(:empty) { flex: 1 1 auto; background: var(--surface); }
+.wrap > .list { align-content: start; }   /* הכרטיסים בגובה התוכן, לא נמתחים לגובה הרשימה */
+.wrap > .list .row .payic { width: auto; min-width: var(--ind); height: var(--tag); padding: 0 8px; font-size: 14px; font-weight: 600; white-space: nowrap; border-radius: var(--r); }   /* התשלום ככיתוב, כמו במפגשים בכרטיס המשתתף */
+.wrap > .list .row .payic.free::after { display: none; }
+.wrap > .list .row .payic.free { background: var(--surface-2); color: var(--text-2); }
+#pDlg .sheet { padding-bottom: 0; }   /* הרקע האפור של הפייג'ר עד תחתית הפופאפ, בלי פס לבן */
+#pPager { padding-bottom: 20px; }
+.wrap > .list > .row.last, .wrap > .list > .row.sel { background: var(--sky-bg); }   /* הכרטיס שנבחר: כחול בהיר */
+#pDlg .ppanel[data-panel="main"] { background: var(--surface); }   /* הרקע האפור עד תחתית הפופאפ, בלי פס לבן */
+#pDlg .ptabs { background: var(--bg); }
+.wafab { position: fixed; bottom: calc(var(--safe-b) + 8px); left: 50%; transform: translateX(-50%); z-index: 30; display: inline-flex; align-items: center; gap: 8px; max-width: calc(100vw - 32px); height: 44px; padding: 0 16px; border-radius: 22px; background: var(--text); color: #fff; font-size: 15px; font-weight: 700; box-shadow: var(--pop); white-space: nowrap; }   /* כפתור צף: מה שנבחר בתפריט הסימון, ולחיצה פותחת אותו לבחירה */
+.wafab span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.wafab svg { width: 18px; height: 18px; flex: none; }
+
+.wrap > .list { padding-bottom: calc(var(--safe-b) + 64px); }
+.wrap > .list .row .nm .name .nwrap { display: inline; white-space: normal; }   /* שם ארוך (גם באנגלית) יורד שורה ולא עולה על הוואטסאפ */
+.wrap > .list .row .nm .name { overflow: hidden; }
+.wrap > .list .row .main .nm .name { margin-inline-end: 32px; }   /* משאיר מקום לוואטסאפ שבפינה: שם ארוך יורד שורה ולא עולה עליו */
+.wrap > .addbox:not(:empty) { padding: 8px var(--gut); }   /* כפתור ההוספה ככרטיס, כמו כרטיסי המשתתפים */
+.wrap > .addbox .newbtn { min-height: 64px; padding: 12px; border: 1px solid var(--line); border-radius: var(--r); background: var(--bg); gap: 12px; font-size: 16px; font-weight: 700; justify-content: flex-start; }
+.wrap > .addbox .newbtn > .tg { flex: 0 0 32px; width: 32px; height: 32px; padding: 0; place-items: center; border-radius: 50%; background: var(--text); color: #fff; font-size: 20px; }
+.chiprow .stc.pt-wait[aria-pressed="true"] { background: var(--yellow-bg); color: var(--yellow); border-color: var(--yellow); }
+#listFS #listMore { order: 1; }   /* סינון מימין ומיון משמאלו */
+#listFS #sortBtnH { order: 2; }
+.mlist .mrow .mmoney { order: -1; }   /* בכרטיס המפגש: קודם התשלום (מימין) ומשמאלו התגית */
+.row .meta .age > bdi, .tchip > bdi { display: inline-flex; flex-direction: row-reverse; align-items: center; gap: 4px; }   /* המגדר מימין והגיל משמאלו */
+.sclear, .hsearch .sclear, #qClear { background: transparent; }   /* X הניקוי בלי רקע לבן (הוא כיסה את הקו שמתחת לשורה) */
+#listTags .hsearch input, #listTags .hsearch:focus-within input, #listTags .hsearch:has(input:not(:placeholder-shown)) input { text-align: center; padding-inline: 0; }   /* החיפוש במרכז, וגם הטקסט שמוקלד */
+#listTags .hsearch input::placeholder { text-align: center; }
+#fabBar { position: fixed; bottom: calc(var(--safe-b) + 8px); left: 50%; transform: translateX(-50%); z-index: 30; display: flex; align-items: center; gap: 8px; }   /* סינון, וואטסאפ ומיון: כפתורים צפים למטה */
+#fabBar .wafab { position: static; transform: none; bottom: auto; left: auto; }
+#fabBar #listFS { position: static; display: contents; margin: 0; }
+#fabBar #listMore { display: flex; order: -1; }
+#fabBar .wafab { order: 0; }
+#fabBar #sortBtnH { order: 1; }
+#fabBar #sortBtnH, #fabBar #listMore .hfilt { position: relative; width: 44px; height: 44px; min-width: 44px; padding: 0; border-radius: 50%; background: var(--bg); color: var(--text); box-shadow: var(--pop); border: 1px solid var(--line); }
+#fabBar #sortBtnH svg, #fabBar #listMore .hfilt svg { width: 20px; height: 20px; }
+html.is-loading #fabBar { display: none; }
+#fabBar .fdot { display: none; }   /* בלי נקודות הסימון על כפתורי הסינון והמיון */
+#fabBar #sortBtnH:has(.fdot), #fabBar #listMore .hfilt:has(.fdot) { background: var(--text); color: #fff; border-color: var(--text); }   /* סינון או מיון פעילים: הכפתור מתמלא בשחור והסמל לבן (במקום נקודה) */
+.wafab { background: var(--bg); color: var(--text); border: 1px solid var(--line); }   /* וואטסאפ (בלי בחירה): כפתור לבן, לא מסומן בצבע */
+.wafab.on { background: var(--text); color: #fff; border-color: var(--text); }   /* תבנית או הגיע / לא הגיע: מסומן בשחור */
+#fabBar #sortBtnH, #fabBar #listMore .hfilt, .wafab { background: var(--surface-2); border: 1px solid var(--text-3, var(--line-2)); box-shadow: 0 6px 18px rgba(22, 25, 29, .30); }   /* אפור עם מסגרת וצל חזק: בולט גם על כרטיסים לבנים */
+#fabBar #sortBtnH:has(.fdot), #fabBar #listMore .hfilt:has(.fdot), .wafab.on { background: var(--text); border-color: var(--text); }
+.wafab.on.f1 { background: var(--green-bg); color: var(--green); border-color: var(--green); }   /* סינון חיובי: ירוק */
+.wafab.on.f0 { background: var(--red-bg); color: var(--red); border-color: var(--red); }   /* סינון שלילי: אדום */
+.wrap > .list .row .main > .meta .sidewrap, .wrap > .list .row .main .sidewrap { flex: 0 1 auto; min-width: 0; max-width: 100%; }   /* תגית ארוכה לא חורגת מהכרטיס: מתקצרת עם שלוש נקודות */
+.wrap > .list .row .sidewrap .ptag { min-width: 0; max-width: 100%; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; line-height: var(--tag); }
+.wrap > .list .row .sidewrap .payic { flex: 0 0 auto; }
+.countline { flex: 0 0 auto; padding: 8px var(--gut) 0; background: var(--surface); color: var(--text-2); font-size: 13px; font-weight: 600; text-align: start; }   /* מספר המשתתפים המוצגים: מעל הכרטיסים, בצד ימין */
+.countline:empty { display: none; }
+
+/* כפתורים צפים בצד ולא במרכז, כרטיסים עם צל, ותוויות במלואן */
+#fabBar { left: 16px; transform: none; }
+.wrap > .list { padding-bottom: calc(var(--safe-b) + 72px); }
+.wrap > .list > .row .ptag, .wrap > .list > .row .payic, .wrap > .list > .row .ptag * { max-width: none; overflow: visible; text-overflow: clip; white-space: normal; height: auto; min-height: var(--tag); line-height: 1.25; text-align: center; }
+
+/* המונה נגלל עם הכרטיסים, והחלק הלבן העליון עם צל: הכרטיסים נעים מתחתיו */
+.countline { display: none !important; }
+.countli { grid-column: 1 / -1; list-style: none; padding: 0 2px; color: var(--text-2); font-size: 13px; font-weight: 600; }
+.wrap > .vbar { position: relative; z-index: 3; }
+
+/* תגית בכרטיס: טקסט מלא, יורד שורה כשצריך */
+.wrap > .list .row .main .sidewrap { flex-wrap: wrap; }
+.wrap > .list .row .main .sidewrap .ptag { overflow: visible; text-overflow: clip; white-space: normal; max-width: 100%; height: auto; min-height: var(--tag); line-height: 1.25; padding-block: 3px; text-align: center; }
