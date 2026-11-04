@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104kf" />
+  <link rel="stylesheet" href="admin.css?v=20261104kg" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -2597,7 +2597,6 @@
     if (state.filter) {
       const m = meetOf(state.filter); if (!m) return out;
       tplsOfType(typeIdOf(m)).forEach((x) => add(x.id, x.name, x.body, m, { own: 'type' }));
-      tplsOfMeeting(m.id).forEach((x) => add(x.id, x.name, x.body, m, { own: 'meeting' }));
     } else if (state.mtype) {   // סוג מפגש נבחר: רק תבניות הסוג. בתצוגת כל המשתתפים (בלי סוג ובלי מפגש) אין תבניות, רק וואטסאפ ריק
       const ty = typeById(state.mtype), cm = ty && tplCtxMeeting(ty.id);
       if (cm) tplsOfType(ty.id).forEach((x) => add(x.id, x.name, x.body, cm, { own: 'type' }));
@@ -3899,6 +3898,7 @@
     F.tpl.scope = () => F.tpl.ownerId ? (isType ? { type_id: F.tpl.ownerId } : { meeting_id: F.tpl.ownerId }) : null;
     F.tpl.list = () => F.tpl.ownerId ? (isType ? tplsOfType(F.tpl.ownerId) : tplsOfMeeting(F.tpl.ownerId)) : F.tpl.rows;
     F.tpl.render = () => {
+      if (!isType) { tplBox.innerHTML = ''; return; }   // אין הודעות למפגש עצמו, רק לסוג המפגש
       const l = F.tpl.list(); tplBox.innerHTML = l.length ? (isType ? '<small class="mtcap">הודעות מוכנות מראש</small>' : '') + '<div class="emvars">' + l.map((r, i) => '<button type="button" data-i="' + i + '">' + esc(r.name || 'תבנית חדשה') + '</button>').join('') + '</div>' : '';
     };
     F.paintTplInh = () => {   // במפגש: תבניות הסוג. אותה שורה כמו תבנית של המפגש, ולחיצה פותחת את פופאפ עריכת ההודעה
@@ -3908,6 +3908,7 @@
     };
     tplBox.addEventListener('click', (e) => { const b = e.target.closest('[data-i]'), r = b && F.tpl.list()[Number(b.dataset.i)]; if (!r) return; if (r.id) openTplPop(r.id); else openTplPop(null, { draft: F, row: r }); });
     if (q('TplInh')) q('TplInh').addEventListener('click', (e) => { const b = e.target.closest('[data-tplpop]'); if (b) openTplPop(b.dataset.tplpop); });
+    if (!isType) q('TplAdd').hidden = true;
     q('TplAdd').addEventListener('click', () => { const sc = F.tpl.scope(); if (sc) { openTplPop(null, { scope: sc }); return; } const row = { id: null, name: '', body: '' }; F.tpl.rows.push(row); F.tpl.render(); openTplPop(null, { draft: F, row }); });
     F.paintImg = () => {
       const t = ty(), inh = !!(t && F.img.inh), own = inh ? '' : (F.img.objUrl || F.img.url || '');
@@ -4267,7 +4268,7 @@
       const inM = !!(state.filter && curMeeting()), row = (k, label) => '<button type="button" class="wadd" data-wadd="' + k + '"><span class="wmi">' + icon('plus') + '<span class="wmn">' + esc(label) + '</span></span></button>';
       if (!inM && !state.mtype) return '';
       if (inM && waAddAsk) return '<div class="wcap">להוסיף את התבנית:</div>' + row('meeting', 'למפגש הזה') + row('type', 'לסוג המפגש');
-      return row(inM ? 'ask' : 'type', 'הוספת תבנית הודעה');
+      return row('type', 'הוספת תבנית הודעה');   // הודעות מוכנות רק לסוג המפגש
     }
   }
   function placeWa(btn) {
