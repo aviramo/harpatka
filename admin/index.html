@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104jp" />
+  <link rel="stylesheet" href="admin.css?v=20261104jq" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -34,8 +34,6 @@
         </div>
         <div class="hgrp">
         <button type="button" class="hicon nextm" id="nextMBtn" hidden><svg data-i="calnext"></svg></button>   <!-- קיצור דרך למפגש הקרוב, מימין לכפתור התפריט -->
-        <div id="listMore"></div>   <!-- סינון: מימין למיון -->
-        <button type="button" class="hicon" id="sortBtnH" aria-haspopup="menu" aria-expanded="false" aria-label="מיון הרשימה" title="מיון הרשימה"><svg data-i="sort"></svg></button>   <!-- מימין לכפתור התפריט -->
         <div class="hicons">
           <button type="button" class="hicon" id="menuBtn" aria-label="תפריט" title="תפריט" aria-haspopup="menu" aria-expanded="false"><svg data-i="grid"></svg><span class="bdbadge" id="menuBadge" hidden></span></button>
           <div class="hmenu" id="hMenu" role="menu" hidden>
@@ -68,7 +66,7 @@
           <input id="q" type="search" placeholder="חיפוש או הוספת משתתף" autocomplete="off" aria-label="חיפוש או הוספת משתתף" />
           <button type="button" class="sclear" id="qClear" aria-label="ניקוי החיפוש" tabindex="-1">×</button>
         </label>
-      <div class="lbend" id="listWa"></div><div class="lbend" id="listPay"></div><div class="lbend" id="listSent"></div><div class="lbend" id="listBal"></div>
+      <div class="lbfs" id="listFS"><button type="button" class="hicon" id="sortBtnH" aria-haspopup="menu" aria-expanded="false" aria-label="מיון הרשימה" title="מיון הרשימה"><svg data-i="sort"></svg></button><div id="listMore"></div></div><div class="lbend" id="listWa"></div><div class="lbend" id="listPay"></div><div class="lbend" id="listSent"></div><div class="lbend" id="listBal"></div>
     </div>
     <ul class="list" id="list"></ul>
     <div class="addbox" id="addBox"></div>
@@ -4196,9 +4194,10 @@
   /* אייקוני הסינון מיושרים מעל העמודות שלהם ברשימה (₪, שליחה, יתרה) */
   /* שלוש הנקודות (הסינון) מימין לימני באייקוני העמודות, ברווח של 8 פיקסל */
   function placeGen(br) {
-    const bar = $('#listTags'); let mx = -1;
-    bar.querySelectorAll('.lbend:not(#listMore) > *').forEach((e) => { const r = e.getBoundingClientRect(); if (r.width) mx = Math.max(mx, r.right - br.left); });
-    bar.style.paddingLeft = mx < 0 ? '' : Math.round(mx + 8) + 'px';   // הסטריפ נגמר 8px מאייקוני העמודות
+    const bar = $('#listTags'), fs = $('#listFS'); let mx = -1;
+    bar.querySelectorAll('.lbend > *').forEach((e) => { const r = e.getBoundingClientRect(); if (r.width) mx = Math.max(mx, r.right - br.left); });
+    fs.style.left = mx < 0 ? '' : Math.round(mx + 8) + 'px';   // סינון ומיון מימין לאייקון התשלום: סינון, ואחריו מיון מימין (8px ביניהם)
+    bar.style.paddingLeft = Math.round(fs.getBoundingClientRect().right - br.left + 8) + 'px';   // שדה החיפוש נגמר 8px לפניהם
   }
   function alignFilters() {
     const bar = $('#listTags'); if (!bar) return; const br = bar.getBoundingClientRect();
@@ -4245,7 +4244,6 @@
     m.style.top = top + 'px'; m.style.maxHeight = Math.max(240, window.innerHeight - top - 12) + 'px';
   };
   $('#listTags').addEventListener('click', listTagsClick);
-  $('#listMore').addEventListener('click', listTagsClick);   // כפתור הסינון עבר לכותרת
   /* עמודת הסימון (העמודה האחרונה ברשימה, והתפריט שלה בשורת הסינון): הודעה ריקה, תבניות הודעה (הסוג ואחריהן המפגש) ובתוך מפגש גם הגיע / לא הגיע.
      הבחירה נשמרת לכל תצוגה: בהודעה, קישור הוואטסאפ של כל משתתף ברשימה נפתח עם ההודעה המוכנה; בהגעה, בכל שורה הסימון של מי הגיע ומי לא */
   document.body.appendChild($('#waMenu'));
