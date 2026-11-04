@@ -1477,11 +1477,16 @@ html.is-loading .hsearch { visibility: hidden; }
 .mlist .mrow { align-content: start; }
 .mlist .mrow .mdt { font-weight: 500; }
 .mlist .mrow.hl .mdt, .mlist .mrow.hl .mnm { font-weight: 800; color: var(--text); }   /* המפגש הנבחר: התאריך והשם מודגשים */
-@media (min-width: 640px) and (max-width: 1023px) {   /* מסך רחב בלי כרטיס צד: רשימת המשתתפים בגריד של שתי עמודות */
-  .wrap > .list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+.row .mcnt2 { display: none; }
+/* רשימת המשתתפים בגריד של כרטיסים: כמה שנכנס ברוחב ומילוי הרוחב (בטלפון שתי עמודות), כמו המפגשים בכרטיס המשתתף */
+  .wrap > .list { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 8px; padding: 8px var(--gut) var(--safe-b); align-items: stretch; }
   .wrap > .list .group, .wrap > .list .empty { grid-column: 1 / -1; }
-  .wrap > .list > .row:nth-child(odd) { border-inline-start: 0; }
-  .wrap > .list > .row:nth-child(even) { border-inline-start: 1px solid var(--line); }
-}
-#pPager #pgN > .nform { background: var(--bg); margin-inline: calc(-1 * var(--gut)); padding-inline: var(--gut); padding-top: 12px; }   /* הערה חדשה: רקע לבן והקו התחתון לכל רוחב המסך */
-#pPager .nform .nattach { margin-inline-end: -12px; }
+  .wrap > .list > .row { padding: 8px; border: 1px solid var(--line); border-radius: var(--r); background: transparent; }   /* ריפוד קבוע בכל הצדדים */
+  .wrap > .list .row .main { display: flex; flex-wrap: wrap; align-items: center; align-content: flex-start; justify-content: flex-start; gap: 4px; min-height: 0; padding: 0; }   /* שורה ראשונה: מגדר, גיל ושם. שורה שנייה: כל השאר, מיושר לימין */
+  .wrap > .list .row .main .age { order: -2; flex: 0 0 auto; min-width: 0; padding: 0; }
+  .wrap > .list .row .main .nm { display: contents; }
+  .wrap > .list .row .main .nm .name { order: -1; flex: 1 1 calc(100% - 56px); min-width: 0; font-size: 14.5px; }
+  .wrap > .list .row .main .nm .name .mcnt { display: none; }
+  .wrap > .list .row .main .mcnt2 { display: inline-flex; align-items: center; gap: 4px; flex: 0 0 auto; margin: 0; font-size: 13px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
+  .wrap > .list .row .main > :not(.nm):not(.meta), .wrap > .list .row .main .meta > :not(.age) { flex: 0 0 auto; }
+  .wrap > .list .row .rowwa { top: 8px; bottom: auto; margin-top: 0; inset-inline-end: 8px; }   /* מה שהיה בעמודה השמאלית (וואטסאפ, שליחת הודעה, הגיע / לא הגיע): בשורת השם, למעלה בצד שמאל של הכרטיס */
