@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104jv" />
+  <link rel="stylesheet" href="admin.css?v=20261104jw" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1382,7 +1382,7 @@
   /* תשלום בהמשך: מחכים לתשלום לפני המפגש, בזמנו או אחריו, בלי מועד ידוע. פעיל כל עוד התשלום לא נסגר */
   const laterOf = (pid, mid) => { const l = linkOf(pid, mid); return !!(l && l.pay_later_at && !l.no_pay) && !(allocatedOf(pid, mid) > 0 && !(dueOf(pid, mid) > 0)); };
   /* משוריין למפגש: לא לתשלום, תשלום שנסגר (שולם מחיר הכרטיס, או "סגירת תשלום"), או תשלום בהמשך. כל השאר עוד לא משוריינים, גם אם דיווחו על תשלום או שילמו חלק */
-  const missedOf = (pid, m) => { const l = m && linkOf(pid, m.id); return !!l && !l.attended && !linkStatus(l) && nowIL() >= startMs(m) + 2 * 36e5 && reservedOf(pid, m.id); };   // מפגש שהסתיים, משוריין ולא הגיע: מוצג "לא הגיע" (כשאין תגית)
+  const missedOf = (pid, m) => { const l = m && linkOf(pid, m.id); return !!l && !l.attended && !linkStatus(l) && nowIL() >= startMs(m) && reservedOf(pid, m.id); };   // מפגש שהסתיים, משוריין ולא הגיע: מוצג "לא הגיע" (כשאין תגית)
   const reservedOf = (pid, mid) => { const l = linkOf(pid, mid); return !!l && (!!l.no_pay || laterOf(pid, mid) || (allocatedOf(pid, mid) > 0 && !(dueOf(pid, mid) > 0))); };
   const payStateOf = (p) => noPayOf(p, linkOf(p.id, state.filter)) ? 'n' : reportedOf(p.id, state.filter) ? 'w' : laterOf(p.id, state.filter) ? 'l' : dueOf(p.id, state.filter) > 0 ? '0' : (allocatedOf(p.id, state.filter) > 0) ? '1' : '0';   // דווח קודם: דיווח לצד הקצאה = שארית שהמשתתף דיווח עליה אחרי ניצול חלקי של הקרדיט (דיווח אחרי הקצאה נמחק ברישום תשלום)   // שולם / לתשלום / לא משלם (מסומן במשתתף)
   /* שליחת פרטי המפגש: רק בתוך מפגש, ביום המפגש (לפי ההגדרה) ולפני שנפתחת ההגעה; רק למי שזכאי (שילם / לא לתשלום / ישלם) */
