@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104kh" />
+  <link rel="stylesheet" href="admin.css?v=20261104ki" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -193,10 +193,16 @@
   <!-- פופאפ הקצאה: עולה מלמטה מעל כרטיס המשתתף (או לבד כשנפתח מהרשימה). מסך ההקצאה עצמו, הצ'יף והשורה השנייה עוברים אליו בפתיחה וחוזרים לכרטיס בסגירה (allocMount / allocUnmount) -->
   <dialog id="tplDlg" aria-labelledby="tplTitle">
     <div class="sheet">
-      <div class="sheet-head"><button type="button" class="hbtn hback" id="tplArrow" aria-label="חזרה" title="חזרה" hidden><svg data-i="back"></svg></button><h2 id="tplTitle">תבנית הודעה</h2><button type="button" class="hbtn" id="tplView" aria-label="צפייה בהודעה עם נתונים לדוגמה" title="צפייה בהודעה עם נתונים לדוגמה"><svg data-i="eye"></svg></button></div>
+      <div class="sheet-head"><h2 id="tplTitle">תבנית הודעה</h2><button type="button" class="hbtn" id="tplView" aria-label="צפייה בהודעה עם נתונים לדוגמה" title="צפייה בהודעה עם נתונים לדוגמה"><svg data-i="eye"></svg></button></div>
       <p class="sthint stintro" id="tplIntro"></p>
       <div class="mtedit" id="tplFields"></div>
-      <div class="tplprev" id="tplPrev" hidden></div>
+    </div>
+  </dialog>
+  <dialog id="tplPrevDlg" aria-labelledby="tplPrevTitle">
+    <div class="sheet">
+      <div class="sheet-head"><h2 id="tplPrevTitle">תצוגה מקדימה</h2></div>
+      <p class="sthint stintro" id="tplPrevIntro"></p>
+      <div class="tplprev" id="tplPrev"></div>
     </div>
   </dialog>
   <dialog id="mailDlg" aria-labelledby="mailTitle">
@@ -511,14 +517,13 @@
     else { menu.style.maxHeight = Math.floor(above) + 'px'; menu.style.top = minTop + 'px'; }
   }
   const NAV = { stack: [], ignore: 0, fromPop: false };
-  const NAV_BACK = { pDlg: '#pBack', setDlg: '#setBack', prDlg: '#prArrow', finDlg: '#finArrow', tplDlg: '#tplArrow' };
+  const NAV_BACK = { pDlg: '#pBack', setDlg: '#setBack', prDlg: '#prArrow', finDlg: '#finArrow' };
   const navDepthOf = (d) => {
     try {
       if (d.id === 'pDlg') return (sheet && sheet.id && pTab !== 'main') ? Math.max(1, viewStack.filter((x) => x !== 'main').length + 1) : 0;
       if (d.id === 'setDlg') return setIsRoot(setView) ? 0 : setView === 'del' ? (setRoot === 'st' || setRoot === 'src' ? 1 : 2) : 1;   // עריכת סוג מפגש נפתחת מתפריט המפגשים: מסך הסוג הוא הראשי, והתגיות וההודעה שלו מסכי משנה
       if (d.id === 'finDlg') return finV === 'main' ? 0 : 1;
       if (d.id === 'prDlg') return RANK[prView] || 0;
-      if (d.id === 'tplDlg') return $('#tplPrev').hidden ? 0 : 1;
     } catch (e) {}
     return 0;
   };
@@ -590,7 +595,7 @@
     if ($('#prDlg').open && prCur) sp.set('pr', prCur);
     if (mDlg.open) sp.set('em', editingMeeting ? editingMeeting.id : 'new');   // עריכת מפגש או מפגש חדש
     if ($('#bdDlg').open) sp.set('bd', '1');
-    if ($('#tplDlg').open && tplEd && tplEd.id) { sp.set('tpl', tplEd.id); if (!$('#tplPrev').hidden) sp.set('tplv', '1'); }   // עריכת תבנית הודעה, והצפייה בה
+    if ($('#tplDlg').open && tplEd && tplEd.id) { sp.set('tpl', tplEd.id); if ($('#tplPrevDlg').open) sp.set('tplv', '1'); }   // עריכת תבנית הודעה, והצפייה בה
     if ($('#stDlg').open) { sp.set('st', '1'); if (stPg.cur) sp.set('stv', ST_IDS[stPg.cur]); }
     if ($('#finDlg').open) sp.set('fin', finV === 'log' ? 'log' : finV === 'settle' ? 'settle' : finV === 'form' ? (finEdit && finEdit.id ? 'edit-' + finEdit.type + '-' + finEdit.id : 'new-' + ((finEdit && finEdit.kind) || 'expense')) : '1');   // כל שלב בכספים: ראשי, יומן, התחשבנות, טופס חדש או עריכה
     const s = sp.toString();
@@ -4304,20 +4309,18 @@
   tplW('TplBody').addEventListener('input', tplViewSync);
   /* צפייה בהודעה: הנוסח שבשדה, גם לפני שנשמר, עם נתוני מפגש ומשתתף אקראי. מסך בתוך הפופאפ, עם חץ חזרה. המפגש: של התבנית; בתבנית של סוג: הקרוב של הסוג, ובלעדיו האחרון שלו */
   const tplPrevMeeting = (e) => { const sc = (e && e.scope) || {}, own = sc.meeting_id && meetOf(sc.meeting_id); if (own) return own; const pool = state.meetings.filter((m) => !sc.type_id || typeIdOf(m) === sc.type_id).sort(meetAsc); return pool.find((m) => !isPast(m)) || pool[pool.length - 1] || null; };
-  function tplShowPrev(on) {
-    const box = $('#tplPrev');
-    if (on) {
-      const ae = document.activeElement; if (ae && ae.blur) ae.blur();   // סוגר את המקלדת
-      const people = state.participants.filter((p) => p.active !== false && String(p.first_name || '').trim()), p = people[Math.floor(Math.random() * people.length)] || null, m = tplPrevMeeting(tplEd);
-      box.textContent = fillMsg(tplW('TplBody').value, m, p);
-      if (tplEd) tplEd.intro = $('#tplIntro').textContent;
-      $('#tplIntro').textContent = 'דוגמה עם ' + (p ? p.name : 'משתתף') + (m ? ' ומפגש ' + dm(m) : '');
-    } else if (tplEd && tplEd.intro != null) { $('#tplIntro').textContent = tplEd.intro; tplEd.intro = null; }
-    box.hidden = !on; $('#tplFields').hidden = on; $('#tplArrow').hidden = !on; $('#tplView').hidden = on;
-    if ($('#tplDlg').open) { navSync($('#tplDlg')); syncUrl(); }
+  function tplShowPrev(on) {   // פופאפ נפרד שעולה מלמטה מעל עריכת ההודעה
+    const dlg = $('#tplPrevDlg');
+    if (!on) { if (dlg.open) dlg.close(); return; }
+    const ae = document.activeElement; if (ae && ae.blur) ae.blur();   // סוגר את המקלדת
+    const people = state.participants.filter((p) => p.active !== false && String(p.first_name || '').trim()), p = people[Math.floor(Math.random() * people.length)] || null, m = tplPrevMeeting(tplEd);
+    $('#tplPrev').textContent = fillMsg(tplW('TplBody').value, m, p);
+    $('#tplPrevIntro').textContent = 'דוגמה עם ' + (p ? p.name : 'משתתף') + (m ? ' ומפגש ' + dm(m) : '');
+    if (!dlg.open) dlg.showModal();
+    syncUrl();
   }
   $('#tplView').addEventListener('click', () => tplShowPrev(true));
-  $('#tplArrow').addEventListener('click', () => tplShowPrev(false));
+  $('#tplPrevDlg').addEventListener('close', () => syncUrl());
   tplW('TplName').addEventListener('input', tplLockSync);
   $('#wtTplBodyEd').addEventListener('click', () => { if (!tplW('TplName').value.trim()) tplW('TplName').focus(); });
   const tplRowsOf = (e) => (e.scope.type_id ? tplsOfType(e.scope.type_id) : tplsOfMeeting(e.scope.meeting_id)).map((r) => ({ id: r.id, name: r.name, body: r.body }));
@@ -4369,7 +4372,7 @@
   tplW('TplDel').addEventListener('click', async () => {
     const e = tplEd, del = tplW('TplDel'); if (!e) return;
     if (del.dataset.sure !== '1') { del.dataset.sure = '1'; del.textContent = 'בטוח? לחיצה נוספת מוחקת'; return; }   // נמחקת מיד, יחד עם סימוני השליחה שלה
-    tplEd = null; $('#tplDlg').close();
+    tplEd = null; if ($('#tplPrevDlg').open) $('#tplPrevDlg').close(); $('#tplDlg').close();
     if (e.draft) { const rows = e.draft.tpl.rows, i = rows.indexOf(e.row); if (i >= 0) rows.splice(i, 1); e.draft.tpl.render(); return; }
     if (e.p) await e.p;
     if (!e.id) return;
