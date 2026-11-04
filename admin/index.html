@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104jz" />
+  <link rel="stylesheet" href="admin.css?v=20261104ka" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -3867,7 +3867,7 @@
       '<div class="dmcur" id="' + I('DCur') + '"><div class="emvars" id="' + I('DTagW') + '" hidden><button type="button" id="' + I('DTag') + '" data-v=""></button></div><a id="' + I('DLink') + '" target="_blank" rel="noopener" hidden>פתיחה</a><button type="button" id="' + I('DDel') + '" hidden>הסרה</button>' +
       '<button type="button" class="mtpladd dmadd" id="' + I('DAttach') + '">+ מדיה</button></div><input type="file" id="' + I('DFile') + '" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" hidden />' +
       (isType ? '' : '<div class="mtinh2" id="' + I('TplInh') + '" hidden></div>') + '<div class="mtlist" id="' + I('Tpl') + '"></div>' +
-      '<button type="button" class="mtpladd" id="' + I('TplAdd') + '">+ תבנית הודעה</button>' +
+      '<button type="button" class="mtpladd" id="' + I('TplAdd') + '">הוספה</button>' +
       '<div class="field"><span>מחירים</span>' +
         (isType ? '' : '<div class="mtinh" id="' + I('TierInh') + '" hidden><span id="' + I('TierInhTxt') + '"></span><button type="button" id="' + I('TierOwn') + '">שינוי למפגש הזה</button></div>') +
         '<div class="mfted" id="' + I('TierEd') + '"><div class="mt2" id="' + I('TierList') + '"></div><div class="mt2add"><button type="button" id="' + I('TierAdd') + '">+ מדרגה</button>' +
@@ -3898,14 +3898,14 @@
     F.tpl.scope = () => F.tpl.ownerId ? (isType ? { type_id: F.tpl.ownerId } : { meeting_id: F.tpl.ownerId }) : null;
     F.tpl.list = () => F.tpl.ownerId ? (isType ? tplsOfType(F.tpl.ownerId) : tplsOfMeeting(F.tpl.ownerId)) : F.tpl.rows;
     F.tpl.render = () => {
-      tplBox.innerHTML = F.tpl.list().map((r, i) => '<button type="button" class="mtitem" data-i="' + i + '"><span>' + esc(r.name || 'תבנית חדשה') + '</span>' + icon('go', 'i18') + '</button>').join('');
+      const l = F.tpl.list(); tplBox.innerHTML = l.length ? (isType ? '<small class="mtcap">הודעות מוכנות מראש</small>' : '') + '<div class="emvars">' + l.map((r, i) => '<button type="button" data-i="' + i + '">' + esc(r.name || 'תבנית חדשה') + '</button>').join('') + '</div>' : '';
     };
     F.paintTplInh = () => {   // במפגש: תבניות הסוג. אותה שורה כמו תבנית של המפגש, ולחיצה פותחת את פופאפ עריכת ההודעה
       const box = q('TplInh'); if (!box) return;
       const t = ty(), l = t ? tplsOfType(t.id) : [];
-      box.hidden = !l.length; box.innerHTML = l.length ? '<small>הודעות מוכנות מראש</small>' + l.map((x) => '<button type="button" class="mtitem" data-tplpop="' + esc(x.id) + '"><span>' + esc(x.name) + '</span>' + icon('go', 'i18') + '</button>').join('') : '';
+      box.hidden = !l.length; box.innerHTML = l.length ? '<small>הודעות מוכנות מראש</small>' + '<div class="emvars">' + l.map((x) => '<button type="button" data-tplpop="' + esc(x.id) + '">' + esc(x.name) + '</button>').join('') + '</div>' : '';
     };
-    tplBox.addEventListener('click', (e) => { const b = e.target.closest('.mtitem'), r = b && F.tpl.list()[Number(b.dataset.i)]; if (!r) return; if (r.id) openTplPop(r.id); else openTplPop(null, { draft: F, row: r }); });
+    tplBox.addEventListener('click', (e) => { const b = e.target.closest('[data-i]'), r = b && F.tpl.list()[Number(b.dataset.i)]; if (!r) return; if (r.id) openTplPop(r.id); else openTplPop(null, { draft: F, row: r }); });
     if (q('TplInh')) q('TplInh').addEventListener('click', (e) => { const b = e.target.closest('[data-tplpop]'); if (b) openTplPop(b.dataset.tplpop); });
     q('TplAdd').addEventListener('click', () => { const sc = F.tpl.scope(); if (sc) { openTplPop(null, { scope: sc }); return; } const row = { id: null, name: '', body: '' }; F.tpl.rows.push(row); F.tpl.render(); openTplPop(null, { draft: F, row }); });
     F.paintImg = () => {
