@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261104mq" />
+  <link rel="stylesheet" href="admin.css?v=20261104np" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -52,8 +52,6 @@
         <div class="facets" id="facets" role="group" aria-label="סינון לפי מגדר ותשלום"></div>
         <div class="sortwrap">
           <button type="button" class="sortbtn" id="sortBtn" aria-haspopup="menu" aria-expanded="false" aria-label="מיון" title="מיון"><svg data-i="sort"></svg></button>
-          <div class="sortmenu" id="sortMenu" role="menu" hidden></div>
-          <div class="sortmenu" id="waMenu" role="menu" hidden></div>
         </div>
       </div>
     </header>
@@ -62,7 +60,7 @@
     <div class="chiprow"><div class="cq" id="chipRow" role="group" aria-label="סינון מהיר: משוריינים, גברים ונשים"></div></div>
     <div class="vbar" id="listTags" role="group" aria-label="חיפוש, סינון ומיון">   <!-- שורה אחת: מונה הרשומות (מימין, בעמודת הגיל), תיבת החיפוש, הסינון, המיון, זכר / נקבה (צמודים לאייקוני הסינון של העמודות), ואייקוני העמודות עצמם (נקבעים ב-JS מעל העמודות שלהם) -->
       <label class="search hsearch" title="חיפוש או הוספת משתתף">
-          <input id="q" type="search" placeholder="חיפוש או הוספת משתתף" autocomplete="off" aria-label="חיפוש או הוספת משתתף" />
+          <span class="sicon" aria-hidden="true"></span><input id="q" type="search" placeholder="חיפוש או הוספת משתתף" autocomplete="off" aria-label="חיפוש או הוספת משתתף" />
           <button type="button" class="sclear" id="qClear" aria-label="ניקוי החיפוש" tabindex="-1">×</button>
         </label>
       <div class="lbfs" id="listFS"><button type="button" class="hicon" id="sortBtnH" aria-haspopup="menu" aria-expanded="false" aria-label="מיון הרשימה" title="מיון הרשימה"><svg data-i="sort"></svg></button><div id="listMore"></div></div><div class="lbend" id="listWa"></div><div class="lbend" id="listPay"></div><div class="lbend" id="listSent"></div><div class="lbend" id="listBal"></div>
@@ -409,7 +407,9 @@
   </dialog>
 
   <div class="qmenu" id="qMenu" role="menu" hidden></div>
-  <div class="qmenu" id="viewMenu" role="menu" hidden></div>
+  <dialog id="viewDlg" class="mdlg" aria-label="סינון"><div class="sheet"><div class="qmenu" id="viewMenu" role="menu" hidden></div></div></dialog>
+  <dialog id="sortDlg" class="mdlg" aria-label="מיון"><div class="sheet"><div class="sortmenu" id="sortMenu" role="menu" hidden></div></div></dialog>
+  <dialog id="waDlg" class="mdlg" aria-label="וואטסאפ"><div class="sheet"><div class="sortmenu" id="waMenu" role="menu" hidden></div></div></dialog>
   <div class="qmenu" id="fMenu" role="menu" hidden></div>
   <div id="splitHandle" role="separator" aria-orientation="vertical" aria-label="רוחב הרשימה (גרירה, חצים במקלדת, לחיצה כפולה לברירת המחדל)" title="גרירה לשינוי הרוחב · לחיצה כפולה: ברירת מחדל" tabindex="0"></div>
   <div id="splitEmpty" aria-hidden="true"><svg data-i="user"></svg><p>בחרו משתתף מהרשימה כדי לראות את הכרטיס שלו</p></div>
@@ -997,14 +997,11 @@
   /* כלל כללי לכל התפריטים הצפים: כשתפריט פתוח, לחיצה בכל מקום מחוצה לו (גם על כפתור או צ'יפ אחר) רק סוגרת אותו ושום דבר אחר לא נפתח או משתנה. מותר רק לתוך התפריט ולכפתור שפותח אותו (שסוגר אותו) */
   const FLOAT_MENUS = [
     { el: () => $('#finPerMenu'), keep: '#finPerMenu, #finPerBtn', close: () => { $('#finPerMenu').hidden = true; $('#finPerBtn').setAttribute('aria-expanded', 'false'); } },
-    { el: () => $('#viewMenu'), keep: '#viewMenu, #filtBtn', close: () => closeView() },
     { el: () => $('#fMenu'), keep: '#fMenu', close: () => { $('#fMenu').hidden = true; $('#fMenu').dataset.kind = ''; } },
     { el: () => $('#qMenu'), keep: '#qMenu', close: () => closeQ() },
     { el: () => document.getElementById('colMenu'), keep: '#colMenu', close: () => { const m = document.getElementById('colMenu'); if (m) m.hidden = true; } },
     { el: () => $('#hMenu'), keep: '.hicons', close: () => closeHMenu() },
     { el: () => $('#mMenu'), keep: '.msel', close: () => closeMSel() },
-    { el: () => $('#sortMenu'), keep: '#sortMenu, #sortBtnH', close: () => closeSort() },
-    { el: () => $('#waMenu'), keep: '#waMenu, #waBtn, #waFab', close: () => closeWa() },
   ];
   document.addEventListener('click', (e) => {
     const open = openMenus();
@@ -1238,11 +1235,11 @@
       const pfl = pf === '1' ? 'שולם' : pf === '0' ? 'לתשלום' : pf === 'n' ? 'לא לתשלום' : pf === 'w' ? 'דווח' : pf === 'l' ? 'תשלום בהמשך' : am ? '₪' + am[1] : mm ? ((state.payMethods.find((x) => x.key === mm[1]) || {}).name || 'תשלומים') : '';
       const pfw = ['תשלומים', 'תשלום בהמשך', 'לא לתשלום'].concat(state.payMethods.map((x) => x.name)).reduce((m, x) => x.length > m.length ? x : m, '');   // רוחב קבוע: מקום שמור לכיתוב הרחב ביותר
       const ptone = pf === '1' || am || mm ? 'ok' : pf === '0' ? 'no' : pf === 'w' ? 'wait' : pf === 'l' ? 'later' : pf === 'n' ? 'free' : '';   // צבע הרקע לפי הערך שנבחר
-      h += btn('pay', ptone ? 'pt-' + ptone : '', !!pfl, '<span class="fx"><span>' + esc(pfl || 'תשלומים') + '</span><span class="ph" aria-hidden="true">' + esc(pfw) + '</span></span>');
+      h += btn('pay', ptone ? 'pt-' + ptone : '', !!pfl, '<span class="fx"><span class="fl">' + esc(pfl || 'תשלומים') + icon('chev', 'i14') + '</span><span class="ph" aria-hidden="true">' + esc(pfw) + '</span></span>');
     } else if (state.showPay) {   // תצוגת כל המשתתפים וסוג מפגש: צ'יף "יתרה" (בלי מונה) שפותח את תפריט סינון היתרה, והערך שנבחר נכנס אליו
       const bf = state.bal, bl = FLAB.bal, bfl = bf === '1' ? bl[1] : bf === '0' ? bl[2] : bf === 'n' ? bl[3] : bf === 'f' ? bl[4] : bf === 'w' ? bl[5] : '';
-      const btone = bf === '1' || bf === 'w' ? 'wait' : bf === '0' ? 'no' : bf === 'n' || bf === 'f' ? 'free' : '', bfw = ['יתרה'].concat(bl.slice(1)).reduce((m, x) => x.length > m.length ? x : m, '');
-      h += btn('bal', btone ? 'pt-' + btone : '', !!bfl, '<span class="fx"><span>' + esc(bfl || 'יתרה') + '</span><span class="ph" aria-hidden="true">' + esc(bfw) + '</span></span>');
+      const btone = bf === '1' || bf === 'w' ? 'wait' : bf === '0' ? 'no' : bf === 'n' || bf === 'f' ? 'free' : '', bfw = 'יתרה';
+      h += btn('bal', btone ? 'pt-' + btone : '', !!bfl, '<span class="fx"><span class="fl">' + esc(bfl || 'יתרה') + icon('chev', 'i14') + '</span><span class="ph" aria-hidden="true">' + esc(bfw) + '</span></span>');
     }
     const fxw = (txt, n) => '<span class="fx"><span>' + txt + ' <small>' + n + '</small></span><span class="ph" aria-hidden="true">' + txt + ' <small>' + w + '</small></span></span>';
     h += btn('male', '', gk.includes('male'), fxw('גברים', men)) + btn('female', '', gk.includes('female'), fxw('נשים', wom));
@@ -1538,7 +1535,6 @@
     $('#sortMenu').innerHTML = SORTS.filter((s) => (!s[4] || state.filter) && (!s[5] || !state.filter)).map((s) => { const on = state.sort === s[0], t = on ? s[1] + ', ' + (state.sortDir === 'asc' ? s[3] : s[2]) + ' (לחיצה נוספת הופכת את הסדר)' : s[1]; return '<button type="button" role="menuitemradio" data-sort="' + s[0] + '" aria-checked="' + on + '" title="' + esc(t) + '"' + (on ? ' aria-label="' + esc(t) + '"' : '') + '><span>' + s[1] + '</span>' + (on ? '<span class="sdir" aria-hidden="true">' + icon(state.sortDir === 'asc' ? 'sup' : 'sdown', 'i16') + '</span>' : '') + '</button>'; }).join('');
   }
   const closeSort = () => { $('#sortMenu').hidden = true; const b = $('#sortBtnH'); if (b) b.setAttribute('aria-expanded', 'false'); };   // התפריט הצף (מועבר ל-body) נפתח מכפתור המיון בכותרת
-  document.body.appendChild($('#sortMenu'));
   $('#sortBtnH').addEventListener('click', (e) => { const b = e.currentTarget; e.stopPropagation(); const m = $('#sortMenu'); if (!m.hidden) { closeSort(); return; } m.hidden = false; b.setAttribute('aria-expanded', 'true'); const r = b.getBoundingClientRect(); m.style.left = menuX(m, b) + 'px'; m.style.maxHeight = Math.max(200, r.top - 20) + 'px'; m.style.top = Math.max(8, Math.round(r.top - 8 - m.offsetHeight)) + 'px'; });   // תפריט המיון מיושר לקצה הימני של התגית שלו
   $('#sortMenu').addEventListener('click', (e) => { const b = e.target.closest('[data-sort]'); if (!b) return; if (b.dataset.sort === state.sort) state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc'; else { state.sort = b.dataset.sort; state.sortDir = 'desc'; } render(); saveViewPrefs(); });   // בחירה (גם במיון אחר) לא סוגרת את התפריט   // לחיצה נוספת על המיון שנבחר: סדר הפוך והתפריט נשאר פתוח (לראות את הכיוון משתנה); בחירת מיון אחר סוגרת אותו
   document.addEventListener('click', (e) => { if (e.target.isConnected && !e.target.closest('#sortMenu, #sortBtnH')) closeSort(); });   // (isConnected: לחיצה על אפשרות שהתפריט צייר מחדש כבר לא בדף, ואינה לחיצה בחוץ)
@@ -1614,7 +1610,7 @@
           // הערה אחרונה וסימון צירוף תמונה לא מוצגים ברשימה (הערות רק בכרטיס המשתתף)
           mcntHtml.replace('class="mcnt"', 'class="mcnt mcnt2"') +   // עותק לכרטיס (טלפון וטאבלט): כמות המפגשים בשורה השנייה, ולא בשורת השם
           evc +
-          (!state.filter && state.showPay ? (() => { const b = Math.round(creditOf(p.id) * 100) / 100; const fa = b === 0 && freeAll(p); return '<span class="balic ' + (b > 0 ? 'pos' : b < 0 ? 'neg' : fa ? 'fr' : 'zero') + '" title="' + (b > 0 ? 'זכאי: יתרה לטובתו ₪' + nfm(b) : b < 0 ? 'חייב: יתרת חובה ₪' + nfm(-b) : fa ? 'לא לתשלום: בכל המפגשים שנרשם אליהם' : 'מאוזן') + '">₪</span>'; })() : '') +
+          (!state.filter && state.showPay ? (() => { const b = Math.round(creditOf(p.id) * 100) / 100; const fa = b === 0 && freeAll(p); return '<span class="balic ' + (b > 0 ? 'pos' : b < 0 ? 'neg' : fa ? 'fr' : 'zero') + '" title="' + (b > 0 ? 'זכאי: יתרה לטובתו ₪' + nfm(b) : b < 0 ? 'חייב: יתרת חובה ₪' + nfm(-b) : fa ? 'לא לתשלום: בכל המפגשים שנרשם אליהם' : 'מאוזן') + '">₪' + (b > 0 ? nfm(b) : b < 0 ? nfm(-b) : '') + '</span>'; })() : '') +
         '</div>' +
       '</li>';
     };
@@ -4203,9 +4199,9 @@
     const place = () => { m.style.left = menuX(m, anchor) + 'px'; m.style.top = (anchor.getBoundingClientRect().bottom + 8) + 'px'; };
     const cur = fstate(kind) || null, lab = FLAB[kind];
     const opts = [[null, 'all', lab[0]]].concat(kind === 'pay' ? [['w', 'wait', lab[4]], ['0', 'no', lab[2]], ['l', 'later', lab[5]], ['1', 'yes', lab[1]], ['n', 'fr', lab[3]]]   // תשלום: דווח, לתשלום, תשלום בהמשך, שולם, לא לתשלום (אותו סדר כמו במיון)
-      : kind === 'bal' ? [['w', 'wait', lab[5]], ['1', 'yes', lab[1]], ['0', 'no', lab[2]], ['n', 'free', lab[3]], ['f', 'fr', lab[4]]] : [['1', 'yes', lab[1]], ['0', 'no', lab[2]]]);
+      : kind === 'bal' ? [['1', 'yes', lab[1]], ['0', 'no', lab[2]]] : [['1', 'yes', lab[1]], ['0', 'no', lab[2]]]);
     const foptOf = (o) => UI.fopt(o[0] === null ? '' : o[0], cur === o[0], o[1], o[3] || fglyph(kind, o[1]), o[2], (FC[kind] || {})[o[0] === null ? '' : o[0]] ?? 0);
-    m.innerHTML = foptOf(opts[0]) + opts.slice(1).map(foptOf).join('');   // תשלום: קודם החלוקה הגדולה (משוריינים), ומתחת המצבים בפירוט
+    m.innerHTML = opts.map(foptOf).join('');   // תשלום: קודם החלוקה הגדולה (משוריינים), ומתחת המצבים בפירוט
     if (kind === 'pay') {   // בנוסף: סינון לפי דרך התשלום ולפי הסכום ששולם למפגש
       const pmc = FC.payMeth || {}, pks = state.payMethods.filter((pm) => pmc[pm.key]);
       if (pks.length) m.innerHTML += '<div class="fsep" role="separator"></div>' + pks.map((pm) => UI.fopt('m' + esc(pm.key), cur === 'm' + pm.key, 'yes', '₪', esc(pm.name), pmc[pm.key])).join('');
@@ -4253,8 +4249,8 @@
   const noMotion = () => !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const closeView = () => {
     const m = $('#viewMenu'), b = $('#filtBtn'); if (b) b.setAttribute('aria-expanded', 'false');
-    if (m.hidden || m._closing) return;
-    if (noMotion()) { m.hidden = true; return; }
+    if (m.hidden) return;
+    m.hidden = true; return;   // הפופאפ סוגר את עצמו באנימציה משלו
     m._closing = true;
     const a = m.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-8px)' }], { duration: 160, easing: 'ease-in', fill: 'forwards' });
     a.onfinish = () => { m._closing = false; m.hidden = true; a.cancel(); };
@@ -4275,7 +4271,6 @@
   $('#listTags').addEventListener('click', listTagsClick);
   /* עמודת הסימון (העמודה האחרונה ברשימה, והתפריט שלה בשורת הסינון): הודעה ריקה, תבניות הודעה (הסוג ואחריהן המפגש) ובתוך מפגש גם הגיע / לא הגיע.
      הבחירה נשמרת לכל תצוגה: בהודעה, קישור הוואטסאפ של כל משתתף ברשימה נפתח עם ההודעה המוכנה; בהגעה, בכל שורה הסימון של מי הגיע ומי לא */
-  document.body.appendChild($('#waMenu'));
   let waAddAsk = false;   // במפגש נבחר: לחיצה על "הוספת תבנית הודעה" שואלת אם להוסיף למפגש או לסוג המפגש
   const closeWa = () => { waAddAsk = false; $('#waMenu').hidden = true; document.querySelectorAll('#waBtn, #waFab').forEach((b) => b.setAttribute('aria-expanded', 'false')); };
   function renderWaMenu() {
@@ -4420,6 +4415,12 @@
     if (!id) { waSetSel(''); waSetFilter(''); closeWa(); render(); return; }   // הודעה ריקה: הסינון מתאפס והתפריט נסגר
     if ((waMap()[waScope()] || '') !== id) { waSetSel(id); waSetFilter(''); }   // מעבר לתבנית אחרת או להגעה: הסינון חוזר ל"הכל"
     waAddAsk = false; refreshWa();   // התפריט נשאר פתוח כדי שאפשר יהיה לבחור סינון
+  });
+  /* תפריטי הסינון, המיון והוואטסאפ הם פופאפים רגילים (dialog): עולים מלמטה, נסגרים בהחלקה, בלחיצה בחוץ ובחזרה */
+  [['viewMenu', 'viewDlg', () => closeView()], ['sortMenu', 'sortDlg', () => closeSort()], ['waMenu', 'waDlg', () => closeWa()]].forEach(([mi, di, cl]) => {
+    const m = document.getElementById(mi), d = document.getElementById(di);
+    new MutationObserver(() => { if (!m.hidden) { if (!d.open) d.showModal(); } else if (d.open) d.close(); }).observe(m, { attributes: true, attributeFilter: ['hidden'] });
+    d.addEventListener('close', () => { if (!m.hidden) cl(); });
   });
   $('#viewMenu').addEventListener('click', (e) => {
     const after = (prefs) => { render(); renderViewMenu(); if (sheet && sheet.id && pDlg.open) refreshSheetMeetings(); if (prefs) saveViewPrefs(); };
