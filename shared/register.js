@@ -828,7 +828,7 @@
   let meSheet = null, meSheetPush = false;
   function closeMeSheet(fromPop) {
     if (!meSheet || meSheet.hidden) return;
-    try { const f = meSheet.querySelector('iframe'), ae = f && f.contentDocument && f.contentDocument.activeElement; if (ae && ae !== f.contentDocument.body) PersonForm.blurKeyboard(ae); if (f && f.contentWindow) { try { f.contentWindow.postMessage({ harpatka: 'me-blur' }, location.origin); } catch (e2) {} } if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}   // המקלדת נסגרת: הפוקוס היה בשדה בתוך המסגרת, והמסגרת נשארת חיה מוסתרת
+    try { const f = meSheet.querySelector('iframe'), ae = f && f.contentDocument && f.contentDocument.activeElement; if (ae && ae !== f.contentDocument.body) PersonForm.blurKeyboard(ae); if (f && f.contentWindow) { try { f.contentWindow.postMessage({ harpatka: 'me-blur' }, location.origin); } catch (e2) {} } if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); PersonForm.releaseKeyboard(); setTimeout(() => { try { PersonForm.releaseKeyboard(); } catch (e3) {} }, 120); } catch (e) {}   // המקלדת נסגרת: הפוקוס היה בשדה בתוך המסגרת, והמסגרת נשארת חיה מוסתרת; הסגירה מתבצעת גם מהדף הראשי (פעם מיד, ופעם אחרי שהמסגרת סיימה לעבד את הבקשה)
     meSheet.classList.remove('open'); unlockPage();
     if (meSheetPush && !fromPop) { meSheetPush = false; try { history.back(); } catch (e) {} } else meSheetPush = false;
     const sh = meSheet; setTimeout(() => { sh.hidden = true; }, 340);
