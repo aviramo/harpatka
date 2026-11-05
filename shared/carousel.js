@@ -79,8 +79,8 @@
     if (next) next.addEventListener('click', function () { userMoved(); go(idx + 1, true); });
     if (prev) prev.addEventListener('click', function () { userMoved(); go(idx - 1, true); });
     if (toggle) toggle.addEventListener('click', function () { setStopped(!stopped); });
-    root.addEventListener('focusin', function () { hold = true; sync(); });
-    root.addEventListener('focusout', function () { hold = false; sync(); });
+    track.addEventListener('focus', function () { try { if (track.matches(':focus-visible')) { hold = true; sync(); } } catch (e) {} });   // השהיה רק בפוקוס מקלדת על הסליידר (לא אחרי לחיצה או נגיעה, ולא על הכפתורים)
+    track.addEventListener('blur', function () { hold = false; sync(); });
     document.addEventListener('visibilitychange', sync);
     window.addEventListener('resize', function () { clearTimeout(syncT); syncT = setTimeout(function () { track.scrollTo({ left: centerOf(idx), behavior: 'auto' }); }, 150); });
     if ('IntersectionObserver' in window) new IntersectionObserver(function (es) { vis = es[0].isIntersecting; sync(); }, { threshold: 0.4 }).observe(root); else vis = true;
