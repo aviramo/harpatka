@@ -97,6 +97,7 @@
     window.scrollTo({ top: lockY, left: 0, behavior: 'instant' });
   }
   /* שדה הטלפון: פוקוס שגם פותח מקלדת (PersonForm.focusKeyboard) */
+  function kbProxy(type) { try { const px = document.createElement('input'); px.type = type; px.tabIndex = -1; px.setAttribute('aria-hidden', 'true'); px.setAttribute('autocomplete', 'off'); px.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;border:0;padding:0;margin:0;pointer-events:none;font-size:16px'; document.body.appendChild(px); px.focus({ preventScroll: true }); return px; } catch (e) { return null; } }
   function kbFocus(el) { const pf = window.PersonForm; if (pf && pf.focusKeyboard) pf.focusKeyboard(el); else el.focus({ preventScroll: true }); }
   function openModal(m, noFocus){
     if (m.id === 'contactModal') { regUrl(true); modalHistPush(); }
@@ -112,7 +113,8 @@
       if (f.matches('.modal-box')) f.setAttribute('tabindex', '-1');
       /* שדה השם מקבל פוקוס רק אחרי שהמגירה סיימה לרדת: אם המקלדת עולה בזמן שהטופס עוד מחוץ למסך, הדפדפן (אנדרואיד) מזיז את הדף והחלק העליון נחתך. ב-iOS חייבים מיד (בתוך הלחיצה) */
       const ios = /iP(hone|ad|od)/.test(navigator.userAgent);
-      if (f.matches('input, select, textarea') && !ios) setTimeout(() => { if (!m.hidden && m.classList.contains('open')) { if (tel) kbFocus(tel); else f.focus({ preventScroll: true }); } }, 420);
+      /* אנדרואיד: מקלדת נפתחת רק בתוך לחיצה, והפוקוס על שדה הפופאפ מתעכב עד שהמגירה ירדה. לכן בתוך הלחיצה עצמה מפעילים שדה זמני שקוף (בתוך המסך, כדי שהדף לא יזוז) והמקלדת עולה, ואחרי שהמגירה ירדה הפוקוס עובר לשדה האמיתי והמקלדת נשארת */
+      if (f.matches('input, select, textarea') && !ios) { const px = f.matches('input') ? kbProxy(f.type === 'tel' ? 'tel' : 'text') : null; setTimeout(() => { try { if (!m.hidden && m.classList.contains('open')) kbFocus(f); } finally { if (px) px.remove(); } }, 420); }
       else f.focus({ preventScroll: true });
     }
   }
@@ -614,7 +616,7 @@
         const f = contactModal.querySelector('[data-su="fail"]'); if (f && hard) f.textContent = 'ההתחברות עם גוגל לא הצליחה. אפשר להירשם כאן עם הפרטים';
         return;
       }
-      openReg(true, takeRegMeeting());
+      openReg(false, takeRegMeeting());   // המשתתף לחץ על הרשמה: הפוקוס עובר לשדה הראשון. רק בכניסה ישירה דרך /register/ אין פוקוס אוטומטי
     }, wait);
   }
   /* כניסה עם גוגל, תמיד בתוך הדף:
@@ -777,10 +779,56 @@
   }
   /* פופאפ האזור האישי: עולה מלמטה ומציג את דף האזור האישי (me/?embed=1) בתוך iframe, בלי לעבור לדף אחר. סגירה: גרירה למטה או לחיצה על הפס, לחיצה בחוץ, Esc וכפתור "חזרה" */
   /* מנהל: דף הניהול שומר את החיבור במפתח משלו, ולכן מעתיקים אליו את החיבור של דף הבית ועוברים אליו (בלי להתחבר שוב) */
+  /* מעטפת משותפת לפופאפים שעולים מלמטה ומציגים דף בתוך iframe (האזור האישי, דף הביודנסה): פס אחיזה שנגרר או נלחץ, לחיצה בחוץ ו-Esc סוגרים. הסגירה עצמה (וההיסטוריה) אצל כל פופאפ */
+  function sheetShell(label, cls, onClose) {
+    const el = document.createElement('div'); el.className = 'mesheet' + (cls ? ' ' + cls : ''); el.hidden = true; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', label);
+    el.innerHTML = '<div class="mesb"></div><div class="mesp"><button type="button" class="mesgrab" aria-label="סגירה"><i></i></button><iframe class="mesf" title="' + label + '"></iframe></div>';
+    document.body.appendChild(el);
+    el.querySelector('.mesb').addEventListener('click', () => onClose());
+    const g = el.querySelector('.mesgrab'), p = el.querySelector('.mesp'); let sy = 0, dy = 0, dr = false;
+    g.addEventListener('pointerdown', (e) => { dr = true; sy = e.clientY; dy = 0; p.style.transition = 'none'; try { g.setPointerCapture(e.pointerId); } catch (x) {} });
+    g.addEventListener('pointermove', (e) => { if (!dr) return; dy = Math.max(0, e.clientY - sy); p.style.transform = 'translateY(' + dy + 'px)'; });
+    const end = () => { if (!dr) return; dr = false; p.style.transition = ''; p.style.transform = ''; if (dy > 70 || dy < 4) onClose(); };
+    g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') onClose(); });
+    return { el, p };
+  }
+  /* דף הביודנסה כפופאפ מסך מלא: הקישור נשאר קישור רגיל (גוגל סורק את /biodanza/ מה-sitemap), ובלחיצה רגילה נפתח פופאפ שמציג את biodanza/?embed=1 והכתובת בדפדפן היא /biodanza/.
+     סגירה: החלקה למטה מראש הדף, כפתור "חזרה לדף הבית" שבדף, Esc וכפתור "חזרה"; בסגירה הכתובת והכותרת חוזרות למה שהיו */
+  let bioSheet = null, bioPush = false, bioTitle = '';
+  function closeBioSheet(fromPop) {
+    if (!bioSheet || bioSheet.hidden) return;
+    bioSheet.classList.remove('open'); unlockPage();
+    if (bioTitle) { document.title = bioTitle; bioTitle = ''; }
+    if (bioPush && !fromPop) { bioPush = false; try { history.back(); } catch (e) {} } else bioPush = false;
+    const sh = bioSheet; setTimeout(() => { sh.hidden = true; }, 340);
+  }
+  function openBioSheet() {
+    if (!bioSheet) {
+      const shell = sheetShell('שיטת הביודנסה', 'full', () => closeBioSheet()); bioSheet = shell.el; const p = shell.p;
+      window.addEventListener('popstate', () => { if (bioPush) { bioPush = false; closeBioSheet(true); } });
+      window.addEventListener('message', (e) => {
+        if (e.origin !== location.origin || !e.data || !bioSheet || bioSheet.hidden) return;
+        const t = e.data.harpatka, d = Math.max(0, Number(e.data.dy) || 0);
+        if (t === 'bio-drag') { p.style.transition = 'none'; p.style.transform = 'translateY(' + d + 'px)'; }
+        else if (t === 'bio-close') closeBioSheet();   // "חזרה לדף הבית" בתוך הדף, או Esc כשהפוקוס בתוך המסגרת
+        else if (t === 'bio-drag-end') { p.style.transition = ''; p.style.transform = ''; if (d > 110) closeBioSheet(); }
+      });
+    }
+    const fr = bioSheet.querySelector('iframe');
+    if (!fr.dataset.url) { fr.dataset.url = BASE + 'biodanza/?embed=1'; frameGo(fr, fr.dataset.url); }   // נטען רק בלחיצה הראשונה (בלי לספור צפייה בדף שלא נפתח) ונשאר חם לפתיחות הבאות
+    bioSheet.hidden = false; lockPage();
+    requestAnimationFrame(() => requestAnimationFrame(() => bioSheet.classList.add('open')));
+    if (!bioPush && !EMB) { try { history.pushState({ bioSheet: 1 }, '', BASE + 'biodanza/'); bioPush = true; bioTitle = document.title; document.title = 'שיטת הביודנסה | יוצאים להרפתקה'; } catch (e) {} }
+  }
+  document.addEventListener('click', (e) => {   // קישור עם data-popup="bio": פופאפ מסך מלא במקום מעבר לדף (לחיצה אמצעית, Ctrl ופתיחה בלשונית חדשה ממשיכות לעבוד כקישור רגיל)
+    const a = e.target.closest && e.target.closest('a[data-popup="bio"]'); if (!a || e.defaultPrevented || e.button || e.ctrlKey || e.metaKey || e.shiftKey || a.target === '_blank' || EMB) return;
+    e.preventDefault(); openBioSheet();
+  });
   let meSheet = null, meSheetPush = false;
   function closeMeSheet(fromPop) {
     if (!meSheet || meSheet.hidden) return;
-    try { const f = meSheet.querySelector('iframe'), ae = f && f.contentDocument && f.contentDocument.activeElement; if (ae && ae !== f.contentDocument.body) PersonForm.blurKeyboard(ae); if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}   // המקלדת נסגרת: הפוקוס היה בשדה בתוך המסגרת, והמסגרת נשארת חיה מוסתרת
+    try { const f = meSheet.querySelector('iframe'), ae = f && f.contentDocument && f.contentDocument.activeElement; if (ae && ae !== f.contentDocument.body) PersonForm.blurKeyboard(ae); if (f && f.contentWindow) { try { f.contentWindow.postMessage({ harpatka: 'me-blur' }, location.origin); } catch (e2) {} } if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}   // המקלדת נסגרת: הפוקוס היה בשדה בתוך המסגרת, והמסגרת נשארת חיה מוסתרת
     meSheet.classList.remove('open'); unlockPage();
     if (meSheetPush && !fromPop) { meSheetPush = false; try { history.back(); } catch (e) {} } else meSheetPush = false;
     const sh = meSheet; setTimeout(() => { sh.hidden = true; }, 340);
@@ -794,16 +842,7 @@
     }
     const lm = document.getElementById('logoutModal'); if (!preload && lm && !lm.hidden) { try { closeModal(lm); } catch (e) {} }
     if (!meSheet) {
-      meSheet = document.createElement('div'); meSheet.className = 'mesheet'; meSheet.hidden = true; meSheet.setAttribute('role', 'dialog'); meSheet.setAttribute('aria-modal', 'true'); meSheet.setAttribute('aria-label', 'האזור האישי');
-      meSheet.innerHTML = '<div class="mesb"></div><div class="mesp"><button type="button" class="mesgrab" aria-label="סגירה"><i></i></button><iframe class="mesf" title="האזור האישי"></iframe></div>';
-      document.body.appendChild(meSheet);
-      meSheet.querySelector('.mesb').addEventListener('click', () => closeMeSheet());
-      const g = meSheet.querySelector('.mesgrab'), p = meSheet.querySelector('.mesp'); let sy = 0, dy = 0, dr = false;
-      g.addEventListener('pointerdown', (e) => { dr = true; sy = e.clientY; dy = 0; p.style.transition = 'none'; try { g.setPointerCapture(e.pointerId); } catch (x) {} });
-      g.addEventListener('pointermove', (e) => { if (!dr) return; dy = Math.max(0, e.clientY - sy); p.style.transform = 'translateY(' + dy + 'px)'; });
-      const end = () => { if (!dr) return; dr = false; p.style.transition = ''; p.style.transform = ''; if (dy > 70 || dy < 4) closeMeSheet(); };
-      g.addEventListener('pointerup', end); g.addEventListener('pointercancel', end);
-      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMeSheet(); });
+      const shell = sheetShell('האזור האישי', '', () => closeMeSheet()); meSheet = shell.el; const p = shell.p;
       window.addEventListener('popstate', () => { if (meSheetPush) { meSheetPush = false; closeMeSheet(true); } });
       window.addEventListener('message', (e) => {
         if (e.origin === location.origin && e.data && e.data.harpatka === 'me-login') {   // בתוך הפופאפ התברר שהחיבור לא תקף: סוגרים אותו ופותחים כניסה עם גוגל, ואחריה הפופאפ נפתח שוב

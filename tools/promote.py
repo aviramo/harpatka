@@ -59,7 +59,7 @@ else:
         same = [subprocess.run(['git', 'rev-parse', f'{ref}:{path}'], cwd=ROOT, capture_output=True, text=True).stdout.strip() for ref in ('origin/main', 'staging')]
         if same[0] != same[1]:
             sys.exit('בענף main יש שינוי שאין ב-staging, צריך למזג ידנית: ' + path)
-    new = run('git', 'commit-tree', 'staging^{tree}', '-p', 'origin/main', '-p', 'staging', '-m', 'העלאה לאמת מהבדיקות', '-m', 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>', out=True)
+    new = run('git', 'commit-tree', 'staging^{tree}', '-p', 'origin/main', '-p', 'staging', '-m', 'העלאה לאמת מהבדיקות', '-m', 'Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>', out=True)
     run('git', 'push', '-q', 'origin', new + ':refs/heads/main')
     run('git', 'merge', '-q', '--ff-only', new, check=False)   # אותו עץ בדיוק, אז קובץ בתיקייה לא משתנה; אם נוסף בינתיים קומיט, ההעלאה הבאה תטפל בזה
 run('git', 'push', '-q', 'origin', 'staging', check=False)

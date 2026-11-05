@@ -28,7 +28,8 @@
 </div>
 <script src="../shared/config.js?v=20261103d"></script>
 <script src="../shared/rt.js?v=1"></script>
-<script src="../shared/person-form.js?v=20261103d"></script>
+<script src="../shared/person-form.js?v=20261105a"></script>
+<script src="../shared/embed-drag.js?v=20261105a"></script>
 <script>
 (() => {
   const DB = {
@@ -66,17 +67,7 @@
   const EMBED = window.self !== window.top && new URLSearchParams(location.search).has('embed');
   if (EMBED) {
     document.documentElement.classList.add('embed');
-    /* החלקה למטה כשהדף בראשו (scrollTop = 0) סוגרת את הפופאפ: הדף הראשי מקבל את התזוזה ומזיז את הפופאפ יחד עם האצבע */
-    let sy = 0, dy = 0, on = false;
-    const top = () => (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
-    const post = (t, d) => { try { window.parent.postMessage({ harpatka: t, dy: d }, location.origin); } catch (e) {} };
-    document.addEventListener('touchstart', (e) => { if (e.touches.length !== 1) return; sy = e.touches[0].screenY; dy = 0; on = top(); }, { passive: true });
-    document.addEventListener('touchmove', (e) => {
-      if (!on) return; const d = e.touches[0].screenY - sy;   // screenY: לא משתנה כשהפופאפ (והדף שבתוכו) זז עם האצבע, אחרת התזוזה מצטמצמת ויוצר ריצוד
-      if (d > 6 && top()) { dy = d; if (e.cancelable) e.preventDefault(); post('me-drag', dy); } else if (d <= 0 && dy === 0) { on = false; }
-    }, { passive: false });
-    const end = () => { if (on && dy > 0) post('me-drag-end', dy); on = false; dy = 0; };
-    document.addEventListener('touchend', end); document.addEventListener('touchcancel', end);
+    HarpatkaEmbedDrag('me');   // החלקה למטה מהראש סוגרת את הפופאפ, ו-Esc כשהפוקוס בתוך המסגרת (shared/embed-drag.js)
   }
   const goGoogle = () => {
     try { if (asId) sessionStorage.setItem(AS_KEY, asId); } catch (e) {}
@@ -136,7 +127,8 @@
      אחר כך האזור האישי נטען, וכשחסרים פרטים כרטיס "הפרטים שלי" נפתח מעצמו להשלמה. טלפון של משתתף שכבר מחובר לחשבון אחר: לא נשמר (והמנהלים מקבלים מייל) */
   /* שלב הטלפון: הפוקוס בשדה והמקלדת עולה. בפופאפ של דף הבית רק כשהוא פתוח (טעינה מוקדמת מוסתרת לא מקפיצה מקלדת), ובפתיחה דף הבית קורא לזה; פעם אחת, כדי שרענון לא יקפיץ שוב את המקלדת */
   let phoneFocused = false;
-  if (EMBED) document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { try { parent.postMessage({ harpatka: 'me-close' }, location.origin); } catch (x) {} } });   // Esc כשהפוקוס בתוך הפופאפ סוגר אותו
+  /* הדף הראשי סוגר את הפופאפ ומבקש שהפוקוס יורד מהשדה מתוך המסמך הזה עצמו (כך המקלדת נסגרת, וגם כשהמסגרת נשארת חיה מוסתרת) */
+  if (EMBED) window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-blur') { const a = document.activeElement; if (a && a !== document.body && window.PersonForm) PersonForm.blurKeyboard(a); } });
   window.harpatkaFocusPhone = () => { const i = $('#sph'); if (!i) return; phoneFocused = true; try { window.focus(); PersonForm.focusKeyboard(i); } catch (e) {} };
   function viewSignup(phone) {
     app.innerHTML = '<div class="card"><h2>מה מספר הטלפון שלכם?</h2><p class="muted" style="margin:0">אם כבר נרשמתם אצלנו בעבר, נמצא אתכם לפי המספר</p>' +

@@ -110,6 +110,14 @@
       if (can) { input.virtualKeyboardPolicy = 'manual'; vk.hide(); }
       input.blur();
       if (can) input.virtualKeyboardPolicy = '';
+      /* אנדרואיד: blur לבד לא תמיד סוגר מקלדת (במיוחד כששדה בתוך מסגרת): מעבירים לרגע את הפוקוס לשדה קריאה בלבד שקוף, שלא פותח מקלדת, וזה סוגר אותה */
+      var d = input.ownerDocument;
+      if (d && d.body) {
+        var px = d.createElement('input'); px.readOnly = true; px.tabIndex = -1; px.setAttribute('aria-hidden', 'true');
+        px.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;border:0;padding:0;margin:0;pointer-events:none;font-size:16px';
+        d.body.appendChild(px); px.focus({ preventScroll: true });
+        setTimeout(function () { try { px.blur(); px.remove(); } catch (e2) {} }, 80);
+      }
     } catch (e) {}
   }
 

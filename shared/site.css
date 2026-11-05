@@ -1013,7 +1013,9 @@ html.gl-on #meAreaCard{ display:block; }
 @media (prefers-reduced-motion: reduce) { .cta-sheet[open], .cta-sheet.closing, .cta-sheet[open]::backdrop { animation: none; } }
 .cta-sheet .cs-grab { display: grid; place-items: center; height: 28px; }
 .cta-sheet .cs-grab i { width: 40px; height: 4px; background: rgba(44, 35, 29, .25); }
-.cta-sheet .cs-body { display: flex; flex-direction: column; gap: 12px; padding: 4px 20px calc(24px + env(safe-area-inset-bottom)); }
+.cta-sheet .cs-body { display: flex; flex-direction: column; gap: 12px; padding: 4px 20px var(--cta-b); }   /* הכפתור התחתון בפופאפ על אותו קו תחתון של הכפתור הקבוע "להצטרפות" */
+/* הפס שמתחת לפופאפ (אזור סרגל המערכת, מחוץ לדף) בצבע הפופאפ כשהוא פתוח, כדי שלא יישאר שם בז' */
+html:has(.cta-sheet[open]) { background-color: var(--paper); }
 .cta-sheet .cs-btn { display: block; width: 100%; text-align: center; padding: 16px; font-size: 1.15rem; font-weight: 700; border: 0; cursor: pointer; }
 
 /* דסקטופ: כמו שאר הפופאפים של האתר: במרכז המסך, בלי פס גרירה, נפתח בדהייה והגדלה קלה */
@@ -1022,7 +1024,7 @@ html.gl-on #meAreaCard{ display:block; }
 @media (min-width: 760px) {
   .cta-sheet { margin: auto; max-width: 440px; border-radius: var(--r); }
   .cta-sheet .cs-grab { display: none; }
-  .cta-sheet .cs-body { padding-top: 24px; }
+  .cta-sheet .cs-body { padding-top: 24px; padding-bottom: 24px; }
   .cta-sheet[open] { animation: ctaPop .18s ease-out; }
   .cta-sheet.closing { animation: ctaPopOut .16s ease-in forwards; }
 }
@@ -1084,8 +1086,8 @@ html.gl-on #meAreaCard{ display:block; }
 :where(.pg-home) .h8t-i.grow { fill: var(--plum, #9A2D5E); }
 :where(.pg-home) .h8t-w text { font-family: "Amatic SC", "Assistant", cursive; font-weight: 700; font-size: 104px; fill: #FFF5E8; text-anchor: middle; direction: rtl; }
 /* אחרי התמונה בא ישר הטקסט (אין יותר רשימת תגיות ביניהם) */
-:where(.pg-home) #stuck .sx-wrap > .sx-p:first-child { margin-top: 1.6rem; }
-@media (min-width: 1024px) { :where(.pg-home) #stuck .sx-wrap > .sx-p:first-child { margin-top: 2.4rem; } }
+:where(.pg-home) #stuck .sx-wrap > :first-child { margin-top: 1.6rem; }
+@media (min-width: 1024px) { :where(.pg-home) #stuck .sx-wrap > :first-child { margin-top: 2.4rem; } }
 
 /* צורת תמונת הפתיח: קצה זורם (גלים למעלה ולמטה במובייל, מתאר זורם מסביב בדסקטופ) וסרטים כתומים שנעים סביבה. גדל וקטן עם התמונה */
 :where(.pg-home) .h8-frame { clip-path: url(#h8m) !important; border-bottom: 0 !important; box-shadow: none !important; }
@@ -1102,7 +1104,7 @@ html.gl-on #meAreaCard{ display:block; }
 /* הסרט התחתון בתמונת הפתיח יורד מעט מתחת לתמונה, והסקשן חותך גלישה (overflow:hidden): משאירים לו מקום (כשליש מרוחב המסך בקירוב, כמו הגלישה שלו) ומקטינים בהתאם את הרווח שלפני הטקסט, כך שהרווח הכולל לא משתנה */
 @media (max-width: 1023px) {
   :where(.pg-home) .h8 { padding-bottom: 3.5vw; }
-  :where(.pg-home) #stuck .sx-wrap > .sx-p:first-child { margin-top: max(0px, calc(1.6rem - 3.5vw)); }
+  :where(.pg-home) #stuck .sx-wrap > :first-child { margin-top: max(0px, calc(1.6rem - 3.5vw)); }
 }
 /* דסקטופ: התמונה היא ריבוע בגודל העמודה שלה (עד 70% מגובה המסך ו-640 פיקסל), וממורכזת בה; הסרטים נמדדים מאותה תיבה בדיוק. קודם גובה קבוע חישב רוחב גדול מהעמודה, והתמונה גלשה מהמסך */
 @media (min-width: 1024px) {
@@ -1213,3 +1215,46 @@ html.gl-on #meAreaCard{ display:block; }
   @keyframes h8letter { from { opacity: 0; translate: 0 .42em; } 55% { opacity: 1; } to { opacity: 1; translate: 0 0; } }
   @keyframes h8sweep { from { translate: 60% 0; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } to { translate: -60% 0; opacity: 0; } }
 }
+
+/* ===== הגדלת טקסטים בכל האתר הציבורי (5.11.26, לבקשת בעל האתר: "לא רואים את הטקסטים הקטנים, ובכלל להגדיל את הכול") =====
+   1. גודל הבסיס (rem) גדל בכ-6% במובייל ובכ-11% מטאבלט ומעלה: 17px ל-18px, ו-18px ל-20px. כל מה שנמדד ב-rem גדל איתו, כולל גבהים ורווחים, כך שהפריסה נשארת באותו יחס.
+   2. טקסט קטן במיוחד (תוויות, הערות, קישורים) קיבל גודל מינימום, כי עליו אי אפשר לסמוך על הגדלת הבסיס לבד.
+   הכלל חל על עמוד הבית, ביודנסה ומדיניות הפרטיות. דף המודעות והאזור האישי לא שונו. */
+html.pg-home, html.pg-bio, html.pg-priv { font-size: 112.5%; }
+@media (min-width: 768px) { html.pg-home, html.pg-bio, html.pg-priv { font-size: 125%; } }
+:where(.pg-home, .pg-bio, .pg-priv) .text-sm { font-size: 1rem; line-height: 1.5; }
+:where(.pg-home, .pg-bio, .pg-priv) .text-xs { font-size: .95rem; line-height: 1.45; }
+:where(.pg-home) .pt-now b { font-size: .95rem; }
+:where(.pg-home) .pt-lab span { font-size: 1rem; }
+:where(.pg-home) .mt-name, :where(.pg-home) .mt-city, :where(.pg-home) .mt-card.open .mt-name { font-size: 1rem; }
+:where(.pg-home) .mt-card.is-past .mt-city { font-size: 1rem; }
+:where(.pg-home) .mt-note { font-size: 1rem; }
+:where(.pg-home) .mt-ptitle { font-size: .95rem; }
+:where(.pg-home) .mt-pwhere, :where(.pg-home) #mList .mt-prow { font-size: 1rem; }
+:where(.pg-home) .mt-tier, :where(.pg-home) .mt-card.open .mt-city { font-size: 1.05rem; }
+:where(.pg-home) .st-pt { font-size: 1rem; }
+:where(.pg-home) .st-pw { font-size: 1rem; }
+:where(.pg-home) #facilitators article p { font-size: 1.05rem; }
+:where(.pg-home) .h8-who .h8-small { font-size: 1.1rem; }
+.site-back { font-size: 1.05rem; }
+/* "מי מלווה את המפגשים": התמונה והשם זה לצד זה למעלה, והתיאור ברוחב מלא מתחתיהם. אחרי הגדלת הטקסטים העמודה הצרה שלידה התארכה מדי (שתי מילים בשורה) */
+:where(.pg-home) #facilitators article.card-soft { grid-template-columns: 6.6rem minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 1.1rem; row-gap: 1rem; align-items: center; }
+:where(.pg-home) #facilitators article img { grid-column: 1; grid-row: 1; }
+:where(.pg-home) #facilitators article h3 { grid-column: 2; grid-row: 1; align-self: center; margin: 0; font-size: 1.6rem; }
+:where(.pg-home) #facilitators article p { grid-column: 1 / -1; grid-row: 2; }
+@media (min-width: 768px) {
+  :where(.pg-home) #facilitators article.card-soft { grid-template-columns: 8.5rem minmax(0, 1fr); }
+  :where(.pg-home) #facilitators article h3 { font-size: 1.8rem; }
+}
+/* אחרי הגדלת הטקסטים פסקאות עם שבירת שורה קבועה השאירו מילה בודדת בשורה האחרונה: מאזנים את השורות */
+:where(.pg-home, .pg-bio) .sx-p { text-wrap: balance; }
+
+/* viewport-fit=cover (5.11.26): הדף נמשך עד קצה המסך, גם מתחת לסרגל המערכת, בלי פס נפרד מתחתיו; סוף הדף נשאר מעל הסרגל */
+html.pg-home body, html.pg-bio body, html.pg-priv body { padding-bottom: env(safe-area-inset-bottom); }
+
+/* הרווח התחתון של הכפתור הקבוע "להצטרפות" ושל הכפתורים בפופאפ שהוא פותח: משתנה אחד, כדי שיהיו על אותו קו */
+:root { --cta-b: calc(.5rem + env(safe-area-inset-bottom, 0px)); }
+
+/* סוף הדף: מקום בגובה הכפתור הקבוע "להצטרפות", כדי שהחתימה בפוטר לא תיחסם מאחוריו וניתן יהיה לגלול אליה */
+html.pg-home footer.relative { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); }
+@media (min-width: 1024px) { html.pg-home footer.relative { padding-bottom: 8rem; } }

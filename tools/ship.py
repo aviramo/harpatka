@@ -14,7 +14,7 @@ except Exception:
     pass
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-TRAILER = 'Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>'
+TRAILER = 'Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>'
 
 
 def run(*a, check=True):
