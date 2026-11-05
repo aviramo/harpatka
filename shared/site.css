@@ -929,12 +929,6 @@ html.gl-on #meAreaCard{ display:block; }
 :where(.pg-home) .st-note{ font-weight:700; font-size:1.02rem; line-height:1.5; color:#C8411B; margin:.6rem 0 0; }
 :where(.pg-home) .st-hand{ margin-top:.45rem; font-size:clamp(1.75rem,6.6vw,2.15rem); }
 :where(.pg-home) .st-last{ padding:1rem 1rem 1.1rem; }
-/* מפגשים שהסתיימו בתוך כרטיס שלב 6: שני האחרונים, תאריך בלבד, מתחת לקו מקווקו */
-:where(.pg-home) .st-past{ margin-top:.9rem; padding-top:.7rem; border-top:1px dashed rgba(44,35,29,.22); }
-:where(.pg-home) .st-pt{ font-size:.82rem; font-weight:700; color:var(--muted); letter-spacing:.02em; }
-:where(.pg-home) .st-pr{ margin-top:.45rem; font-weight:700; color:var(--muted); }
-:where(.pg-home) .st-pd{ font-size:1rem; }
-:where(.pg-home) .st-pw{ margin-top:.1rem; font-size:.9rem; font-weight:600; }
 :where(.pg-home) #meetings{ padding-top:2.2rem !important; padding-bottom:2.4rem !important; }
 :where(.pg-home) #listen{ padding-top:2.4rem !important; }
 :where(.pg-home) #listen .card-soft{ background:var(--paper); border-bottom:5px solid var(--terra); box-shadow:0 22px 44px -28px rgba(44,35,29,.55) !important; }
@@ -1290,3 +1284,50 @@ html.pg-home footer.relative { padding-bottom: calc(5.5rem + env(safe-area-inset
 @media (min-width:1024px){ :where(.pg-home) .wf{ margin-top:-2.6rem; } }
 :where(.pg-home) .wf-out{ margin-bottom:-1.7rem; }
 :where(.pg-home) #whoFor + #meetings{ padding-top:0; }
+
+/* הסרת חששות לפני ההרשמה (5.11.26): שורה קצרה בתחתית כרטיס "למי זה מתאים", מעל המפגשים */
+:where(.pg-home) .wf-ease{ margin-top:1.4rem; padding-top:1.15rem; border-top:1px dashed rgba(44,35,29,.22); display:flex; flex-direction:column; align-items:center; gap:.55rem; }
+:where(.pg-home) .wf-ease-ic{ display:grid; place-items:center; width:34px; height:34px; border-radius:50%; background:rgba(141,178,85,.28); color:var(--olive); }
+:where(.pg-home) .wf-ease-ic svg{ width:18px; height:18px; }
+:where(.pg-home) .wf-ease-t{ margin:0; max-width:24em; font-size:clamp(1.05rem,4.4vw,1.2rem); line-height:1.55; color:var(--muted); text-wrap:balance; }
+:where(.pg-home) .wf-ease-t strong{ color:var(--ink); font-weight:700; }
+
+/* עדויות (5.11.26): סליידר מתנגן אוטומטית, החלקה ימינה ושמאלה, נעצר כשמזיזים אותו. עיצוב פתוח בלי מלבנים וצללים: ציטוט גדול במרכז על רקע הדף, אייקון ציטוט כתום, ושם וגיל בכתב יד. האנימציות עם !important ו-#voices כי main * מכבה אנימציות בדף הבית; מכובדת prefers-reduced-motion */
+:where(.pg-home) .vc{ position:relative; padding:2.6rem 0 .6rem; overflow:hidden; --vc-w:min(86vw,26rem); }
+:where(.pg-home) .vc-h{ margin:0 0 .2rem; padding:0 1.25rem; text-align:center; font-family:'Rubik',sans-serif; font-weight:700; font-size:clamp(1.35rem,5.8vw,1.7rem); line-height:1.25; color:var(--ink); }
+:where(.pg-home) .vc-car{ position:relative; max-width:68rem; margin:0 auto; }
+:where(.pg-home) .vc-track{ display:flex; gap:10px; align-items:stretch; overflow-x:auto; scroll-snap-type:x mandatory; padding:1.2rem calc(50% - var(--vc-w) / 2) 1rem; scroll-padding-inline:calc(50% - var(--vc-w) / 2); scrollbar-width:none; overscroll-behavior-x:contain; position:relative; }
+:where(.pg-home) .vc-track::-webkit-scrollbar{ display:none; }
+:where(.pg-home) .vc-slide{ position:relative; flex:0 0 var(--vc-w); scroll-snap-align:center; margin:0; padding:0 .6rem; display:flex; flex-direction:column; align-items:center; text-align:center; gap:.8rem; opacity:.24; transform:scale(.96); transition:opacity .5s ease, transform .5s cubic-bezier(.2,.8,.2,1); }
+:where(.pg-home) .vc-slide.on{ opacity:1; transform:none; }
+:where(.pg-home) .vc-q{ width:42px; height:42px; color:var(--terra); flex:0 0 auto; }
+:where(.pg-home) .vc-text{ margin:0; flex:1 1 auto; font-size:clamp(1.15rem,4.8vw,1.3rem); line-height:1.7; font-weight:500; color:var(--ink); text-wrap:balance; }
+:where(.pg-home) .vc-by{ display:flex; flex-direction:column; align-items:center; gap:.45rem; }
+:where(.pg-home) .vc-name{ font-family:'Amatic SC',cursive; font-weight:700; font-size:clamp(1.9rem,7.6vw,2.3rem); line-height:1; color:#C8411B; }
+:where(.pg-home) .vc-name strong{ font-weight:700; }
+:where(.pg-home) .vc-bar{ width:min(11rem,52%); height:3px; margin:.3rem auto .7rem; background:rgba(44,35,29,.12); border-radius:3px; overflow:hidden; }
+:where(.pg-home) .vc-fill{ display:block; width:100%; height:100%; background:var(--terra); transform:scaleX(0); transform-origin:right; }
+:where(.pg-home) .vc-car.stopped .vc-bar{ opacity:.35; }
+:where(.pg-home) .vc-ctl{ display:flex; align-items:center; justify-content:center; gap:.4rem; }
+:where(.pg-home) .vc-btn{ width:44px; height:44px; display:grid; place-items:center; padding:0; border:0; border-radius:50%; background:transparent; color:var(--ink); cursor:pointer; transition:transform .18s ease, background-color .18s ease; }
+:where(.pg-home) .vc-btn:active{ transform:scale(.9); background:var(--sand); }
+:where(.pg-home) .vc-btn svg{ width:22px; height:22px; }
+:where(.pg-home) .vc-cnt{ min-width:4.4rem; text-align:center; font-weight:700; font-size:1rem; color:var(--muted); font-variant-numeric:tabular-nums; }
+:where(.pg-home) .vc-toggle .i-play{ display:none; }
+:where(.pg-home) .vc-car.stopped .vc-toggle .i-pause{ display:none; }
+:where(.pg-home) .vc-car.stopped .vc-toggle .i-play{ display:block; }
+@media (hover:hover){ :where(.pg-home) .vc-btn:hover{ background:var(--sand); } }
+@media (min-width:1024px){ :where(.pg-home) .vc{ --vc-w:30rem; padding-top:3rem; } }
+html.pg-home #voices .vc-fill.run{ animation:vcFill var(--vc-iv,6500ms) linear forwards !important; }
+html.pg-home #voices .vc-car.wait .vc-fill.run{ animation-play-state:paused !important; }   /* הפס מוקפא במקומו בהשהיה, וממשיך מאותה נקודה */
+html.pg-home #voices .vc-slide.on .vc-q{ animation:vcPop .6s cubic-bezier(.2,.8,.2,1) both !important; }
+html.pg-home #voices .vc-slide.on .vc-text{ animation:vcUp .6s cubic-bezier(.2,.8,.2,1) .06s both !important; }
+html.pg-home #voices .vc-slide.on .vc-by{ animation:vcUp .6s cubic-bezier(.2,.8,.2,1) .18s both !important; }
+@keyframes vcFill{ from{ transform:scaleX(0); } to{ transform:scaleX(1); } }
+@keyframes vcPop{ from{ opacity:0; transform:scale(.6) rotate(-8deg); } to{ opacity:1; transform:none; } }
+@keyframes vcUp{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
+@media (prefers-reduced-motion:reduce){
+  :where(.pg-home) .vc-slide, :where(.pg-home) .vc-btn{ transition:none; }
+  html.pg-home #voices .vc-slide.on .vc-q, html.pg-home #voices .vc-slide.on .vc-text, html.pg-home #voices .vc-slide.on .vc-by, html.pg-home #voices .vc-fill.run{ animation:none !important; }
+  html.pg-home #voices .vc-fill{ transform:none; }
+}
