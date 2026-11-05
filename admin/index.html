@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261105o" />
+  <link rel="stylesheet" href="admin.css?v=20261105q" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -821,7 +821,7 @@
     const web = 'https://wa.me/' + n + (t ? '?text=' + t : ''), q = 'send?phone=' + n + (t ? '&text=' + t : '');
     if (WA_ANDROID) return 'intent://' + q + '#Intent;scheme=whatsapp;package=' + WA_PKG[waApp()] + ';S.browser_fallback_url=' + encodeURIComponent(web) + ';end';
     if (WA_IOS) return waApp() === 'biz' ? 'whatsapp-smb://' + q : web;
-    return WA_DESK ? 'whatsapp://' + q : web;
+    return WA_DESK && !/[\u{10000}-\u{10FFFF}]/u.test(text || '') ? 'whatsapp://' + q : web;   // אפליקציית וואטסאפ במחשב מציגה אימוג'י (תו של 4 בתים, כמו 🙂) כסימן שאלה כשהוא עובר בקישור whatsapp://: הודעה עם אימוג'י נפתחת דרך wa.me (לשונית שעוברת לאפליקציה), ובלי אימוג'י ישר באפליקציה
   }
   const waTgt = (href) => /^https?:/.test(href || '') ? ' target="_blank" rel="noopener"' : '';   // קישור אינטרנט בלשונית חדשה; קישור לאפליקציה בלי לשונית
 
@@ -2641,6 +2641,8 @@
     '<button type="button" class="mtreset" id="' + I('TplReset') + '" hidden>שחזור נוסח ברירת מחדל</button>' +
     '<button type="button" class="mtdel" id="' + I('TplDel') + '">מחיקת התבנית</button>';
   const DAY_FULL = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+  /* קישור לתמונה או סרטון של הוראות ההגעה בהודעה: לא הקישור הארוך לאחסון (הוא מציג את הכתובת של supabase בכרטיס התצוגה המקדימה בוואטסאפ) אלא דף שלנו, harpatka.co.il/m/?f=<הנתיב בדלי>, שמציג את הקובץ (m/index.html). הקובץ והטקסט השמור לא משתנים, רק מה שנשלח */
+  const brandMedia = (t) => t.replace(/https?:\/\/[A-Za-z0-9.-]+\.supabase\.co\/storage\/v1\/object\/public\/meeting-media\/([A-Za-z0-9_\-./]+)/g, 'https://harpatka.co.il/m/?f=$1');
   /* "אישור מקום": משפט התשלום לפי מה שהוקצה למפגש (אותו חישוב כמו harpatka_confirm_text במייל): לא לתשלום, או מה ששולם (מהקרדיט ולפי דרך תשלום) והקרדיט שנשאר; בלי הקצאה: ריק (בתצוגה מקדימה: דוגמה) */
   const nTrim = (n) => String(Number(Number(n).toFixed(2)));
   function payText(p, m, sample) {
@@ -2658,7 +2660,7 @@
   }
   function fillMsg(tpl, m, p, o) {   // רכיב אחד: גם ההודעה לפני המפגש, תבניות הוואטסאפ, ו"אישור מקום" (שנשלח גם במייל). o.sample: תצוגה מקדימה
     let t = String(tpl || '');
-    const dir = String((m && m.directions) || '').trim();   // {הוראות הגעה}: הוראות ההגעה של המפגש; בלי הוראות השורה נמחקת. {מיקום} הוא השם הישן של אותו שדה (נוסחים שנשמרו קודם)
+    const dir = brandMedia(String((m && m.directions) || '').trim());   // {הוראות הגעה}: הוראות ההגעה של המפגש; בלי הוראות השורה נמחקת. {מיקום} הוא השם הישן של אותו שדה (נוסחים שנשמרו קודם)
     for (const tok of ['{הוראות הגעה}', '{מיקום}']) t = dir ? t.split(tok).join(dir) : t.split('\n').filter((ln) => !ln.includes(tok)).join('\n');
     const hm = (min) => String(Math.floor(min / 60) % 24).padStart(2, '0') + ':' + String(min % 60).padStart(2, '0');
     const tm = m && m.meeting_time ? String(m.meeting_time).split(':').map(Number) : null, start = tm ? tm[0] * 60 + tm[1] : null;
