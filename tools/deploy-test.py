@@ -27,7 +27,7 @@ def build_test_admin(srcdir='admin'):
     css_src = src.parent / 'admin.css'
     css = css_src.read_text(encoding='utf-8').replace('\r\n', '\n') if css_src.exists() else None
     testbar_css = ("    :root { --envtop: 18px; }\n"
-                   "    #testBadge { inset: auto; margin: 0; border: 0; position: fixed; top: 0; left: 0; right: 0; width: auto; height: 18px; padding: 0; overflow: hidden; background: #3F382F; color: #fff; font: 700 11px/18px Arial, sans-serif; text-align: center; pointer-events: none; }\n")
+                   "    #testBadge { inset: auto; margin: 0; border: 0; border-radius: 0; position: fixed; top: 0; left: 0; right: 0; width: auto; height: 18px; padding: 0; overflow: hidden; background: #3F382F; color: #fff; font: 700 11px/18px Arial, sans-serif; text-align: center; pointer-events: none; }\n")
     testbar_div = '  <div id="testBadge" popover="manual">סביבת בדיקות · נתונים נפרדים מהאמיתיים</div>\n'
 
     def rep(old, new):

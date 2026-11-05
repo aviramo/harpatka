@@ -26,7 +26,7 @@
   if (TOP) document.documentElement.classList.add('env-test');
   var st = document.createElement('style');
   st.textContent = 'html.env-test{margin-top:18px;--tbtop:18px}html.env-test.modal-lock body{margin-top:18px}html.env-test .modal{top:18px}' +
-    '#testEnvBadge{inset:auto;margin:0;border:0;position:fixed;top:0;left:0;right:0;z-index:2147483647;width:auto;height:18px;padding:0;overflow:hidden;background:#3F382F;color:#fff;font:700 11px/18px Arial,sans-serif;text-align:center;pointer-events:none}' +
+    '#testEnvBadge{inset:auto;margin:0;border:0;border-radius:0;position:fixed;top:0;left:0;right:0;z-index:2147483647;width:auto;height:18px;padding:0;overflow:hidden;background:#3F382F;color:#fff;font:700 11px/18px Arial,sans-serif;text-align:center;pointer-events:none}' +
     'html:not(.env-test) #testEnvBadge{display:none!important}';
   (document.head || document.documentElement).appendChild(st);
   /* הפס בשכבה העליונה של הדפדפן (popover): מעל הכל, גם מעל פופאפים (dialog); כשנפתח dialog הוא מורם מחדש */
