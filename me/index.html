@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="../shared/meeting-box.css?v=2" />
 <link rel="stylesheet" href="../shared/person-form.css?v=1" />
 <link rel="stylesheet" href="../shared/wa-card.css?v=1" />
-<link rel="stylesheet" href="../shared/site.css?v=20261104m" />
+<link rel="stylesheet" href="../shared/site.css?v=20261105aa" />
 <script>try { if (window.self !== window.top && /[?&]embed=/.test(location.search)) document.documentElement.classList.add('embed'); } catch (e) {}</script>   <!-- בפופאפ: הרקע הטורקיז כבר בציור הראשון -->
 </head>
 <body>
@@ -37,6 +37,7 @@
     key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6YWthcndxc3RubGRxaXhncmViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTA3MzIsImV4cCI6MjEwNjc4NjczMn0.Bg0eFBC4zKjyJc5kBw3wLgSP-PkxLFVv3o7-4YUdq4c',
   };
   const $ = (s) => document.querySelector(s);
+  const linkify = (t) => esc(t).replace(/https?:\/\/[^\s<]+/g, (u) => '<a class="lnk" href="' + u + '" target="_blank" rel="noopener">' + (/\.(mp4|mov|webm)(\?|$)/i.test(u) ? 'לצפייה בסרטון' : /\.(jpe?g|png|webp|gif)(\?|$)/i.test(u) ? 'לצפייה בתמונה' : 'לפתיחה') + '</a>');
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const SKEY = 'harpatka_me_session', AKEY = 'harpatka_admin_session_v2', AS_KEY = 'harpatka_me_as';
   const CFG = (typeof CONFIG !== 'undefined') ? CONFIG : {};
@@ -154,7 +155,7 @@
   function viewPending() { app.innerHTML = '<div class="card"><h2>הבקשה התקבלה</h2><p class="muted" style="margin:0">אנחנו מאשרים את החיבור, ובקרוב האזור האישי יהיה זמין. אפשר לחזור לכאן בעוד קצת זמן</p></div>'; }
   function viewBlocked() { app.innerHTML = '<div class="card"><h2>אין גישה</h2><p class="muted" style="margin:0">החשבון הזה לא מחובר לאזור אישי. אפשר לפנות אלינו בוואטסאפ</p></div>'; }
 
-  let keepOpenSet = new Set(), keepDetOpen = false;   // מפגשים וכרטיס פרטים שהיו פתוחים בזמן רענון אוטומטי (זמן אמת)
+  let keepOpenSet = new Set(), keepDetOpen = false, keepDirSet = new Set();   // מפגשים וכרטיס פרטים שהיו פתוחים בזמן רענון אוטומטי (זמן אמת)
   let unregSure = null, unregT = 0;   // ביטול רישום שממתין ללחיצת האישור (מזהה המפגש): נשמר גם כשהרשימה מצוירת מחדש
   const UNREG_SURE = 'לחיצה נוספת לאישור ביטול הרישום';
   let keepOpen = null, scrollTo = null;   // scrollTo: מפגש מהקישור ?m= (מדף הבית): נפתח ונגללים אליו פעם אחת   // המפגש שנפתח לפני טעינה מחדש (אחרי הרשמה או ביטול) נשאר פתוח
@@ -186,6 +187,9 @@
         const payAmt = rem || price;
         foot += '<div class="payfold" data-pf="' + m.id + '"><div>' + (rem ? '<p class="crnote">שולם ' + ils(m.paid) + '. נשאר לשלם ' + ils(rem) + '</p>' : '') + '<a class="btn pay" data-paynow="' + m.id + '" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">לתשלום ' + (payAmt ? payAmt + ' ₪ ' : '') + 'בפייבוקס</a><div class="paylinks"><button type="button" class="lnk" data-other="' + m.id + '">רוצים לשלם בדרך אחרת?</button></div><div class="msg" data-pm="' + m.id + '"></div></div></div>';
       }
+      /* הוראות ההגעה של המפגש (אותו טקסט כמו בהודעה בדף הניהול, כולל התמונה או הסרטון): שורה עם חץ, ובלחיצה נפתחת באנימציה; מעל "ביטול רישום" */
+      const dirFold = (mm) => { const t = String(mm.directions || '').trim(); if (!t) return ''; const o = keepDirSet.has(mm.id); return '<div class="dirbox"><button type="button" class="dethead dirhead" data-dir="' + mm.id + '" aria-expanded="' + o + '" aria-controls="dir-' + mm.id + '"><span>הוראות הגעה</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="detfold' + (o ? ' open' : '') + '" id="dir-' + mm.id + '"><div><p class="dirtxt">' + linkify(t) + '</p></div></div></div>'; };
+      if (m.future) foot += dirFold(m);
       if (m.future) { const sure = unregSure === m.id; foot += '<button type="button" class="lnk sm" data-unreg="' + m.id + '"' + (sure ? ' data-sure="1"' : '') + '>' + (sure ? UNREG_SURE : 'ביטול רישום') + '</button><div class="msg" data-um="' + m.id + '"></div>'; }
       /* אותו רכיב כמו בפופאפים ובדף הבית, עם המצב והתשלום בתוך המסגרת. מפגש שעבר: בלי תמונה ובלי כמות משתתפים */
       return '<div class="mtg" data-mid="' + m.id + '">' + CFG.meetingBox(m.future ? m : Object.assign({}, m, { max: 0 }), '<div class="mts">' + att + pay + '</div>' + (foot ? '<div class="mtfoot">' + foot + '</div>' : '')) + '</div>';
@@ -205,7 +209,7 @@
       '<div class="two"><div>' + PersonForm.html('age', { id: 'ag', value: p.age }) + PersonForm.err('age') + '</div><div>' + PersonForm.html('gender', { id: 'gn', value: gv }) + PersonForm.err('gender') + '</div></div>' +
       '<button type="button" class="btn" id="saveBtn">שמירה</button><div class="msg" id="sm"></div></div></div></div>';
     if (!req) h += meetHtml;   // "הפרטים שלי" ראשון, ומתחתיו רשימת המפגשים (רק אחרי שהפרטים הושלמו)
-    keepOpenSet = new Set(); keepDetOpen = false;
+    keepOpenSet = new Set(); keepDetOpen = false; keepDirSet = new Set();
     app.innerHTML = h;
     if (scrollTo) { const row = app.querySelector('.mtg[data-mid="' + scrollTo + '"]'); scrollTo = null; if (row) setTimeout(() => row.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }), 120); }
 
@@ -265,6 +269,7 @@
       $('#otherCard').innerHTML = CFG.waCard('../', 'otherWa'); $('#otherWa').href = 'https://wa.me/' + CFG.whatsapp + '?text=' + encodeURIComponent(text);
       $('#otherDlg').showModal();
     }; });
+    app.querySelectorAll('[data-dir]').forEach((b) => { b.onclick = () => { const f = app.querySelector('#dir-' + b.dataset.dir); if (!f) return; const on = !f.classList.contains('open'); f.classList.toggle('open', on); b.setAttribute('aria-expanded', String(on)); }; });
     PersonForm.bind(app);
     $('#detHead').onclick = () => { const f = $('#detBody'), on = !f.classList.contains('open'); f.classList.toggle('open', on); $('#detHead').setAttribute('aria-expanded', String(on)); };
     $('#saveBtn').onclick = async () => {
@@ -296,7 +301,7 @@
   function meOpt(mid, patch, keepFold, balDelta) {
     const apply = (d) => { const mm = ((d && d.meetings) || []).find((x) => x.id === mid); if (mm) Object.assign(mm, patch); if (balDelta && d) d.balance = (Number(d.balance) || 0) + balDelta; };   // balDelta: שינוי בקרדיט (למשל ניצול שלו לתשלום)
     const h = HRT.optimistic(apply);
-    if (data && data.status === 'ok' && !keepFold) { keepOpenSet = new Set([...app.querySelectorAll('.mtg.open')].map((x) => x.dataset.mid)); keepDetOpen = !!(app.querySelector('#detBody') && app.querySelector('#detBody').classList.contains('open')); keepOpen = mid; apply(data); viewMain(); }
+    if (data && data.status === 'ok' && !keepFold) { keepOpenSet = new Set([...app.querySelectorAll('.mtg.open')].map((x) => x.dataset.mid)); keepDirSet = new Set([...app.querySelectorAll('.dirhead[aria-expanded="true"]')].map((x) => x.dataset.dir)); keepDetOpen = !!(app.querySelector('#detBody') && app.querySelector('#detBody').classList.contains('open')); keepOpen = mid; apply(data); viewMain(); }
     else if (data) apply(data);
     return { done: h.done, fail: () => { h.fail(); load(true); } };
   }
@@ -356,6 +361,7 @@
     rtDirty = false;
     keepOpenSet = new Set([...app.querySelectorAll('.mtg.open')].map((x) => x.dataset.mid));
     keepDetOpen = !!(app.querySelector('#detBody') && app.querySelector('#detBody').classList.contains('open'));
+    keepDirSet = new Set([...app.querySelectorAll('.dirhead[aria-expanded="true"]')].map((x) => x.dataset.dir));
     load(true);
   };
   const scheduleRefresh = () => { clearTimeout(rtT); rtT = setTimeout(refreshNow, 250); };
