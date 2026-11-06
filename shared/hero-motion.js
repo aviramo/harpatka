@@ -9,11 +9,12 @@
     /* 1. הכותרת: כל אות בנפרד, כדי שיעבור בה גל. הקריאה לקוראי מסך נשארת בכותרת עצמה */
     var h1 = document.querySelector('#invite .h8-h1');
     if (h1 && !h1.dataset.split) {
+      var keys = {}; h1.querySelectorAll('.h8-key').forEach(function (k) { k.textContent.trim().split(/\s+/).forEach(function (w) { keys[w] = 1; }); });   // המילים המודגשות בצבע נשארות מודגשות אחרי הפיצול לאותיות
       var txt = h1.textContent.replace(/\s+/g, ' ').trim(), i = 0;
       h1.dataset.split = '1'; h1.setAttribute('aria-label', txt); h1.textContent = '';
       txt.split(' ').forEach(function (w, wi) {
         if (wi) h1.appendChild(document.createTextNode(' '));
-        var ws = document.createElement('span'); ws.className = 'hw'; ws.setAttribute('aria-hidden', 'true');
+        var ws = document.createElement('span'); ws.className = 'hw' + (keys[w] ? ' hkey' : ''); ws.setAttribute('aria-hidden', 'true');
         Array.from(w).forEach(function (ch) { var l = document.createElement('span'); l.className = 'hl'; l.textContent = ch; l.style.setProperty('--i', i++); ws.appendChild(l); });
         h1.appendChild(ws);
       });
