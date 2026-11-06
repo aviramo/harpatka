@@ -1244,7 +1244,7 @@
       h += btn('pay', ptone ? 'pt-' + ptone : '', !!pfl, '<span class="fx"><span class="fl">' + esc(pfl || 'תשלומים') + icon('chev', 'i14') + '</span><span class="ph" aria-hidden="true">' + esc(pfw) + '</span></span>');
       const af = state.arrF, ast = af === '1' ? 1 : af === '0' ? 2 : 0, aok = pool.filter((p) => common(p) && genOk(p) && paidOk0(p)), arrN = aok.filter((p) => (linkOf(p.id, state.filter) || {}).attended).length, noArrN = aok.length - arrN;
       const arrH = btn('arr', ast === 2 ? 'neg' : '', ast > 0, '<span class="fx"><span>' + (ast === 2 ? 'לא הגיעו' : 'הגיעו') + ' <small>' + (ast === 2 ? noArrN : arrN) + '</small></span><span class="ph" aria-hidden="true">לא הגיעו <small>' + w + '</small></span></span>');
-      h += resH + arrH;   // קודם תשלומים (מימין), אחריו משוריינים, ואחריו הגיעו (הכל ← הגיעו ← לא הגיעו ← הכל)
+      h += resH + (arrOpen() ? arrH : '');   // קודם תשלומים (מימין), אחריו משוריינים, ואחריו הגיעו, רק במפגש שהתחיל (הכל ← הגיעו ← לא הגיעו ← הכל)
     } else if (state.showPay) {   // תצוגת כל המשתתפים וסוג מפגש: צ'יף "יתרה" (בלי מונה) שפותח את תפריט סינון היתרה, והערך שנבחר נכנס אליו
       const bf = state.bal, bl = FLAB.bal, bfl = bf === '1' ? bl[1] : bf === '0' ? bl[2] : bf === 'n' ? bl[3] : bf === 'f' ? bl[4] : bf === 'w' ? bl[5] : '';
       const btone = bf === '1' || bf === 'w' ? 'wait' : bf === '0' ? 'no' : bf === 'n' || bf === 'f' ? 'free' : '', bfw = 'יתרה';
@@ -1441,8 +1441,9 @@
   const paidVia = (pid, mid, key) => state.payments.some((x) => x.participant_id === pid && x.meeting_id === mid && (x.kind === 'payment' || x.kind === 'deposit') && x.method === key);
   const payF = (p, f) => f === 'r' ? reservedOf(p.id, state.filter) : f === 'u' ? !reservedOf(p.id, state.filter) : (f && f[0] === 'm') ? (!noPayOf(p, linkOf(p.id, state.filter)) && paidVia(p.id, state.filter, f.slice(1))) : (f && f[0] === 'a') ? (!noPayOf(p, linkOf(p.id, state.filter)) && Math.round(allocatedOf(p.id, state.filter)) === Number(f.slice(1))) : payStateOf(p) === f;   // 'a80': ששולם בדיוק 80 למפגש הזה
   const paidOk0 = (p) => { const f = effPaidF(); return (!f || payF(p, f)) && sentOk(p); };
-  /* הגיעו / לא הגיעו (הצ'יף בשורה העליונה, אחרי המשוריינים): לפי סימון ההגעה למפגש (attended), רק בתוך מפגש, ומושהה בזמן חיפוש כמו שאר הסינונים */
-  const effArrF = () => (state.q.trim() || !state.filter) ? null : state.arrF;
+  /* הגיעו / לא הגיעו (הצ'יף בשורה העליונה, אחרי המשוריינים): לפי סימון ההגעה למפגש (attended), רק בתוך מפגש שהתחיל, ומושהה בזמן חיפוש כמו שאר הסינונים */
+  const arrOpen = () => { const m = state.filter && meetOf(state.filter); return !!m && meetingStarted(m); };   // רק מפגש שהתחיל
+  const effArrF = () => (state.q.trim() || !arrOpen()) ? null : state.arrF;
   const arrOk = (p) => { const f = effArrF(); if (!f) return true; const l = linkOf(p.id, state.filter), on = !!(l && l.attended); return f === '1' ? on : !on; };
   const paidOk = (p) => paidOk0(p) && arrOk(p);
   const normFilter = () => { if (state.pay) { const ks = payKeys(state.pay).filter((k) => k === '__none' || state.statuses.some((s) => s.key === k)); state.pay = ks.length ? ks.join(',') : null; } };   // בחירה מרובה: רק תגיות שקיימות
