@@ -917,7 +917,8 @@
   } };   // לשימוש עמודים אחרים
   { const q0 = new URLSearchParams(location.search);   // הגעה דרך /me: דף הבית נטען והאזור האישי עולה עליו (לא מחובר: כניסה עם גוגל ואז הפופאפ). הפרמטרים יורדים מהכתובת, כדי שרענון לא יפתח אותו שוב
     if (q0.has('me')) { const m0 = q0.get('m'); q0.delete('me'); q0.delete('m'); try { history.replaceState(null, '', location.pathname + (q0.toString() ? '?' + q0 : '') + location.hash); } catch (e) {} setTimeout(() => { try { openMeArea(m0 ? '?m=' + encodeURIComponent(m0) : ''); } catch (e) {} }, 500); } }
-  if (new URLSearchParams(location.search).has('register')) setTimeout(() => window.HarpatkaRegister.open(true), 500);   // הגעה דרך /register/: דף הבית נטען והפופאפ נפתח עליו
+  { const q1 = new URLSearchParams(location.search);   // הגעה דרך /register/: דף הבית נטען והפופאפ נפתח עליו. הפרמטר register יורד מהכתובת (שאר הפרמטרים, למשל s=p, נשארים), כדי שהכתובת לא תכלול register ורענון לא יפתח אותו שוב
+    if (q1.has('register')) { q1.delete('register'); try { history.replaceState(null, '', location.pathname + (q1.toString() ? '?' + q1 : '') + location.hash); } catch (e) {} setTimeout(() => window.HarpatkaRegister.open(true), 500); } }
   document.querySelectorAll('[data-contact]').forEach(el => {
     el.setAttribute('href', '#');
     el.addEventListener('click', (e) => { e.preventDefault(); window.HarpatkaRegister.open(false, el.__meeting); });

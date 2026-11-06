@@ -165,8 +165,8 @@
     }
   </script>
 
-  <link rel="stylesheet" href="../shared/site.css?v=20261107c">
-  <script src="../shared/hero-motion.js?v=20261106d" defer></script>
+  <link rel="stylesheet" href="../shared/site.css?v=20261107i">
+  <script src="../shared/hero-motion.js?v=20261107c" defer></script>
   <script src="../shared/carousel.js?v=20261105f" defer></script>
   <script>
     /* סרטון פתיחה: אם הדפדפן מאפשר, מסתירים את ההזמנה (בלי להזיז את הדף) עד שהסרטון נגמר; רשת ביטחון אחרי 9 שניות */
@@ -185,7 +185,7 @@
 </head>
 
 <body class="grain">
-  <a href="#register" class="skip-link">דילוג להצטרפות</a>
+  <a href="#register" class="skip-link" onclick="var t=document.getElementById('register');if(t){event.preventDefault();t.scrollIntoView({block:'start'});t.setAttribute('tabindex','-1');t.focus({preventScroll:true});}">דילוג להצטרפות</a>
 
   <!-- ====================== באנר "המפגש הקרוב": קבוע בראש הדף, גובה קבוע (שלד בטעינה / אין מפגש / יש מפגש), מצטמצם בגלילה ====================== -->
   <div id="tbWrap">
@@ -258,7 +258,7 @@
   <!-- ====================== איך יוצאים באורות? (6.11.26): מתחת לתמונה הראשונה; בשפה של "כשהלב נפתח" (כתב יד, קו גלי, שטיפות צבע, בלי מלבנים). בלי נקודות בסוף שורה ====================== -->
   <section id="lights" class="ht" aria-labelledby="ltH">
     <div class="ht-ch"><div class="ht-in">
-      <h2 id="ltH" class="ht-h3">איך יוצאים <span class="ht-key">באורות?<svg class="ht-ul" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M1 5C12 1 20 8 31 4S51 1 62 5 83 7 99 3" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg></span></h2>
+      <h2 id="ltH" class="ht-h3">איך יוצאים <span class="ht-key">עם אור בעיניים?<svg class="ht-ul" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="M1 5C12 1 20 8 31 4S51 1 62 5 83 7 99 3" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg></span></h2>
       <p class="ht-lead g2">יש חוויות שקשה להסביר במילים<br>כי לא מדובר במשהו שמבינים בראש,<br>אלא במשהו שמרגישים בכל הגוף</p>
     </div></div>
     <div class="ht-ch"><div class="ht-in">
@@ -826,10 +826,15 @@
   </footer>
 
   <!-- כפתור הרשמה קבוע בתחתית המסך (לבקשת המשתמש 20.10.26; מחליף את כפתורי ההרשמה שהיו בתוך הדף) -->
-  <dialog id="ctaSheet" class="cta-sheet" aria-label="איך מצטרפים"><div class="cs-grab"><i></i></div><div class="cs-body"><button type="button" class="btn-primary cs-btn" id="csReg">הרשמה למפגש</button><a href="#" target="_blank" rel="noopener" data-updates class="btn-green cs-btn" id="csWa">עדכונים בוואטסאפ</a></div></dialog>
-  <div id="stickyReg" class="cta-off fixed inset-x-0 bottom-0 z-40 px-5 pt-5 pointer-events-none" style="padding-bottom:var(--cta-b);background:linear-gradient(to top, rgb(255,245,232) 50%, rgba(255,245,232,0))">
+  <dialog id="ctaSheet" class="cta-sheet" aria-labelledby="csT"><div class="cs-grab"><i></i></div><div class="cs-body"><p class="cs-title" id="csT">רוצים להגיע למפגש או רק להישאר בלופ?</p><button type="button" class="btn-primary cs-btn" id="csReg">הרשמה למפגש</button><a href="#" target="_blank" rel="noopener" data-updates class="btn-green cs-btn" id="csWa">עדכונים בוואטסאפ</a></div></dialog>
+  <div id="stickyReg" class="cta-off cta-wait fixed inset-x-0 bottom-0 z-40 px-5 pt-5 pointer-events-none" style="padding-bottom:var(--cta-b);background:linear-gradient(to top, rgb(255,245,232) 50%, rgba(255,245,232,0))">
     <a href="#" target="_blank" rel="noopener" data-contact class="btn-primary rounded-full pointer-events-auto block mx-auto w-full max-w-[24rem] text-center py-4 text-[1.2rem] font-bold" id="stickyRegBtn" style="box-shadow:0 10px 24px -8px rgba(200,65,27,.55)">שמירת מקום ועדכונים</a>
   </div>
+  <script>/* הכפתור הקבוע יוצא רק כשתמונת הפתיח מגיעה לראש הדף (7.11.26): עד אז (cta-wait) הוא מוסתר, וכשחוזרים למעלה הוא יורד שוב */
+  (function(){ var sr=document.getElementById('stickyReg'), ph=document.querySelector('#invite .h8-photo'), tb=document.getElementById('topbar'); if(!sr||!ph){ if(sr) sr.classList.remove('cta-wait'); return; }
+    var tick=false; function chk(){ tick=false; var top=tb?tb.getBoundingClientRect().bottom:0; sr.classList.toggle('cta-wait', ph.getBoundingClientRect().top > top + 4); }
+    function req(){ if(!tick){ tick=true; requestAnimationFrame(chk); } }
+    addEventListener('scroll',req,{passive:true}); addEventListener('resize',req); chk(); })();</script>
 
 
   <script src="../shared/age.js?v=20261031a"></script>
@@ -1430,6 +1435,6 @@
 </script>
   <script src="../shared/rt.js?v=1"></script>
   <script src="../shared/person-form.js?v=20261105b"></script>
-  <script src="../shared/register.js?v=20261105c"></script>
+  <script src="../shared/register.js?v=20261107a"></script>
 </body>
 </html>

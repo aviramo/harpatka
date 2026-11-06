@@ -1,4 +1,4 @@
-/* אפקט תנועה בפתיח: אותיות הכותרת נכנסות בגל זורם, והסרטים הכתומים מצטיירים לאורך המסלול שלהם (שאר האפקט ב-shared/site.css).
+/* אפקט תנועה בפתיח: הסרטים הכתומים מצטיירים לאורך המסלול שלהם (שאר האפקט ב-shared/site.css).
    פעיל רק כשעל html יש class "hero-motion" (להסרת האפקט כולו: להסיר אותו מה-html). לא מופעל כשמוגדרת הפחתת תנועה. */
 (function () {
   var root = document.documentElement;
@@ -6,21 +6,8 @@
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   function ready(fn) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn); else fn(); }
   ready(function () {
-    /* 1. הכותרת: כל אות בנפרד, כדי שיעבור בה גל. הקריאה לקוראי מסך נשארת בכותרת עצמה */
-    var h1 = document.querySelector('#invite .h8-h1');
-    if (h1 && !h1.dataset.split) {
-      var keys = {}; h1.querySelectorAll('.h8-key').forEach(function (k) { k.textContent.trim().split(/\s+/).forEach(function (w) { keys[w] = 1; }); });   // המילים המודגשות בצבע נשארות מודגשות אחרי הפיצול לאותיות
-      var txt = h1.textContent.replace(/\s+/g, ' ').trim(), i = 0;
-      h1.dataset.split = '1'; h1.setAttribute('aria-label', txt); h1.textContent = '';
-      txt.split(' ').forEach(function (w, wi) {
-        if (wi) h1.appendChild(document.createTextNode(' '));
-        var ws = document.createElement('span'); ws.className = 'hw' + (keys[w] ? ' hkey' : ''); ws.setAttribute('aria-hidden', 'true');
-        Array.from(w).forEach(function (ch) { var l = document.createElement('span'); l.className = 'hl'; l.textContent = ch; l.style.setProperty('--i', i++); ws.appendChild(l); });
-        h1.appendChild(ws);
-      });
-    }
     /* 2. הסרטים הכתומים: גדלים לאורך המסלול (החצי הראשון של הנקודות הוא הקצה העליון, והשני הקצה התחתון בסדר הפוך) */
-    var starts = [4.6, 5.1], dur = 2.4;   /* אחרי שהטקסט נכתב (הזזה של 3.0 שניות כמו בזמני התמונה ב-site.css) */
+    var starts = [0.15, 0.3], dur = 1.0;   /* הקווים סביב התמונה נמשכים יחד עם כניסת התמונה, תוך שנייה */
     document.querySelectorAll('#invite .h8-flow').forEach(function (svg) {
       svg.querySelectorAll('polygon').forEach(function (poly, k) {
         var pts = poly.getAttribute('points').trim().split(' '), n = pts.length / 2;
