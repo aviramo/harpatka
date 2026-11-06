@@ -5,12 +5,12 @@
 -- * לא כשמנהל פועל על משתתף אחר (חוץ משיוך מחדש אחרי הסרה, mail-relink.sql), לא במפגש שעבר, לא ב"לא לתשלום" ולא כשכבר שולם. פעם אחת לכל רישום.
 -- * טריגרים דחויים: רצים בסוף הפעולה. בלי חשבון גוגל: "המייל לא נשלח" בהערה, כמו בכל מייל.
 -- * harpatka_me_phone: קודם מחברים את החשבון למשתתף, ורק אחר כך נרשמים למפגש.
-insert into __S__.harpatka_mail_templates (key, subject, html) values ('meeting_registered', 'נרשמת למפגש, נשאר לשלם', $tpl$<div dir="rtl" style="direction:rtl;text-align:right;background:#FFFFFF;padding:24px 16px;font-family:Arial,Helvetica,sans-serif;color:#2C231D">
+insert into __S__.harpatka_mail_templates (key, subject, html) values ('meeting_registered', 'שמרת מקום למפגש, נשאר לשלם', $tpl$<div dir="rtl" style="direction:rtl;text-align:right;background:#FFFFFF;padding:24px 16px;font-family:Arial,Helvetica,sans-serif;color:#2C231D">
 <div style="max-width:520px;margin:0 auto;background:#FFFFFF;border-top:4px solid #E5562D">
 <div style="padding:22px 4px 4px"><div style="font-size:14px;font-weight:bold;color:#C8411B"><span style="display:inline-block;width:9px;height:9px;background:#E5562D;margin-left:8px;vertical-align:middle"></span>יוצאים להרפתקה</div></div>
 <div style="padding:16px 4px 24px">
 <div style="font-size:20px;font-weight:bold;color:#2C231D;margin-bottom:12px">{{hello}}</div>
-<div style="font-size:16px;line-height:1.6;color:#2C231D;margin-bottom:16px">נרשמת למפגש:</div>
+<div style="font-size:16px;line-height:1.6;color:#2C231D;margin-bottom:16px">שמרת מקום למפגש:</div>
 {{{meeting_block}}}
 <div style="font-size:16px;line-height:1.6;color:#2C231D;margin-bottom:16px">המקום נשמר זמנית, והוא יישמר קבוע רק אחרי התשלום.{{{price_note}}}</div>
 {{{credit_block}}}

@@ -44,12 +44,12 @@
                   </div>
                 </div>
               </div>
-              <p class="su-phonehint" data-su="phonehint">הזינו את מספר הטלפון שלכם. אם כבר נרשמתם אצלנו בעבר, נמצא אתכם לפי המספר</p>
+              <p class="su-phonehint" data-su="phonehint">הזינו את מספר הטלפון שלכם. אם כבר שמרתם אצלנו מקום בעבר, נמצא אתכם לפי המספר</p>
               <p class="su-dethint" data-su="dethint">כמעט סיימנו. נשאר רק להשלים כמה פרטים</p>
-              <div class="su-member" data-su="member"><p class="su-memberp">הפרטים שלכם כבר שמורים אצלנו</p><p class="su-who" data-su="who"></p><p class="su-membernm" data-su="nomeet" hidden>עוד אין מפגש להירשם אליו. נעדכן אתכם ברגע שייקבע מפגש</p></div>
-              <a href="__BASE__me/?login=1&back=reg" class="su-glink" data-su="glink">נרשמתם בעבר? לחצו כאן</a>
+              <div class="su-member" data-su="member"><p class="su-memberp">הפרטים שלכם כבר שמורים אצלנו</p><p class="su-who" data-su="who"></p><p class="su-membernm" data-su="nomeet" hidden>עוד אין מפגש לשמור בו מקום. נעדכן אתכם ברגע שייקבע מפגש</p></div>
+              <a href="__BASE__me/?login=1&back=reg" class="su-glink" data-su="glink">שמרתם מקום בעבר? לחצו כאן</a>
             </div></div>
-            <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-3.5 text-[1.2rem] whitespace-nowrap w-full mt-4">הרשמה</button>
+            <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-3.5 text-[1.2rem] whitespace-nowrap w-full mt-4">שמירת מקום</button>
             <div data-su="fail" class="su-err mt-3 text-center" role="alert"></div>
             <div class="su-fold su-after shut" data-su="after"><div>
               <p class="su-paynote">המקום נשמר באופן זמני, והוא יישמר קבוע רק לאחר תשלום</p>
@@ -57,7 +57,7 @@
                 <p class="su-crnote" data-su="crnote" hidden></p>
                 <button type="button" data-su="paycredit" class="btn-primary rounded-full px-8 py-4 text-[1.2rem] block text-center w-full" hidden>תשלום מהקרדיט</button>
                 <a href="#" target="_blank" rel="noopener" data-paybox class="btn-primary rounded-full px-8 py-4 text-[1.2rem] block text-center w-full">לתשלום <span data-price>80 ₪</span> בפייבוקס</a>
-                <div class="su-paylinks" data-su="paylinks"><button type="button" class="su-lnk" data-su="other">רוצים לשלם בדרך אחרת?</button></div>
+                <div class="su-paylinks" data-su="paylinks"><button type="button" class="su-lnk" data-su="other">רוצים לשמור מקום בדרך אחרת?</button></div>
               </div></div>
             </div></div>
           </form>
@@ -68,15 +68,11 @@
   if (window.REGISTER_MIN !== false) document.documentElement.classList.add('reg-min');
   /* שאלת יציאה מהחשבון: אותה מעטפת פופאפ של ההרשמה (נפתח מלמעלה, פס סגירה בתחתית) */
   const LOGOUT_HTML = `<div id="logoutModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="logoutTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="logoutTtl"></p><a class="su-lgyes" href="__BASE__me/">כניסה לאזור האישי</a><button type="button" class="su-lgno" data-lg="yes">יציאה מהחשבון</button></div></div>`.replace(/__BASE__/g, BASE);
-  const OTHER_HTML = `<div id="otherModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="otherTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="otherTtl">לשלם בדרך אחרת</p><p class="su-lgq">נפתחת שיחת וואטסאפ איתנו, וההודעה כבר מוכנה:</p><div id="otherInfo"></div>${CONFIG.waCard('__BASE__', 'otherWa')}</div></div>`.replace(/__BASE__/g, BASE);
   /* חשבון חסום או מנותק: פופאפ מלמעלה (אותה מעטפת) שמסביר שאי אפשר להתחבר דרך החשבון הזה, עם וואטסאפ אלינו */
-  const BLOCKED_HTML = OTHER_HTML.replace('id="otherModal"', 'id="blockedModal"').replace('aria-labelledby="otherTtl"', 'aria-labelledby="blockedTtl"')
-    .replace('<p class="su-lgwho" id="otherTtl">לשלם בדרך אחרת</p><p class="su-lgq">נפתחת שיחת וואטסאפ איתנו, וההודעה כבר מוכנה:</p><div id="otherInfo"></div>',
-      '<p class="su-lgwho" id="blockedTtl">לא ניתן להתחבר דרך החשבון הזה</p><p class="su-lgq">החשבון הזה לא מאושר לכניסה לאתר. לשאלות אפשר לפנות אלינו בוואטסאפ:</p>')
-    .replace('id="otherWa"', 'id="blockedWa"');
+  const BLOCKED_HTML = `<div id="blockedModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="blockedTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="blockedTtl">לא ניתן להתחבר דרך החשבון הזה</p><p class="su-lgq">החשבון הזה לא מאושר לכניסה לאתר. לשאלות אפשר לפנות אלינו בוואטסאפ:</p>${CONFIG.waCard('__BASE__', 'blockedWa')}</div></div>`.replace(/__BASE__/g, BASE);
   /* כניסה עם גוגל כשהשכבה הקטנה של גוגל לא יכולה להופיע (למשל בהשהיה של גוגל אחרי שנסגרה): פופאפ קטן בתוך הדף עם הכפתור של גוגל, בלי חלון נפרד */
-  const GLOGIN_HTML = `<div id="gloginModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="gloginTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="gloginTtl">כניסה עם גוגל</p><p class="su-lgq">ממשיכים עם חשבון הגוגל שלכם, בלי סיסמה</p><div class="su-gbtn" id="gloginBtn"></div><a href="#" class="su-galt" id="gloginAlt" hidden>הרשמה בלי חשבון גוגל</a></div></div>`;
-  document.body.insertAdjacentHTML('beforeend', MODAL_HTML + LOGOUT_HTML + OTHER_HTML + BLOCKED_HTML + GLOGIN_HTML);
+  const GLOGIN_HTML = `<div id="gloginModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="gloginTtl"><div class="modal-box"><button type="button" class="modal-close" data-close-modal aria-label="סגירה">&times;</button><p class="su-lgwho" id="gloginTtl">כניסה עם גוגל</p><p class="su-lgq">ממשיכים עם חשבון הגוגל שלכם, בלי סיסמה</p><div class="su-gbtn" id="gloginBtn"></div><a href="#" class="su-galt" id="gloginAlt" hidden>שמירת מקום בלי חשבון גוגל</a></div></div>`;
+  document.body.insertAdjacentHTML('beforeend', MODAL_HTML + LOGOUT_HTML + BLOCKED_HTML + GLOGIN_HTML);
 
   /* ===== מנגנון פופאפ כללי (משותף לכל ה-.modal) ===== */
   let modalLastFocus = null, urlBeforeReg = null;
@@ -290,7 +286,7 @@
           const st = r && r.status;
           if (st === 'invalid_phone') PersonForm.setErr(root, 'phone', PersonForm.MSG.phone);
           else if (st === 'phone_taken') q('fail').textContent = 'מספר הטלפון הזה כבר מחובר לחשבון אחר';   // והמנהלים מקבלים מייל
-          else if (st === 'blocked') q('fail').textContent = 'אי אפשר להירשם מהחשבון הזה';
+          else if (st === 'blocked') q('fail').textContent = 'אי אפשר לשמור מקום מהחשבון הזה';
           else if (st === 'created' || st === 'linked' || st === 'reactivated') {
             if (st !== 'linked') { leadOnce(); createdHere = true; }   // Lead על משתתף חדש (או שחזר להיות פעיל); RegistrationValue אחרי הגיל, בהשלמת הפרטים
             mePending = null;
@@ -335,7 +331,7 @@
             doneJ = true; showDone(payOkJ);
             for (let i = 0; i < 6 && !meInfo; i++) { await meLoader.now(); if (!meInfo) await new Promise((rs) => setTimeout(rs, 450)); }   // המשתתף המקושר נטען: השם בבאנר והמפגשים מתעדכנים
           } else if (PersonForm.serverError(root, r)) { /* ההודעה ליד השדה */ }
-          else q('fail').textContent = r === 'phone_taken' ? 'מספר הטלפון הזה כבר מחובר לחשבון אחר' : r === 'blocked' ? 'אי אפשר להירשם מהחשבון הזה' : 'משהו השתבש, אפשר לנסות שוב';   // טלפון של משתתף אחר: ההרשמה לא מתבצעת (והמנהלים מקבלים מייל)
+          else q('fail').textContent = r === 'phone_taken' ? 'מספר הטלפון הזה כבר מחובר לחשבון אחר' : r === 'blocked' ? 'אי אפשר לשמור מקום מהחשבון הזה' : 'משהו השתבש, אפשר לנסות שוב';   // טלפון של משתתף אחר: ההרשמה לא מתבצעת (והמנהלים מקבלים מייל)
         } catch (er) { q('fail').textContent = 'משהו השתבש, אפשר לנסות שוב'; }
         relJ(); if (!doneJ) { btn.disabled = false; btn.textContent = submitLabel; }
         return;
@@ -404,7 +400,7 @@
   const AS = (() => { try { const v = new URLSearchParams(location.search).get('as'); return v && /^[0-9a-f-]{36}$/i.test(v) ? v : null; } catch (e) { return null; } })();
   const TOK_KEY = AS ? 'harpatka_admin_session_v2' : ME_KEY;
   window.__meAs = AS;
-  if (AS && CONFIG.viewOnly) CONFIG.viewOnly('[data-su="btn"], [data-su="paycredit"], [data-paybox], .wacard', '#contactModal .pf-input');   // צפייה כמשתתף: לקריאה בלבד
+  if (AS && CONFIG.viewOnly) CONFIG.viewOnly('[data-su="btn"], [data-su="paycredit"], [data-paybox], [data-su="other"], .wacard', '#contactModal .pf-input');   // צפייה כמשתתף: לקריאה בלבד
   /* צפייה כמשתתף בתוך הפופאפ של דף הניהול (iframe): החלקה למטה כשהדף בראשו מורידה את הפופאפ יחד עם האצבע וסוגרת אותו (כמו האזור האישי).
      לא כשפופאפ פנימי פתוח (הרשמה, אזור אישי), כי שם הגלילה של הדף נעולה */
   if (AS && window.parent !== window) {
@@ -502,7 +498,7 @@
     btn.hidden = true;
     root.querySelectorAll('.su-fold:not(.su-after)').forEach((f) => f.classList.add('shut'));
     after.classList.remove('shut');
-    note.innerHTML = '<span class="su-regd">נרשמתם למפגש</span>' + (free ? 'המפגש בשבילכם ללא תשלום' : (paid && !rem) ? (x.pay_mail ? 'התשלום התקבל, ופרטי המפגש' + (String(x.directions || '').trim() ? ' והוראות ההגעה' : '') + ' נשלחו אליכם במייל. נתראה!' : 'התשלום התקבל. נתראה!') : 'המקום יישמר קבוע רק לאחר תשלום');   // "נרשמתם למפגש" בשורה משלו בכתום, והמצב מתחתיו
+    note.innerHTML = '<span class="su-regd">שמרתם מקום למפגש</span>' + (free ? 'המפגש בשבילכם ללא תשלום' : (paid && !rem) ? (x.pay_mail ? 'התשלום התקבל, ופרטי המפגש' + (String(x.directions || '').trim() ? ' והוראות ההגעה' : '') + ' נשלחו אליכם במייל. נתראה!' : 'התשלום התקבל. נתראה!') : 'המקום יישמר קבוע רק לאחר תשלום');   // "נרשמתם למפגש" בשורה משלו בכתום, והמצב מתחתיו
     if (fold) fold.hidden = (paid && !rem) || free;   // כפתור התשלום נשאר עד שהתשלום באמת התקבל. הדיווח על תשלום מוצג רק בדף הניהול; המשתתף רואה הכול כאילו לא לחץ
   }
   let phoneMode = false;   // מחוברים עם גוגל, אין משתתף מקושר: פופאפ ההרשמה במצב הזנת טלפון בלבד
@@ -613,7 +609,7 @@
     if (gm && !gm.hidden) { try { closeModal(gm); } catch (e) {} wait = 400; }
     setTimeout(() => {
       if (contactModal && !contactModal.hidden) {   // כבר בפופאפ ההרשמה ("נרשמתם בעבר"): נשארים בטופס המלא
-        const f = contactModal.querySelector('[data-su="fail"]'); if (f && hard) f.textContent = 'ההתחברות עם גוגל לא הצליחה. אפשר להירשם כאן עם הפרטים';
+        const f = contactModal.querySelector('[data-su="fail"]'); if (f && hard) f.textContent = 'ההתחברות עם גוגל לא הצליחה. אפשר לשמור מקום כאן עם הפרטים';
         return;
       }
       openReg(false, takeRegMeeting());   // המשתתף לחץ על הרשמה: הפוקוס עובר לשדה הראשון. רק בכניסה ישירה דרך /register/ אין פוקוס אוטומטי
@@ -719,7 +715,7 @@
   }
   async function memberSubmit(root, btn, q, showDone) {
     const m = selMeeting || nearest, fail = q('fail'); fail.textContent = '';
-    if (!m || !m.id) { fail.textContent = 'עוד אין מפגש להירשם אליו. נעדכן ברגע שייקבע'; return; }
+    if (!m || !m.id) { fail.textContent = 'עוד אין מפגש לשמור בו מקום. נעדכן ברגע שייקבע'; return; }
     btn.disabled = true; btn.textContent = 'שולחים...';
     const ob = meOptimistic(m.id, { registered: true }), rel = HRT.busy(btn);
     try {
@@ -767,15 +763,12 @@
     setTimeout(() => openModal(dlg, true), wait);   // אחרי שהפופאפים הקודמים נסגרו (הם חוזרים אחורה בהיסטוריה)
   }
   window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-blocked') showBlocked(); });   // האזור האישי (בפופאפ) גילה שהחשבון חסום
-  /* תשלום בדרך אחרת: פופאפ (אותה מעטפת) עם שיחת וואטסאפ מוכנה אלינו, עם פרטי המפגש */
+  /* שמירת מקום בדרך אחרת: פותח ישר שיחת וואטסאפ איתנו עם הודעה מוכנה (בלי פופאפ), עם פרטי המפגש */
   function openOtherPay(m) {
-    const dlg = document.getElementById('otherModal'); if (!dlg) return;
-    let info = 'המפגש הקרוב';
-    if (m && m.date) { const [, mo, d] = String(m.date).split('-').map(Number), wd = HE_DAYS[new Date(m.date + 'T12:00:00Z').getUTCDay()]; info = 'יום ' + wd + ' ' + d + '.' + mo + (m.time ? ' בשעה ' + m.time : ''); }
-    const text = 'היי, אני רוצה להעביר את התשלום בדרך אחרת למפגש ביום ' + info.replace(/^יום /, '');
-    dlg.querySelector('#otherInfo').innerHTML = m && m.date ? CONFIG.meetingBox(Object.assign({}, m, { name: m.name || defMeetingName })) : '';
-    dlg.querySelector('#otherWa').href = 'https://wa.me/' + CONFIG.whatsapp + '?text=' + encodeURIComponent(text);
-    openModal(dlg, true);
+    let when = 'הקרוב';
+    if (m && m.date) { const [, mo, d] = String(m.date).split('-').map(Number), wd = HE_DAYS[new Date(m.date + 'T12:00:00Z').getUTCDay()]; when = 'ביום ' + wd + ' ' + d + '.' + mo + (m.time ? ' בשעה ' + m.time : ''); }
+    const text = 'היי, אני רוצה לשמור מקום בדרך אחרת למפגש ' + when;
+    window.open('https://wa.me/' + CONFIG.whatsapp + '?text=' + encodeURIComponent(text), '_blank', 'noopener');
   }
   /* פופאפ האזור האישי: עולה מלמטה ומציג את דף האזור האישי (me/?embed=1) בתוך iframe, בלי לעבור לדף אחר. סגירה: גרירה למטה או לחיצה על הפס, לחיצה בחוץ, Esc וכפתור "חזרה" */
   /* מנהל: דף הניהול שומר את החיבור במפתח משלו, ולכן מעתיקים אליו את החיבור של דף הבית ועוברים אליו (בלי להתחבר שוב) */
@@ -941,8 +934,8 @@
     return left <= 3 ? '100' : '80';
   };
   /* טקסט כפתור השליחה: "הרשמה" כשיש מפגש להירשם אליו, "השארת פרטים" כשאין (כמו הכפתור הראשי בעמוד) */
-  let submitLabel = 'הרשמה';
-  const setSubmitLabel = (m) => { submitLabel = m ? 'הרשמה' : 'השארת פרטים'; document.querySelectorAll('[data-su="btn"]:not(.saved):not(:disabled)').forEach((b) => { b.textContent = submitLabel; }); };
+  let submitLabel = 'שמירת מקום';
+  const setSubmitLabel = (m) => { submitLabel = m ? 'שמירת מקום' : 'השארת פרטים'; document.querySelectorAll('[data-su="btn"]:not(.saved):not(:disabled)').forEach((b) => { b.textContent = submitLabel; }); };
   let defMeetingName = '';   // שם ברירת המחדל למפגש (harpatka_public_settings)
   const showMeeting = (m) => {
     setSubmitLabel(m);

@@ -17,12 +17,12 @@ insert into __S__.harpatka_mail_templates (key, subject, html) values ('payment_
 </div></div></div>$tpl$)
 on conflict (key) do update set subject = excluded.subject, html = excluded.html;
 
-insert into __S__.harpatka_mail_templates (key, subject, html) values ('meeting_removed', 'הרישום שלך למפגש בוטל', $tpl$<div dir="rtl" style="direction:rtl;text-align:right;background:#FFFFFF;padding:24px 16px;font-family:Arial,Helvetica,sans-serif;color:#2C231D">
+insert into __S__.harpatka_mail_templates (key, subject, html) values ('meeting_removed', 'שמירת המקום שלך למפגש בוטלה', $tpl$<div dir="rtl" style="direction:rtl;text-align:right;background:#FFFFFF;padding:24px 16px;font-family:Arial,Helvetica,sans-serif;color:#2C231D">
 <div style="max-width:520px;margin:0 auto;background:#FFFFFF;border-top:4px solid #E5562D">
 <div style="padding:22px 4px 4px"><div style="font-size:14px;font-weight:bold;color:#C8411B"><span style="display:inline-block;width:9px;height:9px;background:#E5562D;margin-left:8px;vertical-align:middle"></span>יוצאים להרפתקה</div></div>
 <div style="padding:16px 4px 24px">
 <div style="font-size:20px;font-weight:bold;color:#2C231D;margin-bottom:12px">{{hello}}</div>
-<div style="font-size:16px;line-height:1.6;color:#2C231D;margin-bottom:16px">הרישום שלך למפגש הזה בוטל:</div>
+<div style="font-size:16px;line-height:1.6;color:#2C231D;margin-bottom:16px">שמירת המקום שלך למפגש הזה בוטלה:</div>
 {{{meeting_block}}}{{{credit_block}}}
 <a href="{{me_link}}" style="display:block;background:#C8411B;color:#ffffff;text-decoration:none;font-weight:bold;font-size:17px;text-align:center;padding:14px 20px;border-radius:0">לאזור האישי</a>
 <div style="font-size:15px;line-height:1.6;color:#4A3D33;margin-top:18px">שאלות, או שזו טעות? אפשר לכתוב לנו בוואטסאפ: <a href="{{wa}}" dir="ltr" style="color:#C8411B;font-weight:bold;white-space:nowrap">{{wa_num}}</a></div>
