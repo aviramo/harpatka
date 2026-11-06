@@ -1442,7 +1442,7 @@
   const payF = (p, f) => f === 'r' ? reservedOf(p.id, state.filter) : f === 'u' ? !reservedOf(p.id, state.filter) : (f && f[0] === 'm') ? (!noPayOf(p, linkOf(p.id, state.filter)) && paidVia(p.id, state.filter, f.slice(1))) : (f && f[0] === 'a') ? (!noPayOf(p, linkOf(p.id, state.filter)) && Math.round(allocatedOf(p.id, state.filter)) === Number(f.slice(1))) : payStateOf(p) === f;   // 'a80': ששולם בדיוק 80 למפגש הזה
   const paidOk0 = (p) => { const f = effPaidF(); return (!f || payF(p, f)) && sentOk(p); };
   /* הגיעו / לא הגיעו (הצ'יף בשורה העליונה, אחרי המשוריינים): לפי סימון ההגעה למפגש (attended), רק בתוך מפגש שהתחיל, ומושהה בזמן חיפוש כמו שאר הסינונים */
-  const arrOpen = () => { const m = state.filter && meetOf(state.filter); return !!m && meetingStarted(m); };   // רק מפגש שהתחיל
+  const arrOpen = () => { const m = state.filter && meetOf(state.filter); return !!m && (meetingStarted(m) || attMode()); };   // רק מפגש שהתחיל, או כשעמודת הסימון במצב הגעה (אז הצ'יף "הגיעו" והסינון שבתפריט העמודה הם אותו סינון)
   const effArrF = () => (state.q.trim() || !arrOpen()) ? null : state.arrF;
   const arrOk = (p) => { const f = effArrF(); if (!f) return true; const l = linkOf(p.id, state.filter), on = !!(l && l.attended); return f === '1' ? on : !on; };
   const paidOk = (p) => paidOk0(p) && arrOk(p);
@@ -1508,7 +1508,7 @@
     const fbtn = (kind, v, n1, n0) => { const isA = v && /^[am]/.test(String(v)) && String(v).length > 1 && kind === 'pay', isM = isA && String(v)[0] === 'm', c = (v === '1' || v === 'r' || isA) ? 'yes' : (v === '0' || v === 'u') ? 'no' : v === 'n' ? (kind === 'pay' ? 'fr' : 'free') : v === 'f' ? 'fr' : (v === 'l' && kind === 'pay') ? 'later' : (v === 'w' && (kind === 'pay' || kind === 'bal')) ? 'wait' : 'all', lab = FLAB[kind]; return '<button type="button" class="hfilt ' + c + '" data-fk="' + kind + '" aria-haspopup="menu" aria-label="' + FNAME[kind] + ': ' + (isM ? ((state.payMethods.find((pm) => pm.key === v.slice(1)) || {}).name || v.slice(1)) : isA ? '₪' + v.slice(1) : v === '1' ? lab[1] : v === '0' ? lab[2] : v === 'n' ? lab[3] : v === 'l' ? lab[5] : v === 'r' ? lab[6] : v === 'u' ? lab[7] : v === 'f' ? lab[4] : lab[0]) + '" title="' + (isM ? 'שולם ב' + ((state.payMethods.find((pm) => pm.key === v.slice(1)) || {}).name || v.slice(1)) : isA ? 'ששולמו ₪' + v.slice(1) : v === '1' ? lab[1] + ' (' + n1 + ')' : v === '0' ? lab[2] + ' (' + n0 + ')' : v === 'n' ? lab[3] : v === 'l' ? lab[5] : v === 'r' ? lab[6] : v === 'u' ? lab[7] : v === 'f' ? lab[4] : lab[0] + ': ' + lab[1] + ' ' + n1 + ', ' + lab[2] + ' ' + n0) + ' (לחיצה לפתיחת תפריט)">' + fglyph(kind, c) + UI.fdot(c === 'all' ? '' : c === 'yes' ? (kind === 'bal' ? 'yellow' : 'green') : c === 'wait' ? 'yellow' : c === 'later' ? 'blue' : c === 'no' ? 'red' : 'gray') + '</button>'; };
     const sentN = (v) => base.filter((p) => { if (!genOk(p) || !paidOk(p) || !matchPay(p, epk)) return false; return sentMatch(p.id, linkOf(p.id, state.filter), v); }).length;
     $('#listPay').innerHTML = '';   // אייקון סינון התשלום הוסר (הצ'יף "תשלומים" בשורת הצ'יפים במקומו)
-    { const ws = waSelected(), am = attMode(), cur = am ? 'הגיע / לא הגיע' : ws ? esc(ws.name) : 'וואטסאפ'; if (state.waSent && !waFilter() && !document.documentElement.classList.contains('is-loading')) waSetFilter('');   // עמודת הסימון: הודעה ריקה, תבנית הודעה, או הגיע / לא הגיע
+    { const ws = waSelected(), am = attMode(), cur = am ? 'הגעה' : ws ? esc(ws.name) : 'וואטסאפ'; if (state.waSent && !waFilter() && !document.documentElement.classList.contains('is-loading')) waResetSent('');   // עמודת הסימון: הודעה ריקה, תבנית הודעה, או הגיע / לא הגיע
       $('#listWa').innerHTML = '';   // אייקון עמודת הסימון הוסר (הכפתור הצף בתחתית במקומו)
       const fab = $('#waFab'); if (fab) { fab.classList.toggle('on', !!(am || ws)); fab.classList.toggle('f1', !!(am || ws) && waFilter() === '1'); fab.classList.toggle('f0', !!(am || ws) && waFilter() === '0'); fab.innerHTML = (am ? icon('check') : ws ? icon('chat') : icon('wa')) + '<span>' + cur + '</span>' + icon('dots');   // הסמל של מה שנבחר; הרקע לפי המצב: סינון "הגיע / נשלח" ירוק, "לא הגיע / לא נשלח" אדום: וואטסאפ (וואטסאפ), בועת הודעה (תבנית), או ✓ (הגיע / לא הגיע)
         fab.setAttribute('aria-label', 'מה מוצג בעמודה: ' + cur); }   // כפתור צף: מה שנבחר בתפריט, ולחיצה פותחת אותו לבחירה
@@ -2717,9 +2717,10 @@
   try { const o = JSON.parse(localStorage.getItem(WA_SF) || 'null'), ok = o && typeof o === 'object'; state.waSent = ok ? String(o.v || '') : ''; state.waSentKey = ok ? String(o.k || '') : ''; } catch (e) { state.waSent = ''; state.waSentKey = ''; }
   const ATT_SEL = '__att', attMode = () => !!state.filter && waMap()[waScope()] === ATT_SEL;   // הגיע / לא הגיע בעמודת הסימון: רק בתוך מפגש
   const waKey = () => { if (attMode()) return waScope() + '|' + ATT_SEL; const ws = waSelected(); return ws ? waScope() + '|' + ws.id : ''; };
-  const waFilter = () => (state.waSent && state.waSentKey && state.waSentKey === waKey()) ? state.waSent : '';
-  const waSetFilter = (v) => { state.waSent = v || ''; state.waSentKey = v ? waKey() : ''; try { localStorage.setItem(WA_SF, JSON.stringify({ k: state.waSentKey, v: state.waSent })); } catch (e) {} };
-  const waSentOk = (p) => { const f = waFilter(); if (!f) return true; let on; if (attMode()) { const l = linkOf(p.id, state.filter); on = !!(l && l.attended); } else { const ws = waSelected(); on = !!sentRow(p.id, ws.m.id, ws.id); } return f === '1' ? on : !on; };
+  const waFilter = () => attMode() ? (state.arrF || '') : ((state.waSent && state.waSentKey && state.waSentKey === waKey()) ? state.waSent : '');   // במצב הגעה הסינון הוא אותו סינון של הצ'יף "הגיעו" שמעל הרשימה (state.arrF)
+  const waResetSent = (v) => { state.waSent = v || ''; state.waSentKey = v ? waKey() : ''; try { localStorage.setItem(WA_SF, JSON.stringify({ k: state.waSentKey, v: state.waSent })); } catch (e) {} };
+  const waSetFilter = (v) => { if (attMode()) { state.arrF = v || null; return; } waResetSent(v); };
+  const waSentOk = (p) => { if (attMode()) return true; const f = waFilter(); if (!f) return true; let on; if (attMode()) { const l = linkOf(p.id, state.filter); on = !!(l && l.attended); } else { const ws = waSelected(); on = !!sentRow(p.id, ws.m.id, ws.id); } return f === '1' ? on : !on; };
   const waSelected = () => { const id = waMap()[waScope()]; return id ? (waList().find((x) => x.id === id) || null) : null; };
   const attTag = (p) => { const l = linkOf(p.id, state.filter), on = !!(l && l.attended), t = !l ? 'לא משויך למפגש. לחיצה: הגיע בלי הרשמה' : on ? 'הגיע. לחיצה מבטלת' : 'לא הגיע. לחיצה מסמנת הגעה'; return UI.tag(on ? icon('check') : '', 'ico rowwa ratt ' + (on ? 'yes' : 'no'), { 'data-att': p.id, 'aria-pressed': String(on), 'aria-label': esc(p.name) + ': ' + t, title: t }, 'button'); };   // הסימון בעמודה: עיגול ירוק בהיר עם ✓ = הגיע, עיגול שקוף ריק = לא הגיע
   /* מעקב שליחה: אחרי שליחת תבנית מסוימת (וחזרה מוואטסאפ) מאשרים שנשלחה, והשורה מסומנת; כך רואים למי נשלחה כל הודעה ולמי לא */
@@ -2727,9 +2728,9 @@
   /* ספירות לסינון בתפריט העמודה: מי שמוצג ברשימה לפי שאר הסינונים והחיפוש (בלי סינון העמודה עצמו), וכמה מהם הגיעו או נשלחה להם התבנית */
   const waCounts = () => {
     const am = attMode(), ws = waSelected(); if (!am && !ws) return null;
-    const keep = state.waSent; state.waSent = '';
+    const keep = state.waSent, keepA = state.arrF; state.waSent = ''; if (am) state.arrF = null;
     const q = state.q.trim().toLowerCase(), qd = digits(q), pool = state.participants.filter((p) => rowPass(p, q, qd));
-    state.waSent = keep;
+    state.waSent = keep; state.arrF = keepA;
     const n1 = pool.filter((p) => { if (!am) return sentRow(p.id, ws.m.id, ws.id); const l = linkOf(p.id, state.filter); return l && l.attended; }).length;
     return { '': pool.length, '1': n1, '0': pool.length - n1 };
   };
@@ -4367,7 +4368,7 @@
     const LB = am ? ['הגיע', 'לא הגיע'] : ['נשלח', 'לא נשלח'], cn = (am || sel) ? waCounts() : null, seg = cn ? '<div class="wseg" role="group" aria-label="' + (am ? 'סינון הרשימה לפי הגעה' : 'סינון הרשימה לפי שליחה של התבנית שנבחרה') + '">' + [['', 'הכל'], ['1', LB[0]], ['0', LB[1]]].map((o) => '<button type="button" class="wsf' + (cn[o[0]] || f === o[0] ? '' : ' zero') + '" data-wsf="' + o[0] + '" aria-pressed="' + (f === o[0]) + '"><span class="wmi"><span class="wdot">' + UI.fdot(f === o[0] && (o[0] === '1' ? 'green' : o[0] === '0' ? 'red' : 'ink')) + '</span><span class="wmn">' + o[1] + ' <small>' + cn[o[0]] + '</small></span></span></button>').join('') + '</div>' : '', bot = seg + addRows();
     $('#waMenu').innerHTML = item('', WA_ICON, 'וואטסאפ', '', !sel && !am) +
       waList().map((x) => { const on = !!sel && sel.id === x.id, b = item(x.id, PIN_ICON, x.name || 'ללא שם', x.tag || '', on); return on ? '<div class="wrow">' + b + '<button type="button" class="wedit" role="menuitem" data-wedit="' + esc(x.id) + '" title="עריכת ההודעה" aria-label="עריכת ההודעה">' + icon('edit', 'i18') + '</button></div>' : b; }).join('') +
-      (state.filter ? item(ATT_SEL, icon('check'), 'הגיע / לא הגיע', '', am) : '') +
+      (state.filter ? item(ATT_SEL, icon('check'), 'הגעה', '', am) : '') +
       (bot ? '<div class="wbot">' + bot + '</div>' : '');
     function addRows() {
       const inM = !!(state.filter && curMeeting()), row = (k, label) => '<button type="button" class="wadd" data-wadd="' + k + '"><span class="wmi">' + icon('plus') + '<span class="wmn">' + esc(label) + '</span></span></button>';
@@ -4514,8 +4515,8 @@
     const b = e.target.closest('[data-wt]'); if (!b) return;
     const id = b.dataset.wt;
     if (id && b.getAttribute('aria-checked') === 'true') { closeWa(); return; }   // לחיצה נוספת על פריט שכבר מסומן סוגרת את התפריט, בלי לשנות את הבחירה
-    if (!id) { waSetSel(''); waSetFilter(''); closeWa(); render(); return; }   // הודעה ריקה: הסינון מתאפס והתפריט נסגר
-    if ((waMap()[waScope()] || '') !== id) { waSetSel(id); waSetFilter(''); }   // מעבר לתבנית אחרת או להגעה: הסינון חוזר ל"הכל"
+    if (!id) { waSetSel(''); waResetSent(''); closeWa(); render(); return; }   // הודעה ריקה: הסינון מתאפס והתפריט נסגר
+    if ((waMap()[waScope()] || '') !== id) { waSetSel(id); waResetSent(''); }   // מעבר לתבנית אחרת או להגעה: הסינון חוזר ל"הכל"
     waAddAsk = false; refreshWa();   // התפריט נשאר פתוח כדי שאפשר יהיה לבחור סינון
   });
   /* תפריטי הסינון, המיון והוואטסאפ הם פופאפים רגילים (dialog): עולים מלמטה, נסגרים בהחלקה, בלחיצה בחוץ ובחזרה */
