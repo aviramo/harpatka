@@ -20,11 +20,12 @@
       });
     }
     /* 2. הסרטים הכתומים: גדלים לאורך המסלול (החצי הראשון של הנקודות הוא הקצה העליון, והשני הקצה התחתון בסדר הפוך) */
-    var starts = [1.6, 2.1], dur = 2.6;
+    var starts = [4.6, 5.1], dur = 2.4;   /* אחרי שהטקסט נכתב (הזזה של 3.0 שניות כמו בזמני התמונה ב-site.css) */
     document.querySelectorAll('#invite .h8-flow').forEach(function (svg) {
       svg.querySelectorAll('polygon').forEach(function (poly, k) {
         var pts = poly.getAttribute('points').trim().split(' '), n = pts.length / 2;
         var P = pts.slice(0, n), Q = pts.slice(n).reverse();
+        if (!svg.classList.contains('fm') && parseFloat(P[0]) < parseFloat(P[P.length - 1])) { P.reverse(); Q.reverse(); }   /* כל הסרטים נבנים מימין לשמאל, חוץ מהגלים שמעל ומתחת לתמונה במובייל (.fm), שנבנים משמאל לימין לבקשת בעל האתר */
         poly.setAttribute('points', P[0] + ' ' + Q[0]);
         var t0 = performance.now() + starts[k % 2] * 1000;
         (function frame(now) {
