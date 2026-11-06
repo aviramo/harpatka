@@ -8,7 +8,7 @@
   <link rel="icon" href="../images/favicon-v5.ico" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="../images/favicon-v5-32.png" />
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Assistant:wght@400;500;600;700&display=block" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/site.css?v=20261104m">
+  <link rel="stylesheet" href="../shared/site.css?v=20261106a">
   <script src="../shared/age.js?v=20261031a"></script>
 </head>
 <body>
@@ -35,9 +35,11 @@
   </div>
   </div>
   <div id="grid" class="grid"></div>
-  <div id="none" class="none" hidden>לא נמצאו מודעות עם הטקסט הזה</div>
+  <a class="soloback" href="./" hidden>לכל המודעות</a>
+  <div id="none" class="none" hidden>לא נמצאו מודעות עם הטקסט הזה<a href="./" hidden>לכל המודעות</a></div>
   <script>
     // ads.json נבנה על ידי ads/tools/build_ads.py. videos.json (ידני): מספר סידורי של מודעה → קובץ ב-video/.
+    if (new URLSearchParams(location.search).has('a')) document.documentElement.classList.add('solo');
     const json = u => fetch(u).then(r => r.ok ? r.json() : {}).catch(() => ({}));
     const DOTS = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>';
     const I_DL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg>';
@@ -70,6 +72,18 @@
       try { await navigator.clipboard.writeText(abs); toast('הקישור הועתק'); } catch (e) { window.prompt('הקישור לקובץ:', abs); }
     }
 
+    /* כתובת ייחודית לכל מודעה: ?a=<מזהה> (המזהה הוא שם הקובץ, למשל ad-07 או heart-30b). נפתחת במודעה אחת בלבד, ובה אפשר לנגן ולשתף.
+       כשמנגנים מודעה בדף הרגיל הכתובת בדפדפן מתעדכנת אליה, ובעצירה חוזרת (אפשר גם להעתיק או לשלוח אותה בתפריט ⋯, "שיתוף קישור"). */
+    const soloId = new URLSearchParams(location.search).get('a') || '';
+    const adUrl = id => { const u = new URL(location.href); u.search = ''; u.hash = ''; u.searchParams.set('a', id); return u.href; };
+    const curId = () => new URLSearchParams(location.search).get('a') || '';
+    const setOpenId = id => { const u = new URL(location.href); if (id) u.searchParams.set('a', id); else u.searchParams.delete('a'); history.replaceState(history.state, '', u); };
+    const I_LINK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>';
+    async function shareLink(id, name) {
+      const url = adUrl(id);
+      if (navigator.share) { try { await navigator.share({ title: name, url }); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+      try { await navigator.clipboard.writeText(url); toast('הקישור הועתק'); } catch (e) { window.prompt('הקישור למודעה:', url); }
+    }
     let openMore = null;
     /* תפריט פתוח: שכבה שקופה על כל הדף. נגיעה בה, גם תחילת גלילה, סוגרת את התפריט מיד. השכבה נשארת עד סוף הנגיעה, כדי שהנגיעה לא תפעיל את מה שמתחתיה ולא תגלול */
     const shield = document.createElement('div'); shield.className = 'menu-shield'; shield.hidden = true; document.body.appendChild(shield);
@@ -96,8 +110,12 @@
       // הסדר: שיתוף סרטון, הורדת סרטון, שיתוף תמונה, הורדת תמונה (בלי סרטון: רק התמונה)
       const kinds = [{ url: img, name: base + '.' + ext, type: ext === 'jpg' ? 'image/jpeg' : 'image/png', dl: 'הורדת תמונה', sh: 'שיתוף תמונה' }];
       if (vid) kinds.unshift({ url: vid, name: base + '.mp4', type: 'video/mp4', dl: 'הורדת סרטון', sh: 'שיתוף סרטון' });
+      const bl = document.createElement('button');
+      bl.type = 'button'; bl.setAttribute('role', 'menuitem'); bl.innerHTML = I_LINK + '<span>שיתוף קישור</span>';
+      bl.addEventListener('click', () => { closeMore(); shareLink(base, name); });
+      menu.appendChild(bl);
       kinds.forEach((k, i) => {
-        if (i) menu.appendChild(document.createElement('hr'));
+        menu.appendChild(document.createElement('hr'));
         const a = document.createElement('a');
         a.href = k.url; a.download = k.name; a.setAttribute('role', 'menuitem'); a.innerHTML = I_DL + '<span>' + k.dl + '</span>';
         a.addEventListener('click', closeMore);
@@ -118,9 +136,13 @@
 
     // סרטונים שמופיעים ראשונים, לפני המודעות הממוספרות. סרטון מעודכן = שם קובץ חדש (cache)
     const SCENES_END = 'יוצאים להרפתקה, מכניסים תנועה לחיים. לנשים וגברים בגילאי ' + ageText('to') + ' בפרק פתוח בחיים. ';
-    const FEATURED = [{ label: 'כשהלב נפתח', name: 'הסרטון כשהלב נפתח', type: 'anim', base: 'heart-30', w: 1080, h: 1920,
+    const ALT_HEART = 'דמיינו שאתם קמים בבוקר עם שמחת חיים. ערים, נרגשים, פתוחים. אבל במהלך היום: משימות, דאגות, אחריות. האנרגיה מתרוקנת, והכול נהיה כבד ועמוס, וקשה לראות את האור. ומה אם אפשר להרגיש את החיים קצת אחרת? משחק, סקרנות, הנאה. כי במקום שבו יש תנועה, החיים מתעוררים. יוצאים להרפתקה';
+    const FEATURED = [{ label: 'כשהלב נפתח (פרחים)', name: 'הסרטון כשהלב נפתח, פרחים', type: 'anim', base: 'heart-30b', w: 1080, h: 1920,
+      img: 'img/heart-30b-18d2014d.jpg', vid: 'video/heart-30b-18d2014d.mp4',
+      alt: ALT_HEART },
+      { label: 'כשהלב נפתח (דמויות)', name: 'הסרטון כשהלב נפתח, דמויות', type: 'anim', base: 'heart-30', w: 1080, h: 1920,
       img: 'img/heart-30-eb531021.jpg', vid: 'video/heart-30-eb531021.mp4',
-      alt: 'דמיינו שאתם קמים בבוקר עם שמחת חיים. ערים, נרגשים, פתוחים. אבל במהלך היום: משימות, דאגות, אחריות. האנרגיה מתרוקנת, והכול נהיה כבד ועמוס, וקשה לראות את האור. ומה אם אפשר להרגיש את החיים קצת אחרת? משחק, סקרנות, הנאה. כי במקום שבו יש תנועה, החיים מתעוררים. יוצאים להרפתקה' },
+      alt: ALT_HEART },
       { label: 'מרגישה שהחיים עומדים במקום? (בת 50)', cr: true, name: 'הסרטון מרגישה שהחיים עומדים במקום', type: 'photo', base: 'adventure-woman', w: 1080, h: 1920,
       img: 'img/adventure-woman-c6a5a5cb.jpg', vid: 'video/adventure-woman-c6a5a5cb.mp4',
       alt: 'מרגישה לפעמים שהחיים עומדים במקום? רוצה שמשהו ישתנה? אבל כל צעד מרגיש כמו מאמץ? ומה אם יש דרך אחרת? בלי להילחם בעצמך. בלי להתאמץ כל כך. פשוט לשחק. לנוע. ליהנות. לפעמים דווקא ההנאה מניעה את השינוי. ' + SCENES_END + 'בואי לחוות את זה בעצמך' },
@@ -205,7 +227,7 @@
     function card(g, c) {
       const f = document.createElement('figure');
       /* טקסט לחיפוש: מספר, נוסח המודעה (זהה בתמונה ובסרטון) ובמודעה עם סרטון גם הטקסטים הקבועים שבסרטון */
-      f.dataset.type = c.type || 'msg'; f.dataset.cat = c.cat || '';
+      f.dataset.type = c.type || 'msg'; f.dataset.cat = c.cat || ''; f.dataset.id = c.base;
       f.classList.toggle('tall', c.h / c.w > 1.5);   // 9:16: התמונה והסרטון ביחס האמיתי שלהם
       f.dataset.text = [c.label, c.name, c.alt, c.cr ? 'מוגן בזכויות יוצרים' : '', c.vid && c.type !== 'photo' && c.type !== 'anim' ? (c.type === 'move' ? 'להכניס תנועה חדשה לחיים' : 'מפגש מסוג אחר') + ' לגילאי ' + ageText('to') + ' בפרק פתוח בחיים הזמנה יוצאים להרפתקה' : ''].join(' ');
       const head = document.createElement('div'); head.className = 'head';
@@ -244,6 +266,7 @@
         const ppIcon = () => { bPP.innerHTML = v.paused ? I_PLAY : I_PAUSE; bPP.setAttribute('aria-label', v.paused ? 'המשך ניגון' : 'השהיה'); };
         const toggle = () => { if (v.paused) v.play().catch(() => {}); else v.pause(); };
         const show = on => {
+          if (!on && !soloId && curId() === c.base) setOpenId(null);   // עצירה: הכתובת חוזרת לדף הרגיל
           if (!on && media.classList.contains('fsx')) { v.pause(); fsSlideOut(media, () => { f.classList.remove('playing'); fsExit(media); }); return; }
           f.classList.toggle('playing', on);
           if (on) { v.currentTime = 0; paint(); v.play().catch(() => {}); v.focus({ preventScroll: true }); }
@@ -272,7 +295,7 @@
         stops.push(stop);
         v.addEventListener('webkitendfullscreen', stop);
         media._stop = stop; if (io) io.observe(media);
-        v.addEventListener('play', () => stops.forEach(s => s !== stop && s()));
+        v.addEventListener('play', () => { stops.forEach(s => s !== stop && s()); if (curId() !== c.base) setOpenId(c.base); });   // ניגון: הכתובת היא של המודעה הזו
         f.classList.add('has-video'); media.appendChild(v);
         show(false);
       }
@@ -280,6 +303,7 @@
     }
 
     FEATURED.forEach(c => card(document.getElementById('grid'), c));
+    if (soloId) { document.querySelector('.soloback').hidden = false; const sf = FEATURED.find(c => c.base === soloId); document.title = 'מודעה ' + (sf ? sf.label : soloId.replace(/^ad-0*/, '')); }
     Promise.all([json('ads.json'), json('videos.json')]).then(([items, videos]) => {
       const g = document.getElementById('grid');
       (Array.isArray(items) ? items : []).forEach(it => {
@@ -309,7 +333,7 @@
       const words = norm(qEl.value).split(' ').filter(Boolean), count = { '': 0 };
       let shown = 0;
       document.querySelectorAll('#grid figure').forEach(f => {
-        const hay = norm(f.dataset.text), match = words.every(w => hay.includes(w)), ok = match && (!typeSel || catOf(f) === typeSel);
+        const hay = norm(f.dataset.text), match = words.every(w => hay.includes(w)), ok = soloId ? f.dataset.id === soloId : match && (!typeSel || catOf(f) === typeSel);
         f.hidden = !ok; if (ok) shown++;
         if (match) { count[''] ++; count[catOf(f)] = (count[catOf(f)] || 0) + 1; }
         if (!ok) f.querySelector('.media') && f.querySelector('.media')._stop && f.querySelector('.media')._stop();
@@ -318,6 +342,7 @@
       [...typesEl.options].forEach(o => { o.textContent = TYPE_LABELS[o.value] + ' (' + (count[o.value] || 0) + ')'; });
       qClr.hidden = !qEl.value;
       noneEl.hidden = shown > 0;
+      if (soloId) { noneEl.firstChild.textContent = 'המודעה לא נמצאה '; noneEl.querySelector('a').hidden = false; }
     }
     qEl.addEventListener('input', applySearch);
     qClr.addEventListener('click', () => { qEl.value = ''; applySearch(); qEl.focus(); });
