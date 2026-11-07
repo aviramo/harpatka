@@ -11,7 +11,7 @@ MIN = int(re.search(r'AGE_MIN\s*=\s*(\d+)', src).group(1))
 MAX = int(re.search(r'AGE_MAX\s*=\s*(\d+)', src).group(1))
 TEXT = {'range': f'{MIN}–{MAX}', 'to': f'{MIN} עד {MAX}', 'en': f'{MIN} to {MAX}', 'min': str(MIN), 'max': str(MAX)}
 
-FILES = ['index.html', 'v9/index.html', 'v10/index.html', 'privacy/index.html', 'biodanza/index.html', 'ads/index.html', 'register/index.html', 'me/index.html', 'board/index.html']
+FILES = ['index.html', 'v9/index.html', 'v10/index.html', 'v11/index.html', 'privacy/index.html', 'biodanza/index.html', 'ads/index.html', 'register/index.html', 'me/index.html', 'board/index.html']
 WORDS = r'(גילאי|בגילאי|לגילאי|בגילי|לגילי|גילי)'
 changed = 0
 for rel in FILES:
