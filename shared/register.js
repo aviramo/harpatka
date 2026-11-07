@@ -208,6 +208,9 @@
     catch (e) { if (window.__leadSent) return; window.__leadSent = true; }   // בלי אחסון: פעם אחת לטעינת דף
     try { fbq('track', 'Lead'); } catch (e) {}
   };
+  /* Lead (פיקסל): לא במילוי טופס, אלא בלחיצה על הכפתור הקבוע למטה או על "שמירת מקום" בכרטיס מפגש. הסימון הוא data-lead על האלמנט; ההאזנה בשלב הלכידה, כך שהיא עובדת גם כשהכפתור עוצר את האירוע או נבנה מאוחר יותר. חד ערכי למכשיר, כמו קודם */
+  window.HarpatkaLead = leadOnce;
+  document.addEventListener('click', (e) => { const t = e.target; if (t && t.closest && t.closest('[data-lead]')) leadOnce(); }, true);
   const normPhone = PersonForm.normPhone;   // הלוגיקה בטופס המשותף (shared/person-form.js)
   window.normPhone = normPhone;
   const suRoots = [], suResets = [];
@@ -288,7 +291,7 @@
           else if (st === 'phone_taken') q('fail').textContent = 'מספר הטלפון הזה כבר מחובר לחשבון אחר';   // והמנהלים מקבלים מייל
           else if (st === 'blocked') q('fail').textContent = 'אי אפשר לשמור מקום מהחשבון הזה';
           else if (st === 'created' || st === 'linked' || st === 'reactivated') {
-            if (st !== 'linked') { leadOnce(); createdHere = true; }   // Lead על משתתף חדש (או שחזר להיות פעיל); RegistrationValue אחרי הגיל, בהשלמת הפרטים
+            if (st !== 'linked') { createdHere = true; }   // RegistrationValue אחרי הגיל, בהשלמת הפרטים (Lead כבר לא נשלח במילוי טופס, ראו data-lead)
             mePending = null;
             for (let i = 0; i < 6 && !meInfo; i++) { await meLoader.now(); if (!meInfo) await new Promise((rs) => setTimeout(rs, 450)); }   // meLoader.now מסתיים מיד כשטעינה אחרת כבר רצה; מנסים עד שהמשתתף נטען
             if (!meInfo) q('fail').textContent = 'משהו השתבש, אפשר לנסות שוב';
@@ -327,7 +330,7 @@
         try {
           const r = await meRpc('harpatka_me_join', Object.assign({ p_first: ck.v.first, p_last: ck.v.last, p_age: ck.v.age, p_gender: ck.v.gender, p_phone: ck.v.phoneRaw }, mm && mm.id ? { p_meeting: mm.id } : {}, PAID ? { p_src: 'p' } : {}));
           if (r === 'created' || r === 'exists') {
-            if (r === 'created') { leadOnce(); try { if (window.fbq) fbq('trackCustom', 'RegistrationValue', { value: ageOk(ck.v.age) ? 3 : 1, currency: 'ILS' }); } catch (e) {} }
+            if (r === 'created') { try { if (window.fbq) fbq('trackCustom', 'RegistrationValue', { value: ageOk(ck.v.age) ? 3 : 1, currency: 'ILS' }); } catch (e) {} }
             doneJ = true; showDone(payOkJ);
             for (let i = 0; i < 6 && !meInfo; i++) { await meLoader.now(); if (!meInfo) await new Promise((rs) => setTimeout(rs, 450)); }   // המשתתף המקושר נטען: השם בבאנר והמפגשים מתעדכנים
           } else if (PersonForm.serverError(root, r)) { /* ההודעה ליד השדה */ }
@@ -357,9 +360,8 @@
         if (!res.ok && PAID) res = await send({});   // אם הפונקציה בבסיס הנתונים עוד לא עודכנה (admin/source.sql): ההרשמה נשמרת בלי הסימון
         const out = res.ok ? await res.json() : null;
         if (out === 'created' || out === 'exists') {   // כפילות: אותה הודעה, בלי לחשוף שהמספר כבר רשום
-          if (out === 'created') {   // Lead רק על מספר חדש (חד ערכי), לא על כפילות
+          if (out === 'created') {   // RegistrationValue רק על מספר חדש, לא על כפילות
             try { if (claimToken) localStorage.setItem('harpatka_claim_token', claimToken); } catch (e) {}   // האזור האישי יחבר את המשתתף לחשבון גוגל בלי טלפון
-            leadOnce();
             /* RegistrationValue: ערך 3 למי שבטווח הגילאים (זהה ל-payOk), 1 למי שמחוץ לטווח */
             const inRange = ageOk(age);
             try { if (window.fbq) fbq('trackCustom', 'RegistrationValue', { value: inRange ? 3 : 1, currency: 'ILS' }); } catch (e) {}
