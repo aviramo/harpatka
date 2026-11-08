@@ -44,7 +44,6 @@
                   </div>
                 </div>
               </div>
-              <p class="su-phonehint" data-su="phonehint">הזינו את מספר הטלפון שלכם. אם כבר שמרתם אצלנו מקום בעבר, נמצא אתכם לפי המספר</p>
               <p class="su-dethint" data-su="dethint">כמעט סיימנו. נשאר רק להשלים כמה פרטים</p>
               <div class="su-member" data-su="member"><p class="su-memberp">הפרטים שלכם כבר שמורים אצלנו</p><p class="su-who" data-su="who"></p><p class="su-membernm" data-su="nomeet" hidden>עוד אין מפגש לשמור בו מקום. נעדכן אתכם ברגע שייקבע מפגש</p></div>
               <a href="__BASE__me/?login=1&back=reg" class="su-glink" data-su="glink">כניסה עם גוגל</a><button type="button" class="su-gback" data-su="gback">חזרה</button>
