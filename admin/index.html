@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261108j" />
+  <link rel="stylesheet" href="admin.css?v=20261108k" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -4291,9 +4291,10 @@
   function moreSecs() {
     const scope = state.participants.filter((p) => (state.filter ? linkOf(p.id, state.filter) : p.active !== false) && mtypeOk(p));
     const cnt = (f) => scope.filter(f).length;
-    const chip = (kind, val, label, n, col) => { const on = payKeys(state[FK[kind]]).includes(val), pc = PALETTE[col || DEFCOL[kind]]; return '<button type="button" class="mc' + (n || on ? '' : ' zero') + '"' + (pc ? ' data-sc="1" style="--sbg:' + pc[0] + ';--sfg:' + pc[1] + '"' : '') + ' data-mk="' + kind + '" data-mv="' + esc(val) + '" aria-pressed="' + on + '">' + (kind === 'age' ? '<bdi dir="ltr">' + esc(label) + '</bdi>' : esc(label)) + ' <small>' + n + '</small></button>'; };
+    const fillS = (n) => '--fill:' + (scope.length ? Math.min(100, Math.round(n / scope.length * 100)) : 0) + '%';   // כמה מהמשתתפים בתצוגה נמצאים בערך הזה: שיעור המילוי של הרקע
+    const chip = (kind, val, label, n, col) => { const on = payKeys(state[FK[kind]]).includes(val), pc = PALETTE[col || DEFCOL[kind]]; return '<button type="button" class="mc' + (n || on ? '' : ' zero') + '"' + ' style="' + fillS(n) + (pc ? ';--sbg:' + pc[0] + ';--sfg:' + pc[1] : '') + '"' + (pc ? ' data-sc="1"' : '') + ' data-mk="' + kind + '" data-mv="' + esc(val) + '" aria-pressed="' + on + '">' + (kind === 'age' ? '<bdi dir="ltr">' + esc(label) + '</bdi>' : esc(label)) + ' <small>' + n + '</small></button>'; };
     /* תשלום (בתוך מפגש) או יתרה (בכל המשתתפים ובסוג מפגש): קטגוריה ראשונה, בחירה אחת (לחיצה נוספת מבטלת); במקום הצ'יף שהיה בשורת הצ'יפים */
-    const pchip = (kind, val, label, n, col) => { const on = (kind === 'pay' ? state.paidF : state.bal) === val, pc = PALETTE[col]; return '<button type="button" class="mc' + (n || on ? '' : ' zero') + '" data-sc="1" style="--sbg:' + pc[0] + ';--sfg:' + pc[1] + '" data-mp="' + kind + '" data-mv="' + esc(val) + '" aria-pressed="' + on + '">' + esc(label) + ' <small>' + n + '</small></button>'; };
+    const pchip = (kind, val, label, n, col) => { const on = (kind === 'pay' ? state.paidF : state.bal) === val, pc = PALETTE[col]; return '<button type="button" class="mc' + (n || on ? '' : ' zero') + '" data-sc="1" style="' + fillS(n) + ';--sbg:' + pc[0] + ';--sfg:' + pc[1] + '" data-mp="' + kind + '" data-mv="' + esc(val) + '" aria-pressed="' + on + '">' + esc(label) + ' <small>' + n + '</small></button>'; };
     let payCols = [];   // בתוך מפגש התשלום מפוצל לשתי קטגוריות: מצב התשלום, ודרך התשלום והסכום ששולם יחד
     if (state.filter) {
       const lab = FLAB.pay, fc = FC.pay || {}, pmc = FC.payMeth || {}, am = FC.payAmts || {};
