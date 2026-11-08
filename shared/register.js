@@ -195,7 +195,7 @@
   /* ?s=p (פייסבוק) ו-?s=pm (פייסבוק, גרסה שבה הסדר בדף שונה, v11/index.html) נחשבים אותה הגעה ממודעה: הרישום נשלח כ-'p', ושני הקודים שייכים לאותו שיווק ממומן */
   const PAID = (() => {
     const ok = (x) => x === 'p' || x === 'pm';
-    let s = new URLSearchParams(location.search).get('s'), v = ok(s);
+    const q = new URLSearchParams(location.search); let s = q.get('s') || (q.has('pm') ? 'pm' : null), v = ok(s);   // גם ?pm הוא אותו קוד
     try { if (v) sessionStorage.setItem('harpatka_s', s); else v = ok(sessionStorage.getItem('harpatka_s')); } catch (e) {}
     return v;
   })();
