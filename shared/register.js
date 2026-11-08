@@ -45,9 +45,10 @@
                 </div>
               </div>
               <p class="su-phonehint" data-su="phonehint">הזינו את מספר הטלפון שלכם. אם כבר שמרתם אצלנו מקום בעבר, נמצא אתכם לפי המספר</p>
+              <p class="su-gphint" data-su="gphint">מה מספר הטלפון שלכם? אם כבר חיברתם חשבון גוגל, אפשר להיכנס איתו בלי להזין אותו</p>
               <p class="su-dethint" data-su="dethint">כמעט סיימנו. נשאר רק להשלים כמה פרטים</p>
               <div class="su-member" data-su="member"><p class="su-memberp">הפרטים שלכם כבר שמורים אצלנו</p><p class="su-who" data-su="who"></p><p class="su-membernm" data-su="nomeet" hidden>עוד אין מפגש לשמור בו מקום. נעדכן אתכם ברגע שייקבע מפגש</p></div>
-              <a href="__BASE__me/?login=1&back=reg" class="su-glink" data-su="glink">שמרתם מקום בעבר? לחצו כאן</a>
+              <a href="__BASE__me/?login=1&back=reg" class="su-glink" data-su="glink">כבר חיברתם חשבון גוגל? כניסה עם גוגל</a>
             </div></div>
             <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-3.5 text-[1.2rem] whitespace-nowrap w-full mt-4">שמירת מקום</button>
             <div data-su="fail" class="su-err mt-3 text-center" role="alert"></div>
@@ -103,7 +104,7 @@
     lockPage();
     /* הפוקוס עובר לקופסת הפופאפ (בלי טבעת פוקוס מכוערת על כפתור הסגירה) */
     /* פתיחה על ידי המשתמש (לחיצה על כפתור): הפוקוס עובר לשדה השם והמקלדת עולה. בכניסה ישירה ל-/register/ בלי פוקוס אוטומטי */
-    const tel = m.id === 'contactModal' && document.documentElement.classList.contains('reg-phone') ? m.querySelector('input[type="tel"]') : null;   // שלב הטלפון: תמיד בשדה הטלפון, והמקלדת עולה
+    const tel = m.id === 'contactModal' && document.documentElement.classList.contains('reg-phone') || document.documentElement.classList.contains('reg-gphone') ? m.querySelector('input[type="tel"]') : null;   // שלב הטלפון: תמיד בשדה הטלפון, והמקלדת עולה
     const f = tel || (!noFocus && m.querySelector('[data-autofocus]')) || m.querySelector('.modal-box');
     if (f) {
       if (f.matches('.modal-box')) f.setAttribute('tabindex', '-1');
@@ -281,6 +282,12 @@
     form.addEventListener('submit', async (e) => {
       e.preventDefault(); q('fail').textContent = '';
       if (!selMeeting && !nearestOk) { btn.disabled = true; try { await ensureNearest(); } catch (er) {} btn.disabled = false; }   // הטעינה של המפגש הקרוב נכשלה בעמוד: מנסים שוב לפני השליחה, כדי שהפופאפ והשרת יתייחסו לאותו מפגש
+      if (guestStep) {   // אורח: שלב הטלפון (בלי חובת גוגל). ממשיכים לטופס המלא עם הטלפון שהוזן
+        const gt = root.querySelector('input[type="tel"]');
+        if (!normPhone((gt || {}).value || '')) { PersonForm.setErr(root, 'phone', PersonForm.MSG.phone); return; }
+        setGuestStep(false); const f1 = document.getElementById('cmFirst'); if (f1) try { kbFocus(f1); } catch (x) {}
+        return;
+      }
       if (phoneMode) {   // מחוברים עם גוגל, אין משתתף מקושר: רק טלפון. השרת מחבר את החשבון למשתתף עם הטלפון הזה (או יוצר משתתף עם הטלפון בלבד) ורושם למפגש שנבחר
         const ph = (root.querySelector('input[type="tel"]') || {}).value || '';
         if (!normPhone(ph)) { PersonForm.setErr(root, 'phone', PersonForm.MSG.phone); return; }
@@ -505,6 +512,12 @@
     note.innerHTML = '<span class="su-regd">שמרתם מקום למפגש</span>' + (free ? 'המפגש בשבילכם ללא תשלום' : (paid && !rem) ? (x.pay_mail ? 'התשלום התקבל, ופרטי המפגש' + (String(x.directions || '').trim() ? ' והוראות ההגעה' : '') + ' נשלחו אליכם במייל. נתראה!' : 'התשלום התקבל. נתראה!') : 'המקום יישמר קבוע רק לאחר תשלום');   // "נרשמתם למפגש" בשורה משלו בכתום, והמצב מתחתיו
     if (fold) fold.hidden = (paid && !rem) || free;   // כפתור התשלום נשאר עד שהתשלום באמת התקבל. הדיווח על תשלום מוצג רק בדף הניהול; המשתתף רואה הכול כאילו לא לחץ
   }
+  /* שלב הטלפון לאורח (reg-gphone): הרשמה לא מחייבת גוגל. קודם טלפון בלבד, ובאותו שלב אפשר להיכנס עם גוגל (אם כבר חיברו חשבון). "המשך" פותח את שאר השדות; אזור אישי כן דורש גוגל */
+  let guestStep = false;
+  function setGuestStep(on) {
+    guestStep = !!on; document.documentElement.classList.toggle('reg-gphone', guestStep);
+    document.querySelectorAll('[data-su="btn"]:not(.saved):not(:disabled)').forEach((b) => { b.textContent = guestStep ? 'המשך' : submitLabel; });
+  }
   let phoneMode = false;   // מחוברים עם גוגל, אין משתתף מקושר: פופאפ ההרשמה במצב הזנת טלפון בלבד
   let createdHere = false;   // המשתתף נוצר בהרשמה הזו (בשלב הטלפון): RegistrationValue נשלח כשהגיל ידוע, בהשלמת הפרטים
   function setPhoneMode(on) {
@@ -523,6 +536,7 @@
     h.toggle('reg-details', on && !full);
     h.remove('reg-join');
     setPhoneMode(!on && GL && !AS && loggedIn());
+    if ((on || loggedIn()) && guestStep) setGuestStep(false);   // התחברו עם גוגל: שלב הטלפון של האורח מסתיים
     if (on && !full) {   // השלמת פרטים: הטלפון כבר ידוע (השדה מוסתר וממולא בשבילו), והפרטים הקיימים אם יש
       const t = document.getElementById('cmPhone'); if (t && meInfo.phone) t.value = meInfo.phone;
       PersonForm.fill(document.getElementById('contactModal') || document, { first: meInfo.first, last: meInfo.last, age: meInfo.age, gender: meInfo.gender });
@@ -880,7 +894,7 @@
   window.HarpatkaMe = { enabled: GL, ready: false, confirmLogout, get: meGet, login: loginGoogle, loginPopup, openArea: (search) => openMeArea(search || '') };   // ready: הטעינה הראשונה של מצב המשתתף הסתיימה (הכפתור הקבוע בדף הבית מחכה לה)
   try { if (sessionStorage.getItem('harpatka_open_me')) { sessionStorage.removeItem('harpatka_open_me'); setTimeout(() => { try { if (localStorage.getItem(ME_KEY)) openMeArea(''); } catch (e) {} }, 700); } } catch (e) {}   // חזרה מהתחברות עם גוגל שהתחילה מתוך הפופאפ: נפתח מחדש
   document.querySelectorAll('[data-su="ame"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); try { closeModal(contactModal); } catch (x) {} setTimeout(() => openMeArea(''), 450); }));   // כניסה לאזור האישי (בתחתית אחרי ההרשמה): סוגרים את פופאפ ההרשמה ופותחים את האזור האישי
-  document.querySelectorAll('[data-su="glink"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); loginPopup('reg'); }));   // נרשמתם בעבר: כניסה עם גוגל בחלון קופץ; אחרי החיבור פופאפ ההרשמה עובר למצב משתתף מחובר (בלי לפתוח את האזור האישי)
+  document.querySelectorAll('[data-su="glink"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); try { sessionStorage.setItem(REG_MEET_KEY, JSON.stringify(selMeeting && selMeeting.id ? selMeeting : null)); } catch (er) {} loginPopup('reg'); }));   // נרשמתם בעבר: כניסה עם גוגל בחלון קופץ; אחרי החיבור פופאפ ההרשמה עובר למצב משתתף מחובר (בלי לפתוח את האזור האישי)
   { const done = () => { restoreDone = true; window.HarpatkaMe.ready = true; try { window.dispatchEvent(new Event('harpatka:me')); } catch (e) {} }; restoreP = Promise.resolve(loadMe()); restoreP.then(done, done); }
   if (GL && !AS && !loggedIn()) setTimeout(gsiLoad, 1500);   // השכבה של גוגל נטענת מראש למי שלא מחובר, כדי שתופיע מיד בלחיצה
   /* זמן אמת: מצב המשתתף המחובר דרך הערוץ "me" (בבדיקות "me-test"), ומפגשים והגדרות ציבוריות דרך הערוץ "meetings" (גם למבקרים לא מחוברים).
@@ -902,13 +916,13 @@
     const f = document.getElementById('cmFirst'), l = document.getElementById('cmLast');
     if (f && !f.value && first) f.value = first; if (l && !l.value && last) l.value = last;
   }
-  function openReg(auto, meeting) { if (!nearestOk) ensureNearest(); selMeeting = meeting && meeting.id ? meeting : null; suResets.forEach((r) => r((selMeeting || nearest || {}).id || null)); showMeeting(selMeeting || nearest); applyMemberMode(); prefillGoogleName(); applyRegState(selMeeting || nearest); if (contactModal) openModal(contactModal, auto === true); }
+  function openReg(auto, meeting) { if (!nearestOk) ensureNearest(); selMeeting = meeting && meeting.id ? meeting : null; suResets.forEach((r) => r((selMeeting || nearest || {}).id || null)); showMeeting(selMeeting || nearest); applyMemberMode(); prefillGoogleName(); applyRegState(selMeeting || nearest); setGuestStep(GL && !AS && !meInfo && !loggedIn()); if (contactModal) openModal(contactModal, auto === true); }
   /* הרשמה כשהכניסה עם גוגל פעילה: מי שלא מחובר עובר קודם לכניסה עם גוגל (בלי פופאפ); אחרי הכניסה נפתח פופאפ ההרשמה של המפגש שנבחר:
      משתתף מקושר: הרשמה בלחיצה; בלי משתתף מקושר: הזנת פרטים, והכפתור יוצר משתתף, מחבר את החשבון ונרשם באותו צעד (harpatka_me_join) */
   window.HarpatkaRegister = { open: (auto, meeting) => {
     if (GL && !AS && !loggedIn()) {
-      if (hasSess()) { sessionReady().then((ok) => { if (ok) openReg(auto, meeting); else { try { sessionStorage.setItem(REG_MEET_KEY, JSON.stringify(meeting && meeting.id ? meeting : null)); } catch (e) {} loginPopup('reg'); } }); return; }   // יש חיבור שמור: קודם מחכים לשחזור שלו
-      try { sessionStorage.setItem(REG_MEET_KEY, JSON.stringify(meeting && meeting.id ? meeting : null)); } catch (e) {} loginPopup('reg'); return;
+      if (hasSess()) { sessionReady().then(() => openReg(auto, meeting)); return; }   // יש חיבור שמור: קודם מחכים לשחזור שלו; אם לא שוחזר, ממשיכים כאורח (בלי חובת גוגל)
+      openReg(auto, meeting); return;   // אורח: שלב טלפון (reg-gphone) עם אפשרות כניסה עם גוגל, בלי לאלץ
     }
     openReg(auto, meeting);
   } };   // לשימוש עמודים אחרים
@@ -939,7 +953,7 @@
   };
   /* טקסט כפתור השליחה: "הרשמה" כשיש מפגש להירשם אליו, "השארת פרטים" כשאין (כמו הכפתור הראשי בעמוד) */
   let submitLabel = 'שמירת מקום';
-  const setSubmitLabel = (m) => { submitLabel = m ? 'שמירת מקום' : 'השארת פרטים'; document.querySelectorAll('[data-su="btn"]:not(.saved):not(:disabled)').forEach((b) => { b.textContent = submitLabel; }); };
+  const setSubmitLabel = (m) => { submitLabel = m ? 'שמירת מקום' : 'השארת פרטים'; document.querySelectorAll('[data-su="btn"]:not(.saved):not(:disabled)').forEach((b) => { b.textContent = guestStep ? 'המשך' : submitLabel; }); };
   let defMeetingName = '';   // שם ברירת המחדל למפגש (harpatka_public_settings)
   const showMeeting = (m) => {
     setSubmitLabel(m);
