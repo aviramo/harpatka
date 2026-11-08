@@ -192,9 +192,11 @@
     el.addEventListener('click', () => { try { fbq('track', 'InitiateCheckout'); } catch (e) {} });
   });
   /* ===== הגעה ממודעה בתשלום: הקישור במודעות הוא ?s=p. הסימון נשמר למשך הביקור (גם אם עוברים בין עמודים) ונשלח עם ההרשמה ===== */
+  /* ?s=p (פייסבוק) ו-?s=pm (פייסבוק, גרסה שבה הסדר בדף שונה, v11/index.html) נחשבים אותה הגעה ממודעה: הרישום נשלח כ-'p', ושני הקודים שייכים לאותו שיווק ממומן */
   const PAID = (() => {
-    let v = new URLSearchParams(location.search).get('s') === 'p';
-    try { if (v) sessionStorage.setItem('harpatka_s', 'p'); else v = sessionStorage.getItem('harpatka_s') === 'p'; } catch (e) {}
+    const ok = (x) => x === 'p' || x === 'pm';
+    let s = new URLSearchParams(location.search).get('s'), v = ok(s);
+    try { if (v) sessionStorage.setItem('harpatka_s', s); else v = ok(sessionStorage.getItem('harpatka_s')); } catch (e) {}
     return v;
   })();
   /* ===== טופס הרשמה: שם + טלפון -> Supabase (פונקציה harpatka_signup, admin/signup.sql) =====

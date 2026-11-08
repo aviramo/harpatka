@@ -461,6 +461,18 @@
 
 
 
+    <script>
+      /* ?s=pm: הסקשן "ומה אם אפשר להרגיש אחרת בחיים?" עובר לפני "מה זו בעצם ביודנסה?" (הקוד נשמר למשך הביקור, כמו ?s=p) */
+      (function () {
+        try {
+          var s = new URLSearchParams(location.search).get('s');
+          if (s) sessionStorage.setItem('harpatka_s', s); else s = sessionStorage.getItem('harpatka_s');
+          if (s !== 'pm') return;
+          var move = function () { var story = document.getElementById('story'), method = document.getElementById('method'); if (story && method && method.parentNode) method.parentNode.insertBefore(story, method); };
+          if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', move); else move();   // הסקריפט לפני #method, ולכן ממתינים לסיום הטעינה
+        } catch (e) {}
+      })();
+    </script>
     <section id="method" class="relative pt-4 md:pt-6 pb-0">
       <div class="relative z-10 max-w-6xl mx-auto px-5">
         <h2 class="h-sect text-center mb-5 reveal">מה זו בעצם ביודנסה?</h2>
@@ -1294,6 +1306,6 @@
 </script>
   <script src="shared/rt.js?v=1"></script>
   <script src="shared/person-form.js?v=20261105b"></script>
-  <script src="shared/register.js?v=20261107c"></script>
+  <script src="shared/register.js?v=20261108a"></script>
 </body>
 </html>
