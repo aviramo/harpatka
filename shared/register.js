@@ -47,7 +47,7 @@
               <p class="su-phonehint" data-su="phonehint">הזינו את מספר הטלפון שלכם. אם כבר שמרתם אצלנו מקום בעבר, נמצא אתכם לפי המספר</p>
               <p class="su-dethint" data-su="dethint">כמעט סיימנו. נשאר רק להשלים כמה פרטים</p>
               <div class="su-member" data-su="member"><p class="su-memberp">הפרטים שלכם כבר שמורים אצלנו</p><p class="su-who" data-su="who"></p><p class="su-membernm" data-su="nomeet" hidden>עוד אין מפגש לשמור בו מקום. נעדכן אתכם ברגע שייקבע מפגש</p></div>
-              <a href="__BASE__me/?login=1&back=reg" class="su-glink" data-su="glink">כבר חיברתם חשבון גוגל? כניסה עם גוגל</a>
+              <a href="__BASE__me/?login=1&back=reg" class="su-glink" data-su="glink">כניסה עם גוגל</a>
             </div></div>
             <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-3.5 text-[1.2rem] whitespace-nowrap w-full mt-4">שמירת מקום</button>
             <div data-su="fail" class="su-err mt-3 text-center" role="alert"></div>
