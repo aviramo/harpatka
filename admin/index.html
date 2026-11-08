@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261108k" />
+  <link rel="stylesheet" href="admin.css?v=20261108l" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -4297,14 +4297,17 @@
     const pchip = (kind, val, label, n, col) => { const on = (kind === 'pay' ? state.paidF : state.bal) === val, pc = PALETTE[col]; return '<button type="button" class="mc' + (n || on ? '' : ' zero') + '" data-sc="1" style="' + fillS(n) + ';--sbg:' + pc[0] + ';--sfg:' + pc[1] + '" data-mp="' + kind + '" data-mv="' + esc(val) + '" aria-pressed="' + on + '">' + esc(label) + ' <small>' + n + '</small></button>'; };
     let payCols = [];   // בתוך מפגש התשלום מפוצל לשתי קטגוריות: מצב התשלום, ודרך התשלום והסכום ששולם יחד
     if (state.filter) {
-      const lab = FLAB.pay, fc = FC.pay || {}, pmc = FC.payMeth || {}, am = FC.payAmts || {};
+      const lab = FLAB.pay, mid = state.filter, fc = {}, pmc = {}, am = {};   // הספירות מכלל המשתתפים במפגש, בלי קשר לסינונים הפעילים, כדי שהקטגוריות והספירות לא ייעלמו בגללם
+      ['1', '0', 'n', 'w', 'l'].forEach((v) => { fc[v] = cnt((p) => payF(p, v)); });
+      scope.forEach((p) => { const l = linkOf(p.id, mid); if (!l || noPayOf(p, l)) return; const a = Math.round(allocatedOf(p.id, mid)); if (a > 0) am[a] = (am[a] || 0) + 1; state.payMethods.forEach((pm) => { if (paidVia(p.id, mid, pm.key)) pmc[pm.key] = (pmc[pm.key] || 0) + 1; }); });
       payCols = [
         { t: 'מצב תשלום', items: [['w', 'amber', lab[4]], ['0', 'red', lab[2]], ['l', 'sky', lab[5]], ['1', 'green', lab[1]], ['n', 'neutral', lab[3]]].map((o) => pchip('pay', o[0], o[2], fc[o[0]] || 0, o[1])) },   // דווח, לתשלום, תשלום בהמשך, שולם, לא לתשלום (אותו סדר כמו במיון)
         { t: 'דרך תשלום וסכום', items: state.payMethods.filter((pm) => pmc[pm.key]).map((pm) => pchip('pay', 'm' + pm.key, pm.name, pmc[pm.key], 'green'))   // דרכי תשלום ששולם בהן במפגש
           .concat(Object.keys(am).map(Number).sort((a, b) => b - a).map((a) => pchip('pay', 'a' + a, '₪' + nfm(a), am[a], 'green'))) },   // וסכומים ששולמו במפגש
-      ].filter((c) => c.items.length);   // קטגוריה בלי אפשרויות (עוד אין תשלומים בדרך או בסכום) לא מוצגת
+      ];   // הקטגוריות מוצגות תמיד, גם כשאין בהן עדיין תשלומים
     } else if (state.showPay) {
-      const bl = FLAB.bal, fb = FC.bal || {};
+      const bl = FLAB.bal, fb = {};
+      ['1', '0'].forEach((v) => { fb[v] = cnt((p) => balMatch(p, v)); });
       payCols = [{ t: 'יתרה', items: [['1', 'amber', bl[1]], ['0', 'red', bl[2]]].map((o) => pchip('bal', o[0], o[2], fb[o[0]] || 0, o[1])) }];   // זכאי (יתרה לטובת המשתתף) וחייב
     }
     return [].concat(payCols, [   // עמודות הגריד: כותרת ותוויות
