@@ -3179,10 +3179,10 @@
   /* תשלום בהמשך: המשתתף משוריין למפגש, והתשלום נשאר פתוח. תשלום שמשלים את הכרטיס גובר עליו */
   async function setPayLater(on) {
     const pid = sheet && sheet.id, mid = sheet && sheet.depMid, l = pid && mid && linkOf(pid, mid); if (!l) return;
-    const patch = { pay_later_at: on ? new Date().toISOString() : null }, prev = l.pay_later_at || null, h = pendBegin(pid, mid, patch);
+    const patch = on ? { pay_later_at: new Date().toISOString(), pay_reported_at: null, pay_reported_amount: null, pay_rejected_at: null } : { pay_later_at: null }, prev = Object.fromEntries(Object.keys(patch).map((k) => [k, l[k] ?? null])), h = pendBegin(pid, mid, patch);
     Object.assign(l, patch); paintDepLines(); render(); refreshSheetMeetings();
     try { await api(T.a + attQs(pid, mid), { method: 'PATCH', body: patch }); pendDone(h); toast(on ? 'סומן: תשלום בהמשך' : 'המפגש לתשלום'); }
-    catch (err) { pendFail(h); l.pay_later_at = prev; paintDepLines(); render(); refreshSheetMeetings(); fail(err); }
+    catch (err) { pendFail(h); Object.assign(l, prev); paintDepLines(); render(); refreshSheetMeetings(); fail(err); }
   }
   /* אחרי שהתשלום נרשם הפופאפ (כרטיס המשתתף) נסגר, והרשימה מתעדכנת (31.10.26) */
   /* פופאפ הקצאה (#allocDlg, 1.11.26): דיאלוג נפרד שעולה מלמטה מעל כרטיס המשתתף הפתוח, בלי לגעת בכרטיס (או לבד כשנפתח מעיגול ה-₪ ברשימה). מסך ההקצאה הקיים (הפאנל, הצ'יף "הקצאה" והשורה השנייה עם המועד) עובר אליו פיזית בפתיחה וחוזר לכרטיס בסגירה, כך שיש מימוש אחד של מסך ההקצאה. גם בדסקטופ רחב (כרטיס בצד הרשימה); אין יותר מסך הקצאה בתוך הכרטיס ואין לו כתובת */
@@ -3237,7 +3237,7 @@
   const closePayCard = () => { if (allocDlg.open) allocDlg.close(); };   // אחרי תשלום מלא פופאפ התשלום נסגר, וכרטיס המשתתף (אם פתוח) נשאר כמו שהוא
   const depSaveRun = async (dueAmt) => {   // dueAmt: נשאר לשלם על המפגש
     const f = pForm, pid = sheet && sheet.id; const amt = parseFloat(f.pay_dep.value); if (!pid) return;
-    const dueMeta = dueAmt > 0 ? { reason: 'partial_due:' + dueAmt } : null, setDue = (mid) => { const l = linkOf(pid, mid); if (l) l.pay_due_amount = dueMeta ? dueAmt : null; };
+    const dueMeta = dueAmt > 0 ? { reason: 'partial_due:' + dueAmt } : null, setDue = (mid) => { const l = linkOf(pid, mid); if (l) { l.pay_due_amount = dueMeta ? dueAmt : null; l.pay_reported_at = null; l.pay_reported_amount = null; l.pay_rejected_at = null; } };   // תשלום נרשם: הדיווח מתבטל (גם בשרת, בטריגר)
     if (!(amt > 0)) { f.pay_dep.focus(); return; }
     const payDone = () => { sheet.depTyped = false; if (dueAmt > 0) { f.pay_dep.value = dueAmt; depLinesRefresh(); } else { f.pay_dep.value = ''; render(); closePayCard(); } };   // עדיין נשאר לשלם: הפופאפ נשאר פתוח, עם השארית כסכום המוצע
     if (sheet.depCr && sheet.depMid) {   // תשלום מהיתרה: רשומת תשלום מהיתרה (from_credit) למפגש, בלי הפקדה חדשה
@@ -3260,7 +3260,7 @@
         toast('נרשם תשלום ₪' + nfm(amt)); payDone(); return;
       }
       await addPayRecord(pid, null, 'deposit', amt, payCm ? pr.id : null, Number.isFinite(cm) ? cm : null, false, method, mnote || null, pkgMeta); toast('התקבל תשלום ₪' + nfm(amt));
-      const mid = sheet.depMid;
+      const mid = sheet.depMid; if (mid) setDue(mid);
       if (mid) {   // תשלום מתוך מפגש: המפגש הזה נפרע (גם חלקית), וחבילה פורעת גם מפגשים קרובים משויכים
         await autoAllocate(pid, mid, true);
         if (pk >= 2) {
