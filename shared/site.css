@@ -1752,3 +1752,51 @@ html.pg-home #invite .h8-tag{ transform:rotate(-3.5deg); }
 html.pg-home #story .sx-flow{ width:min(19rem,82vw); margin:0 auto 1.4rem; } html.pg-home #story .sx-flow svg{ display:block; width:100%; height:auto; }
 html.pg-home #invite .h8-tagbody .o{ font-size:1.32em; font-weight:700; line-height:1; background:linear-gradient(transparent 62%, rgba(255,138,92,.38) 62%); padding:0 .12em; }
 html.pg-home .st-note{ font-weight:700; font-size:1.1rem; line-height:1.5; color:#C8411B; margin:.6rem 0 0; }
+/* #story מתחיל עכשיו ב"אבל מה אם אפשר גם אחרת?": הרקע מתחיל שקוף (בלי פס אפור בראש הסקשן) */
+html.pg-home #story > .ht-s3:first-child{ --seg:linear-gradient(180deg, rgba(255,216,174,0) 0%, rgba(255,138,92,.26) 26%, rgba(255,216,174,.58) 66%, rgba(255,216,174,0) 100%); }
+
+/* תנועה עדינה בסרט עם התווים ב-#story: שלושת הקווים נעים לאט, והתווים מתנדנדים */
+@keyframes sxw1{0%,100%{transform:translate(0,0)}50%{transform:translate(16px,-9px)}}
+@keyframes sxw2{0%,100%{transform:translate(0,0)}50%{transform:translate(-18px,7px)}}
+@keyframes sxw3{0%,100%{transform:translate(0,0)}50%{transform:translate(14px,10px)}}
+@keyframes sxn{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+html.pg-home #story .sx-flow svg>g:first-child path,html.pg-home #story .sx-flow svg>g:last-child>*{ transform-box:fill-box; transform-origin:center; }
+html.pg-home #story .sx-flow svg>g:first-child path:nth-child(1){ animation:sxw1 4.6s ease-in-out infinite !important; }
+html.pg-home #story .sx-flow svg>g:first-child path:nth-child(2){ animation:sxw2 5.4s ease-in-out infinite !important; }
+html.pg-home #story .sx-flow svg>g:first-child path:nth-child(3){ animation:sxw3 6.2s ease-in-out infinite !important; }
+html.pg-home #story .sx-flow svg>g:last-child>*:nth-child(-n+2){ animation:sxn 4.2s ease-in-out infinite !important; }
+html.pg-home #story .sx-flow svg>g:last-child>*:nth-child(3),html.pg-home #story .sx-flow svg>g:last-child>*:nth-child(4){ animation:sxn 5s ease-in-out -1.6s infinite !important; }
+html.pg-home #story .sx-flow svg>g:last-child>*:nth-child(n+5){ animation:sxn 4.6s ease-in-out -3s infinite !important; }
+@media (prefers-reduced-motion: reduce){ html.pg-home #story .sx-flow svg *{ animation:none !important; } }
+
+/* זריחה עם הגלילה ב-CSS בלבד: חצי השמש עולים מקו האופק והקרניים גדלות (animation-timeline). בדפדפן בלי תמיכה השמש מוצגת מלאה */
+@keyframes sunUp{ from{ transform:translateY(72px) } to{ transform:translateY(0) } }
+@keyframes rayGrow{ from{ transform:scale(.2); opacity:0 } to{ transform:scale(1); opacity:1 } }
+@supports (animation-timeline: view()){
+  html.pg-home #story .ht-sun{ view-timeline:--sunview block; }
+  html.pg-home #story .ht-sunsvg .sun-body{ animation:sunUp linear both !important; animation-timeline:--sunview !important; animation-range:cover 3% cover 50% !important; }
+  html.pg-home #story .ht-sunsvg > g:last-child path:not(:last-child){ transform-box:view-box; transform-origin:110px 112px; animation:rayGrow linear both !important; animation-timeline:--sunview !important; animation-range:cover 14% cover 50% !important; }
+}
+@media (prefers-reduced-motion: reduce){ html.pg-home #story .ht-sunsvg *{ animation:none !important; } }
+/* overflow:clip ולא hidden, כדי שהסקשן לא יהפוך לגלילה של אנימציית הזריחה (view timeline) */
+html.pg-home #story.ht{ overflow:clip; }
+
+/* שעון של שעתיים במקום הנקודות: מחוג הדקות עושה שני סיבובים (שעתיים) ומחוג השעות שישית סיבוב, בלולאה */
+html.pg-home #story .ht-clock{ display:block; width:5.2rem; height:5.2rem; margin:.4rem auto; }
+html.pg-home #story .ht-clock .ck-h, html.pg-home #story .ht-clock .ck-m{ transform-box:view-box; transform-origin:60px 60px; }
+@keyframes ckM{ from{ transform:rotate(var(--ck-m0,0deg)) } to{ transform:rotate(var(--ck-m1,720deg)) } }
+@keyframes ckH{ from{ transform:rotate(var(--ck-h0,0deg)) } to{ transform:rotate(var(--ck-h1,60deg)) } }
+html.pg-home #story .ht-clock .ck-m{ animation:ckM 7s cubic-bezier(.45,0,.25,1) infinite !important; }
+html.pg-home #story .ht-clock .ck-h{ animation:ckH 7s cubic-bezier(.45,0,.25,1) infinite !important; }
+@media (prefers-reduced-motion: reduce){ html.pg-home #story .ht-clock *{ animation:none !important; } }
+/* הקווים הנעים של הסרט לא נחתכים בקצוות ה-svg */
+html.pg-home #story .sx-flow, html.pg-home #story .sx-flow svg{ overflow:visible; }
+html.pg-home #story .ht-clock{ width:8.5rem; height:8.5rem; }
+/* השעון לא בלולאה: בדפדפן עם תמיכה המחוגים מתקדמים עם הגלילה (שעתיים עוברות כשהשעון עולה למסך), ובלי תמיכה רצים פעם אחת */
+html.pg-home #story .ht-clock .ck-m{ animation:ckM 3.6s cubic-bezier(.45,0,.25,1) 1 both !important; }
+html.pg-home #story .ht-clock .ck-h{ animation:ckH 3.6s cubic-bezier(.45,0,.25,1) 1 both !important; }
+@supports (animation-timeline: view()){
+  html.pg-home #story .ht-trail{ view-timeline:--clockview block; }
+  html.pg-home #story .ht-clock .ck-m, html.pg-home #story .ht-clock .ck-h{ animation-timing-function:linear !important; animation-timeline:--clockview !important; animation-range:cover 12% cover 55% !important; animation-duration:1s !important; }
+}
+@media (prefers-reduced-motion: reduce){ html.pg-home #story .ht-clock *{ animation:none !important; } }
