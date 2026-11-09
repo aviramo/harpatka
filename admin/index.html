@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261110dl" />
+  <link rel="stylesheet" href="admin.css?v=20261110dq" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -29,11 +29,11 @@
 
         <div class="msel">
           <h1><button type="button" id="mSel" aria-haspopup="menu" aria-expanded="false"><span class="mldg" aria-hidden="true">טוען<b>.</b><b>.</b><b>.</b></span><span id="mSelTxt">הכל</span><svg data-i="chev"></svg></button></h1>
+          <button type="button" class="hicon nextm" id="nextMBtn" hidden><svg data-i="arrowl"></svg><svg data-i="calnext"></svg></button>   <!-- קיצור דרך למפגש הקרוב: משמאל לחץ בחירת המפגש, עם חץ שמוביל אליו -->
           
           <div class="sortmenu mmenu" id="mMenu" role="menu" hidden></div>
         </div>
         <div class="hgrp">
-        <button type="button" class="hicon nextm" id="nextMBtn" hidden><svg data-i="calnext"></svg></button>   <!-- קיצור דרך למפגש הקרוב, מימין לכפתור התפריט -->
         <button type="button" class="hicon" id="tagEditBtn" aria-label="עריכת תגיות" title="עריכת תגיות"><svg data-i="tag"></svg></button>   <!-- עריכת תגיות: מימין לכפתור התפריט -->
         <div class="hicons">
           <button type="button" class="hicon" id="menuBtn" aria-label="תפריט" title="תפריט" aria-haspopup="menu" aria-expanded="false"><svg data-i="grid"></svg><span class="bdbadge" id="menuBadge" hidden></span></button>
@@ -435,6 +435,7 @@
      UI.metric(תווית, ערך, אפשרויות) כרטיס מספר: תווית למעלה, ערך גדול בצבע המצב, שורת משנה
      UI.fopt(...)                שורת אפשרות בתפריטי הסינון: מחוון, תווית וספירה */
   const ICONS = {
+    arrowl: ['s', '<path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/>'],
     back: ['s', '<path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>'],
     cal: ['s', '<rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16"/><path d="M9 3v4"/><path d="M15 3v4"/>'],
     calnext: ['s', '<rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16"/><path d="M9 3v4"/><path d="M15 3v4"/><circle cx="12" cy="15" r="2.5" fill="currentColor" stroke="none"/>'],   // המפגש הקרוב: לוח שנה עם נקודה
@@ -552,6 +553,7 @@
   window.addEventListener('popstate', () => {
     if (NAV.ignore > 0) { NAV.ignore--; return; }
     const top = NAV.stack[NAV.stack.length - 1]; if (!top) return;
+    if (top.d === floatNav) { NAV.stack.pop(); floatPushed = false; floatNav.close(); return; }   // תפריט צף: החזרה כבר הורידה את הרשומה שלו (בלי הורדה כפולה כשהמעקב אחרי הסגירה רץ אחר כך)
     if (top.d.tagName === 'DIALOG' && !top.d.open) { NAV.stack.pop(); return; }   // רשומה ישנה של פופאפ שכבר סגור (נסגר מחוץ ל-close שלנו): החזרה הזו שייכת לה, לא סוגרים כלום
     NAV.fromPop = true;
     let left = -1;
@@ -1051,10 +1053,14 @@
   /* גם סימון טקסט (לחיצה ארוכה במובייל, גרירה בעכבר) לא אפשרי מאחורי תפריט פתוח (31.10.26): html.menu-open מבטל בחירת טקסט בכל הדף,
      selectstart מחוץ לתפריט מבוטל, וסימון שכבר קיים נמחק ברגע שתפריט נפתח. המצב מתעדכן לבד כשתפריט נפתח או נסגר (שינוי hidden בכל מקום בדף) */
   const anyMenuOpen = () => FLOAT_MENUS.some((m) => { const x = m.el(); return x && !x.hidden; });
-  let menuLock = false;
+  let menuLock = false, floatPushed = false;
+  const floatNav = { close() { openMenus().forEach((m) => m.close()); } };
   const syncMenuLock = () => {
     FLOAT_MENUS.forEach((m) => { const x = m.el(); if (x) x.classList.toggle('fm-open', !x.hidden); });   // רק התפריט הפתוח מקבל לחיצות (ראו html.menu-open ב-CSS)
     const on = anyMenuOpen(); if (on === menuLock) return; menuLock = on;
+    /* חזרה בדפדפן כשתפריט צף פתוח סוגרת רק אותו (רשומת היסטוריה אחת לכל זמן שתפריט פתוח), במקום לצאת מהדף */
+    if (on && !floatPushed) { floatPushed = true; NAV.stack.push({ d: floatNav, sub: 0 }); try { history.pushState({ nav: 1 }, ''); } catch (e) {} }
+    else if (!on && floatPushed) { floatPushed = false; navClose(floatNav); }
     document.documentElement.classList.toggle('menu-open', on);
     if (on) try { const sel = window.getSelection(); if (sel && sel.rangeCount) sel.removeAllRanges(); } catch (e) {}
   };
@@ -1462,7 +1468,7 @@
   /* תשלום בהמשך: מחכים לתשלום לפני המפגש, בזמנו או אחריו, בלי מועד ידוע. פעיל כל עוד התשלום לא נסגר */
   const laterOf = (pid, mid) => { const l = linkOf(pid, mid); return !!(l && l.pay_later_at && !l.no_pay) && !(allocatedOf(pid, mid) > 0 && !(dueOf(pid, mid) > 0)); };
   /* משוריין למפגש: לא לתשלום, תשלום שנסגר (שולם מחיר הכרטיס, או "סגירת תשלום"), או תשלום בהמשך. כל השאר עוד לא משוריינים, גם אם דיווחו על תשלום או שילמו חלק */
-  const missedOf = (pid, m) => { const l = m && linkOf(pid, m.id); return !!l && !l.attended && !linkStatus(l) && nowIL() >= startMs(m) && reservedOf(pid, m.id); };   // מפגש שהסתיים, משוריין ולא הגיע: מוצג "לא הגיע" (כשאין תגית)
+  const missedOf = (pid, m) => { const l = m && linkOf(pid, m.id); return !!l && !l.attended && !linkStatus(l) && nowIL() >= startMs(m); };   // משויך למפגש שהתחיל, בלי תגית ולא הגיע (גם אם לא משוריין): מוצג "לא הגיע" (כשאין תגית)
   const reservedOf = (pid, mid) => { const l = linkOf(pid, mid); return !!l && (!!l.no_pay || laterOf(pid, mid) || (allocatedOf(pid, mid) > 0 && !(dueOf(pid, mid) > 0))); };
   const payStateOf = (p) => noPayOf(p, linkOf(p.id, state.filter)) ? 'n' : reportedOf(p.id, state.filter) ? 'w' : laterOf(p.id, state.filter) ? 'l' : dueOf(p.id, state.filter) > 0 ? '0' : (allocatedOf(p.id, state.filter) > 0) ? '1' : '0';   // דווח קודם: דיווח לצד הקצאה = שארית שהמשתתף דיווח עליה אחרי ניצול חלקי של הקרדיט (דיווח אחרי הקצאה נמחק ברישום תשלום)   // שולם / לתשלום / לא משלם (מסומן במשתתף)
   /* שליחת פרטי המפגש: רק בתוך מפגש, ביום המפגש (לפי ההגדרה) ולפני שנפתחת ההגעה; רק למי שזכאי (שילם / לא לתשלום / ישלם) */
@@ -1668,7 +1674,7 @@
       if (state.filter) {
         const l = linkOf(p.id, state.filter);
         if (!l) side = UI.tag('לא משויך', 'ptag none', { 'data-rowadd': p.id, role: 'button', tabindex: 0, title: 'לא משויך למפגש. לחיצה: שיוך למפגש' });   // עוד לא משויך: תגית "לא משויך" (לחיצה כמו על ה-+: שיוך עם אישור)
-        else if (missedOf(p.id, meetOf(state.filter))) side = UI.tag('לא הגיע', 'ptag missed', { 'data-qs': p.id, role: 'button', tabindex: 0, title: 'משוריין ולא הגיע (לחיצה לשינוי תגית)' });
+        else if (missedOf(p.id, meetOf(state.filter))) side = UI.tag('לא הגיע', 'ptag missed', { 'data-qs': p.id, role: 'button', tabindex: 0, title: 'משויך ולא הגיע (לחיצה לשינוי תגית)' });
         else { const st = linkStatus(l); side = st ? UI.tag(esc(STATUS_LABEL[st]), 'ptag ' + st, { 'data-qs': p.id, role: 'button', tabindex: 0, title: 'תגית (לחיצה לשינוי)' }) : UI.tag(icon('tag'), 'ico ptag nolabel', { 'data-qs': p.id, role: 'button', tabindex: 0, 'aria-label': 'הוספת תגית', title: 'הוספת תגית' }); }
       }
       let payIc = '';
