@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261110cd" />
+  <link rel="stylesheet" href="admin.css?v=20261110cn" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1668,8 +1668,9 @@
         const ptx = payTxt(p.id, state.filter, noPayOf(p, lk));
         if (noPayOf(p, lk)) payIc = '<span class="payic free" title="לא לתשלום">' + ptx + '</span>';
         else payIc = reportedOf(p.id, state.filter) ? '<span class="payic wait" title="דווח' + reportedAmt(p.id, state.filter) + (al > 0 ? ' (שולם ₪' + nfm(al) + ')' : '') + ': המשתתף דיווח ששילם, ממתין לאימות">' + ptx + '</span>' : laterOf(p.id, state.filter) ? '<span class="payic later" title="תשלום בהמשך, משוריין למפגש' + (al > 0 ? ' (שולם ₪' + nfm(al) + ', נשאר ₪' + nfm(dueOf(p.id, state.filter)) + ')' : '') + '">' + ptx + '</span>' : dueOf(p.id, state.filter) > 0 ? '<span class="payic" title="שולם ₪' + nfm(al) + ', נשאר לשלם ₪' + nfm(dueOf(p.id, state.filter)) + '">' + ptx + '</span>' : al <= 0 ? '<span class="payic" title="לתשלום">' + ptx + '</span>' : '<span class="payic ok" title="שולם ₪' + nfm(al) + '">' + ptx + '</span>'; }   // אין "שולם חלקית": יש כסף שהוקצה למפגש = שולם   // סמל תשלום (לפי רשומות התשלום, לא לפי תגית) מימין לתגית
-      let mcntHtml = '';
-      if (!state.filter) { const c = meetCounts(p), n = c.came + c.next; if (n) mcntHtml = '<span class="mcnt" title="' + [c.came ? 'הגיע ל' + (c.came === 1 ? 'מפגש אחד' : '-' + c.came + ' מפגשים') : '', c.next ? 'משוריין ל' + (c.next === 1 ? 'מפגש הבא אחד' : '-' + c.next + ' מפגשים הבאים') : ''].filter(Boolean).join(' · ') + '">' + icon('cal', 'i14') + n + '</span>'; }   // בלי שיוך: התא ריק, והעמודה נשמרת
+      let mcntHtml = '', mcntAll = '';
+      { const c = meetCounts(p), n = c.came + c.next; mcntAll = '<span class="mcnt" title="' + ([c.came ? 'הגיע ל' + (c.came === 1 ? 'מפגש אחד' : '-' + c.came + ' מפגשים') : '', c.next ? 'משוריין ל' + (c.next === 1 ? 'מפגש הבא אחד' : '-' + c.next + ' מפגשים הבאים') : ''].filter(Boolean).join(' · ') || 'עוד לא הגיע ולא משוריין למפגשים') + '">' + icon('cal', 'i14') + n + '</span>'; if (!state.filter) mcntHtml = mcntAll; }   // כמות המפגשים של המשתתף: תמיד מוצגת (גם 0), בכל התצוגות
+      if (false) { const c = meetCounts(p), n = c.came + c.next; if (n) mcntHtml = '<span class="mcnt" title="' + [c.came ? 'הגיע ל' + (c.came === 1 ? 'מפגש אחד' : '-' + c.came + ' מפגשים') : '', c.next ? 'משוריין ל' + (c.next === 1 ? 'מפגש הבא אחד' : '-' + c.next + ' מפגשים הבאים') : ''].filter(Boolean).join(' · ') + '">' + icon('cal', 'i14') + n + '</span>'; }   // בלי שיוך: התא ריק, והעמודה נשמרת
       const evc = evCircle(p);
       const hasUn = !!state.filter, isLinked = !!(state.filter && linkOf(p.id, state.filter));   // בתוך מפגש: ✕ להסרת השיוך, באותו מקום של ה-✕ בשורת המפגש בכרטיס המשתתף
       return '<li class="row ucard' + (hasUn ? ' hasun' : '') + '">' +
@@ -1677,7 +1678,7 @@
         (attM ? attTag(p) : wa ? UI.tag(wsel ? (wsent ? WA_ICON : mailed ? MAIL_ICON : '') : WA_ICON, 'ico rowwa' + (wsel ? ' ratt msgc ' + (wsent ? 'yes sent' : mailed ? 'yes' : 'no') : ''), Object.assign({ href: wa }, /^https?:/.test(wa) ? { target: '_blank', rel: 'noopener' } : {}, wsel ? { 'data-wsend': p.id } : {}, { 'aria-label': 'וואטסאפ ל' + esc(p.name) + (wsent ? ', ההודעה נשלחה' : mailed ? ', נשלח במייל' : ''), title: wsel ? esc(wsent ? 'נשלחה ההודעה "' + wsel.name + '" בוואטסאפ · ' + fmtDT(wsent.sent_at) + ' · לחיצה לביטול הסימון' : mailed ? 'נשלח במייל. לחיצה: וואטסאפ עם ההודעה' : 'וואטסאפ עם ההודעה: ' + wsel.name) : 'וואטסאפ' }), 'a') : UI.tag(WA_ICON, 'ico rowwa nophone', { role: 'img', 'aria-label': 'אין טלפון', title: 'אין טלפון' })) +
         '<div class="main' + ' hasw' + (anyEv ? ' ev' : '') + (!state.filter && state.showPay ? ' bl' : '') + '" role="button" tabindex="0" data-edit="' + p.id + '">' +
           '<div class="nm"><span class="name' + nameCls(p) + '" dir="rtl">' + nameMark(p) + mcntHtml + '</span>' + '</div>' +   // רק השם מבודד (שם באנגלית לא הופך את השורה), וסמל החשבון תמיד משמאל לשם
-          (true ? '<div class="meta">' + (true ? '<span class="age' + (originOf(p, state.filter) ? ' ' + originOf(p, state.filter).kind : '') + '"' + originAttr(p, state.filter) + ' title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi dir="rtl">' + (age != null ? age : (p.gender ? '' : '—')) + (age != null || !p.gender ? ' ' : '') + '<b class="gl">' + (p.gender ? icon(p.gender === 'male' ? 'male' : 'female', 'i14') : '<span class="ic i14 ph" aria-hidden="true"></span>') + '</b>' + '</bdi></span>' : '') + '<span class="sidewrap">' + side + payIc + '</span>' + '</div>' : '') +
+          (true ? '<div class="meta">' + (true ? '<span class="age' + (originOf(p, state.filter) ? ' ' + originOf(p, state.filter).kind : '') + '"' + originAttr(p, state.filter) + ' title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi dir="rtl">' + (age != null ? age : (p.gender ? '' : '—')) + (age != null || !p.gender ? ' ' : '') + '<b class="gl">' + (p.gender ? icon(p.gender === 'male' ? 'male' : 'female', 'i14') : '<span class="ic i14 ph" aria-hidden="true"></span>') + '</b>' + '</bdi></span>' : '') + '<span class="sidewrap">' + (state.filter ? mcntAll.replace('class="mcnt"', 'class="mcnt mcnt2 mcnt3"') : '') + side + payIc + '</span>' + '</div>' : '') +
           // הערה אחרונה וסימון צירוף תמונה לא מוצגים ברשימה (הערות רק בכרטיס המשתתף)
           mcntHtml.replace('class="mcnt"', 'class="mcnt mcnt2"') +   // עותק לכרטיס (טלפון וטאבלט): כמות המפגשים בשורה השנייה, ולא בשורת השם
           evc +
@@ -3717,13 +3718,19 @@
   function pgApply() { if (sheet && !sheet.id) { pgBox.scrollLeft = 0; pgPages[3].inert = false; return; } PG.apply(); }
   /* המפגש שממנו הגענו בראש הרשימה: גלילה אליו בפתיחה, ומקום אחרי "שיוך למפגש" כדי שיגיע לראש גם כשיש מעט מפגשים. הכפתור תמיד מיד אחרי הכרטיס האחרון */
   function meetTop(scroll) {
-    const box = $('#pMeetings'), pg = $('#pgM'), row = box.querySelector('.mrow.hl'), sp = $('#pMeetPad');
-    sp.style.height = ''; if (scroll) pg.scrollTop = 0;
-    if (!row || row === box.firstElementChild || !pg.clientHeight) return;
-    const above = row.offsetTop - box.offsetTop; if (!above) return;   // כבר בשורה הראשונה (כרטיס רחב, שתי עמודות)
-    const add = pg.querySelector('.maddw'), gap = parseFloat(getComputedStyle(box).rowGap) || 0, pad = parseFloat(getComputedStyle(pg).paddingTop) || 0, to = above + gap;   // עוד המרווח בין הכרטיסים: שלא יציץ פס מהכרטיס הקודם
-    sp.style.height = Math.max(0, Math.ceil(pg.clientHeight - (pad + box.offsetHeight + (add ? add.offsetHeight : 0) - to))) + 'px';
-    if (scroll) pg.scrollTop = to;
+    /* גלילה אוטומטית למפגש שממנו הגענו, כך שייראה ככרטיס הראשון: ברווח הרגיל מעליו (8px, כמו הרווח בין הכרטיסים). אם הוא כבר בראש, אין גלילה; מקום נוסף למטה (#pMeetPad) מאפשר את הגלילה גם כשיש מעט מפגשים */
+    const box = $('#pMeetings'), pg = $('#pgM'), row = box.querySelector('.mrow.hl'), sp = $('#pMeetPad'), PAD = 8;
+    if (scroll && (!pg.clientHeight || !pg.getBoundingClientRect().height) && (meetTop.n = (meetTop.n || 0) + 1) < 40) { requestAnimationFrame(() => meetTop(true)); return; }   // הפופאפ עוד נפתח (למשל אחרי רענון עם קישור): מנסים שוב כשהוא מוצג
+    meetTop.n = 0;
+    if (!scroll) return;   // עדכון נתונים (זמן אמת וכו'): לא נוגעים במרווח ובגלילה, אחרת הגלילה מתאפסת
+    pg.scrollTop = 0; sp.style.height = '0px';
+    if (!row || !pg.clientHeight) return;
+    const top = row.getBoundingClientRect().top - pg.getBoundingClientRect().top + pg.scrollTop;
+    if (top <= PAD + 1) return;
+    const target = Math.round(top - PAD);
+    const contentH = sp.getBoundingClientRect().top - pg.getBoundingClientRect().top + pg.scrollTop;   // סוף התוכן האמיתי (המרווח הריק בסוף עוד בגובה 0)
+    sp.style.height = Math.max(0, Math.ceil(target + pg.clientHeight - contentH)) + 'px';
+    if (scroll) pg.scrollTop = target;
   }
   function refreshSheetMeetings() {
     if (!sheet) return;
