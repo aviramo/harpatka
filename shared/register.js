@@ -784,7 +784,7 @@
   function openOtherPay(m) {
     let when = 'הקרוב';
     if (m && m.date) { const [, mo, d] = String(m.date).split('-').map(Number), wd = HE_DAYS[new Date(m.date + 'T12:00:00Z').getUTCDay()]; when = 'ביום ' + wd + ' ' + d + '.' + mo + (m.time ? ' בשעה ' + m.time : ''); }
-    const text = 'היי, אני רוצה לשמור מקום בדרך אחרת למפגש ' + when;
+    const text = 'היי, אני רוצה להעביר תשלום בדרך אחרת למפגש ' + when;
     window.open('https://wa.me/' + CONFIG.whatsapp + '?text=' + encodeURIComponent(text), '_blank', 'noopener');
   }
   /* פופאפ האזור האישי: עולה מלמטה ומציג את דף האזור האישי (me/?embed=1) בתוך iframe, בלי לעבור לדף אחר. סגירה: גרירה למטה או לחיצה על הפס, לחיצה בחוץ, Esc וכפתור "חזרה" */
