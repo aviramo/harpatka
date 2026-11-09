@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261109e" />
+  <link rel="stylesheet" href="admin.css?v=20261109q" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -59,12 +59,12 @@
     <div id="status"></div>
     <div class="chiprow"><div class="cq" id="chipRow" role="group" aria-label="סינון מהיר: משוריינים, גברים ונשים"></div></div>
     <div class="vbar" id="listTags" role="group" aria-label="חיפוש, סינון ומיון">   <!-- שורה אחת: מונה הרשומות (מימין, בעמודת הגיל), תיבת החיפוש, הסינון, המיון, זכר / נקבה (צמודים לאייקוני הסינון של העמודות), ואייקוני העמודות עצמם (נקבעים ב-JS מעל העמודות שלהם) -->
-      <button type="button" class="wafab" id="waFab" aria-haspopup="menu" aria-expanded="false" aria-label="מה מוצג בעמודה"></button>
+      <div class="wm3" id="waFab" role="group" aria-label="מה מוצג בעמודה: וואטסאפ, הודעה או הגעה"></div>
       <label class="search hsearch" title="חיפוש והוספה">
           <span class="sicon" aria-hidden="true"></span><input id="q" type="search" placeholder="חיפוש והוספה" autocomplete="off" aria-label="חיפוש והוספה" />
           <button type="button" class="sclear" id="qClear" aria-label="ניקוי החיפוש" tabindex="-1">×</button>
         </label>
-      <div id="listMore"></div><button type="button" class="hicon" id="sortBtnH" aria-haspopup="menu" aria-expanded="false" aria-label="מיון הרשימה" title="מיון הרשימה"><svg data-i="sort"></svg></button><div class="lbend" id="listWa"></div><div class="lbend" id="listPay"></div><div class="lbend" id="listSent"></div><div class="lbend" id="listBal"></div>
+      <div id="listMore"></div><div class="lbend" id="listWa"></div><div class="lbend" id="listPay"></div><div class="lbend" id="listSent"></div><div class="lbend" id="listBal"></div>
     </div>
     <div class="countline" id="listCount" aria-live="polite" title="מספר הרשומות המוצגות"></div>
     <ul class="list" id="list"></ul>
@@ -436,6 +436,7 @@
     cal: ['s', '<rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16"/><path d="M9 3v4"/><path d="M15 3v4"/>'],
     calnext: ['s', '<rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16"/><path d="M9 3v4"/><path d="M15 3v4"/><circle cx="12" cy="15" r="2.5" fill="currentColor" stroke="none"/>'],   // המפגש הקרוב: לוח שנה עם נקודה
     call: ['s', '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/>'],
+    mail: ['s', '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'],
     chat: ['s', '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.4A8 8 0 1 1 21 12z"/>'],
     checkc: ['s', '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>'],
     check: ['s', '<path d="M5 12.5l4.5 4.5L19 7"/>'],
@@ -558,7 +559,7 @@
     } finally { NAV.fromPop = false; }
     if (left >= 0) navSync(top.d);   // אם המסך לא השתנה (למשל תבנית לא מושלמת נשארת פתוחה), מחזירים את הרשומה שהחזרה הורידה
   });
-  const state = { mtypes: [], tpls: [], msgSent: [], mtype: null, pubSettings: {}, prefs: {}, statuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, paidF: null, arrF: null, gender: null, sent: null, bal: null, viewScopes: {}, srcF: null, ageF: null, fin: [], finRec: [], finTr: [], finPeriod: 'all', finFilter: null };
+  const state = { mtypes: [], tpls: [], msgSent: [], mtype: null, pubSettings: {}, prefs: {}, statuses: [], participants: [], meetings: [], att: [], notes: [], promoters: [], promoPays: [], payments: [], filter: null, q: '', pay: null, paidF: null, arrF: null, gender: null, sent: null, bal: null, viewScopes: {}, srcF: null, ageF: null, mcF: null, regF: null, fin: [], finRec: [], finTr: [], finPeriod: 'all', finFilter: null };
   /* ---------- עזרים משותפים ---------- */
   const partOf = (id) => state.participants.find((x) => x.id === id);   // משתתף לפי מזהה
   const meetOf = (id) => state.meetings.find((x) => x.id === id);   // מפגש לפי מזהה
@@ -590,8 +591,10 @@
     if (state.gender) sp.set('g', state.gender);
     if (state.srcF) sp.set('sc', state.srcF);
     if (state.ageF) sp.set('ag', state.ageF);
+    if (state.mcF) sp.set('mc', state.mcF);
     if (state.loginF) sp.set('lg', state.loginF);
     if (state.updF) sp.set('up', state.updF);
+    if (state.regF) sp.set('rg', state.regF);
     if (state.q.trim()) sp.set('q', state.q.trim());
     if (openPid) { sp.set('p', openPid); if (pTab && pTab !== 'main' && pTab !== 'contact' && pTab !== 'meets' && pTab !== 'deposit') { sp.set('pt', pTab); } if (sheet && sheet.mailId && document.getElementById('mailDlg').open) sp.set('ml', sheet.mailId); if (pTab === 'main' && PG.cur) sp.set('pg', PG_IDS[PG.cur]); }
     if ($('#setDlg').open) sp.set('set', setView === 'main' ? '1' : setView === 'tydet' ? 'tydet:' + (tyId || '') : (setView === 'del' && setRoot === 'src') || setView === 'srcd' ? 'src' : (setView === 'st' || setView === 'del') ? ('st:' + (stType || '')) : setView === 'em' ? 'em:' + (stType || '') : setView);   // סוג מפגש: עריכת הסוג, התגיות וההודעה שלו
@@ -947,6 +950,8 @@
   /* כמות המפגשים של משתתף: מפגשים שהגיע אליהם (came) ועוד מפגשים שעוד לא עברו שהוא משוריין אליהם (next); בסוג מפגש: רק של הסוג */
   const meetCounts = (p) => { let came = 0, next = 0; linksOf(p.id).forEach((l) => { const m = meetOf(l.meeting_id); if (state.mtype && !(m && typeIdOf(m) === state.mtype)) return; if (l.attended) came++; else if (m && !isPast(m) && reservedOf(p.id, l.meeting_id)) next++; }); return { came, next }; };
   const meetCountOf = (p) => { const c = meetCounts(p); return c.came + c.next; };
+  const MC_B = [['0', '0'], ['1', '1'], ['2', '2'], ['3', '3+']];   // קבוצות מספר המפגשים בתפריט הסינון
+  const mcKey = (p) => { const n = meetCountOf(p); return n >= 3 ? '3' : String(n); };
   const linkOf = (pid, mid) => state.att.find((a) => a.participant_id === pid && a.meeting_id === mid);
 
   let toastTimer;
@@ -1131,7 +1136,7 @@
     if (!silent) { $('#status').innerHTML = '<div class="empty">טוען…</div>'; document.documentElement.classList.add('is-loading'); }   // מצב טעינה: "טוען..." בכותרת בלבד, בלי הקו ובלי מה שמתחתיו
     const myLoad = ++loadSeq;
     try {
-      const [p, m, a, nn, prs, pps, pays, sts, pfs, pms, pubs, fin0, finr0, fintr0, mem0, mts, tpls0, sent0] = await Promise.all([
+      const [p, m, a, nn, prs, pps, pays, sts, pfs, pms, pubs, fin0, finr0, fintr0, mem0, mts, tpls0, sent0, mail0] = await Promise.all([
         api(T.p + '?select=*'),
         api(T.m + '?select=*'),
         api(T.a + '?select=participant_id,meeting_id,pay_requested_at,status_key,created_at,attended,attended_at,paid_amount,promoter_id,commission,paid_at,details_sent_at,no_pay,pay_later_at,pay_reported_at,pay_reported_amount,pay_due_amount,pay_closed_at,source_promoter_id'),
@@ -1150,12 +1155,14 @@
         api(T.mt + '?select=*&order=sort.asc,created_at.asc').catch(() => null),   // סוגי מפגשים
         api(T.tpl + '?select=*&order=sort.asc,created_at.asc').catch(() => null),   // תבניות הודעה לוואטסאפ (סוג מפגש או מפגש)
         api(T.sent + '?select=participant_id,meeting_id,tpl_key,sent_at').catch(() => null),   // מי קיבל איזו תבנית
+        api(T.ml + '?select=participant_id,meeting_id&status=eq.sent&tpl=in.(payment_confirmed,place_saved)', { ui: false }).catch(() => null),   // מי קיבל את אישור המקום במייל
       ]);
       if (myLoad < loadApplied) return;   // טעינה ישנה שהסתיימה אחרי טעינה חדשה יותר: לא דורסת אותה
       loadApplied = myLoad;
       if (tpls0) state.tpls = tpls0;
       if (mailFailPrimeFn) mailFailPrimeFn();   // כישלונות מייל שכבר קיימים לא נשאלים מחדש
       if (sent0) state.msgSent = sent0;
+      if (mail0) state.confMail = new Set(mail0.map((x) => x.participant_id + '|' + x.meeting_id));
       if (mts) { state.mtypes = mts; if (state.mtype && !typeById(state.mtype)) state.mtype = null; }
       state.pubSettings = Object.fromEntries((pubs || []).map((x) => [x.key, x.value]));
       state.fin = fin0 || []; state.finRec = finr0 || []; state.finTr = fintr0 || [];
@@ -1185,7 +1192,9 @@
         if (d.bl === '1' || d.bl === '0' || d.bl === 'n' || d.bl === 'f' || d.bl === 'w') state.bal = d.bl;
         { const g = payKeys(d.g).filter((x) => x === 'male' || x === 'female' || x === 'none'); if (g.length) state.gender = g.join(','); }
         if (d.sc) state.srcF = d.sc;
+        { const g = payKeys(d.mc).filter((x) => ['0', '1', '2', '3'].includes(x)); if (g.length) state.mcF = g.join(','); }
         { const g = payKeys(d.lg).filter((x) => x === 'yes' || x === 'no' || x === 'blocked'); if (g.length) state.loginF = g.join(','); }
+        { const g = payKeys(d.rg).filter((x) => UPD_B.some((u) => u[0] === x)); if (g.length) state.regF = g.join(','); }
         { const g = payKeys(d.up).filter((x) => UPD_B.some((u) => u[0] === x)); if (g.length) state.updF = g.join(','); }
         { const g = payKeys(d.ag).filter((x) => AGE_B.some((b) => b[0] === x)); if (g.length) state.ageF = g.join(','); }
         if (d.q) { state.q = d.q; $('#q').value = d.q; }
@@ -1356,14 +1365,17 @@
     return updMap.get(id) || '';
   };
   const UPD_B = [['h', 'שעה', 36e5], ['d', 'יום', 864e5], ['w', 'שבוע', 7 * 864e5], ['m', 'חודש', 30 * 864e5]];   // סינון "עדכון אחרון": בשעה, ביום, בשבוע ובחודש האחרונים
+  const regWithin = (p, ms) => { const t = Date.parse(p.created_at); return !isNaN(t) && Date.now() - t <= ms; };   // סינון "מועד הרשמה": אותן יחידות כמו עדכון אחרון
   const updWithin = (id, ms) => { const t = Date.parse(lastUpd(id)); return !isNaN(t) && Date.now() - t <= ms; };
   const moreOk = (p) => {   // אחד מהערכים שסומנו בקבוצה (או), וכל הקבוצות יחד (וגם)
     if (state.q.trim()) return true;
     const ks = (v) => payKeys(v);
     if (state.updF && !ks(state.updF).some((k) => { const u = UPD_B.find((x) => x[0] === k); return !u || updWithin(p.id, u[2]); })) return false;
+    if (state.regF && !ks(state.regF).some((k) => { const u = UPD_B.find((x) => x[0] === k); return !u || regWithin(p, u[2]); })) return false;
     if (state.loginF && !ks(state.loginF).includes(loginOf(p))) return false;
     if (state.srcF) { const c = channelAt(p, state.filter); if (!ks(state.srcF).some((k) => k === '__none' ? !c : !!(c && c.id === k))) return false; }
     if (state.ageF) { const a = shownAge(p); if (!ks(state.ageF).some((k) => { const b = AGE_B.find((x) => x[0] === k); return !b || (a != null && a >= b[2] && a <= b[3]); })) return false; }
+    if (state.mcF && !state.filter && !ks(state.mcF).includes(mcKey(p))) return false;   // מספר מפגשים (רק בתצוגה הכללית ובסוג מפגש)
     return true;
   };
   const payKeys = (s) => s ? String(s).split(',').filter(Boolean) : [];   // state.pay: התגית שנבחרה בפס
@@ -1382,7 +1394,7 @@
   /* הצגה בשורת הצ'יפים (7.11.26): לכל מנהל, בכל התצוגות; נשמר ב-view_scopes._g. chipHide: מפתחות של צ'יפי ברירת המחדל שמוסתרים (res, arr, male, female); tagHide: מפתחות של תגיות שמוסתרות. צ'יף שהסינון שלו פעיל נשאר מוצג גם אם הוסתר */
   ['chipHide', 'tagHide'].forEach((prop) => Object.defineProperty(state, prop, { get() { const c = state.viewScopes._g; return Array.isArray(c && c[prop]) ? c[prop] : []; }, set(v) { (state.viewScopes._g || (state.viewScopes._g = {}))[prop] = v; }, enumerable: true }));
   Object.defineProperty(state, 'sortDir', { get() { const c = state.viewScopes._g; return c && c.sortDir === 'asc' ? 'asc' : 'desc'; }, set(v) { (state.viewScopes._g || (state.viewScopes._g = {})).sortDir = v === 'asc' ? 'asc' : 'desc'; }, enumerable: true });   // כיוון המיון: desc = ברירת המחדל של כל מיון (חדש, עדכני,  גבוהה קודם), asc = הפוך; לחיצה נוספת על המיון שנבחר הופכת
-  Object.defineProperty(state, 'sort', { get() { const c = state.viewScopes._g; return c && c.sort && c.sort !== 'pers' ? c.sort : 'new'; }, set(v) { (state.viewScopes._g || (state.viewScopes._g = {})).sort = v; }, enumerable: true });
+  Object.defineProperty(state, 'sort', { get() { const c = state.viewScopes._g; return c && c.sort && c.sort !== 'pers' && c.sort !== 'pay' ? c.sort : 'upd'; }, set(v) { (state.viewScopes._g || (state.viewScopes._g = {})).sort = v; }, enumerable: true });
   function applyViewPrefs() { const pr = state.prefs[emailOf()] || {}; state.viewScopes = (pr.view_scopes && typeof pr.view_scopes === 'object') ? JSON.parse(JSON.stringify(pr.view_scopes)) : {}; }
   async function saveViewPrefs() {
     const em = emailOf(), body = { email: em, view_scopes: state.viewScopes };
@@ -1455,7 +1467,7 @@
     return mtSet.s.has(p.id);
   };
   const stMatch = (p, key) => key === '__none' ? (state.filter ? !linkStatus(linkOf(p.id, state.filter)) : !linksOf(p.id).some((l) => linkStatus(l))) : state.filter ? linkStatus(linkOf(p.id, state.filter)) === key : linksOf(p.id).some((l) => { if (linkStatus(l) !== key) return false; if (!state.mtype) return true; const m = meetOf(l.meeting_id); return !!m && typeIdOf(m) === state.mtype; });   // במפגש: התגית בו; בסוג מפגש: במפגשים של הסוג; בכל המשתתפים: בכל מפגש
-  const clearFilters = () => { arrKeep = null; state.pay = null; state.gender = null; state.paidF = null; state.arrF = null; state.sent = null; state.bal = null; state.srcF = null; state.ageF = null; state.loginF = null; state.updF = null; waSetFilter(''); };   // כל הסינונים, בלי המיון
+  const clearFilters = () => { arrKeep = null; state.pay = null; state.gender = null; state.paidF = null; state.arrF = null; state.sent = null; state.bal = null; state.srcF = null; state.ageF = null; state.mcF = null; state.loginF = null; state.updF = null; state.regF = null; waSetFilter(''); };   // כל הסינונים, בלי המיון
 
   /* המשתתפים בתצוגה לפני סינוני הצ'יפים והעמודות: מפגש, סוג מפגש, מחוקים, "עוד" (שיווק ממומן, גיל, אזור אישי) והחיפוש */
   const poolP = () => {
@@ -1482,7 +1494,7 @@
     { const nd = String(Math.max(2, String(state.participants.length).length)); $('#listTags').style.setProperty('--nd', nd); }
     { const lc = $('#listCount'); lc.textContent = cntTxt(state.listCnt); }
     const filtHtml = '<button type="button" class="hfilt all" id="filtBtn" aria-haspopup="menu" aria-expanded="' + !$('#viewMenu').hidden + '" aria-label="סינון ותצוגה' + (panelOn() ? ' (יש סינון פעיל)' : '') + '" title="סינון ותצוגה">' + icon('filter') + '<span class="fcnt" aria-hidden="true"></span>' + UI.fdot(panelOn() && 'ink') + '</button>';
-    { const sb = $('#sortBtnH'), sd = state.sort !== 'new' || state.sortDir === 'asc'; sb.innerHTML = icon('sort') + UI.fdot(sd && 'ink'); sb.setAttribute('aria-expanded', String(!$('#sortMenu').hidden)); sb.title = 'מיון: ' + (SORTS.find((x) => x[0] === state.sort) || SORTS[0])[1] + (state.sortDir === 'asc' ? ' (הפוך)' : ''); }
+    
     $('#listMore').innerHTML = filtHtml; paintCnt();   // שלוש נקודות מימין לסינון ה-₪; המגדר בתוך התפריט
     ['#listWa', '#listPay', '#listSent', '#listBal'].forEach((q) => { $(q).innerHTML = ''; });   // אייקוני הסינון של העמודות (תשלום, שליחה, הגעה / יתרה, ), מיושרים מעל העמודות שלהן
     {   /* ספירה לכל אפשרות בתפריטי הסינון של העמודות: כמה משתתפים יוצגו אם בוחרים אותה (שאר הסינונים והחיפוש נשמרים) */
@@ -1510,8 +1522,9 @@
     $('#listPay').innerHTML = '';   // אייקון סינון התשלום הוסר (הצ'יף "תשלומים" בשורת הצ'יפים במקומו)
     { const ws = waSelected(), am = attMode(), cur = am ? 'הגעה' : ws ? esc(ws.name) : 'וואטסאפ'; if (state.waSent && !waFilter() && !document.documentElement.classList.contains('is-loading')) waResetSent('');   // עמודת הסימון: הודעה ריקה, תבנית הודעה, או הגיע / לא הגיע
       $('#listWa').innerHTML = '';   // אייקון עמודת הסימון הוסר (הכפתור הצף בתחתית במקומו)
-      const fab = $('#waFab'); if (fab) { fab.classList.toggle('on', !!(am || ws)); fab.classList.toggle('f1', !!(am || ws) && waFilter() === '1'); fab.classList.toggle('f0', !!(am || ws) && waFilter() === '0'); fab.innerHTML = (am ? icon('check') : ws ? icon('chat') : icon('wa')) + icon('dots'); fab.title = cur;   // הסמל של מה שנבחר; הרקע לפי המצב: סינון "הגיע / נשלח" ירוק, "לא הגיע / לא נשלח" אדום: וואטסאפ (וואטסאפ), בועת הודעה (תבנית), או ✓ (הגיע / לא הגיע)
-        fab.setAttribute('aria-label', 'מה מוצג בעמודה: ' + cur); }   // כפתור צף: מה שנבחר בתפריט, ולחיצה פותחת אותו לבחירה
+      const fab = $('#waFab'); if (fab) {   // מתג של שלושה מצבים: וואטסאפ רגיל, הודעה (תבנית), הגעה (רק בתוך מפגש); המסומן הוא הבולט
+        const mb = (k, ic, on, lab, id) => '<button type="button"' + (id ? ' id="' + id + '" aria-haspopup="menu" aria-expanded="false"' : '') + ' class="wm3b' + (on ? ' on' : '') + '" data-wm="' + k + '" aria-pressed="' + on + '" aria-label="' + lab + '" title="' + lab + '">' + ic + '</button>';
+        fab.innerHTML = mb('wa', icon('wa'), !am && !ws, 'וואטסאפ רגיל') + mb('msg', icon('chat'), !!ws && !am, ws ? 'הודעה: ' + esc(ws.name) : 'הודעה מוכנה', 'waMsgBtn') + (state.filter ? mb('att', icon('check'), am, 'הגעה') : ''); }
     }
     $('#listSent').innerHTML = evOn ? fbtn('sent', effSent(), sentN('1'), sentN('0')) : '';
     $('#listBal').innerHTML = '';   // אייקון סינון היתרה הוסר (הצ'יף "יתרה" בשורת הצ'יפים במקומו)
@@ -1541,6 +1554,7 @@
     if (state.sort === 'upd') {   // עדכון: הפעולה האחרונה על המשתתף: הרשמה, שיוך או שינוי במפגש, הגעה, שליחת פרטים, דיווח, תשלום או הערה (גם הערות מערכת)
       return rev((a, b) => lastUpd(b.id).localeCompare(lastUpd(a.id)) || byName(a, b));
     }
+    if (state.sort === 'age') return (a, b) => byAge(asc ? 1 : -1)(a, b) || byNew(a, b);   // גיל: מהגבוה לנמוך (ירידה) או הפוך; בלי גיל בסוף
     switch (state.sort) {
       case 'old': return (a, b) => -byNew(a, b) || byName(a, b);
       case 'name': return byName;
@@ -1554,10 +1568,9 @@
     
     $('#sortMenu').innerHTML = SORTS.filter((s) => (!s[4] || state.filter) && (!s[5] || !state.filter)).map((s) => { const on = state.sort === s[0], t = on ? s[1] + ', ' + (state.sortDir === 'asc' ? s[3] : s[2]) + ' (לחיצה נוספת הופכת את הסדר)' : s[1]; return '<button type="button" role="menuitemradio" data-sort="' + s[0] + '" aria-checked="' + on + '" title="' + esc(t) + '"' + (on ? ' aria-label="' + esc(t) + '"' : '') + '><span>' + s[1] + '</span>' + (on ? '<span class="sdir" aria-hidden="true">' + icon(state.sortDir === 'asc' ? 'sup' : 'sdown', 'i16') + '</span>' : '') + '</button>'; }).join('');
   }
-  const closeSort = () => { $('#sortMenu').hidden = true; const b = $('#sortBtnH'); if (b) b.setAttribute('aria-expanded', 'false'); };   // התפריט הצף (מועבר ל-body) נפתח מכפתור המיון בכותרת
-  $('#sortBtnH').addEventListener('click', (e) => { const b = e.currentTarget; e.stopPropagation(); const m = $('#sortMenu'); if (!m.hidden) { closeSort(); return; } m.hidden = false; b.setAttribute('aria-expanded', 'true'); const r = b.getBoundingClientRect(); m.style.left = menuX(m, b) + 'px'; m.style.maxHeight = Math.max(200, r.top - 20) + 'px'; m.style.top = Math.max(8, Math.round(r.top - 8 - m.offsetHeight)) + 'px'; });   // תפריט המיון מיושר לקצה הימני של התגית שלו
+  const closeSort = () => { $('#sortMenu').hidden = true; };   // התפריט הצף (מועבר ל-body) נפתח מכפתור המיון בכותרת
   $('#sortMenu').addEventListener('click', (e) => { const b = e.target.closest('[data-sort]'); if (!b) return; if (b.dataset.sort === state.sort) state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc'; else { state.sort = b.dataset.sort; state.sortDir = 'desc'; } render(); saveViewPrefs(); });   // בחירה (גם במיון אחר) לא סוגרת את התפריט   // לחיצה נוספת על המיון שנבחר: סדר הפוך והתפריט נשאר פתוח (לראות את הכיוון משתנה); בחירת מיון אחר סוגרת אותו
-  document.addEventListener('click', (e) => { if (e.target.isConnected && !e.target.closest('#sortMenu, #sortBtnH')) closeSort(); });   // (isConnected: לחיצה על אפשרות שהתפריט צייר מחדש כבר לא בדף, ואינה לחיצה בחוץ)
+  document.addEventListener('click', (e) => { if (e.target.isConnected && !e.target.closest('#sortMenu')) closeSort(); });   // (isConnected: לחיצה על אפשרות שהתפריט צייר מחדש כבר לא בדף, ואינה לחיצה בחוץ)
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSort(); });
 
 
@@ -1610,7 +1623,7 @@
       let side = '';
       if (state.filter) {
         const l = linkOf(p.id, state.filter);
-        if (!l) side = UI.tag('שיוך למפגש', 'ptag none', { 'data-qs': p.id, role: 'button', tabindex: 0, title: 'לא משויך למפגש (לחיצה לשיוך)' });
+        if (!l) side = '';   // עוד לא משויך: במקום תגית, סימן + בפינה (שיוך ישיר)
         else if (missedOf(p.id, meetOf(state.filter))) side = UI.tag('לא הגיע', 'ptag missed', { 'data-qs': p.id, role: 'button', tabindex: 0, title: 'משוריין ולא הגיע (לחיצה לשינוי תגית)' });
         else { const st = linkStatus(l); side = st ? UI.tag(esc(STATUS_LABEL[st]), 'ptag ' + st, { 'data-qs': p.id, role: 'button', tabindex: 0, title: 'תגית (לחיצה לשינוי)' }) : UI.tag(icon('tag'), 'ico ptag nolabel', { 'data-qs': p.id, role: 'button', tabindex: 0, 'aria-label': 'הוספת תגית', title: 'הוספת תגית' }); }
       }
@@ -1622,10 +1635,11 @@
       let mcntHtml = '';
       if (!state.filter) { const c = meetCounts(p), n = c.came + c.next; if (n) mcntHtml = '<span class="mcnt" title="' + [c.came ? 'הגיע ל' + (c.came === 1 ? 'מפגש אחד' : '-' + c.came + ' מפגשים') : '', c.next ? 'משוריין ל' + (c.next === 1 ? 'מפגש הבא אחד' : '-' + c.next + ' מפגשים הבאים') : ''].filter(Boolean).join(' · ') + '">' + icon('cal', 'i14') + n + '</span>'; }   // בלי שיוך: התא ריק, והעמודה נשמרת
       const evc = evCircle(p);
-      const hasUn = !!(state.filter && linkOf(p.id, state.filter));   // בתוך מפגש: ✕ להסרת השיוך, באותו מקום של ה-✕ בשורת המפגש בכרטיס המשתתף
+      const hasUn = !!state.filter, isLinked = !!(state.filter && linkOf(p.id, state.filter));   // בתוך מפגש: ✕ להסרת השיוך, באותו מקום של ה-✕ בשורת המפגש בכרטיס המשתתף
       return '<li class="row' + (hasUn ? ' hasun' : '') + '">' +
-        (hasUn ? '<button type="button" class="rowun" data-rowun="' + p.id + '" aria-label="הסרה מהמפגש" title="הסרה מהמפגש">' + icon('close', 'i16') + '</button>' : '') +
-        (attM ? attTag(p) : wa ? UI.tag(wsel ? (wsent ? icon('check') : PIN_ICON) : WA_ICON, 'ico rowwa' + (wsent ? ' sent' : ''), Object.assign({ href: wa }, /^https?:/.test(wa) ? { target: '_blank', rel: 'noopener' } : {}, wsel ? { 'data-wsend': p.id } : {}, { 'aria-label': 'וואטסאפ ל' + esc(p.name) + (wsent ? ', ההודעה נשלחה' : ''), title: wsel ? esc(wsent ? 'נשלחה ההודעה "' + wsel.name + '" · ' + fmtDT(wsent.sent_at) + ' · לחיצה לביטול הסימון' : 'וואטסאפ עם ההודעה: ' + wsel.name) : 'וואטסאפ' }), 'a') : UI.tag(WA_ICON, 'ico rowwa nophone', { role: 'img', 'aria-label': 'אין טלפון', title: 'אין טלפון' })) +
+        (hasUn ? (isLinked ? '<button type="button" class="rowun" data-rowun="' + p.id + '" aria-label="הסרה מהמפגש" title="הסרה מהמפגש">' + icon('close', 'i16') + '</button>' : '<button type="button" class="rowun rowadd" data-rowadd="' + p.id + '" aria-label="שיוך למפגש" title="שיוך למפגש">' + icon('plus', 'i16') + '</button>') : '') +
+        (attM ? attTag(p) : wa ? UI.tag(wsel ? (wsent ? WA_ICON : '') : WA_ICON, 'ico rowwa' + (wsel ? ' ratt msgc ' + (wsent ? 'yes sent' : 'no') : ''), Object.assign({ href: wa }, /^https?:/.test(wa) ? { target: '_blank', rel: 'noopener' } : {}, wsel ? { 'data-wsend': p.id } : {}, { 'aria-label': 'וואטסאפ ל' + esc(p.name) + (wsent ? ', ההודעה נשלחה' : ''), title: wsel ? esc(wsent ? 'נשלחה ההודעה "' + wsel.name + '" · ' + fmtDT(wsent.sent_at) + ' · לחיצה לביטול הסימון' : 'וואטסאפ עם ההודעה: ' + wsel.name) : 'וואטסאפ' }), 'a') : UI.tag(WA_ICON, 'ico rowwa nophone', { role: 'img', 'aria-label': 'אין טלפון', title: 'אין טלפון' })) +
+        (wsel && wsel.system_key === 'confirm' && !attM && state.filter && state.confMail.has(p.id + '|' + state.filter) ? UI.tag(MAIL_ICON, 'ico rowwa ratt yes rowmail', { role: 'img', 'aria-label': 'קיבל במייל', title: 'קיבל את אישור המקום במייל' }) : '') +
         '<div class="main' + ' hasw' + (anyEv ? ' ev' : '') + (!state.filter && state.showPay ? ' bl' : '') + '" role="button" tabindex="0" data-edit="' + p.id + '">' +
           '<div class="nm"><span class="name' + nameCls(p) + '" dir="rtl">' + nameMark(p) + mcntHtml + '</span>' + '</div>' +   // רק השם מבודד (שם באנגלית לא הופך את השורה), וסמל החשבון תמיד משמאל לשם
           (true ? '<div class="meta">' + (true ? '<span class="age' + (originOf(p, state.filter) ? ' ' + originOf(p, state.filter).kind : '') + '"' + originAttr(p, state.filter) + ' title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi dir="rtl">' + (age != null ? age : (p.gender ? '' : '—')) + (age != null || !p.gender ? ' ' : '') + '<b class="gl">' + (p.gender ? icon(p.gender === 'male' ? 'male' : 'female', 'i14') : '<span class="ic i14 ph" aria-hidden="true"></span>') + '</b>' + '</bdi></span>' : '') + '<span class="sidewrap">' + side + payIc + '</span>' + '</div>' : '') +
@@ -2108,7 +2122,7 @@
   $('#cDlg').addEventListener('close', () => { $('#cYes').textContent = 'אישור'; $('#cYes').classList.remove('danger', 'ok', 'yel'); $('#cAlt').hidden = true; });
   /* משתתף שהגיע למפגש (סומנה הגעה) אי אפשר להסיר מהמפגש */
   /* הסרה ממפגש לא יוצרת זיכוי ליתרה: למי ששולם אפשר רק להחזיר את התשלום */
-  const confirmLink = (pid, mid, on, after) => (!on && allocatedOf(pid, mid) > 0) ? confirmAct('הסרה מהמפגש', pid, mid, async () => { try { await reduceAlloc(pid, mid, Math.max(0, allocatedOf(pid, mid))); } catch (err) { fail(err); return; } setLinked(pid, mid, false); if (after) after(); }, 'ההקצאה למפגש (<b>' + ils(Math.round(allocatedOf(pid, mid) * 100) / 100) + '</b>) תוסר, והסכום יחזור ליתרה של המשתתף. לא מוחזר כסף.', 'הסר והחזר את הסכום ליתרה', null, { yellow: true }) : confirmAct(on ? 'להוסיף למפגש?' : 'להסיר מהמפגש?', pid, mid, () => { setLinked(pid, mid, on); if (after) after(); });
+  const confirmLink = (pid, mid, on, after) => (!on && allocatedOf(pid, mid) > 0) ? confirmAct('הסרה מהמפגש', pid, mid, async () => { try { await reduceAlloc(pid, mid, Math.max(0, allocatedOf(pid, mid))); } catch (err) { fail(err); return; } setLinked(pid, mid, false); if (after) after(); }, 'ההקצאה למפגש (<b>' + ils(Math.round(allocatedOf(pid, mid) * 100) / 100) + '</b>) תוסר, והסכום יחזור ליתרה של המשתתף. לא מוחזר כסף.', 'הסר והחזר את הסכום ליתרה', null, { yellow: true }) : confirmAct(on ? 'להוסיף למפגש?' : 'להסיר מהמפגש?', pid, mid, () => { setLinked(pid, mid, on); if (after) after(); }, '', on ? 'הוספה למפגש' : 'הסרה מהמפגש', null, on ? { green: true } : undefined);
 
   /* סימון הגעה למפגש (זמן אמת: מעדכן מיד, נשמר ומתעדכן אצל כולם) */
   /* שיווק ממומן: רשימה עם יתרה, דף התחשבנות לכל שיווק ממומן (עמלות שנצברו מול תשלומים לשיווק ממומן), הוספה, עריכה ומחיקה */
@@ -2716,6 +2730,7 @@
     return out;
   }
   /* התבנית שנבחרה נשמרת בדפדפן הזה לכל תצוגה (מפגש, סוג או הכל); בלי בחירה = הודעה ריקה */
+  const MAIL_ICON = icon('mail');
   const WA_LS = 'harpatka_admin_watpl';
   const waScope = () => state.filter ? 'm:' + state.filter : state.mtype ? 't:' + state.mtype : 'all';
   const waMap = () => { try { return JSON.parse(localStorage.getItem(WA_LS) || '{}') || {}; } catch (e) { return {}; } };
@@ -2731,6 +2746,7 @@
   const waSelected = () => { const id = waMap()[waScope()]; return id ? (waList().find((x) => x.id === id) || null) : null; };
   const attTag = (p) => { const l = linkOf(p.id, state.filter), on = !!(l && l.attended), t = !l ? 'לא משויך למפגש. לחיצה: הגיע בלי הרשמה' : on ? 'הגיע. לחיצה מבטלת' : 'לא הגיע. לחיצה מסמנת הגעה'; return UI.tag(on ? icon('check') : '', 'ico rowwa ratt ' + (on ? 'yes' : 'no'), { 'data-att': p.id, 'aria-pressed': String(on), 'aria-label': esc(p.name) + ': ' + t, title: t }, 'button'); };   // הסימון בעמודה: עיגול ירוק בהיר עם ✓ = הגיע, עיגול שקוף ריק = לא הגיע
   /* מעקב שליחה: אחרי שליחת תבנית מסוימת (וחזרה מוואטסאפ) מאשרים שנשלחה, והשורה מסומנת; כך רואים למי נשלחה כל הודעה ולמי לא */
+  state.confMail = state.confMail || new Set();
   const sentRow = (pid, mid, key) => state.msgSent.find((x) => x.participant_id === pid && x.meeting_id === mid && x.tpl_key === key) || null;
   /* ספירות לסינון בתפריט העמודה: מי שמוצג ברשימה לפי שאר הסינונים והחיפוש (בלי סינון העמודה עצמו), וכמה מהם הגיעו או נשלחה להם התבנית */
   const waCounts = () => {
@@ -2768,7 +2784,10 @@
     let prev = {}; try { prev = JSON.parse(localStorage.getItem(WA_PREV) || '{}') || {}; } catch (e) {}
     if (attMode() && Object.prototype.hasOwnProperty.call(prev, waScope())) attModeSet(false);
   };
-  const waSetSel = (id) => { const mp = waMap(); if (id) mp[waScope()] = id; else delete mp[waScope()]; try { localStorage.setItem(WA_LS, JSON.stringify(mp)); } catch (e) {} };
+  const WA_LAST = 'harpatka_admin_walast';   // ההודעה האחרונה שנבחרה: לכל תצוגה, ובנוסף האחרונה בכלל (גיבוי)
+  const waLastMap = () => { try { return JSON.parse(localStorage.getItem(WA_LAST) || '{}') || {}; } catch (e) { return {}; } };
+  const waLast = () => { const m = waLastMap(); return [m[waScope()], m['*']].map((id) => id && waList().find((x) => x.id === id)).find(Boolean) || null; };
+  const waSetSel = (id) => { if (id && id !== ATT_SEL) { const lm = waLastMap(); lm[waScope()] = id; lm['*'] = id; try { localStorage.setItem(WA_LAST, JSON.stringify(lm)); } catch (e) {} } const mp = waMap(); if (id) mp[waScope()] = id; else delete mp[waScope()]; try { localStorage.setItem(WA_LS, JSON.stringify(mp)); } catch (e) {} };
   function renderContact() {
     const box = $('#pMsgs'); if (!box) return;
     const p = sheet && sheet.id ? partOf(sheet.id) : null;
@@ -3592,7 +3611,7 @@
   /* דסקטופ רחב (31.10.26): השורה של המשתתף שהכרטיס שלו פתוח בצד מסומנת ברשימה */
   let lastPid = null;   // המשתתף שהפופאפ שלו נסגר: הרשומה שלו באפור בהיר עד הלחיצה הבאה במסך
   function markSel() { const on = pDlg && pDlg.open && pDlg._side; document.querySelectorAll('#list li.row').forEach((r) => { const e = r.querySelector('[data-edit]'), id = e && e.dataset.edit; r.classList.toggle('sel', !!(on && id === openPid)); r.classList.toggle('last', !!(id && id === lastPid)); }); }
-  window.addEventListener('click', () => { if (lastPid) { lastPid = null; markSel(); } }, true);   // לחיצה, לא נגיעה: גלילה ברשימה לא מבטלת את הסימון
+  window.addEventListener('click', (e) => { const r = e.target.closest && e.target.closest('#list li.row'), ed = r && r.querySelector('[data-edit]'), id = ed ? ed.dataset.edit : null; if (id !== lastPid) { lastPid = id; markSel(); } }, true);   // לחיצה על כל אלמנט בכרטיס מסמנת אותו; לחיצה במקום אחר מבטלת   // לחיצה, לא נגיעה: גלילה ברשימה לא מבטלת את הסימון
   function openParticipant(id, tab, fromEl) {
     const p = id ? partOf(id) : null;
     if (!p && pDlg.open && pDlg._side) pDlg.close();   // כרטיס פתוח בצד הרשימה: נסגר, והמשתתף החדש נפתח כפופאפ
@@ -3640,7 +3659,7 @@
       return '<div class="mrow' + (on ? ' on' : '') + (sheet.hl === m.id ? ' hl' : '') + '" data-mrow="' + m.id + '">' +
         '<div class="mwhen"><div class="mdt">' + UI.tag(dm(m), 'mlabel') + '<span class="mtm">' + esc(String(m.meeting_time || '').slice(0, 5)) + '</span>' + (meetName(m) ? '<span class="mnm mn1">' + esc(meetName(m)) + '</span>' : '') + '</div>' + (meetWhere(m) ? '<span class="mnm mwh">' + esc(meetWhere(m)) + '</span>' : '') + '</div>' +
         '<div class="mchips">' +
-        '<button type="button" class="pay ' + (on ? (st || (miss ? 'missed' : 'nolabel')) : 'none') + '" data-mp="' + m.id + '" title="' + (on ? (st ? 'שינוי תגית' : 'הוספת תגית') : 'לא משויך למפגש') + '"' + (on && !st ? ' aria-label="הוספת תגית"' : '') + '>' + (on ? (st ? esc(STATUS_LABEL[st]) : miss ? 'לא הגיע' : icon('tag', 'i14') + ' תגית') : 'שיוך למפגש') + '</button>' +
+        '<button type="button" class="pay ' + (on ? (st || (miss ? 'missed' : 'nolabel')) : 'none') + '" data-mp="' + m.id + '" title="' + (on ? (st ? 'שינוי תגית' : 'הוספת תגית') : 'לא משויך למפגש') + '"' + (on && !st ? ' aria-label="הוספת תגית"' : '') + '>' + (on ? (st ? esc(STATUS_LABEL[st]) : miss ? 'לא הגיע' : icon('tag', 'i14') + ' תגית') : '') + '</button>' +
         '<div class="mline">' + (sheet.id && !on ? '<span></span>' : sheet.id ? '<button type="button" class="mmoney' + (reportedOf(sheet.id, m.id) ? ' wait' : laterOf(sheet.id, m.id) ? ' later' : dueOf(sheet.id, m.id) > 0 ? '' : allocatedOf(sheet.id, m.id) > 0 ? ' has' : freeL ? ' free' : '') + '" data-mm="' + m.id + '"' + (on ? '' : ' hidden') + ' title="תשלום למפגש">' + payTxt(sheet.id, m.id, freeL) + '</button>' : '') +
         '</div></div>' +
         (!sheet.id ? '<span></span>' : on ? '<button type="button" class="munl" data-mun="' + m.id + '" aria-label="הסרה מהמפגש" title="הסרה מהמפגש">' + icon('close', 'i16') + '</button>' : '<button type="button" class="munl madd" data-mp="' + m.id + '" aria-label="שיוך למפגש" title="שיוך למפגש">' + icon('plus', 'i16') + '</button>') +
@@ -3685,7 +3704,8 @@
       if (sheet.id) openPayFor(sheet.id, mm.dataset.mm);   // כפתור ה-₪ בכרטיס המפגש: פופאפ הקצאה שעולה מלמטה מעל הכרטיס (הכרטיס לא משתנה)
     } else if (pay) {
       const mid = pay.dataset.mp;
-      if (sheet.id) { if (!$('#qMenu').hidden) closeQ(); else openQuickMenu(sheet.id, pay, mid); }
+      if (sheet.id && rw) { if (!$('#qMenu').hidden) closeQ(); else confirmLink(sheet.id, mid, true); }   // עוד לא משויך: שיוך ישיר, בלי בחירת תגית
+      else if (sheet.id) { if (!$('#qMenu').hidden) closeQ(); else openQuickMenu(sheet.id, pay, mid); }
       else { sheet.links.has(mid) ? sheet.links.delete(mid) : sheet.links.set(mid, false); refreshSheetMeetings(); }
     }
   };
@@ -4289,8 +4309,8 @@
      לכל נושא כותרת עם טוגל תצוגה ("בשורה" / "ברשימה") ומתחתיה האפשרויות כתגיות עם הכמות; לחיצה נוספת על תגית נבחרת מבטלת אותה */
   const fsec = (title, body, extra) => '<div class="fsec"><div class="fsh"><b>' + title + '</b>' + (extra || '') + '</div>' + (body ? '<div class="mgc">' + body + '</div>' : '') + '</div>';
   const fedit = (what, label) => '<button type="button" class="fedit" data-fedit="' + what + '" aria-label="' + label + '" title="' + label + '">' + icon('edit') + '</button>';   // סמל עריכה בכותרת של קבוצה
-  const DEFCOL = { gen: 'neutral', upd: 'sky', tag: 'neutral', src: 'neutral', login: 'amber', age: 'green' };   // צבע ברירת מחדל לכל קטגוריה בתפריט הסינון
-  const FK = { gen: 'gender', upd: 'updF', tag: 'pay', src: 'srcF', login: 'loginF', age: 'ageF' };   // סוג הסינון בפאנל ← השדה ב-state
+  const DEFCOL = { gen: 'neutral', upd: 'sky', reg: 'sky', tag: 'neutral', src: 'neutral', login: 'amber', age: 'green' };   // צבע ברירת מחדל לכל קטגוריה בתפריט הסינון
+  const FK = { gen: 'gender', upd: 'updF', reg: 'regF', tag: 'pay', src: 'srcF', login: 'loginF', age: 'ageF', mc: 'mcF' };   // סוג הסינון בפאנל ← השדה ב-state
   function moreSecs() {
     const scope = state.participants.filter((p) => (state.filter ? linkOf(p.id, state.filter) : p.active !== false) && mtypeOk(p));   // כל המשתתפים בתצוגה: מהם נקבע אילו ערכים קיימים בכל קטגוריה (הם לא נעלמים בגלל סינון)
     /* הספירה בכל קטגוריה היא כמה מוצגים ברשימה אם בוחרים את הערך, לפי כל שאר הסינונים והחיפוש (בלי הסינון של אותה קטגוריה); המילוי הוא שיעור הערך מאותה קבוצה */
@@ -4314,23 +4334,29 @@
       const bl = FLAB.bal, g = mk(['bal']);
       payCols = [{ t: 'יתרה', items: [['1', 'amber', bl[1]], ['0', 'red', bl[2]]].map((o) => pchip('bal', o[0], o[2], g.cnt((p) => balMatch(p, o[0])), o[1], g)) }];   // זכאי (יתרה לטובת המשתתף) וחייב
     }
-    const gU = mk(['updF']), gS = mk(['srcF']), gA = mk(['ageF']), gL = mk(['loginF']);
-    return [].concat(payCols, [   // עמודות הגריד: כותרת ותוויות
-      { t: 'עדכון אחרון', items: UPD_B.map((b) => chip('upd', b[0], b[1], gU.cnt((p) => updWithin(p.id, b[2])), null, gU)) },
+    const gU = mk(['updF']), gR = mk(['regF']), gS = mk(['srcF']), gA = mk(['ageF']), gL = mk(['loginF']), gM = mk(['mcF']);
+    const ORD = ['עדכון אחרון', 'מועד הרשמה', 'מצב תשלום', 'יתרה', 'שיווק ממומן', 'דרך תשלום וסכום', 'מספר מפגשים', 'גיל', 'אזור אישי'];   // סדר הקטגוריות מימין לשמאל
+    const ordCols = (cols) => cols.slice().sort((x, y) => ORD.indexOf(x.t) - ORD.indexOf(y.t));
+    return ordCols([].concat(payCols, [   // עמודות הגריד: כותרת ותוויות
+      { t: 'עדכון אחרון', sk: 'upd', items: UPD_B.map((b) => chip('upd', b[0], b[1], gU.cnt((p) => updWithin(p.id, b[2])), null, gU)) },
+      { t: 'מועד הרשמה', sk: 'new', items: UPD_B.map((b) => chip('reg', b[0], b[1], gR.cnt((p) => regWithin(p, b[2])), null, gR)) },
       { t: 'שיווק ממומן', items: [chip('src', '__none', 'ללא שיווק ממומן', gS.cnt((p) => !channelAt(p, state.filter)), null, gS)].concat(state.promoters.map((x) => chip('src', x.id, x.name, gS.cnt((p) => (channelAt(p, state.filter) || {}).id === x.id), x.color || 'red', gS))) },
-      { t: 'גיל', items: AGE_B.map((b) => chip('age', b[0], b[1], gA.cnt((p) => { const a = shownAge(p); return a != null && a >= b[2] && a <= b[3]; }), null, gA)) },
+      { t: 'גיל', sk: 'age', items: AGE_B.map((b) => chip('age', b[0], b[1], gA.cnt((p) => { const a = shownAge(p); return a != null && a >= b[2] && a <= b[3]; }), null, gA)) },
+      ...(state.filter ? [] : [{ t: 'מספר מפגשים', sk: 'meet', items: MC_B.map((b) => chip('mc', b[0], b[1], gM.cnt((p) => mcKey(p) === b[0]), 'sky', gM)) }]),
       { t: 'אזור אישי', items: [['yes', 'רשומים'], ['no', 'לא רשומים'], ['blocked', 'חסומים']].map((o) => chip('login', o[0], o[1], gL.cnt((p) => loginOf(p) === o[0]), null, gL)) },
-    ]);
+    ]));
   }
   const curMeeting = () => meetOf(state.filter) || null;
   /* יש סינון פעיל שלא רואים בשורת הסינון (כל מה שבפאנל חוץ ממגדר שמוצג בשורה): נקודה בתגית הסינון */
-  const panelOn = () => !!(state.updF || state.srcF || state.ageF || state.loginF || state.bal || (state.paidF && state.paidF !== 'r' && state.paidF !== 'u'));   // כל מה שבתפריט הסינון (כולל תשלום ויתרה); "משוריינים" נראה בצ'יף ולכן לא נספר; סינוני השליחה וההגעה נראים באייקונים שמעל העמודות
+  const panelOn = () => !!(state.updF || state.regF || state.srcF || state.ageF || (state.mcF && !state.filter) || state.loginF || state.bal || (state.paidF && state.paidF !== 'r' && state.paidF !== 'u'));   // כל מה שבתפריט הסינון (כולל תשלום ויתרה); "משוריינים" נראה בצ'יף ולכן לא נספר; סינוני השליחה וההגעה נראים באייקונים שמעל העמודות
+  /* סמל מיון בשלושה מצבים ליד כותרת קטגוריה: לא פעיל, יורד, עולה (לחיצה מחזורית; לא פעיל = חזרה למיון לפי הרשמה) */
+  const sortTri = (k) => { const on = state.sort === k, asc = on && state.sortDir === 'asc', lab = on ? (asc ? 'מיון עולה' : 'מיון יורד') : 'מיון לא פעיל'; return '<button type="button" class="sorttri' + (on ? ' on' : '') + '" data-stri="' + k + '" aria-label="' + lab + '" title="' + lab + '">' + icon(on ? (asc ? 'sup' : 'sdown') : 'sort', 'i16') + '</button>'; };
   function renderViewMenu() {
     const m = curMeeting();
     /* בלי שורת מונה בראש התפריט (31.10.26): התפריט נפתח מתחת לשורת הסינון, והמונה שבה נשאר גלוי */
     const cols = moreSecs();   // 2x2: שתי קבוצות בשורה, כל אחת עם הכותרת והתוויות שלה זו מתחת לזו
     $('#viewMenu').style.gridTemplateColumns = '';
-    $('#viewMenu').innerHTML = cols.map((c) => '<div class="fsec"><div class="fsh"><b>' + c.t + '</b></div><div class="mgc">' + c.items.join('') + '</div></div>').join('');
+    $('#viewMenu').innerHTML = cols.map((c) => { if (c.sk && c.sk !== 'upd' && c.sk !== 'new' && c.sk !== 'pay' && state.sort === c.sk) { const n = (h) => +((h.match(/<small>(\d+)<\/small>/) || [])[1] || 0), d = state.sortDir === 'asc' ? 1 : -1; c.items = c.items.map((h, i) => [h, i]).sort((x, y) => d * (n(x[0]) - n(y[0])) || x[1] - y[1]).map((x) => x[0]); } return c; }).map((c) => '<div class="fsec"><div class="fsh"><b>' + c.t + '</b>' + (c.sk ? sortTri(c.sk) : '') + '</div><div class="mgc">' + c.items.join('') + '</div></div>').join('');
   }
   /* סינון לפי העמודות (תשלום, שליחת פרטי המפגש; בתצוגה הכללית יתרה): אייקון מעל כל עמודה, לחיצה פותחת תפריט עם המצבים, אייקוניהם והכמות; הבחירה מבצעת את הסינון */
   let FC = {};   // ספירות לתפריטי הסינון, מתעדכן ב-renderFacets
@@ -4396,7 +4422,15 @@
   };
   const listTagsClick = (e) => {
     const gb = e.target.closest('[data-stg]'); if (gb) { state.gender = state.gender === gb.dataset.stg ? null : gb.dataset.stg; render(); syncUrl(); return; }   // זכר / נקבה בשורת הסינון
-    const wb = e.target.closest('#waBtn, #waFab'); if (wb) { toggleWa(wb); return; }   // בחירת הודעה לוואטסאפ
+    const wm = e.target.closest('[data-wm]');
+    if (wm) {   // מתג מצב העמודה: רק "הודעה" פותחת את הפופאפ של בחירת התבנית והסינון
+      const k = wm.dataset.wm;
+      if (k === 'msg') { if (!waSelected()) { const lt = waLast(); if (lt) { closeWa(); waSetSel(lt.id); waResetSent(''); render(); const nb = $('#waMsgBtn'); if (nb) toggleWa(nb); return; } } toggleWa(wm); return; }   // הלחיצה על "הודעה" תמיד פותחת את הפופאפ; אם אין בחירה, קודם נבחרת ההודעה האחרונה שנבחרה
+      closeWa();
+      if (k === 'att') { if (!attMode()) { waSetSel(ATT_SEL); waResetSent(''); } }
+      else if (waSelected() || attMode()) { waSetSel(''); waResetSent(''); }
+      render(); return;
+    }
     const fk = e.target.closest('[data-fk]'); if (fk) { openF(fk.dataset.fk, fk); return; }   // אייקון סינון מעל עמודה
     const fb = e.target.closest('#filtBtn'); if (!fb) return;
     const m = $('#viewMenu'); if (!m.hidden) { closeView(); return; }
@@ -4411,14 +4445,13 @@
   /* עמודת הסימון (העמודה האחרונה ברשימה, והתפריט שלה בשורת הסינון): הודעה ריקה, תבניות הודעה (הסוג ואחריהן המפגש) ובתוך מפגש גם הגיע / לא הגיע.
      הבחירה נשמרת לכל תצוגה: בהודעה, קישור הוואטסאפ של כל משתתף ברשימה נפתח עם ההודעה המוכנה; בהגעה, בכל שורה הסימון של מי הגיע ומי לא */
   let waAddAsk = false;   // במפגש נבחר: לחיצה על "הוספת תבנית הודעה" שואלת אם להוסיף למפגש או לסוג המפגש
-  const closeWa = () => { waAddAsk = false; $('#waMenu').hidden = true; document.querySelectorAll('#waBtn, #waFab').forEach((b) => b.setAttribute('aria-expanded', 'false')); };
+  const closeWa = () => { waAddAsk = false; $('#waMenu').hidden = true; document.querySelectorAll('#waBtn, #waMsgBtn').forEach((b) => b.setAttribute('aria-expanded', 'false')); };
   function renderWaMenu() {
-    const am = attMode(), sel = waSelected(), f = waFilter(), item = (id, ic, name, tag, on) => '<button type="button" role="menuitemradio" data-wt="' + esc(id) + '" aria-checked="' + on + '"><span class="wmi">' + ic + '<span class="wmn">' + esc(name) + '</span>' + (tag ? '<small>' + esc(tag) + '</small>' : '') + '</span></button>';
+    const am = false, sel = waSelected(), f = waFilter(), item = (id, ic, name, tag, on) => '<button type="button" role="menuitemradio" data-wt="' + esc(id) + '" aria-checked="' + on + '"><span class="wmi">' + ic + '<span class="wmn">' + esc(name) + '</span>' + (tag ? '<small>' + esc(tag) + '</small>' : '') + '</span></button>';
     /* מתחת לקו: סינון (לפי הגעה, או לפי שליחה של התבנית שנבחרה; לא בהודעה ריקה) ואחריו הוספת תבנית */
-    const LB = am ? ['הגיע', 'לא הגיע'] : ['נשלח', 'לא נשלח'], cn = (am || sel) ? waCounts() : null, seg = cn ? '<div class="wseg" role="group" aria-label="' + (am ? 'סינון הרשימה לפי הגעה' : 'סינון הרשימה לפי שליחה של התבנית שנבחרה') + '">' + [['', 'הכל'], ['1', LB[0]], ['0', LB[1]]].map((o) => '<button type="button" class="wsf' + (cn[o[0]] || f === o[0] ? '' : ' zero') + '" data-wsf="' + o[0] + '" aria-pressed="' + (f === o[0]) + '"><span class="wmi"><span class="wdot">' + UI.fdot(f === o[0] && (o[0] === '1' ? 'green' : o[0] === '0' ? 'red' : 'ink')) + '</span><span class="wmn">' + o[1] + ' <small>' + cn[o[0]] + '</small></span></span></button>').join('') + '</div>' : '', bot = seg + addRows();
-    $('#waMenu').innerHTML = item('', WA_ICON, 'וואטסאפ', '', !sel && !am) +
+    const LB = am ? ['הגיע', 'לא הגיע'] : ['נשלח', 'לא נשלח'], cn = (am || sel) ? waCounts() : null, seg = cn ? '<div class="wseg" role="group" aria-label="' + (am ? 'סינון הרשימה לפי הגעה' : 'סינון הרשימה לפי שליחה של התבנית שנבחרה') + '">' + [['', 'הכל'], ['1', LB[0]], ['0', LB[1]]].map((o) => '<button type="button" class="wsf' + (cn[o[0]] || f === o[0] ? '' : ' zero') + '" data-wsf="' + o[0] + '" aria-pressed="' + (f === o[0]) + '"><span class="wmi"><span class="wdot">' + UI.fdot(f === o[0] && 'yellow') + '</span><span class="wmn">' + o[1] + ' <small>' + cn[o[0]] + '</small></span></span></button>').join('') + '</div>' : '', bot = seg + addRows();
+    $('#waMenu').innerHTML =
       waList().map((x) => { const on = !!sel && sel.id === x.id, b = item(x.id, PIN_ICON, x.name || 'ללא שם', x.tag || '', on); return on ? '<div class="wrow">' + b + '<button type="button" class="wedit" role="menuitem" data-wedit="' + esc(x.id) + '" title="עריכת ההודעה" aria-label="עריכת ההודעה">' + icon('edit', 'i18') + '</button></div>' : b; }).join('') +
-      (state.filter ? item(ATT_SEL, icon('check'), 'הגעה', '', am) : '') +
       (bot ? '<div class="wbot">' + bot + '</div>' : '');
     function addRows() {
       const inM = !!(state.filter && curMeeting()), row = (k, label) => '<button type="button" class="wadd" data-wadd="' + k + '"><span class="wmi">' + icon('plus') + '<span class="wmn">' + esc(label) + '</span></span></button>';
@@ -4427,7 +4460,7 @@
       return row('type', 'הוספת תבנית הודעה');   // הודעות מוכנות רק לסוג המפגש
     }
   }
-  let waAnchor = '#waBtn';
+  let waAnchor = '#waMsgBtn';
   function placeWa(btn) {
     const m = $('#waMenu'), r = btn.getBoundingClientRect();
     m.style.left = menuX(m, btn) + 'px';
@@ -4571,7 +4604,8 @@
   $('#viewMenu').addEventListener('click', (e) => {
     const after = (prefs) => { render(); renderViewMenu(); if (sheet && sheet.id && pDlg.open) refreshSheetMeetings(); if (prefs) saveViewPrefs(); };
     const mk = e.target.closest('[data-mk]');
-    if (mk) { const f = FK[mk.dataset.mk], v = mk.dataset.mv; if (f) { const cur = payKeys(state[f]); state[f] = (cur.includes(v) ? cur.filter((x) => x !== v) : (f === 'gender' || f === 'updF' || f === 'loginF' ? [v] : cur.concat(v))).join(',') || null; } syncUrl(); return after(); }
+    const st = e.target.closest('[data-stri]'); if (st) { const k = st.dataset.stri; if (state.sort !== k) { state.sort = k; state.sortDir = 'desc'; } else if (state.sortDir === 'desc') state.sortDir = 'asc'; else { state.sort = 'upd'; state.sortDir = 'desc'; } render(); saveViewPrefs(); renderViewMenu(); return; }
+    if (mk) { const f = FK[mk.dataset.mk], v = mk.dataset.mv; if (f) { const cur = payKeys(state[f]); state[f] = (cur.includes(v) ? cur.filter((x) => x !== v) : (f === 'gender' || f === 'updF' || f === 'regF' || f === 'loginF' ? [v] : cur.concat(v))).join(',') || null; } syncUrl(); return after(); }
     const mp = e.target.closest('[data-mp]');
     if (mp) { const v = mp.dataset.mv; if (mp.dataset.mp === 'pay') state.paidF = state.paidF === v ? null : v; else state.bal = state.bal === v ? null : v; syncUrl(); return after(); }   // תשלום או יתרה: בחירה אחת
     if (e.target.closest('[data-fclear]')) { clearFilters(); return after(); }
@@ -4621,6 +4655,7 @@
   const listClick = (e) => {
     { const ra = e.target.closest('[data-att]'); if (ra) { e.stopPropagation(); setAttended(ra.dataset.att, state.filter); return; } }   // הגיע / לא הגיע בעמודת הסימון: לא פותח את הכרטיס
     if (e.target.closest('.evc.inert')) { e.stopPropagation(); e.preventDefault(); return; }   // אחרי תחילת המפגש: עיגול שליחת הפרטים לא עושה כלום (לא וואטסאפ, לא שינוי נתונים, ולא פותח את הכרטיס)
+    { const ra = e.target.closest('[data-rowadd]'); if (ra) { e.stopPropagation(); e.preventDefault(); confirmLink(ra.dataset.rowadd, state.filter, true); return; } }   // שיוך ישיר מהרשימה, בלי בחירת תגית
     { const ru = e.target.closest('[data-rowun]'); if (ru) { e.stopPropagation(); e.preventDefault(); confirmLink(ru.dataset.rowun, state.filter, false); return; } }   // הסרה מהמפגש מהכרטיס ברשימה: פופאפ אישור
     { const rw = e.target.closest('.rowwa'); if (rw) { e.stopPropagation(); const ws = rw.dataset.wsend && waSelected(); if (ws) { waAwait = { pid: rw.dataset.wsend, mid: ws.m.id, key: ws.id, name: ws.name }; if (rw.classList.contains('sent')) { e.preventDefault(); askMsgSent(); } } return; } }   // וואטסאפ מהרשימה: רק פותח את השיחה, לא את כרטיס המשתתף; עם תבנית: בחזרה מאשרים שנשלחה. הודעה שכבר סומנה כנשלחה: לא פותח וואטסאפ, רק פופאפ אישור לביטול הסימון
     const qs = e.target.closest('[data-qs]');
@@ -4641,6 +4676,7 @@
     const bi = e.target.closest('.balic');
     if (bi) { const r1 = bi.closest('li.row'), id1 = r1 && r1.querySelector('[data-edit]').dataset.edit; if (id1) { e.stopPropagation(); openParticipant(id1, undefined, r1); viewStack = []; goView('wallet'); } return; }   // עיגול היתרה בתצוגת הכל: פותח את כרטיס המשתתף ישר במסך "יתרה ותשלומים"
     const row = e.target.closest('li.row'), ed = row && row.querySelector('[data-edit]');   // לחיצה בכל מקום בכרטיס פותחת את פרטי המשתתף
+    if (ed && state.filter && !linkOf(ed.dataset.edit, state.filter)) { confirmLink(ed.dataset.edit, state.filter, true); return; }   // עוד לא משויך למפגש: לחיצה בכל מקום בכרטיס מבקשת אישור שיוך (במקום לפתוח את המשתתף)
     if (ed) openParticipant(ed.dataset.edit, undefined, row);
   };
   $('#list').addEventListener('mousedown', (e) => { if (e.target.closest('.evc, .payic, .ratt') && document.activeElement === $('#q')) e.preventDefault(); });   // הלחיצה לא לוקחת פוקוס מהחיפוש: המקלדת נשארת פתוחה

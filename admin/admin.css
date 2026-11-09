@@ -1762,3 +1762,55 @@ html.is-loading #fabBar { display: none; }
 .wrap > .list .row .main .age { display: inline-flex; align-items: center; line-height: var(--tag); min-height: var(--tag); }
 .wrap > .list .row .main .nm .name { flex: 1 1 0; min-width: 0; display: flex; align-items: center; min-height: var(--tag); line-height: 1.25; }
 .wrap > .list .row .rowwa, .wrap > .list .row .rowun { top: 8px; }
+
+/* סמל מיון בשלושה מצבים בכותרת קטגוריה בתפריט הסינון: לא פעיל, יורד, עולה */
+#viewMenu .fsh .sorttri { margin-inline-start: auto; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; background: none; border: 0; padding: 0; color: var(--text-3); cursor: pointer; border-radius: var(--r); }
+#viewMenu .fsh .sorttri.on { color: var(--text); background: var(--surface-2); }
+
+/* סימון כרטיס נבחר (משתתף או מפגש): פס צל דק בתחתית הכרטיס מבפנים, במקום צל חיצוני */
+.wrap > .list > .row.last, .wrap > .list > .row.sel, .wrap > .list > .row.sel:hover, #pPager .mlist .mrow.hl { box-shadow: inset 0 -7px 6px -5px rgba(22, 25, 29, .22), inset 0 7px 6px -5px rgba(22, 25, 29, .22); z-index: auto; }
+
+/* תפריט הסינון כפופאפ: גלילה כשהתוכן ארוך מהמסך, כדי שאפשר יהיה להגיע לקטגוריה האחרונה */
+#viewDlg { max-height: calc(100dvh - 40px); }
+#viewDlg .sheet { max-height: calc(100dvh - 40px); overflow-y: auto; overscroll-behavior: contain; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+
+.mlist .mrow .pay.none:empty { display: none; }   /* מפגש שעוד לא משויך: רק סימן +, בלי תגית */
+
+/* פופאפ הסינון: הדיאלוג עצמו הוא הגולל (בלי גלילה פנימית כפולה שנתקעת), ונפתח עד ראש המסך כשהתוכן ארוך */
+#viewDlg { max-height: calc(100dvh - var(--envtop, 0px)); overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+#viewDlg .sheet { max-height: none; overflow: visible; }
+#viewDlg #viewMenu { max-height: none !important; overflow: visible !important; height: auto !important; }
+
+/* המשתתף האחרון שנגענו בו: טקסט "אחרון" בפינה השמאלית התחתונה של הכרטיס, במקום פס הצל */
+.wrap > .list > .row.last, .wrap > .list > .row.sel, .wrap > .list > .row.sel:hover { box-shadow: none; }
+.wrap > .list > .row.last::after, .wrap > .list > .row.sel::after { content: "אחרון"; position: absolute; inset-inline-end: auto; left: 12px; bottom: 8px; font-size: 12.5px; font-weight: 700; color: var(--text-3); pointer-events: none; }
+
+/* המפגש הנבחר בכרטיס המשתתף: טקסט "המפגש" בפינה השמאלית התחתונה, במקום פס הצל */
+#pPager .mlist .mrow.hl { box-shadow: none; position: relative; }
+#pPager .mlist .mrow.hl::after { content: "המפגש"; position: absolute; left: 12px; bottom: 10px; font-size: 12.5px; font-weight: 700; color: var(--text-3); pointer-events: none; }
+
+/* עיגול מייל לצד עיגול הוואטסאפ: אישור המקום שנשלח במייל */
+.wrap > .list .row .rowwa.rowmail { inset-inline-start: calc(8px + var(--tag) + 8px); cursor: default; }
+.wrap > .list .row:has(> .rowmail) .main .age { margin-inline-start: calc(var(--tag) * 2 + 12px); }
+.rowwa.ratt.sent svg { width: 16px; height: 16px; }
+
+/* מתג שלושה מצבים לעמודת הסימון: וואטסאפ, הודעה, הגעה; המסומן בולט */
+#listTags .wm3 { display: inline-flex; align-items: center; flex: 0 0 auto; height: 36px; border-radius: 18px; background: var(--surface-2); padding: 3px; gap: 2px; }
+.wm3 .wm3b { position: relative; width: 40px; height: 30px; border-radius: 15px; border: 0; background: transparent; color: var(--text-3); display: inline-flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; }
+.wm3 .wm3b svg { width: 18px; height: 18px; }
+.wm3 .wm3b::before { content: ""; position: absolute; inset: -6px -1px; }
+.wm3 .wm3b.on { background: var(--text); color: #fff; }
+.wm3 .wm3b.on[data-wm="msg"] { background: var(--yellow); }   /* הודעה: צהוב */
+.wm3 .wm3b.on[data-wm="att"] { background: var(--green); }   /* הגעה: ירוק; וואטסאפ נשאר שחור */
+
+/* עיגולי הודעה שנשלחה (וואטסאפ או מייל): צהוב, כדי להבדיל מעיגול ההגעה הירוק */
+.rowwa.ratt.sent, .rowwa.ratt.rowmail { background: var(--yellow-bg); border-color: var(--yellow-bg); color: var(--yellow); }
+
+/* עיגול ריק (לא הגיע / לא נשלחה הודעה): רקע בצבע המצב, חלש יותר, בלי מסגרת ובלי סמל */
+.rowwa.ratt.no { background: var(--green-bg); border-color: transparent; opacity: .55; }
+.rowwa.ratt.msgc.no { background: var(--yellow-bg); }
+
+/* מתג מצב העמודה: הצבעים בהירים (שחור בהיר, ירוק בהיר, צהוב בהיר) ולא כהים */
+.wm3 .wm3b.on { background: var(--line); color: var(--text); }
+.wm3 .wm3b.on[data-wm="msg"] { background: var(--yellow-bg); color: var(--yellow); }
+.wm3 .wm3b.on[data-wm="att"] { background: var(--green-bg); color: var(--green); }
