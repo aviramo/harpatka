@@ -1055,7 +1055,8 @@
           if (sr && 'IntersectionObserver' in window) {
             const seen = new Set(), io = new IntersectionObserver(es => { es.forEach(e => { if (e.isIntersecting) seen.add(e.target); else seen.delete(e.target); }); sr.classList.toggle('cta-away', seen.size > 0); }, { threshold: .05 });
             window.__mtIO = io; sr.classList.remove('cta-away');
-            if (future.length > 1) [...list.querySelectorAll('.mt-card:not(.is-past)')].forEach(c => io.observe(c));
+            [...list.querySelectorAll('.mt-card')].forEach(c => io.observe(c));   // כל כרטיס מפגש (גם מפגש אחד, גם שעבר) וכרטיס האזור האישי: הכפתור הקבוע נעלם כל עוד הם בתצוגה
+            { const ma = document.getElementById('meAreaCard'); if (ma) io.observe(ma); }
           } }
         const sb = el('stickyRegBtn'), tc = el('tbCta'), stxt = future.length ? 'שמירת מקום למפגש ' + short(dayN(future[0].date)) : 'השארת פרטים';   // עם התאריך: ברור לאיזה מפגש נרשמים
         if (sb) { sb.dataset.reg = stxt; sb.textContent = 'שמירת מקום ועדכונים'; } if (tc) tc.textContent = 'שמירת מקום ועדכונים';   // הכפתור פותח בחירה: הרשמה למפגש או קבוצת וואטסאפ (הנוסח של ההרשמה נשמר ל-data-reg)
