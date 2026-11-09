@@ -1814,3 +1814,38 @@ html.is-loading #fabBar { display: none; }
 
 /* נקודת הסינון על כפתור ההודעה במתג: צמודה לסמל */
 .wm3 .wm3b .fdot { right: 6px; bottom: 3px; }
+
+/* כפתור הסרה / שיוך למפגש: בשורה התחתונה של הכרטיס, בצד ימין לפני התוויות. סמל הוואטסאפ / הודעה / הגעה: למעלה בצד שמאל */
+.wrap > .list .row .sidewrap .rowun { position: relative; inset: auto; top: auto; flex: 0 0 auto; }
+.wrap > .list .row .rowwa { top: 8px; inset-inline-start: auto; inset-inline-end: 8px; }
+.wrap > .list .row:has(> .rowwa) .main .age { margin-inline-start: 0; }
+
+/* הטקסטים "אחרון" (משתתף) ו"המפגש" (מפגש בכרטיס המשתתף): מודגשים */
+.wrap > .list > .row.last::after, .wrap > .list > .row.sel::after, #pPager .mlist .mrow.hl::after { font-weight: 800; color: var(--text); }
+
+/* עיגולי ההגעה וההודעה ברשימה: מסגרת דקה בגוון הכהה של צבע הרקע (ירוק להגעה, צהוב להודעה) */
+.rowwa.ratt { border: 1px solid var(--green); }
+.rowwa.ratt.msgc { border-color: var(--yellow); }
+.rowwa.ratt.no { opacity: 1; background: var(--green-bg); }
+.rowwa.ratt.msgc.no { background: var(--yellow-bg); }
+
+/* ה-✕ / + בשורה התחתונה: רוחב הסמל עצמו, כך שהוא מיושר לימין עם שאר הטקסט בכרטיס (שטח הלחיצה נשאר גדול, מהמסגרת הלא נראית) */
+.wrap > .list .row .sidewrap .rowun { width: 16px; }
+
+/* ה-✕ / +: בפינה השמאלית התחתונה של הכרטיס; "אחרון" זז ימינה ממנו */
+.wrap > .list .row .sidewrap .rowun { position: absolute; inset-inline-end: 8px; inset-inline-start: auto; top: auto; bottom: 8px; width: var(--tag); height: var(--tag); }
+.wrap > .list .row:has(.rowun).last::after, .wrap > .list .row:has(.rowun).sel::after { left: 48px; }
+
+/* ה-✕ / + ישירות בכרטיס (לא בתוך השורה התחתונה): בפינה השמאלית התחתונה */
+.wrap > .list .row > .rowun { position: absolute; inset-inline-end: 8px; inset-inline-start: auto; top: auto; bottom: 8px; width: var(--tag); height: var(--tag); }
+
+/* "אחרון": באותו קו אנכי של ה-✕ (אותו גובה ואותה שורה) */
+.wrap > .list .row.last::after, .wrap > .list .row.sel::after { bottom: 8px; height: var(--tag); line-height: var(--tag); }
+
+/* ה-✕ / + במפגש בכרטיס המשתתף: מיושר לשמאל באותו קו אנכי של הטקסט "המפגש" (אותו מרחק מהקצה השמאלי) */
+#pPager .mlist .mrow .munl { position: absolute; left: 12px; right: auto; top: 12px; width: 16px; height: 16px; justify-self: auto; }
+#pPager .mlist .mrow { position: relative; }
+#pPager .mlist .mrow .munl { grid-area: auto; top: 14px; left: 12px; }   /* בלי אזור גריד, כדי שהמיקום יהיה מהקצה של הכרטיס ולא מהעמודה */
+
+/* כרטיס עם ✕ / + בפינה: גובה מינימלי שמשאיר רווח בין סמל הוואטסאפ למעלה לבין הכפתור למטה (גם כשאין תוויות בשורה התחתונה) */
+.wrap > .list .row:has(> .rowun) { min-height: 88px; }
