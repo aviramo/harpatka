@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261110cu" />
+  <link rel="stylesheet" href="admin.css?v=20261110dl" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -34,6 +34,7 @@
         </div>
         <div class="hgrp">
         <button type="button" class="hicon nextm" id="nextMBtn" hidden><svg data-i="calnext"></svg></button>   <!-- קיצור דרך למפגש הקרוב, מימין לכפתור התפריט -->
+        <button type="button" class="hicon" id="tagEditBtn" aria-label="עריכת תגיות" title="עריכת תגיות"><svg data-i="tag"></svg></button>   <!-- עריכת תגיות: מימין לכפתור התפריט -->
         <div class="hicons">
           <button type="button" class="hicon" id="menuBtn" aria-label="תפריט" title="תפריט" aria-haspopup="menu" aria-expanded="false"><svg data-i="grid"></svg><span class="bdbadge" id="menuBadge" hidden></span></button>
           <div class="hmenu" id="hMenu" role="menu" hidden>
@@ -331,8 +332,8 @@
       </div>
       <div id="setSt" hidden>
         <div id="stBoth">
-        <section class="stsec"><h3 class="sth">הצגה</h3><p class="sthint">מה מוצג בשורת הצ'יפים שמעל הרשימה (ההגדרה שלך בלבד)</p><div id="stShow"></div></section>
-        <section class="stsec"><h3 class="sth">תגיות</h3><p class="sthint stintro" id="stIntro"></p>
+        <section class="stsec"><div id="stShow"></div></section>
+        <section class="stsec">
         <div id="stList"></div>
         <button type="button" class="btn ghost" id="stAdd">+ תגית חדשה</button></section>
         </div>
@@ -1272,8 +1273,9 @@
       const n = pool.filter((p) => paidOk(p) && genOk(p) && stMatch(p, t.key)).length, pc = PALETTE[t.color] || PALETTE.neutral;
       h += '<button type="button" class="stc tagc' + (n ? '' : ' zero') + '" data-ct="' + esc(t.key) + '" data-sc="1" style="--sbg:' + pc[0] + ';--sfg:' + pc[1] + '" aria-pressed="' + pk.includes(t.key) + '">' + fxw(esc(t.label), n) + '</button>';
     });
-    const edit = '<button type="button" class="stc tagc editc" data-edit-tags aria-label="עריכת תגיות" title="עריכת תגיות">' + icon('edit') + '</button>';
-    const lastI = h.lastIndexOf('<button');   // אילוץ: העיפרון לא נשאר לבד בשורה, הצ'יף האחרון והעיפרון תמיד יחד
+    const edit = '';   // כפתור עריכת התגיות עבר לכותרת (#tagEditBtn)
+    const fpI = h.lastIndexOf('<button type="button" class="fspair"'); let lastI = h.lastIndexOf('<button'); if (fpI >= 0 && h.indexOf('data-ct', fpI) < 0) lastI = fpI;   // בלי תגיות: הצ'יף האחרון הוא כפתור הסינון והמיון
+    //   // אילוץ: העיפרון לא נשאר לבד בשורה, הצ'יף האחרון והעיפרון תמיד יחד
     h = lastI < 0 ? edit : h.slice(0, lastI) + '<span class="stlast">' + h.slice(lastI) + edit + '</span>';   // כניסה לעריכת התגיות (קודם בכותרת הקבוצה בתפריט הסינון)
     el.innerHTML = h;
   }
@@ -1288,7 +1290,7 @@
     m.hidden = false; m.style.left = menuX(m, anchor) + 'px'; placeMenuV(m, anchor.getBoundingClientRect().top, anchor.getBoundingClientRect().bottom, true);
   }
   $('#chipMenu').addEventListener('click', (e) => { const b = e.target.closest('[data-ci]'); if (!b) return; CHIP_DEF[$('#chipMenu').dataset.kind].set(+b.dataset.ci); $('#chipMenu').hidden = true; render(); });
-  const filterBtnHtml = () => '<button type="button" class="stc tagc filtchip" id="filtBtn" aria-haspopup="menu" aria-expanded="' + !$('#viewMenu').hidden + '" aria-label="סינון ותצוגה' + (panelOn() ? ' (יש סינון פעיל)' : '') + '" title="סינון ותצוגה">' + icon('filter', 'i16') + UI.fdot(panelOn() && 'ink') + '</button>';
+  const filterBtnHtml = () => '<button type="button" class="fspair' + (panelOn() ? ' on' : '') + '" id="filtBtn" aria-pressed="' + !!panelOn() + '" aria-haspopup="menu" aria-expanded="' + !$('#viewMenu').hidden + '" aria-label="סינון ותצוגה' + (panelOn() ? ' (יש סינון פעיל)' : '') + '" title="סינון ותצוגה">' + icon('sort', 'i16') + icon('filter', 'i16') + '</button>';   // לחיצה אחת פותחת את פופאפ הסינון; שני הסמלים צמודים
   /* בלי סרגל המילוי האוטומטי של כרום (כתובת, כרטיס אשראי, סיסמאות והשם של החשבון) מעל המקלדת: הערך "off" מתעלמים ממנו, אז משתמשים בערך לא חוקי */
   { const noFill = (root) => (root.querySelectorAll ? root.querySelectorAll('input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=date]):not([type=time]), textarea') : []).forEach((el) => { if (el.getAttribute('autocomplete') !== 'nope') el.setAttribute('autocomplete', 'nope'); });
     noFill(document); new MutationObserver((ml) => ml.forEach((m) => m.addedNodes.forEach((n) => { if (n.nodeType === 1) { if (n.matches && n.matches('input, textarea')) noFill({ querySelectorAll: () => [n] }); else noFill(n); } }))).observe(document.body, { childList: true, subtree: true });
@@ -3462,6 +3464,7 @@
     const drawer = (d) => DRAWERS.includes(d.id) && desk();
     proto.showModal = function () {
       if (this.open) return;
+      { const ae = document.activeElement; if (ae && ae.matches && ae.matches('input, textarea, select')) ae.blur(); }   // שדה שנשאר בפוקוס (למשל החיפוש) משאיר את סרגל המילוי האוטומטי של כרום גם אחרי שהמקלדת נסגרה
       if (side(this)) {
         this._side = true; this.classList.add('side');
         rawShowNM.call(this);
@@ -4371,6 +4374,7 @@
     // (מצב המתג לא עוקב אחרי הצ'יף "הגיעו")   // הסינונים נשמרים במעבר בין מפגשים, וגם מצב ההגעה של עמודת הסימון (לפי הצ'יף "הגיעו")
     render();
   };
+  $('#tagEditBtn').addEventListener('click', () => openStatusSettings());
   $('#nextMBtn').addEventListener('click', () => { const nm = nextMeetingOf(); if (nm) pickFilter(nm.id); });   // קיצור דרך למפגש הקרוב
   /* פאנל הסינון והתצוגה (31.10.26): כל הסינונים והטוגלים במקום אחד, נפתח מתגית הסינון שבשורת "סינון ומיון".
      לכל נושא כותרת עם טוגל תצוגה ("בשורה" / "ברשימה") ומתחתיה האפשרויות כתגיות עם הכמות; לחיצה נוספת על תגית נבחרת מבטלת אותה */
@@ -4423,7 +4427,7 @@
     /* בלי שורת מונה בראש התפריט (31.10.26): התפריט נפתח מתחת לשורת הסינון, והמונה שבה נשאר גלוי */
     const cols = moreSecs();   // 2x2: שתי קבוצות בשורה, כל אחת עם הכותרת והתוויות שלה זו מתחת לזו
     $('#viewMenu').style.gridTemplateColumns = '';
-    $('#viewMenu').innerHTML = cols.map((c) => { if (c.sk && c.sk !== 'upd' && c.sk !== 'new' && c.sk !== 'pay' && state.sort === c.sk) { const n = (h) => +((h.match(/<small>(\d+)<\/small>/) || [])[1] || 0), d = state.sortDir === 'asc' ? 1 : -1; c.items = c.items.map((h, i) => [h, i]).sort((x, y) => d * (n(x[0]) - n(y[0])) || x[1] - y[1]).map((x) => x[0]); } return c; }).map((c) => '<div class="fsec"><div class="fsh"><b>' + c.t + '</b>' + (c.sk ? sortTri(c.sk) : '') + '</div><div class="mgc">' + c.items.join('') + '</div></div>').join('');
+    $('#viewMenu').innerHTML = cols.map((c) => { if (c.sk && c.sk !== 'upd' && c.sk !== 'new' && c.sk !== 'pay' && c.sk !== 'age' && c.sk !== 'meet' && state.sort === c.sk) { const n = (h) => +((h.match(/<small>(\d+)<\/small>/) || [])[1] || 0), d = state.sortDir === 'asc' ? 1 : -1; c.items = c.items.map((h, i) => [h, i]).sort((x, y) => d * (n(x[0]) - n(y[0])) || x[1] - y[1]).map((x) => x[0]); } return c; }).map((c) => '<div class="fsec"><div class="fsh"><b>' + c.t + '</b>' + (c.sk ? sortTri(c.sk) : '') + '</div><div class="mgc">' + c.items.join('') + '</div></div>').join('');
   }
   /* סינון לפי העמודות (תשלום, שליחת פרטי המפגש; בתצוגה הכללית יתרה): אייקון מעל כל עמודה, לחיצה פותחת תפריט עם המצבים, אייקוניהם והכמות; הבחירה מבצעת את הסינון */
   let FC = {};   // ספירות לתפריטי הסינון, מתעדכן ב-renderFacets
@@ -4915,10 +4919,10 @@
       '<button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר"' + (s._d ? ' disabled' : '') + '>' + icon('grip', 'i18') + '</button>' +
       '<button type="button" class="swcur" data-c="' + s.color + '" aria-haspopup="menu" aria-label="צבע: ' + (PALETTE[s.color] || PALETTE.sky)[2] + ' (לחיצה לשינוי)" title="שינוי צבע" style="background:' + (PALETTE[s.color] || PALETTE.sky)[0] + '"></button>' +
       '<input class="stname" value="' + esc(s.label) + '" maxlength="14" aria-label="שם התגית"' + (s._d ? ' placeholder="שם התגית" autocomplete="nope" enterkeyhint="done"' : '') + ' style="' + nameStyle(s) + '" />' +
-      (s._d ? '' : '<label class="stshow" title="מופיעה בשורת הצ\'יפים"><input type="checkbox" data-showtag="' + esc(s.key) + '"' + (state.tagHide.includes(s.key) ? '' : ' checked') + ' aria-label="הצגה בשורת הצ\'יפים: ' + esc(s.label) + '" /></label>') +
+      (s._d ? '' : '<button type="button" class="stshow eyebtn" data-showtag="' + esc(s.key) + '" aria-pressed="' + !state.tagHide.includes(s.key) + '" aria-label="' + (state.tagHide.includes(s.key) ? 'הצגה בשורת הצ\'יפים: ' : 'הסתרה משורת הצ\'יפים: ') + esc(s.label) + '" title="' + (state.tagHide.includes(s.key) ? 'מוסתר בשורת הצ\'יפים' : 'מוצג בשורת הצ\'יפים') + '">' + icon(state.tagHide.includes(s.key) ? 'eyeoff' : 'eye', 'i18') + '</button>') +
       (s._d ? '<button type="button" class="stdel" data-dcancel="1" aria-label="ביטול" title="ביטול">×</button>' : '<button type="button" class="stdel" data-del="' + s.key + '" aria-label="מחיקת התגית" title="מחיקת התגית">×</button>') + '</div>').join('');
-    $('#stIntro').textContent = 'לכל משתתף אפשר לשייך תגית אחת בכל מפגש, והתגיות שייכות לסוג המפגש וחלות על כל המפגשים שלו. הסימון ליד כל תגית קובע אם היא מופיעה בשורת הצ\'יפים';
-    $('#stShow').innerHTML = [['res', 'משוריינים'], ['arr', 'הגיעו'], ['gen', 'מגדר']].map((c) => '<label class="shrow"><input type="checkbox" data-showchip="' + c[0] + '"' + (state.chipHide.some((x) => x === c[0] || (c[0] === 'gen' && (x === 'male' || x === 'female'))) ? '' : ' checked') + ' /><span>' + c[1] + '</span></label>').join('');   // ארבעת הצ'יפים של ברירת המחדל
+    const hid = (k) => state.chipHide.some((x) => x === k || (k === 'gen' && (x === 'male' || x === 'female')));
+    $('#stShow').innerHTML = [['res', 'משוריינים', icon('bookmark', 'i16')], ['arr', 'הגיעו', icon('check', 'i16')], ['gen', 'מגדר', icon('male', 'i16') + icon('female', 'i16')]].map((c) => '<div class="shrow"><span class="stc tagc shchip" title="' + c[1] + '" aria-label="' + c[1] + '">' + c[2] + ' <span class="shname">' + c[1] + '</span></span><button type="button" class="eyebtn" data-showchip="' + c[0] + '" aria-pressed="' + !hid(c[0]) + '" aria-label="' + (hid(c[0]) ? 'הצגה בשורת הצ\'יפים: ' : 'הסתרה משורת הצ\'יפים: ') + c[1] + '" title="' + (hid(c[0]) ? 'מוסתר בשורת הצ\'יפים' : 'מוצג בשורת הצ\'יפים') + '">' + icon(hid(c[0]) ? 'eyeoff' : 'eye', 'i18') + '</button></div>').join('');   // צ'יפים של ברירת המחדל: סמל ועין (פקוחה = מוצג, עם אלכסון = מוסתר)
     if (stDraft) { const dv = document.querySelector('#stBoth .strow.draft .stname'); if (dv) { if (dVal) dv.value = dVal; if (dFoc) dv.focus(); } }
   }
   async function saveStatus(key, patch) {
@@ -5118,13 +5122,11 @@
   $('#srcPrAdd').addEventListener('click', startSrcDraft);
   $('#srcPrDraft').addEventListener('focusout', () => setTimeout(() => { if (!srcDraftOn) return; const b = $('#srcPrDraft'), n = b.querySelector('[data-f="name"]'), m = $('#colMenu'); if (n && !n.value.trim() && !b.contains(document.activeElement) && !(m && !m.hidden)) dropSrcDraft(); }, 150));   // יצאו בלי שם: הכרטיס נעלם, ושום דבר לא נשמר
   $('#setDlg').addEventListener('close', () => { tyF.edited = false; setRoot = 'main'; showSetView('main'); tyId = null; stType = null; tyNew = null; tyFormFor = null; syncUrl(); });
-  $('#stBoth').addEventListener('change', (e) => {
-    const inp = e.target.closest('.stname'); if (!inp) return;
-    const k = inp.closest('.strow').dataset.k, v = inp.value.trim().slice(0, 14);
-    if (inp.closest('.strow').dataset.draft) { commitDraft(inp); return; }
-    if (!v) { renderStSettings(); return; }
-    if (stNameTaken(v, k)) { toast(ST_DUP); renderStSettings(); return; }
-    saveStatus(k, { label: v });
+  $('#stBoth').addEventListener('click', (e) => {
+    const cb = e.target.closest('[data-showchip], [data-showtag]'); if (!cb) return;
+    const prop = cb.dataset.showchip ? 'chipHide' : 'tagHide', key = cb.dataset.showchip || cb.dataset.showtag, cur = state[prop].filter((x) => x !== key && !(key === 'gen' && (x === 'male' || x === 'female')));
+    state[prop] = cb.getAttribute('aria-pressed') === 'true' ? cur.concat(key) : cur;   // עין פקוחה (מוצג) ← לחיצה מסתירה
+    saveViewPrefs(); renderChipRow(); renderStSettings();
   });
   /* "+ חדש": שורה ריקה עם סמן (בלי שם אוטומטי); הפריט נשמר רק כשמקלידים שם שלא קיים באותה רשימה, ובלי שם השורה נעלמת */
   function startDraft() {
