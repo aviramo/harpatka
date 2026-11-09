@@ -1298,7 +1298,9 @@
     if (nx) {
       const [, mo, dd] = nx.date.split('-');
       el('tbPillT').parentElement.style.visibility = '';
-      el('tbMain').textContent = 'יום ' + dayName(nx.date) + ' ' + Number(dd) + '.' + Number(mo) + ' · ' + nx.time + (nx.city ? ' · ' + nx.city : '');
+      const diff = Math.round((Date.parse(nx.date + 'T00:00:00Z') - Date.parse(todayIso() + 'T00:00:00Z')) / 86400000);   // ימים מהיום (שעון ישראל)
+      const when = diff === 0 ? 'היום' : diff === 1 ? 'מחר' : diff === 2 ? 'מחרתיים' : (diff >= 3 && diff <= 6) ? 'יום ' + dayName(nx.date) : (diff >= 7 && diff <= 13) ? 'יום ' + dayName(nx.date) + ' בשבוע הבא' : 'יום ' + dayName(nx.date) + ' ' + Number(dd) + '.' + Number(mo);
+      el('tbMain').textContent = when + ' · ' + nx.time + (nx.city ? ' · ' + nx.city : '');
       el('tbSub').textContent = ' ';
     } else {
       el('tbPillT').parentElement.style.visibility = '';
