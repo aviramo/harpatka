@@ -1639,7 +1639,7 @@
       return '<li class="row' + (hasUn ? ' hasun' : '') + '">' +
         (hasUn ? (isLinked ? '<button type="button" class="rowun" data-rowun="' + p.id + '" aria-label="הסרה מהמפגש" title="הסרה מהמפגש">' + icon('close', 'i16') + '</button>' : '<button type="button" class="rowun rowadd" data-rowadd="' + p.id + '" aria-label="שיוך למפגש" title="שיוך למפגש">' + icon('plus', 'i16') + '</button>') : '') +
         (attM ? attTag(p) : wa ? UI.tag(wsel ? (wsent ? WA_ICON : '') : WA_ICON, 'ico rowwa' + (wsel ? ' ratt msgc ' + (wsent ? 'yes sent' : 'no') : ''), Object.assign({ href: wa }, /^https?:/.test(wa) ? { target: '_blank', rel: 'noopener' } : {}, wsel ? { 'data-wsend': p.id } : {}, { 'aria-label': 'וואטסאפ ל' + esc(p.name) + (wsent ? ', ההודעה נשלחה' : ''), title: wsel ? esc(wsent ? 'נשלחה ההודעה "' + wsel.name + '" · ' + fmtDT(wsent.sent_at) + ' · לחיצה לביטול הסימון' : 'וואטסאפ עם ההודעה: ' + wsel.name) : 'וואטסאפ' }), 'a') : UI.tag(WA_ICON, 'ico rowwa nophone', { role: 'img', 'aria-label': 'אין טלפון', title: 'אין טלפון' })) +
-        (wsel && wsel.system_key === 'confirm' && !attM && state.filter && state.confMail.has(p.id + '|' + state.filter) ? UI.tag(MAIL_ICON, 'ico rowwa ratt yes rowmail', { role: 'img', 'aria-label': 'קיבל במייל', title: 'קיבל את אישור המקום במייל' }) : '') +
+        (wsel && wsel.system_key === 'confirm' && !attM && state.confMail.has(p.id + '|' + wsel.m.id) ? UI.tag(MAIL_ICON, 'ico rowwa ratt yes rowmail', { role: 'img', 'aria-label': 'קיבל במייל', title: 'קיבל את אישור המקום במייל' }) : '') +
         '<div class="main' + ' hasw' + (anyEv ? ' ev' : '') + (!state.filter && state.showPay ? ' bl' : '') + '" role="button" tabindex="0" data-edit="' + p.id + '">' +
           '<div class="nm"><span class="name' + nameCls(p) + '" dir="rtl">' + nameMark(p) + mcntHtml + '</span>' + '</div>' +   // רק השם מבודד (שם באנגלית לא הופך את השורה), וסמל החשבון תמיד משמאל לשם
           (true ? '<div class="meta">' + (true ? '<span class="age' + (originOf(p, state.filter) ? ' ' + originOf(p, state.filter).kind : '') + '"' + originAttr(p, state.filter) + ' title="' + (p.gender ? (p.gender === 'male' ? 'זכר' : 'נקבה') + ' · ' : '') + 'גיל"><bdi dir="rtl">' + (age != null ? age : (p.gender ? '' : '—')) + (age != null || !p.gender ? ' ' : '') + '<b class="gl">' + (p.gender ? icon(p.gender === 'male' ? 'male' : 'female', 'i14') : '<span class="ic i14 ph" aria-hidden="true"></span>') + '</b>' + '</bdi></span>' : '') + '<span class="sidewrap">' + side + payIc + '</span>' + '</div>' : '') +
@@ -2720,11 +2720,11 @@
     const out = [], add = (id, name, body, m, extra) => out.push(Object.assign({ id, name, body, m }, extra));
     if (state.filter) {
       const m = meetOf(state.filter); if (!m) return out;
-      const sys = state.tpls.find((x) => x.system_key === 'confirm'); if (sys) add(sys.id, sys.name, sys.body, m, { tag: 'ברירת מחדל' });   // "אישור מקום": של המערכת, לכל סוגי המפגשים
+      const sys = state.tpls.find((x) => x.system_key === 'confirm'); if (sys) add(sys.id, sys.name, sys.body, m, { tag: 'ברירת מחדל', system_key: 'confirm' });   // "אישור מקום": של המערכת, לכל סוגי המפגשים
       tplsOfType(typeIdOf(m)).forEach((x) => add(x.id, x.name, x.body, m, { own: 'type' }));
     } else if (state.mtype) {   // סוג מפגש נבחר: רק תבניות הסוג. בתצוגת כל המשתתפים (בלי סוג ובלי מפגש) אין תבניות, רק וואטסאפ ריק
       const ty = typeById(state.mtype), cm = ty && tplCtxMeeting(ty.id);
-      const sys = state.tpls.find((x) => x.system_key === 'confirm'); if (cm && sys) add(sys.id, sys.name, sys.body, cm, { tag: 'ברירת מחדל' });
+      const sys = state.tpls.find((x) => x.system_key === 'confirm'); if (cm && sys) add(sys.id, sys.name, sys.body, cm, { tag: 'ברירת מחדל', system_key: 'confirm' });
       if (cm) tplsOfType(ty.id).forEach((x) => add(x.id, x.name, x.body, cm, { own: 'type' }));
     }
     return out;
