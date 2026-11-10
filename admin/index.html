@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261110dq" />
+  <link rel="stylesheet" href="admin.css?v=20261110ev" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -969,6 +969,7 @@
   }
   function fail(err) {
     console.error(err);
+    if (/promoter_code_taken/.test(String((err && (err.message || err.details || err.hint)) || err))) { toast('הקוד כבר קיים אצל שיווק ממומן אחר. כל קוד חייב להיות ייחודי'); return; }
     toast('משהו השתבש, לא נשמר. נסו שוב');
   }
 
@@ -4950,23 +4951,25 @@
     return '<div class="srccard" data-w="' + w + '">' +
       '<div class="srcgrid">' +
         '<label class="srcfld"><small>שם</small><input class="stname" data-f="name" value="' + esc(x.name) + '" maxlength="24" aria-label="שם דרך ההגעה" style="' + nameStyle(x.color || 'red') + '" /></label>' +
-        '<div class="srcfld srccodes"><small>קודים בקישור <bdi dir="ltr">?s=</bdi></small><span class="srcin codes" dir="ltr">' + codesOf(x).map((c) => '<span class="cchip"><button type="button" class="cc" data-copylink="' + esc(c) + '" aria-label="' + esc('העתקת הקישור של ' + c) + '" title="העתקת הקישור">' + esc(c) + '</button><button type="button" class="ccx" data-codedel="' + esc(c) + '" aria-label="' + esc('הסרת הקוד ' + c) + '">×</button></span>').join('') + '<input class="codein codeadd" data-f="code" placeholder="+ קוד" maxlength="6" aria-label="הוספת קוד לקישור" autocapitalize="off" autocomplete="off" /></span></div>' +
-        '<div class="srcfld srccolf"><span class="srccol">' + colDot(x.color || 'red', w) + (isNew ? '' : '<button type="button" class="stdel" data-sdel="' + w + '" aria-label="מחיקת דרך ההגעה" title="מחיקת דרך ההגעה">×</button>') + '</span></div>' +
+        '<div class="srcfld srccodes"><span class="srcin codes" dir="ltr">' + codesOf(x).map((c) => '<span class="cchip"><span class="cc">' + esc(c) + '</span><button type="button" class="ccp" data-copylink="' + esc(c) + '" aria-label="' + esc('העתקת הקישור של ' + c) + '" title="העתקת הקישור">' + icon('copy', 'i14') + '</button><button type="button" class="ccx" data-codedel="' + esc(c) + '" aria-label="' + esc('הסרת הקוד ' + c) + '">×</button></span>').join('') + '<input class="codein codeadd" data-f="code" placeholder="+ קוד" maxlength="6" aria-label="הוספת קוד לקישור" autocapitalize="off" autocomplete="off" /></span></div>' +
+        '<div class="srcfld srccolf"><span class="srccol">' + colDot(x.color || 'red', w) + '' + '</span></div>' +
         '<label class="srcfld' + (ct ? ' wide2' : '') + '"><small>סוג עלות</small><select class="srcsel" data-f="cost_type" aria-label="סוג העלות"><option value="lead"' + (fp || ct ? '' : ' selected') + '>עלות לליד</option><option value="pay"' + (fp ? ' selected' : '') + '>עלות מהתשלום</option><option value="total"' + (ct ? ' selected' : '') + '>עלות כללית</option></select></label>' +
         (ct ? '' : '<label class="srcfld srcamt"><small>' + (fp ? 'סכום או אחוז' : 'כמה עולה ליד') + '</small><span class="srcin">' +
           (fp ? '<select class="ratetype" data-f="rate_type" aria-label="סוג"><option value="fixed"' + (x.rate_type !== 'percent' ? ' selected' : '') + '>₪</option><option value="percent"' + (x.rate_type === 'percent' ? ' selected' : '') + '>%</option></select>' : '<i>₪</i>') +
           '<input class="codein ratein" data-f="rate" type="number" inputmode="decimal" min="0" value="' + (isNew && !Number(x.rate) ? '' : Number(x.rate || 0)) + '" placeholder="0" aria-label="עלות" /></span></label>') +
         (isNew ? '' : '<div class="srcfld">' + (!ct && bal > 0 ? '<small>לתשלום</small>' : '') + '<button type="button" class="prsettle" data-settle="' + x.id + '" aria-label="' + esc('התחשבנות עם ' + x.name + ': ' + (ct ? 'תשלומים' : bal > 0 ? nfx(bal) + ' שקלים לתשלום' : 'מסולק')) + '"><b' + (ct ? '' : ' class="' + (bal > 0 ? 'owe' : 'ok') + '"') + '>' + (ct ? 'תשלומים' : bal > 0 ? '₪' + nfx(bal) : 'מסולק') + '</b>' + icon('next', 'i14') + '</button></div>') +
-      '</div></div>';
+        '<div class="srcct"><label class="field srcfld srccp"><span>טלפון</span><input class="stname" data-f="contact_phone" type="tel" inputmode="tel" dir="ltr" value="' + esc(x.contact_phone || '') + '" maxlength="20" aria-label="טלפון איש הקשר" placeholder=" " autocomplete="off" />' + '</label></div>' +
+      '</div>' + (isNew ? '' : '<button type="button" class="srcdelbtn" data-sdel="' + w + '">מחיקה</button>') + '</div>';
   }
   let srcOpen = null;   // שיווק ממומן שנפתח במסך הפרטים (srcd)
   /* שורת תצוגה מקדימה: צבע, שם, הקודים, סוג העלות והיתרה; לחיצה פותחת את הכרטיס המלא של שיווק ממומן אחד, כמסך בתוך הפופאפ */
   function srcPreview(x) {
-    const ct = !!x.cost_total, fp = !ct && !!x.cost_from_payment, bal = ledgerOf(x.id).balance, codes = codesOf(x);
+    const ct = !!x.cost_total, fp = !ct && !!x.cost_from_payment, bal = ledgerOf(x.id).balance, codes = codesOf(x), wlp = x.contact_phone ? waLink(x.contact_phone) : null;
     const cost = ct ? 'עלות כללית' : fp ? 'עלות מהתשלום ' + (x.rate_type === 'percent' ? Number(x.rate || 0) + '%' : '₪' + Number(x.rate || 0)) : 'עלות לליד ₪' + Number(x.rate || 0);
-    return '<div class="srcpvrow" data-k="' + x.id + '"><button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר">' + icon('grip', 'i18') + '</button><button type="button" class="srcpv" data-srcopen="' + x.id + '"><i class="pvdot" style="background:' + (PALETTE[x.color || 'red'] || PALETTE.red)[0] + '"></i>' +
-      '<span class="pvmain"><b style="' + nameStyle(x.color || 'red') + '">' + esc(x.name) + '</b><small>' + esc(cost) + '</small><span class="pvcodes" dir="ltr">' + (codes.length ? codes.map((c) => '<em>' + esc(c) + '</em>').join('') : '<em class="none">אין קוד</em>') + '</span></span>' +
-      '<b class="pvbal ' + (!ct && bal > 0 ? 'owe' : 'ok') + '">' + (ct ? 'תשלומים' : bal > 0 ? '₪' + nfx(bal) : 'מסולק') + '</b>' + icon('next', 'i14') + '</button></div>';
+    const open = String(srcOpen) === String(x.id);
+    return '<div class="srcpvrow' + (open ? ' open' : '') + '" data-k="' + x.id + '"><div class="srcpvh"><button type="button" class="sthandle" aria-label="גרירה לשינוי הסדר (או חצים במקלדת)" title="גרירה לשינוי הסדר">' + icon('grip', 'i18') + '</button><button type="button" class="srcpv" data-srcopen="' + x.id + '"><i class="pvdot" style="background:' + (PALETTE[x.color || 'red'] || PALETTE.red)[0] + '"></i>' +
+      '<span class="pvmain"><span class="pvt"><b style="' + nameStyle(x.color || 'red') + '">' + esc(x.name) + '</b><span class="pvcodes" dir="ltr">' + (codes.length ? codes.map((c) => '<em role="button" tabindex="0" data-copylink="' + esc(c) + '" title="העתקת הקישור" aria-label="' + esc('העתקת הקישור של ' + c) + '">' + esc(c) + '</em>').join('') : '<em class="none">אין קוד</em>') + (wlp ? '<span class="pvwa" role="link" tabindex="0" data-wahref="' + esc(wlp) + '" aria-label="וואטסאפ לאיש הקשר" title="וואטסאפ">' + icon('wa', 'i14') + '</span>' : '') + '</span></span><small>' + esc(cost) + '</small></span>' +
+      '<b class="pvbal ' + (!ct && bal > 0 ? 'owe' : 'ok') + '">' + (ct ? 'תשלומים' : bal > 0 ? '₪' + nfx(bal) : 'מסולק') + '</b>' + icon('next', 'i14') + '</button></div><div class="srcacc"' + (open ? '' : ' inert') + '><div class="srcacc-in">' + srcCard(x, 'pr:' + x.id) + '</div></div></div>';
   }
   function renderSources() {
     if (setView === 'srcd') {
@@ -5077,18 +5080,17 @@
     const money = state.payments.some((q) => q.promoter_id === x.id) || state.att.some((q) => q.promoter_id === x.id || q.source_promoter_id === x.id) || state.promoPays.some((q) => q.promoter_id === x.id);
     const others = state.promoters.filter((o) => o.id !== x.id), nm = '<b>"' + esc(x.name) + '"</b>', who = ps.length === 1 ? 'משתתף אחד שקשור' : '<b>' + ps.length + '</b> משתתפים שקשורים';
     const linked = ps.length ? 'יש ' + who + ' לדרך ההגעה ' + nm + '.' : 'יש תשלומים שקשורים לדרך ההגעה ' + nm + '.';
-    $('#setDelText').innerHTML = !ps.length && !money ? 'למחוק את דרך ההגעה ' + nm + '?' : !others.length ? linked + ' זו דרך ההגעה היחידה, ולכן צריך קודם להוסיף שיווק ממומן אחרת' : linked + ' לאיזה שיווק ממומן להעביר אותם?';
-    $('#setDelOpts').innerHTML = !ps.length && !money ? '<button type="button" class="btn danger" data-to="">מחיקה</button>' : others.map((o) => '<button type="button" class="sopt" data-to="' + o.id + '" style="' + nameStyle(o.color || 'red') + '">' + esc(o.name) + '</button>').join('');
-    $('#setDelOpts').onclick = async (ev) => {
-      const b = ev.target.closest('[data-to]'); if (!b || b.disabled) return; b.disabled = true;
+    if ((ps.length || money) && !others.length) { toast('זה השיווק הממומן היחיד שיש עליו נתונים, ולכן צריך קודם להוסיף שיווק אחר'); return; }
+    const run = async (to) => {
       try {
-        const r = await api('rpc/harpatka_promoter_replace', { method: 'POST', body: { p_from: x.id, p_to: b.dataset.to || null } });
-        if (r !== 'ok') { toast('דרך ההגעה לא נמחקה, אפשר לנסות שוב'); b.disabled = false; return; }
-        toast(b.dataset.to ? 'הועברו ל"' + (promoterOf(b.dataset.to) || {}).name + '" ודרך ההגעה נמחקה' : 'דרך ההגעה נמחקה');
-        state.promoters = state.promoters.filter((o) => o.id !== x.id); showSetView('src'); load(true);
-      } catch (err) { b.disabled = false; fail(err); }
+        const r = await api('rpc/harpatka_promoter_replace', { method: 'POST', body: { p_from: x.id, p_to: to || null } });
+        if (r !== 'ok') { toast('השיווק הממומן לא נמחק, אפשר לנסות שוב'); return; }
+        toast(to ? 'הועברו ל"' + (promoterOf(to) || {}).name + '" והשיווק הממומן נמחק' : 'השיווק הממומן נמחק');
+        state.promoters = state.promoters.filter((o) => o.id !== x.id); if (String(srcOpen) === String(x.id)) srcOpen = null; renderSources(); load(true);
+      } catch (err) { fail(err); }
     };
-    showSetView('del');
+    if (!ps.length && !money) { confirmAct('מחיקת שיווק ממומן', null, null, () => run(null), 'למחוק את ' + nm + '?', 'כן, למחוק', null, { plain: true }); return; }
+    confirmAct('מחיקת שיווק ממומן', null, null, () => run(($('#srcDelTo') || {}).value), linked + '<br><br>לאיזה שיווק ממומן להעביר אותם?<label class="field" style="margin-top:12px"><span>העברה אל</span><select id="srcDelTo">' + others.map((o) => '<option value="' + o.id + '">' + esc(o.name) + '</option>').join('') + '</select></label>', 'מחיקה והעברה', null, { plain: true });
   }
   const srcTarget = (w) => ({ tbl: T.pr, row: w === 'new' ? prDraft : promoterOf(w.slice(3)), kind: 'pr' });
   async function saveSrc(w, patch) {
@@ -5104,7 +5106,8 @@
     else if (f === 'code') {   // כמה קודים מופרדים בפסיק; הראשון הוא הקוד הראשי (code)
       const add = inp.value.toLowerCase().split(/[\s,]+/).filter(Boolean); if (!add.length) return;
       const vs = [...new Set(codesOf(tg.row).concat(add))];
-      if (vs.some((v) => !/^[a-z0-9]{1,6}$/.test(v) || state.promoters.some((s) => s !== tg.row && codesOf(s).includes(v)))) { toast('קוד לא תקין או כבר קיים'); if (w === 'new') renderPrDraft(); else renderSources(); return; }
+      if (vs.some((v) => state.promoters.some((s) => s !== tg.row && codesOf(s).includes(v)))) { toast('הקוד כבר קיים אצל שיווק ממומן אחר. כל קוד חייב להיות ייחודי'); if (w === 'new') renderPrDraft(); else renderSources(); return; }
+      if (vs.some((v) => !/^[a-z0-9]{1,6}$/.test(v))) { toast('קוד לא תקין: עד 6 אותיות באנגלית או ספרות'); if (w === 'new') renderPrDraft(); else renderSources(); return; }
       saveSrc(w, { codes: vs, code: vs[0] || null });
     }
     else if (f === 'cost_type') {
@@ -5115,12 +5118,15 @@
     }
     else if (f === 'rate_type') { const c = w === 'new' ? null : costRateFor(tg.row, inp.value === 'percent' ? 'percent' : 'fixed'); saveSrc(w, Object.assign({ rate_type: inp.value }, c ? { rate: c.rate } : {})); if (c && c.kept) toast('הסכום לתשלום נשאר ₪' + nfm(c.kept)); }
     else if (f === 'rate') saveSrc(w, { rate: Math.max(0, Number(inp.value) || 0) });
+    else if (f === 'contact_phone') { const v = inp.value.trim(); if (v && digits(v).length < 9) { toast('מספר טלפון לא תקין'); return; } saveSrc(w, { contact_phone: v || null }); }
   };
   const srcClick = async (e) => {
     const cur = e.target.closest('.swcur'); if (cur) { const w = cur.dataset.who, tg = srcTarget(w); if (tg.row) openColorMenu(w, cur, tg.row.color || (tg.kind === 'ad' ? 'sky' : 'red'), (c) => saveSrc(w, { color: c })); return; }
-    const so = e.target.closest('[data-srcopen]'); if (so) { srcOpen = so.dataset.srcopen; showSetView('srcd'); return; }
+    const pcc = e.target.closest('.pvcodes [data-copylink]'); if (pcc) { e.preventDefault(); e.stopPropagation(); const url1 = 'https://harpatka.co.il/?s=' + pcc.dataset.copylink; (navigator.clipboard ? navigator.clipboard.writeText(url1) : Promise.reject()).then(() => toast('הקישור הועתק'), () => { prompt('העתיקו את הקישור', url1); }); return; }
+    const wp = e.target.closest('[data-wahref]'); if (wp) { e.preventDefault(); e.stopPropagation(); const u = wp.dataset.wahref; if (/^https?:/.test(u)) window.open(u, '_blank', 'noopener'); else location.href = u; return; }
+    const so = e.target.closest('[data-srcopen]'); if (so) { const row = so.closest('.srcpvrow'), was = row.classList.contains('open'); $('#srcPrList').querySelectorAll('.srcpvrow.open').forEach((r) => { r.classList.remove('open'); r.querySelector('.srcacc').inert = true; }); if (!was) { row.classList.add('open'); row.querySelector('.srcacc').inert = false; srcOpen = so.dataset.srcopen; } else srcOpen = null; return; }
     const cp0 = e.target.closest('[data-copylink]'); if (cp0) { e.preventDefault(); const c0 = cp0.dataset.copylink; if (!c0) { toast('אין קוד לדרך ההגעה הזו'); return; } const url0 = 'https://harpatka.co.il/?s=' + c0; (navigator.clipboard ? navigator.clipboard.writeText(url0) : Promise.reject()).then(() => toast('הקישור הועתק'), () => { prompt('העתיקו את הקישור', url0); }); return; }
-    const cd = e.target.closest('[data-codedel]'); if (cd) { const w = cd.closest('[data-w]').dataset.w, tg = srcTarget(w), vs = codesOf(tg.row).filter((c) => c !== cd.dataset.codedel); saveSrc(w, { codes: vs, code: vs[0] || null }); return; }
+    const cd = e.target.closest('[data-codedel]'); if (cd) { const w = cd.closest('[data-w]').dataset.w, tg = srcTarget(w), code = cd.dataset.codedel, vs = codesOf(tg.row).filter((c) => c !== code); confirmAct('מחיקת קוד', null, null, () => saveSrc(w, { codes: vs, code: vs[0] || null }), 'למחוק את הקוד <bdi dir="ltr"><b>' + esc(code) + '</b></bdi>? קישורים שמשתמשים בו יפסיקו לסמן את ההגעה לשיווק הזה', 'כן, למחוק', null, { plain: true }); return; }
     const st0 = e.target.closest('[data-settle]'); if (st0) { showPromoterDetail(st0.dataset.settle); $('#prDlg').showModal(); return; }   // ההתחשבנות דרך דרכי ההגעה
     const d = e.target.closest('[data-sdel]'); if (d) { askSrcDelete(d.dataset.sdel.slice(3)); return; }
   };
