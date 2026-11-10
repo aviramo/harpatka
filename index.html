@@ -1221,7 +1221,11 @@
           const txt = v => String(v == null ? '' : v).trim(), url = v => /^https:\/\//i.test(v || '') ? v : '';
           const mk = r => { const t = tyOf(r); return { id: r.id, date: r.meeting_date, time: String(r.meeting_time || (t && t.meeting_time) || '').slice(0, 5), name: txt(r.name) || (t ? txt(t.name) : defName), city: txt(r.city) || txt(t && t.city), place: txt(r.place) || txt(t && t.place), img: url(r.image_url) || (t ? url(t.image_url) : defImg), max: r.max_participants != null ? r.max_participants : (t ? t.max_participants : null), tiers: normT(r.price_tiers) || (t && normT(t.price_tiers)), dir: txt(r.directions) || txt(t && t.directions) }; };
           const emptyImg = (tys.length ? url(tys[0].image_url) : '') || defImg;   // אין מפגש עתידי: התמונה של סוג המפגש הראשון
-          return { past: p.map(mk).reverse(), future: f.map(mk), defName, defImg: emptyImg };
+          /* מפגש שהתחיל כבר עבר (לפי שעת ההתחלה בשעון ישראל), גם אם התאריך הוא היום */
+          const ilMs = m => { const q = (m.time || '23:59').split(':'), d = m.date.split('-'), g = Date.UTC(+d[0], +d[1] - 1, +d[2], +q[0], +q[1]), f2 = z => new Date(new Date(g).toLocaleString('en-US', { timeZone: z })).getTime(); return g - (f2('Asia/Jerusalem') - f2('UTC')); };
+          const fm = f.map(mk), pm = p.map(mk).reverse(), nowMs = Date.now();
+          const started = fm.filter(m => ilMs(m) <= nowMs);
+          return { past: pm.concat(started).slice(-3), future: fm.filter(m => ilMs(m) > nowMs), defName, defImg: emptyImg };
         }
       } catch (e) {}
       return null;
