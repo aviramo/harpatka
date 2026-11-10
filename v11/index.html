@@ -214,10 +214,10 @@
     :root{ --tkh:calc(3.4rem + max(env(safe-area-inset-bottom), 1.3rem)); }
     #invite .h8-deco, #invite .h8-photo::before, #invite .h8-photo::after{ display:none !important; }
     html.hero-motion #invite .h8-media, html.hero-motion #invite .h8-photo, html.hero-motion #invite .h8-frame{ animation:none !important; transform:none !important; opacity:1 !important; }
-    .v12-ticker{ overflow:hidden; background:var(--terra); color:var(--paper); height:var(--tkh); padding:.85rem 0 0; box-sizing:border-box; direction:ltr; }
-    .v12-tk{ display:flex; width:max-content; animation:v12tk 24s linear infinite; }
+    .v12-ticker{ overflow:hidden; background:transparent; color:#C8411B; border-top:2px solid var(--terra); border-bottom:2px solid var(--terra); height:var(--tkh); padding:.85rem 0 0; box-sizing:border-box; direction:ltr; }
+    .v12-tk{ display:flex; width:max-content; animation:v12tk 48s linear infinite; }
     .v12-tk span{ font-family:'Rubik',sans-serif; font-weight:600; font-size:1.05rem; padding:0 1.1rem; white-space:nowrap; direction:rtl; }
-    .v12-tk span::after{ content:"•"; margin-inline-start:2.2rem; color:var(--paper); opacity:.75; }
+    .v12-tk span::after{ content:"•"; margin-inline-start:2.2rem; color:var(--coral); opacity:1; }
     @keyframes v12tk{ to{ transform:translateX(-50%); } }
     @media (prefers-reduced-motion:reduce){ .v12-tk{ animation:none; } }
     .v12s{ padding:3.2rem 0; }
@@ -313,7 +313,7 @@
     </div>
   </section>
 
-  <div class="v12-ticker" aria-hidden="true"><div class="v12-tk"><span>גוף</span><span>תנועה</span><span>מוזיקה</span><span>קהילה</span><span>חופש</span><span>שחרור</span><span>פורקן</span><span>רגש</span><span>חיוניות</span><span>יצירתיות</span><span>התעלות</span><span>חיבור</span><span>אהבה</span><span>גוף</span><span>תנועה</span><span>מוזיקה</span><span>קהילה</span><span>חופש</span><span>שחרור</span><span>פורקן</span><span>רגש</span><span>חיוניות</span><span>יצירתיות</span><span>התעלות</span><span>חיבור</span><span>אהבה</span></div></div>
+  <div class="v12-ticker" aria-hidden="true"><div class="v12-tk" id="v12tk"></div></div>
 
 
 
@@ -1452,5 +1452,15 @@ els.forEach(function(e){io.observe(e);});})();
   document.addEventListener('mt:next', set); setInterval(tick, 1000); set();
 })();
 </script>
+  <script>/* סרט המילים: סדר אקראי בכל טעינה, מילים מהאפיון ומהגרסאות הקודמות */
+  (function(){
+    var w = ['גוף','תנועה','מוזיקה','קהילה','חופש','שחרור','פורקן','רגש','חיוניות','יצירתיות','התעלות','חיבור','אהבה',
+      'צחוק','נשימה','מבט','שייכות','חיוך','קצב','משחק','סקרנות','נוכחות','אמון','פתיחות','הקשבה','קרבה','עדינות','שמחה','התחדשות','ביטחון','התרגשות','קלילות','חושניות','הרפיה','איזון','מגע','חיים'];
+    for (var i = w.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = w[i]; w[i] = w[j]; w[j] = t; }
+    var box = document.getElementById('v12tk'); if (!box) return;
+    var one = w.map(function(x){ return '<span>' + x + '</span>'; }).join('');
+    box.innerHTML = one + one;
+  })();
+  </script>
 </body>
 </html>
