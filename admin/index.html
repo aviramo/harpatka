@@ -3865,7 +3865,7 @@
     { /* מספר אחד: קרדיט = חוב פחות קרדיט. חוב רק על מפגשים שביקשנו עליהם תשלום ("בטיפול") או שהמשתתף אמר שישלם ("ישלם"); רשום בלבד (חדש) הוא עוד לא חוב */
       const owed = sheet.id ? owedOf(sheet.id) : 0;
       const net = owed - (sheet.id ? creditOf(sheet.id) : 0), bn = $('#pBalN');
-      bn.innerHTML = '<bdi dir="ltr">₪' + nfm(Math.abs(net)) + '</bdi>' + (sheet.id && pkgLeft(sheet.id) > 0 ? '<span class="pses" title="מפגשים בקרדיט">' + icon('cal', 'i14') + pkgLeft(sheet.id) + '</span>' : ''); }
+      bn.innerHTML = (!net && !(sheet.id && pkgLeft(sheet.id) > 0) ? 'תשלומים' : '<bdi dir="ltr">₪' + nfm(Math.abs(net)) + '</bdi>') + (sheet.id && pkgLeft(sheet.id) > 0 ? '<span class="pses" title="מפגשים בקרדיט">' + icon('cal', 'i14') + pkgLeft(sheet.id) + '</span>' : ''); }
     box.innerHTML = desc.filter((m) => shown.includes(m) || m.id === sheet.hl).map(meetRow).join('');   // המפגש שממנו הגענו מסומן ברשימה, וכשעוד לא משויך אליו: "שיוך למפגש" במקומו לפי התאריך (לא נספר במונה)
     meetTop(false);
   }
