@@ -217,6 +217,16 @@
     :root{ --tkh:calc(3.4rem + max(env(safe-area-inset-bottom), 1.3rem)); }
     /* הפתיח מוסתר עד שהגופנים נטענו והתמונה קיבלה את הגודל הסופי, כדי שלא תראו אותה משנה גודל אחרי הטעינה (fit-wait מוסר בסקריפט שמתחת לפתיח; גיבוי אחרי 1.5 שניות) */
     html.fit-wait #invite{ opacity:0 !important; } #invite{ transition:opacity .25s ease; }
+    /* מסך צר מאוד (חלון צר, טלפון קטן): העמודה לא מתרחבת מעבר למסך, והטקסטים מצטמצמים עם הרוחב במקום לחרוג (קודם הפתיח זז שמאלה ונחתך) */
+    #invite .h8-in{ grid-template-columns:minmax(0,1fr) !important; } #invite .h8-in > *, #invite .h8-copy, #invite .h8-who{ min-width:0 !important; max-width:100% !important; }
+    html.pg-home.nd #invite .h8-who .h8-lead2{ --s1:clamp(.6rem, calc((100vw - 4rem) / 13.4), 1.75rem); }
+    html.pg-home.nd #invite .h8-who .h8-lead2 .l1{ font-size:min(var(--s1), calc((100vw - 2.4rem) / 14.6)) !important; }
+    html.pg-home.nd #invite .h8-who .h8-lead2 .l2{ font-size:min(calc(var(--s1) * 1.5), calc((100vw - 2.4rem) / 9.2)) !important; }
+    /* הטקסט בתוך השלט ממורכז ומצטמצם לרוחב השלט, כך שלעולם לא חורג ממנו */
+    #invite .h8-hwrap{ container-type:inline-size; }
+    html.pg-home.nd #invite .h8-h1{ text-align:center !important; }
+    html.pg-home.nd #invite .h8-h1 .h8-key, html.pg-home.nd #invite .h8-h1 .h8-sm{ font-size:min(1em, calc(14cqw - 5px)) !important; }
+    @media (max-width:340px){ html.pg-home.nd #invite .h8-h1 .h8-key, html.pg-home.nd #invite .h8-h1 .h8-sm{ font-size:min(1em, 8.4vw) !important; } html.pg-home.nd #invite .h8-photo{ width:min(86%, var(--pw, 100%)) !important; } }
     /* מסך נמוך: הכול נכנס למסך אחד והסטריפ נשאר צמוד לתחתית. מקצרים קודם את החוט (מעל התמונה ובין התמונה לשלט) ואחר כך את הרווחים */
     /* מסך רחב ונמוך (טאבלט אנכי, חלון צר): התמונה מצטמצמת (סקריפט קטן מתחת לפתיח) עד שהסטריפ נכנס כולו למסך הראשון */
     @media (max-width:1023px){ html.pg-home.nd #invite .h8-photo{ width:min(92%, 540px, var(--pw, 100%)) !important; margin-inline:auto !important; } }
@@ -400,10 +410,9 @@
     .v12-list-s li{ text-align:center; border-right:0; border-bottom:4px solid var(--terra); }
     .v12-quote{ padding:2.4rem 1.25rem; text-align:center; }
     .v12-quote blockquote{ max-width:38rem; margin:0 auto; }
-    .v12-steps{ list-style:none; margin:1.4rem 0 0; padding:0; display:grid; gap:1.9rem; text-align:right; }
+    .v12-steps{ list-style:none; margin:1.4rem 0 0; padding:0; display:grid; gap:1.4rem; text-align:right; }
     .v12-steps li{ display:grid; grid-template-columns:2.4rem 1fr; gap:.8rem; align-items:start; }
     .v12-n{ display:grid; place-items:center; width:2.4rem; height:2.4rem; border-radius:50%; background:var(--terra); color:var(--paper); font-family:'Rubik',sans-serif; font-weight:700; font-size:1.15rem; }
-    .v12-steps li > .v12-img{ grid-column:1 / -1; margin:0 0 .2rem; }   /* התמונה לפני הטקסט של השלב: שורה משלה מעל המספר והכותרת */
     .v12-steps strong{ display:block; font-family:'Rubik',sans-serif; font-weight:600; font-size:1.15rem; margin:.2rem 0 .3rem; }
     .v12-steps p{ margin:0 0 .6rem; font-size:1.05rem; line-height:1.75; }
     .v12-img{ display:block; width:100%; height:auto; aspect-ratio:3/1; object-fit:cover; margin:.8rem 0 .2rem; border-radius:var(--r); box-shadow:0 0 14px rgba(44,35,29,.22); }
@@ -739,9 +748,9 @@
       <p class="v12-p v12-how-lead">מפגש ביודנסה נמשך כשעתיים והוא לא שיעור ריקוד, אלא תהליך קבוצתי חווייתי שמשלב מוזיקה שנבחרה בקפידה, תנועה חופשית ומפגש אנושי</p>
       <p class="v12-p v12-how-sub">המפגש בנוי מארבעה שלבים, שמובילים אותנו בהדרגה דרך חוויות שונות של תנועה, רגש וחיבור</p>
       <ol class="v12-steps">
-        <li><img class="v12-img" src="../images/step1-circle-v10.webp" width="1400" height="467" loading="lazy" decoding="async" alt="גברים ונשים יושבים במעגל על רצפת עץ בסטודיו מואר ומחייכים זה לזו"><span class="v12-n" aria-hidden="true">1</span><div><strong>מתחילים במעגל</strong><p>יושבים יחד במעגל, והמנחים מציגים את הנושא שילווה את המפגש, למשל שמחה, גבולות, אמון או חיבור לעצמנו ולאחרים. מי שרוצה מוזמן לשתף בקצרה איך מרגישים, אבל אין חובה לדבר</p></div></li>
-        <li><img class="v12-img" src="../images/step3-group-v10.webp" width="1400" height="467" loading="lazy" decoding="async" alt="קבוצת אנשים נעה יחד בסטודיו, בזרועות פתוחות ובתנועה חופשית"><span class="v12-n" aria-hidden="true">2</span><div><strong>מעלים את האנרגיה</strong><p>מתחילים בתנועה חופשית ופשוטה, ובהדרגה המוזיקה הופכת לקצבית ושמחה יותר. דרך תרגילים אישיים, בזוגות ובקבוצה אנחנו משחררים מתחים, מעוררים חיוניות ומכניסים משחק, צחוק וספונטניות</p><p>המפגש עם האחרים מתרחש דרך תנועה, קשר עין ומחוות טבעיות, בלי צורך במילים</p></div></li>
-        <li><img class="v12-img" src="../images/step4-walk2-v10.webp" width="1400" height="467" loading="lazy" decoding="async" alt="זוג הולך יד ביד בסטודיו מואר כשאחד מוביל ואחד נשען ובוטח, ובני זוג נוספים ברקע"><span class="v12-n" aria-hidden="true">3</span><div><strong>מאטים ומעמיקים</strong><p>המוזיקה הופכת לרכה ורגועה יותר, ואיתה גם התנועה. הקצב האיטי מאפשר לנו להירגע, להקשיב לגוף ולרגשות ולחוות רגעים של שקט, רוך, קבלה וקרבה אנושית</p><p>זהו שלב שמזמין אותנו להרפות מהמאמץ, להתחבר לעצמנו ולהרגיש בנוח גם בנוכחות אחרים</p></div></li>
+        <li><span class="v12-n" aria-hidden="true">1</span><div><strong>מתחילים במעגל</strong><img class="v12-img" src="../images/step1-circle-v10.webp" width="1400" height="467" loading="lazy" decoding="async" alt="גברים ונשים יושבים במעגל על רצפת עץ בסטודיו מואר ומחייכים זה לזו"><p>יושבים יחד במעגל, והמנחים מציגים את הנושא שילווה את המפגש, למשל שמחה, גבולות, אמון או חיבור לעצמנו ולאחרים. מי שרוצה מוזמן לשתף בקצרה איך מרגישים, אבל אין חובה לדבר</p></div></li>
+        <li><span class="v12-n" aria-hidden="true">2</span><div><strong>מעלים את האנרגיה</strong><img class="v12-img" src="../images/step3-group-v10.webp" width="1400" height="467" loading="lazy" decoding="async" alt="קבוצת אנשים נעה יחד בסטודיו, בזרועות פתוחות ובתנועה חופשית"><p>מתחילים בתנועה חופשית ופשוטה, ובהדרגה המוזיקה הופכת לקצבית ושמחה יותר. דרך תרגילים אישיים, בזוגות ובקבוצה אנחנו משחררים מתחים, מעוררים חיוניות ומכניסים משחק, צחוק וספונטניות</p><p>המפגש עם האחרים מתרחש דרך תנועה, קשר עין ומחוות טבעיות, בלי צורך במילים</p></div></li>
+        <li><span class="v12-n" aria-hidden="true">3</span><div><strong>מאטים ומעמיקים</strong><img class="v12-img" src="../images/step4-walk2-v10.webp" width="1400" height="467" loading="lazy" decoding="async" alt="זוג הולך יד ביד בסטודיו מואר כשאחד מוביל ואחד נשען ובוטח, ובני זוג נוספים ברקע"><p>המוזיקה הופכת לרכה ורגועה יותר, ואיתה גם התנועה. הקצב האיטי מאפשר לנו להירגע, להקשיב לגוף ולרגשות ולחוות רגעים של שקט, רוך, קבלה וקרבה אנושית</p><p>זהו שלב שמזמין אותנו להרפות מהמאמץ, להתחבר לעצמנו ולהרגיש בנוח גם בנוכחות אחרים</p></div></li>
         <li><span class="v12-n" aria-hidden="true">4</span><div><strong>חוזרים בהדרגה</strong><p>לקראת הסיום המוזיקה והאנרגיה עולות שוב בעדינות. חוזרים לתנועה משותפת, מסיימים במעגל ונפרדים מתוך תחושת חיבור, איזון והתחדשות, שאפשר לקחת איתנו גם אל חיי היומיום</p></div></li>
       </ol>
       <ul class="v12-list v12-know">
