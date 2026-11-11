@@ -3097,7 +3097,7 @@
     const pid = sheet && sheet.id; if (!pid) return;
     const bal = creditOf(pid), owed = owedOf(pid);
     { const pays = state.payments.filter((x) => x.participant_id === pid), inn = pays.filter((x) => (x.kind === 'payment' || x.kind === 'deposit') && !x.from_credit).reduce((s, x) => s + Number(x.amount), 0), out = pays.filter((x) => x.kind === 'refund').reduce((s, x) => s + Number(x.amount), 0);
-      $('#walSum').innerHTML = UI.metric('שילם בסך הכול', '<bdi dir="ltr">₪' + nfm(inn - out) + '</bdi>', { tone: 'pos', sub: out > 0 ? 'אחרי החזרים של ₪' + nfm(out) : '' }) + UI.metric('קרדיט', '<bdi dir="ltr">₪' + nfm(bal) + '</bdi>', { tone: (bal > 0 || pkgLeft(pid) > 0) ? 'yel' : bal < 0 ? 'neg' : 'mut', sub: pkgLeft(pid) > 0 ? '<span class="pses">' + icon('cal', 'i14') + pkgLeft(pid) + ' מפגשים · ₪' + nfm(pkgUnit(pid)) + ' למפגש</span>' : '' }); }
+      $('#walSum').innerHTML = UI.metric('שילם בסך הכול', '<bdi dir="ltr">₪' + nfm(inn - out) + '</bdi>', { tone: 'pos', sub: out > 0 ? 'אחרי החזרים של ₪' + nfm(out) : '' }) + UI.metric('קרדיט', '<bdi dir="ltr">₪' + nfm(bal) + '</bdi>', { tone: (bal > 0 || pkgLeft(pid) > 0) ? 'yel' : bal < 0 ? 'neg' : 'mut', sub: pkgLeft(pid) > 0 ? pkgLeft(pid) + ' מפגשים · ₪' + nfm(pkgUnit(pid)) + ' למפגש' : '' }); }
     $('#walRefund').hidden = !(bal > 0 || pkgLeft(pid) > 0);
         $('#walZikuy').hidden = true;   // בארנק רק קבלת כסף או החזרת כסף; אין זיכוי (ביטול הקצאה למפגש נעשה במסך התשלום למפגש)
     const mlabel = (x) => { const m = meetOf(x.meeting_id); return m ? ' ' + dm(m) : ''; };
