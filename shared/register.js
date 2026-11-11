@@ -288,14 +288,14 @@
         btn.disabled = true; const relG = HRT.busy(btn); let gr = null;
         try {
           const res = await fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_signup_phone', { method: 'POST', headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify(Object.assign({ p_phone: gt.value }, selMeeting && selMeeting.id ? { p_meeting: selMeeting.id } : {}, PAID ? { p_src: 'p' } : {})) });
+            body: JSON.stringify(Object.assign({ p_phone: gt.value, p_token: guestToken }, selMeeting && selMeeting.id ? { p_meeting: selMeeting.id } : {}, PAID ? { p_src: 'p' } : {})) });
           gr = res.ok ? await res.json() : null;
         } catch (er) { gr = null; }
         relG(); btn.disabled = false;
         const gs = gr && gr.status;
         if (gs === 'invalid_phone') { PersonForm.setErr(root, 'phone', PersonForm.MSG.phone); return; }
         if (gs === 'created' || gs === 'exists') { const age0 = gr.age != null ? Number(gr.age) : null; suRoots.forEach((f) => f(age0 == null ? !!(selMeeting || nearest) : (ageOk(age0) && !!(selMeeting || nearest)))); setGuestStep(false); return; }
-        setGuestStep(false, true); const f1 = document.getElementById('cmFirst'); if (f1) try { kbFocus(f1); } catch (x) {}   // לא מזוהה (או חסרים פרטים) או שהבדיקה נכשלה: שאר השדות
+        guestReg = gs === 'need_details' && !!(gr && gr.registered); setGuestStep(false, true); const f1 = document.getElementById('cmFirst'); if (f1) try { kbFocus(f1); } catch (x) {}   // לא מזוהה (או חסרים פרטים) או שהבדיקה נכשלה: שאר השדות
         return;
       }
       if (phoneMode) {   // מחוברים עם גוגל, אין משתתף מקושר: רק טלפון. השרת מחבר את החשבון למשתתף עם הטלפון הזה (או יוצר משתתף עם הטלפון בלבד) ורושם למפגש שנבחר
@@ -371,6 +371,19 @@
       let finished = false;
       const claimToken = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : null;   // אסימון חיבור לאזור האישי (נשמר על המשתתף החדש בלבד)
       try {
+        if (guestReg && guestToken) {   // השלמת פרטים למשתתף שנוצר בשלב הטלפון
+          const rc = await fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_signup_complete', { method: 'POST', headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ p_token: guestToken, p_first: first, p_last: last, p_age: age, p_gender: gender }) });
+          const oc = rc.ok ? await rc.json() : null;
+          if (oc === 'ok') {
+            try { localStorage.setItem('harpatka_claim_token', guestToken); } catch (e) {}
+            try { if (window.fbq) fbq('trackCustom', 'RegistrationValue', { value: ageOk(age) ? 3 : 1, currency: 'ILS' }); } catch (e) {}
+            finished = true; allDone(); guestReg = false;
+          } else if (PersonForm.serverError(root, oc)) { /* ההודעה הוצגה ליד השדה */ }
+          else throw new Error('complete failed');
+          relBtn(); if (!finished) { btn.disabled = false; btn.textContent = curLabel(); }
+          return;
+        }
         const send = (extra) => fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_signup', {
           method: 'POST',
           headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' },
@@ -525,6 +538,8 @@
   }
   /* שלב הטלפון לאורח (reg-gphone): הרשמה לא מחייבת גוגל. קודם טלפון בלבד, ובאותו שלב אפשר להיכנס עם גוגל (אם כבר חיברו חשבון). "המשך" פותח את שאר השדות; אזור אישי כן דורש גוגל */
   let guestStep = false;
+  let guestReg = false;   // כבר בשלב הטלפון נוצר משתתף (הטלפון בלבד) ונרשם למפגש: שלב הפרטים משלים אותו באסימון
+  const guestToken = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : null;
   function setGuestStep(on, cont) {
     if (cont) { const tl = document.querySelector('#contactModal input[type="tel"]'), v = tl ? tl.value.trim() : ''; document.querySelectorAll('.su-gph').forEach((e) => { e.innerHTML = 'טלפון: <bdi dir="ltr">' + String(v).replace(/[<>&]/g, '') + '</bdi>'; }); }   // שלב הפרטים: הטלפון שהוזן מוצג ליד "חזרה" ואפשר לתקן
     guestStep = !!on; document.documentElement.classList.toggle('reg-gphone', guestStep); document.documentElement.classList.toggle('reg-gdet', !guestStep && !!cont);   /* reg-gdet: אורח אחרי "המשך": מוצג כפתור חזרה לשלב הטלפון */
