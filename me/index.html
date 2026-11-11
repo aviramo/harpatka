@@ -143,8 +143,10 @@
     const credit = Math.round(Number(data.balance) || 0);   // בשקלים שלמים: סכום זעיר (שבר או -0) לא מוצג כ"חוב 0"
     let h = '';
     setTitle(((p.first_name || '') + ' ' + (p.last_name || '')).trim() || String(p.phone || '').replace(/^\+972/, '0'));   // שם המשתתף מחליף את הכותרת "האזור האישי"; עוד בלי פרטים: הטלפון
-    { const bc = $('#balChip'); if (bc) { bc.hidden = !credit; bc.className = 'chip ' + (credit > 0 ? 'wait' : 'no'); bc.textContent = (credit > 0 ? 'קרדיט ' : 'חוב ') + ils(Math.abs(credit)); bc.title = credit > 0 ? 'קרדיט לטובתכם' : 'חוב'; } }   // קרדיט (או חוב) כצ'יף ליד "יציאה", רק כשיש; בלי שורת יתרה
-    { const sc = $('#sesChip'), n = Math.round(Number(data.sessions) || 0); if (sc) { sc.hidden = n <= 0; sc.textContent = 'כרטיסייה ' + n + (n === 1 ? ' מפגש' : ' מפגשים'); sc.title = 'מפגשים שנשארו בכרטיסייה'; } }   // כמות המפגשים שנשארו ביתרה (כרטיסייה), רק כשיש
+    { const bc = $('#balChip'), n = Math.round(Number(data.sessions) || 0), sc = $('#sesChip'); if (sc) sc.hidden = true;   // קרדיט כספי ומפגשי כרטיסייה בצ'יף אחד
+      if (bc) { bc.hidden = !credit && n <= 0; bc.className = 'chip ' + (credit < 0 ? 'no' : 'wait');
+        const parts = []; if (credit || n <= 0) parts.push((credit < 0 ? 'חוב ' : 'קרדיט ') + ils(Math.abs(credit))); if (n > 0) parts.push(n + (n === 1 ? ' מפגש' : ' מפגשים'));
+        bc.textContent = parts.join(' · '); bc.title = credit < 0 ? 'חוב' : n > 0 ? 'קרדיט לטובתכם: סכום ומפגשים בכרטיסייה' : 'קרדיט לטובתכם'; } }
     // סקשן אחד "המפגשים שלי": כל מפגש עתידי (אפשר להירשם, לשלם ולבטל) ומפגשים שהיו. כל מפגש נפתח ונסגר; הקרוב פתוח כברירת מחדל
     const ordered = ms.slice().sort((a, b) => (String(b.date) + String(b.time)).localeCompare(String(a.date) + String(a.time))), upcoming = ordered.filter((m) => m.future);   // מהחדש לישן
     const firstId = keepOpen && ordered.some((m) => m.id === keepOpen) ? keepOpen : null; keepOpen = null;   // אין מפגש פתוח כברירת מחדל; רק מפגש שהרגע נרשמו אליו או ביטלו נשאר פתוח
