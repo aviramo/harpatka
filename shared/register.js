@@ -225,6 +225,7 @@
     let saved = false, savedFor = null;
     const showDone = (payOk = true) => {
       if (saved) return; saved = true; savedFor = (selMeeting || nearest || {}).id || null;
+      document.documentElement.classList.remove('reg-gdet');   // אחרי שמירה אין צורך בשורת הטלפון עם חזרה לתיקון
       root.querySelectorAll('.su-fold:not(.su-after)').forEach(f => f.classList.add('shut'));
       btn.disabled = true; btn.classList.add('swap');
       setTimeout(() => { if (!saved) return; btn.textContent = (selMeeting || nearest) ? 'תודה על ההרשמה' : 'הפרטים נשלחו'; btn.classList.remove('swap'); btn.classList.add('saved'); if (payOk) btn.classList.add('gone'); }, 260);   // המקום נשמר: אין צורך בכפתור "נשמר זמנית" (מוסתר); בלי תשלום (מחוץ לטווח) נשאר "הפרטים נשלחו"
