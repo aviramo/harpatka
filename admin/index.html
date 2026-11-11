@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261111za" />
+  <link rel="stylesheet" href="admin.css?v=20261111zb" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1508,7 +1508,7 @@
   const sentMatch = (pid, l, v) => !!l && (v === '1' ? !!l.details_sent_at : (!l.details_sent_at && evElig(pid, l)));
   const effSent = () => (state.q.trim() || !state.filter || !sentView(meetOf(state.filter))) ? null : state.sent;
   /* מצב קרדיט (רק בתצוגת הכל): זכאי (יש קרדיט לטובתו), חייב (יתרת חובה), מאוזן */
-  const balState = (p) => { const b = Math.round(creditOf(p.id) * 100) / 100; return b > 0 ? '1' : b < 0 ? '0' : 'n'; };
+  const balState = (p) => { const b = Math.round(creditOf(p.id) * 100) / 100; return b < 0 ? '0' : (b > 0 || pkgLeft(p.id) > 0) ? '1' : 'n'; };   // זכאי: קרדיט כספי או מפגשים בכרטיסייה
   /* לא לתשלום בסינון הקרדיט: משתתף שרשום לפחות למפגש אחד והוא לא לתשלום בכל המפגשים שהוא רשום אליהם */
   const freeAll = (p) => { const ls = linksOf(p.id); return ls.length > 0 && ls.every((l) => noPayOf(p, l)); };
   const balMatch = (p, v) => v === 'f' ? freeAll(p) : v === 'w' ? state.meetings.some((m) => reportedOf(p.id, m.id)) : balState(p) === v;   // 'w': דווח על תשלום באחד המפגשים
