@@ -408,6 +408,9 @@
       <button class="btn ghost" id="cNo" type="button" style="color:var(--muted)">ביטול</button>
     </form>
   </dialog>
+  <dialog id="finFormDlg" aria-labelledby="finFormTitle">
+    <div class="sheet"><h2 id="finFormTitle"></h2><div id="finFormBody"></div></div>
+  </dialog>
   <dialog id="mfPopDlg" aria-labelledby="mfPopTitle">
     <form class="sheet" method="dialog" novalidate onsubmit="return false">
       <h2 id="mfPopTitle"></h2>
@@ -545,7 +548,7 @@
     try {
       if (d.id === 'pDlg') return (sheet && sheet.id && pTab !== 'main') ? Math.max(1, viewStack.filter((x) => x !== 'main').length + 1) : 0;
       if (d.id === 'setDlg') return setIsRoot(setView) ? 0 : setView === 'del' ? (setRoot === 'st' || setRoot === 'src' ? 1 : 2) : 1;   // עריכת סוג מפגש נפתחת מתפריט המפגשים: מסך הסוג הוא הראשי, והתגיות וההודעה שלו מסכי משנה
-      if (d.id === 'finDlg') return finV === 'main' ? 0 : 1;
+      if (d.id === 'finDlg') return (finV === 'main' || finV === 'form') ? 0 : 1;
       if (d.id === 'prDlg') return RANK[prView] || 0;
     } catch (e) {}
     return 0;
@@ -2032,7 +2035,12 @@
     $('#finMeetF').hidden = edit.type === 'rec'; $('#finRepF').hidden = !!(edit.type === 'entry');
     $('#finDel').hidden = !edit.id; $('#finDel').textContent = 'מחיקה'; delete $('#finDel').dataset.arm;
     f.querySelector('[name=date]').closest('label').firstElementChild.textContent = edit.type === 'rec' ? 'מתאריך' : 'תאריך';   // השדה עטוף ב-dtbox (dtField), לכן הכותרת היא הילד הראשון של התווית ולא האח הקודם של השדה
-    finView('form');
+    /* טופס הכנסה / הוצאה: פופאפ נפרד מלמטה (הטופס עצמו עובר פיזית לתוכו וחוזר בסגירה) */
+    const dlg = $('#finFormDlg'), home = $('#finDlg'); $('#finFormTitle').textContent = edit.id ? 'עריכה' : (kind === 'income' ? 'הכנסה חדשה' : 'הוצאה חדשה');
+    if (!dlg.open) {
+      $('#finFormBody').appendChild(f); f.hidden = false; finV = 'form'; dlg.showModal(); syncUrl();
+      dlg.addEventListener('close', function back() { dlg.removeEventListener('close', back); home.appendChild(f); f.hidden = true; if (finV === 'form') { finV = 'main'; syncUrl(); } });
+    }
   }
   /* תקופה: הכל, החודש, וחודשים קודמים לפי ההיסטוריה (תנועות, תשלומי משתתפים ותשלומי שיווק ממומן); ערך חודש הוא YYYY-MM */
   const finMonthLabel = (ym) => { const [y, m] = ym.split('-').map(Number); return new Date(y, m - 1, 1).toLocaleDateString('he-IL', { month: 'long', year: 'numeric' }); };
@@ -2132,7 +2140,7 @@
         if (editing) { const x = state.fin.find((q) => q.id === finEdit.id); Object.assign(x, body); await api(T.fin + '?id=eq.' + finEdit.id, { method: 'PATCH', body }); }
         else { const [row] = await api(T.fin, { method: 'POST', body, prefer: 'return=representation' }); state.fin.unshift(row); }
       }
-      toast('נשמר'); renderFinance(); finView('main');
+      toast('נשמר'); renderFinance(); $('#finFormDlg').close();
     } catch (err) { fail(err); }
   });
   $('#finDel').addEventListener('click', async () => {   // לחיצה ראשונה מחליפה את הכיתוב, שנייה מוחקת
@@ -2141,7 +2149,7 @@
     try {
       if (finEdit.type === 'rec') { await api(T.finr + '?id=eq.' + finEdit.id, { method: 'DELETE' }); state.finRec = state.finRec.filter((x) => x.id !== finEdit.id); }
       else { await api(T.fin + '?id=eq.' + finEdit.id, { method: 'DELETE' }); state.fin = state.fin.filter((x) => x.id !== finEdit.id); }
-      toast('נמחק'); renderFinance(); finView('main');
+      toast('נמחק'); renderFinance(); $('#finFormDlg').close();
     } catch (err) { fail(err); }
   });
   $('#finDlg').addEventListener('close', () => { finV = 'main'; syncUrl(); });
