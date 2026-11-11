@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261111k" />
+  <link rel="stylesheet" href="admin.css?v=20261111m" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -406,6 +406,12 @@
       <button class="btn" id="cYes" type="button">אישור</button>
       <button class="btn ghost" id="cAlt" type="button" hidden>אפשרות נוספת</button>
       <button class="btn ghost" id="cNo" type="button" style="color:var(--muted)">ביטול</button>
+    </form>
+  </dialog>
+  <dialog id="mfPopDlg" aria-labelledby="mfPopTitle">
+    <form class="sheet" method="dialog" novalidate onsubmit="return false">
+      <h2 id="mfPopTitle"></h2>
+      <div id="mfPopBody"></div>
     </form>
   </dialog>
   <dialog id="lockDlg" aria-labelledby="lockTitle" style="max-width:420px">
@@ -4168,10 +4174,12 @@
       '<small class="mfh" id="' + I('TplHead') + '"' + (isType ? '' : ' hidden') + '>הודעות</small>' +
       (isType ? '' : '<div class="mtinh2" id="' + I('TplInh') + '" hidden></div>') + '<div class="mtlist" id="' + I('Tpl') + '"></div>' +
       '<button type="button" class="mtpladd" id="' + I('TplAdd') + '">הוספת הודעה</button>' +
-      '<div class="field"><span class="mtl">מחירים' + (isType ? '' : '<button type="button" class="lnk" id="' + I('TierOwn') + '" hidden>שינוי למפגש הזה</button><button type="button" class="lnk" id="' + I('TierReset') + '" hidden>כמו בסוג המפגש</button>') + '</span>' +
+      '<button type="button" class="mfshort" id="' + I('PriceBtn') + '"><span>מחירים</span><small></small>' + icon('chev') + '</button>' +
+      (isType ? '<button type="button" class="mfshort" id="' + I('PassBtn') + '"><span>כרטיסיות</span><small></small>' + icon('chev') + '</button>' : '') +
+      '<div class="mfstore" hidden><div class="field" id="' + I('PriceF') + '"><span class="mtl">מחירים' + (isType ? '' : '<button type="button" class="lnk" id="' + I('TierOwn') + '" hidden>שינוי למפגש הזה</button><button type="button" class="lnk" id="' + I('TierReset') + '" hidden>כמו בסוג המפגש</button>') + '</span>' +
         (isType ? '' : '<div class="mtinh" id="' + I('TierInh') + '" hidden><span id="' + I('TierInhTxt') + '"></span></div>') +
         '<div class="mfted" id="' + I('TierEd') + '"><div class="mt2" id="' + I('TierList') + '"></div><div class="mt2add"><button type="button" id="' + I('TierAdd') + '">הוספת מדרגה</button></div></div></div>' +
-      (isType ? '<div class="field"><span class="mtl">כרטיסיות</span><div class="mt2" id="' + I('PassList') + '"></div><div class="mt2add"><button type="button" id="' + I('PassAdd') + '">הוספת כרטיסייה</button></div></div>' : '');
+      (isType ? '<div class="field" id="' + I('PassF') + '"><span class="mtl">כרטיסיות</span><div class="mt2" id="' + I('PassList') + '"></div><div class="mt2add"><button type="button" id="' + I('PassAdd') + '">הוספת כרטיסייה</button></div></div>' : '') + '</div>';
     { const tf = !isType && $('#' + p + 'TypeF'), slot = q('TypeSlot'); if (slot) { if (tf) slot.replaceWith(tf); else slot.remove(); } }   // סוג המפגש באותה שורה עם שם המפגש
     const F = { te: tierEditor('#' + I('TierList'), '#' + I('TierAdd'), () => F.changed()), img: { url: null, blob: null, objUrl: null, inh: false }, tiersInh: false, passes: [] };
     const ty = () => (typOf ? typOf() : null);
@@ -4243,6 +4251,21 @@
       if (inh) q('TierInhTxt').textContent = tiersText(t);
     };
     /* פלייסהולדרים: הערכים של הסוג (במפגש עם סוג), אחרת דוגמה */
+    /* מחירים וכרטיסיות: קיצורי דרך שפותחים פופאפ נוסף עם כותרת של סוג המפגש או המפגש; העורך עצמו עובר פיזית לפופאפ וחוזר בסגירה */
+    const baseName = () => q('Name').value.trim() || (isType ? 'סוג מפגש' : ((q('Date') && q('Date').value) ? q('Date').value.split('-').reverse().slice(0, 2).join('.') : 'מפגש'));
+    F.paintShort = () => {
+      const pb = q('PriceBtn'), kb = q('PassBtn');
+      if (pb) { const v = F.te.value(); pb.querySelector('small').textContent = F.tiersInh ? 'כמו בסוג המפגש' : v ? [v.base].concat(v.steps.map((x) => x.price)).map((x) => '₪' + x).join(' · ') : ''; }
+      if (kb) { const ps = F.passes.filter((x) => Number(x.n) >= 2 && Number(x.price) > 0); kb.querySelector('small').textContent = ps.length ? ps.map((x) => x.n + ' ב-₪' + x.price).join(' · ') : 'אין'; }
+    };
+    F.openPop = (kind) => {
+      const node = q(kind === 'pass' ? 'PassF' : 'PriceF'), dlg = $('#mfPopDlg'), body = $('#mfPopBody'), home = node.parentNode; if (!node || !dlg) return;
+      $('#mfPopTitle').textContent = (kind === 'pass' ? 'כרטיסיות' : 'מחירים') + ' · ' + baseName();
+      body.appendChild(node);
+      const back = () => { dlg.removeEventListener('close', back); home.appendChild(node); F.paintTiers && F.paintTiers(); F.paintShort(); };
+      dlg.addEventListener('close', back); dlg.showModal();
+    };
+    { const pb = q('PriceBtn'), kb = q('PassBtn'); if (pb) pb.addEventListener('click', () => F.openPop('price')); if (kb) kb.addEventListener('click', () => F.openPop('pass')); }
     F.paint = () => {
       const t = ty();
       /* בסוג המפגש בלי פלייסהולדרים בכלל; במפגש הפלייסהולדר הוא הערך שנלקח מהסוג (או דוגמה כשאין סוג) */
@@ -4254,7 +4277,7 @@
       setPh(q('Max'), t && t.max_participants != null ? String(t.max_participants) : '', 'ללא הגבלה');
       setPh(q('Dirs'), t && t.directions, 'כתובת, קומה, חנייה, ואיך מגיעים בתחבורה ציבורית');
       q('Time').dataset.ph = t && t.meeting_time ? String(t.meeting_time).slice(0, 5) : ''; q('Time').dtPaint();
-      F.paintTiers(); F.paintImg(); F.paintMedia(); F.paintTplInh();
+      F.paintTiers(); F.paintImg(); F.paintMedia(); F.paintTplInh(); F.paintShort();
     };
     /* מילוי: src = מפגש או סוג; inh = השדות שנלקחים מהסוג (מוצגים ריקים) */
     F.fill = (src, inh) => {
