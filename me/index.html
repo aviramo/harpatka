@@ -145,7 +145,7 @@
     setTitle(((p.first_name || '') + ' ' + (p.last_name || '')).trim() || String(p.phone || '').replace(/^\+972/, '0'));   // שם המשתתף מחליף את הכותרת "האזור האישי"; עוד בלי פרטים: הטלפון
     { const bc = $('#balChip'), n = Math.round(Number(data.sessions) || 0), sc = $('#sesChip'); if (sc) sc.hidden = true;   // קרדיט כספי ומפגשי כרטיסייה בצ'יף אחד
       if (bc) { bc.hidden = !credit && n <= 0; bc.className = 'chip ' + (credit < 0 ? 'no' : 'wait');
-        const parts = []; if (credit || n <= 0) parts.push((credit < 0 ? 'חוב ' : 'קרדיט ') + ils(Math.abs(credit))); if (n > 0) parts.push(n + (n === 1 ? ' מפגש' : ' מפגשים'));
+        const parts = []; if (credit || n <= 0) parts.push((credit < 0 ? 'חוב ' : 'קרדיט ') + ils(Math.abs(credit))); if (n > 0) parts.push((n === 1 ? 'מפגש אחד' : n + ' מפגשים') + ' בכרטיסייה');
         bc.textContent = parts.join(' · '); bc.title = credit < 0 ? 'חוב' : n > 0 ? 'קרדיט לטובתכם: סכום ומפגשים בכרטיסייה' : 'קרדיט לטובתכם'; } }
     // סקשן אחד "המפגשים שלי": כל מפגש עתידי (אפשר להירשם, לשלם ולבטל) ומפגשים שהיו. כל מפגש נפתח ונסגר; הקרוב פתוח כברירת מחדל
     const ordered = ms.slice().sort((a, b) => (String(b.date) + String(b.time)).localeCompare(String(a.date) + String(a.time))), upcoming = ordered.filter((m) => m.future);   // מהחדש לישן
