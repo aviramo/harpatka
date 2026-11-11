@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261111m" />
+  <link rel="stylesheet" href="admin.css?v=20261111n" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -4022,11 +4022,11 @@
     const ed = { t: { base: 80, steps: [] } }, list = $(listSel), done = () => { if (onChange) onChange(); };
     ed.render = () => {
       const t = ed.t; t.steps.sort((a, b) => b.days - a.days);
-      const pr = (v, k) => '<span class="mtp"><b>₪</b><input data-k="' + k + '" type="number" inputmode="numeric" min="0" max="9999" value="' + v + '" aria-label="מחיר" /></span>';
-      let h = '<div class="mt2row">' + pr(t.base, 'base') + '<span class="mtlbl">' + (t.steps.length ? 'מחיר רגיל, מתחילת ההרשמה' : 'מחיר הכרטיס') + '</span></div>';
+      const pr = (v, k, lab) => '<label class="field money mtf"><span>' + lab + '</span><input placeholder=" " data-k="' + k + '" type="number" inputmode="numeric" min="0" max="9999" value="' + v + '" /></label>';
+      let h = '<div class="mt2row">' + pr(t.base, 'base', t.steps.length ? 'מחיר רגיל, מתחילת ההרשמה' : 'מחיר הכרטיס') + '</div>';
       t.steps.forEach((x, i) => {
         const days = []; for (let d = 1; d <= 30; d++) days.push(d); if (!days.includes(x.days)) days.push(x.days);
-        h += '<div class="mt2row">' + pr(x.price, 's' + i) + '<span class="mtlbl">החל מ<select data-k="d' + i + '" aria-label="ימים לפני המפגש">' + days.sort((a, b) => a - b).map((d) => mtOpt(d, x.days)).join('') + '</select>ימים לפני</span><button type="button" class="mtdel" data-del="s' + i + '" aria-label="מחיקת מדרגה" title="מחיקת מדרגה">×</button></div>';
+        h += '<div class="mt2row">' + pr(x.price, 's' + i, 'מחיר') + '<label class="field mtf"><span>מתחיל</span><select data-k="d' + i + '">' + days.sort((a, b) => a - b).map((d) => '<option value="' + d + '"' + (d === x.days ? ' selected' : '') + '>' + d + ' ימים לפני</option>').join('') + '</select></label><button type="button" class="mtdel" data-del="s' + i + '" aria-label="מחיקת מדרגה" title="מחיקת מדרגה">×</button></div>';
       });
       list.innerHTML = h;
     };
@@ -4168,7 +4168,7 @@
         '<label class="field"><span>עיר</span><input placeholder=" " id="' + I('City') + '" name="city" type="text" maxlength="40" autocomplete="off" /></label>' +
         '<label class="field"><span>מיקום</span><input placeholder=" " id="' + I('Place') + '" name="place" type="text" maxlength="60" autocomplete="off" /></label></div>' +
       '<div class="field"><span>הוראות הגעה</span><textarea placeholder=" " id="' + I('Dirs') + '" name="directions" rows="1"></textarea></div>' +
-      '<small class="mfh">מדיה</small>' +
+      '<small class="mfh">מדיה להוראות הגעה</small>' +
       '<div class="dmcur" id="' + I('DCur') + '"><div class="emvars" id="' + I('DTagW') + '" hidden><button type="button" id="' + I('DTag') + '" data-v=""></button></div><a id="' + I('DLink') + '" target="_blank" rel="noopener" hidden>פתיחה</a><button type="button" id="' + I('DDel') + '" hidden>הסרה</button>' +
       '<button type="button" class="mtpladd dmadd" id="' + I('DAttach') + '">הוספת מדיה</button></div><input type="file" id="' + I('DFile') + '" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm" hidden />' +
       '<small class="mfh" id="' + I('TplHead') + '"' + (isType ? '' : ' hidden') + '>הודעות</small>' +
@@ -4186,7 +4186,7 @@
     /* כרטיסיות (רק בסוג מפגש): שורות {n מפגשים, price}; נשמרות בעמודה passes */
     F.paintPasses = () => {
       const L = q('PassList'); if (!L) return;
-      L.innerHTML = F.passes.map((x, i) => '<div class="mt2row"><span class="mtp"><b>מפגשים</b><input data-pk="n' + i + '" type="number" inputmode="numeric" min="2" max="50" value="' + (x.n || '') + '" aria-label="מספר מפגשים" /></span><span class="mtp"><b>₪</b><input data-pk="p' + i + '" type="number" inputmode="numeric" min="1" max="99999" value="' + (x.price || '') + '" aria-label="מחיר הכרטיסייה" /></span><button type="button" class="medit" data-pdel="' + i + '" aria-label="הסרת כרטיסייה">' + icon('close', 'i16') + '</button></div>').join('');
+      L.innerHTML = F.passes.map((x, i) => '<div class="mt2row"><label class="field mtf"><span>מספר מפגשים</span><input placeholder=" " data-pk="n' + i + '" type="number" inputmode="numeric" min="2" max="50" value="' + (x.n || '') + '" /></label><label class="field money mtf"><span>מחיר</span><input placeholder=" " data-pk="p' + i + '" type="number" inputmode="numeric" min="1" max="99999" value="' + (x.price || '') + '" /></label><button type="button" class="medit" data-pdel="' + i + '" aria-label="הסרת כרטיסייה">' + icon('close', 'i16') + '</button></div>').join('');
     };
     if (isType) {
       q('PassList').addEventListener('input', (e) => { const i = e.target.closest('input'); if (!i) return; const k = i.dataset.pk, v = i.value === '' ? '' : Math.round(Number(i.value)); F.passes[Number(k.slice(1))][k[0] === 'n' ? 'n' : 'price'] = v; });
