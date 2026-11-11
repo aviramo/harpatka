@@ -916,13 +916,13 @@
     const f = document.getElementById('cmFirst'), l = document.getElementById('cmLast');
     if (f && !f.value && first) f.value = first; if (l && !l.value && last) l.value = last;
   }
-  function openReg(auto, meeting) { if (!nearestOk) ensureNearest(); selMeeting = meeting && meeting.id ? meeting : null; suResets.forEach((r) => r((selMeeting || nearest || {}).id || null)); showMeeting(selMeeting || nearest); applyMemberMode(); prefillGoogleName(); applyRegState(selMeeting || nearest); setGuestStep(GL && !AS && !meInfo && !loggedIn()); if (contactModal) openModal(contactModal, auto === true); }
+  function openReg(auto, meeting) { if (!nearestOk) ensureNearest(); selMeeting = meeting && meeting.id ? meeting : null; suResets.forEach((r) => r((selMeeting || nearest || {}).id || null)); showMeeting(selMeeting || nearest); applyMemberMode(); prefillGoogleName(); applyRegState(selMeeting || nearest); setGuestStep(false); if (contactModal) openModal(contactModal, auto === true); }
   /* הרשמה כשהכניסה עם גוגל פעילה: מי שלא מחובר עובר קודם לכניסה עם גוגל (בלי פופאפ); אחרי הכניסה נפתח פופאפ ההרשמה של המפגש שנבחר:
      משתתף מקושר: הרשמה בלחיצה; בלי משתתף מקושר: הזנת פרטים, והכפתור יוצר משתתף, מחבר את החשבון ונרשם באותו צעד (harpatka_me_join) */
   window.HarpatkaRegister = { open: (auto, meeting) => {
     if (GL && !AS && !loggedIn()) {
-      if (hasSess()) { sessionReady().then(() => openReg(auto, meeting)); return; }   // יש חיבור שמור: קודם מחכים לשחזור שלו; אם לא שוחזר, ממשיכים כאורח (בלי חובת גוגל)
-      openReg(auto, meeting); return;   // אורח: שלב טלפון (reg-gphone) עם אפשרות כניסה עם גוגל, בלי לאלץ
+      if (hasSess()) { sessionReady().then((ok) => { if (ok) openReg(auto, meeting); else { try { sessionStorage.setItem(REG_MEET_KEY, JSON.stringify(meeting && meeting.id ? meeting : null)); } catch (e) {} loginPopup('reg'); } }); return; }   // יש חיבור שמור: קודם מחכים לשחזור שלו
+      try { sessionStorage.setItem(REG_MEET_KEY, JSON.stringify(meeting && meeting.id ? meeting : null)); } catch (e) {} loginPopup('reg'); return;   // אורח: קודם כניסה עם גוגל (חזר ב-9.11.26). דפדפן של אפליקציה (INAPP) ותקלה בכניסה (regFallback) נופלים לטופס הרגיל
     }
     openReg(auto, meeting);
   } };   // לשימוש עמודים אחרים
