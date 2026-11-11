@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261111a" />
+  <link rel="stylesheet" href="admin.css?v=20261111c" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -726,7 +726,7 @@
     const el = lastUi.el.closest(UI_SEL);
     return el && !el.closest('#status') ? el : null;
   }
-  let mailFailHook = null, mailFailPrimeFn = null;   // "אישור מקום" בוואטסאפ כשהמייל לא יוצא (מוגדרים בהמשך)
+  let mailFailHook = null, mailFailPrimeFn = null, mailOfferHook = null;   // "אישור מקום" בוואטסאפ כשהמייל לא יוצא (מוגדרים בהמשך)
   async function api(path, { method = 'GET', body, prefer, ui } = {}) {
     const isRead = method === 'GET', t0 = Date.now(), pr = wovParse(path), table = pr.table;
     let ov = null, rel = null;
@@ -761,6 +761,7 @@
         if (method === 'POST' && Array.isArray(data) && data.length && !ov && !table.startsWith('rpc/')) { ov = { table, rows: data.map((x) => Object.assign({}, x)), doneAt: null, exp: Date.now() + 60000 }; WOV.push(ov); }
         if (ov) { ov.doneAt = Date.now(); ov.exp = Date.now() + 15000; }
         if (mailFailHook && (table === T.pay || table === T.a)) mailFailHook();   // תשלום או שיוך נכתבו: אולי המערכת ניסתה לשלוח מייל
+        if (mailOfferHook && (table === T.pay || table === T.a)) mailOfferHook(table, method, path, body);   // מנהל סגר תשלום או סימן "לא לתשלום": פופאפ לשליחה (מייל או וואטסאפ), בלי שליחה אוטומטית
         return data;
       }
       if (Array.isArray(data)) {
@@ -1151,7 +1152,7 @@
       const [p, m, a, nn, prs, pps, pays, sts, pfs, pms, pubs, fin0, finr0, fintr0, mem0, mts, tpls0, sent0, mail0] = await Promise.all([
         api(T.p + '?select=*'),
         api(T.m + '?select=*'),
-        api(T.a + '?select=participant_id,meeting_id,pay_requested_at,status_key,created_at,attended,attended_at,paid_amount,promoter_id,commission,paid_at,details_sent_at,no_pay,pay_later_at,pay_reported_at,pay_reported_amount,pay_due_amount,pay_closed_at,source_promoter_id'),
+        api(T.a + '?select=participant_id,meeting_id,pay_requested_at,status_key,created_at,attended,attended_at,paid_amount,promoter_id,commission,paid_at,details_sent_at,no_pay,pay_later_at,pay_reported_at,pay_reported_amount,pay_due_amount,pay_closed_at,source_promoter_id,ticket_price'),
         api(T.n + '?select=id,participant_id,body,author_email,author_name,created_at,has_image,system,event_type,old_status,new_status,meeting_id,meeting_short,status_label,status_color,amount,mail_id,mail_failed,mail_noaddr&order=created_at.desc'),
         api(T.pr + '?select=*&order=sort.asc.nullslast,name.asc'),
         api(T.pp + '?select=*&order=paid_at.desc'),
@@ -1462,7 +1463,7 @@
   const dueOf = (pid, mid) => {
     const l = linkOf(pid, mid), al = l ? allocatedOf(pid, mid) : 0; if (!(al > 0)) return 0;
     const stored = Number(l.pay_due_amount) || 0, m = meetOf(mid);
-    if (stored > 0 && l.pay_later_at && !l.no_pay && m) return Math.max(0, Math.round((defaultPrice(m) - al) * 100) / 100);   // תשלום בהמשך: מה שנשאר מתעדכן למחיר הנוכחי של הכרטיס פחות מה ששולם
+    if (stored > 0 && l.pay_later_at && !l.no_pay && m) return Math.max(0, Math.round(((ticketOf(pid, mid) || defaultPrice(m)) - al) * 100) / 100);   // תשלום בהמשך: מה שנשאר מתעדכן למחיר הנוכחי של הכרטיס פחות מה ששולם
     return stored;
   };   // שולם חלק ונשאר לשלם (לא הנחה)
   const oweOf = (pid, m) => dueOf(pid, m.id) || Math.max(0, suggestPrice(pid, m) - Math.max(0, allocatedOf(pid, m.id)));   // כמה עוד צריך לשלם על המפגש
@@ -2460,7 +2461,9 @@
   const pkgLeft = (pid) => state.payments.filter((x) => x.participant_id === pid).reduce((s, x) => s + (x.kind === 'deposit' && x.pkg_n > 0 ? Number(x.pkg_n) : x.pkg && x.kind === 'payment' ? -1 : x.pkg && x.kind === 'credit' ? 1 : 0), 0);
   const pkgUnit = (pid) => { const d = state.payments.filter((x) => x.participant_id === pid && x.kind === 'deposit' && x.pkg_n > 0).sort(newestFirst)[0]; return d ? Math.round(Number(d.amount) / Number(d.pkg_n)) : 0; };
   const pkgNetFor = (pid, mid) => state.payments.filter((x) => x.participant_id === pid && x.meeting_id === mid && x.pkg).reduce((s, x) => s + (x.kind === 'payment' ? 1 : x.kind === 'credit' ? -1 : 0), 0);
-  const expectedPrice = (pid, m, iso) => (pkgLeft(pid) > 0 && pkgUnit(pid) ? pkgUnit(pid) : defaultPrice(m, iso));
+  /* מחיר סגור (תשלום בהמשך): מחיר הכרטיס של המשתתף למפגש הזה, בלי קשר לעליית המדרגות */
+  const ticketOf = (pid, mid) => { const l = pid && mid ? linkOf(pid, mid) : null; return l && Number(l.ticket_price) > 0 ? Number(l.ticket_price) : 0; };
+  const expectedPrice = (pid, m, iso) => ticketOf(pid, m && m.id) || (pkgLeft(pid) > 0 && pkgUnit(pid) ? pkgUnit(pid) : defaultPrice(m, iso));
   const payMethodOpts = () => state.payMethods.map((x) => '<option value="' + esc(x.key) + '">' + esc(x.name) + '</option>').join('');
   async function addPayRecord(pid, mid, kind, amount, promoterId, commission, fromCredit, method, methodNote, pkgMeta) {
     const body = { participant_id: pid, meeting_id: mid || null, kind, from_credit: !!fromCredit, amount: Number(amount) || 0, promoter_id: promoterId || null, commission: commission != null && commission !== '' ? Number(commission) : null, author_name: authorName(), method: (kind === 'payment' || kind === 'deposit' || kind === 'refund') ? (method || null) : null, method_note: (kind === 'payment' || kind === 'deposit' || kind === 'refund') ? (methodNote || null) : null };
@@ -2660,18 +2663,60 @@
     fresh.reverse().forEach((r) => mailFailQ.push(r)); mailFailNext();
   }
   function openWaUrl(url) { if (!url) return; if (/^https?:/.test(url)) window.open(url, '_blank', 'noopener'); else location.href = url; }
-  function mailFailNext() {
-    if (!mailFailQ.length) return;
-    if ($('#cDlg').open) { setTimeout(mailFailNext, 400); return; }
-    const r = mailFailQ.shift(), p = partOf(r.participant_id), m = meetOf(r.meeting_id), tpl = state.tpls.find((x) => x.system_key === 'confirm');
-    if (!p || !m || !tpl) { mailFailNext(); return; }
-    if (!String(p.phone || '').trim()) { toast('המייל לא נשלח (אין חשבון גוגל), ואין טלפון לשליחה בוואטסאפ'); mailFailNext(); return; }
+  /* פופאפ הצעה לשלוח בוואטסאפ את "אישור מקום" (כשאי אפשר במייל). מחזיר false כשאי אפשר לשלוח בכלל */
+  function waConfirmOffer(p, m, why) {
+    const tpl = state.tpls.find((x) => x.system_key === 'confirm');
+    if (!p || !m || !tpl) return false;
+    if (!String(p.phone || '').trim()) { toast('המייל לא נשלח (אין חשבון גוגל), ואין טלפון לשליחה בוואטסאפ'); return false; }
     confirmAct('המייל לא נשלח', p.id, m.id, () => {
       waAwait = { pid: p.id, mid: m.id, key: tpl.id, name: tpl.name };
       openWaUrl(waLink(p.phone, fillMsg(tpl.body, m, p)));
-    }, nameB(String(p.first_name || p.name || '')) + ' לא מחובר/ת לחשבון גוגל, ולכן לא נשלח מייל. לשלוח עכשיו את אותם פרטים בוואטסאפ?', 'כן, פתיחת וואטסאפ', null, { primary: true });
+    }, why || (nameB(String(p.first_name || p.name || '')) + ' לא מחובר/ת לחשבון גוגל, ולכן לא נשלח מייל. לשלוח עכשיו את אותם פרטים בוואטסאפ?'), 'כן, פתיחת וואטסאפ', null, { primary: true });
+    return true;
+  }
+  function mailFailNext() {
+    if (!mailFailQ.length) return;
+    if ($('#cDlg').open) { setTimeout(mailFailNext, 400); return; }
+    const r = mailFailQ.shift(), p = partOf(r.participant_id), m = meetOf(r.meeting_id);
+    if (!p || !m || !waConfirmOffer(p, m)) { mailFailNext(); return; }
     $('#cDlg').addEventListener('close', () => setTimeout(mailFailNext, 350), { once: true });
   }
+  /* סגירת תשלום או "לא לתשלום" בידי מנהל: לא נשלח מייל אוטומטית. פופאפ שואל איך לשלוח למשתתף: מייל (אם יש לו חשבון גוגל מחובר) או וואטסאפ (11.11.26) */
+  const mailOfferQ = []; let mailOfferT = 0;
+  function offerCloseMail(pid, mid) {
+    if (!pid || !mid || mailOfferQ.some((x) => x.pid === pid && x.mid === mid)) return;
+    mailOfferQ.push({ pid, mid }); clearTimeout(mailOfferT); mailOfferT = setTimeout(mailOfferNext, 800);
+  }
+  async function mailOfferNext() {
+    if (!mailOfferQ.length) return;
+    if ($('#cDlg').open) { mailOfferT = setTimeout(mailOfferNext, 500); return; }
+    const it = mailOfferQ.shift(), p = partOf(it.pid), m = meetOf(it.mid);
+    if (!p || !m) { mailOfferNext(); return; }
+    let st = ''; try { st = await api('rpc/harpatka_close_payment_mail', { method: 'POST', body: { p_pid: it.pid, p_mid: it.mid, p_dry: true }, ui: false }); } catch (e) { console.error(e); }
+    const nopay = noPayOf(p, linkOf(it.pid, it.mid)), hasPhone = !!String(p.phone || '').trim(), tpl = state.tpls.find((x) => x.system_key === 'confirm');
+    const after = () => $('#cDlg').addEventListener('close', () => setTimeout(mailOfferNext, 350), { once: true });
+    if (st === 'ready') {
+      const send = async () => {
+        let r = ''; try { r = await api('rpc/harpatka_close_payment_mail', { method: 'POST', body: { p_pid: it.pid, p_mid: it.mid }, ui: false }); } catch (e) { fail(e); return; }
+        if (r === 'sent') { toast('המייל נשלח למשתתף'); refreshOpenSheet(); render(); }
+        else if (r === 'no_email') waConfirmOffer(p, m);
+        else toast(r === 'already' ? 'כבר נשלח למשתתף מייל על המפגש הזה' : 'המייל לא נשלח');
+      };
+      const wa = hasPhone && tpl ? { label: 'שליחה בוואטסאפ', fn: () => { waAwait = { pid: p.id, mid: m.id, key: tpl.id, name: tpl.name }; openWaUrl(waLink(p.phone, fillMsg(tpl.body, m, p))); } } : null;
+      confirmAct(nopay ? 'לשלוח למשתתף אישור?' : 'לשלוח למשתתף אישור תשלום?', p.id, m.id, send, (nopay ? 'המקום במפגש שמור, ולא נדרש תשלום.' : 'התשלום נסגר.') + ' איך לשלוח למשתתף את האישור, עם פרטי המפגש והוראות ההגעה? בלי שליחה, לא יישלח כלום.', 'שליחה במייל', wa, { primary: true });
+      after();
+    } else if (st === 'no_email') {
+      if (waConfirmOffer(p, m, nameB(String(p.first_name || p.name || '')) + ' לא מחובר/ת לחשבון גוגל, ולכן אי אפשר לשלוח מייל. לשלוח את האישור בוואטסאפ?')) after(); else mailOfferNext();
+    } else mailOfferNext();
+  }
+  mailOfferHook = (table, method, path, body) => {
+    try {
+      const q = new URLSearchParams(path.indexOf('?') < 0 ? '' : path.slice(path.indexOf('?') + 1));
+      const eq = (k) => { const v = q.get(k); return v && v.indexOf('eq.') === 0 ? v.slice(3) : null; };
+      if (table === T.a && method === 'PATCH' && body && body.no_pay === true) offerCloseMail(eq('participant_id'), eq('meeting_id'));
+      else if (table === T.pay && method === 'POST' && body && !Array.isArray(body) && body.kind === 'payment' && body.participant_id && body.meeting_id && String(body.reason || '').indexOf('partial_due:') !== 0) offerCloseMail(body.participant_id, body.meeting_id);
+    } catch (e) {}
+  };
   mailFailHook = () => { if (!mailFailPrimed) return; clearTimeout(mailFailT); mailFailT = setTimeout(mailFailCheck, 700); };
   mailFailPrimeFn = () => { if (!mailFailPrimed) mailFailPrime(); };
   /* הודעת הפתיחה בוואטסאפ (תבנית שהמשתמש קבע): למשתתף שבתגית חדש. המחיר: 80 ₪ עד שלושה ימים לפני המפגש (לא כולל), ומאז 100 ₪ */
@@ -3060,10 +3105,10 @@
           await api(T.a + attQs(pid, mid), { method: 'PATCH', body: { pay_due_amount: null, pay_reported_at: null, pay_reported_amount: null, pay_rejected_at: null } });
           if (cl) { cl.pay_due_amount = null; cl.pay_reported_at = null; cl.pay_reported_amount = null; cl.pay_rejected_at = null; }
           await closeNote(cd);
-          let ml = ''; try { ml = await api('rpc/harpatka_close_payment_mail', { method: 'POST', body: { p_pid: pid, p_mid: mid } }); } catch (e1) { console.error(e1); }   // התשלום נסגר גם אם המייל נכשל
-          toast(ml === 'sent' ? 'התשלום נסגר ונשלח מייל למשתתף' : ml === 'no_email' ? 'התשלום נסגר. למשתתף אין חשבון מחובר, לכן לא נשלח מייל' : 'התשלום נסגר'); closePayCard(); refreshOpenSheet(); render();
+          offerCloseMail(pid, mid);   // לא נשלח מייל אוטומטית: פופאפ שואל איך לשלוח (מייל או וואטסאפ)
+          toast('התשלום נסגר'); closePayCard(); refreshOpenSheet(); render();
         } catch (e) { fail(e); }
-      }, 'שולמו <b>' + ils(ca) + '</b>. <b>' + ils(cd) + '</b> שנשארו לשלם יימחקו, והמפגש ייחשב כשולם.' + (isPast(meetOf(mid) || {}) ? '' : ' המשתתף יקבל מייל שהתשלום התקבל, אם יש לו חשבון מחובר.'), 'כן, לסגור את התשלום', null, { green: true });
+      }, 'שולמו <b>' + ils(ca) + '</b>. <b>' + ils(cd) + '</b> שנשארו לשלם יימחקו, והמפגש ייחשב כשולם.' + (isPast(meetOf(mid) || {}) ? '' : ' אחר כך תישאלו אם לשלוח למשתתף אישור (מייל או וואטסאפ).'), 'כן, לסגור את התשלום', null, { green: true });
       return;
     }
     if (to === 'reject') {   // דחיית דיווח: מנקה את הדיווח, מסמנת דחייה (הערת מערכת דרך הטריגר בבסיס הנתונים, ושינוי באזור האישי ובדף הבית). בלי מייל למשתתף
@@ -3078,7 +3123,12 @@
       confirmAct('להעביר את ההקצאה ליתרה?', pid, mid, () => mapi.del(), '<b>' + ils(al0) + '</b> שמוקצים למפגש יוסרו ממנו ויעברו כזיכוי ליתרה של המשתתף, ואפשר יהיה להקצות אותם למפגש אחר או להחזיר אותם ככסף. לא מוחזר כסף עכשיו.', 'כן, העברת הסכום ליתרה', null, { yellow: true });
       return;
     }
-    if (to === 'later') { setPayLater(true).then(closePayCard); return; }   // תשלום בהמשך: בלי אישור, כי אין כאן כסף שזז; המפגש נשאר פתוח לתשלום
+    if (to === 'later') {   // תשלום בהמשך: אין כאן כסף שזז; שואלים אם לסגור את מחיר הכרטיס של המשתתף למפגש (נשאר גם אם המדרגות עולות)
+      const m0 = meetOf(mid), cur = m0 ? Math.round(defaultPrice(m0)) : 0;
+      if (cur > 0) confirmAct('לסגור את מחיר הכרטיס?', pid, mid, () => setPayLater(true, cur).then(closePayCard), 'מחיר הכרטיס של המשתתף למפגש הזה ייסגר על <b>' + ils(cur) + '</b> (המחיר הנוכחי), וישאר כך גם אם המחיר יעלה לפני התשלום.', 'כן, סגירת מחיר ' + ils(cur), { label: 'בלי לסגור מחיר', fn: () => setPayLater(true).then(closePayCard) }, { primary: true });
+      else setPayLater(true).then(closePayCard);
+      return;
+    }
     if (to === 'unlater') { setPayLater(false); return; }
     if ((to === 'free') === mapi.free()) return;
     if (to === 'free') mapi.go('free').then(closePayCard); else mapi.go('pay');
@@ -3260,11 +3310,11 @@
     catch (err) { pendFail(h); Object.assign(l, before); $('#depFields').hidden = !v; $('#depFree').hidden = v; if (repaint) repaint(); render(); refreshSheetMeetings(); fail(err); }
   }
   /* תשלום בהמשך: המשתתף משוריין למפגש, והתשלום נשאר פתוח. תשלום שמשלים את הכרטיס גובר עליו */
-  async function setPayLater(on) {
+  async function setPayLater(on, lockPrice) {
     const pid = sheet && sheet.id, mid = sheet && sheet.depMid, l = pid && mid && linkOf(pid, mid); if (!l) return;
-    const patch = on ? { pay_later_at: new Date().toISOString(), pay_reported_at: null, pay_reported_amount: null, pay_rejected_at: null } : { pay_later_at: null }, prev = Object.fromEntries(Object.keys(patch).map((k) => [k, l[k] ?? null])), h = pendBegin(pid, mid, patch);
+    const patch = on ? Object.assign({ pay_later_at: new Date().toISOString(), pay_reported_at: null, pay_reported_amount: null, pay_rejected_at: null }, lockPrice ? { ticket_price: lockPrice } : {}) : { pay_later_at: null, ticket_price: null }, prev = Object.fromEntries(Object.keys(patch).map((k) => [k, l[k] ?? null])), h = pendBegin(pid, mid, patch);
     Object.assign(l, patch); paintDepLines(); render(); refreshSheetMeetings();
-    try { await api(T.a + attQs(pid, mid), { method: 'PATCH', body: patch }); pendDone(h); toast(on ? 'סומן: תשלום בהמשך' : 'המפגש לתשלום'); }
+    try { await api(T.a + attQs(pid, mid), { method: 'PATCH', body: patch }); pendDone(h); toast(on ? (lockPrice ? 'סומן: תשלום בהמשך, המחיר ננעל על ₪' + lockPrice : 'סומן: תשלום בהמשך') : 'המפגש לתשלום'); }
     catch (err) { pendFail(h); Object.assign(l, prev); paintDepLines(); render(); refreshSheetMeetings(); fail(err); }
   }
   /* אחרי שהתשלום נרשם הפופאפ (כרטיס המשתתף) נסגר, והרשימה מתעדכנת (31.10.26) */
