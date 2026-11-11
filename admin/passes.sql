@@ -74,3 +74,13 @@ begin
     execute d;
   end if;
 end $do$;
+-- החזרת כסף על כרטיסייה (refund עם pkg ו-pkg_n) גורעת מפגשים מהיתרה של המשתתף
+do $do$
+declare d text;
+begin
+  d := pg_get_functiondef('__S__.harpatka_me(uuid)'::regprocedure);
+  if position('''refund'' and p.pkg then' in d) = 0 and position('when p.pkg and p.kind = ''payment'' then -1' in d) > 0 then
+    d := replace(d, 'when p.pkg and p.kind = ''payment'' then -1', 'when p.kind = ''refund'' and p.pkg then -coalesce(p.pkg_n, 0) when p.pkg and p.kind = ''payment'' then -1');
+    execute d;
+  end if;
+end $do$;

@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261111y" />
+  <link rel="stylesheet" href="admin.css?v=20261111z" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -178,6 +178,7 @@
       <div class="ppanel" data-panel="credit" hidden>
         <div class="payrow">
           <label class="field money"><span>סכום</span><input placeholder=" " form="pForm" name="pay_refund" type="number" inputmode="decimal" min="0" step="10" /></label>
+          <label class="field" id="refundPkF"><span>מפגשים להפחתה</span><input placeholder=" " form="pForm" name="pay_refpk" type="number" inputmode="numeric" min="0" step="1" /></label>
           <label class="field" id="refundMSelF"><span>דרך העברה</span><select id="refundMSel"></select></label>
           <button class="btn danger paygo" id="creditRefundBtn" type="button">החזרת כסף</button>
         </div>
@@ -2484,7 +2485,7 @@
   }
   /* יומן תשלומים: כל סימון תשלום או החזר יוצר רשומה חדשה (תיקון תשלום = החזר של הישן + תשלום חדש) */
   /* חבילות: הפקדה עם pkg_n מפגשים (מחיר למפגש = סכום / pkg_n); כל הקצאה מחבילה (pkg) לוקחת מחיר חבילה ומורידה מפגש; זיכוי של הקצאה כזו מחזיר מפגש */
-  const pkgLeft = (pid) => state.payments.filter((x) => x.participant_id === pid).reduce((s, x) => s + (x.kind === 'deposit' && x.pkg_n > 0 ? Number(x.pkg_n) : x.pkg && x.kind === 'payment' ? -1 : x.pkg && x.kind === 'credit' ? 1 : 0), 0);
+  const pkgLeft = (pid) => state.payments.filter((x) => x.participant_id === pid).reduce((s, x) => s + (x.kind === 'deposit' && x.pkg_n > 0 ? Number(x.pkg_n) : x.kind === 'refund' && x.pkg && x.pkg_n > 0 ? -Number(x.pkg_n) : x.pkg && x.kind === 'payment' ? -1 : x.pkg && x.kind === 'credit' ? 1 : 0), 0);
   const pkgUnit = (pid) => { const d = state.payments.filter((x) => x.participant_id === pid && x.kind === 'deposit' && x.pkg_n > 0).sort(newestFirst)[0]; return d ? Math.round(Number(d.amount) / Number(d.pkg_n)) : 0; };
   const pkgNetFor = (pid, mid) => state.payments.filter((x) => x.participant_id === pid && x.meeting_id === mid && x.pkg).reduce((s, x) => s + (x.kind === 'payment' ? 1 : x.kind === 'credit' ? -1 : 0), 0);
   /* מחיר סגור (תשלום בהמשך): מחיר הכרטיס של המשתתף למפגש הזה, בלי קשר לעליית המדרגות */
@@ -3096,8 +3097,8 @@
     const pid = sheet && sheet.id; if (!pid) return;
     const bal = creditOf(pid), owed = owedOf(pid);
     { const pays = state.payments.filter((x) => x.participant_id === pid), inn = pays.filter((x) => (x.kind === 'payment' || x.kind === 'deposit') && !x.from_credit).reduce((s, x) => s + Number(x.amount), 0), out = pays.filter((x) => x.kind === 'refund').reduce((s, x) => s + Number(x.amount), 0);
-      $('#walSum').innerHTML = UI.metric('שילם בסך הכול', '<bdi dir="ltr">₪' + nfm(inn - out) + '</bdi>', { tone: 'pos', sub: out > 0 ? 'אחרי החזרים של ₪' + nfm(out) : '' }) + UI.metric('קרדיט זמינה', '<bdi dir="ltr">₪' + nfm(bal) + '</bdi>', { tone: bal > 0 ? 'yel' : bal < 0 ? 'neg' : 'mut' }) + (pkgLeft(pid) > 0 ? UI.metric('מפגשים בקרדיט', '<bdi dir="ltr">' + pkgLeft(pid) + '</bdi>', { tone: 'yel', sub: '₪' + nfm(pkgUnit(pid)) + ' למפגש' }) : ''); }
-    $('#walRefund').hidden = !(bal > 0);
+      $('#walSum').innerHTML = UI.metric('שילם בסך הכול', '<bdi dir="ltr">₪' + nfm(inn - out) + '</bdi>', { tone: 'pos', sub: out > 0 ? 'אחרי החזרים של ₪' + nfm(out) : '' }) + UI.metric('קרדיט', '<bdi dir="ltr">₪' + nfm(bal) + '</bdi>', { tone: (bal > 0 || pkgLeft(pid) > 0) ? 'yel' : bal < 0 ? 'neg' : 'mut', sub: pkgLeft(pid) > 0 ? '<span class="pses">' + icon('cal', 'i14') + pkgLeft(pid) + ' מפגשים · ₪' + nfm(pkgUnit(pid)) + ' למפגש</span>' : '' }); }
+    $('#walRefund').hidden = !(bal > 0 || pkgLeft(pid) > 0);
         $('#walZikuy').hidden = true;   // בארנק רק קבלת כסף או החזרת כסף; אין זיכוי (ביטול הקצאה למפגש נעשה במסך התשלום למפגש)
     const mlabel = (x) => { const m = meetOf(x.meeting_id); return m ? ' ' + dm(m) : ''; };
     const rows = state.payments.filter((x) => x.participant_id === pid && x.kind !== 'credit').slice().sort(newestFirst).flatMap((x) => {
@@ -3105,7 +3106,7 @@
       if (x.kind === 'deposit') { lab = 'קבלת תשלום' + (x.pkg_n > 0 ? ' · כרטיסייה ' + x.pkg_n + ' מפגשים' : '') + (mt ? ' · ' + mt : ''); cls = 'up'; sign = ''; }
       else if (x.kind === 'credit') { lab = 'ביטול מפגש' + mlabel(x) + ', נשאר בקרדיט'; cls = 'up'; sign = ''; }
       else if (x.kind === 'payment') { lab = 'הקצאה למפגש' + mlabel(x) + (x.pkg ? ' · מהכרטיסייה' : ''); cls = 'flat'; sign = ''; }
-      else if (x.kind === 'refund' && x.from_credit) { lab = 'החזרת כסף' + (mt ? ' · ' + mt : ''); cls = 'down'; sign = ''; }
+      else if (x.kind === 'refund' && x.from_credit) { lab = 'החזרת כסף' + (x.pkg && x.pkg_n > 0 ? ' · כרטיסייה ' + x.pkg_n + ' מפגשים' : '') + (mt ? ' · ' + mt : ''); cls = 'down'; sign = ''; }
       else { lab = 'החזרת כסף למפגש' + mlabel(x); cls = 'flat'; sign = ''; }
       const rc = x.kind === 'deposit' ? ' rcpt' : (x.kind === 'credit' || x.kind === 'refund') ? ' rfnd' : x.kind === 'payment' ? ' balmv' : '';   // קבלה בירוק, זיכוי/החזר באדום
       const row = (lb, c, cl, tm) => ({ t: String(tm || x.created_at), h: '<div class="walrow' + c + '"><div class="wl"><b>' + esc(lb) + '</b><small>' + fmtDT(tm || x.created_at) + (x.author_name ? ' · ' + esc(noteAuthor(x.author_email, x.author_name)) : '') + '</small></div><span class="wamt ' + cl + '"><bdi dir="ltr">' + sign + '₪' + nfm(a) + '</bdi></span></div>' });
@@ -3383,19 +3384,27 @@
   /* החזרת כסף מהקרדיט: אותו פופאפ, עם פאנל החזרת הכסף. הכותרת "החזרת כסף" (כמו הכפתור), ומתחתיה "ללא קשר למפגש" */
   function openRefundPop() {
     const pid = sheet && sheet.id, pp = partOf(pid); if (!pp || allocDlg.open) return;
-    const cr = creditOf(pid); if (!(cr > 0)) return;
+    const cr = Math.max(0, creditOf(pid)), pl = Math.max(0, pkgLeft(pid)), unit = pl > 0 ? pkgUnit(pid) : 0; if (!(cr > 0) && !(pl > 0)) return;
     allocMount('credit'); $('#pAllocChip').hidden = true;
     $('#allocTitle').innerHTML = 'החזרת כסף <span class="tsubname">· ' + esc(pp.name) + '</span>';
     { const sub = $('#pViewSub'); sub.innerHTML = 'ללא קשר למפגש'; sub.classList.add('bold'); sub.hidden = false; }
-    pForm.pay_refund.value = cr; pForm.pay_refund.max = cr; payCtx = null; $('#refundMSel').innerHTML = payMethodOpts();
-    /* אי אפשר להחזיר יותר מהקרדיט: הכפתור כבוי כשהסכום ריק, אפס או גדול מהקרדיט הנוכחית (מתעדכן גם בזמן אמת) */
-    const refundOk = () => { const a = parseFloat(pForm.pay_refund.value); return a > 0 && a <= Math.max(0, creditOf(pid)) + 0.001; };
+    /* ברירת מחדל: כל מה שיש (כל המפגשים בכרטיסייה ואת כל הסכום: הקרדיט הכספי ועוד מפגשים כפול מחיר למפגש); המנהל קובע כמה להחזיר וכמה מפגשים לגרוע */
+    $('#refundPkF').hidden = !(pl > 0); pForm.pay_refpk.value = pl > 0 ? pl : ''; pForm.pay_refpk.max = String(pl);
+    pForm.pay_refund.value = Math.round((cr + pl * unit) * 100) / 100; pForm.pay_refund.removeAttribute('max'); payCtx = null; $('#refundMSel').innerHTML = payMethodOpts();
+    const nOf = () => Math.max(0, parseInt(pForm.pay_refpk.value, 10) || 0);
+    /* מפגשים שנגרעים: עד מה שנשאר. הסכום: חלק עבור המפגשים (עד מחירם) והשאר מהקרדיט הכספי, שלא יעלה על הקרדיט */
+    const refundOk = () => { const a = parseFloat(pForm.pay_refund.value), n = nOf(), cur = Math.max(0, creditOf(pid)), pk = Math.max(0, pkgLeft(pid)); if (!(a > 0) || n > pk) return false; const rest = a - Math.min(a, n * (pk > 0 ? pkgUnit(pid) : 0)); return rest <= cur + 0.001; };
     sheet.refundSync = () => { $('#creditRefundBtn').disabled = !refundOk(); };
-    pForm.pay_refund.oninput = sheet.refundSync; sheet.refundSync();
+    pForm.pay_refund.oninput = pForm.pay_refpk.oninput = sheet.refundSync; sheet.refundSync();
     $('#creditRefundBtn').onclick = async () => {
       if (!refundOk()) return;
-      const amt = parseFloat(pForm.pay_refund.value);
-      try { await addPayRecord(pid, null, 'refund', amt, null, null, true, $('#refundMSel').value); toast('הוחזרו ₪' + nfm(amt) + ' למשתתף'); allocDlg.close(); } catch (err) { fail(err); }
+      const amt = parseFloat(pForm.pay_refund.value), n = nOf(), u = pkgLeft(pid) > 0 ? pkgUnit(pid) : 0, forPk = n > 0 ? Math.min(amt, n * u) : 0, rest = Math.round((amt - forPk) * 100) / 100, method = $('#refundMSel').value;
+      try {
+        if (n > 0 && forPk > 0) await addPayRecord(pid, null, 'refund', forPk, null, null, true, method, null, { pkg: true, pkg_n: n });
+        else if (n > 0) await addPayRecord(pid, null, 'refund', amt, null, null, true, method, null, { pkg: true, pkg_n: n });
+        if (rest > 0 && forPk > 0 || (n === 0 && rest > 0)) await addPayRecord(pid, null, 'refund', rest, null, null, true, method);
+        toast('הוחזרו ₪' + nfm(amt) + ' למשתתף' + (n > 0 ? ' ונגרעו ' + n + ' מפגשים' : '')); allocDlg.close();
+      } catch (err) { fail(err); }
     };
     allocDlg.showModal(); blurActive();
   }
