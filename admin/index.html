@@ -88,7 +88,7 @@
       <div class="ppanel" data-panel="main">
         <div class="ptabs" id="pTabs" role="tablist" aria-label="הערות ומפגשים">
           <button type="button" role="tab" id="pTabM" aria-controls="pgM" aria-selected="false" tabindex="-1"><span class="pmn" id="pMeetN"></span></button>
-          <button type="button" role="tab" id="pTabW" aria-controls="pgW" aria-selected="false" tabindex="-1"><span class="pmn">קרדיט <span id="pBalN"></span></span></button>
+          <button type="button" role="tab" id="pTabW" aria-controls="pgW" aria-selected="false" tabindex="-1" aria-label="קרדיט" title="קרדיט"><span class="pmn"><span id="pBalN"></span></span></button>
           <button type="button" role="tab" id="pTabN" aria-controls="pgN" aria-selected="true">הערות</button>
           <button type="button" role="tab" id="pTabI" aria-controls="pgI" aria-selected="false" tabindex="-1"><span class="pmn">פרטים<span class="ptm" id="pTabMark"></span></span></button>
           <span class="ptabi" aria-hidden="true"></span>
@@ -3846,7 +3846,7 @@
     { /* מספר אחד: קרדיט = חוב פחות קרדיט. חוב רק על מפגשים שביקשנו עליהם תשלום ("בטיפול") או שהמשתתף אמר שישלם ("ישלם"); רשום בלבד (חדש) הוא עוד לא חוב */
       const owed = sheet.id ? owedOf(sheet.id) : 0;
       const net = owed - (sheet.id ? creditOf(sheet.id) : 0), bn = $('#pBalN');
-      bn.innerHTML = (net || !(sheet.id && pkgLeft(sheet.id) > 0) ? '<bdi dir="ltr">₪' + nfm(Math.abs(net)) + '</bdi>' : '') + (sheet.id && pkgLeft(sheet.id) > 0 ? '<span class="pses" title="מפגשים בקרדיט">' + icon('cal', 'i14') + pkgLeft(sheet.id) + '</span>' : ''); }
+      bn.innerHTML = '<bdi dir="ltr">₪' + nfm(Math.abs(net)) + '</bdi>' + (sheet.id && pkgLeft(sheet.id) > 0 ? '<span class="pses" title="מפגשים בקרדיט">' + icon('cal', 'i14') + pkgLeft(sheet.id) + '</span>' : ''); }
     box.innerHTML = desc.filter((m) => shown.includes(m) || m.id === sheet.hl).map(meetRow).join('');   // המפגש שממנו הגענו מסומן ברשימה, וכשעוד לא משויך אליו: "שיוך למפגש" במקומו לפי התאריך (לא נספר במונה)
     meetTop(false);
   }
