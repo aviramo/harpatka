@@ -1465,7 +1465,7 @@
   /* הצגה בשורת הצ'יפים (7.11.26): לכל מנהל, בכל התצוגות; נשמר ב-view_scopes._g. chipHide: מפתחות של צ'יפי ברירת המחדל שמוסתרים (res, arr, male, female); tagHide: מפתחות של תגיות שמוסתרות. צ'יף שהסינון שלו פעיל נשאר מוצג גם אם הוסתר */
   ['chipHide', 'tagHide'].forEach((prop) => Object.defineProperty(state, prop, { get() { const c = state.viewScopes._g; return Array.isArray(c && c[prop]) ? c[prop] : []; }, set(v) { (state.viewScopes._g || (state.viewScopes._g = {}))[prop] = v; }, enumerable: true }));
   Object.defineProperty(state, 'sortDir', { get() { const c = state.viewScopes._g; return c && c.sortDir === 'asc' ? 'asc' : 'desc'; }, set(v) { (state.viewScopes._g || (state.viewScopes._g = {})).sortDir = v === 'asc' ? 'asc' : 'desc'; }, enumerable: true });   // כיוון המיון: desc = ברירת המחדל של כל מיון (חדש, עדכני,  גבוהה קודם), asc = הפוך; לחיצה נוספת על המיון שנבחר הופכת
-  Object.defineProperty(state, 'sort', { get() { const c = state.viewScopes._g; return c && c.sort && c.sort !== 'pers' && c.sort !== 'pay' ? c.sort : 'upd'; }, set(v) { (state.viewScopes._g || (state.viewScopes._g = {})).sort = v; }, enumerable: true });
+  Object.defineProperty(state, 'sort', { get() { const c = state.viewScopes._g; return c && c.sort && c.sort !== 'pers' && c.sort !== 'pay' ? c.sort : 'last'; }, set(v) { (state.viewScopes._g || (state.viewScopes._g = {})).sort = v; }, enumerable: true });
   function applyViewPrefs() { const pr = state.prefs[emailOf()] || {}; state.viewScopes = (pr.view_scopes && typeof pr.view_scopes === 'object') ? JSON.parse(JSON.stringify(pr.view_scopes)) : {}; }
   async function saveViewPrefs() {
     const em = emailOf(), body = { email: em, view_scopes: state.viewScopes };
@@ -1602,7 +1602,7 @@
   }
 
   /* מיון הרשימה */
-  const SORTS = [['new', 'הרשמה', 'מהחדש לישן', 'מהישן לחדש'], ['upd', 'עדכון', 'מהעדכני לישן', 'מהישן לעדכני'], ['meet', 'כמות מפגשים', 'מהרב למעט', 'מהמעט לרב', false, true], ['status', 'תגית', 'לפי סדר התגיות בסוג המפגש', 'בסדר הפוך', true], ['pay', 'תשלום', 'דווח, לתשלום, תשלום בהמשך, שולם, לא לתשלום', 'בסדר הפוך', true]];   // תגית (רק בתוך מפגש): לפי סדר התגיות של סוג המפגש   // הרשמה: לפי מועד ההרשמה; עדכון: לפי הפעולה האחרונה שבוצעה על המשתתף
+  const SORTS = [['last', 'מפגש אחרון', 'מהאחרון לישן', 'מהישן לאחרון'], ['new', 'הרשמה', 'מהחדש לישן', 'מהישן לחדש'], ['upd', 'עדכון', 'מהעדכני לישן', 'מהישן לעדכני'], ['meet', 'כמות מפגשים', 'מהרב למעט', 'מהמעט לרב', false, true], ['status', 'תגית', 'לפי סדר התגיות בסוג המפגש', 'בסדר הפוך', true], ['pay', 'תשלום', 'דווח, לתשלום, תשלום בהמשך, שולם, לא לתשלום', 'בסדר הפוך', true]];   // תגית (רק בתוך מפגש): לפי סדר התגיות של סוג המפגש   // הרשמה: לפי מועד ההרשמה; עדכון: לפי הפעולה האחרונה שבוצעה על המשתתף
   function sortCmp() {
     const byNew = (a, b) => String(b.created_at || '').localeCompare(String(a.created_at || ''));
     const byName = (a, b) => a.name.localeCompare(b.name, 'he');
@@ -1621,6 +1621,13 @@
     if (state.sort === 'meet' && !state.filter) {   // כמות מפגשים (רק בכל המשתתפים ובסוג מפגש): מי שלא משויך לאף מפגש תמיד בסוף, בשני הכיוונים
       const n = new Map(state.participants.map((p) => [p.id, meetCountOf(p)]));
       return (a, b) => { const x = n.get(a.id) || 0, y = n.get(b.id) || 0; if (!x || !y) return !x && !y ? byName(a, b) : !x ? 1 : -1; return (asc ? x - y : y - x) || byName(a, b); };
+    }
+    if (state.sort === 'last') {   // מפגש אחרון (ברירת מחדל): לפי המפגש האחרון שהמשתתף משויך אליו (בתוך מפגש: לפי מועד השיוך למפגש הזה); מי שלא משויך לאף מפגש בסוף
+      const key = new Map(state.participants.map((p) => {
+        if (state.filter) { const l = linkOf(p.id, state.filter); return [p.id, l ? String(l.created_at || '') : '']; }
+        const ms = linksOf(p.id).map((l) => meetOf(l.meeting_id)).filter(Boolean).map((m) => String(m.meeting_date) + ' ' + String(m.meeting_time || '')); return [p.id, ms.length ? ms.sort().pop() : ''];
+      }));
+      return (a, b) => { const x = key.get(a.id) || '', y = key.get(b.id) || ''; if (!x || !y) return !x && !y ? byNew(a, b) : !x ? 1 : -1; return (asc ? x.localeCompare(y) : y.localeCompare(x)) || byNew(a, b); };
     }
     if (state.sort === 'upd') {   // עדכון: הפעולה האחרונה על המשתתף: הרשמה, שיוך או שינוי במפגש, הגעה, שליחת פרטים, דיווח, תשלום או הערה (גם הערות מערכת)
       return rev((a, b) => lastUpdV(b.id).localeCompare(lastUpdV(a.id)) || byName(a, b));
