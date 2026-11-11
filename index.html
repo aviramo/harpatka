@@ -224,8 +224,10 @@
     #invite .h8-lead2 .l1{ font-family:'Rubik',sans-serif !important; font-weight:500 !important; font-size:clamp(1.05rem,4.4vw,1.35rem) !important; color:#5a4a40 !important; letter-spacing:.01em; }
     #invite .h8-lead2 .l2{ font-family:'Amatic SC',cursive !important; font-weight:700 !important; font-size:clamp(2.8rem,12.5vw,4rem) !important; color:#C8411B !important; line-height:1 !important; }
     .fac-wa + #meAreaCard{ max-width:30rem; margin-inline:auto; }
+    /* הכפתור הקבוע במצב קבוצת העדכונים: אותו ירוק של הכפתור "להצטרפות לקבוצה השקטה" */
+    #stickyRegBtn[data-mode="wa"], #tbCta[data-mode="wa"]{ background:linear-gradient(155deg,#3F6A22 0%,#4E7D2C 55%,#6B9A3B 100%) !important; color:#FFFDF9 !important; }
     #quietCard{ display:flex; width:100%; max-width:22rem; margin-inline:auto; margin-top:.4rem; box-shadow:0 0 14px rgba(44,35,29,.22); border-radius:var(--r); }
-    @media (min-width:1024px){ #mList > #quietCard{ flex:1 1 15rem; max-width:19rem; min-width:0; margin-top:0; align-self:center; } }
+    @media (min-width:1024px){ #mList > #quietCard{ flex:0 0 22rem !important; width:22rem !important; max-width:22rem !important; min-width:0; margin:1.4rem calc((100% - 22rem) / 2) 0 !important; align-self:center; } }   /* בדסקטופ: שורה משלו מתחת לכרטיסי המפגשים, ממורכז (במקום קובייה תלושה לידם) */
     /* v12: רקע גרדיאנט מהתמונה עד הסטריפ, והטקסט עליו */
     #invite{ background:linear-gradient(180deg,#FFE3C2 0%,#FFC79B 45%,#FF9F72 100%) !important; }
     #invite .h8-h1{ color:#2C231D !important; text-shadow:none; }
@@ -1365,7 +1367,7 @@
           const need = known && (!window.__meName || future.some(m => { const st = window.HarpatkaMe ? HarpatkaMe.get(m.id) : null; return !(st && st.registered); }));
           if (sr2) sr2.classList.toggle('cta-off', !known); if (tc) tc.hidden = !known;   // למטה תמיד יש כפתור (מוסתר רק עד שברור מי המשתתף)
           /* אין מה להירשם אליו (או אין מפגש): הכפתור הופך לעדכונים בוואטסאפ, ישר לקבוצה */
-          const wa = !need, link = (window.CONFIG && CONFIG.updatesGroupLink) || '#';
+          const wa = !need, link = (typeof CONFIG !== 'undefined' && CONFIG.updatesGroupLink) || '#';   /* CONFIG הוא const גלובלי ולא מאפיין של window, ולכן window.CONFIG היה ריק והקישור נשאר # */
           [sb, tc].forEach((x) => { if (!x) return; x.dataset.mode = wa ? 'wa' : ''; if (wa) { x.href = link; x.target = '_blank'; x.rel = 'noopener'; x.textContent = 'עדכונים בוואטסאפ'; } else { x.href = '#'; x.removeAttribute('target'); x.textContent = 'שמירת מקום ועדכונים'; } }); }
       };
       /* הכפתור הקבוע למטה פותח פופאפ מלמטה עם שתי אפשרויות: הרשמה למפגש וקבוצת וואטסאפ */
@@ -1382,7 +1384,7 @@
           let lockY = 0, pendingAfter = null;   // אותה נעילה כמו בפופאפ ההרשמה (html.modal-lock): ההדר נשאר במצבו והגלילה חוזרת בדיוק למקומה
           const lockCta = () => { lockY = window.scrollY || document.documentElement.scrollTop || 0; document.body.style.top = (-lockY) + 'px'; document.documentElement.classList.add('modal-lock'); };
           sh.addEventListener('close', () => { document.documentElement.classList.remove('modal-lock'); document.body.style.top = ''; window.scrollTo({ top: lockY, left: 0, behavior: 'instant' }); const fn = pendingAfter; pendingAfter = null; if (fn) fn(); });   // הפעולה שאחרי הסגירה (גלילה לפופאפ הרשמה) רק אחרי שהגלילה חזרה למקומה
-          sb.addEventListener('click', (e) => { if (window.__ctaBypass) { window.__ctaBypass = false; return; } if (sb.dataset.mode === 'wa') { e.stopImmediatePropagation(); return; } e.preventDefault(); e.stopImmediatePropagation(); document.getElementById('csReg').textContent = window.__mtMulti ? 'שמירת מקום למפגש' : (sb.dataset.reg || 'שמירת מקום למפגש');  if (!sh.open) { lockCta(); sh.showModal(); } }, true);   // כמה מפגשים עתידיים: בלי לציין איזה, והלחיצה גוללת אליהם
+          sb.addEventListener('click', (e) => { if (window.__ctaBypass) { window.__ctaBypass = false; return; } if (sb.dataset.mode === 'wa') { if (typeof CONFIG !== 'undefined' && CONFIG.updatesGroupLink) { sb.href = CONFIG.updatesGroupLink; sb.target = '_blank'; sb.rel = 'noopener'; } e.stopImmediatePropagation(); return; }   /* הקישור נקבע בלחיצה: בזמן הציור CONFIG עוד לא נטען, והכפתור נשאר #, ולחיצה רק רעננה את הדף */ e.preventDefault(); e.stopImmediatePropagation(); document.getElementById('csReg').textContent = window.__mtMulti ? 'שמירת מקום למפגש' : (sb.dataset.reg || 'שמירת מקום למפגש');  if (!sh.open) { lockCta(); sh.showModal(); } }, true);   // כמה מפגשים עתידיים: בלי לציין איזה, והלחיצה גוללת אליהם
           document.getElementById('csReg').addEventListener('click', () => { slideClose(() => { window.__ctaBypass = true; sb.click(); }); });
           document.getElementById('csWa').addEventListener('click', () => slideClose());
           sh.addEventListener('click', (e) => { if (e.target === sh) slideClose(); });   // לחיצה על הרקע
@@ -1646,7 +1648,7 @@ var els=s.querySelectorAll('.ht-in > *');document.documentElement.classList.add(
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{rootMargin:'0px 0px -12% 0px',threshold:0.05});
 els.forEach(function(e){io.observe(e);});})();
 </script>
-  <script src="shared/register.js?v=20261111d"></script>
+  <script src="shared/register.js?v=20261111g"></script>
   <script>/* שעון ספירה לאחור למפגש הקרוב (שעון ישראל) */
 (function(){
   var box = document.getElementById('v12cd'); if (!box) return; var tgt = null;

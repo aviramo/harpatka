@@ -932,8 +932,8 @@
   { const q1 = new URLSearchParams(location.search);   // הגעה דרך /register/: דף הבית נטען והפופאפ נפתח עליו. הפרמטר register יורד מהכתובת (שאר הפרמטרים, למשל s=p, נשארים), כדי שהכתובת לא תכלול register ורענון לא יפתח אותו שוב
     if (q1.has('register')) { q1.delete('register'); try { history.replaceState(null, '', location.pathname + (q1.toString() ? '?' + q1 : '') + location.hash); } catch (e) {} setTimeout(() => window.HarpatkaRegister.open(true), 500); } }
   document.querySelectorAll('[data-contact]').forEach(el => {
-    el.setAttribute('href', '#');
-    el.addEventListener('click', (e) => { e.preventDefault(); window.HarpatkaRegister.open(false, el.__meeting); });
+    if (el.dataset.mode !== 'wa') el.setAttribute('href', '#');
+    el.addEventListener('click', (e) => { if (el.dataset.mode === 'wa') return; e.preventDefault(); window.HarpatkaRegister.open(false, el.__meeting); });   // מצב וואטסאפ (אין מה להירשם אליו): הכפתור הוא קישור רגיל לקבוצה
     if (el.getAttribute('role') === 'button') el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); window.HarpatkaRegister.open(false, el.__meeting); } });   // אלמנט שאינו קישור (למשל הבאנר העליון) נגיש גם במקלדת
   });
 
