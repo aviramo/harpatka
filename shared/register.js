@@ -958,7 +958,7 @@
   let defMeetingName = '';   // שם ברירת המחדל למפגש (harpatka_public_settings)
   const showMeeting = (m) => {
     setSubmitLabel(m);
-    { const nm = '', box = m && m.date ? CONFIG.meetingBox(Object.assign({}, m, { name: m.name || defMeetingName })) : ''; document.querySelectorAll('[data-meeting-name]').forEach((e) => { e.textContent = nm; e.hidden = !nm; }); document.querySelectorAll('[data-meeting-box]').forEach((e) => { if (e.__box !== box) { e.__box = box; e.innerHTML = box; } }); }   // פרטי המפגש במסגרת; אין מפגש: בלי כותרת
+    { const nm = '', box = m && m.date ? CONFIG.meetingBox(Object.assign({}, m, { name: '' }))   /* בפופאפ בלי שם המפגש: רק מועד, מקום וכמות */ : ''; document.querySelectorAll('[data-meeting-name]').forEach((e) => { e.textContent = nm; e.hidden = !nm; }); document.querySelectorAll('[data-meeting-box]').forEach((e) => { if (e.__box !== box) { e.__box = box; e.innerHTML = box; } }); }   // פרטי המפגש במסגרת; אין מפגש: בלי כותרת
     if (!m) { document.querySelectorAll('[data-price]').forEach((e) => { e.textContent = priceFor(999, null) + ' ₪'; }); return; }
     document.querySelectorAll('[data-meeting-place]').forEach((e) => { e.textContent = CONFIG.meetingPlace || ''; });
     const left = dayN(m.date) - dayN(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date()));
