@@ -194,7 +194,7 @@
     const meetHtml = rows.length ? rows.join('') : '<div class="card"><p class="muted" style="margin:0">עוד לא נקבע מפגש קרוב</p></div>';
 
     const gv = p.gender || '';
-    const noName = !String(p.first_name || '').trim() || !String(p.last_name || '').trim(), gnm = noName ? googleName() : {};   // עוד בלי פרטים (נוצר מטלפון בלבד): השם מחשבון הגוגל כהצעה
+    const noName = !String(p.first_name || '').trim() || !String(p.last_name || '').trim(), gnm = {};   /* השם לא מתמלא אוטומטית מגוגל: המשתתף מקליד בעצמו */   // עוד בלי פרטים (נוצר מטלפון בלבד): השם מחשבון הגוגל כהצעה
     const req = !p.gender || p.age == null || noName;   // חסרים פרטים: מבחינת המשתתף הוא עוד לא רשום; רואים רק את השלמת הפרטים (בלי המפגשים) עד שממלאים
     const missing = req || keepDetOpen;   // חסר פרט חובה: הכרטיס נפתח מעצמו
     h += '<div class="card" id="detCard"><button type="button" class="dethead" id="detHead" aria-expanded="' + missing + '" aria-controls="detBody"><h2>' + (req ? 'השלמת פרטים' : 'הפרטים שלי') + '</h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="detfold' + (missing ? ' open' : '') + '" id="detBody"><div><div class="two"><div>' + PersonForm.html('first', { id: 'fn', value: p.first_name || gnm.first }) + '</div><div>' + PersonForm.html('last', { id: 'ln', value: p.last_name || gnm.last }) + '</div></div>' + PersonForm.err('name') +

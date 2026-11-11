@@ -910,6 +910,7 @@
   const contactModal = document.getElementById('contactModal');
   /* השלמת פרטים אחרי כניסה עם גוגל: שם פרטי ושם משפחה מהחשבון (רק בשדות ריקים) */
   function prefillGoogleName() {
+    return;   // השם לא מתמלא אוטומטית מחשבון הגוגל: המשתתף מקליד בעצמו (11.11.26)
     if (!document.documentElement.classList.contains('reg-details')) return;
     let md = {}; try { const s = JSON.parse(localStorage.getItem(TOK_KEY) || 'null'); md = JSON.parse(decodeURIComponent(escape(atob(s.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))))).user_metadata || {}; } catch (e) {}
     const full = String(md.full_name || md.name || '').trim(), first = md.given_name || full.split(' ')[0] || '', last = md.family_name || full.split(' ').slice(1).join(' ');
