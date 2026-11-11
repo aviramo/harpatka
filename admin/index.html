@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261111c" />
+  <link rel="stylesheet" href="admin.css?v=20261111e" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -405,6 +405,15 @@
       <button class="btn" id="cYes" type="button">אישור</button>
       <button class="btn ghost" id="cAlt" type="button" hidden>אפשרות נוספת</button>
       <button class="btn ghost" id="cNo" type="button" style="color:var(--muted)">ביטול</button>
+    </form>
+  </dialog>
+  <dialog id="lockDlg" aria-labelledby="lockTitle" style="max-width:420px">
+    <form class="sheet" method="dialog" novalidate>
+      <h2 id="lockTitle">סגירת מחיר הכרטיס</h2>
+      <p id="lockText" style="color:var(--muted);margin:0 0 8px"></p>
+      <label class="field money"><span>מחיר הכרטיס</span><input placeholder=" " id="lockPrice" type="number" inputmode="numeric" min="1" step="10" /></label>
+      <p id="lockErr" class="msg" style="color:var(--red);margin:8px 0 0" hidden>צריך להזין מחיר גדול מאפס</p>
+      <button class="btn" id="lockYes" type="button" style="margin-top:16px">תשלום בהמשך</button>
     </form>
   </dialog>
 
@@ -1675,7 +1684,7 @@
       let side = '';
       if (state.filter) {
         const l = linkOf(p.id, state.filter);
-        if (!l) side = UI.tag('לא משויך', 'ptag none', { 'data-rowadd': p.id, role: 'button', tabindex: 0, title: 'לא משויך למפגש. לחיצה: שיוך למפגש' });   // עוד לא משויך: תגית "לא משויך" (לחיצה כמו על ה-+: שיוך עם אישור)
+        if (!l) side = UI.tag('הוספה למפגש', 'ptag none', { 'data-rowadd': p.id, role: 'button', tabindex: 0, title: 'לא משויך למפגש. לחיצה: הוספה למפגש' });   // עוד לא משויך: תגית "לא משויך" (לחיצה כמו על ה-+: שיוך עם אישור)
         else if (missedOf(p.id, meetOf(state.filter))) side = UI.tag('לא הגיע', 'ptag missed', { 'data-qs': p.id, role: 'button', tabindex: 0, title: 'משויך ולא הגיע (לחיצה לשינוי תגית)' });
         else { const st = linkStatus(l); side = st ? UI.tag(esc(STATUS_LABEL[st]), 'ptag ' + st, { 'data-qs': p.id, role: 'button', tabindex: 0, title: 'תגית (לחיצה לשינוי)' }) : UI.tag(icon('tag'), 'ico ptag nolabel', { 'data-qs': p.id, role: 'button', tabindex: 0, 'aria-label': 'הוספת תגית', title: 'הוספת תגית' }); }
       }
@@ -1690,7 +1699,7 @@
       const evc = evCircle(p);
       const hasUn = !!state.filter, isLinked = !!(state.filter && linkOf(p.id, state.filter));   // בתוך מפגש: ✕ להסרת השיוך, באותו מקום של ה-✕ בשורת המפגש בכרטיס המשתתף
       return '<li class="row ucard' + (hasUn ? ' hasun' : '') + '">' +
-        (hasUn ? (isLinked ? '<button type="button" class="rowun" data-rowun="' + p.id + '" aria-label="הסרה מהמפגש" title="הסרה מהמפגש">' + icon('close', 'i16') + '</button>' : '<button type="button" class="rowun rowadd" data-rowadd="' + p.id + '" aria-label="שיוך למפגש" title="שיוך למפגש">' + icon('plus', 'i16') + '</button>') : '') +
+        // בלי ✕ להסרה מהמפגש ובלי + להוספה ברשימת המשתתפים (11.11.26): ההסרה והשיוך רק מכרטיס המשתתף, ומהצ'יף "הוספה למפגש"
         (attM ? attTag(p) : wa ? UI.tag(wsel ? (wsent ? WA_ICON : mailed ? MAIL_ICON : '') : WA_ICON, 'ico rowwa' + (wsel ? ' ratt msgc ' + (wsent ? 'yes sent' : mailed ? 'yes' : 'no') : ''), Object.assign({ href: wa }, /^https?:/.test(wa) ? { target: '_blank', rel: 'noopener' } : {}, wsel ? { 'data-wsend': p.id } : {}, { 'aria-label': 'וואטסאפ ל' + esc(p.name) + (wsent ? ', ההודעה נשלחה' : mailed ? ', נשלח במייל' : ''), title: wsel ? esc(wsent ? 'נשלחה ההודעה "' + wsel.name + '" בוואטסאפ · ' + fmtDT(wsent.sent_at) + ' · לחיצה לביטול הסימון' : mailed ? 'נשלח במייל. לחיצה: וואטסאפ עם ההודעה' : 'וואטסאפ עם ההודעה: ' + wsel.name) : 'וואטסאפ' }), 'a') : UI.tag(WA_ICON, 'ico rowwa nophone', { role: 'img', 'aria-label': 'אין טלפון', title: 'אין טלפון' })) +
         '<div class="main' + ' hasw' + (anyEv ? ' ev' : '') + (!state.filter && state.showPay ? ' bl' : '') + '" role="button" tabindex="0" data-edit="' + p.id + '">' +
           '<div class="nm"><span class="name' + nameCls(p) + '" dir="rtl">' + nameMark(p) + mcntHtml + '</span>' + '</div>' +   // רק השם מבודד (שם באנגלית לא הופך את השורה), וסמל החשבון תמיד משמאל לשם
@@ -3123,10 +3132,13 @@
       confirmAct('להעביר את ההקצאה ליתרה?', pid, mid, () => mapi.del(), '<b>' + ils(al0) + '</b> שמוקצים למפגש יוסרו ממנו ויעברו כזיכוי ליתרה של המשתתף, ואפשר יהיה להקצות אותם למפגש אחר או להחזיר אותם ככסף. לא מוחזר כסף עכשיו.', 'כן, העברת הסכום ליתרה', null, { yellow: true });
       return;
     }
-    if (to === 'later') {   // תשלום בהמשך: אין כאן כסף שזז; שואלים אם לסגור את מחיר הכרטיס של המשתתף למפגש (נשאר גם אם המדרגות עולות)
-      const m0 = meetOf(mid), cur = m0 ? Math.round(defaultPrice(m0)) : 0;
-      if (cur > 0) confirmAct('לסגור את מחיר הכרטיס?', pid, mid, () => setPayLater(true, cur).then(closePayCard), 'מחיר הכרטיס של המשתתף למפגש הזה ייסגר על <b>' + ils(cur) + '</b> (המחיר הנוכחי), וישאר כך גם אם המחיר יעלה לפני התשלום.', 'כן, סגירת מחיר ' + ils(cur), { label: 'בלי לסגור מחיר', fn: () => setPayLater(true).then(closePayCard) }, { primary: true });
-      else setPayLater(true).then(closePayCard);
+    if (to === 'later') {   // תשלום בהמשך: תמיד סוגרים את מחיר הכרטיס של המשתתף למפגש, והמנהל קובע כמה (ברירת מחדל: המחיר הנוכחי). נשאר גם אם המדרגות עולות
+      const m0 = meetOf(mid), cur = m0 ? Math.round(ticketOf(pid, mid) || defaultPrice(m0)) : 0, dlg = $('#lockDlg'), inp = $('#lockPrice');
+      $('#lockText').innerHTML = nameB(partOf(pid) ? partOf(pid).name : '') + ' · ' + esc(m0 ? meetingLabel(m0, true) : '') + '<br>המחיר שתקבעו הוא מחיר הכרטיס של המשתתף למפגש הזה, וישאר כך גם אם המחיר יעלה לפני התשלום.';
+      inp.value = cur > 0 ? String(cur) : ''; $('#lockErr').hidden = true;
+      const go = () => { const v = Math.round(Number(inp.value)); if (!(v > 0)) { $('#lockErr').hidden = false; return; } dlg.close(); setPayLater(true, v).then(closePayCard); };
+      $('#lockYes').onclick = go; inp.onkeydown = (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); go(); } };
+      dlg.showModal();
       return;
     }
     if (to === 'unlater') { setPayLater(false); return; }
@@ -3772,7 +3784,7 @@
       return '<div class="mrow ucard' + (on ? ' on' : '') + (sheet.hl === m.id ? ' hl' : '') + '" data-mrow="' + m.id + '">' +
         '<div class="mwhen"><div class="mdt">' + UI.tag(dm(m), 'mlabel') + '<span class="mtm">' + esc(String(m.meeting_time || '').slice(0, 5)) + '</span>' + (meetName(m) ? '<span class="mnm mn1">' + esc(meetName(m)) + '</span>' : '') + '</div>' + (meetWhere(m) ? '<span class="mnm mwh">' + esc(meetWhere(m)) + '</span>' : '') + '</div>' +
         '<div class="mchips">' +
-        (!on && sheet.id ? UI.tag('לא משויך', 'ptag none', { 'data-mp': m.id, role: 'button', tabindex: 0, title: 'לא משויך למפגש. לחיצה: שיוך למפגש' }) : '<button type="button" class="pay ' + (on ? (st || (miss ? 'missed' : 'nolabel')) : 'none') + '" data-mp="' + m.id + '" title="' + (on ? (st ? 'שינוי תגית' : 'הוספת תגית') : 'לא משויך למפגש. לחיצה: שיוך למפגש') + '"' + (on && !st ? ' aria-label="הוספת תגית"' : '') + '>' + (on ? (st ? esc(STATUS_LABEL[st]) : miss ? 'לא הגיע' : icon('tag', 'i14') + ' תגית') : sheet.id ? 'לא משויך' : '') + '</button>') +
+        (!on && sheet.id ? UI.tag('הוספה למפגש', 'ptag none', { 'data-mp': m.id, role: 'button', tabindex: 0, title: 'לא משויך למפגש. לחיצה: הוספה למפגש' }) : '<button type="button" class="pay ' + (on ? (st || (miss ? 'missed' : 'nolabel')) : 'none') + '" data-mp="' + m.id + '" title="' + (on ? (st ? 'שינוי תגית' : 'הוספת תגית') : 'לא משויך למפגש. לחיצה: שיוך למפגש') + '"' + (on && !st ? ' aria-label="הוספת תגית"' : '') + '>' + (on ? (st ? esc(STATUS_LABEL[st]) : miss ? 'לא הגיע' : icon('tag', 'i14') + ' תגית') : sheet.id ? 'לא משויך' : '') + '</button>') +
         '<div class="mline">' + (sheet.id && !on ? '<span></span>' : sheet.id ? '<button type="button" class="mmoney' + (reportedOf(sheet.id, m.id) ? ' wait' : laterOf(sheet.id, m.id) ? ' later' : dueOf(sheet.id, m.id) > 0 ? '' : allocatedOf(sheet.id, m.id) > 0 ? ' has' : freeL ? ' free' : '') + '" data-mm="' + m.id + '"' + (on ? '' : ' hidden') + ' title="תשלום למפגש">' + payTxt(sheet.id, m.id, freeL) + '</button>' : '') +
         '</div></div>' +
         (!sheet.id ? '<span></span>' : on ? '<button type="button" class="munl" data-mun="' + m.id + '" aria-label="הסרה מהמפגש" title="הסרה מהמפגש">' + icon('close', 'i16') + '</button>' : '<button type="button" class="munl madd" data-mp="' + m.id + '" aria-label="שיוך למפגש" title="שיוך למפגש">' + icon('plus', 'i16') + '</button>') +
