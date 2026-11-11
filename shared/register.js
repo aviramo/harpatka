@@ -526,7 +526,7 @@
   /* שלב הטלפון לאורח (reg-gphone): הרשמה לא מחייבת גוגל. קודם טלפון בלבד, ובאותו שלב אפשר להיכנס עם גוגל (אם כבר חיברו חשבון). "המשך" פותח את שאר השדות; אזור אישי כן דורש גוגל */
   let guestStep = false;
   function setGuestStep(on, cont) {
-    if (cont) { const tl = document.querySelector('#contactModal input[type="tel"]'), v = tl ? tl.value.trim() : ''; document.querySelectorAll('.su-gph').forEach((e) => { e.innerHTML = 'מספר הטלפון להרשמה: <bdi dir="ltr">' + String(v).replace(/[<>&]/g, '') + '</bdi>'; }); }   // שלב הפרטים: הטלפון שהוזן מוצג ליד "חזרה" ואפשר לתקן
+    if (cont) { const tl = document.querySelector('#contactModal input[type="tel"]'), v = tl ? tl.value.trim() : ''; document.querySelectorAll('.su-gph').forEach((e) => { e.innerHTML = 'טלפון: <bdi dir="ltr">' + String(v).replace(/[<>&]/g, '') + '</bdi>'; }); }   // שלב הפרטים: הטלפון שהוזן מוצג ליד "חזרה" ואפשר לתקן
     guestStep = !!on; document.documentElement.classList.toggle('reg-gphone', guestStep); document.documentElement.classList.toggle('reg-gdet', !guestStep && !!cont);   /* reg-gdet: אורח אחרי "המשך": מוצג כפתור חזרה לשלב הטלפון */
     document.querySelectorAll('[data-su="btn"]:not(.saved):not(:disabled)').forEach((b) => { b.textContent = curLabel(); });
   }
