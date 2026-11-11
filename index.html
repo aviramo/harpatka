@@ -1390,7 +1390,8 @@
             { const ma = document.getElementById('meAreaCard'); if (ma) io.observe(ma); }
           } }
         const sb = el('stickyRegBtn'), tc = el('tbCta'), stxt = future.length ? 'שמירת מקום למפגש ' + short(dayN(future[0].date)) : 'השארת פרטים';   // עם התאריך: ברור לאיזה מפגש נרשמים
-        if (sb) { sb.dataset.reg = stxt; sb.textContent = 'שמירת מקום ועדכונים'; } if (tc) tc.textContent = 'שמירת מקום ועדכונים';   // הכפתור פותח בחירה: הרשמה למפגש או קבוצת וואטסאפ (הנוסח של ההרשמה נשמר ל-data-reg)
+        const btxt = future.length ? 'שמירת מקום ועדכונים' : 'השארת פרטים ועדכונים';   /* אין מפגש עתידי: השארת פרטים ועדכונים */
+        if (sb) { sb.dataset.reg = stxt; sb.textContent = btxt; } if (tc) tc.textContent = btxt;   // הכפתור פותח בחירה: הרשמה למפגש או קבוצת וואטסאפ (הנוסח של ההרשמה נשמר ל-data-reg)
         /* הכפתור הקבוע מוסתר בטעינה ועולה (באנימציה) רק כשברור שיש למה להירשם: אורח מיד, ומשתתף מחובר רק אחרי שמצב ההרשמות שלו נטען.
            משתתף מחובר שכבר רשום לכל המפגשים (או שאין מפגש): אין מה להירשם אליו, ולכן בלי הכפתור הקבוע */
         { const sr2 = el('stickyReg');
@@ -1400,7 +1401,7 @@
           if (sr2) sr2.classList.toggle('cta-off', !known); if (tc) tc.hidden = !known;   // למטה תמיד יש כפתור (מוסתר רק עד שברור מי המשתתף)
           /* אין מה להירשם אליו (או אין מפגש): הכפתור הופך לעדכונים בוואטסאפ, ישר לקבוצה */
           const wa = !need, link = (typeof CONFIG !== 'undefined' && CONFIG.updatesGroupLink) || '#';   /* CONFIG הוא const גלובלי ולא מאפיין של window, ולכן window.CONFIG היה ריק והקישור נשאר # */
-          [sb, tc].forEach((x) => { if (!x) return; x.dataset.mode = wa ? 'wa' : ''; if (wa) { x.href = link; x.target = '_blank'; x.rel = 'noopener'; x.textContent = 'עדכונים בוואטסאפ'; } else { x.href = '#'; x.removeAttribute('target'); x.textContent = 'שמירת מקום ועדכונים'; } }); }
+          [sb, tc].forEach((x) => { if (!x) return; x.dataset.mode = wa ? 'wa' : ''; if (wa) { x.href = link; x.target = '_blank'; x.rel = 'noopener'; x.textContent = 'עדכונים בוואטסאפ'; } else { x.href = '#'; x.removeAttribute('target'); x.textContent = btxt; } }); }
       };
       /* הכפתור הקבוע למטה פותח פופאפ מלמטה עם שתי אפשרויות: הרשמה למפגש וקבוצת וואטסאפ */
       { const sb = document.getElementById('stickyRegBtn'), sh = document.getElementById('ctaSheet');
