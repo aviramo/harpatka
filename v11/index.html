@@ -215,6 +215,13 @@
     #invite .h8-photo{ margin-bottom:0 !important; }
     @media (min-width:1024px){ #invite .h8-photo{ width:min(100%,980px) !important; margin-inline:auto !important; } #invite .h8-h1{ font-size:clamp(3rem,6.2vh,4.4rem) !important; } #invite .h8-copy{ transform:scale(.9); } }
     :root{ --tkh:calc(3.4rem + max(env(safe-area-inset-bottom), 1.3rem)); }
+    /* מסך נמוך: הכול נכנס למסך אחד והסטריפ נשאר צמוד לתחתית. מקצרים קודם את החוט (מעל התמונה ובין התמונה לשלט) ואחר כך את הרווחים */
+    @media (max-width:1023px) and (max-height:716px){ html.pg-home.nd #invite .h8-photo{ margin-top:2.6rem !important; } html.pg-home.nd #invite .h8-hwrap{ padding-top:2.6rem !important; } }
+    @media (max-width:1023px) and (max-height:680px){ html.pg-home.nd #invite .h8-photo{ margin-top:2.1rem !important; } html.pg-home.nd #invite .h8-hwrap{ padding-top:2rem !important; } html.pg-home.nd #invite .h8-who{ padding-top:.5rem !important; padding-bottom:.6rem !important; margin-bottom:.6rem !important; } html.pg-home.nd #invite .h8-lead2{ margin-top:.8rem !important; } html.pg-home.nd #invite .h8{ padding-bottom:0 !important; } }
+    @media (max-width:1023px) and (max-height:620px){ html.pg-home.nd #invite .h8-photo{ margin-top:1.2rem !important; } html.pg-home.nd #invite .h8-hwrap{ padding-top:1.2rem !important; } html.pg-home.nd #invite .h8-h1{ padding-top:1rem !important; padding-bottom:.6rem !important; } html.pg-home.nd #invite .h8-who{ padding-top:.2rem !important; padding-bottom:.3rem !important; margin-bottom:.2rem !important; } html.pg-home.nd #invite .h8-lead2{ margin-top:.4rem !important; } }
+    /* סוף הדף: פחות רווח מתחת לפוטר, והכפתור הקבוע יורד כשהפוטר מגיע (אין מה לכסות) */
+    html.pg-home footer.relative{ padding-bottom:calc(1rem + env(safe-area-inset-bottom, 0px)) !important; }
+    #stickyReg.cta-end{ transform:translateY(130%); opacity:0; } #stickyReg.cta-end [data-contact]{ pointer-events:none !important; }
     #invite .h8-deco, #invite .h8-photo::before{ display:none !important; }
     html.hero-motion #invite .h8-media, html.hero-motion #invite .h8-photo, html.hero-motion #invite .h8-frame{ animation:none !important; transform:none !important; opacity:1 !important; }
     /* v12: עיצוב הטקסטים בפתיח */
@@ -1021,6 +1028,9 @@
       <p class="mt-3 text-sm"><a href="../privacy/" class="underline" style="color:var(--muted)">מדיניות פרטיות</a></p>
     </div>
   </footer>
+  <script>/* הכפתור הקבוע יורד כשהפוטר בתצוגה (סוף הדף) */
+  (function(){ var f=document.querySelector('footer.relative'), sr=document.getElementById('stickyReg'); if(!f||!sr||!window.IntersectionObserver) return;
+    new IntersectionObserver(function(en){ sr.classList.toggle('cta-end', en[0].isIntersecting); }).observe(f); })();</script>
 
 
 
@@ -1649,7 +1659,7 @@ var els=s.querySelectorAll('.ht-in > *');document.documentElement.classList.add(
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{rootMargin:'0px 0px -12% 0px',threshold:0.05});
 els.forEach(function(e){io.observe(e);});})();
 </script>
-  <script src="../shared/register.js?v=20261111g"></script>
+  <script src="../shared/register.js?v=20261111h"></script>
   <script>/* שעון ספירה לאחור למפגש הקרוב (שעון ישראל) */
 (function(){
   var box = document.getElementById('v12cd'); if (!box) return; var tgt = null;
