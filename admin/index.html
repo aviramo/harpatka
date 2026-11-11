@@ -4025,8 +4025,7 @@
       const pr = (v, k, lab) => '<label class="field money mtf"><span>' + lab + '</span><input placeholder=" " data-k="' + k + '" type="number" inputmode="numeric" min="0" max="9999" value="' + v + '" /></label>';
       let h = '<div class="mt2row">' + pr(t.base, 'base', t.steps.length ? 'מחיר רגיל, מתחילת ההרשמה' : 'מחיר הכרטיס') + '</div>';
       t.steps.forEach((x, i) => {
-        const days = []; for (let d = 1; d <= 30; d++) days.push(d); if (!days.includes(x.days)) days.push(x.days);
-        h += '<div class="mt2row">' + pr(x.price, 's' + i, 'מחיר') + '<label class="field mtf"><span>מתחיל</span><select data-k="d' + i + '">' + days.sort((a, b) => a - b).map((d) => '<option value="' + d + '"' + (d === x.days ? ' selected' : '') + '>' + d + ' ימים לפני</option>').join('') + '</select></label><button type="button" class="mtdel" data-del="s' + i + '" aria-label="מחיקת מדרגה" title="מחיקת מדרגה">×</button></div>';
+        h += '<div class="mt2row">' + pr(x.price, 's' + i, 'מחיר') + '<label class="field mtf"><span>ימים לפני המפגש</span><input placeholder=" " data-k="d' + i + '" type="number" inputmode="numeric" min="1" max="365" step="1" value="' + x.days + '" /></label><button type="button" class="mtdel" data-del="s' + i + '" aria-label="מחיקת מדרגה" title="מחיקת מדרגה">×</button></div>';
       });
       list.innerHTML = h;
     };
@@ -4038,10 +4037,17 @@
     };
     list.addEventListener('input', (e) => {
       const inp = e.target.closest('input'); if (!inp) return; const v = inp.value === '' ? '' : Math.max(0, Math.round(Number(inp.value))), k = inp.dataset.k;
-      if (k === 'base') ed.t.base = v; else if (k[0] === 's') ed.t.steps[Number(k.slice(1))].price = v;
+      if (k === 'base') ed.t.base = v; else if (k[0] === 's') ed.t.steps[Number(k.slice(1))].price = v; else if (k[0] === 'd') ed.t.steps[Number(k.slice(1))].days = inp.value === '' ? '' : Math.max(1, Math.round(Number(inp.value)));
     });
     list.addEventListener('change', (e) => {
-      if (e.target.closest('input')) { done(); return; }
+      const inp = e.target.closest('input');
+      if (inp && inp.dataset.k && inp.dataset.k[0] === 'd') {   // ימים לפני: מספר שלם חיובי, בלי כפילות
+        const i = Number(inp.dataset.k.slice(1)), d = Math.round(Number(inp.value));
+        if (!(d >= 1)) { toast('מספר הימים צריך להיות מספר שלם חיובי'); ed.render(); return; }
+        if (ed.t.steps.some((x, j) => j !== i && x.days === d)) { toast('כבר יש מדרגה שמתחילה באותו מספר ימים'); ed.render(); return; }
+        ed.t.steps[i].days = d; ed.render(); done(); return;
+      }
+      if (inp) { done(); return; }
       const sel = e.target.closest('select'); if (!sel) return; const i = Number(sel.dataset.k.slice(1)), d = Number(sel.value);
       if (ed.t.steps.some((x, j) => j !== i && x.days === d)) { toast('כבר יש מדרגה שמתחילה באותו מספר ימים'); ed.render(); return; }
       ed.t.steps[i].days = d; ed.render(); done();
