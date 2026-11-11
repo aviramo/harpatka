@@ -183,7 +183,7 @@
       /* הוראות ההגעה של המפגש (אותו טקסט כמו בהודעה בדף הניהול, כולל התמונה או הסרטון): שורה עם חץ, ובלחיצה נפתחת באנימציה; מעל "ביטול רישום" */
       const dirFold = (mm) => { const t = String(mm.directions || '').trim(); if (!t) return ''; const o = keepDirSet.has(mm.id); return '<div class="dirbox"><button type="button" class="dethead dirhead" data-dir="' + mm.id + '" aria-expanded="' + o + '" aria-controls="dir-' + mm.id + '"><span>הוראות הגעה</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="detfold' + (o ? ' open' : '') + '" id="dir-' + mm.id + '"><div><p class="dirtxt">' + linkify(t) + '</p></div></div></div>'; };
       if (m.future) foot += dirFold(m);
-      if (m.future) { const sure = unregSure === m.id; foot += '<button type="button" class="lnk sm" data-unreg="' + m.id + '"' + (sure ? ' data-sure="1"' : '') + '>' + (sure ? UNREG_SURE : 'ביטול שמירת מקום') + '</button><div class="msg" data-um="' + m.id + '"></div>'; }
+      if (m.future) { const sure = unregSure === m.id; foot += '<button type="button" class="lnk sm" data-unreg="' + m.id + '"' + (sure ? ' data-sure="1"' : '') + '>' + (sure ? UNREG_SURE : 'ביטול שמירת המקום') + '</button><div class="msg" data-um="' + m.id + '"></div>'; }
       /* אותו רכיב כמו בפופאפים ובדף הבית, עם המצב והתשלום בתוך המסגרת. מפגש שעבר: בלי תמונה ובלי כמות משתתפים */
       return '<div class="mtg" data-mid="' + m.id + '">' + CFG.meetingBox(m.future ? m : Object.assign({}, m, { max: 0 }), '<div class="mts">' + att + pay + '</div>' + (foot ? '<div class="mtfoot">' + foot + '</div>' : '')) + '</div>';
     };
@@ -217,7 +217,7 @@
       const id = ub.dataset.unreg, msg = app.querySelector('[data-um="' + id + '"]');
       if (!ub.dataset.sure) {   // המצב נשמר מחוץ לכפתור, כי לחיצה בתוך הפופאפ מרעננת את הרשימה (פוקוס לחלון) והרענון היה מחזיר את הכפתור ל"ביטול רישום"
         unregSure = id; ub.dataset.sure = '1'; ub.textContent = UNREG_SURE;
-        clearTimeout(unregT); unregT = setTimeout(() => { if (unregSure !== id) return; unregSure = null; const b = app.querySelector('[data-unreg="' + id + '"]'); if (b && !b.disabled) { delete b.dataset.sure; b.textContent = 'ביטול שמירת מקום'; } }, 8000);   // בלי אישור תוך כמה שניות: חוזר למצב הרגיל
+        clearTimeout(unregT); unregT = setTimeout(() => { if (unregSure !== id) return; unregSure = null; const b = app.querySelector('[data-unreg="' + id + '"]'); if (b && !b.disabled) { delete b.dataset.sure; b.textContent = 'ביטול שמירת המקום'; } }, 8000);   // בלי אישור תוך כמה שניות: חוזר למצב הרגיל
         return;
       }
       unregSure = null; clearTimeout(unregT);
@@ -227,8 +227,8 @@
         const r = await rpc('harpatka_me_unregister', Object.assign({ p_meeting: id }, imp ? { p_as: asId } : {}));
         rel();
         if (r === 'cancelled' || r === 'not_registered') { ob.done(); keepOpen = id; load(); }
-        else { ob.fail(); toast(msg, 'אי אפשר לבטל את שמירת המקום למפגש הזה', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול שמירת מקום'; }
-      } catch (e) { rel(); ob.fail(); toast(msg, 'משהו השתבש, אפשר לנסות שוב', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול שמירת מקום'; }
+        else { ob.fail(); toast(msg, 'אי אפשר לבטל את שמירת המקום למפגש הזה', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול שמירת המקום'; }
+      } catch (e) { rel(); ob.fail(); toast(msg, 'משהו השתבש, אפשר לנסות שוב', true); ub.disabled = false; delete ub.dataset.sure; ub.textContent = 'ביטול שמירת המקום'; }
     }; });
     /* תשלום מהקרדיט: הקרדיט מכסה את מחיר המפגש, ומוקצה לו (בלי פייבוקס) */
     app.querySelectorAll('[data-paycredit]').forEach((cb) => { cb.onclick = async () => {
