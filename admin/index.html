@@ -408,8 +408,8 @@
       <button class="btn ghost" id="cNo" type="button" style="color:var(--muted)">ביטול</button>
     </form>
   </dialog>
-  <dialog id="finFormDlg" aria-labelledby="finFormTitle">
-    <div class="sheet"><h2 id="finFormTitle"></h2><div id="finFormBody"></div></div>
+  <dialog id="finFormDlg">
+    <div class="sheet"><div id="finFormBody"></div></div>
   </dialog>
   <dialog id="mfPopDlg" aria-labelledby="mfPopTitle">
     <form class="sheet" method="dialog" novalidate onsubmit="return false">
@@ -2022,6 +2022,7 @@
     else if (v && v.startsWith('edit-')) { const m = /^edit-(entry|rec)-(.+)$/.exec(v); if (m && (m[1] === 'rec' ? state.finRec : state.fin).some((x) => x.id === m[2])) openFinForm({ type: m[1], id: m[2] }); }
     if (document.activeElement && document.activeElement.closest('#finDlg')) document.activeElement.blur();
   }
+  const finSaveLabel = () => { const k = $('#finForm').dataset.kind; $('#finSave').textContent = k === 'income' ? 'שמירת הכנסה' : 'שמירת הוצאה'; $('#finFormDlg').setAttribute('aria-label', k === 'income' ? 'הכנסה' : 'הוצאה'); };
   function openFinForm(edit) {
     finEdit = edit; const f = $('#finForm');
     const src = edit.type === 'rec' ? state.finRec.find((x) => x.id === edit.id) : edit.type === 'entry' ? state.fin.find((x) => x.id === edit.id) : null;
@@ -2036,7 +2037,7 @@
     $('#finDel').hidden = !edit.id; $('#finDel').textContent = 'מחיקה'; delete $('#finDel').dataset.arm;
     f.querySelector('[name=date]').closest('label').firstElementChild.textContent = edit.type === 'rec' ? 'מתאריך' : 'תאריך';   // השדה עטוף ב-dtbox (dtField), לכן הכותרת היא הילד הראשון של התווית ולא האח הקודם של השדה
     /* טופס הכנסה / הוצאה: פופאפ נפרד מלמטה (הטופס עצמו עובר פיזית לתוכו וחוזר בסגירה) */
-    const dlg = $('#finFormDlg'), home = $('#finDlg'); $('#finFormTitle').textContent = edit.id ? 'עריכה' : (kind === 'income' ? 'הכנסה חדשה' : 'הוצאה חדשה');
+    const dlg = $('#finFormDlg'), home = $('#finDlg'); finSaveLabel();
     if (!dlg.open) {
       $('#finFormBody').appendChild(f); f.hidden = false; finV = 'form'; dlg.showModal(); syncUrl();
       dlg.addEventListener('close', function back() { dlg.removeEventListener('close', back); home.appendChild(f); f.hidden = true; if (finV === 'form') { finV = 'main'; syncUrl(); } });
@@ -2070,7 +2071,7 @@
     const ch = e.target.closest('[data-fch]'); if (ch) { showPromoterDetail(ch.dataset.fch); $('#prDlg').showModal(); return; }   // תשלום לשיווק ממומן: פותח את ההתחשבנות שלה
     const x = e.target.closest('[data-fent]'); if (x) openFinForm({ type: 'entry', id: x.dataset.fent });
   });
-  $('#finKind').addEventListener('click', (e) => { const b = e.target.closest('[data-fk]'); if (!b) return; $('#finForm').dataset.kind = b.dataset.fk; document.querySelectorAll('#finKind [data-fk]').forEach((q) => q.setAttribute('aria-checked', String(q === b))); });
+  $('#finKind').addEventListener('click', (e) => { const b = e.target.closest('[data-fk]'); if (!b) return; $('#finForm').dataset.kind = b.dataset.fk; document.querySelectorAll('#finKind [data-fk]').forEach((q) => q.setAttribute('aria-checked', String(q === b))); finSaveLabel(); });
   $('#finArrow').addEventListener('click', () => finView('main'));
   /* יומן הכספים: כתובות מייל מוצגות כשמות ("מאופיר להדר"), כי שני מיילים ולוגיים בתוך טקסט עברי מתהפכים בתצוגה */
   const FIN_LABS = ['תאריך התחלה', 'תאריך סיום', 'שיוך למפגש', 'סכום', 'תיאור', 'תאריך', 'חזרתיות', 'פעיל', 'סוג', 'דרך', 'מאת', 'אל'];
