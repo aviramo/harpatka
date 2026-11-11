@@ -3274,6 +3274,9 @@
       const pkgF = $('#depPkgSel').closest('.field');
       if (free) { $('#depMethods').innerHTML = ''; return; }   // במצב לא לתשלום אין כלום מתחת; חוזרים ל"לתשלום" דרך הצ'יפ
       $('#depQuick').hidden = false;
+      const hasPasses = !!$('#depPasses').querySelector('[data-pn]');
+      $('#depPasses').hidden = !hasPasses || cr0;   // תשלום מהקרדיט או מהכרטיסייה: הצעות מחיר וכרטיסיות לא רלוונטיות
+      if (cr0) { $('#depQuick').hidden = true; }
       if (cr0) {   // יש קרדיט: קודם כל משתמשים בה (אפשר להקצות רק חלק ממנה); שאר דרכי התשלום נפתחות כשהקרדיט נגמרת
         sheet.depCr = !free;
         if (!hasPk) sheet.depPk = false; else if (!sheet.depPkAuto) { sheet.depPk = true; sheet.depPkAuto = true; }   // יש כרטיסייה: ברירת המחדל לנצל ממנה
