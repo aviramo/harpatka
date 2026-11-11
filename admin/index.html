@@ -3102,9 +3102,9 @@
     const mlabel = (x) => { const m = meetOf(x.meeting_id); return m ? ' ' + dm(m) : ''; };
     const rows = state.payments.filter((x) => x.participant_id === pid && x.kind !== 'credit').slice().sort(newestFirst).flatMap((x) => {
       const a = Number(x.amount), mt = methodName(x); let lab, cls, sign;
-      if (x.kind === 'deposit') { lab = 'קבלת תשלום' + (mt ? ' · ' + mt : ''); cls = 'up'; sign = ''; }
+      if (x.kind === 'deposit') { lab = 'קבלת תשלום' + (x.pkg_n > 0 ? ' · כרטיסייה ' + x.pkg_n + ' מפגשים' : '') + (mt ? ' · ' + mt : ''); cls = 'up'; sign = ''; }
       else if (x.kind === 'credit') { lab = 'ביטול מפגש' + mlabel(x) + ', נשאר בקרדיט'; cls = 'up'; sign = ''; }
-      else if (x.kind === 'payment') { lab = 'הקצאה למפגש' + mlabel(x); cls = 'flat'; sign = ''; }
+      else if (x.kind === 'payment') { lab = 'הקצאה למפגש' + mlabel(x) + (x.pkg ? ' · מהכרטיסייה' : ''); cls = 'flat'; sign = ''; }
       else if (x.kind === 'refund' && x.from_credit) { lab = 'החזרת כסף' + (mt ? ' · ' + mt : ''); cls = 'down'; sign = ''; }
       else { lab = 'החזרת כסף למפגש' + mlabel(x); cls = 'flat'; sign = ''; }
       const rc = x.kind === 'deposit' ? ' rcpt' : (x.kind === 'credit' || x.kind === 'refund') ? ' rfnd' : x.kind === 'payment' ? ' balmv' : '';   // קבלה בירוק, זיכוי/החזר באדום
