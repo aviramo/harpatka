@@ -192,7 +192,7 @@
     /* רכישת כרטיסייה: הכרטיסיות שהוגדרו בסוגי המפגש. תשלום בפייבוקס רושם בקשה, והמנהל מזין את התשלום ומתווספים המפגשים לקרדיט */
     const passes = Array.isArray(data.passes) ? data.passes : [];
     const passHtml = (passes.length && !(Number(data.sessions) > 0)) ? '<div class="card" id="passCard"><h2>כרטיסיות</h2><p class="muted" style="margin:0 0 8px">משלמים פעם אחת ומקבלים מפגשים בקרדיט. כל שמירת מקום מורידה מפגש אחד</p>' + passes.map((x) => '<div class="passrow"><div><b>כרטיסייה ' + x.n + ' מפגשים</b><small>' + (passes.some((y) => y.type_id !== x.type_id) ? esc(x.type_name || '') + ' · ' : '') + ils(Math.round(x.price / x.n)) + ' למפגש</small></div>' + (CFG.payboxLink ? '<a class="btn pay" data-buypass="' + x.type_id + '" data-n="' + x.n + '" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">' + ils(x.price) + ' בפייבוקס</a>' : '') + '</div>').join('') + '</div>' : '';
-    if (!req) h += meetHtml + passHtml;   // "הפרטים שלי" ראשון, ומתחתיו רשימת המפגשים (רק אחרי שהפרטים הושלמו)
+    if (!req) h += passHtml + meetHtml;   // "הפרטים שלי" ראשון, ומתחתיו רשימת המפגשים (רק אחרי שהפרטים הושלמו)
     keepOpenSet = new Set(); keepDetOpen = false; keepDirSet = new Set();
     app.innerHTML = h;
     if (scrollTo) { const row = app.querySelector('.mtg[data-mid="' + scrollTo + '"]'); scrollTo = null; if (row) setTimeout(() => row.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }), 120); }
