@@ -52,7 +52,7 @@
             <a href="__BASE__me/?login=1&back=reg" class="su-glink" data-su="glink">כניסה עם גוגל</a><button type="button" class="su-gback" data-su="gback">חזרה</button>
             <div data-su="fail" class="su-err mt-3 text-center" role="alert"></div>
             <div class="su-fold su-after shut" data-su="after"><div>
-              <p class="su-paynote">המקום נשמר באופן זמני, והוא יישמר קבוע רק לאחר תשלום</p>
+              <p class="su-paynote">המקום נשמר באופן זמני והוא יישמר קבוע רק לאחר תשלום</p>
               <div class="su-payfold" data-su="payfold"><div>
                 <p class="su-crnote" data-su="crnote" hidden></p>
                 <button type="button" data-su="paycredit" class="btn-primary rounded-full px-8 py-4 text-[1.2rem] block text-center w-full" hidden>תשלום מהקרדיט</button>
@@ -227,7 +227,8 @@
       if (saved) return; saved = true; savedFor = (selMeeting || nearest || {}).id || null;
       root.querySelectorAll('.su-fold:not(.su-after)').forEach(f => f.classList.add('shut'));
       btn.disabled = true; btn.classList.add('swap');
-      setTimeout(() => { if (!saved) return; btn.textContent = payOk ? 'נשמר זמנית' : 'הפרטים נשלחו'; btn.classList.remove('swap'); btn.classList.add('saved'); }, 260);
+      setTimeout(() => { if (!saved) return; btn.textContent = 'הפרטים נשלחו'; btn.classList.remove('swap'); btn.classList.add('saved'); if (payOk) btn.classList.add('gone'); }, 260);   // המקום נשמר: אין צורך בכפתור "נשמר זמנית" (מוסתר); בלי תשלום (מחוץ לטווח) נשאר "הפרטים נשלחו"
+      try { const gm = selMeeting || nearest; if (gm && gm.id && !meInfo) guestSaveMark(gm); } catch (e) {}   // הרשמה כאורח: הכרטיס בדף הבית מציג "שמרתם מקום · תשלום" גם בלי חיבור
       if (payOk) setTimeout(() => { const a = q('after'); if (saved && a) a.classList.remove('shut'); }, 700);
     };
     suRoots.push(showDone);
@@ -235,7 +236,7 @@
     suResets.push((id) => {
       if (!saved || savedFor === id) return;
       saved = false; savedFor = null;
-      btn.classList.remove('saved', 'swap'); btn.disabled = false; btn.textContent = curLabel();
+      btn.classList.remove('saved', 'swap', 'gone'); btn.disabled = false; btn.textContent = curLabel();
       const a = q('after'), fl = q('fail'); if (a) a.classList.add('shut'); if (fl) fl.textContent = '';
       root.querySelectorAll('.su-fold:not(.su-after)').forEach((f) => f.classList.remove('shut'));
     });
@@ -764,7 +765,16 @@
     openModal(m, true);
   }
   /* מצב מפגש של המשתתף המחובר (להצגה בכפתור של כרטיסי המפגשים בדף הבית) */
-  const meGet = (mid) => (meInfo && meInfo.complete && (meInfo.meetings || []).find((x) => x.id === mid)) || null;   // בלי פרטים: הכרטיסים בדף הבית לא מציגים "נרשמתם", והלחיצה פותחת את השלמת הפרטים
+  /* אורח ששמר מקום (הרשמה בטופס, בלי חיבור): מזהה המפגש והמחיר נשמרים בדפדפן, והכרטיס בדף הבית מציג "שמרתם מקום · תשלום" במקום "שמירת מקום" */
+  const GS_KEY = 'harpatka_guest_saved';
+  const guestRead = () => { try { return JSON.parse(localStorage.getItem(GS_KEY) || '{}') || {}; } catch (e) { return {}; } };
+  function guestSaveMark(m) {
+    const left = dayN(m.date) - dayN(todayIL); let price = 0; try { price = priceFor(left, m.tiers) || 0; } catch (e) {}
+    const g = guestRead(); g[m.id] = { price, t: Date.now() }; try { localStorage.setItem(GS_KEY, JSON.stringify(g)); } catch (e) {}
+    try { window.dispatchEvent(new Event('harpatka:me')); } catch (e) {}
+  }
+  const guestGet = (mid) => { if (meInfo) return null; const x = guestRead()[mid]; return x ? { id: mid, registered: true, paid: 0, free: false, price: x.price, due: 0 } : null; };
+  const meGet = (mid) => (meInfo && meInfo.complete && (meInfo.meetings || []).find((x) => x.id === mid)) || guestGet(mid) || null;   // בלי פרטים: הכרטיסים בדף הבית לא מציגים "נרשמתם", והלחיצה פותחת את השלמת הפרטים
   /* חשבון חסום או מנותק (מיד אחרי כניסה עם גוגל, או בזמן אמת כשמנהל חסם): החיבור נמחק מהדפדפן, הדף חוזר למצב אורח, פופאפים פתוחים נסגרים,
      ונפתח מלמעלה פופאפ שמסביר שאי אפשר להתחבר דרך החשבון הזה (במקום שהאזור האישי ייפתח וייסגר מיד). פעם אחת גם כשגם הדף וגם האזור האישי מדווחים */
   /* אחרי יציאה מהחשבון (או חסימה) גוגל לא מחבר שוב לבד: הכניסה הבאה דורשת לחיצה (כך גוגל מבקש מאתרים עם כניסה אוטומטית) */
