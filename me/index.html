@@ -124,26 +124,11 @@
   /* הדף הראשי סוגר את הפופאפ ומבקש שהפוקוס יורד מהשדה מתוך המסמך הזה עצמו (כך המקלדת נסגרת, וגם כשהמסגרת נשארת חיה מוסתרת) */
   if (EMBED) window.addEventListener('message', (e) => { if (e.origin === location.origin && e.data && e.data.harpatka === 'me-blur') { const a = document.activeElement; if (a && a !== document.body && window.PersonForm) PersonForm.blurKeyboard(a); } });
   window.harpatkaFocusPhone = () => { const i = $('#sph'); if (!i) return; phoneFocused = true; try { window.focus(); PersonForm.focusKeyboard(i); } catch (e) {} };
-  function viewSignup(phone) {
-    app.innerHTML = '<div class="card"><h2>מה מספר הטלפון שלכם?</h2><p class="muted" style="margin:0">אם כבר שמרתם אצלנו מקום בעבר, נמצא אתכם לפי המספר</p>' +
-      PersonForm.html('phone', { id: 'sph', value: phone || '' }) + PersonForm.err('phone') +
-      '<button type="button" class="btn" id="sgBtn">המשך</button><div class="msg" id="sgm"></div></div>';
-    PersonForm.bind(app);
-    { let sh = null; try { sh = EMBED && window.frameElement ? window.frameElement.closest('.mesheet') : null; } catch (e) {} if (!phoneFocused && (!sh || !sh.hidden)) setTimeout(window.harpatkaFocusPhone, EMBED ? 380 : 0); }
-    $('#sgBtn').onclick = async () => {
-      const raw = ($('#sph') || {}).value || '';
-      if (!PersonForm.normPhone(raw)) { PersonForm.setErr(app, 'phone', PersonForm.MSG.phone); return; }
-      const b = $('#sgBtn'); b.disabled = true;
-      try {
-        const r = await rpc('harpatka_me_phone', { p_phone: raw, p_no_meeting: true });
-        const st = r && r.status;
-        if (st === 'invalid_phone') { PersonForm.setErr(app, 'phone', PersonForm.MSG.phone); b.disabled = false; return; }
-        const bad = { phone_taken: 'מספר הטלפון הזה כבר מחובר לחשבון אחר', blocked: 'אי אפשר לשמור מקום מהחשבון הזה' }[st];
-        if (bad) { toast($('#sgm'), bad, true); b.disabled = false; return; }
-        if (!st) throw new Error('no status');
-        load();
-      } catch (e) { toast($('#sgm'), 'משהו השתבש, אפשר לנסות שוב', true); b.disabled = false; }
-    };
+  /* חשבון גוגל בלי טלפון מקושר: אין יותר שלב טלפון בתוך האזור האישי. בדף הבית האזור האישי נפתח רק אחרי שהחשבון והטלפון חוברו (פופאפ הטלפון מלמעלה, כמו בהרשמה); אם בכל זאת הגענו לכאן, מחזירים לשם */
+  function viewSignup() {
+    app.innerHTML = '';
+    if (EMBED) { try { parent.postMessage({ harpatka: 'me-phone' }, location.origin); } catch (e) {} }
+    else location.replace('../?me=1');
   }
   function viewPending() { app.innerHTML = '<div class="card"><h2>הבקשה התקבלה</h2><p class="muted" style="margin:0">אנחנו מאשרים את החיבור, ובקרוב האזור האישי יהיה זמין. אפשר לחזור לכאן בעוד קצת זמן</p></div>'; }
   function viewBlocked() { app.innerHTML = '<div class="card"><h2>אין גישה</h2><p class="muted" style="margin:0">החשבון הזה לא מחובר לאזור אישי. אפשר לפנות אלינו בוואטסאפ</p></div>'; }
