@@ -227,7 +227,7 @@
       if (saved) return; saved = true; savedFor = (selMeeting || nearest || {}).id || null;
       root.querySelectorAll('.su-fold:not(.su-after)').forEach(f => f.classList.add('shut'));
       btn.disabled = true; btn.classList.add('swap');
-      setTimeout(() => { if (!saved) return; btn.textContent = 'הפרטים נשלחו'; btn.classList.remove('swap'); btn.classList.add('saved'); if (payOk) btn.classList.add('gone'); }, 260);   // המקום נשמר: אין צורך בכפתור "נשמר זמנית" (מוסתר); בלי תשלום (מחוץ לטווח) נשאר "הפרטים נשלחו"
+      setTimeout(() => { if (!saved) return; btn.textContent = (selMeeting || nearest) ? 'תודה על ההרשמה' : 'הפרטים נשלחו'; btn.classList.remove('swap'); btn.classList.add('saved'); if (payOk) btn.classList.add('gone'); }, 260);   // המקום נשמר: אין צורך בכפתור "נשמר זמנית" (מוסתר); בלי תשלום (מחוץ לטווח) נשאר "הפרטים נשלחו"
       if (payOk) setTimeout(() => { const a = q('after'); if (saved && a) a.classList.remove('shut'); }, 700);
     };
     suRoots.push(showDone);
