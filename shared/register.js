@@ -57,7 +57,7 @@
                 <p class="su-crnote" data-su="crnote" hidden></p>
                 <button type="button" data-su="paycredit" class="btn-primary rounded-full px-8 py-4 text-[1.2rem] block text-center w-full" hidden>תשלום מהקרדיט</button>
                 <a href="#" target="_blank" rel="noopener" data-paybox class="btn-primary rounded-full px-8 py-4 text-[1.2rem] block text-center w-full">לתשלום <span data-price>80 ₪</span> בפייבוקס</a>
-                <div class="su-paylinks" data-su="paylinks"><button type="button" class="su-lnk" data-su="other">רוצים לשמור מקום בדרך אחרת?</button></div>
+                <div class="su-paylinks" data-su="paylinks"><button type="button" class="su-lnk" data-su="other">רוצים להעביר תשלום בדרך אחרת?</button></div>
               </div></div>
             </div></div>
           </form>

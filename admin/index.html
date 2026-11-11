@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261110ew" />
+  <link rel="stylesheet" href="admin.css?v=20261111a" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -1571,7 +1571,7 @@
     $('#listPay').innerHTML = '';   // אייקון סינון התשלום הוסר (הצ'יף "תשלומים" בשורת הצ'יפים במקומו)
     { const ws = waSelected(), am = attMode(), cur = am ? 'הגעה' : ws ? esc(ws.name) : 'וואטסאפ'; if (state.waSent && !waFilter() && !document.documentElement.classList.contains('is-loading')) waResetSent('');   // עמודת הסימון: הודעה ריקה, תבנית הודעה, או הגיע / לא הגיע
       $('#listWa').innerHTML = '';   // אייקון עמודת הסימון הוסר (הכפתור הצף בתחתית במקומו)
-      const fab = $('#waFab'); if (fab) {   // מתג של שלושה מצבים: וואטסאפ רגיל, הודעה (תבנית), הגעה (רק בתוך מפגש); המסומן הוא הבולט
+      const fab = $('#waFab'); if (fab && !state.filter) { fab.innerHTML = ''; fab.hidden = true; } else if (fab) { fab.hidden = false;   // מתג של שלושה מצבים: וואטסאפ רגיל, הודעה (תבנית), הגעה (רק בתוך מפגש); המסומן הוא הבולט
         const mb = (k, ic, on, lab, id) => '<button type="button"' + (id ? ' id="' + id + '" aria-haspopup="menu" aria-expanded="false"' : '') + ' class="wm3b' + (on ? ' on' : '') + '" data-wm="' + k + '" aria-pressed="' + on + '" aria-label="' + lab + '" title="' + lab + '">' + ic + (k === 'msg' && on && waFilter() ? UI.fdot(waFilter() === '1' ? 'green' : 'red') : '') + '</button>';   // סינון נשלח / לא נשלח פעיל: נקודה ליד סמל ההודעה
         fab.innerHTML = mb('wa', icon('wa'), !am && !ws, 'וואטסאפ רגיל') + mb('msg', icon('chat'), !!ws && !am, ws ? 'הודעה: ' + esc(ws.name) : 'הודעה מוכנה', 'waMsgBtn') + (state.filter ? mb('att', icon('check'), am, 'הגעה') : ''); }
     }
@@ -2801,7 +2801,8 @@
   const waSentRaw = (p, f) => { const ws = waSelected(); if (!ws) return true; const on = waSentFor(p.id, ws); return f === '1' ? on : !on; };
   const waSentOk = (p) => { if (attMode()) return true; const f = waFilter(); if (!f) return true; if (sentKeep && sentKeep.f === f && sentKeep.k === waKey() && sentKeep.ids.has(p.id)) return true; return waSentRaw(p, f); };
   const waSentFreeze = () => { const f = waFilter(); if (!f || attMode()) { sentKeep = null; return; } if (sentKeep && sentKeep.f === f && sentKeep.k === waKey()) return; sentKeep = { f, k: waKey(), ids: new Set(state.participants.filter((p) => waSentRaw(p, f)).map((p) => p.id)) }; };
-  const waSelected = () => { const id = waMap()[waScope()]; return id ? (waList().find((x) => x.id === id) || null) : null; };
+  const waSelected = () => { if (!state.filter) return null;   /* בתצוגת כל המשתתפים ובסוג מפגש: וואטסאפ בלבד, בלי תבניות הודעה והגעה */
+    const id = waMap()[waScope()]; return id ? (waList().find((x) => x.id === id) || null) : null; };
   const attTag = (p) => { const l = linkOf(p.id, state.filter), on = !!(l && l.attended), t = !l ? 'לא משויך למפגש. לחיצה: הגיע בלי הרשמה' : on ? 'הגיע. לחיצה מבטלת' : 'לא הגיע. לחיצה מסמנת הגעה'; return UI.tag(on ? icon('check') : '', 'ico rowwa ratt ' + (on ? 'yes' : 'no'), { 'data-att': p.id, 'aria-pressed': String(on), 'aria-label': esc(p.name) + ': ' + t, title: t }, 'button'); };   // הסימון בעמודה: עיגול ירוק בהיר עם ✓ = הגיע, עיגול שקוף ריק = לא הגיע
   /* מעקב שליחה: אחרי שליחת תבנית מסוימת (וחזרה מוואטסאפ) מאשרים שנשלחה, והשורה מסומנת; כך רואים למי נשלחה כל הודעה ולמי לא */
   state.confMail = state.confMail || new Set();
