@@ -235,7 +235,7 @@
     suResets.push((id) => {
       if (!saved || savedFor === id) return;
       saved = false; savedFor = null;
-      btn.classList.remove('saved', 'swap'); btn.disabled = false; btn.textContent = submitLabel;
+      btn.classList.remove('saved', 'swap'); btn.disabled = false; btn.textContent = curLabel();
       const a = q('after'), fl = q('fail'); if (a) a.classList.add('shut'); if (fl) fl.textContent = '';
       root.querySelectorAll('.su-fold:not(.su-after)').forEach((f) => f.classList.remove('shut'));
     });
@@ -303,7 +303,7 @@
             mePending = null;
             for (let i = 0; i < 6 && !meInfo; i++) { await meLoader.now(); if (!meInfo) await new Promise((rs) => setTimeout(rs, 450)); }   // meLoader.now מסתיים מיד כשטעינה אחרת כבר רצה; מנסים עד שהמשתתף נטען
             if (!meInfo) q('fail').textContent = 'משהו השתבש, אפשר לנסות שוב';
-            else if (areaFlow) { const af = areaFlow; areaFlow = null; applyMemberMode(); try { closeModal(contactModal); } catch (x) {} setTimeout(() => openMeArea(af.search || ''), 450); }   // הטלפון חובר: עכשיו נפתח האזור האישי
+            else if (areaFlow) { const af = areaFlow; areaFlow = null; refreshLabel(); applyMemberMode(); try { closeModal(contactModal); } catch (x) {} setTimeout(() => openMeArea(af.search || ''), 450); }   // הטלפון חובר: עכשיו נפתח האזור האישי
             else {   // הפופאפ מחליף וריאציה: חסרים פרטים: השלמת פרטים; יש פרטים: מצב "נרשמתם" עם התשלום (ההרשמה כבר בוצעה בשרת)
               applyMemberMode(); applyRegState(mm);
               if (!meInfo.complete) { const f = document.getElementById('cmFirst'); if (f) try { f.focus({ preventScroll: true }); } catch (x) {} }
@@ -345,7 +345,7 @@
           } else if (PersonForm.serverError(root, r)) { /* ההודעה ליד השדה */ }
           else q('fail').textContent = r === 'phone_taken' ? 'מספר הטלפון הזה כבר מחובר לחשבון אחר' : r === 'blocked' ? 'אי אפשר לשמור מקום מהחשבון הזה' : 'משהו השתבש, אפשר לנסות שוב';   // טלפון של משתתף אחר: ההרשמה לא מתבצעת (והמנהלים מקבלים מייל)
         } catch (er) { q('fail').textContent = 'משהו השתבש, אפשר לנסות שוב'; }
-        relJ(); if (!doneJ) { btn.disabled = false; btn.textContent = submitLabel; }
+        relJ(); if (!doneJ) { btn.disabled = false; btn.textContent = curLabel(); }
         return;
       }
       const chk = PersonForm.validate(root); if (!chk.ok) return;
@@ -383,7 +383,7 @@
         q('fail').querySelector('a').addEventListener('click', ev => { ev.preventDefault(); const m = document.getElementById('contactModal'); if (m) { if (m.hidden) openModal(m); showChoose(); } });
       }
       relBtn();
-      if (!finished) { btn.disabled = false; btn.textContent = submitLabel; }
+      if (!finished) { btn.disabled = false; btn.textContent = curLabel(); }
     });
   }
   /* פופאפ יצירת קשר: כפתור שלישי "השאירו פרטים" מחליף את הבחירה בטופס (באותו פופאפ) */
@@ -516,7 +516,7 @@
   let guestStep = false;
   function setGuestStep(on, cont) {
     guestStep = !!on; document.documentElement.classList.toggle('reg-gphone', guestStep); document.documentElement.classList.toggle('reg-gdet', !guestStep && !!cont);   /* reg-gdet: אורח אחרי "המשך": מוצג כפתור חזרה לשלב הטלפון */
-    document.querySelectorAll('[data-su="btn"]:not(.saved):not(:disabled)').forEach((b) => { b.textContent = guestStep ? 'המשך' : submitLabel; });
+    document.querySelectorAll('[data-su="btn"]:not(.saved):not(:disabled)').forEach((b) => { b.textContent = guestStep ? 'המשך' : curLabel(); });
   }
   let areaFlow = null;   // כניסה לאזור האישי בלי טלפון מקושר: פופאפ ההרשמה במצב טלפון בלבד (בלי שיוך למפגש), ורק אחריו נפתח האזור האישי
   let phoneMode = false;   // מחוברים עם גוגל, אין משתתף מקושר: פופאפ ההרשמה במצב הזנת טלפון בלבד
@@ -745,7 +745,7 @@
       const payOk = ageOk(meInfo.age) && !(mine && (Number(mine.paid) > 0 || mine.free));
       showDone(payOk); meLoader.reload(0); return;   // טעינה מחדש של המצב (השינוי שלי כבר מוצג ונשמר מול טעינות ישנות)
     } catch (e) { ob.fail(); rel(); fail.textContent = 'משהו השתבש, אפשר לנסות שוב'; }
-    btn.disabled = false; btn.textContent = submitLabel;
+    btn.disabled = false; btn.textContent = curLabel();
   }
   /* יציאה מהחשבון (לחיצה על השם בבאנר): שואלים לפני שמנתקים */
   function confirmLogout() {
@@ -927,7 +927,7 @@
     const f = document.getElementById('cmFirst'), l = document.getElementById('cmLast');
     if (f && !f.value && first) f.value = first; if (l && !l.value && last) l.value = last;
   }
-  function openReg(auto, meeting, area) { areaFlow = area || null; if (!nearestOk) ensureNearest(); selMeeting = meeting && meeting.id ? meeting : null; suResets.forEach((r) => r((selMeeting || nearest || {}).id || null)); showMeeting(selMeeting || nearest); applyMemberMode(); prefillGoogleName(); applyRegState(selMeeting || nearest); setGuestStep(false); if (contactModal) openModal(contactModal, auto === true); }
+  function openReg(auto, meeting, area) { areaFlow = area || null; refreshLabel(); if (!nearestOk) ensureNearest(); selMeeting = meeting && meeting.id ? meeting : null; suResets.forEach((r) => r((selMeeting || nearest || {}).id || null)); showMeeting(selMeeting || nearest); applyMemberMode(); prefillGoogleName(); applyRegState(selMeeting || nearest); setGuestStep(false); if (contactModal) openModal(contactModal, auto === true); }
   /* הרשמה כשהכניסה עם גוגל פעילה: מי שלא מחובר עובר קודם לכניסה עם גוגל (בלי פופאפ); אחרי הכניסה נפתח פופאפ ההרשמה של המפגש שנבחר:
      משתתף מקושר: הרשמה בלחיצה; בלי משתתף מקושר: הזנת פרטים, והכפתור יוצר משתתף, מחבר את החשבון ונרשם באותו צעד (harpatka_me_join) */
   window.HarpatkaRegister = { open: (auto, meeting) => {
@@ -964,7 +964,9 @@
   };
   /* טקסט כפתור השליחה: "הרשמה" כשיש מפגש להירשם אליו, "השארת פרטים" כשאין (כמו הכפתור הראשי בעמוד) */
   let submitLabel = 'שמירת מקום';
-  const setSubmitLabel = (m) => { submitLabel = m ? 'שמירת מקום' : 'השארת פרטים'; document.querySelectorAll('[data-su="btn"]:not(.saved):not(:disabled)').forEach((b) => { b.textContent = guestStep ? 'המשך' : submitLabel; }); };
+  const curLabel = () => areaFlow ? 'כניסה לאזור האישי' : submitLabel;   // נפתח מהאזור האישי: הכפתור "כניסה לאזור האישי", בכחול (html.reg-area)
+  const refreshLabel = () => { document.documentElement.classList.toggle('reg-area', !!areaFlow); document.querySelectorAll('[data-su="btn"]:not(.saved):not(:disabled)').forEach((b) => { b.textContent = guestStep ? 'המשך' : curLabel(); }); };
+  const setSubmitLabel = (m) => { submitLabel = m ? 'שמירת מקום' : 'השארת פרטים'; refreshLabel(); };
   let defMeetingName = '';   // שם ברירת המחדל למפגש (harpatka_public_settings)
   const showMeeting = (m) => {
     setSubmitLabel(m);
