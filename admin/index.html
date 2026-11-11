@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261111e" />
+  <link rel="stylesheet" href="admin.css?v=20261111f" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -3133,7 +3133,7 @@
       return;
     }
     if (to === 'later') {   // תשלום בהמשך: תמיד סוגרים את מחיר הכרטיס של המשתתף למפגש, והמנהל קובע כמה (ברירת מחדל: המחיר הנוכחי). נשאר גם אם המדרגות עולות
-      const m0 = meetOf(mid), cur = m0 ? Math.round(ticketOf(pid, mid) || defaultPrice(m0)) : 0, dlg = $('#lockDlg'), inp = $('#lockPrice');
+      const m0 = meetOf(mid), cur = m0 ? Math.round(defaultPrice(m0)) : 0, dlg = $('#lockDlg'), inp = $('#lockPrice');
       $('#lockText').innerHTML = nameB(partOf(pid) ? partOf(pid).name : '') + ' · ' + esc(m0 ? meetingLabel(m0, true) : '') + '<br>המחיר שתקבעו הוא מחיר הכרטיס של המשתתף למפגש הזה, וישאר כך גם אם המחיר יעלה לפני התשלום.';
       inp.value = cur > 0 ? String(cur) : ''; $('#lockErr').hidden = true;
       const go = () => { const v = Math.round(Number(inp.value)); if (!(v > 0)) { $('#lockErr').hidden = false; return; } dlg.close(); setPayLater(true, v).then(closePayCard); };
@@ -3787,7 +3787,7 @@
         (!on && sheet.id ? UI.tag('הוספה למפגש', 'ptag none', { 'data-mp': m.id, role: 'button', tabindex: 0, title: 'לא משויך למפגש. לחיצה: הוספה למפגש' }) : '<button type="button" class="pay ' + (on ? (st || (miss ? 'missed' : 'nolabel')) : 'none') + '" data-mp="' + m.id + '" title="' + (on ? (st ? 'שינוי תגית' : 'הוספת תגית') : 'לא משויך למפגש. לחיצה: שיוך למפגש') + '"' + (on && !st ? ' aria-label="הוספת תגית"' : '') + '>' + (on ? (st ? esc(STATUS_LABEL[st]) : miss ? 'לא הגיע' : icon('tag', 'i14') + ' תגית') : sheet.id ? 'לא משויך' : '') + '</button>') +
         '<div class="mline">' + (sheet.id && !on ? '<span></span>' : sheet.id ? '<button type="button" class="mmoney' + (reportedOf(sheet.id, m.id) ? ' wait' : laterOf(sheet.id, m.id) ? ' later' : dueOf(sheet.id, m.id) > 0 ? '' : allocatedOf(sheet.id, m.id) > 0 ? ' has' : freeL ? ' free' : '') + '" data-mm="' + m.id + '"' + (on ? '' : ' hidden') + ' title="תשלום למפגש">' + payTxt(sheet.id, m.id, freeL) + '</button>' : '') +
         '</div></div>' +
-        (!sheet.id ? '<span></span>' : on ? '<button type="button" class="munl" data-mun="' + m.id + '" aria-label="הסרה מהמפגש" title="הסרה מהמפגש">' + icon('close', 'i16') + '</button>' : '<button type="button" class="munl madd" data-mp="' + m.id + '" aria-label="שיוך למפגש" title="שיוך למפגש">' + icon('plus', 'i16') + '</button>') +
+        (!sheet.id ? '<span></span>' : on ? '<button type="button" class="munl" data-mun="' + m.id + '" aria-label="הסרה מהמפגש" title="הסרה מהמפגש">' + icon('close', 'i16') + '</button>' : '<span></span>') +
       '</div>';
   };
   /* פייג'ר בכרטיס המשתתף: מפגשים (מימין, הכרטיס תמיד נפתח עליו), יתרה, הערות ופרטים. החלקה עם הצמדה, והאטבים והמחוון עוקבים אחרי הגלילה. בלי רשומות היסטוריה: "חזרה" סוגרת את הכרטיס */
