@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261111zg" />
+  <link rel="stylesheet" href="admin.css?v=20261111zh" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -2726,6 +2726,7 @@
     if ($('#cDlg').open) { mailOfferT = setTimeout(mailOfferNext, 500); return; }
     const it = mailOfferQ.shift(), p = partOf(it.pid), m = meetOf(it.mid);
     if (!p || !m) { mailOfferNext(); return; }
+    { const t0 = state.tpls.find((x) => x.system_key === 'confirm'); if (t0 && sentRow(it.pid, it.mid, t0.id)) { mailOfferNext(); return; } }   // כבר סומן שנשלח אליו: בלי פופאפ
     let st = ''; try { st = await api('rpc/harpatka_close_payment_mail', { method: 'POST', body: { p_pid: it.pid, p_mid: it.mid, p_dry: true }, ui: false }); } catch (e) { console.error(e); }
     const nopay = noPayOf(p, linkOf(it.pid, it.mid)), hasPhone = !!String(p.phone || '').trim(), tpl = state.tpls.find((x) => x.system_key === 'confirm');
     const after = () => $('#cDlg').addEventListener('close', () => setTimeout(mailOfferNext, 350), { once: true });
@@ -3160,7 +3161,7 @@
       const m0 = meetOf(mid), cur = m0 ? Math.round(defaultPrice(m0)) : 0, dlg = $('#lockDlg'), inp = $('#lockPrice');
       $('#lockText').innerHTML = nameB(partOf(pid) ? partOf(pid).name : '') + ' · ' + esc(m0 ? meetingLabel(m0, true) : '') + '<br>המחיר שתקבעו הוא מחיר הכרטיס של המשתתף למפגש הזה, וישאר כך גם אם המחיר יעלה לפני התשלום.';
       inp.value = cur > 0 ? String(cur) : ''; $('#lockErr').hidden = true;
-      const go = () => { const v = Math.round(Number(inp.value)); if (!(v > 0)) { $('#lockErr').hidden = false; return; } dlg.close(); setPayLater(true, v).then(closePayCard); };
+      const go = () => { const v = Math.round(Number(inp.value)); if (!(v > 0)) { $('#lockErr').hidden = false; return; } dlg.close(); setPayLater(true, v).then(() => { offerCloseMail(sheet && sheet.id, mid); closePayCard(); }); };
       $('#lockYes').onclick = go; inp.onkeydown = (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); go(); } };
       dlg.showModal();
       return;
