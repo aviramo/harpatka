@@ -49,7 +49,7 @@
             </div></div>
             <button data-su="btn" type="submit" class="btn-primary rounded-full px-5 md:px-8 py-3.5 text-[1.2rem] whitespace-nowrap w-full mt-4">שמירת מקום</button>
             <div class="su-or" data-su="or">או</div>
-            <a href="__BASE__me/?login=1&back=reg" class="su-glink" data-su="glink">כניסה עם גוגל</a><button type="button" class="su-gback" data-su="gback">חזרה</button>
+            <a href="__BASE__me/?login=1&back=reg" class="su-glink" data-su="glink">כניסה עם גוגל</a><div class="su-gbrow"><span class="su-gph"></span><button type="button" class="su-gback" data-su="gback">חזרה לתיקון</button></div>
             <div data-su="fail" class="su-err mt-3 text-center" role="alert"></div>
             <div class="su-fold su-after shut" data-su="after"><div>
               <p class="su-paynote">המקום נשמר באופן זמני והוא יישמר קבוע רק לאחר תשלום</p>
@@ -526,6 +526,7 @@
   /* שלב הטלפון לאורח (reg-gphone): הרשמה לא מחייבת גוגל. קודם טלפון בלבד, ובאותו שלב אפשר להיכנס עם גוגל (אם כבר חיברו חשבון). "המשך" פותח את שאר השדות; אזור אישי כן דורש גוגל */
   let guestStep = false;
   function setGuestStep(on, cont) {
+    if (cont) { const tl = document.querySelector('#contactModal input[type="tel"]'), v = tl ? tl.value.trim() : ''; document.querySelectorAll('.su-gph').forEach((e) => { e.innerHTML = 'מספר הטלפון להרשמה: <bdi dir="ltr">' + String(v).replace(/[<>&]/g, '') + '</bdi>'; }); }   // שלב הפרטים: הטלפון שהוזן מוצג ליד "חזרה" ואפשר לתקן
     guestStep = !!on; document.documentElement.classList.toggle('reg-gphone', guestStep); document.documentElement.classList.toggle('reg-gdet', !guestStep && !!cont);   /* reg-gdet: אורח אחרי "המשך": מוצג כפתור חזרה לשלב הטלפון */
     document.querySelectorAll('[data-su="btn"]:not(.saved):not(:disabled)').forEach((b) => { b.textContent = curLabel(); });
   }
