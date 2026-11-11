@@ -292,7 +292,7 @@
         if (!normPhone(ph)) { PersonForm.setErr(root, 'phone', PersonForm.MSG.phone); return; }
         btn.disabled = true; const relB = HRT.busy(btn);
         try {
-          const mm = selMeeting || nearest;
+          const mm = areaFlow ? null : (selMeeting || nearest);
           const r = await meRpc('harpatka_me_phone', Object.assign({ p_phone: ph }, mm && mm.id ? { p_meeting: mm.id } : {}, PAID ? { p_src: 'p' } : {}));
           const st = r && r.status;
           if (st === 'invalid_phone') PersonForm.setErr(root, 'phone', PersonForm.MSG.phone);
@@ -303,6 +303,7 @@
             mePending = null;
             for (let i = 0; i < 6 && !meInfo; i++) { await meLoader.now(); if (!meInfo) await new Promise((rs) => setTimeout(rs, 450)); }   // meLoader.now מסתיים מיד כשטעינה אחרת כבר רצה; מנסים עד שהמשתתף נטען
             if (!meInfo) q('fail').textContent = 'משהו השתבש, אפשר לנסות שוב';
+            else if (areaFlow) { const af = areaFlow; areaFlow = null; applyMemberMode(); try { closeModal(contactModal); } catch (x) {} setTimeout(() => openMeArea(af.search || ''), 450); }   // הטלפון חובר: עכשיו נפתח האזור האישי
             else {   // הפופאפ מחליף וריאציה: חסרים פרטים: השלמת פרטים; יש פרטים: מצב "נרשמתם" עם התשלום (ההרשמה כבר בוצעה בשרת)
               applyMemberMode(); applyRegState(mm);
               if (!meInfo.complete) { const f = document.getElementById('cmFirst'); if (f) try { f.focus({ preventScroll: true }); } catch (x) {} }
@@ -517,6 +518,7 @@
     guestStep = !!on; document.documentElement.classList.toggle('reg-gphone', guestStep); document.documentElement.classList.toggle('reg-gdet', !guestStep && !!cont);   /* reg-gdet: אורח אחרי "המשך": מוצג כפתור חזרה לשלב הטלפון */
     document.querySelectorAll('[data-su="btn"]:not(.saved):not(:disabled)').forEach((b) => { b.textContent = guestStep ? 'המשך' : submitLabel; });
   }
+  let areaFlow = null;   // כניסה לאזור האישי בלי טלפון מקושר: פופאפ ההרשמה במצב טלפון בלבד (בלי שיוך למפגש), ורק אחריו נפתח האזור האישי
   let phoneMode = false;   // מחוברים עם גוגל, אין משתתף מקושר: פופאפ ההרשמה במצב הזנת טלפון בלבד
   let createdHere = false;   // המשתתף נוצר בהרשמה הזו (בשלב הטלפון): RegistrationValue נשלח כשהגיל ידוע, בהשלמת הפרטים
   function setPhoneMode(on) {
@@ -850,6 +852,10 @@
       if (hasSess()) { sessionReady().then((ok) => { if (ok) openMeArea(search, preload); else loginPopup('', true); }); return; }   // יש חיבור שמור: קודם מחכים לשחזור שלו
       loginPopup('', true); return;
     }
+    if (!AS && !preload && !meInfo) {   // מחובר עם גוגל, עוד בלי טלפון מקושר: קודם פופאפ הטלפון מלמעלה (כמו בהרשמה), ורק אחריו האזור האישי
+      Promise.resolve(restoreDone ? null : restoreP).then(() => meInfo ? openMeArea(search, preload) : openReg(false, null, { search }));
+      return;
+    }
     const lm = document.getElementById('logoutModal'); if (!preload && lm && !lm.hidden) { try { closeModal(lm); } catch (e) {} }
     if (!meSheet) {
       const shell = sheetShell('האזור האישי', '', () => closeMeSheet()); meSheet = shell.el; const p = shell.p;
@@ -917,7 +923,7 @@
     const f = document.getElementById('cmFirst'), l = document.getElementById('cmLast');
     if (f && !f.value && first) f.value = first; if (l && !l.value && last) l.value = last;
   }
-  function openReg(auto, meeting) { if (!nearestOk) ensureNearest(); selMeeting = meeting && meeting.id ? meeting : null; suResets.forEach((r) => r((selMeeting || nearest || {}).id || null)); showMeeting(selMeeting || nearest); applyMemberMode(); prefillGoogleName(); applyRegState(selMeeting || nearest); setGuestStep(false); if (contactModal) openModal(contactModal, auto === true); }
+  function openReg(auto, meeting, area) { areaFlow = area || null; if (!nearestOk) ensureNearest(); selMeeting = meeting && meeting.id ? meeting : null; suResets.forEach((r) => r((selMeeting || nearest || {}).id || null)); showMeeting(selMeeting || nearest); applyMemberMode(); prefillGoogleName(); applyRegState(selMeeting || nearest); setGuestStep(false); if (contactModal) openModal(contactModal, auto === true); }
   /* הרשמה כשהכניסה עם גוגל פעילה: מי שלא מחובר עובר קודם לכניסה עם גוגל (בלי פופאפ); אחרי הכניסה נפתח פופאפ ההרשמה של המפגש שנבחר:
      משתתף מקושר: הרשמה בלחיצה; בלי משתתף מקושר: הזנת פרטים, והכפתור יוצר משתתף, מחבר את החשבון ונרשם באותו צעד (harpatka_me_join) */
   window.HarpatkaRegister = { open: (auto, meeting) => {
