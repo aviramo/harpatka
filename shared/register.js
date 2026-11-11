@@ -284,7 +284,18 @@
       if (guestStep) {   // אורח: שלב הטלפון (בלי חובת גוגל). ממשיכים לטופס המלא עם הטלפון שהוזן
         const gt = root.querySelector('input[type="tel"]');
         if (!normPhone((gt || {}).value || '')) { PersonForm.setErr(root, 'phone', PersonForm.MSG.phone); return; }
-        setGuestStep(false, true); const f1 = document.getElementById('cmFirst'); if (f1) try { kbFocus(f1); } catch (x) {}
+        /* הטלפון מזוהה כמשתתף קיים עם פרטים מלאים: נרשם למפגש בלי למלא פרטים. אחרת ממשיכים לשאר השדות */
+        btn.disabled = true; const relG = HRT.busy(btn); let gr = null;
+        try {
+          const res = await fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_signup_phone', { method: 'POST', headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify(Object.assign({ p_phone: gt.value }, selMeeting && selMeeting.id ? { p_meeting: selMeeting.id } : {}, PAID ? { p_src: 'p' } : {})) });
+          gr = res.ok ? await res.json() : null;
+        } catch (er) { gr = null; }
+        relG(); btn.disabled = false;
+        const gs = gr && gr.status;
+        if (gs === 'invalid_phone') { PersonForm.setErr(root, 'phone', PersonForm.MSG.phone); return; }
+        if (gs === 'created' || gs === 'exists') { const age0 = gr.age != null ? Number(gr.age) : null; suRoots.forEach((f) => f(age0 == null ? !!(selMeeting || nearest) : (ageOk(age0) && !!(selMeeting || nearest)))); setGuestStep(false); return; }
+        setGuestStep(false, true); const f1 = document.getElementById('cmFirst'); if (f1) try { kbFocus(f1); } catch (x) {}   // לא מזוהה (או חסרים פרטים) או שהבדיקה נכשלה: שאר השדות
         return;
       }
       if (phoneMode) {   // מחוברים עם גוגל, אין משתתף מקושר: רק טלפון. השרת מחבר את החשבון למשתתף עם הטלפון הזה (או יוצר משתתף עם הטלפון בלבד) ורושם למפגש שנבחר
@@ -516,7 +527,7 @@
   let guestStep = false;
   function setGuestStep(on, cont) {
     guestStep = !!on; document.documentElement.classList.toggle('reg-gphone', guestStep); document.documentElement.classList.toggle('reg-gdet', !guestStep && !!cont);   /* reg-gdet: אורח אחרי "המשך": מוצג כפתור חזרה לשלב הטלפון */
-    document.querySelectorAll('[data-su="btn"]:not(.saved):not(:disabled)').forEach((b) => { b.textContent = guestStep ? 'המשך' : curLabel(); });
+    document.querySelectorAll('[data-su="btn"]:not(.saved):not(:disabled)').forEach((b) => { b.textContent = curLabel(); });
   }
   let areaFlow = null;   // כניסה לאזור האישי בלי טלפון מקושר: פופאפ ההרשמה במצב טלפון בלבד (בלי שיוך למפגש), ורק אחריו נפתח האזור האישי
   let phoneMode = false;   // מחוברים עם גוגל, אין משתתף מקושר: פופאפ ההרשמה במצב הזנת טלפון בלבד
@@ -927,7 +938,7 @@
     const f = document.getElementById('cmFirst'), l = document.getElementById('cmLast');
     if (f && !f.value && first) f.value = first; if (l && !l.value && last) l.value = last;
   }
-  function openReg(auto, meeting, area) { areaFlow = area || null; refreshLabel(); if (!nearestOk) ensureNearest(); selMeeting = meeting && meeting.id ? meeting : null; suResets.forEach((r) => r((selMeeting || nearest || {}).id || null)); showMeeting(selMeeting || nearest); applyMemberMode(); prefillGoogleName(); applyRegState(selMeeting || nearest); setGuestStep(false); if (contactModal) openModal(contactModal, auto === true); }
+  function openReg(auto, meeting, area) { areaFlow = area || null; refreshLabel(); if (!nearestOk) ensureNearest(); selMeeting = meeting && meeting.id ? meeting : null; suResets.forEach((r) => r((selMeeting || nearest || {}).id || null)); showMeeting(selMeeting || nearest); applyMemberMode(); prefillGoogleName(); applyRegState(selMeeting || nearest); { const hc = document.documentElement.classList; setGuestStep(!AS && !loggedIn() && !areaFlow && !phoneMode && !hc.contains('reg-member') && !hc.contains('reg-details') && !hc.contains('reg-phone')); } if (contactModal) openModal(contactModal, auto === true); }
   /* הרשמה כשהכניסה עם גוגל פעילה: מי שלא מחובר עובר קודם לכניסה עם גוגל (בלי פופאפ); אחרי הכניסה נפתח פופאפ ההרשמה של המפגש שנבחר:
      משתתף מקושר: הרשמה בלחיצה; בלי משתתף מקושר: הזנת פרטים, והכפתור יוצר משתתף, מחבר את החשבון ונרשם באותו צעד (harpatka_me_join) */
   window.HarpatkaRegister = { open: (auto, meeting) => {
@@ -965,7 +976,7 @@
   /* טקסט כפתור השליחה: "הרשמה" כשיש מפגש להירשם אליו, "השארת פרטים" כשאין (כמו הכפתור הראשי בעמוד) */
   let submitLabel = 'שמירת מקום';
   const curLabel = () => areaFlow ? 'כניסה לאזור האישי' : submitLabel;   // נפתח מהאזור האישי: הכפתור "כניסה לאזור האישי", בכחול (html.reg-area)
-  const refreshLabel = () => { document.documentElement.classList.toggle('reg-area', !!areaFlow); document.querySelectorAll('[data-su="btn"]:not(.saved):not(:disabled)').forEach((b) => { b.textContent = guestStep ? 'המשך' : curLabel(); }); };
+  const refreshLabel = () => { document.documentElement.classList.toggle('reg-area', !!areaFlow); document.querySelectorAll('[data-su="btn"]:not(.saved):not(:disabled)').forEach((b) => { b.textContent = curLabel(); }); };
   const setSubmitLabel = (m) => { submitLabel = m ? 'שמירת מקום' : 'השארת פרטים'; refreshLabel(); };
   let defMeetingName = '';   // שם ברירת המחדל למפגש (harpatka_public_settings)
   const showMeeting = (m) => {
