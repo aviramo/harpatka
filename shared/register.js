@@ -707,6 +707,7 @@
       const pp = d.participant, ph = String(pp.phone || '');
       meInfo = { first: String(pp.first_name || '').trim(), last: String(pp.last_name || '').trim(), age: pp.age, gender: pp.gender, phone: ph.indexOf('+972') === 0 ? '0' + ph.slice(4) : ph, meetings: d.meetings || [], credit: Number(d.balance) || 0 };   // credit: הקרדיט של המשתתף (אפשר לשלם ממנו על מפגש)
       meInfo.complete = meInfo.first.length >= 2 && meInfo.last.length >= 2 && meInfo.age != null && !!meInfo.gender;
+      guestClear();
       applyMemberMode(); applyRegState(selMeeting || nearest);
       if (!AS) try { localStorage.setItem('harpatka_me_name', meDisplay()); } catch (e) {}
       ensureMeChannel();
@@ -767,7 +768,8 @@
   /* מצב מפגש של המשתתף המחובר (להצגה בכפתור של כרטיסי המפגשים בדף הבית) */
   /* אורח ששמר מקום (הרשמה בטופס, בלי חיבור): מזהה המפגש והמחיר נשמרים בדפדפן, והכרטיס בדף הבית מציג "שמרתם מקום · תשלום" במקום "שמירת מקום" */
   const GS_KEY = 'harpatka_guest_saved';
-  const guestRead = () => { try { return JSON.parse(localStorage.getItem(GS_KEY) || '{}') || {}; } catch (e) { return {}; } };
+  const guestRead = () => { try { const g = JSON.parse(localStorage.getItem(GS_KEY) || '{}') || {}, lim = Date.now() - 45 * 864e5; Object.keys(g).forEach((k) => { if (!g[k] || g[k].t < lim) delete g[k]; }); return g; } catch (e) { return {}; } };   // רשומות ישנות (מעל 45 יום) נמחקות
+  const guestClear = () => { try { localStorage.removeItem(GS_KEY); } catch (e) {} };   // חשבון מחובר הוא מקור האמת: הזיכרון של הדפדפן נמחק
   function guestSaveMark(m) {
     const left = dayN(m.date) - dayN(todayIL); let price = 0; try { price = priceFor(left, m.tiers) || 0; } catch (e) {}
     const g = guestRead(); g[m.id] = { price, t: Date.now() }; try { localStorage.setItem(GS_KEY, JSON.stringify(g)); } catch (e) {}
