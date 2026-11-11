@@ -20,3 +20,17 @@ begin
     execute d;
   end if;
 end $do$;
+-- קרדיט כספי לא כולל כרטיסייה: הפקדה עם pkg_n והקצאה מכרטיסייה (pkg) לא נכנסות לסכום (המפגשים נספרים בנפרד ב-sessions)
+do $do$
+declare d text; f text;
+begin
+  foreach f in array array['harpatka_me(uuid)', 'harpatka_me_pay_credit(uuid,uuid)'] loop
+    begin
+      d := pg_get_functiondef(('__S__.' || f)::regprocedure);
+      if position('into bal from __S__.harpatka_payments where participant_id = pid;' in d) > 0 then
+        d := replace(d, 'into bal from __S__.harpatka_payments where participant_id = pid;', 'into bal from __S__.harpatka_payments where participant_id = pid and not coalesce(pkg, false) and not (kind = ''deposit'' and coalesce(pkg_n, 0) > 0);');
+        execute d;
+      end if;
+    exception when undefined_function then null; end;
+  end loop;
+end $do$;
