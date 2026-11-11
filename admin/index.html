@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css?v=20261111h" />
+  <link rel="stylesheet" href="admin.css?v=20261111i" />
 </head>
 <body class="locked">
   <div class="gate" id="gate" hidden>
@@ -160,6 +160,7 @@
           <button class="btn success paygo" id="depSave" type="button">תשלום</button>
         </div>
         <div class="pquick" id="depQuick"></div>
+        <div class="pquick" id="depPasses" hidden></div>
         <label class="field payfield" id="depMethodSel" hidden><span>דרך העברה</span><select form="pForm" name="pay_depm"><option value="paybox">פייבוקס</option><option value="bit">ביט</option><option value="cash">מזומן</option><option value="bank">בנק</option><option value="other">אחר</option></select></label>
         <div class="payhint" id="depPkgHint"></div>
         <label class="field" id="depOtherField" hidden><span>פירוט קצר</span><input form="pForm" data-hint name="pay_depn" maxlength="60" autocomplete="off" placeholder="למשל: פייפאל, צ׳ק" /></label>
@@ -3225,13 +3226,21 @@
   }
   function openDeposit(mid) {
     const f = pForm, pid = sheet && sheet.id, m = mid ? meetOf(mid) : null;
-    sheet.depMid = m ? m.id : null; sheet.depCr = false; sheet.depTyped = false; sheet.allocEdit = false;   // depCr: תשלום מהיתרה (בלי קבלת כסף חדש)
+    sheet.depMid = m ? m.id : null; sheet.depPk = false; sheet.depCr = false; sheet.depTyped = false; sheet.allocEdit = false;   // depCr: תשלום מהיתרה (בלי קבלת כסף חדש)
     f.pay_pkg.value = ''; $('#depPkgHint').textContent = ''; f.pay_depm.value = 'paybox'; f.pay_depn.value = ''; $('#depOtherField').hidden = true;
     { const al = m ? Math.max(0, allocatedOf(pid, m.id)) : 0, pr0 = m ? suggestPrice(pid, m) : 0; f.pay_dep.value = !m ? '' : al <= 0 ? pr0 : al < pr0 ? pr0 - al : ''; }   // מפגש ששולם חלקית: המוצע הוא היתרה
     { const pp = partOf(pid), lk = m && linkOf(pid, m.id), np = !!(m && pp && noPayOf(pp, lk)); $('#depFields').hidden = np; $('#depFree').hidden = !np; }
     { f.pay_dep.closest('label').querySelector('span').textContent = 'סכום'; $('#depSave').textContent = 'תשלום'; $('#depAddTitle').hidden = !m; paintDepLines(); }
     $('#depPkgLbl').textContent = m ? 'על כמה מפגשים' : 'חבילה'; f.pay_pkg.options[0].textContent = m ? '1' : '—';
     $('#depQuick').innerHTML = (() => { const q = quickPrices(m), l = m && linkOf(pid, m.id), r = l && l.pay_reported_at && Number(l.pay_reported_amount) > 0 ? Number(l.pay_reported_amount) : 0; return r && !q.includes(r) ? [r].concat(q) : q; })().map((v) => '<button type="button" data-q="' + v + '">' + v + ' ₪</button>').join('');
+    /* כרטיסיות שהוגדרו בסוג המפגש (בקבלת תשלום מתוך מפגש: של סוג המפגש; בלי מפגש: של כל הסוגים): בחירה ממלאת סכום ומספר מפגשים, והתשלום נרשם כהפקדה עם pkg_n (חבילה) */
+    { const ts = (m && typeById(m.type_id) ? [typeById(m.type_id)] : state.mtypes).filter((t) => Array.isArray(t.passes) && t.passes.length), box = $('#depPasses');
+      box.hidden = !ts.length; sheet.depPass = null;
+      box.innerHTML = ts.flatMap((t) => t.passes.map((x) => '<button type="button" data-pn="' + x.n + '" data-pp="' + x.price + '" data-pt="' + t.id + '">כרטיסייה ' + x.n + ' מפגשים · ' + nfm(x.price) + ' ₪' + (state.mtypes.length > 1 && !m ? ' · ' + esc(t.name || '') : '') + '</button>')).join('');
+      box.onclick = (e) => { const b = e.target.closest('[data-pn]'); if (!b) return; const on = !b.classList.contains('on'); box.querySelectorAll('.on').forEach((x) => x.classList.remove('on'));
+        if (on) { b.classList.add('on'); sheet.depPass = { n: Number(b.dataset.pn), type: b.dataset.pt }; f.pay_dep.value = b.dataset.pp; const o = [...f.pay_pkg.options].find((x) => Number(x.value) === sheet.depPass.n); if (!o) f.pay_pkg.add(new Option(String(sheet.depPass.n), String(sheet.depPass.n))); f.pay_pkg.value = String(sheet.depPass.n); }
+        else { sheet.depPass = null; f.pay_pkg.value = ''; }
+        sheet.depTyped = true; paintPkg(); syncDepSave(); }; }
     $('#depQuick').onclick = (e) => { const b = e.target.closest('[data-q]'); if (b) { f.pay_dep.value = b.dataset.q; paintPkg(); } };
     f.pay_depm.innerHTML = payMethodOpts() + '<option value="other">אחר</option>'; f.pay_depm.value = state.payMethods.length ? state.payMethods[0].key : 'other';
     const isFree = () => { const pp = partOf(pid), lk = m && linkOf(pid, m.id); return !!(m && pp && lk && noPayOf(pp, lk)); };
@@ -3253,7 +3262,7 @@
       $('#depQuick').hidden = false;
       if (cr0) {   // יש יתרה: קודם כל משתמשים בה (אפשר להקצות רק חלק ממנה); שאר דרכי התשלום נפתחות כשהיתרה נגמרת
         sheet.depCr = !free;
-        $('#depMethods').innerHTML = ''; $('#depMSel').innerHTML = '<option value="__cr">מהיתרה ₪' + nfm(crAvail()) + '</option>'; $('#depMSel').value = '__cr';   // דרך התשלום: רשימה נפתחת בין הסכום לכפתור
+        $('#depMethods').innerHTML = ''; $('#depMSel').innerHTML = '<option value="__cr">מהיתרה ₪' + nfm(crAvail()) + '</option>' + (pkgLeft(pid) > 0 && pkgUnit(pid) > 0 && crAvail() >= pkgUnit(pid) ? '<option value="__pk">מהכרטיסייה (נשארו ' + pkgLeft(pid) + ' מפגשים)</option>' : ''); $('#depMSel').value = sheet.depPk ? '__pk' : '__cr';   // דרך התשלום: רשימה נפתחת בין הסכום לכפתור
         pkgF.hidden = true; $('#depOtherField').hidden = true;
         { const cv = parseFloat(f.pay_dep.value); if (!free && (!(cv > 0) || (cv > crAvail() + 0.001 && !sheet.depTyped))) f.pay_dep.value = Math.min(needNow(), crAvail()); }   // בתשלום מהיתרה הסכום המוצע לא עולה על היתרה (גם אם המחיר או הסכום שדווח גבוהים ממנה)
         f.pay_dep.max = String(crAvail()); return;
@@ -3262,7 +3271,7 @@
       $('#depMethods').innerHTML = ''; $('#depMSel').innerHTML = payMethodOpts(); $('#depMSel').value = f.pay_depm.value;
       pkgF.hidden = false; $('#depOtherField').hidden = free || f.pay_depm.value !== 'other';
     };
-    $('#depMSel').onchange = () => { const v = $('#depMSel').value; if (v === '__cr') return; f.pay_depm.value = v; f.pay_depm.onchange(); };
+    $('#depMSel').onchange = () => { const v = $('#depMSel').value; sheet.depPk = v === '__pk'; if (v === '__pk') { f.pay_dep.value = pkgUnit(pid); sheet.depTyped = true; syncDepSave(); return; } if (v === '__cr') return; f.pay_depm.value = v; f.pay_depm.onchange(); };
     f.pay_depm.onchange = () => { $('#depOtherField').hidden = f.pay_depm.value !== 'other'; paintMeth(); if (f.pay_depm.value === 'other') f.pay_depn.focus(); };
     const switchLocked = async (md) => {
       sheet.depLock = Date.now() + 60000;   // נועל ציור מחדש מהזמן אמת עד שהמעבר מסתיים
@@ -3389,14 +3398,14 @@
       const use = Math.min(amt, Math.max(0, creditOf(pid)));
       if (amt > Math.max(0, creditOf(pid)) + 0.001) { toast('אין מספיק יתרה: היתרה ₪' + nfm(Math.max(0, creditOf(pid)))); return; }
       if (!(use > 0)) { toast('אין יתרה לשימוש'); return; }
-      try { await addPayRecord(pid, sheet.depMid, 'payment', use, null, null, true, null, null, dueMeta); setDue(sheet.depMid); toast('שולם ₪' + nfm(use) + ' מהיתרה'); sheet.depCr = false; payDone(); } catch (err) { fail(err); }
+      try { await addPayRecord(pid, sheet.depMid, 'payment', use, null, null, true, null, null, sheet.depPk ? Object.assign({ pkg: true }, dueMeta || {}) : dueMeta); setDue(sheet.depMid); toast(sheet.depPk ? 'שולם מהכרטיסייה (נשארו ' + Math.max(0, pkgLeft(pid)) + ' מפגשים)' : 'שולם ₪' + nfm(use) + ' מהיתרה'); sheet.depPk = false; sheet.depCr = false; payDone(); } catch (err) { fail(err); }
       return;
     }
     const p = partOf(pid), pr = p && channelOf(p);
     /* עמלה לשיווק ממומן: על התשלום הראשון של המשתתף (הפקדה או תשלום ישיר). דרך ההגעה גם כשהיא נגזרת מהקוד בקישור, ולא רק כשנבחרה ידנית */
     const isFirst = !state.payments.some((x) => x.participant_id === pid && (x.kind === 'deposit' || (x.kind === 'payment' && !x.from_credit && x.meeting_id)));
     const payCm = pr && (isFirst || commOnEvery(pr)), cm = payCm ? calcCommission(pr, amt) : null, method = f.pay_depm.value, mnote = method === 'other' ? f.pay_depn.value.trim().slice(0, 60) : '';
-    const pk = parseInt(f.pay_pkg.value, 10), pkgMeta = pk >= 2 ? { pkg_n: pk } : null;
+    const pk = parseInt(f.pay_pkg.value, 10), pkgMeta = pk >= 2 ? Object.assign({ pkg_n: pk }, sheet.depPass && sheet.depPass.n === pk ? { pass_type_id: sheet.depPass.type } : {}) : null;
     try {
       if (sheet.depMid && !pkgMeta) {   // תשלום ישיר למפגש בדרך העברה (בלי הפקדה ליתרה): נרשם כהקצאה למפגש ונכנס להכנסות, והיתרה לא משתנה
         const mid0 = sheet.depMid, l0 = linkOf(pid, mid0);
@@ -4161,10 +4170,22 @@
       '<button type="button" class="mtpladd" id="' + I('TplAdd') + '">הוספת הודעה</button>' +
       '<div class="field"><span class="mtl">מחירים' + (isType ? '' : '<button type="button" class="lnk" id="' + I('TierOwn') + '" hidden>שינוי למפגש הזה</button><button type="button" class="lnk" id="' + I('TierReset') + '" hidden>כמו בסוג המפגש</button>') + '</span>' +
         (isType ? '' : '<div class="mtinh" id="' + I('TierInh') + '" hidden><span id="' + I('TierInhTxt') + '"></span></div>') +
-        '<div class="mfted" id="' + I('TierEd') + '"><div class="mt2" id="' + I('TierList') + '"></div><div class="mt2add"><button type="button" id="' + I('TierAdd') + '">הוספת מדרגה</button></div></div></div>';
+        '<div class="mfted" id="' + I('TierEd') + '"><div class="mt2" id="' + I('TierList') + '"></div><div class="mt2add"><button type="button" id="' + I('TierAdd') + '">הוספת מדרגה</button></div></div></div>' +
+      (isType ? '<div class="field"><span class="mtl">כרטיסיות</span><div class="mt2" id="' + I('PassList') + '"></div><div class="mt2add"><button type="button" id="' + I('PassAdd') + '">הוספת כרטיסייה</button></div></div>' : '');
     { const tf = !isType && $('#' + p + 'TypeF'), slot = q('TypeSlot'); if (slot) { if (tf) slot.replaceWith(tf); else slot.remove(); } }   // סוג המפגש באותה שורה עם שם המפגש
-    const F = { te: tierEditor('#' + I('TierList'), '#' + I('TierAdd'), () => F.changed()), img: { url: null, blob: null, objUrl: null, inh: false }, tiersInh: false };
+    const F = { te: tierEditor('#' + I('TierList'), '#' + I('TierAdd'), () => F.changed()), img: { url: null, blob: null, objUrl: null, inh: false }, tiersInh: false, passes: [] };
     const ty = () => (typOf ? typOf() : null);
+    /* כרטיסיות (רק בסוג מפגש): שורות {n מפגשים, price}; נשמרות בעמודה passes */
+    F.paintPasses = () => {
+      const L = q('PassList'); if (!L) return;
+      L.innerHTML = F.passes.map((x, i) => '<div class="mt2row"><span class="mtp"><b>מפגשים</b><input data-pk="n' + i + '" type="number" inputmode="numeric" min="2" max="50" value="' + (x.n || '') + '" aria-label="מספר מפגשים" /></span><span class="mtp"><b>₪</b><input data-pk="p' + i + '" type="number" inputmode="numeric" min="1" max="99999" value="' + (x.price || '') + '" aria-label="מחיר הכרטיסייה" /></span><button type="button" class="medit" data-pdel="' + i + '" aria-label="הסרת כרטיסייה">' + icon('close', 'i16') + '</button></div>').join('');
+    };
+    if (isType) {
+      q('PassList').addEventListener('input', (e) => { const i = e.target.closest('input'); if (!i) return; const k = i.dataset.pk, v = i.value === '' ? '' : Math.round(Number(i.value)); F.passes[Number(k.slice(1))][k[0] === 'n' ? 'n' : 'price'] = v; });
+      q('PassList').addEventListener('change', () => F.changed());
+      q('PassList').addEventListener('click', (e) => { const b = e.target.closest('[data-pdel]'); if (!b) return; F.passes.splice(Number(b.dataset.pdel), 1); F.paintPasses(); F.changed(); });
+      q('PassAdd').addEventListener('click', () => { F.passes.push({ n: 4, price: '' }); F.paintPasses(); const ins = q('PassList').querySelectorAll('input'); if (ins.length) ins[ins.length - 1].focus(); });
+    }
     if (isType) q('Time').dataset.noph = '1';   // בסוג המפגש בלי פלייסהולדר
     dtField(q('Time')); if (!isType) dtField(q('Date'));   // תאריך ושעה: הרכיב האחיד (מיושר לימין, פלייסהולדר של הסוג)
     F.q = q;
@@ -4242,6 +4263,7 @@
       q('Place').value = v('place', s.place || ''); q('City').value = v('city', s.city || ''); F.dMedia = null; q('Dirs').value = v('directions', s.directions || '');
       q('Max').value = v('max_participants', s.max_participants == null ? '' : s.max_participants);
       F.tiersInh = !!t && h.has('price_tiers'); F.te.t = tiersOf(F.tiersInh ? t : s); F.te.render();
+      F.passes = isType ? (Array.isArray(s.passes) ? s.passes.map((x) => ({ n: Number(x.n), price: Number(x.price) })) : []) : []; F.paintPasses();
       if (F.img.objUrl) URL.revokeObjectURL(F.img.objUrl);
       F.img = { url: s.image_url || null, blob: null, objUrl: null, inh: !!t && h.has('image_url') };
       F.tpl.rows = []; F.tpl.ownerId = s.id || null; F.tpl.render();
@@ -4262,6 +4284,7 @@
       take('max_participants', mx, mx === '' ? null : Math.max(1, Math.min(500, parseInt(mx, 10) || 1)), t ? t.max_participants : null);
       if (t && F.tiersInh) { inherit.push('price_tiers'); body.price_tiers = t.price_tiers || null; }
       else { body.price_tiers = F.te.value(); if (!body.price_tiers) return { err: 'מחיר חסר או לא תקין' }; }
+      if (isType) { const ps = F.passes.filter((x) => x.n !== '' || x.price !== ''); if (ps.some((x) => !(Number(x.n) >= 2) || !(Number(x.price) > 0))) return { err: 'בכרטיסייה צריך מספר מפגשים (2 ומעלה) ומחיר' }; body.passes = ps.map((x) => ({ n: Number(x.n), price: Number(x.price) })).sort((a, b) => a.n - b.n); }
       return { body, inherit };
     };
     /* התמונה לשמירה (מעלה תמונה חדשה אם נבחרה): { url, inh } */
@@ -4897,7 +4920,7 @@
   function createType() {
     const src = typeById(state.mtype) || state.mtypes[0] || {};
     tyNew = { name: '' };
-    ['meeting_time', 'place', 'city', 'max_participants', 'directions', 'price_tiers', 'image_url', 'event_open', 'event_msg'].forEach((k) => { if (src[k] != null) tyNew[k] = src[k]; });
+    ['meeting_time', 'place', 'city', 'max_participants', 'directions', 'price_tiers', 'passes', 'image_url', 'event_open', 'event_msg'].forEach((k) => { if (src[k] != null) tyNew[k] = src[k]; });
     tyId = stType = null; tyFormFor = null; setRoot = 'tydet';
     renderSettings(); $('#setDlg').showModal(); showSetView('tydet');   // סוג חדש נפתח ישר על הפרטים
     blurIn('#setDlg');
