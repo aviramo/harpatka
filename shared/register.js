@@ -228,7 +228,6 @@
       root.querySelectorAll('.su-fold:not(.su-after)').forEach(f => f.classList.add('shut'));
       btn.disabled = true; btn.classList.add('swap');
       setTimeout(() => { if (!saved) return; btn.textContent = 'הפרטים נשלחו'; btn.classList.remove('swap'); btn.classList.add('saved'); if (payOk) btn.classList.add('gone'); }, 260);   // המקום נשמר: אין צורך בכפתור "נשמר זמנית" (מוסתר); בלי תשלום (מחוץ לטווח) נשאר "הפרטים נשלחו"
-      try { const gm = selMeeting || nearest; if (gm && gm.id && !meInfo) guestSaveMark(gm); } catch (e) {}   // הרשמה כאורח: הכרטיס בדף הבית מציג "שמרתם מקום · תשלום" גם בלי חיבור
       if (payOk) setTimeout(() => { const a = q('after'); if (saved && a) a.classList.remove('shut'); }, 700);
     };
     suRoots.push(showDone);
@@ -707,7 +706,6 @@
       const pp = d.participant, ph = String(pp.phone || '');
       meInfo = { first: String(pp.first_name || '').trim(), last: String(pp.last_name || '').trim(), age: pp.age, gender: pp.gender, phone: ph.indexOf('+972') === 0 ? '0' + ph.slice(4) : ph, meetings: d.meetings || [], credit: Number(d.balance) || 0 };   // credit: הקרדיט של המשתתף (אפשר לשלם ממנו על מפגש)
       meInfo.complete = meInfo.first.length >= 2 && meInfo.last.length >= 2 && meInfo.age != null && !!meInfo.gender;
-      guestClear();
       applyMemberMode(); applyRegState(selMeeting || nearest);
       if (!AS) try { localStorage.setItem('harpatka_me_name', meDisplay()); } catch (e) {}
       ensureMeChannel();
@@ -766,17 +764,7 @@
     openModal(m, true);
   }
   /* מצב מפגש של המשתתף המחובר (להצגה בכפתור של כרטיסי המפגשים בדף הבית) */
-  /* אורח ששמר מקום (הרשמה בטופס, בלי חיבור): מזהה המפגש והמחיר נשמרים בדפדפן, והכרטיס בדף הבית מציג "שמרתם מקום · תשלום" במקום "שמירת מקום" */
-  const GS_KEY = 'harpatka_guest_saved';
-  const guestRead = () => { try { const g = JSON.parse(localStorage.getItem(GS_KEY) || '{}') || {}, lim = Date.now() - 45 * 864e5; Object.keys(g).forEach((k) => { if (!g[k] || g[k].t < lim) delete g[k]; }); return g; } catch (e) { return {}; } };   // רשומות ישנות (מעל 45 יום) נמחקות
-  const guestClear = () => { try { localStorage.removeItem(GS_KEY); } catch (e) {} };   // חשבון מחובר הוא מקור האמת: הזיכרון של הדפדפן נמחק
-  function guestSaveMark(m) {
-    const left = dayN(m.date) - dayN(todayIL); let price = 0; try { price = priceFor(left, m.tiers) || 0; } catch (e) {}
-    const g = guestRead(); g[m.id] = { price, t: Date.now() }; try { localStorage.setItem(GS_KEY, JSON.stringify(g)); } catch (e) {}
-    try { window.dispatchEvent(new Event('harpatka:me')); } catch (e) {}
-  }
-  const guestGet = (mid) => { if (meInfo) return null; const x = guestRead()[mid]; return x ? { id: mid, registered: true, paid: 0, free: false, price: x.price, due: 0 } : null; };
-  const meGet = (mid) => (meInfo && meInfo.complete && (meInfo.meetings || []).find((x) => x.id === mid)) || guestGet(mid) || null;   // בלי פרטים: הכרטיסים בדף הבית לא מציגים "נרשמתם", והלחיצה פותחת את השלמת הפרטים
+  const meGet = (mid) => (meInfo && meInfo.complete && (meInfo.meetings || []).find((x) => x.id === mid)) || null;   // בלי פרטים: הכרטיסים בדף הבית לא מציגים "נרשמתם", והלחיצה פותחת את השלמת הפרטים
   /* חשבון חסום או מנותק (מיד אחרי כניסה עם גוגל, או בזמן אמת כשמנהל חסם): החיבור נמחק מהדפדפן, הדף חוזר למצב אורח, פופאפים פתוחים נסגרים,
      ונפתח מלמעלה פופאפ שמסביר שאי אפשר להתחבר דרך החשבון הזה (במקום שהאזור האישי ייפתח וייסגר מיד). פעם אחת גם כשגם הדף וגם האזור האישי מדווחים */
   /* אחרי יציאה מהחשבון (או חסימה) גוגל לא מחבר שוב לבד: הכניסה הבאה דורשת לחיצה (כך גוגל מבקש מאתרים עם כניסה אוטומטית) */
