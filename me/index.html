@@ -178,7 +178,7 @@
     /* מפגש עתידי שעוד לא נרשמו אליו: אותו רכיב, עם כפתור הרשמה ומחיר המפגש */
     const regRow = (m) => { const price = Number(m.price) || 0; return '<div class="mtg" data-mid="' + m.id + '">' + CFG.meetingBox(m, '<div class="mtfoot"><button type="button" class="btn" data-reg="' + m.id + '">שמירת מקום' + (price ? ' · ' + ils(price) : '') + '</button><div class="msg" data-rm="' + m.id + '"></div></div>') + '</div>'; };
     /* הסדר: המפגשים הקרובים שנרשמו אליהם (שם יש תשלום לטפל בו), אחריהם מפגשים שאפשר להירשם אליהם מהקרוב לרחוק, ובסוף מפגשים שעברו */
-    const rows = upcoming.filter((m) => m.registered).map(rowHtml).concat(upcoming.filter((m) => !m.registered).reverse().map(regRow), ordered.filter((m) => m.registered && !m.future).map(rowHtml));
+    const rows = upcoming.filter((m) => m.registered).map(rowHtml).concat(upcoming.filter((m) => !m.registered).reverse().map(regRow), ordered.filter((m) => m.registered && !m.future && m.attended).map(rowHtml));
     const meetHtml = rows.length ? rows.join('') : '<div class="card"><p class="muted" style="margin:0">עוד לא נקבע מפגש קרוב</p></div>';
 
     const gv = p.gender || '';
