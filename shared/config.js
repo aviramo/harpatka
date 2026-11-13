@@ -42,3 +42,9 @@ const CONFIG = {
     return '<div class="mbox"><div class="mbox-in">' + (m.name ? '<div class="mbox-name">' + esc(m.name) + '</div>' : '') + '<div class="mbox-when">' + esc(when) + '</div>' + (where || n ? '<div class="mbox-where">' + esc(where) + ppl + '</div>' : '') + (extra || '') + '</div></div>';
   },
 };
+
+/* בורר תשלום (13.11.26): כפתור אחד "לתשלום", ובלחיצה הוא מתחלף באנימציה בשתי אפשרויות (פייבוקס וביט). האזנה אחת לכל הדפים, גם לתוכן שנבנה מחדש */
+document.addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('.pc-open'); if (!b) return;
+  var w = b.closest('.paychoose'); if (w) w.classList.add('open');
+});

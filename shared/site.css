@@ -1824,3 +1824,17 @@ html.pg-home #story .ht-clock .ck-h{ animation:ckH 3.6s cubic-bezier(.45,0,.25,1
 :where(.pg-me) .btn.pay.bit, html .su-after a[data-bit] { background: var(--paper) !important; color: var(--olive) !important; border: 2px solid var(--olive); box-shadow: none; }
 :where(.pg-me) .payfold .btn.pay + .btn.pay { margin-top: 8px; }
 .su-paybtns { display: flex; flex-direction: column; gap: .6rem; }
+
+/* בורר תשלום: הכפתור הראשי מתכווץ ונעלם, ושתי האפשרויות נפתחות במקומו */
+.paychoose > .pc-a, .paychoose > .pc-b { display: grid; transition: grid-template-rows .35s ease, opacity .3s ease, visibility 0s linear .35s; }
+.paychoose > .pc-a { grid-template-rows: 1fr; opacity: 1; visibility: visible; }
+.paychoose > .pc-b { grid-template-rows: 0fr; opacity: 0; visibility: hidden; }
+.paychoose > .pc-a > div, .paychoose > .pc-b > div { overflow: hidden; min-height: 0; }
+.paychoose.open > .pc-a { grid-template-rows: 0fr; opacity: 0; visibility: hidden; }
+.paychoose.open > .pc-b { grid-template-rows: 1fr; opacity: 1; visibility: visible; transition-delay: 0s; }
+.paychoose > .pc-b > div { display: flex; gap: .6rem; }
+.paychoose > .pc-b > div > a { flex: 1 1 0; width: auto; min-width: 0; }
+.passbtns.paychoose > .pc-b > div { flex-direction: column; }
+@media (prefers-reduced-motion: reduce) { .paychoose > .pc-a, .paychoose > .pc-b { transition: none; } }
+html .su-after .pc-open { background: var(--olive) !important; }
+:where(.pg-me) .paychoose .btn { width: 100%; }
