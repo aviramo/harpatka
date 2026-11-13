@@ -56,7 +56,10 @@
               <div class="su-payfold" data-su="payfold"><div>
                 <p class="su-crnote" data-su="crnote" hidden></p>
                 <button type="button" data-su="paycredit" class="btn-primary rounded-full px-8 py-4 text-[1.2rem] block text-center w-full" hidden>תשלום מהקרדיט</button>
-                <a href="#" target="_blank" rel="noopener" data-paybox class="btn-primary rounded-full px-8 py-4 text-[1.2rem] block text-center w-full">לתשלום <span data-price>80 ₪</span> בפייבוקס</a>
+                <div class="su-paybtns" data-paywrap>
+                  <a href="#" target="_blank" rel="noopener" data-paybox class="btn-primary rounded-full px-8 py-4 text-[1.2rem] block text-center w-full">לתשלום <span data-price>80 ₪</span> בפייבוקס</a>
+                  <a href="#" target="_blank" rel="noopener" data-bit class="btn-primary rounded-full px-8 py-4 text-[1.2rem] block text-center w-full">לתשלום <span data-price>80 ₪</span> בביט</a>
+                </div>
                 <div class="su-paylinks" data-su="paylinks"><button type="button" class="su-lnk" data-su="other">רוצים להעביר תשלום בדרך אחרת?</button></div>
               </div></div>
             </div></div>
@@ -187,8 +190,8 @@
     });
   });
   /* ===== תשלום בפייבוקס (בהודעת התודה אחרי ההרשמה): קישור לקבוצת התשלום, ו-InitiateCheckout ל-Pixel בלחיצה ===== */
-  document.querySelectorAll('[data-paybox]').forEach(el => {
-    el.setAttribute('href', CONFIG.payboxLink);
+  document.querySelectorAll('[data-paybox], [data-bit]').forEach(el => {
+    el.setAttribute('href', el.hasAttribute('data-bit') ? (CONFIG.bitLink || '#') : CONFIG.payboxLink);
     el.addEventListener('click', () => { try { fbq('track', 'InitiateCheckout'); } catch (e) {} });
   });
   /* ===== הגעה ממודעה בתשלום: הקישור במודעות הוא ?s=p. הסימון נשמר למשך הביקור (גם אם עוברים בין עמודים) ונשלח עם ההרשמה ===== */
@@ -241,7 +244,7 @@
       root.querySelectorAll('.su-fold:not(.su-after)').forEach((f) => f.classList.remove('shut'));
     });
     /* לחיצה על התשלום בפייבוקס = דיווח על תשלום, אוטומטית (בלי קישור "שילמתי"): פייבוקס נפתח בלשונית חדשה, ובמערכת המפגש מסומן "דווח" ומחכה לאימות שלנו */
-    const payA = root.querySelector('[data-paybox]');
+    const payBtns = root.querySelectorAll('[data-paybox], [data-bit]');
     let reporting = false;
     const reportPay = async () => {
       const m = selMeeting || nearest; if (!m || !m.id || reporting) return;
@@ -262,7 +265,7 @@
       } catch (e) { if (ob) ob.fail(); }   // הדיווח נכשל: הכפתור נשאר, ולחיצה נוספת מנסה שוב
       reporting = false;
     };
-    if (payA) payA.addEventListener('click', () => { reportPay(); });
+    payBtns.forEach((b) => b.addEventListener('click', () => { reportPay(); }));
     /* תשלום מהקרדיט: הקרדיט מכסה את מחיר המפגש ומוקצה לו (בלי פייבוקס) */
     const cbtn = q('paycredit'); let crBusy = false;
     if (cbtn) cbtn.addEventListener('click', async () => {
@@ -436,7 +439,7 @@
   const AS = (() => { try { const v = new URLSearchParams(location.search).get('as'); return v && /^[0-9a-f-]{36}$/i.test(v) ? v : null; } catch (e) { return null; } })();
   const TOK_KEY = AS ? 'harpatka_admin_session_v2' : ME_KEY;
   window.__meAs = AS;
-  if (AS && CONFIG.viewOnly) CONFIG.viewOnly('[data-su="btn"], [data-su="paycredit"], [data-paybox], [data-su="other"], .wacard', '#contactModal .pf-input');   // צפייה כמשתתף: לקריאה בלבד
+  if (AS && CONFIG.viewOnly) CONFIG.viewOnly('[data-su="btn"], [data-su="paycredit"], [data-paybox], [data-bit], [data-su="other"], .wacard', '#contactModal .pf-input');   // צפייה כמשתתף: לקריאה בלבד
   /* צפייה כמשתתף בתוך הפופאפ של דף הניהול (iframe): החלקה למטה כשהדף בראשו מורידה את הפופאפ יחד עם האצבע וסוגרת אותו (כמו האזור האישי).
      לא כשפופאפ פנימי פתוח (הרשמה, אזור אישי), כי שם הגלילה של הדף נעולה */
   if (AS && window.parent !== window) {
@@ -516,7 +519,7 @@
     if (!x) {
       if (root.dataset.regState) {   // חזרה למצב הרשמה רגיל
         delete root.dataset.regState; btn.hidden = false; note.innerHTML = NOTE0; if (fold) fold.hidden = false; if (rep) rep.hidden = true;
-        { const pa0 = root.querySelector('[data-paybox]'), cb0 = q('paycredit'), cn0 = q('crnote'); if (pa0) pa0.hidden = false; if (cb0) cb0.hidden = true; if (cn0) cn0.hidden = true; showMeeting(m || selMeeting || nearest); }
+        { const pa0 = root.querySelector('[data-paywrap]'), cb0 = q('paycredit'), cn0 = q('crnote'); if (pa0) pa0.hidden = false; if (cb0) cb0.hidden = true; if (cn0) cn0.hidden = true; showMeeting(m || selMeeting || nearest); }
         if (!btn.classList.contains('saved')) { after.classList.add('shut'); root.querySelectorAll('.su-fold:not(.su-after)').forEach((f) => f.classList.remove('shut')); }
       }
       btn.hidden = noMeet;
@@ -526,8 +529,8 @@
     /* קרדיט (בלשון המשתתף): יש קרדיט = כפתור אחד בלבד, תשלום מהקרדיט עד המקסימום שלו. רק אחרי שהשתמשו בו, ואם נשארה שארית (due) או שאין קרדיט, מופיע הכפתור של פייבוקס */
     const price = Number(x.price) || 0, credit = Math.max(0, Number(meInfo.credit) || 0), rem = (paid && Number(x.due) > 0) ? Number(x.due) : 0;
     const useCr = !paid && !free && credit > 0 && price > 0, crFull = useCr && credit >= price, payAmt = rem || price;
-    const ilsF = (n) => '₪' + Math.round(Math.abs(n)).toLocaleString('he-IL'), payA = root.querySelector('[data-paybox]'), crN = q('crnote'), crB = q('paycredit');
-    if (payA) { payA.hidden = useCr; const pe = payA.querySelector('[data-price]'); if (pe && payAmt > 0) pe.textContent = payAmt + ' ₪'; }
+    const ilsF = (n) => '₪' + Math.round(Math.abs(n)).toLocaleString('he-IL'), payA = root.querySelector('[data-paywrap]'), crN = q('crnote'), crB = q('paycredit');
+    if (payA) { payA.hidden = useCr; if (payAmt > 0) payA.querySelectorAll('[data-price]').forEach((pe) => { pe.textContent = payAmt + ' ₪'; }); }
     if (crB) { crB.hidden = !useCr; crB.disabled = false; crB.textContent = 'תשלום מהקרדיט · ' + ilsF(Math.min(credit, price)); }
     if (crN) { const t = crFull ? 'יש לכם קרדיט ' + ilsF(credit) + '. התשלום יורד מהקרדיט, ויישאר ' + ilsF(credit - price) : useCr ? 'הקרדיט כולו (' + ilsF(credit) + ') ינוצל על המפגש, ונשאר לשלם ' + ilsF(price - credit) + ' בפייבוקס' : rem ? 'שולם ' + ilsF(x.paid) + '. נשאר לשלם ' + ilsF(rem) : ''; crN.textContent = t; crN.hidden = !t; }
     root.dataset.regState = '1';

@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="../shared/meeting-box.css?v=2" />
 <link rel="stylesheet" href="../shared/person-form.css?v=1" />
 <link rel="stylesheet" href="../shared/wa-card.css?v=1" />
-<link rel="stylesheet" href="../shared/site.css?v=20261111c" />
+<link rel="stylesheet" href="../shared/site.css?v=20261113a" />
 <script>try { if (window.self !== window.top && /[?&]embed=/.test(location.search)) document.documentElement.classList.add('embed'); } catch (e) {}</script>   <!-- בפופאפ: הרקע הטורקיז כבר בציור הראשון -->
 </head>
 <body>
@@ -19,7 +19,7 @@
   <div class="top"><h1>האזור האישי</h1><span class="chip" id="balChip" hidden></span><span class="chip wait" id="sesChip" hidden></span><button type="button" class="link" id="outBtn" hidden>יציאה</button></div>
   <div id="app"><div class="center">טוען…</div></div>
 </div>
-<script src="../shared/config.js?v=20261103d"></script>
+<script src="../shared/config.js?v=20261113a"></script>
 <script src="../shared/rt.js?v=1"></script>
 <script src="../shared/person-form.js?v=20261105b"></script>
 <script src="../shared/embed-drag.js?v=20261105a"></script>
@@ -166,7 +166,7 @@
         + '<div class="paylinks"><button type="button" class="lnk" data-other="' + m.id + '">רוצים להעביר תשלום בדרך אחרת?</button></div><div class="msg" data-pm="' + m.id + '"></div></div></div>';
       else if (((!paid && !free) || rem > 0) && CFG.payboxLink) {   /* גם מפגש שהסתיים ולא שולם: אפשר לשלם ולדווח (1.11.26) */
         const payAmt = rem || price;
-        foot += '<div class="payfold" data-pf="' + m.id + '"><div>' + (rem ? '<p class="crnote">שולם ' + ils(m.paid) + '. נשאר לשלם ' + ils(rem) + '</p>' : '') + '<a class="btn pay" data-paynow="' + m.id + '" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">לתשלום ' + (payAmt ? payAmt + ' ₪ ' : '') + 'בפייבוקס</a><div class="paylinks"><button type="button" class="lnk" data-other="' + m.id + '">רוצים להעביר תשלום בדרך אחרת?</button></div><div class="msg" data-pm="' + m.id + '"></div></div></div>';
+        foot += '<div class="payfold" data-pf="' + m.id + '"><div>' + (rem ? '<p class="crnote">שולם ' + ils(m.paid) + '. נשאר לשלם ' + ils(rem) + '</p>' : '') + '<a class="btn pay" data-paynow="' + m.id + '" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">לתשלום ' + (payAmt ? payAmt + ' ₪ ' : '') + 'בפייבוקס</a>' + (CFG.bitLink ? '<a class="btn pay bit" data-paynow="' + m.id + '" href="' + esc(CFG.bitLink) + '" target="_blank" rel="noopener">לתשלום ' + (payAmt ? payAmt + ' ₪ ' : '') + 'בביט</a>' : '') + '<div class="paylinks"><button type="button" class="lnk" data-other="' + m.id + '">רוצים להעביר תשלום בדרך אחרת?</button></div><div class="msg" data-pm="' + m.id + '"></div></div></div>';
       }
       /* הוראות ההגעה של המפגש (אותו טקסט כמו בהודעה בדף הניהול, כולל התמונה או הסרטון): שורה עם חץ, ובלחיצה נפתחת באנימציה; מעל "ביטול רישום" */
       const dirFold = (mm) => { const t = String(mm.directions || '').trim(); if (!t) return ''; const o = keepDirSet.has(mm.id); return '<div class="dirbox"><button type="button" class="dethead dirhead" data-dir="' + mm.id + '" aria-expanded="' + o + '" aria-controls="dir-' + mm.id + '"><span>הוראות הגעה</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="detfold' + (o ? ' open' : '') + '" id="dir-' + mm.id + '"><div><p class="dirtxt">' + linkify(t) + '</p></div></div></div>'; };
@@ -191,7 +191,7 @@
       '<button type="button" class="btn" id="saveBtn">שמירה</button><div class="msg" id="sm"></div></div></div></div>';
     /* רכישת כרטיסייה: הכרטיסיות שהוגדרו בסוגי המפגש. תשלום בפייבוקס רושם בקשה, והמנהל מזין את התשלום ומתווספים המפגשים לקרדיט */
     const passes = Array.isArray(data.passes) ? data.passes : [];
-    const passHtml = (passes.length && !(Number(data.sessions) > 0)) ? '<div class="card" id="passCard"><h2>כרטיסיות</h2><p class="muted" style="margin:0 0 8px">משלמים פעם אחת ומקבלים מפגשים בקרדיט. כל שמירת מקום מורידה מפגש אחד</p>' + passes.map((x) => '<div class="passrow"><div><b>כרטיסייה ' + x.n + ' מפגשים</b><small>' + (passes.some((y) => y.type_id !== x.type_id) ? esc(x.type_name || '') + ' · ' : '') + ils(Math.round(x.price / x.n)) + ' למפגש</small></div>' + (CFG.payboxLink ? '<a class="btn pay" data-buypass="' + x.type_id + '" data-n="' + x.n + '" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">' + ils(x.price) + ' בפייבוקס</a>' : '') + '</div>').join('') + '</div>' : '';
+    const passHtml = (passes.length && !(Number(data.sessions) > 0)) ? '<div class="card" id="passCard"><h2>כרטיסיות</h2><p class="muted" style="margin:0 0 8px">משלמים פעם אחת ומקבלים מפגשים בקרדיט. כל שמירת מקום מורידה מפגש אחד</p>' + passes.map((x) => '<div class="passrow"><div><b>כרטיסייה ' + x.n + ' מפגשים</b><small>' + (passes.some((y) => y.type_id !== x.type_id) ? esc(x.type_name || '') + ' · ' : '') + ils(Math.round(x.price / x.n)) + ' למפגש</small></div>' + (CFG.payboxLink ? '<div class="passbtns"><a class="btn pay" data-buypass="' + x.type_id + '" data-n="' + x.n + '" href="' + esc(CFG.payboxLink) + '" target="_blank" rel="noopener">' + ils(x.price) + ' בפייבוקס</a>' + (CFG.bitLink ? '<a class="btn pay bit" data-buypass="' + x.type_id + '" data-n="' + x.n + '" href="' + esc(CFG.bitLink) + '" target="_blank" rel="noopener">' + ils(x.price) + ' בביט</a>' : '') + '</div>' : '') + '</div>').join('') + '</div>' : '';
     if (!req) h += passHtml + meetHtml;   // "הפרטים שלי" ראשון, ומתחתיו רשימת המפגשים (רק אחרי שהפרטים הושלמו)
     keepOpenSet = new Set(); keepDetOpen = false; keepDirSet = new Set();
     app.innerHTML = h;
