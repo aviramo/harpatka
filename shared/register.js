@@ -56,12 +56,7 @@
               <div class="su-payfold" data-su="payfold"><div>
                 <p class="su-crnote" data-su="crnote" hidden></p>
                 <button type="button" data-su="paycredit" class="btn-primary rounded-full px-8 py-4 text-[1.2rem] block text-center w-full" hidden>תשלום מהקרדיט</button>
-                <div class="su-paybtns paychoose" data-paywrap>
-                  <div class="pc-a"><div><button type="button" class="pc-open btn-primary rounded-full px-8 py-4 text-[1.2rem] block text-center w-full">לתשלום <span data-price>80 ₪</span></button></div></div>
-                  <div class="pc-b"><div>
-                    <a href="#" target="_blank" rel="noopener" data-paybox class="btn-primary rounded-full px-3 py-4 text-[1.1rem] block text-center"><span data-price>80 ₪</span> בפייבוקס</a>
-                    <a href="#" target="_blank" rel="noopener" data-bit class="btn-primary rounded-full px-3 py-4 text-[1.1rem] block text-center"><span data-price>80 ₪</span> בביט</a>
-                  </div></div>
+                ${CONFIG.payMenu({ wrap: 'data-paywrap', cls: 'btn-primary rounded-full px-8 py-4 text-[1.2rem]', label: 'לתשלום <span data-price>80 ₪</span>', items: [{ attrs: 'data-paybox', pay: 'paybox', amt: '<span data-price>80 ₪</span>' }, { attrs: 'data-bit', pay: 'bit', amt: '<span data-price>80 ₪</span>' }] })}</div>
                 </div>
                 <div class="su-paylinks" data-su="paylinks"><button type="button" class="su-lnk" data-su="other">רוצים להעביר תשלום בדרך אחרת?</button></div>
               </div></div>

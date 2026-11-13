@@ -1818,28 +1818,21 @@ html.pg-home #story .ht-clock .ck-h{ animation:ckH 3.6s cubic-bezier(.45,0,.25,1
 :where(.pg-me) .top .chip{ grid-column:1 / -1; grid-row:2; justify-self:start; margin-top:0; }
 :where(.pg-me) .top .chip[hidden]{ display:none; }
 
-/* ביט לצד פייבוקס (13.11.26): אפשרות תשלום שנייה, כפתור עם קו מתאר באותו ירוק */
-:where(.pg-me) .passbtns { display: flex; flex-direction: column; gap: 8px; flex: none; }
-:where(.pg-me) .passbtns .btn { width: 100%; }
-:where(.pg-me) .btn.pay.bit, html .su-after a[data-bit] { background: var(--paper) !important; color: var(--olive) !important; border: 2px solid var(--olive); box-shadow: none; }
-:where(.pg-me) .payfold .btn.pay + .btn.pay { margin-top: 8px; }
-.su-paybtns { display: flex; flex-direction: column; gap: .6rem; }
-
-/* בורר תשלום: הכפתור הראשי מתכווץ ונעלם, ושתי האפשרויות נפתחות במקומו */
-.paychoose > .pc-a, .paychoose > .pc-b { display: grid; transition: grid-template-rows .35s ease, opacity .3s ease, visibility 0s linear .35s; }
-.paychoose > .pc-a { grid-template-rows: 1fr; opacity: 1; visibility: visible; }
-.paychoose > .pc-b { grid-template-rows: 0fr; opacity: 0; visibility: hidden; }
-.paychoose > .pc-a > div, .paychoose > .pc-b > div { overflow: hidden; min-height: 0; }
-.paychoose.open > .pc-a { grid-template-rows: 0fr; opacity: 0; visibility: hidden; }
-.paychoose.open > .pc-b { grid-template-rows: 1fr; opacity: 1; visibility: visible; transition-delay: 0s; }
-.paychoose > .pc-b > div { display: flex; gap: .6rem; }
-.paychoose > .pc-b > div > a { flex: 1 1 0; width: auto; min-width: 0; }
-.passbtns.paychoose > .pc-b > div { flex-direction: column; }
-@media (prefers-reduced-motion: reduce) { .paychoose > .pc-a, .paychoose > .pc-b { transition: none; } }
+/* תפריט תשלום (13.11.26): כפתור אחד שפותח באנימציה רשימה של שתי אפשרויות עם הסמלים של פייבוקס וביט */
+.paychoose .pc-open { display: flex; align-items: center; justify-content: center; gap: .55rem; width: 100%; }
+.paychoose .pm-chev { width: 1.1em; height: 1.1em; flex: none; transition: transform .3s ease; }
+.paychoose.open .pm-chev { transform: rotate(180deg); }
+.paychoose .pm-list { display: grid; grid-template-rows: 0fr; opacity: 0; visibility: hidden; transition: grid-template-rows .32s ease, opacity .25s ease, visibility 0s linear .32s; }
+.paychoose.open .pm-list { grid-template-rows: 1fr; opacity: 1; visibility: visible; transition-delay: 0s; }
+.paychoose .pm-in { overflow: hidden; min-height: 0; }
+.paychoose.open .pm-in { padding-top: .5rem; }
+.paychoose .pm-item { display: flex; align-items: center; gap: .8rem; padding: .6rem .9rem; background: var(--paper, #fffdf9); color: var(--ink, #2c231d); border: 1px solid var(--line, #e6d9c6); text-decoration: none; border-radius: var(--r, 10px); font-weight: 700; font-size: 1.05rem; }
+.paychoose .pm-item + .pm-item { margin-top: .5rem; }
+.paychoose .pm-item img { width: 32px; height: 32px; border-radius: 8px; flex: none; }
+.paychoose .pm-n { flex: 1; text-align: start; }
+.paychoose .pm-a { color: var(--olive, #4e7d2c); font-weight: 800; }
+.paychoose .pm-item:active { background: var(--cream, #fff5e8); }
+@media (prefers-reduced-motion: reduce) { .paychoose .pm-list, .paychoose .pm-chev { transition: none; } }
 html .su-after .pc-open { background: var(--olive) !important; }
+:where(.pg-me) .passbtns { display: flex; flex-direction: column; flex: none; width: 170px; }
 :where(.pg-me) .paychoose .btn { width: 100%; }
-/* בורר תשלום סימטרי: שתי האפשרויות באותו גובה, אותה מסגרת ובלי צל (ההבדל היחיד הוא המילוי) */
-.paychoose > .pc-b > div { align-items: stretch; }
-.paychoose > .pc-b > div > a { display: flex; align-items: center; justify-content: center; box-sizing: border-box; height: auto; min-height: 3.4rem; border: 2px solid var(--olive); box-shadow: none !important; text-align: center; }
-.paychoose > .pc-b > div > a:not([data-bit]):not(.bit) { background: var(--olive); color: #fff; }
-.passbtns.paychoose > .pc-b > div > a, .passbtns.paychoose .pc-open { width: 100%; }

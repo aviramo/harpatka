@@ -43,8 +43,18 @@ const CONFIG = {
   },
 };
 
-/* בורר תשלום (13.11.26): כפתור אחד "לתשלום", ובלחיצה הוא מתחלף באנימציה בשתי אפשרויות (פייבוקס וביט). האזנה אחת לכל הדפים, גם לתוכן שנבנה מחדש */
+/* תפריט תשלום (13.11.26): כפתור אחד "לתשלום", ובלחיצה נפתח תפריט עם שתי אפשרויות ועם הסמלים שלהן (פייבוקס וביט). רכיב אחד לפופאפ ההרשמה, לאזור האישי ולכרטיסיות.
+   o = { label: טקסט הכפתור (HTML), cls: מחלקות הכפתור, wrap: מאפיינים למעטפת, items: [{ attrs: מאפייני הקישור (data-paybox וכו'), href, pay: 'paybox' | 'bit', amt: הסכום להצגה (HTML) }] } */
+CONFIG.payMenu = function (o) {
+  var names = { paybox: 'פייבוקס', bit: 'ביט' };
+  var chev = '<svg class="pm-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  var items = (o.items || []).map(function (it) {
+    return '<a class="pm-item" ' + (it.attrs || '') + ' href="' + (it.href || '#') + '" target="_blank" rel="noopener"><img src="/images/pay-' + it.pay + '-v1.png" alt="" width="32" height="32"><span class="pm-n">' + names[it.pay] + '</span><span class="pm-a">' + (it.amt || '') + '</span></a>';
+  }).join('');
+  return '<div class="paychoose" ' + (o.wrap || '') + '><button type="button" class="pc-open ' + (o.cls || '') + '" aria-expanded="false">' + o.label + chev + '</button><div class="pm-list"><div class="pm-in">' + items + '</div></div></div>';
+};
 document.addEventListener('click', function (e) {
-  var b = e.target.closest && e.target.closest('.pc-open'); if (!b) return;
-  var w = b.closest('.paychoose'); if (w) w.classList.add('open');
+  var b = e.target.closest && e.target.closest('.pc-open');
+  if (b) { var w = b.closest('.paychoose'); if (w) { var on = w.classList.toggle('open'); b.setAttribute('aria-expanded', on ? 'true' : 'false'); } return; }
+  document.querySelectorAll('.paychoose.open').forEach(function (w) { if (!w.contains(e.target)) { w.classList.remove('open'); var x = w.querySelector('.pc-open'); if (x) x.setAttribute('aria-expanded', 'false'); } });
 });
