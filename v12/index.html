@@ -1275,6 +1275,15 @@
       const el = id => document.getElementById(id);
       const dayN = s => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d) / 864e5; };
       const short = n => { const dt = new Date(n * 864e5); return dt.getUTCDate() + '.' + (dt.getUTCMonth() + 1); };
+      /* מפגש שהסתיים בשפה אנושית: היום, אתמול, שלשום, "ביום שלישי האחרון" (עד שבוע), "לפני שבועיים", "לפני חודש" */
+      const ago = (m, today) => {
+        const d = Math.round(today - dayN(m.date)), pl = (n, one, two, many) => n === 1 ? one : n === 2 ? two : 'לפני ' + n + ' ' + many;
+        if (d <= 0) return 'היום'; if (d === 1) return 'אתמול'; if (d === 2) return 'שלשום';
+        if (d <= 6) return 'ביום ' + heDay(m.date) + ' האחרון';
+        if (d < 30) return pl(Math.round(d / 7), 'לפני שבוע', 'לפני שבועיים', 'שבועות');
+        if (d < 365) return pl(Math.round(d / 30), 'לפני חודש', 'לפני חודשיים', 'חודשים');
+        return pl(Math.round(d / 365), 'לפני שנה', 'לפני שנתיים', 'שנים');
+      };
       const label = m => { const [, mo, dd] = m.date.split('-'); return 'יום ' + heDay(m.date) + ' ' + Number(dd) + '.' + Number(mo); };
       /* המקום והוראות ההגעה נלקחים משדה "הוראות הגעה" של המפגש (דף הניהול); בלי טקסט לא מוצג מקום */
       const where = m => m.dir;
@@ -1383,7 +1392,7 @@
             ps.forEach(m => { const r = document.createElement('div'); r.className = 'mt-prow';
               if (m.img) { const im = document.createElement('img'); im.className = 'mt-pimg'; im.src = m.img; im.alt = ''; im.loading = 'lazy'; im.decoding = 'async'; r.append(im); }
               const tx = document.createElement('div'); tx.className = 'mt-ptxt';
-              [m.name, label(m) + ' · ' + m.time, [m.city, m.place].filter(Boolean).join(' · ')].filter(Boolean).forEach((s, i) => { const x = document.createElement('div'); if (i === 2) x.className = 'mt-pwhere'; x.textContent = s; tx.append(x); });
+              [m.name, ago(m, today), [m.city, m.place].filter(Boolean).join(' · ')].filter(Boolean).forEach((s, i) => { const x = document.createElement('div'); if (i === 2) x.className = 'mt-pwhere'; x.textContent = s; tx.append(x); });
               r.append(tx); box.append(r); });
             frag.append(box);
           } }
