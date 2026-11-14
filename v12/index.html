@@ -169,7 +169,7 @@
     }
   </script>
 
-  <link rel="stylesheet" href="../shared/site.css?v=20261113i">
+  <link rel="stylesheet" href="../shared/site.css?v=20261114a">
   <script src="../shared/carousel.js?v=20261105f" defer></script>
   <script>
     /* סרטון פתיחה: אם הדפדפן מאפשר, מסתירים את ההזמנה (בלי להזיז את הדף) עד שהסרטון נגמר; רשת ביטחון אחרי 9 שניות */
@@ -1317,7 +1317,7 @@
         if (m.name) inn.append(mk('div', 'mt-name font-display', 'הנושא: ' + m.name));
         inn.append(mk('div', 'mt-when font-display', label(m) + ' · ' + m.time));
         { /* עיר · מיקום · כמות משתתפים (סמל במקום המילה "משתתפים") */
-          const cl = [m.city, m.place, past ? 'הסתיים' : ''].filter(Boolean).join(' · '), n = !past && m.max ? m.max : 0;
+          const cl = (past ? [m.city] : [m.city, m.place]).filter(Boolean).join(' · '), n = !past && m.max ? m.max : 0;
           if (cl || n) {
             const row = mk('div', 'mt-city', cl);
             if (n) { const pp = mk('span', 'mt-ppl'); pp.setAttribute('aria-label', n + ' משתתפים'); pp.title = n + ' משתתפים'; pp.innerHTML = (cl ? '<i aria-hidden="true">·</i>' : '') + '<b aria-hidden="true">' + n + '</b>' + PPL_ICON; row.append(pp); }
@@ -1376,6 +1376,17 @@
         const frag = document.createDocumentFragment();
         if (future.length) future.forEach((m, i) => frag.append(meetingCard(m, today, false, i === 0)));
         else frag.append(emptyCard(d.defName, d.defImg));
+        { const ps = (d.past || []).slice(-2).reverse();   // שני המפגשים האחרונים שהסתיימו, ברובריקה אחת: נושא, תאריך ועיר
+          if (ps.length) {
+            const box = document.createElement('div'); box.className = 'mt-pastlist';
+            const t = document.createElement('div'); t.className = 'mt-ptitle'; t.textContent = 'מפגשים שהסתיימו'; box.append(t);
+            ps.forEach(m => { const r = document.createElement('div'); r.className = 'mt-prow';
+              if (m.img) { const im = document.createElement('img'); im.className = 'mt-pimg'; im.src = m.img; im.alt = ''; im.loading = 'lazy'; im.decoding = 'async'; r.append(im); }
+              const tx = document.createElement('div'); tx.className = 'mt-ptxt';
+              [m.name, label(m) + ' · ' + m.time, [m.city, m.place].filter(Boolean).join(' · ')].filter(Boolean).forEach((s, i) => { const x = document.createElement('div'); if (i === 2) x.className = 'mt-pwhere'; x.textContent = s; tx.append(x); });
+              r.append(tx); box.append(r); });
+            frag.append(box);
+          } }
         { const qc = el('quietCard'); if (qc) frag.append(qc); }
         list.replaceChildren(frag);
         if (window.syncQuiet) window.syncQuiet();
