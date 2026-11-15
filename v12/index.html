@@ -448,9 +448,86 @@
     @media (min-width:1024px){ .v12s{ padding:4.2rem 0; } .v12-in{ max-width:46rem; } .v12-p{ font-size:1.2rem; } .v12-list-s{ grid-template-columns:1fr 1fr; } }
   </style>
 <script>if (innerWidth < 1024) document.documentElement.classList.add('fit-wait');</script>
+<script>
+/* שאלון למגיעים ממודעה (s=p / s=pm): מוצג במקום האתר עד הסיום, פעם אחת בכל ביקור */
+(function(){try{var q=new URLSearchParams(location.search),s=q.get('s');if(window.top!==window.self||!(s==='p'||s==='pm'||q.has('pm')))return;if(sessionStorage.getItem('harpatka_quiz_done'))return;document.documentElement.classList.add('quiz-on');}catch(e){}})();
+</script>
+<style>
+html.quiz-on{overflow:hidden}
+#quiz{display:none}
+html.quiz-on #quiz{display:flex;position:fixed;inset:0;z-index:2147483000;background:#FFF5E8;color:#2C231D;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#quiz .qz-in{margin:auto;width:100%;max-width:30rem;padding:1.5rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom,0px))}
+#quiz .qz-brand{font-family:'Amatic SC',cursive;font-weight:700;font-size:2rem;color:#C8411B;text-align:center;line-height:1;margin:0 0 1rem}
+#quiz .qz-prog{display:flex;align-items:center;gap:.75rem;margin-bottom:1.5rem}
+#quiz .qz-bar{flex:1;height:6px;background:#FFD8AE;border-radius:3px;overflow:hidden}
+#quiz .qz-fill{display:block;height:100%;width:0;background:#E5562D;transition:width .35s ease}
+#quiz .qz-num{font-size:.9rem;font-weight:700;color:#6B5E52;white-space:nowrap}
+#quiz h2{font-family:Rubik,sans-serif;font-weight:700;font-size:1.45rem;line-height:1.35;margin:0 0 .4rem;text-wrap:balance}
+#quiz .qz-hint{font-size:.95rem;color:#6B5E52;margin:0 0 1.1rem}
+#quiz .qz-opts{display:flex;flex-direction:column;gap:.6rem;margin:0 0 1.5rem;padding:0;border:0}
+#quiz .qz-opt{display:flex;align-items:center;gap:.75rem;min-height:56px;padding:.7rem 1rem;text-align:start;font:inherit;font-size:1.05rem;font-weight:600;color:#2C231D;background:#FFFDF9;border:1.5px solid rgba(44,35,29,.22);border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#quiz .qz-opt .qz-box{flex:none;width:24px;height:24px;border:1.5px solid rgba(44,35,29,.4);border-radius:6px;display:grid;place-items:center;color:transparent}
+#quiz .qz-opt .qz-box svg{width:16px;height:16px}
+#quiz .qz-opt[aria-pressed="true"]{border-color:#E5562D;background:#FFEAD2}
+#quiz .qz-opt[aria-pressed="true"] .qz-box{background:#E5562D;border-color:#E5562D;color:#FFFDF9}
+#quiz .qz-next{width:100%;min-height:56px;font:inherit;font-size:1.15rem;font-weight:700;color:#FFFDF9;background:#E5562D;border:0;border-radius:10px;cursor:pointer}
+#quiz .qz-next:disabled{opacity:.4;cursor:not-allowed}
+html.quiz-leaving #quiz{transform:translateY(-100%);opacity:.4;pointer-events:none;transition:transform .85s cubic-bezier(.77,0,.18,1),opacity .85s ease;box-shadow:0 18px 40px rgba(44,35,29,.18)}
+#quiz .qz-opt:focus-visible,#quiz .qz-next:focus-visible{outline:3px solid #9A2D5E;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){#quiz .qz-fill{transition:none}html.quiz-leaving #quiz{transition:none}}
+</style>
 </head>
 
 <body class="grain">
+  <div id="quiz" role="dialog" aria-modal="true" aria-label="שלוש שאלות קצרות">
+    <div class="qz-in">
+      <p class="qz-brand">יוצאים להרפתקה</p>
+      <div class="qz-prog"><span class="qz-bar" role="progressbar" aria-valuemin="1" aria-valuemax="3" aria-valuenow="1"><span class="qz-fill"></span></span><span class="qz-num"></span></div>
+      <h2 id="qzQ" tabindex="-1"></h2>
+      <p class="qz-hint">אפשר לסמן כמה תשובות</p>
+      <div class="qz-opts" id="qzOpts" role="group" aria-labelledby="qzQ"></div>
+      <button type="button" class="qz-next" id="qzNext" disabled></button>
+    </div>
+  </div>
+  <script>
+  (function(){
+    var root=document.documentElement; if(!root.classList.contains('quiz-on')) return;
+    var Q=[
+      {q:'מה היית רוצה להכניס יותר לחיים שלך?',a:['יותר שמחה וקלילות','יותר חיבור וקרבה לאנשים','יותר חופש וספונטניות','יותר רוגע ונוכחות']},
+      {q:'מתי בפעם האחרונה הרגשת ממש חי/ה?',a:['כשצחקתי והשתחררתי','כשהייתי בחיבור קרוב עם אנשים','כשעשיתי משהו חדש ולא מוכר','כשנתתי לעצמי פשוט להיות']},
+      {q:'דמיין/י ערב שבו אפשר פשוט להיות, בלי ציפיות ובלי צורך להרשים. מה הכי מסקרן אותך?',a:['להשתחרר דרך מוזיקה ותנועה','לפגוש אנשים בדרך קצת אחרת','להרגיש חופשי/ה ובנוח עם עצמי','לחוות משהו חדש שלא ניסיתי']}
+    ];
+    var i=0, sel=[[],[],[]];
+    var qEl=document.getElementById('qzQ'), oEl=document.getElementById('qzOpts'), nx=document.getElementById('qzNext');
+    var fill=document.querySelector('#quiz .qz-fill'), num=document.querySelector('#quiz .qz-num'), bar=document.querySelector('#quiz .qz-bar');
+    var chk='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';
+    function esc(s){return s.replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+    function paint(foc){
+      var d=Q[i];
+      qEl.textContent=d.q;
+      oEl.innerHTML=d.a.map(function(t,k){return '<button type="button" class="qz-opt" data-k="'+k+'" aria-pressed="'+(sel[i].indexOf(k)>-1)+'"><span class="qz-box">'+chk+'</span><span>'+esc(t)+'</span></button>';}).join('');
+      num.textContent='שאלה '+(i+1)+' מתוך 3';
+      fill.style.width=((i+1)/3*100)+'%'; bar.setAttribute('aria-valuenow',i+1);
+      nx.textContent=i<2?'הבא':'סיום'; nx.disabled=!sel[i].length;
+      if(foc) qEl.focus({preventScroll:true});
+      document.getElementById('quiz').scrollTop=0;
+    }
+    oEl.addEventListener('click',function(e){
+      var b=e.target.closest('.qz-opt'); if(!b) return;
+      var k=+b.getAttribute('data-k'), p=sel[i].indexOf(k);
+      if(p>-1) sel[i].splice(p,1); else sel[i].push(k);
+      b.setAttribute('aria-pressed',p===-1); nx.disabled=!sel[i].length;
+    });
+    nx.addEventListener('click',function(){
+      if(i<2){i++; paint(true); return;}
+      try{sessionStorage.setItem('harpatka_quiz_done','1');}catch(e){}
+      window.scrollTo(0,0); root.classList.add('quiz-leaving');
+      var rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
+      setTimeout(function(){root.classList.remove('quiz-on','quiz-leaving');},rm?0:900);
+    });
+    paint(false);
+  })();
+  </script>
   <a href="#register" class="skip-link" onclick="var t=document.getElementById('register');if(t){event.preventDefault();t.scrollIntoView({block:'start'});t.setAttribute('tabindex','-1');t.focus({preventScroll:true});}">דילוג להצטרפות</a>
 
   <!-- ====================== באנר "המפגש הקרוב": קבוע בראש הדף, גובה קבוע (שלד בטעינה / אין מפגש / יש מפגש), מצטמצם בגלילה ====================== -->
