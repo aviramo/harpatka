@@ -747,7 +747,7 @@
   /* דפדפן פנימי של אפליקציה (פייסבוק, אינסטגרם ועוד, לשם מגיעים מהמודעות): גוגל חוסם שם כל כניסה עם גוגל, ולכן שם האתר מתנהג כאילו הכניסה כבויה: ההרשמה בטופס הרגיל */
   const INAPP = /FBAN|FBAV|FB_IAB|FBIOS|Instagram|Line\/|MicroMessenger|TikTok|musical_ly|BytedanceWebview|Snapchat|LinkedInApp|; wv\)/i.test(navigator.userAgent || '');
   const GL = (CONFIG.googleLogin !== false && !INAPP) || !!AS;   // מתג כניסה עם גוגל (shared/config.js); בצפייה כמשתתף הדף מתנהג כמחובר גם כשהכניסה לציבור כבויה
-  document.documentElement.classList.toggle('no-gl', !GL); document.documentElement.classList.toggle('gl-on', GL && !PAID);   // gl-on: מציג את כרטיס האזור האישי (shared/site.css); בלי כניסה עם גוגל אין זכר לאזור האישי   // כניסה עם גוגל כבויה (או דפדפן של אפליקציה): בלי קישורי הכניסה. בצפייה כמשתתף הכרטיס פותח את האזור האישי שלו
+  document.documentElement.classList.toggle('no-gl', !GL); document.documentElement.classList.toggle('gl-on', GL && !/^(p|pm)$/.test(new URLSearchParams(location.search).get('s') || (new URLSearchParams(location.search).has('pm') ? 'pm' : '')));   // gl-on: מציג את כרטיס האזור האישי (shared/site.css); בלי כניסה עם גוגל אין זכר לאזור האישי   // כניסה עם גוגל כבויה (או דפדפן של אפליקציה): בלי קישורי הכניסה. בצפייה כמשתתף הכרטיס פותח את האזור האישי שלו
   function loadMe() {
     if (!GL) return Promise.resolve();
     takeLoginHash();
