@@ -53,6 +53,7 @@ CONFIG.payMenu = function (o) {
   var items = (o.items || []).map(function (it) {
     return '<a class="pm-item" ' + (it.attrs || '') + ' href="' + (it.href || '#') + '" target="_blank" rel="noopener" aria-label="' + names[it.pay] + '" title="' + names[it.pay] + '"><img src="/images/pay-' + it.pay + '-v1.png" alt="" width="32" height="32"><span class="pm-a">' + (it.amt || '') + '</span></a>';
   }).join('');
+  if (o.other) items += '<button type="button" class="pm-item pm-other" ' + (o.other.attrs || '') + '>' + (o.other.label || 'דרך אחרת') + '</button>';   // אפשרות נוספת בלי סמל: תשלום בדרך אחרת (שיחת וואטסאפ)
   var key = o.key || '', on = !!(key && CONFIG.payOpen.has(key));
   return '<div class="paychoose' + (on ? ' open' : '') + '" ' + (key ? 'data-pk="' + key + '" ' : '') + (o.wrap || '') + '><button type="button" class="pc-open ' + (o.cls || '') + '" aria-expanded="' + on + '">' + o.label + chev + '</button><div class="pm-list"><div class="pm-in">' + items + '</div></div></div>';
 };

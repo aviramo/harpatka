@@ -56,9 +56,8 @@
               <div class="su-payfold" data-su="payfold"><div>
                 <p class="su-crnote" data-su="crnote" hidden></p>
                 <button type="button" data-su="paycredit" class="btn-primary rounded-full px-8 py-4 text-[1.2rem] block text-center w-full" hidden>תשלום מהקרדיט</button>
-                ${CONFIG.payMenu({ wrap: 'data-paywrap', cls: 'btn-primary rounded-full px-8 py-4 text-[1.2rem]', label: 'לתשלום <span data-price>80 ₪</span>', items: [{ attrs: 'data-paybox', pay: 'paybox', amt: '<span data-price>80 ₪</span>' }, { attrs: 'data-bit', pay: 'bit', amt: '<span data-price>80 ₪</span>' }] })}</div>
+                ${CONFIG.payMenu({ wrap: 'data-paywrap', cls: 'btn-primary rounded-full px-8 py-4 text-[1.2rem]', label: 'לתשלום <span data-price>80 ₪</span>', items: [{ attrs: 'data-paybox', pay: 'paybox', amt: '<span data-price>80 ₪</span>' }, { attrs: 'data-bit', pay: 'bit', amt: '<span data-price>80 ₪</span>' }], other: { attrs: 'data-su="other"', label: 'דרך אחרת' } })}</div>
                 </div>
-                <div class="su-paylinks" data-su="paylinks"><button type="button" class="su-lnk" data-su="other">רוצים להעביר תשלום בדרך אחרת?</button></div>
               </div></div>
             </div></div>
           </form>
