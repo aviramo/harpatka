@@ -104,7 +104,8 @@
     /* הפוקוס עובר לקופסת הפופאפ (בלי טבעת פוקוס מכוערת על כפתור הסגירה) */
     /* פתיחה על ידי המשתמש (לחיצה על כפתור): הפוקוס עובר לשדה השם והמקלדת עולה. בכניסה ישירה ל-/register/ בלי פוקוס אוטומטי */
     const tel = m.id === 'contactModal' && document.documentElement.classList.contains('reg-phone') || document.documentElement.classList.contains('reg-gphone') ? m.querySelector('input[type="tel"]') : null;   // שלב הטלפון: תמיד בשדה הטלפון, והמקלדת עולה
-    const f = tel || (!noFocus && m.querySelector('[data-autofocus]')) || m.querySelector('.modal-box');
+    const af = !noFocus && !document.documentElement.classList.contains('reg-member') ? m.querySelector('[data-autofocus]') : null;   // במצב משתתף מחובר (פרטים שמורים) אין שדה לכתוב בו, ולכן אין פוקוס ואין מקלדת
+    const f = tel || (af && !af.closest('.shut, [hidden]') && af.getClientRects().length ? af : null) || m.querySelector('.modal-box');
     if (f) {
       if (f.matches('.modal-box')) f.setAttribute('tabindex', '-1');
       /* שדה השם מקבל פוקוס רק אחרי שהמגירה סיימה לרדת: אם המקלדת עולה בזמן שהטופס עוד מחוץ למסך, הדפדפן (אנדרואיד) מזיז את הדף והחלק העליון נחתך. ב-iOS חייבים מיד (בתוך הלחיצה) */
