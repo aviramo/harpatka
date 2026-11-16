@@ -1,5 +1,5 @@
 /* סביבת בדיקות (test.harpatka.co.il). הקובץ נוצר ומוזרק רק לבניית הבדיקות (tools/deploy-test.py), לא קיים באתר האמיתי.
-   1. כל בקשה לבסיס הנתונים הולכת לסכמת test (נתונים נפרדים מהאמיתיים).
+   1. (בוטל: הנתונים בבדיקות הם ברוסטר, סכמת roster-test).
    2. מעקב (Pixel / Google Analytics) הוסר בבנייה; כאן רק מגנים שקריאות מהקוד לא ייכשלו.
    3. פס "סביבת בדיקות" בראש הדף. נטען בראש ה-<head> (סקריפט חוסם), ולכן המקום של הפס שמור כבר לפני שהדף מצויר;
       הפס עצמו כתוב ב-HTML מיד אחרי <body> (deploy-test.py), כך שהוא מופיע יחד עם הדף, בלי קפיצה (31.10.26). */
@@ -7,19 +7,7 @@
   window.HARPATKA_ENV = { name: 'test', schema: 'test' };
   window.dataLayer = window.dataLayer || [];
   window.gtag = window.gtag || function () {};
-  var origFetch = window.fetch;
-  window.fetch = function (input, init) {
-    try {
-      var url = typeof input === 'string' ? input : (input && input.url) || '';
-      if (url.indexOf('.supabase.co/rest/v1/') !== -1) {
-        var h = new Headers((init && init.headers) || (input && input.headers) || {});
-        h.set('Accept-Profile', 'test');
-        h.set('Content-Profile', 'test');
-        init = Object.assign({}, init || {}, { headers: h });
-      }
-    } catch (e) {}
-    return origFetch.call(this, input, init);
-  };
+  /* אין יותר בקשות לבסיס הנתונים של הרפתקה בבדיקות (הסכמה test נמחקה, הכול ברוסטר דרך shared/roster-bridge.js); כותרות הסכמה נקבעות שם */
   var TOP = window.self === window.top;   // בתוך iframe (פופאפ האזור האישי, צפייה כמשתתף): בלי פס, הוא כבר בדף הראשי
   /* המקום של הפס (18px) שמור מראש: הדף מתחיל מתחתיו, ופופאפים שנפתחים מלמעלה מתחילים מתחתיו.
      הפופאפ נועל את הגוף ב-position:fixed; בלי margin-top על הגוף הדף שמאחור קופץ 18px למעלה */
