@@ -472,8 +472,9 @@ html.quiz-on #quiz{display:flex;position:fixed;inset:0;z-index:2147483000;backgr
 #quiz .qz-opt[aria-pressed="true"] .qz-box{background:#E5562D;border-color:#E5562D;color:#FFFDF9}
 #quiz .qz-next{width:100%;min-height:56px;font:inherit;font-size:1.15rem;font-weight:700;color:#FFFDF9;background:#E5562D;border:0;border-radius:10px;cursor:pointer}
 #quiz .qz-next:disabled{opacity:.4;cursor:not-allowed}
+#quiz .qz-skip{display:block;width:100%;min-height:48px;margin-top:.5rem;font:inherit;font-size:1rem;font-weight:600;color:#6B5E52;background:none;border:0;text-decoration:underline;cursor:pointer}
 html.quiz-leaving #quiz{transform:translateY(-100%);pointer-events:none;transition:transform .85s cubic-bezier(.77,0,.18,1);box-shadow:0 18px 40px rgba(44,35,29,.18)}
-#quiz .qz-opt:focus-visible,#quiz .qz-next:focus-visible{outline:3px solid #9A2D5E;outline-offset:2px}
+#quiz .qz-opt:focus-visible,#quiz .qz-next:focus-visible,#quiz .qz-skip:focus-visible{outline:3px solid #9A2D5E;outline-offset:2px}
 @media (prefers-reduced-motion:reduce){#quiz .qz-fill{transition:none}html.quiz-leaving #quiz{transition:none}}
 </style>
 </head>
@@ -487,6 +488,7 @@ html.quiz-leaving #quiz{transform:translateY(-100%);pointer-events:none;transiti
       <p class="qz-hint">אפשר לסמן כמה תשובות</p>
       <div class="qz-opts" id="qzOpts" role="group" aria-labelledby="qzQ"></div>
       <button type="button" class="qz-next" id="qzNext" disabled></button>
+      <button type="button" class="qz-skip" id="qzSkip">דילוג לאתר, בלי לענות</button>
     </div>
   </div>
   <script>
@@ -518,13 +520,17 @@ html.quiz-leaving #quiz{transform:translateY(-100%);pointer-events:none;transiti
       if(p>-1) sel[i].splice(p,1); else sel[i].push(k);
       b.setAttribute('aria-pressed',p===-1); nx.disabled=!sel[i].length;
     });
-    nx.addEventListener('click',function(){
-      if(i<2){i++; paint(true); return;}
+    function closeQuiz(){
       try{sessionStorage.setItem('harpatka_quiz_done','1');}catch(e){}
       window.scrollTo(0,0); root.classList.add('quiz-leaving');
       var rm=matchMedia('(prefers-reduced-motion:reduce)').matches;
       setTimeout(function(){root.classList.remove('quiz-on','quiz-leaving');},rm?0:900);
+    }
+    nx.addEventListener('click',function(){
+      if(i<2){i++; paint(true); return;}
+      closeQuiz();
     });
+    document.getElementById('qzSkip').addEventListener('click',closeQuiz);   // אפשר לדלג לאתר בלי לענות על השאלון
     paint(false);
   })();
   </script>
