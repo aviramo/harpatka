@@ -386,7 +386,16 @@
           relBtn(); if (!finished) { btn.disabled = false; btn.textContent = curLabel(); }
           return;
         }
-        const send = (extra) => fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_signup', {
+        /* רוסטר (CONFIG.rosterApi, מוזרק רק בסביבת הבדיקות): ההרשמה נכנסת ל-API של רוסטר, בעסק harpatka, והמיילים יוצאים משם */
+        const rosterSend = async () => {
+          const r = await fetch(CONFIG.rosterApi.url + '/signup', { method: 'POST', headers: { Authorization: 'Bearer ' + CONFIG.rosterApi.key, 'Content-Type': 'application/json' },
+            body: JSON.stringify(Object.assign({ first_name: first, last_name: last, phone: norm, age: age, gender: gender }, selMeeting && selMeeting.id ? { meeting_id: selMeeting.id } : {}, PAID ? { source_code: 'p' } : {})) });
+          let j = null; try { j = await r.json(); } catch (e) {}
+          if (r.ok) return { ok: true, json: async () => 'created' };
+          const f = j && j.error && j.error.field, map = { first_name: 'invalid_name', last_name: 'invalid_name', phone: 'invalid_phone', age: 'invalid_age', gender: 'invalid_gender' };
+          return { ok: true, json: async () => (f && map[f]) || 'error' };
+        };
+        const send = CONFIG.rosterApi ? rosterSend : (extra) => fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_signup', {
           method: 'POST',
           headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' },
           body: JSON.stringify(Object.assign({ p_first: first, p_last: last, p_phone: norm, p_age: age, p_gender: gender }, claimToken ? { p_token: claimToken } : {}, selMeeting && selMeeting.id ? { p_meeting: selMeeting.id } : {}, extra))

@@ -87,6 +87,10 @@ GOOGLE_LOGIN_IN_TEST = True   # 30.10.26: הכניסה עם גוגל חוזרת,
 if GOOGLE_LOGIN_IN_TEST:
     _cfg = OUT / 'shared' / 'config.js'
     _cfg.write_text(_cfg.read_text(encoding='utf-8').replace('googleLogin: false', 'googleLogin: true', 1), encoding='utf-8')
+# רוסטר: ההרשמה בבדיקות נכנסת ל-API של רוסטר (העסק harpatka בסכמת roster-test), והמיילים יוצאים משם, רק אל הבעלים. מפתח ציבורי, מותר רק לאתר הזה
+ROSTER_API = "{url: 'https://api-test.floa.co.il/roster/v1', key: 'rk_pub_81212924b841185ddc41a8268f889b5d'}"
+_cfg = OUT / 'shared' / 'config.js'
+_cfg.write_text(_cfg.read_text(encoding='utf-8').replace('googleLogin:', 'rosterApi: ' + ROSTER_API + ', googleLogin:', 1), encoding='utf-8')
 (OUT / 'CNAME').write_text('test.harpatka.co.il\n', encoding='utf-8')
 (OUT / '.nojekyll').write_text('', encoding='utf-8')
 (OUT / 'robots.txt').write_text('User-agent: *\nDisallow: /\n', encoding='utf-8')
