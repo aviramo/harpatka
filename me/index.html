@@ -20,7 +20,7 @@
   <div id="app"><div class="center">טוען…</div></div>
 </div>
 <script src="../shared/config.js?v=20261115a"></script>
-<script src="../shared/roster-bridge.js?v=20261116e"></script>
+<script src="../shared/roster-bridge.js?v=20261117a"></script>
 <script src="../shared/rt.js?v=1"></script>
 <script src="../shared/person-form.js?v=20261105b"></script>
 <script src="../shared/embed-drag.js?v=20261105a"></script>
@@ -173,7 +173,7 @@
       /* הוראות ההגעה של המפגש (אותו טקסט כמו בהודעה בדף הניהול, כולל התמונה או הסרטון): שורה עם חץ, ובלחיצה נפתחת באנימציה; מעל "ביטול רישום" */
       const dirFold = (mm) => { const t = String(mm.directions || '').trim(); if (!t) return ''; const o = keepDirSet.has(mm.id); return '<div class="dirbox"><button type="button" class="dethead dirhead" data-dir="' + mm.id + '" aria-expanded="' + o + '" aria-controls="dir-' + mm.id + '"><span>הוראות הגעה</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button><div class="detfold' + (o ? ' open' : '') + '" id="dir-' + mm.id + '"><div><p class="dirtxt">' + linkify(t) + '</p></div></div></div>'; };
       if (m.future) foot += dirFold(m);
-      if (m.future) { const sure = unregSure === m.id; foot += '<button type="button" class="lnk sm" data-unreg="' + m.id + '"' + (sure ? ' data-sure="1"' : '') + '>' + (sure ? UNREG_SURE : 'ביטול שמירת המקום') + '</button><div class="msg" data-um="' + m.id + '"></div>'; }
+      /* אין ביטול שמירת מקום מהאזור האישי (החלטת הבעלים): ביטול רק דרך המארגנים */
       /* אותו רכיב כמו בפופאפים ובדף הבית, עם המצב והתשלום בתוך המסגרת. מפגש שעבר: בלי תמונה ובלי כמות משתתפים */
       return '<div class="mtg" data-mid="' + m.id + '">' + CFG.meetingBox(m.future ? m : Object.assign({}, m, { max: 0 }), '<div class="mts">' + att + pay + '</div>' + (foot ? '<div class="mtfoot">' + foot + '</div>' : '')) + '</div>';
     };

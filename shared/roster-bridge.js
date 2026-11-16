@@ -148,6 +148,7 @@
       if (name === 'harpatka_signup_complete') return signupComplete(b);
       if (name === 'harpatka_report_payment_token') return reportToken(b);
       if (name === 'harpatka_me_claim' || name === 'harpatka_me_claim_token') return Promise.resolve(reply('none'));   // החיבור למשתתף נעשה לפי טלפון (me_phone)
+      if (name === 'harpatka_me_unregister') return Promise.resolve(reply('forbidden'));   // אין ביטול שמירת מקום מהאזור האישי
       if (name === 'harpatka_me_join') return meJoin(b, init);
       return Promise.resolve(reply({ error: 'not_supported_on_roster', fn: name }, 501));   // שום קריאה לא הולכת לבסיס הנתונים של הרפתקה
     }
