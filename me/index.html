@@ -20,6 +20,7 @@
   <div id="app"><div class="center">טוען…</div></div>
 </div>
 <script src="../shared/config.js?v=20261115a"></script>
+<script src="../shared/roster-bridge.js?v=20261116b"></script>
 <script src="../shared/rt.js?v=1"></script>
 <script src="../shared/person-form.js?v=20261105b"></script>
 <script src="../shared/embed-drag.js?v=20261105a"></script>
@@ -65,8 +66,8 @@
   }
   const goGoogle = () => {
     try { if (asId) sessionStorage.setItem(AS_KEY, asId); } catch (e) {}
-    if (EMBED) { try { if (window.parent.HarpatkaMe && window.parent.HarpatkaMe.loginPopup) { window.parent.HarpatkaMe.loginPopup(''); return; } } catch (e) {} try { sessionStorage.setItem('harpatka_open_me', '1'); } catch (e) {} window.top.location.href = DB.url + '/auth/v1/authorize?provider=google&prompt=select_account&redirect_to=' + encodeURIComponent(window.top.location.origin + window.top.location.pathname); return; }
-    location.href = DB.url + '/auth/v1/authorize?provider=google&prompt=select_account&redirect_to=' + encodeURIComponent(location.origin + location.pathname);
+    if (EMBED) { try { if (window.parent.HarpatkaMe && window.parent.HarpatkaMe.loginPopup) { window.parent.HarpatkaMe.loginPopup(''); return; } } catch (e) {} try { sessionStorage.setItem('harpatka_open_me', '1'); } catch (e) {} window.top.location.href = ((window.CONFIG && CONFIG.rosterApi && CONFIG.rosterApi.authUrl) || DB.url) + '/auth/v1/authorize?provider=google&prompt=select_account&redirect_to=' + encodeURIComponent(window.top.location.origin + window.top.location.pathname); return; }
+    location.href = ((window.CONFIG && CONFIG.rosterApi && CONFIG.rosterApi.authUrl) || DB.url) + '/auth/v1/authorize?provider=google&prompt=select_account&redirect_to=' + encodeURIComponent(location.origin + location.pathname);
   };
   async function rpc(name, body) {
     const call = () => fetch(DB.url + '/rest/v1/rpc/' + name, { method: 'POST', headers: { apikey: DB.key, Authorization: 'Bearer ' + ((session && session.access_token) || DB.key), 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });

@@ -388,6 +388,18 @@
         }
         /* רוסטר (CONFIG.rosterApi, מוזרק רק בסביבת הבדיקות): ההרשמה נכנסת ל-API של רוסטר, בעסק harpatka, והמיילים יוצאים משם */
         const rosterSend = async () => {
+          const RH = { Authorization: 'Bearer ' + CONFIG.rosterApi.key, 'Content-Type': 'application/json' }, rmap = { first_name: 'invalid_name', last_name: 'invalid_name', phone: 'invalid_phone', age: 'invalid_age', gender: 'invalid_gender' };
+          let rtk = ''; try { rtk = localStorage.getItem('harpatka_roster_token') || ''; } catch (e) {}   // שלב הטלפון כבר יצר משתתף (בלי שם): משלימים אותו באסימון (שמירת פרטים לא מעדכנת משתתף קיים)
+          if (rtk) {
+            const rc2 = await fetch(CONFIG.rosterApi.url + '/signup/complete', { method: 'POST', headers: RH, body: JSON.stringify({ participant_token: rtk, first_name: first, last_name: last, age: age, gender: gender }) });
+            if (rc2.ok) {
+              if (selMeeting && selMeeting.id) { try { await fetch(CONFIG.rosterApi.url + '/signup/phone', { method: 'POST', headers: RH, body: JSON.stringify(Object.assign({ phone: norm, meeting_id: selMeeting.id }, PAID ? { source_code: 'p' } : {})) }); } catch (e) {} }   // המפגש שנבחר (אם עוד לא נרשם אליו)
+              return { ok: true, json: async () => 'created' };
+            }
+            let jj = null; try { jj = await rc2.json(); } catch (e) {}
+            const ff = jj && jj.error && jj.error.field;
+            if (ff) return { ok: true, json: async () => rmap[ff] || 'error' };
+          }
           const r = await fetch(CONFIG.rosterApi.url + '/signup', { method: 'POST', headers: { Authorization: 'Bearer ' + CONFIG.rosterApi.key, 'Content-Type': 'application/json' },
             body: JSON.stringify(Object.assign({ first_name: first, last_name: last, phone: norm, age: age, gender: gender }, selMeeting && selMeeting.id ? { meeting_id: selMeeting.id } : {}, PAID ? { source_code: 'p' } : {})) });
           let j = null; try { j = await r.json(); } catch (e) {}
@@ -588,14 +600,14 @@
   const LOGIN_KEY = 'harpatka_login_pending';   // '1': פתיחת הרשמה רק אם אין משתתף; 'reg': תמיד לפתוח את פופאפ ההרשמה אחרי ההתחברות
   function loginGoogle(after) {
     try { sessionStorage.setItem(LOGIN_KEY, after || '1'); } catch (e) {}
-    location.href = CONFIG.supabaseUrl + '/auth/v1/authorize?provider=google&prompt=select_account&redirect_to=' + encodeURIComponent(location.origin + location.pathname);
+    location.href = ((CONFIG.rosterApi && CONFIG.rosterApi.authUrl) || CONFIG.supabaseUrl) + '/auth/v1/authorize?provider=google&prompt=select_account&redirect_to=' + encodeURIComponent(location.origin + location.pathname);
   }
   /* כניסה עם גוגל בחלון קופץ: הדף לא מתרענן ולא עובר לשום מקום. החלון הקופץ חוזר ל-me/, שומר את החיבור ב-localStorage, מסמן harpatka_login_done וסוגר את עצמו;
      כאן מאזינים לסימון (אירוע storage), טוענים את המשתתף ומרעננים את הפופאפ הפתוח. אם החלון נחסם: ניווט רגיל כמו קודם */
   function loginWindow(after, thenOpen) {
     if (!GL) return;
     try { localStorage.setItem('harpatka_login_popup', '1'); } catch (e) {}
-    const url = CONFIG.supabaseUrl + '/auth/v1/authorize?provider=google&prompt=select_account&redirect_to=' + encodeURIComponent(BASE + 'me/');
+    const url = ((CONFIG.rosterApi && CONFIG.rosterApi.authUrl) || CONFIG.supabaseUrl) + '/auth/v1/authorize?provider=google&prompt=select_account&redirect_to=' + encodeURIComponent(BASE + 'me/');
     const w = window.open(url, 'harpatka_login', 'width=480,height=680');
     if (!w) { try { localStorage.removeItem('harpatka_login_popup'); if (thenOpen) sessionStorage.setItem('harpatka_open_me', '1'); } catch (e) {} return loginGoogle(after); }
     const onDone = (ev) => {
