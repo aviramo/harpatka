@@ -615,6 +615,7 @@
   /* התחברות עם גוגל ישר מדף הבית (בלי לעבור באזור האישי): חוזרים לאותו עמוד עם הטוקן ב-hash, שומרים אותו, ואם אין משתתף מקושר פותחים את פופאפ ההרשמה */
   const LOGIN_KEY = 'harpatka_login_pending';   // '1': פתיחת הרשמה רק אם אין משתתף; 'reg': תמיד לפתוח את פופאפ ההרשמה אחרי ההתחברות
   /* כשהחיבור והנתונים ברוסטר (CONFIG.rosterApi): אין כניסה דרך חשבון הגוגל של floa (מסך אישור בשם floa). הכניסה רק עם האפליקציה של הרפתקה (Google Identity); אם היא לא זמינה, הטופס הרגיל עם הודעה */
+  /* googleButton (CONFIG.rosterApi.googleButton): הכניסה תמיד דרך כפתור גוגל שפותח את מסך בחירת החשבון של גוגל בחלון קופץ, עם שם האפליקציה של הרפתקה (ולא השכבה האוטומטית One Tap ולא FedCM) */
   const noFloaLogin = () => { if (!(CONFIG.rosterApi && CONFIG.rosterApi.authUrl)) return false; tapCtx = null; regFallback(true); return true; };
   function loginGoogle(after) {
     if (noFloaLogin()) return;
@@ -649,6 +650,7 @@
      כשהשכבה לא יכולה להופיע (אין חשבון גוגל מחובר בדפדפן, גוגל השהה אותה אחרי שנסגרה, דפדפן שלא תומך, הכתובת לא מורשית אצל גוגל): החלון הקופץ (loginWindow).
      דורש ב-Google Cloud Console, ב-OAuth client של Supabase: Authorized JavaScript origins = https://harpatka.co.il ו-https://test.harpatka.co.il */
   const GCID = CONFIG.googleClientId || '';
+  const GBTN = !!(CONFIG.rosterApi && CONFIG.rosterApi.googleButton);
   let gsiState = 0, gsiNonce = '', tapCtx = null, gsiP = null;   // gsiState: 0 לא נטען, 1 נטען, 2 מוכן, -1 נכשל; gsiP: מתי מוכן (true) או נכשל (false)
   function gsiLoad() {
     if (gsiState || !GL || AS || !GCID || !window.crypto || !crypto.subtle) return gsiP;
@@ -663,7 +665,7 @@
           const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw))), (b) => b.toString(16).padStart(2, '0')).join('');
           gsiNonce = raw;   // לגוגל עובר הגיבוב, ול-Supabase הערך המקורי (הוא בודק שהגיבוב שלו תואם לאישור)
           /* use_fedcm_for_button: הכפתור של גוגל (בפופאפ הגיבוי) פותח בכרום את חלון הבחירה הקטן של הדפדפן בתוך הדף, ולא חלון נפרד */
-          google.accounts.id.initialize({ client_id: GCID, callback: onGoogleCredential, nonce: hash, auto_select: true, cancel_on_tap_outside: true, itp_support: true, use_fedcm_for_prompt: true, use_fedcm_for_button: true, context: 'signin' });
+          google.accounts.id.initialize({ client_id: GCID, callback: onGoogleCredential, nonce: hash, auto_select: true, cancel_on_tap_outside: true, itp_support: true, use_fedcm_for_prompt: true, use_fedcm_for_button: !GBTN, context: 'signin' });
           gsiState = 2;
         } catch (e) { gsiState = -1; }
         clearTimeout(t); res(gsiState === 2);
@@ -712,11 +714,11 @@
     if (!GL) return;
     const ctx = { after, thenOpen }, reg = after === 'reg'; tapCtx = ctx;
     const p = gsiLoad();
-    if (gsiState === 2 && window.google && google.accounts && google.accounts.id) return gsiPrompt(ctx);
+    if (gsiState === 2 && window.google && google.accounts && google.accounts.id) return GBTN ? gsiButton(ctx) : gsiPrompt(ctx);
     const giveUp = () => { if (reg) return regFallback(true); tapCtx = null; loginWindow(after, thenOpen); };
     if (!p || gsiState === -1) return giveUp();
     const wait = reg ? Promise.race([p, new Promise((r) => setTimeout(() => r(false), 3500))]) : p;   // בהרשמה לא מחכים לספרייה של גוגל יותר מכמה שניות
-    wait.then((ok) => { if (tapCtx !== ctx) return; if (ok && gsiState === 2) gsiPrompt(ctx); else giveUp(); });
+    wait.then((ok) => { if (tapCtx !== ctx) return; if (ok && gsiState === 2) (GBTN ? gsiButton(ctx) : gsiPrompt(ctx)); else giveUp(); });
   }
   function gsiPrompt(ctx) {
     try { google.accounts.id.cancel(); } catch (e) {}
