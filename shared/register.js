@@ -703,7 +703,9 @@
         const f = contactModal.querySelector('[data-su="fail"]'); if (f && hard) f.textContent = 'ההתחברות עם גוגל לא הצליחה. אפשר לשמור מקום כאן עם הפרטים';
         return;
       }
-      openReg(false, takeRegMeeting());   // המשתתף לחץ על הרשמה: הפוקוס עובר לשדה הראשון. רק בכניסה ישירה דרך /register/ אין פוקוס אוטומטי
+      openReg(false, takeRegMeeting());
+      if (hard) setTimeout(() => { const f = contactModal && contactModal.querySelector('[data-su="fail"]'); if (f && !f.textContent) f.textContent = 'הכניסה עם גוגל לא הצליחה כרגע. אפשר לנסות שוב בעוד רגע, או לשמור מקום עם הפרטים כאן'; }, 120);   // לא נפתח טופס רגיל בלי להסביר למה
+      // המשתתף לחץ על הרשמה: הפוקוס עובר לשדה הראשון. רק בכניסה ישירה דרך /register/ אין פוקוס אוטומטי
     }, wait);
   }
   /* כניסה עם גוגל, תמיד בתוך הדף:
