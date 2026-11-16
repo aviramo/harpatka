@@ -93,6 +93,10 @@
     var path = url.slice(SB.length);
     init = init || {};
 
+    if (R.googleAuth && path.indexOf('/auth/v1/token?grant_type=id_token') === 0) {   // כניסה עם האפליקציה של הרפתקה בגוגל: ה-Worker מאמת את האישור ומחזיר חיבור, בלי לחבר את האפליקציה לספק של floa
+      var gb = bodyOf(init);
+      return real(R.googleAuth, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id_token: gb.id_token }) });
+    }
     if (path.indexOf('/auth/v1/') === 0) {   // התחברות: אותו מסלול, השרת של floa
       var h = headersOf(init); h.apikey = R.authKey;
       return real(R.authUrl + path, Object.assign({}, init, { headers: h }));
