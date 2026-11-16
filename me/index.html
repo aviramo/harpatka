@@ -66,6 +66,7 @@
   }
   const goGoogle = () => {
     try { if (asId) sessionStorage.setItem(AS_KEY, asId); } catch (e) {}
+    if (window.CONFIG && CONFIG.rosterApi && CONFIG.rosterApi.authUrl) { (EMBED ? window.top : window).location.href = '../?me=1'; return; }   // רוסטר: לא נכנסים דרך הגוגל של floa; הדף הראשי מבצע את הכניסה עם האפליקציה של הרפתקה
     if (EMBED) { try { if (window.parent.HarpatkaMe && window.parent.HarpatkaMe.loginPopup) { window.parent.HarpatkaMe.loginPopup(''); return; } } catch (e) {} try { sessionStorage.setItem('harpatka_open_me', '1'); } catch (e) {} window.top.location.href = ((window.CONFIG && CONFIG.rosterApi && CONFIG.rosterApi.authUrl) || DB.url) + '/auth/v1/authorize?provider=google&prompt=select_account&redirect_to=' + encodeURIComponent(window.top.location.origin + window.top.location.pathname); return; }
     location.href = ((window.CONFIG && CONFIG.rosterApi && CONFIG.rosterApi.authUrl) || DB.url) + '/auth/v1/authorize?provider=google&prompt=select_account&redirect_to=' + encodeURIComponent(location.origin + location.pathname);
   };

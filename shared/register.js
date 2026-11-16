@@ -25,6 +25,7 @@
           <form data-su="form" novalidate class="text-start">
             <input type="text" name="website" data-su="hp" class="su-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
             <div class="su-fold"><div>
+              <p class="su-phonehint" data-su="phint"><span data-su="pname"></span><br>הטלפון מחבר את החשבון למשתתף שלכם <button type="button" class="su-notme" data-su="notme">זה לא אני</button></p>
               <div class="su-grid">
                 <div class="su-cell">${PersonForm.html('first', { id: 'cmFirst', autofocus: true })}</div>
                 <div class="su-cell">${PersonForm.html('last', { id: 'cmLast' })}</div>
@@ -573,7 +574,22 @@
   let createdHere = false;   // המשתתף נוצר בהרשמה הזו (בשלב הטלפון): RegistrationValue נשלח כשהגיל ידוע, בהשלמת הפרטים
   function setPhoneMode(on) {
     const was = phoneMode; phoneMode = !!on; document.documentElement.classList.toggle('reg-phone', phoneMode);
+    if (phoneMode) paintPhoneHint();
     if (phoneMode && !was) { const m = document.getElementById('contactModal'), t = m && !m.hidden && m.querySelector('input[type="tel"]'); if (t) try { kbFocus(t); } catch (e) {} }   // נכנסו עם גוגל מתוך הפופאפ: עוברים לשדה הטלפון
+  }
+  /* שלב הטלפון: מי מחובר ("מחוברים כ...", השם מחשבון הגוגל) וקישור "זה לא אני" שמנתק */
+  function googleName() {
+    try { const s = JSON.parse(localStorage.getItem(TOK_KEY) || 'null'), md = JSON.parse(decodeURIComponent(escape(atob(s.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))))).user_metadata || {}; return String(md.full_name || md.name || '').trim(); } catch (e) { return ''; }
+  }
+  function paintPhoneHint() {
+    const m = document.getElementById('contactModal'); if (!m) return;
+    const n = googleName(), el = m.querySelector('[data-su="pname"]'); if (el) el.textContent = n ? 'מחוברים כ' + n : 'מחוברים עם חשבון גוגל';
+    const b = m.querySelector('[data-su="notme"]'); if (b && !b.dataset.bound) { b.dataset.bound = '1'; b.addEventListener('click', () => {
+      if (AS) return;
+      try { localStorage.removeItem(ME_KEY); localStorage.removeItem('harpatka_me_name'); } catch (er) {}
+      meInfo = null; window.__meName = null; window.__meAdmin = false; areaFlow = null; setPhoneMode(false); applyMemberMode(); try { window.dispatchEvent(new Event('harpatka:me')); } catch (er) {}
+      gsiNoAuto(); gsiLoad(); try { closeModal(m); } catch (er) {}
+    }); }
   }
   /* שם להצגה של המשתתף המחובר: שם פרטי ומשפחה, ואם עוד לא השלים פרטים: הטלפון */
   const meDisplay = () => meInfo ? ((meInfo.first + ' ' + meInfo.last).trim() || meInfo.phone || '') : '';
@@ -598,7 +614,10 @@
   };
   /* התחברות עם גוגל ישר מדף הבית (בלי לעבור באזור האישי): חוזרים לאותו עמוד עם הטוקן ב-hash, שומרים אותו, ואם אין משתתף מקושר פותחים את פופאפ ההרשמה */
   const LOGIN_KEY = 'harpatka_login_pending';   // '1': פתיחת הרשמה רק אם אין משתתף; 'reg': תמיד לפתוח את פופאפ ההרשמה אחרי ההתחברות
+  /* כשהחיבור והנתונים ברוסטר (CONFIG.rosterApi): אין כניסה דרך חשבון הגוגל של floa (מסך אישור בשם floa). הכניסה רק עם האפליקציה של הרפתקה (Google Identity); אם היא לא זמינה, הטופס הרגיל עם הודעה */
+  const noFloaLogin = () => { if (!(CONFIG.rosterApi && CONFIG.rosterApi.authUrl)) return false; tapCtx = null; regFallback(true); return true; };
   function loginGoogle(after) {
+    if (noFloaLogin()) return;
     try { sessionStorage.setItem(LOGIN_KEY, after || '1'); } catch (e) {}
     location.href = ((CONFIG.rosterApi && CONFIG.rosterApi.authUrl) || CONFIG.supabaseUrl) + '/auth/v1/authorize?provider=google&prompt=select_account&redirect_to=' + encodeURIComponent(location.origin + location.pathname);
   }
@@ -606,6 +625,7 @@
      כאן מאזינים לסימון (אירוע storage), טוענים את המשתתף ומרעננים את הפופאפ הפתוח. אם החלון נחסם: ניווט רגיל כמו קודם */
   function loginWindow(after, thenOpen) {
     if (!GL) return;
+    if (noFloaLogin()) return;
     try { localStorage.setItem('harpatka_login_popup', '1'); } catch (e) {}
     const url = ((CONFIG.rosterApi && CONFIG.rosterApi.authUrl) || CONFIG.supabaseUrl) + '/auth/v1/authorize?provider=google&prompt=select_account&redirect_to=' + encodeURIComponent(BASE + 'me/');
     const w = window.open(url, 'harpatka_login', 'width=480,height=680');
