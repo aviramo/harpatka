@@ -87,6 +87,34 @@
     return r.ok ? reply('ok') : reply({ error: 'roster_' + r.status }, 400);
   }
 
+  /* הצטרפות עם חשבון גוגל והפרטים בבת אחת (harpatka_me_join): me_phone ואז me_complete, ורק למשתתף שעוד אין לו פרטים (לא דורסים פרטים קיימים) */
+  async function meJoin(b, init) {
+    var hh = headersOf(init); hh.apikey = R.authKey; hh['content-type'] = 'application/json';
+    hh['content-profile'] = R.profile || 'roster-test'; hh['accept-profile'] = R.profile || 'roster-test';
+    var call = function (fn, body) { return real(R.authUrl + '/rest/v1/rpc/' + fn, { method: 'POST', headers: hh, body: JSON.stringify(Object.assign({ p_slug: R.slug || 'harpatka' }, body)) }).then(function (r) { return r.json().catch(function () { return null; }); }); };
+    var ph = { p_phone: b.p_phone }; if (b.p_meeting && !b.p_no_meeting) ph.p_meeting = b.p_meeting;
+    var r = await call('me_phone', ph), st = r && r.status;
+    if (st === 'phone_taken' || st === 'blocked') return reply(st);
+    if (st === 'invalid_phone') return reply('invalid_phone');
+    if (!(st === 'created' || st === 'linked' || st === 'reactivated')) return reply('error');
+    if (b.p_src) call('me_source', { p_code: b.p_src }).catch(function () {});
+    if (st === 'created' || !r.complete) {
+      var c = await call('me_complete', { p_first: b.p_first, p_last: b.p_last, p_age: b.p_age == null ? null : b.p_age, p_gender: b.p_gender || null });
+      if (c !== 'ok') return reply(c || 'error');
+    }
+    return reply(st === 'created' ? 'created' : 'exists');
+  }
+
+  /* אין חיבור בזמן אמת לבסיס הנתונים של הרפתקה: האתר ממשיך לרענן בגיבוי התקופתי שלו */
+  if (window.WebSocket) {
+    var RealWS = window.WebSocket;
+    window.WebSocket = function (u, p) {
+      if (String(u).indexOf(SB.replace(/^https/, 'wss')) === 0) { var f = { readyState: 3, close: function () {}, send: function () {}, addEventListener: function () {}, removeEventListener: function () {} }; setTimeout(function () { if (typeof f.onerror === 'function') f.onerror(new Event('error')); if (typeof f.onclose === 'function') f.onclose({ code: 1006 }); }, 0); return f; }
+      return p === undefined ? new RealWS(u) : new RealWS(u, p);
+    };
+    window.WebSocket.prototype = RealWS.prototype; ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED'].forEach(function (k) { window.WebSocket[k] = RealWS[k]; });
+  }
+
   window.fetch = function (input, init) {
     var url = typeof input === 'string' ? input : (input && input.url) || '';
     if (url.indexOf(SB) !== 0) return real(input, init);
@@ -120,10 +148,12 @@
       if (name === 'harpatka_signup_complete') return signupComplete(b);
       if (name === 'harpatka_report_payment_token') return reportToken(b);
       if (name === 'harpatka_me_claim' || name === 'harpatka_me_claim_token') return Promise.resolve(reply('none'));   // החיבור למשתתף נעשה לפי טלפון (me_phone)
-      return real(input, init);   // כל השאר (למשל harpatka_signup הישן) ממשיך כמו שהיה
+      if (name === 'harpatka_me_join') return meJoin(b, init);
+      return Promise.resolve(reply({ error: 'not_supported_on_roster', fn: name }, 501));   // שום קריאה לא הולכת לבסיס הנתונים של הרפתקה
     }
     if (path.indexOf('/rest/v1/harpatka_meetings') === 0) return meetingsQuery(path);
-    if (path.indexOf('/rest/v1/harpatka_meeting_types') === 0 || path.indexOf('/rest/v1/harpatka_public_settings') === 0) return Promise.resolve(reply([]));
+    if (path.indexOf('/rest/v1/harpatka_meeting_types') === 0 || path.indexOf('/rest/v1/harpatka_price_tiers') === 0 || path.indexOf('/rest/v1/harpatka_public_settings') === 0) return Promise.resolve(reply([]));
+    if (path.indexOf('/rest/v1/') === 0 || path.indexOf('/realtime/') === 0 || path.indexOf('/storage/') === 0) return Promise.resolve(reply([], 200));   // לא לוקחים נתונים מבסיס הנתונים של הרפתקה
     return real(input, init);
   };
 })();
