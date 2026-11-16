@@ -6,6 +6,8 @@
   - דף הניהול של הבדיקות נוצר מ-admin/index.html (סכמת test בבקשות וב-realtime, פס "סביבת בדיקות"); אין יותר admin-test/
 הקוד של האתר עצמו לא משתנה: ההתאמות נעשות רק בעותק."""
 import os, re, shutil, subprocess, sys, pathlib
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from roster_cfg import ROSTER_API
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = pathlib.Path.home() / 'harpatka-test-deploy'
@@ -89,8 +91,6 @@ if GOOGLE_LOGIN_IN_TEST:
     _cfg.write_text(_cfg.read_text(encoding='utf-8').replace('googleLogin: false', 'googleLogin: true', 1), encoding='utf-8')
 # רוסטר: ההרשמה בבדיקות נכנסת ל-API של רוסטר (העסק harpatka בסכמת roster-test), והמיילים יוצאים משם, רק אל הבעלים. מפתח ציבורי, מותר רק לאתר הזה
 # מפתח ה-anon של פרויקט floa (ציבורי, כמו כל מפתח anon): ההתחברות והאזור האישי של רוסטר
-FLOA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFleG1uYXh2YWhibHZlZWpzYnVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5NzE5MjMsImV4cCI6MjEwMTU0NzkyM30.oXPojzklAqOl9pvH5R_GNGTda6OvYruDQjMLprcBA0Y'
-ROSTER_API = "{url: 'https://api-test.floa.co.il/roster/v1', key: 'rk_pub_81212924b841185ddc41a8268f889b5d', slug: 'harpatka', profile: 'roster-test', googleAuth: 'https://api-test.floa.co.il/roster-auth/google', authUrl: 'https://aexmnaxvahblveejsbup.supabase.co', authKey: '" + FLOA_ANON + "'}"
 _cfg = OUT / 'shared' / 'config.js'
 _cfg.write_text(_cfg.read_text(encoding='utf-8').replace('googleLogin:', 'rosterApi: ' + ROSTER_API + ', googleLogin:', 1), encoding='utf-8')
 (OUT / 'CNAME').write_text('test.harpatka.co.il\n', encoding='utf-8')

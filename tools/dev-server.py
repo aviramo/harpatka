@@ -9,6 +9,9 @@
 (כמו שדף הניהול מרענן אותו), יציאה מהחשבון בדף הניהול מוחקת אותו, ואז הכניסה הבאה היא עם גוגל שוב. החיבור נמסר רק למחשב הזה ולמכשירים ברשת הביתית
 (כתובת פרטית), ורק כשהכתובת בדפדפן היא localhost או כתובת IP (נגד DNS rebinding). אין שימוש במפתחות שירות ואין כתיבה לדיסק מלבד הקובץ הזה."""
 import ast, http.server, ipaddress, json, mimetypes, os, pathlib, re, socket, sys, urllib.parse
+import sys as _sys, pathlib as _pl
+_sys.path.insert(0, str(_pl.Path(__file__).resolve().parent))
+from roster_cfg import ROSTER_API
 
 SCRIPT = re.compile(r'<script\b[^>]*>.*?</script>', re.S | re.I)
 NOSCRIPT = re.compile(r'<noscript>.*?</noscript>', re.S | re.I)
@@ -158,6 +161,7 @@ class H(http.server.SimpleHTTPRequestHandler):
             return self._send((ROOT / 'tools' / 'test-site-env.js').read_text(encoding='utf-8'), 'application/javascript; charset=utf-8')
         if p == '/shared/config.js':
             t = (ROOT / 'shared' / 'config.js').read_text(encoding='utf-8').replace('googleLogin: false', 'googleLogin: true', 1)
+            t = t.replace('googleLogin:', 'rosterApi: ' + ROSTER_API + ', googleLogin:', 1)   # כמו deploy-test.py: ההרשמה והאזור האישי דרך רוסטר
             return self._send(t, 'application/javascript; charset=utf-8')
         f = ROOT / p.lstrip('/')
         if f.is_dir() and (f / 'index.html').exists():
