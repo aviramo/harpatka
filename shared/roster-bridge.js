@@ -103,7 +103,14 @@
         if (b.p_as) return Promise.resolve(reply({ status: 'auth' }));   // צפייה כמשתתף עוד לא נתמכת מול רוסטר
         var nb = Object.assign({ p_slug: R.slug || 'harpatka' }, b); delete nb.p_as; delete nb.p_src;
         var hh = headersOf(init); hh.apikey = R.authKey; hh['content-profile'] = R.profile || 'roster-test'; hh['accept-profile'] = R.profile || 'roster-test';
-        return real(R.authUrl + '/rest/v1/rpc/' + ME[name], Object.assign({}, init, { headers: hh, body: JSON.stringify(nb) }));
+        var src = b.p_src, prof = R.profile || 'roster-test';
+        return real(R.authUrl + '/rest/v1/rpc/' + ME[name], Object.assign({}, init, { headers: hh, body: JSON.stringify(nb) })).then(function (res) {
+          if (src && (name === 'harpatka_me_phone' || name === 'harpatka_me_register' || name === 'harpatka_me_register_src')) {   // מאיזה קוד (?s=) הגיע: נקבע רק למשתתף שעוד אין לו
+            var h2 = Object.assign({}, hh); h2['content-type'] = 'application/json';
+            real(R.authUrl + '/rest/v1/rpc/me_source', { method: 'POST', headers: h2, body: JSON.stringify({ p_slug: R.slug || 'harpatka', p_code: src }) }).catch(function () {});
+          }
+          return res;
+        });
       }
       if (name === 'harpatka_signup_phone') return signupPhone(b);
       if (name === 'harpatka_signup_complete') return signupComplete(b);
