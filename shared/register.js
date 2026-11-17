@@ -678,11 +678,12 @@
   async function onGoogleCredential(resp) {
     const c = tapCtx || { after: null, thenOpen: false }; tapCtx = null;
     { const gm = document.getElementById('gloginModal'); if (gm && !gm.hidden) try { closeModal(gm); } catch (e) {} }
+    try { const pl = JSON.parse(decodeURIComponent(escape(atob(String(resp && resp.credential).split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))))); if (pl && pl.email) sessionStorage.setItem('harpatka_g_email', String(pl.email).toLowerCase()); } catch (e) {}   // האימייל מהאישור של גוגל נשמר: אם הכניסה נכשלת והמשתתף נרשם כאורח, הוא מצורף להרשמה
     try {
       const r = await fetch(CONFIG.supabaseUrl + '/auth/v1/token?grant_type=id_token', { method: 'POST', headers: { apikey: CONFIG.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ provider: 'google', id_token: resp && resp.credential, nonce: gsiNonce }) });
       const d = r.ok ? await r.json() : null;
       if (!d || !d.access_token) throw new Error('token ' + r.status);
-      localStorage.setItem(ME_KEY, JSON.stringify({ access_token: d.access_token, refresh_token: d.refresh_token }));
+      localStorage.setItem(ME_KEY, JSON.stringify({ access_token: d.access_token, refresh_token: d.refresh_token })); try { sessionStorage.removeItem('harpatka_g_email'); } catch (x) {}
     } catch (e) {   // החלפת האישור נכשלה. בהרשמה: הטופס המלא (ההרשמה לא נחסמת). באזור האישי: הכניסה הרגילה (ניווט)
       if (c.after === 'reg') return regFallback(true);
       if (c.thenOpen) try { sessionStorage.setItem('harpatka_open_me', '1'); } catch (x) {}
