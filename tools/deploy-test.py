@@ -74,10 +74,21 @@ for d in DIRS:
     shutil.copytree(ROOT / d, OUT / d, ignore=shutil.ignore_patterns('*.sql', '.DS_Store'))
 for f in FILES:
     shutil.copy2(ROOT / f, OUT / f)
+# הניהול עבר לרוסטר: בבדיקות הדף /admin/ הוא הפניה לממשק הניהול של רוסטר (העסק harpatka, סכמת roster-test).
+# דף הניהול של הרפתקה (admin/) נשאר בקוד ובאמת, ולא מתפרסם לבדיקות. להחזרה: ADMIN_TO_ROSTER = None
+ADMIN_TO_ROSTER = 'https://roster-test.floa.co.il/roster/admin/?biz=harpatka'
 for _d in ('admin', 'admin1'):   # admin1: עותק עבודה מקומי (ב-.gitignore), רק בבדיקות
     if _d == 'admin1' and not (ROOT / 'admin1' / 'index.html').exists():
         continue
     (OUT / _d).mkdir()
+    if _d == 'admin' and ADMIN_TO_ROSTER:
+        (OUT / _d / 'index.html').write_text(
+            '<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+            '<meta name="robots" content="noindex"><title>ניהול</title><meta http-equiv="refresh" content="0;url=' + ADMIN_TO_ROSTER + '">'
+            '<script>location.replace(' + repr(ADMIN_TO_ROSTER) + ' + location.hash)</script></head>'
+            '<body style="font-family:sans-serif;padding:2rem"><a href="' + ADMIN_TO_ROSTER + '">הניהול עבר לרוסטר, לחצו כאן</a></body></html>',
+            encoding='utf-8', newline='\n')
+        continue
     _admin_html, _admin_css = build_test_admin(_d)
     (OUT / _d / 'index.html').write_text(_admin_html, encoding='utf-8', newline='\n')
     if _admin_css is not None:
