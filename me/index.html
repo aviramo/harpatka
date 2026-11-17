@@ -129,7 +129,7 @@
   /* חשבון גוגל בלי טלפון מקושר: אין יותר שלב טלפון בתוך האזור האישי. בדף הבית האזור האישי נפתח רק אחרי שהחשבון והטלפון חוברו (פופאפ הטלפון מלמעלה, כמו בהרשמה); אם בכל זאת הגענו לכאן, מחזירים לשם */
   function viewSignup() {
     app.innerHTML = '';
-    if (EMBED) { try { parent.postMessage({ harpatka: 'me-phone' }, location.origin); } catch (e) {} }
+    if (EMBED) { if (window.__out) return; try { parent.postMessage({ harpatka: 'me-phone' }, location.origin); } catch (e) {} }   // אחרי יציאה לא פותחים הרשמה מעצמנו
     else location.replace('../?me=1');
   }
   function viewPending() { app.innerHTML = '<div class="card"><h2>הבקשה התקבלה</h2><p class="muted" style="margin:0">אנחנו מאשרים את החיבור, ובקרוב האזור האישי יהיה זמין. אפשר לחזור לכאן בעוד קצת זמן</p></div>'; }

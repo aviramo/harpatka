@@ -937,7 +937,8 @@
       const shell = sheetShell('האזור האישי', '', () => closeMeSheet()); meSheet = shell.el; const p = shell.p;
       window.addEventListener('popstate', () => { if (meSheetPush) { meSheetPush = false; closeMeSheet(true); } });
       window.addEventListener('message', (e) => {
-        if (e.origin === location.origin && e.data && e.data.harpatka === 'me-phone') {   // החשבון בלי טלפון מקושר: סוגרים את האזור האישי ופותחים את פופאפ הטלפון מלמעלה
+        if (e.origin === location.origin && e.data && e.data.harpatka === 'me-phone') {
+          if (loggedOutFlag) { closeMeSheet(); return; }   // אחרי יציאה לא פותחים פופאפ הרשמה מעצמנו   // החשבון בלי טלפון מקושר: סוגרים את האזור האישי ופותחים את פופאפ הטלפון מלמעלה
           if (!meSheet || meSheet.hidden) { if (meSheet) meSheet.dataset.k = ''; return; }
           closeMeSheet(); if (!AS) setTimeout(() => openReg(false, null, { search: '' }), 380); return;
         }
