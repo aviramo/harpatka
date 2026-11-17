@@ -1,3 +1,3 @@
 """הגדרות רוסטר לבדיקות (ציבוריות): נטענות גם ב-deploy-test.py וגם ב-dev-server.py, במקום אחד."""
 FLOA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFleG1uYXh2YWhibHZlZWpzYnVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5NzE5MjMsImV4cCI6MjEwMTU0NzkyM30.oXPojzklAqOl9pvH5R_GNGTda6OvYruDQjMLprcBA0Y'
-ROSTER_API = "{url: 'https://api-test.floa.co.il/roster/v1', key: 'rk_pub_81212924b841185ddc41a8268f889b5d', slug: 'harpatka', profile: 'roster-test', googleButton: true, googleAuth: 'https://api-test.floa.co.il/roster-auth/google', authUrl: 'https://aexmnaxvahblveejsbup.supabase.co', authKey: '" + FLOA_ANON + "'}"
+ROSTER_API = "{url: 'https://api-test.floa.co.il/roster/v1', key: 'rk_pub_81212924b841185ddc41a8268f889b5d', slug: 'harpatka', profile: 'roster-test', googleButton: false, googleAuth: 'https://api-test.floa.co.il/roster-auth/google', authUrl: 'https://aexmnaxvahblveejsbup.supabase.co', authKey: '" + FLOA_ANON + "'}"

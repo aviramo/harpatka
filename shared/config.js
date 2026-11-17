@@ -75,7 +75,7 @@ document.addEventListener('click', function (e) {
     var K = 'harpatka_backend', b = new URLSearchParams(location.search).get('backend');
     localStorage.removeItem(K);   // המערכת הישנה (Supabase של הרפתקה) נמחקה ב-17.11.26: אין יותר חזרה ל-?backend=legacy, וסימון ישן נמחק
     if (!CONFIG.rosterApi) {   // החלפה מלאה: ברירת המחדל היא רוסטר, ו-?backend=legacy מחזיר למערכת הישנה בדפדפן הזה
-      CONFIG.rosterApi = { url: 'https://api.floa.co.il/roster/v1', key: 'rk_pub_IXQvipmkAZevJPbdQanj6KW9M9hrQTBf', slug: 'harpatka', profile: 'roster', googleButton: true,
+      CONFIG.rosterApi = { url: 'https://api.floa.co.il/roster/v1', key: 'rk_pub_IXQvipmkAZevJPbdQanj6KW9M9hrQTBf', slug: 'harpatka', profile: 'roster', googleButton: false,
         googleAuth: 'https://api.floa.co.il/roster-auth/google', authUrl: 'https://aexmnaxvahblveejsbup.supabase.co',
         authKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFleG1uYXh2YWhibHZlZWpzYnVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5NzE5MjMsImV4cCI6MjEwMTU0NzkyM30.oXPojzklAqOl9pvH5R_GNGTda6OvYruDQjMLprcBA0Y' };
     }
