@@ -247,7 +247,7 @@
     let reporting = false;
     const reportPay = async () => {
       const m = selMeeting || nearest; if (!m || !m.id || reporting) return;
-      let tk = null; try { tk = localStorage.getItem('harpatka_claim_token'); } catch (e) {}
+      let tk = null; try { tk = localStorage.getItem('harpatka_claim_token') || localStorage.getItem('harpatka_roster_token'); } catch (e) {}   // אורח שכבר קיים לא עובר שלב פרטים, ולכן יש לו רק את הטוקן של הגשר
       if (!meInfo && !tk) return;   // דיווח דורש חשבון מחובר (או צפייה כמשתתף) או אסימון מהרשמה שהרגע נעשתה
       reporting = true;
       const ob = meInfo ? meOptimistic(m.id, { reported: true }) : null;
