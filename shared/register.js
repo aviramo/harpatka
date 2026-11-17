@@ -984,13 +984,17 @@
   /* זמן אמת: מצב המשתתף המחובר דרך הערוץ "me" (בבדיקות "me-test"), ומפגשים והגדרות ציבוריות דרך הערוץ "meetings" (גם למבקרים לא מחוברים).
      הערוצים, חיבור מחדש, חזרה ללשונית וגיבוי כל 45 שניות מגיעים מ-HRT.channel */
   const IS_TEST = !!(window.HARPATKA_ENV && window.HARPATKA_ENV.name === 'test');
+  /* מול רוסטר: ערוץ ציבורי אחד לעסק (roster-test:<slug> בבדיקות, roster:<slug> באמת) בבסיס הנתונים של floa; ההודעה בלי נתונים, והלקוח מרענן דרך ה-API הרגיל */
+  const RR = CONFIG.rosterApi;
+  const RT_CFG = RR && RR.authUrl ? { url: RR.authUrl, key: RR.authKey } : { url: CONFIG.supabaseUrl, key: CONFIG.supabaseKey };
+  const rtTopic = (prod, test) => RR && RR.authUrl ? ((RR.profile === 'roster-test' ? 'roster-test:' : 'roster:') + RR.slug) : (IS_TEST ? test : prod);
   let meChan = null;
   function ensureMeChannel() {
     if (meChan || !GL) return;
-    meChan = HRT.channel({ url: CONFIG.supabaseUrl, key: CONFIG.supabaseKey }, IS_TEST ? 'me-test' : 'me', () => { try { if (!meInfo && !localStorage.getItem(TOK_KEY)) return; } catch (e) { return; } meLoader.reload(250); }, { poll: 45000 });
+    meChan = HRT.channel(RT_CFG, rtTopic('me', 'me-test'), () => { try { if (!meInfo && !localStorage.getItem(TOK_KEY)) return; } catch (e) { return; } meLoader.reload(250); }, { poll: 45000 });
   }
   try { if (localStorage.getItem(TOK_KEY)) ensureMeChannel(); } catch (e) {}
-  HRT.channel({ url: CONFIG.supabaseUrl, key: CONFIG.supabaseKey }, IS_TEST ? 'meetings-test' : 'meetings', () => { setTimeout(() => { loadNearestOnce(); try { window.dispatchEvent(new Event('harpatka:meetings')); } catch (e) {} }, 200 + Math.random() * 800); }, { poll: 90000 });   // פיזור קטן כדי שכל המבקרים לא יטענו באותו רגע
+  HRT.channel(RT_CFG, rtTopic('meetings', 'meetings-test'), () => { setTimeout(() => { loadNearestOnce(); try { window.dispatchEvent(new Event('harpatka:meetings')); } catch (e) {} }, 200 + Math.random() * 800); }, { poll: 90000 });   // פיזור קטן כדי שכל המבקרים לא יטענו באותו רגע
   const contactModal = document.getElementById('contactModal');
   /* השלמת פרטים אחרי כניסה עם גוגל: שם פרטי ושם משפחה מהחשבון (רק בשדות ריקים) */
   function prefillGoogleName() {

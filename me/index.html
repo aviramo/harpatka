@@ -354,7 +354,10 @@
   };
   const scheduleRefresh = () => { clearTimeout(rtT); rtT = setTimeout(refreshNow, 250); };
   document.addEventListener('focusout', () => { if (rtDirty) setTimeout(refreshNow, 300); });
-  HRT.channel({ url: DB.url, key: DB.key }, (window.HARPATKA_ENV && window.HARPATKA_ENV.name === 'test') ? 'me-test' : 'me', scheduleRefresh, { poll: 45000 });
+  { const RR = window.CONFIG && window.CONFIG.rosterApi;   // מול רוסטר: ערוץ ציבורי אחד לעסק בבסיס הנתונים של floa, בלי נתונים
+    const rr = RR && RR.authUrl;
+    HRT.channel(rr ? { url: RR.authUrl, key: RR.authKey } : { url: DB.url, key: DB.key },
+      rr ? ((RR.profile === 'roster-test' ? 'roster-test:' : 'roster:') + RR.slug) : ((window.HARPATKA_ENV && window.HARPATKA_ENV.name === 'test') ? 'me-test' : 'me'), scheduleRefresh, { poll: 45000 }); }
   start();
 })();
 </script>
