@@ -12,6 +12,17 @@
   window.__rosterBridge = true;
   var SB = C.supabaseUrl, real = window.fetch.bind(window), TOK = 'harpatka_roster_token';
 
+  /* חיבור שמור מהמערכת הישנה (Supabase של הרפתקה) לא תקף מול רוסטר: מנקים אותו כבר בטעינה, כדי שהמשתתף יראה כניסה מחדש ולא "משהו השתבש" (401 מהשער) */
+  function clearOldSession() { try { localStorage.removeItem('harpatka_me_session'); localStorage.removeItem('harpatka_me_name'); } catch (e) {} }
+  try {
+    var rawS = localStorage.getItem('harpatka_me_session');
+    if (rawS) {
+      var tkS = JSON.parse(rawS).access_token || '', plS = JSON.parse(decodeURIComponent(escape(atob(tkS.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))));
+      var refS = String(R.authUrl).replace(/^https?:\/\//, '').split('.')[0];
+      if (String(plS.iss || '').indexOf(refS) < 0) clearOldSession();
+    }
+  } catch (e) { clearOldSession(); }
+
   var ME = {
     harpatka_me: 'me', harpatka_me_phone: 'me_phone', harpatka_me_complete: 'me_complete', harpatka_me_register: 'me_register', harpatka_me_register_src: 'me_register',
     harpatka_me_unregister: 'me_unregister', harpatka_me_pay_credit: 'me_pay_credit', harpatka_me_report_payment: 'me_report_payment', harpatka_me_update: 'me_update', harpatka_me_buy_pass: 'me_buy_pass'
@@ -137,6 +148,7 @@
         var hh = headersOf(init); hh.apikey = R.authKey; hh['content-profile'] = R.profile || 'roster-test'; hh['accept-profile'] = R.profile || 'roster-test';
         var src = b.p_src, prof = R.profile || 'roster-test';
         return real(R.authUrl + '/rest/v1/rpc/' + ME[name], Object.assign({}, init, { headers: hh, body: JSON.stringify(nb) })).then(function (res) {
+          if (res.status === 401) { clearOldSession(); if (name === 'harpatka_me') return reply({ status: 'auth' }); }   // טוקן נדחה: מנקים את החיבור השמור, והאתר מציג כניסה מחדש
           if (src && (name === 'harpatka_me_phone' || name === 'harpatka_me_register' || name === 'harpatka_me_register_src')) {   // מאיזה קוד (?s=) הגיע: נקבע רק למשתתף שעוד אין לו
             var h2 = Object.assign({}, hh); h2['content-type'] = 'application/json';
             real(R.authUrl + '/rest/v1/rpc/me_source', { method: 'POST', headers: h2, body: JSON.stringify({ p_slug: R.slug || 'harpatka', p_code: src }) }).catch(function () {});
