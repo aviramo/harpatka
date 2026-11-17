@@ -96,7 +96,7 @@
     var f = await errField(r); return reply(FIELD_CODE[f] || 'error');
   }
   async function reportToken(b) {
-    var r = await roster('/payments/click', { method: 'POST', body: JSON.stringify({ participant_token: getTok(), meeting_id: b.p_meeting }) });
+    var r = await roster('/payments/click', { method: 'POST', body: JSON.stringify({ participant_token: getTok(), meeting_id: b.p_meeting, method: b.p_method || undefined }) });
     return r.ok ? reply('ok') : reply({ error: 'roster_' + r.status }, 400);
   }
 

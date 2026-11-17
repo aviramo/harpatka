@@ -245,7 +245,7 @@
     /* לחיצה על התשלום בפייבוקס = דיווח על תשלום, אוטומטית (בלי קישור "שילמתי"): פייבוקס נפתח בלשונית חדשה, ובמערכת המפגש מסומן "דווח" ומחכה לאימות שלנו */
     const payBtns = root.querySelectorAll('[data-paybox], [data-bit]');
     let reporting = false;
-    const reportPay = async () => {
+    const reportPay = async (method) => {
       const m = selMeeting || nearest; if (!m || !m.id || reporting) return;
       let tk = null; try { tk = localStorage.getItem('harpatka_claim_token') || localStorage.getItem('harpatka_roster_token'); } catch (e) {}   // אורח שכבר קיים לא עובר שלב פרטים, ולכן יש לו רק את הטוקן של הגשר
       if (!meInfo && !tk) return;   // דיווח דורש חשבון מחובר (או צפייה כמשתתף) או אסימון מהרשמה שהרגע נעשתה
@@ -253,9 +253,9 @@
       const ob = meInfo ? meOptimistic(m.id, { reported: true }) : null;
       try {
         let r;
-        if (meInfo) r = await meRpc('harpatka_me_report_payment', { p_meeting: m.id });
+        if (meInfo) r = await meRpc('harpatka_me_report_payment', { p_meeting: m.id, p_method: method });
         else {
-          const res = await fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_report_payment_token', { method: 'POST', keepalive: true, headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_token: tk, p_meeting: m.id }) });
+          const res = await fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_report_payment_token', { method: 'POST', keepalive: true, headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_token: tk, p_meeting: m.id, p_method: method }) });
           if (!res.ok) throw new Error('HTTP ' + res.status); r = await res.json();
         }
         if (r !== 'ok' && r !== 'reported' && r !== 'already') throw new Error('report failed');
@@ -264,7 +264,7 @@
       } catch (e) { if (ob) ob.fail(); }   // הדיווח נכשל: הכפתור נשאר, ולחיצה נוספת מנסה שוב
       reporting = false;
     };
-    payBtns.forEach((b) => b.addEventListener('click', () => { reportPay(); }));
+    payBtns.forEach((b) => b.addEventListener('click', () => { reportPay(b.hasAttribute('data-bit') ? 'bit' : 'paybox'); }));
     /* תשלום מהקרדיט: הקרדיט מכסה את מחיר המפגש ומוקצה לו (בלי פייבוקס) */
     const cbtn = q('paycredit'); let crBusy = false;
     if (cbtn) cbtn.addEventListener('click', async () => {
