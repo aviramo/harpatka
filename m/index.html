@@ -34,7 +34,9 @@
   <main id="app"><h1>הוראות הגעה</h1><p class="msg" id="msg">טוען...</p></main>
   <script>
     (function () {
-      var BASE = 'https://ezakarwqstnldqixgreb.supabase.co/storage/v1/object/public/meeting-media/';
+      /* הקבצים עברו לאחסון של רוסטר (העסק harpatka, 17.11.26): הנתיב הישן d/<קובץ> הוא meeting-media-d-<קובץ> בדלי roster-media. האחסון הישן נשאר כגיבוי עד שיימחק */
+      var BASE = 'https://aexmnaxvahblveejsbup.supabase.co/storage/v1/object/public/roster-media/ce70a9a1-a588-4495-a618-c3525f87cf6f/meeting-media-';
+      var OLD = 'https://ezakarwqstnldqixgreb.supabase.co/storage/v1/object/public/meeting-media/';
       var app = document.getElementById('app'), msg = document.getElementById('msg');
       var f = (new URLSearchParams(location.search).get('f') || '').trim();
       // רק נתיב של קובץ בדלי של המפגשים (תיקייה וקובץ), בלי ".." ובלי כתובת חיצונית
@@ -44,10 +46,11 @@
       else if (/^(jpe?g|png|webp|gif)$/.test(ext)) { el = document.createElement('img'); el.alt = 'הוראות הגעה'; }
       else { msg.textContent = 'הקובץ לא נמצא'; return; }
       el.className = 'media';
-      el.addEventListener('error', function () { el.remove(); msg.textContent = 'הקובץ לא נמצא'; msg.hidden = false; });
+      var tried = false;
+      el.addEventListener('error', function () { if (!tried) { tried = true; el.src = OLD + f; return; } el.remove(); msg.textContent = 'הקובץ לא נמצא'; msg.hidden = false; });
       el.addEventListener('load', function () { msg.hidden = true; });
       el.addEventListener('loadedmetadata', function () { msg.hidden = true; });
-      el.src = BASE + f;
+      el.src = BASE + f.replace(/\//g, '-');
       app.insertBefore(el, msg);
       var home = document.createElement('a'); home.className = 'home'; home.href = '../'; home.textContent = 'לדף הבית';
       app.appendChild(home);
