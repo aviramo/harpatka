@@ -8,7 +8,7 @@
   <link rel="icon" href="../images/favicon-v5.ico" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="../images/favicon-v5-32.png" />
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Assistant:wght@400;500;600;700&display=block" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/site.css?v=20261106a">
+  <link rel="stylesheet" href="../shared/site.css?v=20261117a">
   <script src="../shared/age.js?v=20261031a"></script>
 </head>
 <body>
@@ -186,9 +186,13 @@
     // במובייל כל סרטון ממלא את המסך בתוך הדף, ולא במסך מלא של הדפדפן: שם הדפדפן מציג הודעה שאי אפשר לכבות, והיא מסתירה את פס הבקרה. כפתור החזרה סוגר. אייפון: בלי playsinline הוא פותח את הנגן שלו בעצמו
     const FS_MOBILE = matchMedia('(hover: none) and (pointer: coarse)').matches;
     const FS_NATIVE = FS_MOBILE && !Element.prototype.requestFullscreen;
+    const DESK = matchMedia('(hover: hover) and (pointer: fine) and (min-width: 760px)').matches;   // בדסקטופ אותה התנהגות, כפאנל גדול מימין (כמו האזור האישי)
     let fsOpen = null;   // הסרטון שממלא עכשיו את המסך
-    const fsEnter = m => { m.classList.add('fsx'); document.documentElement.classList.add('vid-open'); fsOpen = m; history.pushState({ adVideo: 1 }, ''); };
-    const fsExit = m => { closeMore(); m.classList.remove('fsx', 'swiping'); m.style.transform = m.style.transition = ''; document.documentElement.classList.remove('vid-open'); if (fsOpen === m) { fsOpen = null; history.back(); } };
+    const vShield = document.createElement('div'); vShield.className = 'vshield'; vShield.hidden = true; document.body.appendChild(vShield);
+    vShield.addEventListener('click', () => { if (fsOpen) fsOpen._stop(); });   // לחיצה מחוץ לפאנל סוגרת
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && fsOpen && !openMore) fsOpen._stop(); });
+    const fsEnter = (m, desk) => { const fg = m.parentElement; if (desk) { fg.style.minHeight = fg.offsetHeight + 'px'; m.classList.add('dsk'); vShield.hidden = false; } m.classList.add('fsx'); if (!desk) document.documentElement.classList.add('vid-open'); fsOpen = m; history.pushState({ adVideo: 1 }, ''); };
+    const fsExit = m => { closeMore(); vShield.hidden = true; m.parentElement.style.minHeight = ''; m.classList.remove('fsx', 'swiping', 'dsk'); m.style.transform = m.style.transition = ''; document.documentElement.classList.remove('vid-open'); if (fsOpen === m) { fsOpen = null; history.back(); } };
     window.addEventListener('popstate', () => { if (fsOpen) { const m = fsOpen; fsOpen = null; m._stop(); } });   // כפתור החזרה סוגר את הסרטון ולא עוזב את הדף
     /* החלקה למטה בזמן צפייה: הסרטון יורד עם האצבע, ומעבר לסף (או בהחלקה מהירה) נסגר וחוזרים למודעות. לא על פס הבקרה */
     let sw = null;
@@ -196,7 +200,7 @@
     const fsSlideOut = (m, done) => {   // הסרטון יורד כמו פופאפ, ואז חוזרים למודעות
       if (m._out) return;
       if (STILL) { done(); return; }
-      m._out = true; m.style.transition = 'transform .22s ease-in'; m.style.transform = 'translateY(100%)';
+      m._out = true; m.style.transition = 'transform .22s ease-in'; m.style.transform = m.classList.contains('dsk') ? 'translateX(100%)' : 'translateY(100%)';
       setTimeout(() => { m._out = false; done(); }, 220);
     };
     const swEnd = (e, cancel) => {
@@ -210,7 +214,7 @@
       m.style.transition = 'transform .18s ease-out'; m.style.transform = '';
       setTimeout(() => { m.classList.remove('swiping'); m.style.transition = ''; }, 180);
     };
-    document.addEventListener('pointerdown', e => { if (fsOpen && !e.target.closest('.ctl')) sw = { id: e.pointerId, x: e.clientX, y: e.clientY, t: e.timeStamp, dy: 0, on: false }; });
+    document.addEventListener('pointerdown', e => { if (fsOpen && !fsOpen.classList.contains('dsk') && !e.target.closest('.ctl')) sw = { id: e.pointerId, x: e.clientX, y: e.clientY, t: e.timeStamp, dy: 0, on: false }; });
     document.addEventListener('pointermove', e => {
       if (!sw || e.pointerId !== sw.id || !fsOpen) return;
       const dy = e.clientY - sw.y, dx = e.clientX - sw.x;
@@ -275,7 +279,7 @@
           if (on) { v.currentTime = 0; paint(); v.play().catch(() => {}); v.focus({ preventScroll: true }); }
           else v.pause();
         };
-        const start = () => { show(true); if (FS_MOBILE && !FS_NATIVE) fsEnter(media); };
+        const start = () => { show(true); if (FS_MOBILE && !FS_NATIVE) fsEnter(media); else if (DESK) fsEnter(media, true); };
         im.addEventListener('click', start);              // לחיצה על התמונה: ניגון
         v.addEventListener('click', toggle);              // לחיצה על הסרטון: השהיה / המשך
         im.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); start(); } });
