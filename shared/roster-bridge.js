@@ -106,11 +106,11 @@
     hh['content-profile'] = R.profile || 'roster-test'; hh['accept-profile'] = R.profile || 'roster-test';
     var call = function (fn, body) { return real(R.authUrl + '/rest/v1/rpc/' + fn, { method: 'POST', headers: hh, body: JSON.stringify(Object.assign({ p_slug: R.slug || 'harpatka' }, body)) }).then(function (r) { return r.json().catch(function () { return null; }); }); };
     var ph = { p_phone: b.p_phone }; if (b.p_meeting && !b.p_no_meeting) ph.p_meeting = b.p_meeting;
+    if (b.p_src) ph.p_source = b.p_src;
     var r = await call('me_phone', ph), st = r && r.status;
     if (st === 'phone_taken' || st === 'blocked') return reply(st);
     if (st === 'invalid_phone') return reply('invalid_phone');
     if (!(st === 'created' || st === 'linked' || st === 'reactivated')) return reply('error');
-    if (b.p_src) call('me_source', { p_code: b.p_src }).catch(function () {});
     if (st === 'created' || !r.complete) {
       var c = await call('me_complete', { p_first: b.p_first, p_last: b.p_last, p_age: b.p_age == null ? null : b.p_age, p_gender: b.p_gender || null });
       if (c !== 'ok') return reply(c || 'error');
@@ -147,11 +147,15 @@
       if (ME[name]) {
         if (b.p_as) return Promise.resolve(reply({ status: 'auth' }));   // צפייה כמשתתף עוד לא נתמכת מול רוסטר
         var nb = Object.assign({ p_slug: R.slug || 'harpatka' }, b); delete nb.p_as; delete nb.p_src;
+        if (name === 'harpatka_me_phone') {   // המקור והאימייל נשלחים באותה קריאה שיוצרת את המשתתף
+          if (b.p_src) nb.p_source = b.p_src;
+          try { var ge2 = sessionStorage.getItem('harpatka_g_email'); if (ge2) nb.p_email = ge2; } catch (e) {}
+        }
         var hh = headersOf(init); hh.apikey = R.authKey; hh['content-profile'] = R.profile || 'roster-test'; hh['accept-profile'] = R.profile || 'roster-test';
         var src = b.p_src, prof = R.profile || 'roster-test';
         return real(R.authUrl + '/rest/v1/rpc/' + ME[name], Object.assign({}, init, { headers: hh, body: JSON.stringify(nb) })).then(function (res) {
           if (res.status === 401) { clearOldSession(); if (name === 'harpatka_me') return reply({ status: 'auth' }); }   // טוקן נדחה: מנקים את החיבור השמור, והאתר מציג כניסה מחדש
-          if (src && (name === 'harpatka_me_phone' || name === 'harpatka_me_register' || name === 'harpatka_me_register_src')) {   // מאיזה קוד (?s=) הגיע: נקבע רק למשתתף שעוד אין לו
+          if (src && (name === 'harpatka_me_register' || name === 'harpatka_me_register_src')) {   // מאיזה קוד (?s=) הגיע: נקבע רק למשתתף שעוד אין לו
             var h2 = Object.assign({}, hh); h2['content-type'] = 'application/json';
             real(R.authUrl + '/rest/v1/rpc/me_source', { method: 'POST', headers: h2, body: JSON.stringify({ p_slug: R.slug || 'harpatka', p_code: src }) }).catch(function () {});
           }
