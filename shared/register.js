@@ -201,6 +201,14 @@
     try { if (v) sessionStorage.setItem('harpatka_s', s); else v = ok(sessionStorage.getItem('harpatka_s')); } catch (e) {}
     return v;
   })();
+  /* קוד ההגעה כמו שהוא (?s=dating, p, pm או כל קוד אחר): נשמר מהכניסה לביקור ונשלח עם ההרשמה. p ו-pm נשלחים כ-'p' */
+  const SRC = (() => {
+    const q = new URLSearchParams(location.search); let s = q.get('s') || (q.has('pm') ? 'pm' : null);
+    s = s && /^[A-Za-z0-9_-]{1,32}$/.test(s) ? s.toLowerCase() : null;
+    try { if (s) sessionStorage.setItem('harpatka_s', s); else s = sessionStorage.getItem('harpatka_s'); } catch (e) {}
+    s = s && /^[A-Za-z0-9_-]{1,32}$/.test(s) ? s.toLowerCase() : null;
+    return s === 'pm' ? 'p' : s;
+  })();
   /* ===== טופס הרשמה: שם + טלפון -> Supabase (פונקציה harpatka_signup, admin/signup.sql) =====
      ולידציה ונרמול ל-E.164 זהים ללוגיקה בבסיס הנתונים (harpatka_normalize_phone).
      הרשומה נקשרת בבסיס הנתונים למפגש הקרוב (זה שבבאנר) כ"טרם שילם" */
@@ -291,7 +299,7 @@
         btn.disabled = true; const relG = HRT.busy(btn); let gr = null;
         try {
           const res = await fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_signup_phone', { method: 'POST', headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify(Object.assign({ p_phone: gt.value, p_token: guestToken }, selMeeting && selMeeting.id ? { p_meeting: selMeeting.id } : {}, PAID ? { p_src: 'p' } : {})) });
+            body: JSON.stringify(Object.assign({ p_phone: gt.value, p_token: guestToken }, selMeeting && selMeeting.id ? { p_meeting: selMeeting.id } : {}, SRC ? { p_src: SRC } : {})) });
           gr = res.ok ? await res.json() : null;
         } catch (er) { gr = null; }
         relG(); btn.disabled = false;
@@ -307,7 +315,7 @@
         btn.disabled = true; const relB = HRT.busy(btn);
         try {
           const mm = areaFlow ? null : (selMeeting || nearest);
-          const r = await meRpc('harpatka_me_phone', Object.assign({ p_phone: ph }, mm && mm.id ? { p_meeting: mm.id } : {}, PAID ? { p_src: 'p' } : {}));
+          const r = await meRpc('harpatka_me_phone', Object.assign({ p_phone: ph }, mm && mm.id ? { p_meeting: mm.id } : {}, SRC ? { p_src: SRC } : {}));
           const st = r && r.status;
           if (st === 'invalid_phone') PersonForm.setErr(root, 'phone', PersonForm.MSG.phone);
           else if (st === 'phone_taken') q('fail').textContent = 'מספר הטלפון הזה כבר מחובר לחשבון אחר';   // והמנהלים מקבלים מייל
@@ -351,7 +359,7 @@
         const mm = selMeeting || nearest, payOkJ = ageOk(ck.v.age) && !!mm;
         btn.disabled = true; btn.textContent = 'שולחים...'; const relJ = HRT.busy(btn); let doneJ = false;
         try {
-          const r = await meRpc('harpatka_me_join', Object.assign({ p_first: ck.v.first, p_last: ck.v.last, p_age: ck.v.age, p_gender: ck.v.gender, p_phone: ck.v.phoneRaw }, mm && mm.id ? { p_meeting: mm.id } : {}, PAID ? { p_src: 'p' } : {}));
+          const r = await meRpc('harpatka_me_join', Object.assign({ p_first: ck.v.first, p_last: ck.v.last, p_age: ck.v.age, p_gender: ck.v.gender, p_phone: ck.v.phoneRaw }, mm && mm.id ? { p_meeting: mm.id } : {}, SRC ? { p_src: SRC } : {}));
           if (r === 'created' || r === 'exists') {
             if (r === 'created') { try { if (window.fbq) fbq('trackCustom', 'RegistrationValue', { value: ageOk(ck.v.age) ? 3 : 1, currency: 'ILS' }); } catch (e) {} }
             doneJ = true; showDone(payOkJ);
@@ -394,7 +402,7 @@
           if (rtk) {
             const rc2 = await fetch(CONFIG.rosterApi.url + '/signup/complete', { method: 'POST', headers: RH, body: JSON.stringify({ participant_token: rtk, first_name: first, last_name: last, age: age, gender: gender }) });
             if (rc2.ok) {
-              if (selMeeting && selMeeting.id) { try { await fetch(CONFIG.rosterApi.url + '/signup/phone', { method: 'POST', headers: RH, body: JSON.stringify(Object.assign({ phone: norm, meeting_id: selMeeting.id }, PAID ? { source_code: 'p' } : {})) }); } catch (e) {} }   // המפגש שנבחר (אם עוד לא נרשם אליו)
+              if (selMeeting && selMeeting.id) { try { await fetch(CONFIG.rosterApi.url + '/signup/phone', { method: 'POST', headers: RH, body: JSON.stringify(Object.assign({ phone: norm, meeting_id: selMeeting.id }, SRC ? { source_code: SRC } : {})) }); } catch (e) {} }   // המפגש שנבחר (אם עוד לא נרשם אליו)
               return { ok: true, json: async () => 'created' };
             }
             let jj = null; try { jj = await rc2.json(); } catch (e) {}
@@ -402,7 +410,7 @@
             if (ff) return { ok: true, json: async () => rmap[ff] || 'error' };
           }
           const r = await fetch(CONFIG.rosterApi.url + '/signup', { method: 'POST', headers: { Authorization: 'Bearer ' + CONFIG.rosterApi.key, 'Content-Type': 'application/json' },
-            body: JSON.stringify(Object.assign({ first_name: first, last_name: last, phone: norm, age: age, gender: gender }, selMeeting && selMeeting.id ? { meeting_id: selMeeting.id } : {}, PAID ? { source_code: 'p' } : {})) });
+            body: JSON.stringify(Object.assign({ first_name: first, last_name: last, phone: norm, age: age, gender: gender }, selMeeting && selMeeting.id ? { meeting_id: selMeeting.id } : {}, SRC ? { source_code: SRC } : {})) });
           let j = null; try { j = await r.json(); } catch (e) {}
           if (r.ok) return { ok: true, json: async () => 'created' };
           const f = j && j.error && j.error.field, map = { first_name: 'invalid_name', last_name: 'invalid_name', phone: 'invalid_phone', age: 'invalid_age', gender: 'invalid_gender' };
@@ -413,8 +421,8 @@
           headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' },
           body: JSON.stringify(Object.assign({ p_first: first, p_last: last, p_phone: norm, p_age: age, p_gender: gender }, claimToken ? { p_token: claimToken } : {}, selMeeting && selMeeting.id ? { p_meeting: selMeeting.id } : {}, extra))
         });
-        let res = await send(PAID ? { p_src: 'p' } : {});
-        if (!res.ok && PAID) res = await send({});   // אם הפונקציה בבסיס הנתונים עוד לא עודכנה (admin/source.sql): ההרשמה נשמרת בלי הסימון
+        let res = await send(SRC ? { p_src: SRC } : {});
+        if (!res.ok && SRC) res = await send({});   // אם הפונקציה בבסיס הנתונים עוד לא עודכנה (admin/source.sql): ההרשמה נשמרת בלי הסימון
         const out = res.ok ? await res.json() : null;
         if (out === 'created' || out === 'exists') {   // כפילות: אותה הודעה, בלי לחשוף שהמספר כבר רשום
           if (out === 'created') {   // RegistrationValue רק על מספר חדש, לא על כפילות
@@ -814,7 +822,7 @@
     btn.disabled = true; btn.textContent = 'שולחים...';
     const ob = meOptimistic(m.id, { registered: true }), rel = HRT.busy(btn);
     try {
-      const r = PAID ? await meRpc('harpatka_me_register_src', { p_meeting: m.id, p_src: 'p' }) : await meRpc('harpatka_me_register', { p_meeting: m.id });   // הגיעו ממודעה: נרשם על ההרשמה למפגש הזה
+      const r = SRC ? await meRpc('harpatka_me_register_src', { p_meeting: m.id, p_src: SRC }) : await meRpc('harpatka_me_register', { p_meeting: m.id });   // הגיעו ממודעה: נרשם על ההרשמה למפגש הזה
       if (r !== 'registered' && r !== 'exists') throw new Error('register failed');
       ob.done(); rel();
       const mine = meInfo.meetings.find((x) => x.id === m.id);
