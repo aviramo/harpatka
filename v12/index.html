@@ -473,6 +473,10 @@ html.quiz-on #quiz{display:flex;position:fixed;inset:0;z-index:2147483000;backgr
 #quiz .qz-next{width:100%;min-height:56px;font:inherit;font-size:1.15rem;font-weight:700;color:#FFFDF9;background:#E5562D;border:0;border-radius:10px;cursor:pointer}
 #quiz .qz-next:disabled{opacity:.4;cursor:not-allowed}
 #quiz .qz-skip{display:block;width:100%;min-height:48px;margin-top:.5rem;font:inherit;font-size:1rem;font-weight:600;color:#6B5E52;background:none;border:0;text-decoration:underline;cursor:pointer}
+@keyframes qzUp{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+#quiz .qz-intro.qz-enter>*{animation:qzUp .6s cubic-bezier(.2,.7,.2,1) both}
+#quiz .qz-intro.qz-enter>:nth-child(2){animation-delay:.08s}#quiz .qz-intro.qz-enter>:nth-child(3){animation-delay:.16s}#quiz .qz-intro.qz-enter>:nth-child(4){animation-delay:.26s}#quiz .qz-intro.qz-enter>:nth-child(5){animation-delay:.34s}#quiz .qz-intro.qz-enter>:nth-child(6){animation-delay:.42s}#quiz .qz-intro.qz-enter>:nth-child(7){animation-delay:.5s}
+@media (prefers-reduced-motion:reduce){#quiz .qz-intro.qz-enter>*{animation:none}}
 #quiz .qz-intro{text-align:center;max-width:28rem}
 #quiz .qz-intro .qz-brand{font-size:3.1rem;margin:0 0 .8rem}
 #quiz .qz-intro h2{font-size:1.9rem;line-height:1.25;margin:0 0 1rem}
@@ -545,7 +549,7 @@ html.quiz-leaving #quiz{transform:translateY(-100%);pointer-events:none;transiti
     function showIntro(){
       var q=document.getElementById('quiz'), pic=document.getElementById('qzPic');
       pic.src=pic.getAttribute('data-src');
-      q.querySelector('.qz-in:not(.qz-intro)').hidden=true; document.getElementById('qzIntro').hidden=false;
+      q.querySelector('.qz-in:not(.qz-intro)').hidden=true; document.getElementById('qzIntro').hidden=false; document.getElementById('qzIntro').classList.add('qz-enter');
       q.scrollTop=0; document.getElementById('qzIntroH').focus({preventScroll:true});
     }
     nx.addEventListener('click',function(){
