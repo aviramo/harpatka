@@ -79,42 +79,53 @@ li.skip .nm{color:var(--muted);text-decoration:line-through}
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="../shared/config.js"></script>
 <script>
-/* הרשימה, הסימונים ונוסח ההודעה נשמרים ברוסטר ונקראים ממנו בכל טעינה (Worker מאומת בכניסה עם גוגל, רק לבעלים) */
-var PROD = location.hostname === 'harpatka.co.il' || location.hostname === 'www.harpatka.co.il';
-var API = (PROD ? 'https://api.floa.co.il' : 'https://api-test.floa.co.il') + '/roster-wa';
+/* המספרים, הסימונים ונוסח ההודעה נשמרים בסכמה harpatka_wa בפרויקט ה-Supabase של floa (פונקציות harpatka_wa_*, רק לבעלים לפי האימייל בכניסה עם גוגל).
+   שמות ומספר המפגשים של מי שמשתתף ברוסטר נשלפים מה-API של העסק (/roster-wa/list) ומתמזגים לפי הטלפון. */
+var R = CONFIG.rosterApi || {};
+var SB = R.authUrl || 'https://aexmnaxvahblveejsbup.supabase.co', SBKEY = R.authKey || '';
+var AUTH_URL = R.googleAuth || 'https://api.floa.co.il/roster-auth/google';
+var WA_API = (R.url || 'https://api.floa.co.il/roster/v1').replace(/\/roster\/v1$/, '/roster-wa');
 var UA = navigator.userAgent, ANDROID = /Android/i.test(UA), IOS = /iPhone|iPad|iPod/i.test(UA);
 var PKG = { biz: 'com.whatsapp.w4b', reg: 'com.whatsapp' };
 function ls(k, v){ try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} return null; }
-var QS = '', TOKEN = '', MSG = '', DATA = [], FILTER = ls('wa_filter') || 'all', appSel = document.getElementById('appSel');
+var TOKEN = '', MSG = '', DATA = [], QS = '', FILTER = ls('wa_filter') || 'all', appSel = document.getElementById('appSel');
 appSel.value = ls('wa_app') || 'biz';
 appSel.onchange = function(){ ls('wa_app', appSel.value); render(); };
 function jwtExp(t){ try { return JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).exp * 1000; } catch (e) { return 0; } }
-function api(path, body){
-  return fetch(API + path, { method: body ? 'POST' : 'GET', headers: { Authorization: 'Bearer ' + TOKEN, 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
-    .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ if (!r.ok || !j.ok) { var e = new Error(j.error || r.status); e.status = r.status; throw e; } return j; }); });
+function fail(r){ var e = new Error(r.status); e.status = r.status; return e; }
+function rpc(fn, args){
+  return fetch(SB + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { apikey: SBKEY, Authorization: 'Bearer ' + TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify(args || {}) })
+    .then(function(r){ if (!r.ok) throw fail(r); return r.text(); }).then(function(t){ return t ? JSON.parse(t) : null; });
 }
-function waNum(p){ var n = String(p).replace(/\D/g, ''); return n.charAt(0) === '0' ? '972' + n.slice(1) : n; }
+function roster(){
+  return fetch(WA_API + '/list', { headers: { Authorization: 'Bearer ' + TOKEN } }).then(function(r){ return r.ok ? r.json() : { items: [] }; }).catch(function(){ return { items: [] }; });
+}
+/* טלפון בפורמט אחד: +972XXXXXXXXX */
+function norm(p){ var d = String(p || '').replace(/\D/g, ''); if (!d) return ''; if (d.indexOf('972') === 0) return '+' + d; if (d.charAt(0) === '0') return '+972' + d.slice(1); return '+' + d; }
 function link(p, app){
-  var n = waNum(p), t = encodeURIComponent(MSG), web = 'https://wa.me/' + n + '?text=' + t, q = 'send?phone=' + n + '&text=' + t;
+  var n = norm(p).slice(1), t = encodeURIComponent(MSG), web = 'https://wa.me/' + n + '?text=' + t, q = 'send?phone=' + n + '&text=' + t;
   if (ANDROID) return 'intent://' + q + '#Intent;scheme=whatsapp;package=' + PKG[app] + ';S.browser_fallback_url=' + encodeURIComponent(web) + ';end';
   if (IOS && app === 'biz') return 'whatsapp-smb://' + q;
   return web;
 }
 function local(p){ var d = String(p).replace(/\D/g, ''); if (d.indexOf('972') === 0) d = '0' + d.slice(3); return d.replace(/^(\d{3})(\d{3})(\d{4})$/, '$1-$2-$3'); }
-function match(r){
-  var q = QS.trim().toLowerCase(); if (!q) return true;
-  var d = q.replace(/\D/g, ''), ph = String(r.phone).replace(/\D/g, ''), loc = ph.indexOf('972') === 0 ? '0' + ph.slice(3) : ph;
-  if (String(r.name || '').toLowerCase().indexOf(q) >= 0) return true;
-  return d.length > 0 && (loc.indexOf(d.charAt(0) === '0' ? d : d) >= 0 || ph.indexOf(d) >= 0);
-}
 function state(r){ return r.no_more ? 'skip' : (r.sent_at ? 'sent' : ''); }
 function note(t){ document.getElementById('cnt').textContent = t; }
+function match(r){
+  var q = QS.trim().toLowerCase(); if (!q) return true;
+  if (String(r.name || '').toLowerCase().indexOf(q) >= 0) return true;
+  var d = q.replace(/\D/g, ''); if (!d) return false;
+  var ph = r.phone.replace(/\D/g, ''), loc = ph.indexOf('972') === 0 ? '0' + ph.slice(3) : ph;
+  return loc.indexOf(d) >= 0 || ph.indexOf(d) >= 0;
+}
 function mark(r, patch){
   var old = { sent_at: r.sent_at, no_more: r.no_more };
   if ('sent' in patch) r.sent_at = patch.sent ? (r.sent_at || new Date().toISOString()) : null;
   if ('no_more' in patch) r.no_more = patch.no_more;
-  return api('/mark', Object.assign({ id: r.id }, patch)).then(function(j){ r.sent_at = j.sent_at || null; r.no_more = !!j.no_more; }).catch(function(e){
-    r.sent_at = old.sent_at; r.no_more = old.no_more; if (e.status === 401) { showGate(); } else note('השמירה נכשלה, נסו שוב'); throw e;
+  return rpc('harpatka_wa_mark', { p_rows: [Object.assign({ phone: r.phone, name: r.name || '' }, patch)] }).then(function(j){
+    var x = (j || [])[0]; if (x) { r.sent_at = x.sent_at; r.no_more = !!x.no_more; }
+  }).catch(function(e){
+    r.sent_at = old.sent_at; r.no_more = old.no_more; if (e.status === 401 || e.status === 403) showGate(e.status === 403 ? 'החשבון הזה לא מורשה' : ''); else note('השמירה נכשלה, נסו שוב'); throw e;
   });
 }
 function render(){
@@ -160,17 +171,38 @@ document.getElementById('editBtn').onclick = function(){ ed.hidden = !ed.hidden;
 document.getElementById('msgCancel').onclick = function(){ ed.hidden = true; };
 document.getElementById('msgSave').onclick = function(){
   var v = ta.value.trim(); if (!v) return;
-  api('/message', { message: v }).then(function(j){ MSG = j.message || v; ed.hidden = true; render(); }).catch(function(){ note('שמירת ההודעה נכשלה'); });
+  rpc('harpatka_wa_message', { p_body: v }).then(function(m){ MSG = m || v; ed.hidden = true; render(); }).catch(function(){ note('שמירת ההודעה נכשלה'); });
 };
-function showGate(msg){ document.getElementById('app').hidden = true; document.getElementById('gate').hidden = false; document.getElementById('err').textContent = msg || ''; ls('wa_tok', null); TOKEN = ''; initGoogle(); }
+function showGate(msg){ document.getElementById('app').hidden = true; document.getElementById('gate').hidden = false; document.getElementById('err').textContent = msg || ''; ls('wa_sess', null); TOKEN = ''; initGoogle(); }
+/* סימונים שנשמרו בעבר בדפדפן הזה (גרסאות קודמות של הדף) עוברים פעם אחת ל-DB */
+function migrateOld(){
+  var rows = [], seen = {};
+  try { var o = JSON.parse(ls('wa_marks') || '{}'); Object.keys(o).forEach(function(k){ var ph = norm(k); if (!ph) return; seen[ph] = 1; rows.push(o[k] === 'skip' ? { phone: ph, no_more: true } : { phone: ph, sent: true }); }); } catch (e) {}
+  try { var d = JSON.parse(ls('wa_done') || '{}'); Object.keys(d).forEach(function(k){ var ph = norm(k); if (ph && !seen[ph]) rows.push({ phone: ph, sent: true }); }); } catch (e) {}
+  if (!rows.length) return Promise.resolve(false);
+  return rpc('harpatka_wa_mark', { p_rows: rows }).then(function(){ ls('wa_marks', null); ls('wa_done', null); return true; }).catch(function(){ return false; });
+}
 function load(){
-  return api('/list').then(function(j){
-    DATA = j.items || []; MSG = j.message || '';
+  return migrateOld().then(function(){ return Promise.all([rpc('harpatka_wa_list'), roster()]); }).then(function(res){
+    var db = res[0] || {}, ro = (res[1] && res[1].items) || [], byPhone = {};
+    ro.forEach(function(x){ byPhone[norm(x.phone)] = x; });
+    var seen = {}; DATA = [];
+    (db.items || []).forEach(function(x){
+      var rr = byPhone[x.phone]; seen[x.phone] = 1;
+      DATA.push({ phone: x.phone, name: (rr && rr.name) || x.name || '', attended: rr ? rr.attended : 0, sent_at: x.sent_at, no_more: x.no_more });
+    });
+    ro.forEach(function(x){ var ph = norm(x.phone); if (ph && !seen[ph]) { seen[ph] = 1; DATA.push({ phone: ph, name: x.name || '', attended: x.attended || 0, sent_at: null, no_more: false }); } });
+    MSG = db.message || '';
     document.getElementById('gate').hidden = true; document.getElementById('app').hidden = false; paintFilter(); render();
     if (!MSG) { ed.hidden = false; ta.value = ''; }
-  }).catch(function(e){ showGate(e.status === 403 ? 'החשבון הזה לא מורשה' : e.status === 401 ? '' : 'אין חיבור לרוסטר, נסו שוב (' + (e.status || e.message || 'רשת') + ')'); });
+  }).catch(function(e){ showGate(e.status === 403 ? 'החשבון הזה לא מורשה' : e.status === 401 ? '' : 'אין חיבור (' + (e.status || e.message || 'רשת') + ')'); });
 }
-function onCred(resp){ TOKEN = resp.credential; ls('wa_tok', TOKEN); load(); }
+function onCred(resp){
+  fetch(AUTH_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id_token: resp.credential }) })
+    .then(function(r){ if (!r.ok) throw fail(r); return r.json(); })
+    .then(function(s){ TOKEN = s.access_token; ls('wa_sess', JSON.stringify({ t: TOKEN })); load(); })
+    .catch(function(e){ showGate('הכניסה נכשלה (' + (e.status || 'רשת') + ')'); });
+}
 var gInit = false;
 function initGoogle(){
   if (!window.google || !google.accounts) { setTimeout(initGoogle, 300); return; }
@@ -180,8 +212,8 @@ function initGoogle(){
   google.accounts.id.prompt();
 }
 (function(){
-  var t = ls('wa_tok');
-  if (t && jwtExp(t) > Date.now() + 60000) { TOKEN = t; load(); } else { initGoogle(); }
+  var s = null; try { s = JSON.parse(ls('wa_sess') || 'null'); } catch (e) {}
+  if (s && s.t && jwtExp(s.t) > Date.now() + 60000) { TOKEN = s.t; load(); } else { initGoogle(); }
 })();
 </script>
 </body>
