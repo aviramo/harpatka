@@ -168,7 +168,7 @@ function load(){
     DATA = j.items || []; MSG = j.message || '';
     document.getElementById('gate').hidden = true; document.getElementById('app').hidden = false; paintFilter(); render();
     if (!MSG) { ed.hidden = false; ta.value = ''; }
-  }).catch(function(e){ showGate(e.status === 403 ? 'החשבון הזה לא מורשה' : e.status === 401 ? '' : 'אין חיבור לרוסטר, נסו שוב'); });
+  }).catch(function(e){ showGate(e.status === 403 ? 'החשבון הזה לא מורשה' : e.status === 401 ? '' : 'אין חיבור לרוסטר, נסו שוב (' + (e.status || e.message || 'רשת') + ')'); });
 }
 function onCred(resp){ TOKEN = resp.credential; ls('wa_tok', TOKEN); load(); }
 var gInit = false;
