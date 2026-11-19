@@ -46,6 +46,7 @@ li.skip .nm{color:var(--muted);text-decoration:line-through}
 .ed .row{display:flex;gap:8px;margin-top:6px}
 .ed button{padding:8px 14px;border-radius:6px;border:1px solid var(--line);background:var(--paper);font:inherit}
 .ed .save{background:var(--green);color:#fff;border-color:var(--green)}
+#q{width:100%;margin-top:0;padding:10px 12px;font:inherit;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
 .cnt2{font-size:.8rem;color:var(--muted);white-space:nowrap}
 #gbtn{margin-top:16px;display:flex;justify-content:center}
 </style>
@@ -59,8 +60,8 @@ li.skip .nm{color:var(--muted);text-decoration:line-through}
 </div>
 <div id="app" hidden>
   <header>
-    <h1>שליחת הודעת וואטסאפ</h1>
-    <div class="sub"><span id="cnt"></span> · לחיצה על שם פותחת וואטסאפ עם ההודעה מוכנה</div>
+    <input id="q" type="search" aria-label="חיפוש לפי שם או טלפון" autocomplete="off" />
+    <div class="sub" id="cnt" style="margin-top:6px"></div>
     <div class="bar">
       <select id="appSel" class="app" aria-label="אפליקציית וואטסאפ"><option value="biz">וואטסאפ עסקי</option><option value="reg">וואטסאפ רגיל</option></select>
       <button class="reset" id="editBtn">עריכת ההודעה</button>
@@ -84,7 +85,7 @@ var API = (PROD ? 'https://api.floa.co.il' : 'https://api-test.floa.co.il') + '/
 var UA = navigator.userAgent, ANDROID = /Android/i.test(UA), IOS = /iPhone|iPad|iPod/i.test(UA);
 var PKG = { biz: 'com.whatsapp.w4b', reg: 'com.whatsapp' };
 function ls(k, v){ try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} return null; }
-var TOKEN = '', MSG = '', DATA = [], FILTER = ls('wa_filter') || 'all', appSel = document.getElementById('appSel');
+var QS = '', TOKEN = '', MSG = '', DATA = [], FILTER = ls('wa_filter') || 'all', appSel = document.getElementById('appSel');
 appSel.value = ls('wa_app') || 'biz';
 appSel.onchange = function(){ ls('wa_app', appSel.value); render(); };
 function jwtExp(t){ try { return JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).exp * 1000; } catch (e) { return 0; } }
@@ -100,6 +101,12 @@ function link(p, app){
   return web;
 }
 function local(p){ var d = String(p).replace(/\D/g, ''); if (d.indexOf('972') === 0) d = '0' + d.slice(3); return d.replace(/^(\d{3})(\d{3})(\d{4})$/, '$1-$2-$3'); }
+function match(r){
+  var q = QS.trim().toLowerCase(); if (!q) return true;
+  var d = q.replace(/\D/g, ''), ph = String(r.phone).replace(/\D/g, ''), loc = ph.indexOf('972') === 0 ? '0' + ph.slice(3) : ph;
+  if (String(r.name || '').toLowerCase().indexOf(q) >= 0) return true;
+  return d.length > 0 && (loc.indexOf(d.charAt(0) === '0' ? d : d) >= 0 || ph.indexOf(d) >= 0);
+}
 function state(r){ return r.no_more ? 'skip' : (r.sent_at ? 'sent' : ''); }
 function note(t){ document.getElementById('cnt').textContent = t; }
 function mark(r, patch){
@@ -115,6 +122,7 @@ function render(){
   list.innerHTML = '';
   DATA.forEach(function(r){
     var m = state(r);
+    if (QS && !match(r)) return;
     if (FILTER === 'all' && m === 'skip') return;
     if (FILTER === 'unsent' && m) return;
     if (FILTER === 'sent' && m !== 'sent') return;
@@ -137,6 +145,7 @@ function render(){
     sk.onclick = function(){ var pr = mark(r, { no_more: !r.no_more }); paint(); pr.then(paint, paint); };
     paint(); li.appendChild(a); li.appendChild(ck); li.appendChild(sk); list.appendChild(li);
   });
+  document.getElementById('q').placeholder = 'חיפוש לפי שם או טלפון · ' + list.children.length + ' ברשימה';
   count();
 }
 function count(){
@@ -145,6 +154,7 @@ function count(){
 }
 function paintFilter(){ Array.prototype.forEach.call(document.querySelectorAll('#flt button'), function(b){ b.classList.toggle('on', b.dataset.f === FILTER); }); }
 document.getElementById('flt').onclick = function(e){ var b = e.target.closest('button'); if (!b) return; FILTER = b.dataset.f; ls('wa_filter', FILTER); paintFilter(); render(); };
+document.getElementById('q').oninput = function(){ QS = this.value; render(); };
 var ed = document.getElementById('ed'), ta = document.getElementById('msgTa');
 document.getElementById('editBtn').onclick = function(){ ed.hidden = !ed.hidden; if (!ed.hidden) ta.value = MSG; };
 document.getElementById('msgCancel').onclick = function(){ ed.hidden = true; };
