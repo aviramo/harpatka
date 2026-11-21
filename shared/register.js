@@ -402,7 +402,7 @@
           if (rtk) {
             const rc2 = await fetch(CONFIG.rosterApi.url + '/signup/complete', { method: 'POST', headers: RH, body: JSON.stringify({ participant_token: rtk, first_name: first, last_name: last, age: age, gender: gender }) });
             if (rc2.ok) {
-              if (selMeeting && selMeeting.id) { try { await fetch(CONFIG.rosterApi.url + '/signup/phone', { method: 'POST', headers: RH, body: JSON.stringify(Object.assign({ phone: norm, meeting_id: selMeeting.id }, SRC ? { source_code: SRC } : {})) }); } catch (e) {} }   // המפגש שנבחר (אם עוד לא נרשם אליו)
+              if ((selMeeting || nearest) && (selMeeting || nearest).id) { try { await fetch(CONFIG.rosterApi.url + '/signup/phone', { method: 'POST', headers: RH, body: JSON.stringify(Object.assign({ phone: norm, meeting_id: (selMeeting || nearest).id }, SRC ? { source_code: SRC } : {})) }); } catch (e) {} }   // המפגש שנבחר (אם עוד לא נרשם אליו)
               return { ok: true, json: async () => 'created' };
             }
             let jj = null; try { jj = await rc2.json(); } catch (e) {}
@@ -410,7 +410,7 @@
             if (ff) return { ok: true, json: async () => rmap[ff] || 'error' };
           }
           const r = await fetch(CONFIG.rosterApi.url + '/signup', { method: 'POST', headers: { Authorization: 'Bearer ' + CONFIG.rosterApi.key, 'Content-Type': 'application/json' },
-            body: JSON.stringify(Object.assign({ first_name: first, last_name: last, phone: norm, age: age, gender: gender }, selMeeting && selMeeting.id ? { meeting_id: selMeeting.id } : {}, SRC ? { source_code: SRC } : {})) });
+            body: JSON.stringify(Object.assign({ first_name: first, last_name: last, phone: norm, age: age, gender: gender }, (selMeeting || nearest) && (selMeeting || nearest).id ? { meeting_id: (selMeeting || nearest).id } : {}, SRC ? { source_code: SRC } : {})) });
           let j = null; try { j = await r.json(); } catch (e) {}
           if (r.ok) return { ok: true, json: async () => 'created' };
           const f = j && j.error && j.error.field, map = { first_name: 'invalid_name', last_name: 'invalid_name', phone: 'invalid_phone', age: 'invalid_age', gender: 'invalid_gender' };
