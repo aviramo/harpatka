@@ -4,7 +4,7 @@ const CONFIG = {
   googleClientId: '459432002435-349ppd8r1qqe9tkcdm2v3f6rpp48i1ni.apps.googleusercontent.com',   // מזהה ה-OAuth client של גוגל (ציבורי, אותו אחד ש-Supabase משתמש בו) לשכבת הכניסה של גוגל מעל הדף (One Tap)
   supabaseUrl: 'https://ezakarwqstnldqixgreb.supabase.co',     // Supabase הייעודי של הפרויקט (harpatka_meetings / harpatka_signup)
   supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6YWthcndxc3RubGRxaXhncmViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyMTA3MzIsImV4cCI6MjEwNjc4NjczMn0.Bg0eFBC4zKjyJc5kBw3wLgSP-PkxLFVv3o7-4YUdq4c',                  // מפתח ציבורי (anon)
-  whatsapp: '972587078708',                       // הוואטסאפ העסקי של יוצאים להרפתקה, מספר אחד לשני המנחים (פורמט בינ"ל, בלי +). במיילים: harpatka_wa_vars במסד
+  whatsapp: '972552589829',                       // הוואטסאפ העסקי של יוצאים להרפתקה, מספר אחד לשני המנחים (פורמט בינ"ל, בלי +). במיילים: harpatka_wa_vars במסד
   whatsappMessage: 'היי, הגעתי אליכם דרך האתר',
   updatesGroupLink: 'https://chat.whatsapp.com/HPBClkrbondA3JlQyOvseI',            // קבוצת העדכונים עד גיל 50
   updatesGroup50PlusLink: 'https://chat.whatsapp.com/DB7zVc2NdVXEquZCC6PpUP',      // קבוצת העדכונים גיל 50 ומעלה
