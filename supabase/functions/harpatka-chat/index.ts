@@ -179,6 +179,7 @@ Deno.serve(async (req) => {
   let { reply, chips, cta } = parse(raw);
   if (!reply) return json(origin, { error: 'empty' }, 502);
   if (cta === 'register' && !meeting) cta = 'updates'; // אין מפגש להירשם אליו
+  if (turns >= 9 && !cta) cta = meeting ? 'register' : 'updates'; // רשת ביטחון: שיחה ארוכה תמיד מקבלת צעד
 
   // שמירה ברקע: לא מעכבת את התשובה
   const logMsgs = [...clean, { role: 'assistant', content: reply }];
