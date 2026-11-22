@@ -52,6 +52,14 @@ const ROSTER_URL = 'https://api.floa.co.il/roster/v1';
 const ROSTER_KEY = Deno.env.get('ROSTER_PUBLIC_KEY') || 'rk_pub_IXQvipmkAZevJPbdQanj6KW9M9hrQTBf'; // המפתח הציבורי של האתר (מוגבל לפי Origin)
 
 // המפגש הקרוב מהרוסטר: אותו API ציבורי שהאתר קורא. המפתח מוגבל לפי Origin, ולכן נשלח Origin של האתר
+// צ'אט קצר לא צריך חשיבה: היא אוכלת מתוך max_tokens, מאטה ומייקרת (ובלי הגדרה Sonnet 5.5 ו-Haiku 5.5 חושבים כברירת מחדל).
+// Sonnet 5.5 מכבים בעזרת between_tools (disabled נדחה שם), Haiku 5.5 עם disabled. מודל אחר: בלי שינוי.
+function thinkingOff(model: string): Record<string, unknown> {
+  if (model.startsWith('claude-sonnet-5-5')) return { thinking: { type: 'between_tools' } };
+  if (model.startsWith('claude-haiku-5-5')) return { thinking: { type: 'disabled' } };
+  return {};
+}
+
 async function loadMeeting(): Promise<MeetingInfo | null> {
   try {
     const today = israelToday();
@@ -127,7 +135,7 @@ Deno.serve(async (req) => {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-      body: JSON.stringify({ model: MODEL, max_tokens: 500, system, messages: merged }),
+      body: JSON.stringify({ model: MODEL, max_tokens: 700, system, messages: merged, ...thinkingOff(MODEL) }),
     });
     if (!r.ok) { console.error('anthropic', r.status, (await r.text()).slice(0, 300)); return json(origin, { error: 'upstream' }, 502); }
     const data = await r.json();
