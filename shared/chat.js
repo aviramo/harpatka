@@ -22,6 +22,20 @@
     return { ad, opening: (o.opening || []).map((t) => String(t).replace('{ad}', ad)), chips: o.chips || [] };
   }
 
+  // הודעת הפתיחה מהשרת (הבוט כותב אותה). כשל או איחור של יותר מ-8 שניות: null, והדף ממשיך עם הפתיחה הקבועה
+  async function fetchOpening(session) {
+    const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 8000);
+    try {
+      const r = await fetch(ENDPOINT, {
+        method: 'POST', signal: ctl.signal,
+        headers: { 'Content-Type': 'application/json', apikey: CHAT_SB.key, Authorization: 'Bearer ' + CHAT_SB.key },
+        body: JSON.stringify({ mode: 'opening', session, ad: cid, src }),
+      });
+      const d = await r.json().catch(() => ({}));
+      return r.ok && Array.isArray(d.messages) ? { messages: d.messages.map(String).filter(Boolean).slice(0, 3), chips: Array.isArray(d.chips) ? d.chips.map(String) : [] } : null;
+    } catch (e) { return null; } finally { clearTimeout(timer); }
+  }
+
   function init(opts) {
     const root = opts.root;
     root.innerHTML = '<div class="ch-log" id="chLog" role="log" aria-live="polite" aria-label="השיחה"></div>' +
@@ -107,7 +121,17 @@
       openerInfo = await loadOpener();
       let saved = null; try { saved = JSON.parse(sessionStorage.getItem(KEY) || 'null'); } catch (e) {}
       st = saved && saved.c === cid && Array.isArray(saved.msgs) ? saved : { c: cid, session: uuid(), msgs: [] };
-      if (!st.msgs.length) { openerInfo.opening.forEach((t, i) => { st.msgs.push({ role: 'assistant', content: t, opener: true, chips: i === openerInfo.opening.length - 1 ? openerInfo.chips : [] }); }); }
+      if (!st.msgs.length) {
+        // הפתיחה נכתבת על ידי הבוט (ולומדת מפתיחות קודמות). בזמן ההמתנה מחוון הקלדה; אם השרת לא עונה בזמן, פתיחה קבועה מ-openers.json
+        who(); const t = typing(); const t0 = Date.now();
+        const op = await fetchOpening(st.session);
+        await wait(Math.max(0, 800 - (Date.now() - t0)));
+        log.innerHTML = '';
+        const msgs = op && op.messages.length ? op.messages : openerInfo.opening;
+        const chips = op && op.messages.length ? op.chips : openerInfo.chips;
+        msgs.forEach((m, i) => { st.msgs.push({ role: 'assistant', content: m, opener: true, chips: i === msgs.length - 1 ? chips : [] }); });
+        track('ChatOpen', { ad: cid, source: op ? 'agent' : 'fallback' });
+      }
       save();
       who();
       st.msgs.forEach((m, i) => {

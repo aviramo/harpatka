@@ -1,4 +1,4 @@
-import { buildMessages, parse, quoteSafe } from './parse.ts';
+import { buildMessages, parse, parseOpening, quoteSafe } from './parse.ts';
 const eq = (a: unknown, b: unknown, m: string) => { if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error(m + ': ' + JSON.stringify(a) + ' != ' + JSON.stringify(b)); };
 Deno.test('parse basics', () => {
   const r = parse('היי, מה שלומכם.\n<chips>אחד|שניים|שלושה|ארבעה|חמישה</chips>\n<cta>register</cta>');
@@ -12,7 +12,7 @@ Deno.test('parse unknown cta and truncation', () => {
 Deno.test('parse dashes', () => {
   eq(parse('זה — לא בסדר - בכלל').reply, 'זה, לא בסדר, בכלל', 'dashes');
   eq(parse('גילאי 35–55').reply, 'גילאי 35–55', 'range kept');
-  eq(parse('רגע...').reply, 'רגע...', 'ellipsis kept');
+  eq(parse('רגע...').reply, 'רגע', 'ellipsis removed');
 });
 Deno.test('buildMessages', () => {
   eq(buildMessages([]), null, 'empty');
@@ -32,4 +32,11 @@ Deno.test('prompt', () => {
 Deno.test('gendered quick replies are dropped', () => {
   const r = parse('היי\n<chips>לא יודע איך|לא זוכרת|קשה להסביר|סתם סקרנות|אני צריך זמן</chips>');
   if (JSON.stringify(r.chips) !== JSON.stringify(['קשה להסביר', 'סתם סקרנות'])) throw new Error(JSON.stringify(r.chips));
+});
+
+Deno.test('parseOpening', () => {
+  const r = parseOpening('<msg>היי 🙂 כאן הבוט.</msg>\n<msg>מתי בפעם האחרונה? - ממש</msg>\n<chips>סקרנות|קשה להסביר|לא יודע</chips>');
+  eq(r.messages, ['היי 🙂 כאן הבוט', 'מתי בפעם האחרונה? ממש'], 'messages');
+  eq(r.chips, ['סקרנות', 'קשה להסביר'], 'chips');
+  eq(parseOpening('שלום\n\nמה שלומכם').messages, ['שלום', 'מה שלומכם'], 'fallback split');
 });

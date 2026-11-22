@@ -3,8 +3,8 @@
 // סודות: supabase secrets set ANTHROPIC_API_KEY=...   (אופציונלי: CHAT_MODEL, למשל claude-haiku-5-5)
 // ההנחיות נמצאות ב-prompt.ts. שיחות נשמרות ב-harpatka.chat_logs (admin/chat.sql), בפרויקט ה-Supabase של floa שבו הפונקציה נפרסת.
 // פריסה: supabase functions deploy harpatka-chat --no-verify-jwt --project-ref aexmnaxvahblveejsbup
-import { dynamicPrompt, MeetingInfo, STATIC_PROMPT } from './prompt.ts';
-import { buildMessages, MAX_USER_TURNS, parse, quoteSafe } from './parse.ts';
+import { dynamicPrompt, MeetingInfo, STATIC_PROMPT, AD_TEXTS, learningBlock, openingPrompt, OpeningStat, QuestionStats } from './prompt.ts';
+import { buildMessages, MAX_USER_TURNS, parse, parseOpening, quoteSafe } from './parse.ts';
 
 const AGE_MIN = 35, AGE_MAX = 55; // אותו טווח כמו shared/age.js
 const ORIGINS = ['https://harpatka.co.il', 'https://www.harpatka.co.il', 'https://test.harpatka.co.il'];
@@ -59,6 +59,39 @@ function thinkingOff(model: string): Record<string, unknown> {
   if (model.startsWith('claude-haiku-5-5')) return { thinking: { type: 'disabled' } };
   return {};
 }
+
+// קריאה ל-Claude: מחזיר את הטקסט, או null בכשל
+async function claude(apiKey: string, model: string, system: unknown[], messages: { role: string; content: string }[], maxTokens: number): Promise<string | null> {
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({ model, max_tokens: maxTokens, system, messages, ...thinkingOff(model) }),
+    });
+    if (!r.ok) { console.error('anthropic', r.status, (await r.text()).slice(0, 300)); return null; }
+    const data = await r.json();
+    return (data.content ?? []).filter((b: any) => b.type === 'text').map((b: any) => b.text).join('\n');
+  } catch (e) { console.error('chat', e); return null; }
+}
+
+// למידה מהשיחות הקודמות: נטען מהמסד (פונקציות RPC של service_role) ונשמר בזיכרון ל-10 דקות, כדי לא לעכב כל הודעה
+const statCache = new Map<string, { t: number; v: unknown }>();
+async function stat<T>(name: string, args: Record<string, unknown>, fallback: T): Promise<T> {
+  const key = name + JSON.stringify(args), hit = statCache.get(key);
+  if (hit && Date.now() - hit.t < 600_000) return hit.v as T;
+  let v: T = fallback;
+  if (SB_URL && SB_SERVICE) {
+    try {
+      const r = await fetch(SB_URL + '/rest/v1/rpc/' + name, { method: 'POST', headers: { apikey: SB_SERVICE, Authorization: 'Bearer ' + SB_SERVICE, 'Content-Type': 'application/json' }, body: JSON.stringify(args) });
+      if (r.ok) v = (await r.json()) ?? fallback;
+    } catch (_) { /* כשל בלמידה לא מפיל את השיחה */ }
+  }
+  statCache.set(key, { t: Date.now(), v });
+  return v;
+}
+const openingStats = (ad: string) => stat<OpeningStat[]>('harpatka_chat_opening_stats', { p_ad: ad, p_limit: 8 }, []);
+const questionStats = () => stat<QuestionStats | null>('harpatka_chat_question_stats', { p_ad: null }, null);
+const OPENING_MODEL = Deno.env.get('CHAT_OPENING_MODEL') || MODEL;
 
 async function loadMeeting(): Promise<MeetingInfo | null> {
   try {
@@ -116,32 +149,34 @@ Deno.serve(async (req) => {
   let body: any;
   try { body = await req.json(); } catch (_) { return json(origin, { error: 'body' }, 400); }
 
+  const ageRange = `${AGE_MIN}–${AGE_MAX}`;
+  const staticBlock = { type: 'text', text: STATIC_PROMPT.replaceAll('{AGE}', ageRange), cache_control: { type: 'ephemeral' } };
+
+  // הודעת הפתיחה נכתבת על ידי הבוט, ולומדת מפתיחות קודמות: מה נענה ומה לא
+  if (body.mode === 'opening') {
+    const ad = tx(body.ad).slice(0, 40);
+    const adText = AD_TEXTS[ad] ?? quoteSafe(tx(body.adText).slice(0, 300));
+    const [stats, q] = await Promise.all([openingStats(ad), questionStats()]);
+    const raw = await claude(apiKey, OPENING_MODEL, [staticBlock, { type: 'text', text: [openingPrompt(adText, stats), learningBlock(q)].filter(Boolean).join('\n\n') }], [{ role: 'user', content: 'התחילו.' }], 500);
+    const op = raw ? parseOpening(raw) : null;
+    if (!op || !op.messages.length) return json(origin, { error: 'upstream' }, 502);
+    saveLog(tx(body.session), tx(body.src).slice(0, 20), ad, op.messages.map((content) => ({ role: 'assistant', content })), null);
+    return json(origin, { messages: op.messages, chips: op.chips });
+  }
+
   const built = buildMessages(body.messages);
   if (!built) return json(origin, { error: 'messages' }, 400);
   const { clean, merged, turns } = built;
   if (turns > MAX_USER_TURNS) return json(origin, { error: 'limit', reply: 'זו כבר שיחה ארוכה. כדי להמשיך, הכי נוח לכתוב להדר ולאופיר בוואטסאפ', chips: [], cta: 'whatsapp' });
 
-  const adText = quoteSafe(tx(body.adText).slice(0, 300)), opening = quoteSafe(tx(body.opening).slice(0, 600));
-  const meeting = await loadMeeting();
-  const ageRange = `${AGE_MIN}–${AGE_MAX}`;
+  const adText = AD_TEXTS[tx(body.ad).slice(0, 40)] ?? quoteSafe(tx(body.adText).slice(0, 300)), opening = quoteSafe(tx(body.opening).slice(0, 600));
+  const [meeting, q] = await Promise.all([loadMeeting(), questionStats()]);
 
-  const system = [
-    { type: 'text', text: STATIC_PROMPT.replaceAll('{AGE}', ageRange), cache_control: { type: 'ephemeral' } },
-    { type: 'text', text: dynamicPrompt(meeting, adText, ageRange, opening) },
-  ];
+  const system = [staticBlock, { type: 'text', text: dynamicPrompt(meeting, adText, ageRange, opening, learningBlock(q)) }];
 
-  let reply = '', chips: string[] = [], cta: string | null = null;
-  try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-      body: JSON.stringify({ model: MODEL, max_tokens: 700, system, messages: merged, ...thinkingOff(MODEL) }),
-    });
-    if (!r.ok) { console.error('anthropic', r.status, (await r.text()).slice(0, 300)); return json(origin, { error: 'upstream' }, 502); }
-    const data = await r.json();
-    const raw = (data.content ?? []).filter((b: any) => b.type === 'text').map((b: any) => b.text).join('\n');
-    ({ reply, chips, cta } = parse(raw));
-  } catch (e) { console.error('chat', e); return json(origin, { error: 'upstream' }, 502); }
+  const raw = await claude(apiKey, MODEL, system, merged, 700);
+  if (raw === null) return json(origin, { error: 'upstream' }, 502);
+  let { reply, chips, cta } = parse(raw);
   if (!reply) return json(origin, { error: 'empty' }, 502);
   if (cta === 'register' && !meeting) cta = 'updates'; // אין מפגש להירשם אליו
 
