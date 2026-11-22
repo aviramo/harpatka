@@ -9,8 +9,8 @@ ROOT = B.ROOT
 # כל שורה מוגדלת או מוקטנת לאותו רוחב בדיוק, ולכן מילים קצרות וחזקות נעשות ענקיות ושורות ארוכות קטנות. הטקסט המלא זהה ל-chat/openers.json.
 ADS = {
   "touch": ([("כמה זמן עבר", "fg"), ("מאז שמישהו", "fg"), ("חיבק", "acc"), ("אותנו", "fg"), ("בלי סיבה?", "fg")], "#FF8A5C"),
-  "mask": ([("העייפות הכי גדולה", "fg"), ("היא לא מהעבודה.", "fg"), ("היא מלהיות", "fg"), ("בסדר", "acc"), ("כל היום", "fg")], "#8DB255"),
-  "numb": ([("הכי מפחיד", "fg"), ("זה לא שהכול רע.", "fg"), ("זה שהכול בסדר,", "fg"), ("ואנחנו כבר", "acc"), ("לא מרגישים", "acc")], "#E5562D"),
+  "mask": ([("העייפות הכי גדולה", "fg"), ("היא לא מהעבודה", "fg"), ("היא מלהיות", "fg"), ("בסדר", "acc"), ("כל היום", "fg")], "#8DB255"),
+  "numb": ([("הכי מפחיד", "fg"), ("זה לא שהכול רע", "fg"), ("זה שהכול בסדר,", "fg"), ("ואנחנו כבר", "acc"), ("לא מרגישים", "acc")], "#E5562D"),
 }
 CTA = "לחצו על הכפתור למטה ונדבר"
 
@@ -57,7 +57,7 @@ def main():
     openers = json.loads((ROOT/"chat"/"openers.json").read_text(encoding="utf-8"))["items"]
     for key, (lines, acc) in ADS.items():
         full = " ".join(t for t, _ in lines)
-        assert key not in openers or full.replace("'", "") == openers[key]["ad"].replace("‘", "").replace("’", "").replace("'", ""), key + ": הטקסט שונה מ-chat/openers.json: " + full
+        assert key not in openers or full.replace("'", "") == openers[key]["ad"].replace(".", "").replace("‘", "").replace("’", "").replace("'", ""), key + ": הטקסט שונה מ-chat/openers.json: " + full
         f = tmp/(key+".html"); f.write_text(page(lines, acc), encoding="utf-8")
         name = f"chat-{key}-916.png"
         subprocess.run([B.CHROME, "--headless", "--disable-gpu", "--hide-scrollbars", f"--window-size={B.W},{B.H}", "--virtual-time-budget=6000",
