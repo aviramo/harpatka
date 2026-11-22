@@ -6,7 +6,9 @@
   const q = new URLSearchParams(location.search);
   const cid = (q.get('c') || '').slice(0, 40);
   const src = (q.get('s') || '').slice(0, 20);
-  const ENDPOINT = (window.CHAT_ENDPOINT || (CONFIG.supabaseUrl + '/functions/v1/harpatka-chat'));
+  // הפונקציה רצה בפרויקט ה-Supabase של floa (אותו אחד של הרוסטר), לא בפרויקט הישן של הרפתקה
+  const CHAT_SB = (CONFIG.rosterApi && CONFIG.rosterApi.authUrl) ? { url: CONFIG.rosterApi.authUrl, key: CONFIG.rosterApi.authKey } : { url: CONFIG.supabaseUrl, key: CONFIG.supabaseKey };
+  const ENDPOINT = (window.CHAT_ENDPOINT || (CHAT_SB.url + '/functions/v1/harpatka-chat'));
   const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
   const track = (name, data) => { try { if (window.fbq) fbq('trackCustom', name, data || {}); } catch (e) {} };
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -76,7 +78,7 @@
       try {
         const r = await fetch(ENDPOINT, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey },
+          headers: { 'Content-Type': 'application/json', apikey: CHAT_SB.key, Authorization: 'Bearer ' + CHAT_SB.key },
           body: JSON.stringify({ session: st.session, messages: st.msgs.map((m) => ({ role: m.role, content: m.content })), ad: cid, adText: openerInfo.ad, opening: openerInfo.opening.join('\n'), src }),
         });
         const d = await r.json().catch(() => ({}));

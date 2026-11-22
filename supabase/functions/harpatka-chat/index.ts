@@ -1,7 +1,8 @@
 // Supabase Edge Function: harpatka-chat. הבוט של יוצאים להרפתקה.
 // פריסה: supabase functions deploy harpatka-chat --no-verify-jwt   (המפתח הציבורי נשלח ממילא מהדפדפן)
 // סודות: supabase secrets set ANTHROPIC_API_KEY=...   (אופציונלי: CHAT_MODEL, למשל claude-haiku-5-5)
-// ההנחיות נמצאות ב-prompt.ts. שיחות נשמרות ב-harpatka_chat_logs (admin/chat.sql).
+// ההנחיות נמצאות ב-prompt.ts. שיחות נשמרות ב-harpatka_wa.chat_logs (admin/chat.sql), בפרויקט ה-Supabase של floa שבו הפונקציה נפרסת.
+// פריסה: supabase functions deploy harpatka-chat --no-verify-jwt --project-ref aexmnaxvahblveejsbup
 import { dynamicPrompt, MeetingInfo, STATIC_PROMPT } from './prompt.ts';
 
 const AGE_MIN = 35, AGE_MAX = 55; // אותו טווח כמו shared/age.js
@@ -9,12 +10,10 @@ const ORIGINS = ['https://harpatka.co.il', 'https://www.harpatka.co.il', 'https:
 const MAX_MSG = 600, MAX_USER_TURNS = 30, KEEP = 24;
 
 const SB_URL = Deno.env.get('SUPABASE_URL') ?? '';
-const SB_ANON = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 const SB_SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 const MODEL = Deno.env.get('CHAT_MODEL') || 'claude-sonnet-5-5';
 
 const allowed = (o: string | null) => !!o && (ORIGINS.includes(o) || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o));
-const isTest = (o: string) => o === 'https://test.harpatka.co.il' || o.startsWith('http://localhost') || o.startsWith('http://127.0.0.1');
 
 const cors = (o: string | null) => ({
   'Access-Control-Allow-Origin': allowed(o) ? o! : ORIGINS[0],
@@ -49,42 +48,35 @@ const priceFor = (left: number, T: Tiers | null) => {
   return left <= 3 ? 100 : 80;
 };
 
-async function rest(path: string, schema: string, key = SB_ANON, init: RequestInit = {}) {
-  return await fetch(SB_URL + '/rest/v1/' + path, {
-    ...init,
-    headers: { apikey: key, Authorization: 'Bearer ' + key, 'Accept-Profile': schema, 'Content-Profile': schema, ...(init.headers as object) },
-  });
-}
+const ROSTER_URL = 'https://api.floa.co.il/roster/v1';
+const ROSTER_KEY = Deno.env.get('ROSTER_PUBLIC_KEY') || 'rk_pub_IXQvipmkAZevJPbdQanj6KW9M9hrQTBf'; // המפתח הציבורי של האתר (מוגבל לפי Origin)
 
-async function loadMeeting(schema: string): Promise<MeetingInfo | null> {
+// המפגש הקרוב מהרוסטר: אותו API ציבורי שהאתר קורא. המפתח מוגבל לפי Origin, ולכן נשלח Origin של האתר
+async function loadMeeting(): Promise<MeetingInfo | null> {
   try {
     const today = israelToday();
-    const r = await rest('harpatka_meetings?select=meeting_date,meeting_time,price_tiers,name,city,place,type_id,max_participants&meeting_date=gte.' + today + '&order=meeting_date.asc,meeting_time.asc&limit=1', schema);
-    const rows = r.ok ? await r.json() : [];
-    const m = rows[0];
+    const r = await fetch(ROSTER_URL + '/meetings?limit=10', { headers: { Authorization: 'Bearer ' + ROSTER_KEY, Origin: ORIGINS[0] } });
+    if (!r.ok) return null;
+    const rows: any[] = (await r.json()).meetings ?? [];
+    const m = rows.filter((x) => tx(x.date) >= today).sort((a, b) => (tx(a.date) + tx(a.time)).localeCompare(tx(b.date) + tx(b.time)))[0];
     if (!m) return null;
-    let ty: any = null;
-    if (m.type_id) {
-      const tr = await rest('harpatka_meeting_types?select=name,city,place,price_tiers,max_participants&id=eq.' + m.type_id, schema);
-      ty = tr.ok ? ((await tr.json())[0] ?? null) : null;
-    }
-    const T = normT(m.price_tiers) ?? (ty && normT(ty.price_tiers));
-    const left = dayN(m.meeting_date) - dayN(today);
+    const T = normT(m.price_tiers);
+    const left = dayN(m.date) - dayN(today);
     const fmt = (d: string) => { const [, mo, da] = d.split('-').map(Number); return `${da}.${mo}`; };
     let note = '';
     if (T) {
       const parts = [`המחיר הרגיל ${T.base} ש"ח`];
       for (const s of [...T.steps].sort((a, b) => b.days - a.days)) {
-        const from = new Date((dayN(m.meeting_date) - s.days) * 864e5).toISOString().slice(0, 10);
+        const from = new Date((dayN(m.date) - s.days) * 864e5).toISOString().slice(0, 10);
         parts.push(`מ-${fmt(from)} ${s.price} ש"ח`);
       }
       note = parts.join(', ');
     }
     return {
-      date: m.meeting_date, time: tx(m.meeting_time).slice(0, 5),
-      name: tx(m.name) || tx(ty?.name), city: tx(m.city) || tx(ty?.city), place: tx(m.place) || tx(ty?.place),
-      max: Number(m.max_participants) || Number(ty?.max_participants) || 0,
-      priceNow: priceFor(left, T), priceNote: note,
+      date: m.date, time: tx(m.time).slice(0, 5),
+      name: tx(m.name), city: tx(m.city), place: tx(m.place),
+      max: Number(m.capacity) || 0,
+      priceNow: Number.isFinite(Number(m.price)) && !T ? Number(m.price) : priceFor(left, T), priceNote: note,
     };
   } catch (_) { return null; }
 }
@@ -104,16 +96,14 @@ function parse(raw: string) {
   return { reply: text, chips, cta };
 }
 
-async function saveLog(schema: string, session: string, src: string, ad: string, messages: unknown[], cta: string | null) {
-  if (!SB_SERVICE || !/^[0-9a-f-]{36}$/i.test(session)) return;
+// שמירת שיחות בפרויקט ה-Supabase של floa (שבו הפונקציה רצה): פונקציית RPC שרק service_role מריץ (admin/chat.sql)
+async function saveLog(session: string, src: string, ad: string, messages: unknown[], cta: string | null) {
+  if (!SB_SERVICE || !SB_URL || !/^[0-9a-f-]{36}$/i.test(session)) return;
   try {
-    await rest('harpatka_chat_logs?on_conflict=id', schema, SB_SERVICE, {
+    await fetch(SB_URL + '/rest/v1/rpc/harpatka_chat_log', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' },
-      body: JSON.stringify({
-        id: session, source: src || null, ad: ad || null, messages, turns: messages.filter((m: any) => m.role === 'user').length,
-        ...(cta ? { cta } : {}), updated_at: new Date().toISOString(),
-      }),
+      headers: { apikey: SB_SERVICE, Authorization: 'Bearer ' + SB_SERVICE, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_id: session, p_source: src || null, p_ad: ad || null, p_messages: messages, p_cta: cta }),
     });
   } catch (_) { /* כשל בשמירה לא מפיל את התשובה */ }
 }
@@ -152,9 +142,8 @@ Deno.serve(async (req) => {
     if (last && last.role === m.role) last.content += '\n' + m.content; else merged.push({ ...m });
   }
 
-  const schema = isTest(origin!) ? 'test' : 'public';
-  const adText = tx(body.adText).slice(0, 300), opening = tx(body.opening).slice(0, 600);
-  const meeting = await loadMeeting(schema);
+    const adText = tx(body.adText).slice(0, 300), opening = tx(body.opening).slice(0, 600);
+  const meeting = await loadMeeting();
   const ageRange = `${AGE_MIN}–${AGE_MAX}`;
 
   const system = [
@@ -179,7 +168,7 @@ Deno.serve(async (req) => {
 
   // שמירה ברקע: לא מעכבת את התשובה
   const logMsgs = [...clean, { role: 'assistant', content: reply }];
-  saveLog(schema, tx(body.session), tx(body.src).slice(0, 20), tx(body.ad).slice(0, 40), logMsgs, cta);
+  saveLog(tx(body.session), tx(body.src).slice(0, 20), tx(body.ad).slice(0, 40), logMsgs, cta);
 
   return json(origin, { reply, chips, cta });
 });
