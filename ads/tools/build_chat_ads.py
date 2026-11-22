@@ -28,23 +28,34 @@ def page(lines, acc):
 <script>
 // פריסה לפי הדיו עצמו: כל שורה ברוחב דיו של IN_W בדיוק, מרווחים אנכיים שווים וצפופים, וריפוד זהה מארבעת הצדדים של המלבן 4:5.
 // הטקסט מפוצל לשורות כך שהגובה ימלא את המלבן בדיוק עם מרווח קטן; מילה מודגשת תמיד בשורה משלה, והשורה האחרונה (ההפניה לכפתור) קבועה.
-const SRC={data}, CTA={json.dumps(CTA, ensure_ascii=False)}, ACC='{acc}', FG='{fg}', W={B.W}, H={B.H}, X0={PAD}, Y0={B.SAFE}+{PAD}, IN_W={IN_W}, IN_H={IN_H}, FAM='"{FONT}"', GAP=14;
+const SRC={data}, CTA={json.dumps(CTA, ensure_ascii=False)}, ACC='{acc}', FG='{fg}', W={B.W}, H={B.H}, X0={PAD}, Y0={B.SAFE}+{PAD}, IN_W={IN_W}, IN_H={IN_H}, FAM='"{FONT}"', MINGAP=4, TARGET=8;
 const c=document.getElementById('c'), x=c.getContext('2d');
 function ink(t, fs){{ x.font=fs+'px '+FAM; x.direction='rtl'; const m=x.measureText(t); return {{l:m.actualBoundingBoxLeft, r:m.actualBoundingBoxRight, a:m.actualBoundingBoxAscent, d:m.actualBoundingBoxDescent}}; }}
 function fit(t){{ const i=ink(t,100), fs=100*IN_W/Math.abs(i.l+i.r), j=ink(t,fs); return {{fs, h:j.a+j.d}}; }}
-// קבוצות רצופות לפי צבע; בתוך קבוצת טקסט רגיל מותר לפצל לכמה שורות
-function groups(){{ const g=[]; for(const [t,col] of SRC){{ const last=g[g.length-1]; if(last&&last.col===col&&col==='fg') last.t.push(t); else g.push({{col, t:[t]}}); }} return g; }}
+// קבוצות רצופות לפי צבע (כל המילים של הקבוצה ברצף). בתוך קבוצה בוחרים איפה לשבור שורות כך שהמרווחים יהיו קטנים ושווים וגם הגובה יתמלא.
+function groups(){{ return SRC.map(([t,col])=>({{col, w:t.split(' ')}})); }}   // כל שורה מקורית נשארת יחידה אחת: אפשר לפצל אותה לשורות, אבל לא לאחד שורות מקוריות (משפטים לא נחתכים באמצע)
+function splits(w){{ const out=[]; for(let m=0;m<(1<<(w.length-1));m++){{ const ls=[]; let cur=[w[0]]; for(let i=1;i<w.length;i++){{ if(m&(1<<(i-1))){{ ls.push(cur.join(' ')); cur=[w[i]]; }} else cur.push(w[i]); }} ls.push(cur.join(' ')); out.push(ls); }} return out; }}
+const cache={{}}; const F=t=>cache[t]||(cache[t]=fit(t));
+function choose(){{
+  const gs=groups().map(g=>splits(g.w).map(ls=>ls.map(t=>({{t,c:g.col}})))); let best=null, ctaH=F(CTA).h;
+  (function rec(i,acc){{ if(i===gs.length){{ const n=acc.length+1, sum=acc.reduce((p,l)=>p+F(l.t).h,0)+ctaH, gap=(IN_H-sum)/(n-1);
+      if(gap<MINGAP) return; let pen=Math.abs(gap-TARGET);
+      for(const l of acc){{ const sw=l.t.length<=4 && l.t.indexOf(' ')<0; if(sw) pen+=60; }}
+      pen+=(acc.length-gs.length)*5;   // העדפה לפיצולים מועטים   // מילה קצרה לבד בשורה (לא, זה, היא) נעשית ענקית
+      if(!best||pen<best.pen) best={{pen, lines:acc.slice(), gap}}; return; }}
+    for(const opt of gs[i]) rec(i+1, acc.concat(opt)); }})(0,[]);
+  return best;
+}}
 function go(){{
   x.fillStyle='{bg}'; x.fillRect(0,0,W,H); x.fillStyle='{deco}'; x.beginPath(); x.arc(W+160,{B.SAFE-240}+230,310,0,7); x.fill();
   x.beginPath(); x.moveTo(-130,H); x.lineTo(-130,H-{450+B.SAFE}+200); x.arc(70,H-{450+B.SAFE}+200,200,Math.PI,0); x.lineTo(270,H); x.fill();
-  // מועמדים לשורות: כל SRC כבר מפוצל לשורות לפי הכותרות; אפשר לאחד שורות סמוכות מאותו צבע, או (כאן) להשאיר כמו שהן ולכוון רק רווחים.
-  let lines=SRC.map(([t,c])=>({{t,c}})); lines.push({{t:CTA, c:'acc'}});
-  const m=lines.map(l=>fit(l.t)); let sum=m.reduce((p,q)=>p+q.h,0), n=lines.length, gap=(IN_H-sum)/(n-1), k=1;
-  if(gap<GAP){{ k=(IN_H-GAP*(n-1))/sum; gap=GAP; }}
-  let y=Y0, stats=[]; const ws=IN_W*k, left=X0+(IN_W-ws)/2;
+  const best=choose(); let lines, gap, k=1;
+  if(best){{ lines=best.lines.concat([{{t:CTA,c:'acc'}}]); gap=best.gap; }}
+  else {{ lines=SRC.map(([t,c])=>({{t,c}})).concat([{{t:CTA,c:'acc'}}]); const sum=lines.reduce((p,l)=>p+F(l.t).h,0); k=(IN_H-MINGAP*(lines.length-1))/sum; gap=MINGAP; }}
+  const m=lines.map(l=>F(l.t)); let y=Y0, stats=[]; const ws=IN_W*k, left=X0+(IN_W-ws)/2;
   lines.forEach((l,i)=>{{ const fs=m[i].fs*k, j=ink(l.t,fs); x.font=fs+'px '+FAM; x.direction='rtl'; x.textAlign='right'; x.fillStyle=l.c==='acc'?ACC:FG;
     x.fillText(l.t, left+ws-j.r, y+j.a); stats.push([Math.round(left),Math.round(y),Math.round(left+ws),Math.round(y+j.a+j.d)]); y+=j.a+j.d+gap; }});
-  document.getElementById('s').textContent=JSON.stringify({{k,gap,sum,stats}});
+  document.getElementById('s').textContent=JSON.stringify({{k,gap,lines:lines.map(l=>l.t),stats}});
 }}
 document.fonts.load('100px {FONT}','אבגדהוזחטיכלמנסעפצקרשת?').then(()=>setTimeout(go,50));
 </script></body></html>'''
