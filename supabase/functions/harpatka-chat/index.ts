@@ -3,7 +3,7 @@
 // סודות: supabase secrets set ANTHROPIC_API_KEY=...   (אופציונלי: CHAT_MODEL, למשל claude-haiku-5-5)
 // ההנחיות נמצאות ב-prompt.ts. שיחות נשמרות ב-harpatka.chat_logs (admin/chat.sql), בפרויקט ה-Supabase של floa שבו הפונקציה נפרסת.
 // פריסה: supabase functions deploy harpatka-chat --no-verify-jwt --project-ref aexmnaxvahblveejsbup
-import { dynamicPrompt, MeetingInfo, STATIC_PROMPT, AD_TEXTS, learningBlock, openingPrompt, OpeningStat, QuestionStats } from './prompt.ts';
+import { dynamicPrompt, MeetingInfo, STATIC_PROMPT, AD_TEXTS, AD_PAIN, learningBlock, openingPrompt, OpeningStat, QuestionStats } from './prompt.ts';
 import { buildMessages, MAX_USER_TURNS, parse, parseOpening, quoteSafe } from './parse.ts';
 
 const AGE_MIN = 35, AGE_MAX = 55; // אותו טווח כמו shared/age.js
@@ -172,7 +172,7 @@ Deno.serve(async (req) => {
   const adText = AD_TEXTS[tx(body.ad).slice(0, 40)] ?? quoteSafe(tx(body.adText).slice(0, 300)), opening = quoteSafe(tx(body.opening).slice(0, 600));
   const [meeting, q] = await Promise.all([loadMeeting(), questionStats()]);
 
-  const system = [staticBlock, { type: 'text', text: dynamicPrompt(meeting, adText, ageRange, opening, learningBlock(q), turns) }];
+  const system = [staticBlock, { type: 'text', text: dynamicPrompt(meeting, adText, ageRange, opening, learningBlock(q), turns, AD_PAIN[tx(body.ad).slice(0, 40)] ?? '') }];
 
   const raw = await claude(apiKey, MODEL, system, merged, 700);
   if (raw === null) return json(origin, { error: 'upstream' }, 502);

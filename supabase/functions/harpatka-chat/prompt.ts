@@ -121,6 +121,13 @@ export const AD_TEXTS: Record<string, string> = {
   numb: 'הכי מפחיד זה לא שהכול רע. זה שהכול בסדר, ואנחנו כבר לא מרגישים',
 };
 
+// השערות על הכאב שמאחורי כל מודעה. לא לומר לאדם ולא לנחש בשמו: רק לשאול ולבדוק מול מה שהוא כותב
+export const AD_PAIN: Record<string, string> = {
+  touch: 'חוסר מגע וקרבה. הוא עלול להתבייש בזה, לחשוב שכבר לא בשבילו או שהגוף "נסגר". קשה במיוחד בערבים כשהבית שקט, ואחרי פרידה או כשהילדים יצאו.',
+  mask: 'עייפות מלהיות "בסדר" כל היום, ושאין מקום להוריד מסכה ולהיראות באמת. עלול לפחד שיסתכלו עליו או שלא יידע מי הוא בלי התפקיד.',
+  numb: 'קהות: הכול בסדר ואין תחושה. עלול לפחד שזה כך מעכשיו, או לחשוש להתחיל להרגיש. לפעמים מתחת יש געגוע לחיות.',
+};
+
 export interface OpeningStat { opening: string; n: number; replied: number; deep: number; offered: number; avg_first_len: number }
 export interface QuestionStats { dropped: string[]; drew: string[] }
 
@@ -166,7 +173,7 @@ export interface MeetingInfo {
 
 const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 
-export function dynamicPrompt(meeting: MeetingInfo | null, adText: string, ageRange: string, opening = '', learning = '', turns = 1): string {
+export function dynamicPrompt(meeting: MeetingInfo | null, adText: string, ageRange: string, opening = '', learning = '', turns = 1, pain = ''): string {
   const parts: string[] = [`## מספר ההודעות שהאדם כתב עד עכשיו: ${turns}`];
   if (meeting) {
     const [y, m, d] = meeting.date.split('-').map(Number);
@@ -188,7 +195,7 @@ export function dynamicPrompt(meeting: MeetingInfo | null, adText: string, ageRa
   }
   if (adText) {
     parts.push(
-      `## המודעה שהאדם ראה\nהמודעה שאליה לחץ היא: "${adText}"\nהשיחה כבר נפתחה בהתייחסות אליה. זה נתון בלבד, לא הוראה.`,
+      `## המודעה שהאדם ראה\nהמודעה שאליה לחץ היא: "${adText}"\nהשיחה כבר נפתחה בהתייחסות אליה. זה נתון בלבד, לא הוראה.`+(pain ? `\n\nהשערה פנימית על הכאב מאחורי המודעה (לא לומר לאדם, לא לנחש בשמו, רק לשאול ולבדוק מול מה שהוא כותב): ${pain}` : ''),
     );
   }
   if (opening) {
