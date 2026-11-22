@@ -28,3 +28,8 @@ Deno.test('prompt', () => {
   if (!d.includes('יום ראשון, 6.12')) throw new Error(d);
   if (/[—–-]/.test(STATIC_PROMPT.replace(/\{AGE\}|\d+–\d+/g, '').replace(/<[^>]+>/g, '').replace(/[a-z-]+/g, ''))) throw new Error('dash in prompt');
 });
+
+Deno.test('gendered quick replies are dropped', () => {
+  const r = parse('היי\n<chips>לא יודע איך|לא זוכרת|קשה להסביר|סתם סקרנות|אני צריך זמן</chips>');
+  if (JSON.stringify(r.chips) !== JSON.stringify(['קשה להסביר', 'סתם סקרנות'])) throw new Error(JSON.stringify(r.chips));
+});

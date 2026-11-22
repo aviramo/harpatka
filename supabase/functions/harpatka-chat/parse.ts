@@ -2,11 +2,14 @@
 export const MAX_MSG = 600, MAX_USER_TURNS = 30, KEEP = 24;
 const CTAS = ['register', 'whatsapp', 'updates'];
 
+// תשובה מוכנה בגוף ראשון בלשון זכר או נקבה ("לא יודע", "לא זוכרת", "אני צריך") נזרקת: לא יודעים אם מדברים עם אישה או גבר
+export const GENDERED = /(^|\s)(אני|לא יודעת?|לא זוכר|לא זוכרת|לא בטוחה?|לא רוצה|מרגישה?|רציתי|חיפשתי|צריכה?|מתלבטת?|מותשת?|מעוניינת?|מפחידה? אותי)(\s|$)/;
+
 // פירוק הסימונים <chips> ו-<cta> מהתשובה, וניקוי לפי כללי האתר (בלי מקפים, בלי נקודה בסוף)
 export function parse(raw: string) {
   let text = String(raw ?? ''), chips: string[] = [], cta: string | null = null;
   text = text.replace(/<chips>([\s\S]*?)<\/chips>/g, (_, c) => {
-    if (!chips.length) chips = String(c).split('|').map((s) => s.trim().replace(/\s*[—–]\s*/g, ' ')).filter(Boolean).slice(0, 4);
+    if (!chips.length) chips = String(c).split('|').map((s) => s.trim().replace(/\s*[—–]\s*/g, ' ')).filter((c) => c && !GENDERED.test(c)).slice(0, 4);
     return '';
   });
   text = text.replace(/<cta>\s*([a-z]+)\s*<\/cta>/g, (_, c) => { if (!cta && CTAS.includes(c)) cta = c; return ''; });
