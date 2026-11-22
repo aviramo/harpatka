@@ -4,10 +4,10 @@
 // ההנחיות נמצאות ב-prompt.ts. שיחות נשמרות ב-harpatka.chat_logs (admin/chat.sql), בפרויקט ה-Supabase של floa שבו הפונקציה נפרסת.
 // פריסה: supabase functions deploy harpatka-chat --no-verify-jwt --project-ref aexmnaxvahblveejsbup
 import { dynamicPrompt, MeetingInfo, STATIC_PROMPT } from './prompt.ts';
+import { buildMessages, MAX_USER_TURNS, parse, quoteSafe } from './parse.ts';
 
 const AGE_MIN = 35, AGE_MAX = 55; // אותו טווח כמו shared/age.js
 const ORIGINS = ['https://harpatka.co.il', 'https://www.harpatka.co.il', 'https://test.harpatka.co.il'];
-const MAX_MSG = 600, MAX_USER_TURNS = 30, KEEP = 24;
 
 const SB_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SB_SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -68,7 +68,7 @@ async function loadMeeting(): Promise<MeetingInfo | null> {
       const parts = [`המחיר הרגיל ${T.base} ש"ח`];
       for (const s of [...T.steps].sort((a, b) => b.days - a.days)) {
         const from = new Date((dayN(m.date) - s.days) * 864e5).toISOString().slice(0, 10);
-        parts.push(`מ-${fmt(from)} ${s.price} ש"ח`);
+        parts.push(`מתאריך ${fmt(from)} ${s.price} ש"ח`);
       }
       note = parts.join(', ');
     }
@@ -79,21 +79,6 @@ async function loadMeeting(): Promise<MeetingInfo | null> {
       priceNow: Number.isFinite(Number(m.price)) && !T ? Number(m.price) : priceFor(left, T), priceNote: note,
     };
   } catch (_) { return null; }
-}
-
-// פירוק הסימונים <chips> ו-<cta> מהתשובה
-function parse(raw: string) {
-  let text = raw, chips: string[] = [], cta: string | null = null;
-  text = text.replace(/<chips>([\s\S]*?)<\/chips>/g, (_, c) => {
-    chips = String(c).split('|').map((s) => s.trim()).filter(Boolean).slice(0, 4);
-    return '';
-  });
-  text = text.replace(/<cta>\s*([a-z]+)\s*<\/cta>/g, (_, c) => {
-    if (!cta && ['register', 'whatsapp', 'updates'].includes(c)) cta = c;
-    return '';
-  });
-  text = text.replace(/<\/?(chips|cta)>/g, '').trim();
-  return { reply: text, chips, cta };
 }
 
 // שמירת שיחות בפרויקט ה-Supabase של floa (שבו הפונקציה רצה): פונקציית RPC שרק service_role מריץ (admin/chat.sql)
@@ -123,31 +108,17 @@ Deno.serve(async (req) => {
   let body: any;
   try { body = await req.json(); } catch (_) { return json(origin, { error: 'body' }, 400); }
 
-  // רק הודעות משתמש ובוט, בסדר מתחלף, מתחילות במשתמש; אורך מוגבל
-  const incoming: { role: string; content: string }[] = Array.isArray(body.messages) ? body.messages : [];
-  const clean = incoming
-    .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim())
-    .map((m) => ({ role: m.role, content: m.content.slice(0, m.role === 'user' ? MAX_MSG : 1500) }));
-  const turns = clean.filter((m) => m.role === 'user').length;
-  if (!turns || clean[clean.length - 1].role !== 'user') return json(origin, { error: 'messages' }, 400);
+  const built = buildMessages(body.messages);
+  if (!built) return json(origin, { error: 'messages' }, 400);
+  const { clean, merged, turns } = built;
   if (turns > MAX_USER_TURNS) return json(origin, { error: 'limit', reply: 'זו כבר שיחה ארוכה. כדי להמשיך, הכי נוח לכתוב להדר ולאופיר בוואטסאפ', chips: [], cta: 'whatsapp' });
 
-  // ההיסטוריה שנשלחת למודל: הקצה האחרון, ומתחילה בהודעת משתמש
-  let hist = clean.slice(-KEEP);
-  while (hist.length && hist[0].role !== 'user') hist = hist.slice(1);
-  // הודעות רצופות של אותו תפקיד מאוחדות (דרישת ה-API)
-  const merged: { role: string; content: string }[] = [];
-  for (const m of hist) {
-    const last = merged[merged.length - 1];
-    if (last && last.role === m.role) last.content += '\n' + m.content; else merged.push({ ...m });
-  }
-
-    const adText = tx(body.adText).slice(0, 300), opening = tx(body.opening).slice(0, 600);
+  const adText = quoteSafe(tx(body.adText).slice(0, 300)), opening = quoteSafe(tx(body.opening).slice(0, 600));
   const meeting = await loadMeeting();
   const ageRange = `${AGE_MIN}–${AGE_MAX}`;
 
   const system = [
-    { type: 'text', text: STATIC_PROMPT.replace('{AGE}', ageRange), cache_control: { type: 'ephemeral' } },
+    { type: 'text', text: STATIC_PROMPT.replaceAll('{AGE}', ageRange), cache_control: { type: 'ephemeral' } },
     { type: 'text', text: dynamicPrompt(meeting, adText, ageRange, opening) },
   ];
 
@@ -156,7 +127,7 @@ Deno.serve(async (req) => {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-      body: JSON.stringify({ model: MODEL, max_tokens: 400, system, messages: merged }),
+      body: JSON.stringify({ model: MODEL, max_tokens: 500, system, messages: merged }),
     });
     if (!r.ok) { console.error('anthropic', r.status, (await r.text()).slice(0, 300)); return json(origin, { error: 'upstream' }, 502); }
     const data = await r.json();

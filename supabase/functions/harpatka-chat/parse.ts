@@ -1,0 +1,43 @@
+// פונקציות טהורות של הצ'אט (בלי רשת), כדי שאפשר לבדוק אותן: פירוק תשובת המודל ובניית הודעות הבקשה.
+export const MAX_MSG = 600, MAX_USER_TURNS = 30, KEEP = 24;
+const CTAS = ['register', 'whatsapp', 'updates'];
+
+// פירוק הסימונים <chips> ו-<cta> מהתשובה, וניקוי לפי כללי האתר (בלי מקפים, בלי נקודה בסוף)
+export function parse(raw: string) {
+  let text = String(raw ?? ''), chips: string[] = [], cta: string | null = null;
+  text = text.replace(/<chips>([\s\S]*?)<\/chips>/g, (_, c) => {
+    if (!chips.length) chips = String(c).split('|').map((s) => s.trim().replace(/\s*[—–]\s*/g, ' ')).filter(Boolean).slice(0, 4);
+    return '';
+  });
+  text = text.replace(/<cta>\s*([a-z]+)\s*<\/cta>/g, (_, c) => { if (!cta && CTAS.includes(c)) cta = c; return ''; });
+  // תשובה שנחתכה באמצע סימון: מוחקים את הזנב ולא משאירים אותו כטקסט
+  text = text.replace(/<(chips|cta)>[\s\S]*$/, '').replace(/<\/?(chips|cta)>/g, '');
+  // מקפים: רגיל או ארוך בין מילים הופך לפסיק, וטווח מספרים נשאר
+  text = text.replace(/\s+[—–-]\s+/g, ', ').replace(/(\D)[—–](\D)/g, '$1, $2');
+  text = text.replace(/\n{3,}/g, '\n\n').trim();
+  text = text.replace(/(?<!\.)\.$/, '').trim();
+  return { reply: text, chips, cta };
+}
+
+export type Msg = { role: string; content: string };
+
+// רק הודעות משתמש ובוט, בסדר מתחלף, מתחילות במשתמש; אורך מוגבל. מחזיר null כשאין בקשה תקינה
+export function buildMessages(incoming: unknown) {
+  const arr: any[] = Array.isArray(incoming) ? incoming : [];
+  const clean: Msg[] = arr
+    .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim())
+    .map((m) => ({ role: m.role, content: m.content.slice(0, m.role === 'user' ? MAX_MSG : 1500) }));
+  const turns = clean.filter((m) => m.role === 'user').length;
+  if (!turns || clean[clean.length - 1].role !== 'user') return null;
+  let hist = clean.slice(-KEEP);
+  while (hist.length && hist[0].role !== 'user') hist = hist.slice(1);
+  const merged: Msg[] = [];
+  for (const m of hist) {
+    const last = merged[merged.length - 1];
+    if (last && last.role === m.role) last.content += '\n' + m.content; else merged.push({ ...m });
+  }
+  return { clean, merged, turns };
+}
+
+// טקסט שמגיע מהדפדפן ונכנס לפרומפט: בלי מירכאות ושורות חדשות שיכולות לצאת מהציטוט
+export const quoteSafe = (s: string) => s.replace(/["\r\n]+/g, ' ').trim();

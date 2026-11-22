@@ -1,0 +1,30 @@
+import { buildMessages, parse, quoteSafe } from './parse.ts';
+const eq = (a: unknown, b: unknown, m: string) => { if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error(m + ': ' + JSON.stringify(a) + ' != ' + JSON.stringify(b)); };
+Deno.test('parse basics', () => {
+  const r = parse('היי, מה שלומכם.\n<chips>אחד|שניים|שלושה|ארבעה|חמישה</chips>\n<cta>register</cta>');
+  eq(r, { reply: 'היי, מה שלומכם', chips: ['אחד', 'שניים', 'שלושה', 'ארבעה'], cta: 'register' }, 'basic');
+});
+Deno.test('parse unknown cta and truncation', () => {
+  eq(parse('טקסט <cta>evil</cta>').cta, null, 'cta');
+  eq(parse('טקסט\n<chips>א|ב').reply, 'טקסט', 'truncated');
+  eq(parse('<cta>whatsapp</cta><cta>register</cta>x').cta, 'whatsapp', 'first cta');
+});
+Deno.test('parse dashes', () => {
+  eq(parse('זה — לא בסדר - בכלל').reply, 'זה, לא בסדר, בכלל', 'dashes');
+  eq(parse('גילאי 35–55').reply, 'גילאי 35–55', 'range kept');
+  eq(parse('רגע...').reply, 'רגע...', 'ellipsis kept');
+});
+Deno.test('buildMessages', () => {
+  eq(buildMessages([]), null, 'empty');
+  eq(buildMessages([{ role: 'user', content: 'a' }, { role: 'assistant', content: 'b' }]), null, 'ends with assistant');
+  const r = buildMessages([{ role: 'assistant', content: 'o1' }, { role: 'assistant', content: 'o2' }, { role: 'user', content: 'u1' }, { role: 'user', content: 'u2' }, { role: 'system', content: 'x' }])!;
+  eq(r.merged, [{ role: 'user', content: 'u1\nu2' }], 'merged and starts with user');
+  eq(buildMessages([{ role: 'user', content: 'x'.repeat(900) }])!.merged[0].content.length, 600, 'trunc');
+});
+Deno.test('quoteSafe', () => { eq(quoteSafe('a"b\nc'), 'a b c', 'quote'); });
+import { dynamicPrompt, STATIC_PROMPT } from './prompt.ts';
+Deno.test('prompt', () => {
+  const d = dynamicPrompt({ date: '2026-12-06', time: '20:00', name: '', city: 'הרצליה', place: '', max: 40, priceNow: 80, priceNote: 'המחיר הרגיל 80 ש"ח' }, 'שאלה', '35–55', 'פתיחה');
+  if (!d.includes('יום ראשון, 6.12')) throw new Error(d);
+  if (/[—–-]/.test(STATIC_PROMPT.replace(/\{AGE\}|\d+–\d+/g, '').replace(/<[^>]+>/g, '').replace(/[a-z-]+/g, ''))) throw new Error('dash in prompt');
+});
