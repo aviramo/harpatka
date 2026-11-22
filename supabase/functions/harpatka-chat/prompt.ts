@@ -175,7 +175,8 @@ export function dynamicPrompt(meeting: MeetingInfo | null, adText: string, ageRa
     parts.push(
       '## המפגש הקרוב (מבסיס הנתונים, זה המידע היחיד שמותר לציין על תאריך, מקום ומחיר)\n' +
         `- מועד: יום ${wd}, ${d}.${m}, בשעה ${meeting.time}\n` +
-        (meeting.name ? `- שם המפגש: ${meeting.name}\n` : '') +
+        '- אסור לציין שם או נושא של המפגש. הנושא משתנה מפעם לפעם ואינו אומר דבר למי שמגיע. מדברים על מה שהמפגש נותן בכלל, ועל מועד, מקום ומחיר בלבד.
+' +
         (where ? `- מקום: ${where}\n` : '') +
         (meeting.max ? `- מספר משתתפים מרבי: ${meeting.max}\n` : '') +
         (meeting.priceNow != null ? `- מחיר היום: ${meeting.priceNow} ש"ח\n` : '') +
