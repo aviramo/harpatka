@@ -1,7 +1,7 @@
 // Supabase Edge Function: harpatka-chat. הבוט של יוצאים להרפתקה.
 // פריסה: supabase functions deploy harpatka-chat --no-verify-jwt   (המפתח הציבורי נשלח ממילא מהדפדפן)
 // סודות: supabase secrets set ANTHROPIC_API_KEY=...   (אופציונלי: CHAT_MODEL, למשל claude-haiku-5-5)
-// ההנחיות נמצאות ב-prompt.ts. שיחות נשמרות ב-harpatka_wa.chat_logs (admin/chat.sql), בפרויקט ה-Supabase של floa שבו הפונקציה נפרסת.
+// ההנחיות נמצאות ב-prompt.ts. שיחות נשמרות ב-harpatka.chat_logs (admin/chat.sql), בפרויקט ה-Supabase של floa שבו הפונקציה נפרסת.
 // פריסה: supabase functions deploy harpatka-chat --no-verify-jwt --project-ref aexmnaxvahblveejsbup
 import { dynamicPrompt, MeetingInfo, STATIC_PROMPT } from './prompt.ts';
 
