@@ -64,15 +64,8 @@
     const userTurns = () => st.msgs.filter((m) => m.role === 'user').length;
     function extras(chips, cta) {
       clearExtras();
-      // מההודעה השלישית של האדם ואילך תמיד יש שורת צעדים קבועה: מה שהבוט בחר ראשון, ואז השאר
-      const kinds = [];
-      if (cta) kinds.push(cta);
-      if (userTurns() >= 3) ['register', 'whatsapp', 'updates'].forEach((k) => { if (!kinds.includes(k) && (k !== 'register' || st.hasMeeting)) kinds.push(k); });
-      if (kinds.length) {
-        const w = el('div', 'ch-ctas');
-        kinds.slice(0, 3).forEach((k) => { const n = ctaNode(k); if (n) w.appendChild(n); });
-        if (w.childNodes.length) log.appendChild(w);
-      }
+      const kinds = cta ? [cta] : [];
+      if (kinds.length) { const w = el('div', 'ch-ctas'); kinds.forEach((k) => { const n = ctaNode(k); if (n) w.appendChild(n); }); if (w.childNodes.length) log.appendChild(w); }
       if (chips && chips.length) {
         const w = el('div', 'ch-chips');
         chips.forEach((t) => { const b = el('button', 'ch-chip', t); b.type = 'button'; b.addEventListener('click', () => submit(t)); w.appendChild(b); });
