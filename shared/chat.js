@@ -61,9 +61,18 @@
       return null;
     }
 
+    const userTurns = () => st.msgs.filter((m) => m.role === 'user').length;
     function extras(chips, cta) {
       clearExtras();
-      if (cta) { const n = ctaNode(cta); if (n) { const w = el('div', 'ch-ctas'); w.appendChild(n); log.appendChild(w); } }
+      // מההודעה השלישית של האדם ואילך תמיד יש שורת צעדים קבועה: מה שהבוט בחר ראשון, ואז השאר
+      const kinds = [];
+      if (cta) kinds.push(cta);
+      if (userTurns() >= 3) ['register', 'whatsapp', 'updates'].forEach((k) => { if (!kinds.includes(k) && (k !== 'register' || st.hasMeeting)) kinds.push(k); });
+      if (kinds.length) {
+        const w = el('div', 'ch-ctas');
+        kinds.slice(0, 3).forEach((k) => { const n = ctaNode(k); if (n) w.appendChild(n); });
+        if (w.childNodes.length) log.appendChild(w);
+      }
       if (chips && chips.length) {
         const w = el('div', 'ch-chips');
         chips.forEach((t) => { const b = el('button', 'ch-chip', t); b.type = 'button'; b.addEventListener('click', () => submit(t)); w.appendChild(b); });
@@ -99,6 +108,7 @@
         if (!r.ok && !d.reply) throw new Error(String(r.status));
         await wait(Math.max(0, 600 - (Date.now() - t0)));
         t.remove();
+        if (typeof d.hasMeeting === 'boolean') st.hasMeeting = d.hasMeeting;
         who(); bubble('bot', d.reply);
         st.msgs.push({ role: 'assistant', content: d.reply, chips: d.chips || [], cta: d.cta || null }); save();
         extras(d.chips, d.cta);
@@ -115,7 +125,16 @@
     function grow() { inp.style.height = 'auto'; inp.style.height = Math.min(inp.scrollHeight, 144) + 'px'; send.disabled = busy || !inp.value.trim(); }
     inp.addEventListener('input', grow);
     inp.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && matchMedia('(pointer: fine)').matches) { e.preventDefault(); submit(inp.value); } });
-    form.addEventListener('submit', (e) => { e.preventDefault(); submit(inp.value); });
+    form.addEventListener('submit', (e) => { e.preventDefault(); submit(inp.value); inp.focus(); });
+    // לחיצה על כפתור השליחה לא לוקחת פוקוס מהשדה, כדי שהמקלדת לא תיסגר
+    send.addEventListener('pointerdown', (e) => e.preventDefault());
+    // כשהמקלדת עולה: הדף מתאים לגובה הנראה והשיחה נגללת לסוף, כך שההודעה האחרונה נשארת גלויה
+    const vv = window.visualViewport;
+    if (vv) {
+      const fit = () => { document.documentElement.style.height = vv.height + 'px'; window.scrollTo(0, 0); log.scrollTop = log.scrollHeight; };
+      vv.addEventListener('resize', fit); vv.addEventListener('scroll', () => window.scrollTo(0, 0));
+    }
+    inp.addEventListener('focus', () => setTimeout(() => { log.scrollTop = log.scrollHeight; }, 300));
 
     (async () => {
       openerInfo = await loadOpener();

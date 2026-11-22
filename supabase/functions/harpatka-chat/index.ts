@@ -172,7 +172,7 @@ Deno.serve(async (req) => {
   const adText = AD_TEXTS[tx(body.ad).slice(0, 40)] ?? quoteSafe(tx(body.adText).slice(0, 300)), opening = quoteSafe(tx(body.opening).slice(0, 600));
   const [meeting, q] = await Promise.all([loadMeeting(), questionStats()]);
 
-  const system = [staticBlock, { type: 'text', text: dynamicPrompt(meeting, adText, ageRange, opening, learningBlock(q)) }];
+  const system = [staticBlock, { type: 'text', text: dynamicPrompt(meeting, adText, ageRange, opening, learningBlock(q), turns) }];
 
   const raw = await claude(apiKey, MODEL, system, merged, 700);
   if (raw === null) return json(origin, { error: 'upstream' }, 502);
@@ -184,5 +184,5 @@ Deno.serve(async (req) => {
   const logMsgs = [...clean, { role: 'assistant', content: reply }];
   saveLog(tx(body.session), tx(body.src).slice(0, 20), tx(body.ad).slice(0, 40), logMsgs, cta);
 
-  return json(origin, { reply, chips, cta });
+  return json(origin, { reply, chips, cta, hasMeeting: !!meeting });
 });
