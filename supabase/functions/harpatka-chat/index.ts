@@ -89,6 +89,17 @@ async function stat<T>(name: string, args: Record<string, unknown>, fallback: T)
   statCache.set(key, { t: Date.now(), v });
   return v;
 }
+// הגנה מניצול: כל קריאה נרשמת (מזהה מכשיר אקראי + גיבוב של כתובת הרשת, לא הכתובת עצמה) והמסד מחזיר כמה קריאות היו ב-24 שעות.
+// כשל במסד לא עוצר את הצ'אט. התקרות ניתנות לשינוי בסודות: CHAT_DEVICE_DAY, CHAT_IP_DAY, CHAT_TOTAL_DAY.
+const DEVICE_DAY = Number(Deno.env.get('CHAT_DEVICE_DAY')) || 80, IP_DAY = Number(Deno.env.get('CHAT_IP_DAY')) || 150, TOTAL_DAY = Number(Deno.env.get('CHAT_TOTAL_DAY')) || 2000;
+async function sha(t: string) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('').slice(0, 32); }
+async function usageHit(device: string, ip: string, mode: string): Promise<{ device: number; ip: number; total: number } | null> {
+  if (!SB_URL || !SB_SERVICE) return null;
+  try {
+    const r = await fetch(SB_URL + '/rest/v1/rpc/harpatka_chat_usage_hit', { method: 'POST', headers: { apikey: SB_SERVICE, Authorization: 'Bearer ' + SB_SERVICE, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_device: device, p_ip: ip ? await sha(ip + (Deno.env.get('CHAT_SALT') ?? 'harpatka')) : '', p_mode: mode }) });
+    return r.ok ? await r.json() : null;
+  } catch (_) { return null; }
+}
 const openingStats = (ad: string) => stat<OpeningStat[]>('harpatka_chat_opening_stats', { p_ad: ad, p_limit: 8 }, []);
 const questionStats = () => stat<QuestionStats | null>('harpatka_chat_question_stats', { p_ad: null }, null);
 const OPENING_MODEL = Deno.env.get('CHAT_OPENING_MODEL') || MODEL;
@@ -150,6 +161,13 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch (_) { return json(origin, { error: 'body' }, 400); }
 
   const ageRange = `${AGE_MIN}–${AGE_MAX}`;
+  const device = String(body.device ?? '').replace(/[^a-zA-Z0-9-]/g, '').slice(0, 64);
+  const use = await usageHit(device, ip === 'unknown' ? '' : ip, body.mode === 'opening' ? 'opening' : 'chat');
+  if (use && (use.device > DEVICE_DAY || use.ip > IP_DAY || use.total > TOTAL_DAY)) {
+    if (body.mode === 'opening') return json(origin, { error: 'limit' }, 429);
+    return json(origin, { error: 'limit', reply: 'השיחה עמוסה כרגע. הכי נוח לכתוב להדר ולאופיר בוואטסאפ', chips: [], cta: 'whatsapp' });
+  }
+
   const staticBlock = { type: 'text', text: STATIC_PROMPT.replaceAll('{AGE}', ageRange), cache_control: { type: 'ephemeral' } };
 
   // הודעת הפתיחה נכתבת על ידי הבוט, ולומדת מפתיחות קודמות: מה נענה ומה לא

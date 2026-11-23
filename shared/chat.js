@@ -6,6 +6,9 @@
   const q = new URLSearchParams(location.search);
   const cid = (q.get('c') || '').slice(0, 40);
   const src = (q.get('s') || '').slice(0, 20);
+  // מזהה אקראי של המכשיר (לא טביעת אצבע), נשלח לשרת רק להגנה מניצול לרעה של הצ'אט
+  const DEVKEY = 'harpatka_chat_dev';
+  let device = ''; try { device = localStorage.getItem(DEVKEY) || ''; if (!device) { device = (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now()); localStorage.setItem(DEVKEY, device); } } catch (e) {}
   // הפונקציה רצה בפרויקט ה-Supabase של floa (אותו אחד של הרוסטר), לא בפרויקט הישן של הרפתקה
   const CHAT_SB = (CONFIG.rosterApi && CONFIG.rosterApi.authUrl) ? { url: CONFIG.rosterApi.authUrl, key: CONFIG.rosterApi.authKey } : { url: CONFIG.supabaseUrl, key: CONFIG.supabaseKey };
   const ENDPOINT = (window.CHAT_ENDPOINT || (CHAT_SB.url + '/functions/v1/harpatka-chat'));
@@ -29,7 +32,7 @@
       const r = await fetch(ENDPOINT, {
         method: 'POST', signal: ctl.signal,
         headers: { 'Content-Type': 'application/json', apikey: CHAT_SB.key, Authorization: 'Bearer ' + CHAT_SB.key },
-        body: JSON.stringify({ mode: 'opening', session, ad: cid, src }),
+        body: JSON.stringify({ mode: 'opening', session, ad: cid, src, device }),
       });
       const d = await r.json().catch(() => ({}));
       return r.ok && Array.isArray(d.messages) ? { messages: d.messages.map(String).filter(Boolean).slice(0, 3), chips: Array.isArray(d.chips) ? d.chips.map(String) : [] } : null;
@@ -95,7 +98,7 @@
         const r = await fetch(ENDPOINT, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', apikey: CHAT_SB.key, Authorization: 'Bearer ' + CHAT_SB.key },
-          body: JSON.stringify({ session: st.session, messages: st.msgs.map((m) => ({ role: m.role, content: m.content })), ad: cid, adText: openerInfo.ad, opening: openerInfo.opening.join('\n'), src }),
+          body: JSON.stringify({ session: st.session, messages: st.msgs.map((m) => ({ role: m.role, content: m.content })), ad: cid, adText: openerInfo.ad, opening: openerInfo.opening.join('\n'), src, device }),
         });
         const d = await r.json().catch(() => ({}));
         if (!r.ok && !d.reply) throw new Error(String(r.status));
