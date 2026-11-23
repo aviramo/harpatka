@@ -192,7 +192,9 @@ Deno.serve(async (req) => {
 
   const system = [staticBlock, { type: 'text', text: dynamicPrompt(meeting, adText, ageRange, opening, learningBlock(q), turns, AD_PAIN[tx(body.ad).slice(0, 40)] ?? '') }];
 
-  const raw = await claude(apiKey, MODEL, system, merged, 700);
+  // השוואת מודלים: רק מאתר הבדיקות, ורק מודל מהרשימה (באמת תמיד המודל הרגיל)
+  const model = origin === 'https://test.harpatka.co.il' && tx(body.model) === 'claude-haiku-5-5' ? 'claude-haiku-5-5' : MODEL;
+  const raw = await claude(apiKey, model, system, merged, 700);
   if (raw === null) return json(origin, { error: 'upstream' }, 502);
   let { reply, chips, cta } = parse(raw);
   if (!reply) return json(origin, { error: 'empty' }, 502);
