@@ -91,7 +91,7 @@ async function stat<T>(name: string, args: Record<string, unknown>, fallback: T)
 }
 // הגנה מניצול: כל קריאה נרשמת (מזהה מכשיר אקראי + גיבוב של כתובת הרשת, לא הכתובת עצמה) והמסד מחזיר כמה קריאות היו ב-24 שעות.
 // כשל במסד לא עוצר את הצ'אט. התקרות ניתנות לשינוי בסודות: CHAT_DEVICE_DAY, CHAT_IP_DAY, CHAT_TOTAL_DAY.
-const DEVICE_DAY = Number(Deno.env.get('CHAT_DEVICE_DAY')) || 80, IP_DAY = Number(Deno.env.get('CHAT_IP_DAY')) || 150, TOTAL_DAY = Number(Deno.env.get('CHAT_TOTAL_DAY')) || 2000;
+const DEVICE_DAY = Number(Deno.env.get('CHAT_DEVICE_DAY')) || 80, IP_DAY = Number(Deno.env.get('CHAT_IP_DAY')) || 400, TOTAL_DAY = Number(Deno.env.get('CHAT_TOTAL_DAY')) || 2000;
 async function sha(t: string) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('').slice(0, 32); }
 async function usageHit(device: string, ip: string, mode: string): Promise<{ device: number; ip: number; total: number } | null> {
   if (!SB_URL || !SB_SERVICE) return null;
