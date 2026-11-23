@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
     const ad = tx(body.ad).slice(0, 40);
     const adText = AD_TEXTS[ad] ?? quoteSafe(tx(body.adText).slice(0, 300));
     const [stats, q] = await Promise.all([openingStats(ad), questionStats()]);
-    const raw = await claude(apiKey, OPENING_MODEL, [staticBlock, { type: 'text', text: [openingPrompt(adText, stats), learningBlock(q)].filter(Boolean).join('\n\n') }], [{ role: 'user', content: 'התחילו.' }], 500);
+    const raw = await claude(apiKey, OPENING_MODEL, [staticBlock, { type: 'text', text: [openingPrompt(adText, stats, AD_PAIN[ad] ?? ''), learningBlock(q)].filter(Boolean).join('\n\n') }], [{ role: 'user', content: 'התחילו.' }], 500);
     const op = raw ? parseOpening(raw) : null;
     if (!op || !op.messages.length) return json(origin, { error: 'upstream' }, 502);
     saveLog(tx(body.session), tx(body.src).slice(0, 20), ad, op.messages.map((content) => ({ role: 'assistant', content })), null);
