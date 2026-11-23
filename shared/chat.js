@@ -54,6 +54,8 @@
     const clearExtras = () => log.querySelectorAll('.ch-chips, .ch-ctas, .ch-retry').forEach((n) => n.remove());
 
     function bubble(role, text) { const b = el('div', 'ch-msg ' + (role === 'user' ? 'me' : 'bot'), text); log.appendChild(b); return b; }
+    // תשובה של כמה פסקאות מוצגת כהודעות נפרדות, כמו בשיחה אמיתית (עד שלוש; הפסקאות העודפות מצטרפות לאחרונה)
+    function parts(text) { const p = String(text || '').split(/\n{2,}/).map((x) => x.trim()).filter(Boolean); return p.length > 3 ? [p[0], p[1], p.slice(2).join('\n\n')] : (p.length ? p : ['']); }
     function who() { log.appendChild(el('div', 'ch-who', 'הבוט של יוצאים להרפתקה')); }
 
     function ctaNode(kind) {
@@ -105,7 +107,9 @@
         await wait(Math.max(0, 600 - (Date.now() - t0)));
         t.remove();
         if (typeof d.hasMeeting === 'boolean') st.hasMeeting = d.hasMeeting;
-        who(); bubble('bot', d.reply);
+        const ps = parts(d.reply);
+        who(); bubble('bot', ps[0]);
+        for (const x of ps.slice(1)) { const t2 = typing(); await wait(2000); t2.remove(); bubble('bot', x); scroll(); }
         st.msgs.push({ role: 'assistant', content: d.reply, chips: d.chips || [], cta: d.cta || null }); save();
         extras(d.chips, d.cta);
       } catch (e) {
@@ -151,7 +155,7 @@
       who();
       st.msgs.forEach((m, i) => {
         if (m.role === 'assistant' && i > 0 && st.msgs[i - 1].role === 'user') who();
-        bubble(m.role, m.content);
+        if (m.role === 'assistant') parts(m.content).forEach((x) => bubble('assistant', x)); else bubble(m.role, m.content);
       });
       const last = st.msgs[st.msgs.length - 1];
       if (last.role === 'assistant') extras(last.chips, last.cta);
