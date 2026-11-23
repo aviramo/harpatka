@@ -8,7 +8,7 @@
   <link rel="icon" href="../images/favicon-v5.ico" sizes="any" />
   <link rel="icon" type="image/png" sizes="32x32" href="../images/favicon-v5-32.png" />
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Assistant:wght@400;500;600;700&display=block" rel="stylesheet">
-  <link rel="stylesheet" href="../shared/site.css?v=20261117a">
+  <link rel="stylesheet" href="../shared/site.css?v=20261123b">
   <script src="../shared/age.js?v=20261031a"></script>
 </head>
 <body>
@@ -31,6 +31,7 @@
       <option value="move">מסרים תנועה</option>
       <option value="other-dating">הכרויות</option>
       <option value="other-move">תנועה</option>
+      <option value="chat">צ'אט בוט</option>
     </select>
   </div>
   </div>
@@ -312,9 +313,19 @@
         f.classList.add('has-video'); media.appendChild(v);
         show(false);
       }
+      if (c.link) {   // קישור המודעה בפייסבוק: מוצג וניתן להעתקה
+        const lr = document.createElement('div'); lr.className = 'lnk'; lr.dir = 'ltr';
+        const a = document.createElement('a'); a.href = c.link; a.target = '_blank'; a.rel = 'noopener'; a.textContent = c.link.replace('https://', '');
+        const cp = document.createElement('button'); cp.type = 'button'; cp.textContent = 'העתקה'; cp.setAttribute('aria-label', 'העתקת הקישור של ' + c.name);
+        cp.addEventListener('click', () => { const done = () => { cp.textContent = 'הועתק'; setTimeout(() => { cp.textContent = 'העתקה'; }, 1600); }; if (navigator.clipboard) navigator.clipboard.writeText(c.link).then(done, () => {}); });
+        lr.appendChild(a); lr.appendChild(cp); media.appendChild(lr);
+      }
       g.appendChild(f);
     }
 
+    /* קטגוריית צ'אט בוט: מודעות טקסט שמובילות לדף השיחה (chat/). הקישור הוא מה שמדביקים במודעה בפייסבוק, בלי s=p */
+    const CHAT_ADS = [['lost', 'מתי בפעם האחרונה ירדנו לשחק?'], ['dim', 'אין על מה להתלונן ובכל זאת משהו בפנים כבוי'], ['years', 'עוד שנה עברה ואנחנו עדיין מחכים שהחיים יתחילו'], ['unseen', 'מתי מישהו שאל מה שלומנו ובאמת התכוון לזה?'], ['crowd', 'כל היום עם אנשים ובערב הכי לבד']];
+    CHAT_ADS.forEach(([k, t]) => FEATURED.push({ label: t, name: "מודעת צ'אט " + t, type: 'chat', base: 'chat-' + k, w: 1080, h: 1920, img: 'chat/img/chat-' + k + '-916.png', alt: t, link: 'https://harpatka.co.il/chat/?c=' + k }));
     FEATURED.forEach(c => card(document.getElementById('grid'), c));
     if (soloId) { document.querySelector('.soloback').hidden = false; const sf = FEATURED.find(c => c.base === soloId); document.title = 'מודעה ' + (sf ? sf.label : soloId.replace(/^ad-0*/, '')); }
     Promise.all([json('ads.json'), json('videos.json')]).then(([items, videos]) => {
@@ -330,8 +341,8 @@
     const norm = s => String(s || '').toLowerCase().replace(/[֑-ׇ]/g, '').replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
     const qEl = document.getElementById('q'), qClr = document.getElementById('qClr'), typesEl = document.getElementById('types'), noneEl = document.getElementById('none');
     /* קטגוריות, לכל אחת כתובת משלה: ?c=dating, ?c=move, ?c=other-dating, ?c=other-move. בסרטונים המובילים cat: 'dating' = הכרויות, ובלי זה תנועה */
-    const TYPE_LABELS = { '': 'הכל', dating: 'מסרים הכרויות', move: 'מסרים תנועה', 'other-dating': 'הכרויות', 'other-move': 'תנועה' };
-    const catOf = f => f.dataset.type === 'msg' ? 'dating' : f.dataset.type === 'move' ? 'move' : f.dataset.cat === 'dating' ? 'other-dating' : 'other-move';
+    const TYPE_LABELS = { '': 'הכל', dating: 'מסרים הכרויות', move: 'מסרים תנועה', 'other-dating': 'הכרויות', 'other-move': 'תנועה', chat: "צ'אט בוט" };
+    const catOf = f => f.dataset.type === 'chat' ? 'chat' : f.dataset.type === 'msg' ? 'dating' : f.dataset.type === 'move' ? 'move' : f.dataset.cat === 'dating' ? 'other-dating' : 'other-move';
     let typeSel = new URLSearchParams(location.search).get('c') || '';
     if (!Object.hasOwn(TYPE_LABELS, typeSel)) typeSel = '';
     typesEl.value = typeSel;
