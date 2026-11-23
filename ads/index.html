@@ -341,8 +341,12 @@
     const norm = s => String(s || '').toLowerCase().replace(/[֑-ׇ]/g, '').replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
     const qEl = document.getElementById('q'), qClr = document.getElementById('qClr'), typesEl = document.getElementById('types'), noneEl = document.getElementById('none');
     /* קטגוריות, לכל אחת כתובת משלה: ?c=dating, ?c=move, ?c=other-dating, ?c=other-move. בסרטונים המובילים cat: 'dating' = הכרויות, ובלי זה תנועה */
+    /* לקוחות: קטגוריה לכל לקוח (?c=client-plus). לשייך מודעה ללקוח: להוסיף את ה-base שלה ל-CLIENT_OF. לקוח חדש: להוסיף שם ל-CLIENTS */
+    const CLIENTS = { plus: 'פלוסים', pardes: 'פרדס חנה' };
+    const CLIENT_OF = { 'letgo-v4': 'plus', 'festival-plus': 'plus', taltalia: 'pardes' };
     const TYPE_LABELS = { '': 'הכל', dating: 'מסרים הכרויות', move: 'מסרים תנועה', 'other-dating': 'הכרויות', 'other-move': 'תנועה', chat: "צ'אט בוט" };
-    const catOf = f => f.dataset.type === 'chat' ? 'chat' : f.dataset.type === 'msg' ? 'dating' : f.dataset.type === 'move' ? 'move' : f.dataset.cat === 'dating' ? 'other-dating' : 'other-move';
+    Object.entries(CLIENTS).forEach(([k, name]) => { TYPE_LABELS['client-' + k] = name; const o = document.createElement('option'); o.value = 'client-' + k; o.textContent = name; typesEl.appendChild(o); });
+    const catOf = f => CLIENT_OF[f.dataset.id] ? 'client-' + CLIENT_OF[f.dataset.id] : f.dataset.type === 'chat' ? 'chat' : f.dataset.type === 'msg' ? 'dating' : f.dataset.type === 'move' ? 'move' : f.dataset.cat === 'dating' ? 'other-dating' : 'other-move';
     let typeSel = new URLSearchParams(location.search).get('c') || '';
     if (!Object.hasOwn(TYPE_LABELS, typeSel)) typeSel = '';
     typesEl.value = typeSel;
