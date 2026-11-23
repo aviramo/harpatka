@@ -73,7 +73,7 @@
       if (kinds.length) { const w = el('div', 'ch-ctas'); kinds.forEach((k) => { const n = ctaNode(k); if (n) w.appendChild(n); }); if (w.childNodes.length) log.appendChild(w); }
       if (chips && chips.length) {
         const w = el('div', 'ch-chips');
-        chips.forEach((t) => { const b = el('button', 'ch-chip', t); b.type = 'button'; b.addEventListener('click', () => submit(t)); w.appendChild(b); });
+        chips.forEach((t) => { const b = el('button', 'ch-chip', t); b.type = 'button'; b.addEventListener('click', () => submit(t, true)); w.appendChild(b); });
         log.appendChild(w);
       }
       scroll();
@@ -84,23 +84,30 @@
 
     function setBusy(v) { busy = v; send.disabled = v || !inp.value.trim(); }
 
-    async function submit(text) {
+    async function submit(text, viaChip) {
       text = String(text || '').trim().slice(0, 600);
       if (!text || busy) return;
       clearExtras();
       if (!st.msgs.some((m) => m.role === 'user')) track('ChatStart', { c: cid || 'default' });
-      st.msgs.push({ role: 'user', content: text }); save();
+      st.msgs.push(viaChip ? { role: 'user', content: text, viaChip: true } : { role: 'user', content: text }); save();
       bubble('user', text); inp.value = ''; grow(); setBusy(true); scroll();
       await ask();
     }
 
+    // התשובות המוכנות שהוצעו בהודעת הבוט האחרונה, ואם האדם בחר אחת מהן (למידה: מה מציעים ומה נלחץ)
+    function lastChips() {
+      const u = st.msgs.length - 1; if (u < 0 || st.msgs[u].role !== 'user') return { shown: [], clicked: '', offer: null };
+      let a = u - 1; while (a >= 0 && st.msgs[a].role !== 'assistant') a--;
+      const am = a >= 0 ? st.msgs[a] : null;
+      return { shown: am && Array.isArray(am.chips) ? am.chips : [], clicked: st.msgs[u].viaChip ? st.msgs[u].content : '', offer: am && am.offer ? { stage: am.offer, text: am.content } : null };
+    }
     async function ask() {
       const t = typing(), t0 = Date.now();
       try {
         const r = await fetch(ENDPOINT, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', apikey: CHAT_SB.key, Authorization: 'Bearer ' + CHAT_SB.key },
-          body: JSON.stringify({ session: st.session, messages: st.msgs.map((m) => ({ role: m.role, content: m.content })), ad: cid, adText: openerInfo.ad, opening: openerInfo.opening.join('\n'), src, device }),
+          body: JSON.stringify({ prevOffer: lastChips().offer, prevChips: lastChips().shown, chipClicked: lastChips().clicked, session: st.session, messages: st.msgs.map((m) => ({ role: m.role, content: m.content })), ad: cid, adText: openerInfo.ad, opening: openerInfo.opening.join('\n'), src, device }),
         });
         const d = await r.json().catch(() => ({}));
         if (!r.ok && !d.reply) throw new Error(String(r.status));
@@ -110,7 +117,7 @@
         const ps = parts(d.reply);
         who(); bubble('bot', ps[0]);
         for (const x of ps.slice(1)) { const t2 = typing(); await wait(2000); t2.remove(); bubble('bot', x); scroll(); }
-        st.msgs.push({ role: 'assistant', content: d.reply, chips: d.chips || [], cta: d.cta || null }); save();
+        st.msgs.push({ role: 'assistant', content: d.reply, chips: d.chips || [], cta: d.cta || null, offer: d.offer || null }); save();
         extras(d.chips, d.cta);
       } catch (e) {
         t.remove();

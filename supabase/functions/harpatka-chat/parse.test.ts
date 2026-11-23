@@ -1,8 +1,14 @@
-import { buildMessages, parse, parseOpening, quoteSafe } from './parse.ts';
+import { classifyReply, lastSentence, buildMessages, parse, parseOpening, quoteSafe } from './parse.ts';
 const eq = (a: unknown, b: unknown, m: string) => { if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error(m + ': ' + JSON.stringify(a) + ' != ' + JSON.stringify(b)); };
 Deno.test('parse basics', () => {
   const r = parse('היי, מה שלומכם.\n<chips>אחד|שניים|שלושה|ארבעה|חמישה</chips>\n<cta>register</cta>');
-  eq(r, { reply: 'היי, מה שלומכם', chips: ['אחד', 'שניים', 'שלושה', 'ארבעה'], cta: 'register' }, 'basic');
+  eq(r, { reply: 'היי, מה שלומכם', chips: ['אחד', 'שניים', 'שלושה', 'ארבעה'], cta: 'register', offer: null }, 'basic');
+});
+Deno.test('parse offer marker and classifyReply', () => {
+  const r = parse('רוצים לשמוע על מפגש?\n<offer>meeting</offer>');
+  eq(r.offer, 'meeting', 'offer'); eq(r.reply, 'רוצים לשמוע על מפגש?', 'offer stripped');
+  eq(parse('טקסט <offer>evil</offer>').offer, null, 'unknown offer');
+  eq(classifyReply('כן, אשמח'), 'yes', 'yes'); eq(classifyReply('לא תודה'), 'no', 'no'); eq(classifyReply('אולי אחר כך'), 'no', 'later'); eq(classifyReply('לא שמעתי'), 'other', 'not no'); eq(lastSentence('אחד. שתיים? שלוש שאלה?'), 'שלוש שאלה?', 'last'); eq(classifyReply('מה זה אומר'), 'other', 'other');
 });
 Deno.test('parse unknown cta and truncation', () => {
   eq(parse('טקסט <cta>evil</cta>').cta, null, 'cta');

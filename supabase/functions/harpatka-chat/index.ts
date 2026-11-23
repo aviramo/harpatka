@@ -3,8 +3,8 @@
 // סודות: supabase secrets set ANTHROPIC_API_KEY=...   (אופציונלי: CHAT_MODEL, למשל claude-haiku-5-5)
 // ההנחיות נמצאות ב-prompt.ts. שיחות נשמרות ב-harpatka.chat_logs (admin/chat.sql), בפרויקט ה-Supabase של floa שבו הפונקציה נפרסת.
 // פריסה: supabase functions deploy harpatka-chat --no-verify-jwt --project-ref aexmnaxvahblveejsbup
-import { dynamicPrompt, MeetingInfo, STATIC_PROMPT, AD_TEXTS, AD_PAIN, learningBlock, openingPrompt, OpeningStat, QuestionStats } from './prompt.ts';
-import { buildMessages, MAX_USER_TURNS, parse, parseOpening, quoteSafe } from './parse.ts';
+import { dynamicPrompt, offerBlock, OfferStats, MeetingInfo, STATIC_PROMPT, AD_TEXTS, AD_PAIN, learningBlock, chipBlock, openingPrompt, OpeningStat, QuestionStats } from './prompt.ts';
+import { classifyReply, lastSentence, buildMessages, MAX_USER_TURNS, parse, parseOpening, quoteSafe } from './parse.ts';
 
 const AGE_MIN = 35, AGE_MAX = 55; // אותו טווח כמו shared/age.js
 const ORIGINS = ['https://harpatka.co.il', 'https://www.harpatka.co.il', 'https://test.harpatka.co.il'];
@@ -101,6 +101,8 @@ async function usageHit(device: string, ip: string, mode: string): Promise<{ dev
   } catch (_) { return null; }
 }
 const openingStats = (ad: string) => stat<OpeningStat[]>('harpatka_chat_opening_stats', { p_ad: ad, p_limit: 8 }, []);
+const chipStats = (ad: string) => stat<{ liked: string[]; ignored: string[] } | null>('harpatka_chat_chip_stats', { p_ad: ad }, null);
+const offerStats = (ad: string) => stat<OfferStats | null>('harpatka_chat_offer_stats', { p_ad: ad }, null);
 const questionStats = () => stat<QuestionStats | null>('harpatka_chat_question_stats', { p_ad: null }, null);
 const OPENING_MODEL = Deno.env.get('CHAT_OPENING_MODEL') || MODEL;
 
@@ -188,15 +190,24 @@ Deno.serve(async (req) => {
   if (turns > MAX_USER_TURNS) return json(origin, { error: 'limit', reply: 'זו כבר שיחה ארוכה. כדי להמשיך, הכי נוח לכתוב להדר ולאופיר בוואטסאפ', chips: [], cta: 'whatsapp' });
 
   const adText = AD_TEXTS[tx(body.ad).slice(0, 40)] ?? quoteSafe(tx(body.adText).slice(0, 300)), opening = quoteSafe(tx(body.opening).slice(0, 600));
-  const [meeting, q] = await Promise.all([loadMeeting(), questionStats()]);
+  const adKey = tx(body.ad).slice(0, 40);
+  // תשובות מוכנות: אילו הוצעו בהודעה הקודמת ואיזו נלחצה (אם נלחצה). נרשם בלי לחכות
+  const prevChips = (Array.isArray(body.prevChips) ? body.prevChips : []).map((c: unknown) => tx(c).trim().slice(0, 60)).filter(Boolean).slice(0, 4);
+  const clicked = tx(body.chipClicked).trim().slice(0, 60);
+  if (adKey && prevChips.length) fetch(SB_URL + '/rest/v1/rpc/harpatka_chat_chip_event', { method: 'POST', headers: { apikey: SB_SERVICE, Authorization: 'Bearer ' + SB_SERVICE, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_ad: adKey, p_shown: prevChips, p_clicked: prevChips.includes(clicked) ? clicked : '' }) }).catch(() => {});
+  // הצעה שהבוט הציע בהודעה הקודמת (שלב וטקסט) ומה האדם ענה לה
+  const po = body.prevOffer && typeof body.prevOffer === 'object' ? body.prevOffer : null, poStage = tx(po?.stage), poText = lastSentence(tx(po?.text));
+  const lastUser = [...clean].reverse().find((m) => m.role === 'user')?.content ?? '';
+  if (adKey && poStage && poText) fetch(SB_URL + '/rest/v1/rpc/harpatka_chat_offer_event', { method: 'POST', headers: { apikey: SB_SERVICE, Authorization: 'Bearer ' + SB_SERVICE, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_ad: adKey, p_stage: poStage, p_text: poText, p_outcome: classifyReply(lastUser) }) }).catch(() => {});
+  const [meeting, q, cs, os] = await Promise.all([loadMeeting(), questionStats(), adKey ? chipStats(adKey) : Promise.resolve(null), adKey ? offerStats(adKey) : Promise.resolve(null)]);
 
-  const system = [staticBlock, { type: 'text', text: dynamicPrompt(meeting, adText, ageRange, opening, learningBlock(q), turns, AD_PAIN[tx(body.ad).slice(0, 40)] ?? '') }];
+  const system = [staticBlock, { type: 'text', text: dynamicPrompt(meeting, adText, ageRange, opening, learningBlock(q) + chipBlock(cs) + offerBlock(os), turns, AD_PAIN[tx(body.ad).slice(0, 40)] ?? '') }];
 
   // השוואת מודלים: רק מאתר הבדיקות, ורק מודל מהרשימה (באמת תמיד המודל הרגיל)
   const model = origin === 'https://test.harpatka.co.il' && tx(body.model) === 'claude-haiku-5-5' ? 'claude-haiku-5-5' : MODEL;
   const raw = await claude(apiKey, model, system, merged, 700);
   if (raw === null) return json(origin, { error: 'upstream' }, 502);
-  let { reply, chips, cta } = parse(raw);
+  let { reply, chips, cta, offer } = parse(raw);
   if (!reply) return json(origin, { error: 'empty' }, 502);
   if (cta === 'register' && !meeting) cta = 'updates'; // אין מפגש להירשם אליו
   if (turns >= 7 && !cta && !/[?]\s*$/.test(reply)) cta = meeting ? 'register' : 'updates'; // רשת ביטחון: שיחה ארוכה תמיד מקבלת צעד
@@ -205,5 +216,5 @@ Deno.serve(async (req) => {
   const logMsgs = [...clean, { role: 'assistant', content: reply }];
   saveLog(tx(body.session), tx(body.src).slice(0, 20), tx(body.ad).slice(0, 40), logMsgs, cta);
 
-  return json(origin, { reply, chips, cta, hasMeeting: !!meeting });
+  return json(origin, { reply, chips, cta, offer, hasMeeting: !!meeting });
 });
