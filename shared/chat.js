@@ -59,7 +59,7 @@
     function who() { log.appendChild(el('div', 'ch-who', 'הבוט של יוצאים להרפתקה')); }
 
     function ctaNode(kind) {
-      const wa = 'https://wa.me/' + CONFIG.whatsapp + '?text=' + encodeURIComponent(CONFIG.whatsappMessage || '');
+      const wa = 'https://wa.me/' + CONFIG.whatsapp + '?text=' + encodeURIComponent("היי, הגעתי אליכם דרך הצ'אט בוט");
       if (kind === 'register') { const u = new URL('../', location.href); if (src) u.searchParams.set('s', src); const a = el('a', 'ch-cta', 'לפרטים נוספים באתר'); a.href = u.href; a.target = '_blank'; a.rel = 'noopener'; a.addEventListener('click', () => track('ChatCTA', { kind })); return a; }
       if (kind === 'whatsapp') { const a = el('a', 'ch-cta alt', 'שיחה עם הדר ואופיר בוואטסאפ'); a.href = wa; a.target = '_blank'; a.rel = 'noopener'; a.addEventListener('click', () => track('ChatCTA', { kind })); return a; }
       if (kind === 'updates') { const a = el('a', 'ch-cta plain', 'קבוצת העדכונים בוואטסאפ'); a.href = CONFIG.updatesGroupLink; a.target = '_blank'; a.rel = 'noopener'; a.addEventListener('click', () => track('ChatCTA', { kind })); return a; }
