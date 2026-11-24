@@ -1,6 +1,6 @@
 /* Harpatka scripted chat: a pre-written conversation, no AI, no server, no database.
    Five messages, three buttons under each, the same structure for every pain. Looks like a chat: the other side "types" (three dots), then the bubble appears,
-   and the three buttons appear at once under it. The visitor can also write a free message: sending it opens WhatsApp to the team with that text.
+   and the three buttons appear at once under it. There is no writing bar: buttons only.
 
    Usage (see README.md):
      HarpatkaChat.init({
@@ -35,12 +35,7 @@
     root.classList.add('hc-root');
     root.innerHTML = '';
     var log = el('div', 'hc-log'); log.setAttribute('role', 'log'); log.setAttribute('aria-live', 'polite');
-    var bar = el('div', 'hc-bar'), form = el('form', 'hc-form'), inp = el('textarea', 'hc-in'), send = el('button', 'hc-send');
-    inp.rows = 1; inp.maxLength = 600; inp.placeholder = 'כתיבת הודעה'; inp.setAttribute('aria-label', 'הודעה');
-    send.type = 'submit'; send.disabled = true; send.setAttribute('aria-label', 'שליחה');
-    send.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>';
-    form.appendChild(inp); form.appendChild(send); bar.appendChild(form);
-    root.appendChild(log); root.appendChild(bar);
+    root.appendChild(log);
 
     var scroll = function () { log.scrollTo({ top: log.scrollHeight, behavior: reduce ? 'auto' : 'smooth' }); };
     var who = function () { log.appendChild(el('div', 'hc-who', o.botName || 'הבוט של יוצאים להרפתקה')); };
@@ -100,20 +95,6 @@
       await say('bot', text);
       showOptions(i + 1); busy = false;
     }
-
-    // a free message opens WhatsApp to the team with it (called straight from the send gesture, so the browser allows the new tab)
-    var grow = function () { inp.style.height = 'auto'; inp.style.height = Math.min(inp.scrollHeight, 144) + 'px'; inp.style.overflowY = inp.scrollHeight > 144 ? 'auto' : 'hidden'; send.disabled = !inp.value.trim(); };
-    inp.addEventListener('input', grow);
-    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey && window.matchMedia('(pointer: fine)').matches) { e.preventDefault(); form.requestSubmit(); } });
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var text = inp.value.trim().slice(0, 600);
-      if (!text) return;
-      window.open(waUrl(text), '_blank', 'noopener');
-      inp.value = ''; grow();
-      track('ChatCTA', { kind: 'whatsapp_text', pain: o.pain || 'default' });
-      say('user', text, true).then(function () { return say('bot', 'פתחנו את הוואטסאפ של הדר ואופיר עם ההודעה שלך', true); });
-    });
 
     track('ChatOpen', { ad: o.pain || '', source: 'script' });
     if (st.log.length) {
