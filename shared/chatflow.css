@@ -1,0 +1,35 @@
+/* The look of the scripted chat. Everything is prefixed hc-, nothing leaks into the site. Override the variables on .hc-root to match the site.
+   Layout: the root fills its container as a column; the log scrolls, the bar stays at the bottom (the page itself never scrolls). */
+.hc-root {
+  --hc-cream: #fff4e8; --hc-ink: #2c231d; --hc-paper: #fffdf9; --hc-muted: #7a6d63; --hc-accent: #e5a48f; --hc-plum: #7b2d4a; --hc-radius: 14px;
+  display: flex; flex-direction: column; height: 100%; width: 100%; max-width: 40rem; margin: 0 auto;
+  background: var(--hc-cream); color: var(--hc-ink); font-family: "Assistant", system-ui, sans-serif; direction: rtl; box-sizing: border-box;
+}
+.hc-root *, .hc-root *::before, .hc-root *::after { box-sizing: border-box; }
+.hc-log { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 1.25rem 1rem .5rem; display: flex; flex-direction: column; gap: .6rem; scrollbar-width: none; }
+.hc-log::-webkit-scrollbar { display: none; }
+.hc-who { font-size: .8rem; color: var(--hc-muted); padding-inline: .25rem; margin-top: .4rem; }
+.hc-msg { max-width: 86%; padding: .7rem .95rem; border-radius: var(--hc-radius); font-size: 1.05rem; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.hc-bot { align-self: flex-start; background: var(--hc-paper); border: 1px solid rgba(44, 35, 29, .12); }
+.hc-me { align-self: flex-end; background: var(--hc-ink); color: var(--hc-paper); }
+.hc-typing { align-self: flex-start; display: inline-flex; gap: 5px; padding: .85rem 1rem; background: var(--hc-paper); border: 1px solid rgba(44, 35, 29, .12); border-radius: var(--hc-radius); }
+.hc-typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--hc-muted); opacity: .35; animation: hcdot 1s infinite ease-in-out; }
+.hc-typing i:nth-child(2) { animation-delay: .15s; }
+.hc-typing i:nth-child(3) { animation-delay: .3s; }
+@keyframes hcdot { 0%, 80%, 100% { opacity: .3; } 40% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .hc-typing i { animation: none; opacity: .6; } }
+
+/* the three buttons under a message: prominent, as wide as their text */
+.hc-chips { display: flex; flex-direction: column; align-items: flex-start; gap: .5rem; padding: .2rem 0 .1rem; }
+.hc-chip { font: inherit; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: flex-start; text-align: start; width: fit-content; max-width: 92%; min-height: 44px;
+  padding: .45rem 1rem; border-radius: var(--hc-radius); font-weight: 700; font-size: 1.02rem; line-height: 1.4; background: var(--hc-paper); color: var(--hc-ink); border: 2px solid var(--hc-ink); box-shadow: 0 2px 0 rgba(44, 35, 29, .18); }
+.hc-chip:active { background: var(--hc-ink); color: var(--hc-paper); box-shadow: none; transform: translateY(1px); }
+.hc-chip:focus-visible, .hc-in:focus-visible, .hc-send:focus-visible { outline: 2px solid var(--hc-plum); outline-offset: 2px; }
+
+/* the writing bar */
+.hc-bar { padding: .5rem 1rem calc(.5rem + env(safe-area-inset-bottom, 0px)); background: var(--hc-cream); }
+.hc-form { display: flex; align-items: flex-end; gap: .5rem; }
+.hc-in { flex: 1; font: inherit; font-size: 1.05rem; line-height: 1.5; color: var(--hc-ink); background: var(--hc-paper); border: 1px solid rgba(44, 35, 29, .3); border-radius: var(--hc-radius); padding: .6rem .8rem; resize: none; max-height: 9rem; min-height: 44px; overflow-y: hidden; }
+.hc-send { flex: 0 0 auto; width: 44px; height: 44px; border: 0; border-radius: var(--hc-radius); background: var(--hc-accent); color: var(--hc-paper); display: grid; place-items: center; cursor: pointer; }
+.hc-send:disabled { opacity: .4; cursor: default; }
+.hc-send svg { transform: scaleX(-1); }
