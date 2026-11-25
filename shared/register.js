@@ -14,7 +14,6 @@
       <h2 id="contactTitle" class="h-sect text-[1.6rem] md:text-[2rem] mb-3">מעדיפים לשלוח הודעה?</h2>
       ${CONFIG.waCard('__BASE__', 'cmWa')}
       <button type="button" id="cmShowForm" class="mt-3 w-full rounded-full px-5 py-3.5 text-[1.05rem] font-bold" style="background:var(--sand);color:var(--ink)">חזרה לשמירת מקום בטופס</button>
-      <p class="mt-4 text-[.98rem]"><a href="#" target="_blank" rel="noopener" data-updates class="underline underline-offset-4 decoration-2 text-terra font-bold">לא בטוחים עדיין? אפשר להצטרף לקבוצת העדכונים</a></p>
       </div>
       <div id="cmFormView" data-su-root>
         <div data-su="formWrap">
@@ -104,7 +103,7 @@
     lockPage();
     /* הפוקוס עובר לקופסת הפופאפ (בלי טבעת פוקוס מכוערת על כפתור הסגירה) */
     /* פתיחה על ידי המשתמש (לחיצה על כפתור): הפוקוס עובר לשדה השם והמקלדת עולה. בכניסה ישירה ל-/register/ בלי פוקוס אוטומטי */
-    const tel = m.id === 'contactModal' && document.documentElement.classList.contains('reg-phone') || document.documentElement.classList.contains('reg-gphone') ? m.querySelector('input[type="tel"]') : null;   // שלב הטלפון: תמיד בשדה הטלפון, והמקלדת עולה
+    const tel = m.id === 'contactModal' && document.documentElement.classList.contains('reg-phone') || document.documentElement.classList.contains('reg-gphone') ?m.querySelector('input[type="tel"]') : null;   // שלב הטלפון: תמיד בשדה הטלפון, והמקלדת עולה
     const af = !noFocus && !document.documentElement.classList.contains('reg-member') ? m.querySelector('[data-autofocus]') : null;   // במצב משתתף מחובר (פרטים שמורים) אין שדה לכתוב בו, ולכן אין פוקוס ואין מקלדת
     const f = tel || (af && !af.closest('.shut, [hidden]') && af.getClientRects().length ? af : null) || m.querySelector('.modal-box');
     if (f) {
@@ -162,7 +161,7 @@
       else regUrl(false);
     }
     m.classList.remove('open');
-    setTimeout(() => { m.hidden = true; if (!document.querySelector('.modal:not([hidden])')) unlockPage(); }, 360);
+    setTimeout(() => { m.hidden = true; if (m.id === 'contactModal' && updFlow && !m.classList.contains('open')) setUpd(false); if (!document.querySelector('.modal:not([hidden])')) unlockPage(); }, 360);
     if (modalLastFocus) modalLastFocus.focus();
   }
   // כל פופאפ נסגר ב-X, בלחיצה על הרקע, וב-Esc
@@ -177,15 +176,23 @@
     if (open) closeModal(open);
   });
 
-  /* ===== הצטרפות לעדכונים — קישור ישיר לקבוצת הוואטסאפ (עד גיל 50), בלי פופאפ בחירה ===== */
+  /* ===== הצטרפות לעדכונים: פופאפ ההרשמה בשלב הטלפון הקיים (reg-gphone), כדי שהמשתתף יישמר ברוסטר עם המקור (?s=) כבר עכשיו.
+     כך מי שהגיע ממודעה, הצטרף לקבוצה ונרשם אחרי כמה ימים מקישור בקבוצה (מדפדפן אחר) מזוהה לפי הטלפון כמי שהגיע מהמודעה.
+     הכתובת (href) נשארת הקישור לקבוצה, למקרה שהסקריפט לא רץ. כפתור בתוך הפופאפ של הכפתור הקבוע (.cta-sheet) נפתח משם, אחרי שהוא נסגר ===== */
+  const joinPixel = () => {   // JoinGroup ל-Pixel: ערך 1, פעם אחת בלבד לכל מכשיר
+    if (!window.fbq) return;
+    const K = 'harpatka_join_sent';
+    try { if (localStorage.getItem(K)) return; localStorage.setItem(K, '1'); } catch (e) {}
+    try { fbq('trackCustom', 'JoinGroup', { value: 1, currency: 'ILS' }); } catch (e) {}
+  };
+  const openGroup = () => { const w = window.open(CONFIG.updatesGroupLink, '_blank'); if (w) { try { w.opener = null; } catch (e) {} return true; } return false; };
   document.querySelectorAll('[data-updates]').forEach(el => {
     el.setAttribute('href', CONFIG.updatesGroupLink);
-    /* JoinGroup ל-Pixel בלחיצה על הצטרפות לקבוצה: ערך 1, פעם אחת בלבד לכל מכשיר */
-    el.addEventListener('click', () => {
-      if (!window.fbq) return;
-      const K = 'harpatka_join_sent';
-      try { if (localStorage.getItem(K)) return; localStorage.setItem(K, '1'); } catch (e) {}
-      try { fbq('trackCustom', 'JoinGroup', { value: 1, currency: 'ILS' }); } catch (e) {}
+    el.addEventListener('click', (e) => {
+      if (AS) return;   // צפייה כמשתתף מדף הניהול: הקישור הרגיל
+      e.preventDefault();
+      if (el.closest('.cta-sheet')) return;   // הדף פותח את הפופאפ אחרי שהפופאפ של הכפתור הקבוע נסגר
+      openUpdates();
     });
   });
   /* ===== תשלום בפייבוקס (בהודעת התודה אחרי ההרשמה): קישור לקבוצת התשלום, ו-InitiateCheckout ל-Pixel בלחיצה ===== */
@@ -291,6 +298,18 @@
     if (q('other')) q('other').addEventListener('click', () => openOtherPay(selMeeting || nearest));
     form.addEventListener('submit', async (e) => {
       e.preventDefault(); q('fail').textContent = '';
+      if (updFlow) {   // בקשה לקבלת עדכונים: הטלפון והמקור נשלחים לרוסטר (משתתף עם טלפון בלבד, בלי מפגש ובלי מייל למנהלים) ונפתחת הקבוצה
+        const ut = root.querySelector('input[type="tel"]');
+        if (!normPhone((ut || {}).value || '')) { PersonForm.setErr(root, 'phone', PersonForm.MSG.phone); return; }
+        const sent = (q('hp').value || Date.now() - t0 < 1500) ? Promise.resolve() :   // בוט: בלי שמירה
+          fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_signup_phone', { method: 'POST', keepalive: true, headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify(Object.assign({ p_phone: ut.value, p_token: guestToken }, SRC ? { p_src: SRC } : {})) }).catch(() => {});
+        joinPixel();
+        if (openGroup()) { closeModal(contactModal); return; }   // הקבוצה בלשונית חדשה (בתוך הלחיצה, כדי שלא תיחסם)
+        btn.disabled = true; const relU = HRT.busy(btn);   // הלשונית נחסמה: מחכים שהשמירה תסתיים ועוברים לקבוצה באותה לשונית
+        await Promise.race([sent, new Promise((rs) => setTimeout(rs, 2500))]);
+        relU(); location.href = CONFIG.updatesGroupLink; return;
+      }
       if (!selMeeting && !nearestOk) { btn.disabled = true; try { await ensureNearest(); } catch (er) {} btn.disabled = false; }   // הטעינה של המפגש הקרוב נכשלה בעמוד: מנסים שוב לפני השליחה, כדי שהפופאפ והשרת יתייחסו לאותו מפגש
       if (guestStep) {   // אורח: שלב הטלפון (בלי חובת גוגל). ממשיכים לטופס המלא עם הטלפון שהוזן
         const gt = root.querySelector('input[type="tel"]');
@@ -571,6 +590,7 @@
   }
   /* שלב הטלפון לאורח (reg-gphone): הרשמה לא מחייבת גוגל. קודם טלפון בלבד, ובאותו שלב אפשר להיכנס עם גוגל (אם כבר חיברו חשבון). "המשך" פותח את שאר השדות; אזור אישי כן דורש גוגל */
   let guestStep = false;
+  let updFlow = false;   // הפופאפ נפתח מ"עדכונים בוואטסאפ" (openUpdates)
   let guestReg = false;   // כבר בשלב הטלפון נוצר משתתף (הטלפון בלבד) ונרשם למפגש: שלב הפרטים משלים אותו באסימון
   const guestToken = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : null;
   function setGuestStep(on, cont) {
@@ -1018,7 +1038,17 @@
     const f = document.getElementById('cmFirst'), l = document.getElementById('cmLast');
     if (f && !f.value && first) f.value = first; if (l && !l.value && last) l.value = last;
   }
-  function openReg(auto, meeting, area) { areaFlow = area || null; refreshLabel(); if (!nearestOk) ensureNearest(); selMeeting = meeting && meeting.id ? meeting : null; suResets.forEach((r) => r((selMeeting || nearest || {}).id || null)); showMeeting(selMeeting || nearest); applyMemberMode(); prefillGoogleName(); applyRegState(selMeeting || nearest); { const hc = document.documentElement.classList; setGuestStep(!AS && !loggedIn() && !areaFlow && !phoneMode && !hc.contains('reg-member') && !hc.contains('reg-details') && !hc.contains('reg-phone')); } if (contactModal) openModal(contactModal, auto === true); }
+  /* בקשה לקבלת עדכונים: אותו פופאפ בשלב הטלפון (reg-gphone), רק הכפתור "בקשה לקבלת עדכונים". משתתף מחובר (הטלפון כבר אצלנו) עובר ישר לקבוצה */
+  function setUpd(on) { updFlow = !!on; refreshLabel(); }
+  function openUpdates() {
+    if (meInfo && meInfo.phone) { joinPixel(); if (!openGroup()) location.href = CONFIG.updatesGroupLink; return; }
+    areaFlow = null; setUpd(true); suResets.forEach((r) => r('__upd')); setGuestStep(true);   // אותו פופאפ בשלב הטלפון, בלי עיצוב חדש: רק טקסט הכפתור משתנה
+    if (!contactModal) return;
+    if (!contactModal.hidden) { const t = contactModal.querySelector('input[type="tel"]'); if (t) try { kbFocus(t); } catch (e) {} return; }
+    openModal(contactModal);
+  }
+  window.HarpatkaUpdates = { open: openUpdates };
+  function openReg(auto, meeting, area) { setUpd(false); areaFlow = area || null; refreshLabel(); if (!nearestOk) ensureNearest(); selMeeting = meeting && meeting.id ? meeting : null; suResets.forEach((r) => r((selMeeting || nearest || {}).id || null)); showMeeting(selMeeting || nearest); applyMemberMode(); prefillGoogleName(); applyRegState(selMeeting || nearest); { const hc = document.documentElement.classList; setGuestStep(!AS && !loggedIn() && !areaFlow && !phoneMode && !hc.contains('reg-member') && !hc.contains('reg-details') && !hc.contains('reg-phone')); } if (contactModal) openModal(contactModal, auto === true); }
   /* הרשמה כשהכניסה עם גוגל פעילה: מי שלא מחובר עובר קודם לכניסה עם גוגל (בלי פופאפ); אחרי הכניסה נפתח פופאפ ההרשמה של המפגש שנבחר:
      משתתף מקושר: הרשמה בלחיצה; בלי משתתף מקושר: הזנת פרטים, והכפתור יוצר משתתף, מחבר את החשבון ונרשם באותו צעד (harpatka_me_join) */
   window.HarpatkaRegister = { open: (auto, meeting) => {
@@ -1055,7 +1085,7 @@
   };
   /* טקסט כפתור השליחה: "הרשמה" כשיש מפגש להירשם אליו, "השארת פרטים" כשאין (כמו הכפתור הראשי בעמוד) */
   let submitLabel = 'שמירת מקום';
-  const curLabel = () => areaFlow ? 'כניסה לאזור האישי' : submitLabel;   // נפתח מהאזור האישי: הכפתור "כניסה לאזור האישי", בכחול (html.reg-area)
+  const curLabel = () => updFlow ? 'בקשה לקבלת עדכונים' : areaFlow ?'כניסה לאזור האישי' : submitLabel;   // נפתח מהאזור האישי: הכפתור "כניסה לאזור האישי", בכחול (html.reg-area)
   const refreshLabel = () => { document.documentElement.classList.toggle('reg-area', !!areaFlow); document.querySelectorAll('[data-su="btn"]:not(.saved):not(:disabled)').forEach((b) => { b.textContent = curLabel(); }); };
   const setSubmitLabel = (m) => { submitLabel = m ? 'שמירת מקום' : 'השארת פרטים'; refreshLabel(); };
   let defMeetingName = '';   // שם ברירת המחדל למפגש (harpatka_public_settings)
