@@ -227,7 +227,7 @@
     catch (e) { if (window.__leadSent) return; window.__leadSent = true; }   // בלי אחסון: פעם אחת לטעינת דף
     try { fbq('track', 'Lead'); } catch (e) {}
   };
-  /* Lead (פיקסל): לא במילוי טופס, אלא בלחיצה על הכפתור הקבוע למטה או על "שמירת מקום" בכרטיס מפגש. הסימון הוא data-lead על האלמנט; ההאזנה בשלב הלכידה, כך שהיא עובדת גם כשהכפתור עוצר את האירוע או נבנה מאוחר יותר. חד ערכי למכשיר, כמו קודם */
+  /* Lead (פיקסל): נשלח בהזנת טלפון בפופאפ (phoneLead למטה). חד ערכי למכשיר */
   window.HarpatkaLead = leadOnce;
   /* אותה לחיצה נשלחת גם לפיקסל של ChatGPT (OpenAI Ads) כאירוע "click", באותו כלל של פעם אחת למכשיר */
   const oaiClickOnce = () => {
@@ -235,7 +235,8 @@
     catch (e) { if (window.__oaiSent) return; window.__oaiSent = true; }
     try { oaiq('measure', 'custom', { type: 'custom' }, { custom_event_name: 'click' }); } catch (e) {}
   };
-  document.addEventListener('click', (e) => { const t = e.target; if (t && t.closest && t.closest('[data-lead]')) { leadOnce(); oaiClickOnce(); } }, true);
+  /* הליד נשלח רק בהזנת טלפון תקין בפופאפ (קבוצה שקטה, שמירת מקום, השלמת פרטים), לא בלחיצה על כפתורים. Lead לפייסבוק ו-click ל-OpenAI, כל אחד פעם אחת למכשיר */
+  const phoneLead = () => { leadOnce(); oaiClickOnce(); };
   const normPhone = PersonForm.normPhone;   // הלוגיקה בטופס המשותף (shared/person-form.js)
   window.normPhone = normPhone;
   const suRoots = [], suResets = [];
@@ -310,7 +311,7 @@
         const sent = (q('hp').value || Date.now() - t0 < 1500) ? Promise.resolve() :   // בוט: בלי שמירה
           fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_signup_phone', { method: 'POST', keepalive: true, headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' },
             body: JSON.stringify(Object.assign({ p_phone: ut.value, p_token: guestToken }, SRC ? { p_src: SRC } : {})) }).catch(() => {});
-        joinPixel();
+        joinPixel(); if (!(q('hp').value || Date.now() - t0 < 1500)) phoneLead();
         if (openGroup()) { closeModal(contactModal); return; }   // הקבוצה בלשונית חדשה (בתוך הלחיצה, כדי שלא תיחסם)
         btn.disabled = true; const relU = HRT.busy(btn);   // הלשונית נחסמה: מחכים שהשמירה תסתיים ועוברים לקבוצה באותה לשונית
         await Promise.race([sent, new Promise((rs) => setTimeout(rs, 2500))]);
@@ -320,6 +321,7 @@
       if (guestStep) {   // אורח: שלב הטלפון (בלי חובת גוגל). ממשיכים לטופס המלא עם הטלפון שהוזן
         const gt = root.querySelector('input[type="tel"]');
         if (!normPhone((gt || {}).value || '')) { PersonForm.setErr(root, 'phone', PersonForm.MSG.phone); return; }
+        if (!(q('hp').value || Date.now() - t0 < 1500)) phoneLead();
         /* הטלפון מזוהה כמשתתף קיים עם פרטים מלאים: נרשם למפגש בלי למלא פרטים. אחרת ממשיכים לשאר השדות */
         btn.disabled = true; const relG = HRT.busy(btn); let gr = null;
         try {
@@ -337,6 +339,7 @@
       if (phoneMode) {   // מחוברים עם גוגל, אין משתתף מקושר: רק טלפון. השרת מחבר את החשבון למשתתף עם הטלפון הזה (או יוצר משתתף עם הטלפון בלבד) ורושם למפגש שנבחר
         const ph = (root.querySelector('input[type="tel"]') || {}).value || '';
         if (!normPhone(ph)) { PersonForm.setErr(root, 'phone', PersonForm.MSG.phone); return; }
+        phoneLead();
         btn.disabled = true; const relB = HRT.busy(btn);
         try {
           const mm = areaFlow ? null : (selMeeting || nearest);
@@ -346,7 +349,7 @@
           else if (st === 'phone_taken') q('fail').textContent = 'מספר הטלפון הזה כבר מחובר לחשבון אחר';   // והמנהלים מקבלים מייל
           else if (st === 'blocked') q('fail').textContent = 'אי אפשר לשמור מקום מהחשבון הזה';
           else if (st === 'created' || st === 'linked' || st === 'reactivated') {
-            if (st !== 'linked') { createdHere = true; }   // RegistrationValue אחרי הגיל, בהשלמת הפרטים (Lead כבר לא נשלח במילוי טופס, ראו data-lead)
+            if (st !== 'linked') { createdHere = true; }   // RegistrationValue אחרי הגיל, בהשלמת הפרטים (Lead נשלח בהזנת הטלפון)
             mePending = null;
             for (let i = 0; i < 6 && !meInfo; i++) { await meLoader.now(); if (!meInfo) await new Promise((rs) => setTimeout(rs, 450)); }   // meLoader.now מסתיים מיד כשטעינה אחרת כבר רצה; מנסים עד שהמשתתף נטען
             if (!meInfo) q('fail').textContent = 'משהו השתבש, אפשר לנסות שוב';
@@ -381,6 +384,7 @@
       if (meInfo) { await memberSubmit(root, btn, q, showDone); return; }   // משתתף מחובר: הפרטים כבר שמורים
       if (GL && !AS && hasSess()) {   // מחובר לגוגל בלי משתתף מקושר: יוצרים משתתף (או מוצאים לפי הטלפון), מחברים את החשבון ונרשמים למפגש באותו צעד
         const ck = PersonForm.validate(root); if (!ck.ok) return;
+        phoneLead();
         const mm = selMeeting || nearest, payOkJ = ageOk(ck.v.age) && !!mm;
         btn.disabled = true; btn.textContent = 'שולחים...'; const relJ = HRT.busy(btn); let doneJ = false;
         try {
@@ -402,6 +406,7 @@
       const payOk = ageOk(age) && !!(selMeeting || nearest);
       const allDone = () => { suRoots.forEach(f => f(payOk)); };   // בלי שמירה בדפדפן: בכל טעינה של הדף הטופס מוצג מחדש
       if (q('hp').value || Date.now() - t0 < 1500) { allDone(); return; }   // בוט: מציגים הצלחה בלי לשמור
+      phoneLead();   // טופס מלא (בלי שלב טלפון נפרד, למשל בדפדפן של אפליקציה): גם בו מוזן טלפון
       btn.disabled = true; btn.textContent = 'שולחים...';
       const relBtn = HRT.busy(btn);   // אפקט המתנה על הכפתור עד שהתשובה מגיעה
       let finished = false;
