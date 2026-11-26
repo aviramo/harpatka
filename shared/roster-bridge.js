@@ -83,7 +83,7 @@
     if (b.p_meeting) body.meeting_id = b.p_meeting;
     if (b.p_src) body.source_code = b.p_src;
     try { var ge1 = sessionStorage.getItem('harpatka_g_email'); if (ge1) body.email = ge1; } catch (e) {}   // האימייל מגוגל כבר בשלב הטלפון
-    var r = await roster('/signup/phone', { method: 'POST', body: JSON.stringify(body) });
+    var r = await roster('/signup/phone', { method: 'POST', keepalive: true, body: JSON.stringify(body) });   // keepalive: הבקשה נשלמת גם כשהדף נסגר או עובר לוואטסאפ מיד אחרי הלחיצה
     if (!r.ok) { var f = await errField(r); return f === 'phone' ? reply({ status: 'invalid_phone' }) : reply({ error: 'roster_' + r.status }, 500); }
     var j = await r.json(); setTok(j.participant_token || '');
     return reply(j.complete ? { status: 'exists', registered: !!j.registered, age: null } : { status: 'need_details', registered: !!j.registered });
