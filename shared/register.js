@@ -229,7 +229,13 @@
   };
   /* Lead (פיקסל): לא במילוי טופס, אלא בלחיצה על הכפתור הקבוע למטה או על "שמירת מקום" בכרטיס מפגש. הסימון הוא data-lead על האלמנט; ההאזנה בשלב הלכידה, כך שהיא עובדת גם כשהכפתור עוצר את האירוע או נבנה מאוחר יותר. חד ערכי למכשיר, כמו קודם */
   window.HarpatkaLead = leadOnce;
-  document.addEventListener('click', (e) => { const t = e.target; if (t && t.closest && t.closest('[data-lead]')) leadOnce(); }, true);
+  /* אותה לחיצה נשלחת גם לפיקסל של ChatGPT (OpenAI Ads) כאירוע "click", באותו כלל של פעם אחת למכשיר */
+  const oaiClickOnce = () => {
+    try { if (localStorage.getItem('harpatka_oai_click_sent')) return; localStorage.setItem('harpatka_oai_click_sent', '1'); }
+    catch (e) { if (window.__oaiSent) return; window.__oaiSent = true; }
+    try { oaiq('measure', 'custom', { type: 'custom' }, { custom_event_name: 'click' }); } catch (e) {}
+  };
+  document.addEventListener('click', (e) => { const t = e.target; if (t && t.closest && t.closest('[data-lead]')) { leadOnce(); oaiClickOnce(); } }, true);
   const normPhone = PersonForm.normPhone;   // הלוגיקה בטופס המשותף (shared/person-form.js)
   window.normPhone = normPhone;
   const suRoots = [], suResets = [];

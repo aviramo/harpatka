@@ -115,7 +115,7 @@ NOSCRIPT = re.compile(r'<noscript>.*?</noscript>', re.S | re.I)
 
 def is_tracking_script(m):
     s = m.group(0)
-    return 'googletagmanager.com' in s or 'G-KPSZRGZQRK' in s or 'connect.facebook.net' in s
+    return 'googletagmanager.com' in s or 'G-KPSZRGZQRK' in s or 'connect.facebook.net' in s or 'bzrcdn.openai.com' in s
 
 
 def adapt(path, inject_env):
@@ -139,7 +139,7 @@ for p in OUT.rglob('*.html'):
 
 # 4. בדיקה שלא נשאר מעקב
 bad = [p.relative_to(OUT).as_posix() for p in OUT.rglob('*.html')
-       if re.search(r'googletagmanager|fbevents|429806621602468|G-KPSZRGZQRK', p.read_text(encoding='utf-8'))]
+       if re.search(r'googletagmanager|fbevents|429806621602468|G-KPSZRGZQRK|bzrcdn\.openai|9FVC5y2SfBUcs9vy1G2Fei', p.read_text(encoding='utf-8'))]
 if bad:
     sys.exit('נשאר קוד מעקב ב: ' + ', '.join(bad))
 print('נבנה:', sum(1 for _ in OUT.rglob('*') if _.is_file()), 'קבצים ב-', OUT)
