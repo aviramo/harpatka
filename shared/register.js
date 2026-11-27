@@ -308,13 +308,10 @@
       if (updFlow) {   // בקשה לקבלת עדכונים: הטלפון והמקור נשלחים לרוסטר (משתתף עם טלפון בלבד, בלי מפגש ובלי מייל למנהלים) ונפתחת הקבוצה
         const ut = root.querySelector('input[type="tel"]');
         if (!normPhone((ut || {}).value || '')) { PersonForm.setErr(root, 'phone', PersonForm.MSG.phone); return; }
-        const sent = (q('hp').value || Date.now() - t0 < 1500) ? Promise.resolve() :   // בוט: בלי שמירה
-          fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_signup_phone', { method: 'POST', keepalive: true, headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify(Object.assign({ p_phone: ut.value, p_token: guestToken }, SRC ? { p_src: SRC } : {})) }).catch(() => {});
-        joinPixel(); if (!(q('hp').value || Date.now() - t0 < 1500)) phoneLead();
-        if (openGroup()) { closeModal(contactModal); return; }   // הקבוצה בלשונית חדשה (בתוך הלחיצה, כדי שלא תיחסם)
-        btn.disabled = true; const relU = HRT.busy(btn);   // הלשונית נחסמה: מחכים שהשמירה תסתיים ועוברים לקבוצה באותה לשונית
-        await Promise.race([sent, new Promise((rs) => setTimeout(rs, 2500))]);
+        const bot = !!(q('hp').value || Date.now() - t0 < 1500);   // בוט: בלי שמירה
+        joinPixel(); if (!bot) phoneLead();
+        btn.disabled = true; const relU = HRT.busy(btn);   // מחכים לתשובה מרוסטר שהמשתתף נשמר, ורק אז עוברים לקבוצה (באותה לשונית)
+        if (!bot) { const body = updBody(ut.value); if (!(await updSave(body))) updQueue(body); }   // לא הצליח: נשמר בדפדפן ונשלח שוב בכניסה הבאה
         relU(); location.href = CONFIG.updatesGroupLink; return;
       }
       if (!selMeeting && !nearestOk) { btn.disabled = true; try { await ensureNearest(); } catch (er) {} btn.disabled = false; }   // הטעינה של המפגש הקרוב נכשלה בעמוד: מנסים שוב לפני השליחה, כדי שהפופאפ והשרת יתייחסו לאותו מפגש
@@ -1050,6 +1047,19 @@
     if (f && !f.value && first) f.value = first; if (l && !l.value && last) l.value = last;
   }
   /* בקשה לקבלת עדכונים: אותו פופאפ בשלב הטלפון (reg-gphone), רק הכפתור "בקשה לקבלת עדכונים". משתתף מחובר (הטלפון כבר אצלנו) עובר ישר לקבוצה */
+  /* שמירת הטלפון של בקשת העדכונים ברוסטר: עד 2 ניסיונות, עד כ-7 שניות בסך הכול. נכשל: נשמר בדפדפן (UPD_Q) ונשלח שוב בכניסה הבאה לאתר */
+  const UPD_Q = 'harpatka_upd_pending';
+  const updBody = (phone) => JSON.stringify(Object.assign({ p_phone: phone, p_token: guestToken }, SRC ? { p_src: SRC } : {}));
+  const updPost = (body, ms) => Promise.race([
+    fetch(CONFIG.supabaseUrl + '/rest/v1/rpc/harpatka_signup_phone', { method: 'POST', keepalive: true, headers: { apikey: CONFIG.supabaseKey, Authorization: 'Bearer ' + CONFIG.supabaseKey, 'Content-Type': 'application/json' }, body })
+      .then((r) => r.ok).catch(() => false),
+    new Promise((rs) => setTimeout(() => rs(false), ms))]);
+  async function updSave(body) { return (await updPost(body, 4000)) || (await updPost(body, 3000)); }
+  function updQueue(body) { try { localStorage.setItem(UPD_Q, body); } catch (e) {} }
+  setTimeout(async () => {   // בקשה שלא נשמרה בביקור קודם
+    let body = null; try { body = localStorage.getItem(UPD_Q); } catch (e) {}
+    if (body && (await updPost(body, 8000))) { try { localStorage.removeItem(UPD_Q); } catch (e) {} }
+  }, 2500);
   function setUpd(on) { updFlow = !!on; document.documentElement.classList.toggle('reg-upd', updFlow); refreshLabel(); }   // reg-upd: סמל וואטסאפ על הכפתור (register.css)
   function openUpdates() {
     if (meInfo && meInfo.phone) { joinPixel(); if (!openGroup()) location.href = CONFIG.updatesGroupLink; return; }
