@@ -1096,7 +1096,7 @@
   };
   /* טקסט כפתור השליחה: "הרשמה" כשיש מפגש להירשם אליו, "השארת פרטים" כשאין (כמו הכפתור הראשי בעמוד) */
   let submitLabel = 'שמירת מקום';
-  const curLabel = () => updFlow ? 'בקשה לקבלת עדכונים' : areaFlow ?'כניסה לאזור האישי' : submitLabel;   // נפתח מהאזור האישי: הכפתור "כניסה לאזור האישי", בכחול (html.reg-area)
+  const curLabel = () => updFlow ? 'עדכונים בקבוצה השקטה' : areaFlow ?'כניסה לאזור האישי' : submitLabel;   // נפתח מהאזור האישי: הכפתור "כניסה לאזור האישי", בכחול (html.reg-area)
   const refreshLabel = () => { document.documentElement.classList.toggle('reg-area', !!areaFlow); document.querySelectorAll('[data-su="btn"]:not(.saved):not(:disabled)').forEach((b) => { b.textContent = curLabel(); }); };
   const setSubmitLabel = (m) => { submitLabel = m ? 'שמירת מקום' : 'השארת פרטים'; refreshLabel(); };
   let defMeetingName = '';   // שם ברירת המחדל למפגש (harpatka_public_settings)
