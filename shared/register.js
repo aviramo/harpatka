@@ -311,7 +311,7 @@
         const bot = !!(q('hp').value || Date.now() - t0 < 1500);   // בוט: בלי שמירה
         joinPixel(); if (!bot) phoneLead();
         btn.disabled = true; const relU = HRT.busy(btn);   // מחכים לתשובה מרוסטר שהמשתתף נשמר, ורק אז עוברים לקבוצה (באותה לשונית)
-        if (!bot) { const body = updBody(ut.value); if (!(await updSave(body))) updQueue(body); }   // לא הצליח: נשמר בדפדפן ונשלח שוב בכניסה הבאה
+        if (!bot) { const body = updBody(ut.value); const [ok] = await Promise.all([updSave(body), new Promise((rs) => setTimeout(rs, 700))]); if (!ok) updQueue(body); }   // לא הצליח: נשמר בדפדפן ונשלח שוב בכניסה הבאה. לפחות 0.7 שניות, כדי שבקשות הפיקסלים (שנשלחו קודם) יסתיימו גם כשרוסטר עונה מהר מאוד
         relU(); location.href = CONFIG.updatesGroupLink; return;
       }
       if (!selMeeting && !nearestOk) { btn.disabled = true; try { await ensureNearest(); } catch (er) {} btn.disabled = false; }   // הטעינה של המפגש הקרוב נכשלה בעמוד: מנסים שוב לפני השליחה, כדי שהפופאפ והשרת יתייחסו לאותו מפגש
