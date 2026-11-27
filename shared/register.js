@@ -1050,7 +1050,7 @@
     if (f && !f.value && first) f.value = first; if (l && !l.value && last) l.value = last;
   }
   /* בקשה לקבלת עדכונים: אותו פופאפ בשלב הטלפון (reg-gphone), רק הכפתור "בקשה לקבלת עדכונים". משתתף מחובר (הטלפון כבר אצלנו) עובר ישר לקבוצה */
-  function setUpd(on) { updFlow = !!on; refreshLabel(); }
+  function setUpd(on) { updFlow = !!on; document.documentElement.classList.toggle('reg-upd', updFlow); refreshLabel(); }   // reg-upd: סמל וואטסאפ על הכפתור (register.css)
   function openUpdates() {
     if (meInfo && meInfo.phone) { joinPixel(); if (!openGroup()) location.href = CONFIG.updatesGroupLink; return; }
     areaFlow = null; setUpd(true); suResets.forEach((r) => r('__upd')); setGuestStep(true);   // אותו פופאפ בשלב הטלפון, בלי עיצוב חדש: רק טקסט הכפתור משתנה
